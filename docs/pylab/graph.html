@@ -1,0 +1,3469 @@
+<!doctype html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+
+    <title>pylab.graph API documentation</title>
+    <meta name="description" content="Defines classes used for defining a graphical model.
+
+If no graph is specified when defining a node,..." />
+
+  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
+  
+  <style type="text/css">
+  
+* {
+  box-sizing: border-box;
+}
+/*! normalize.css v1.1.1 | MIT License | git.io/normalize */
+
+/* ==========================================================================
+   HTML5 display definitions
+   ========================================================================== */
+
+/**
+ * Correct `block` display not defined in IE 6/7/8/9 and Firefox 3.
+ */
+
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+main,
+nav,
+section,
+summary {
+    display: block;
+}
+
+/**
+ * Correct `inline-block` display not defined in IE 6/7/8/9 and Firefox 3.
+ */
+
+audio,
+canvas,
+video {
+    display: inline-block;
+    *display: inline;
+    *zoom: 1;
+}
+
+/**
+ * Prevent modern browsers from displaying `audio` without controls.
+ * Remove excess height in iOS 5 devices.
+ */
+
+audio:not([controls]) {
+    display: none;
+    height: 0;
+}
+
+/**
+ * Address styling not present in IE 7/8/9, Firefox 3, and Safari 4.
+ * Known issue: no IE 6 support.
+ */
+
+[hidden] {
+    display: none;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+/**
+ * 1. Prevent system color scheme's background color being used in Firefox, IE,
+ *    and Opera.
+ * 2. Prevent system color scheme's text color being used in Firefox, IE, and
+ *    Opera.
+ * 3. Correct text resizing oddly in IE 6/7 when body `font-size` is set using
+ *    `em` units.
+ * 4. Prevent iOS text size adjust after orientation change, without disabling
+ *    user zoom.
+ */
+
+html {
+    background: #fff; /* 1 */
+    color: #000; /* 2 */
+    font-size: 100%; /* 3 */
+    -webkit-text-size-adjust: 100%; /* 4 */
+    -ms-text-size-adjust: 100%; /* 4 */
+}
+
+/**
+ * Address `font-family` inconsistency between `textarea` and other form
+ * elements.
+ */
+
+html,
+button,
+input,
+select,
+textarea {
+    font-family: sans-serif;
+}
+
+/**
+ * Address margins handled incorrectly in IE 6/7.
+ */
+
+body {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Links
+   ========================================================================== */
+
+/**
+ * Address `outline` inconsistency between Chrome and other browsers.
+ */
+
+a:focus {
+    outline: thin dotted;
+}
+
+/**
+ * Improve readability when focused and also mouse hovered in all browsers.
+ */
+
+a:active,
+a:hover {
+    outline: 0;
+}
+
+/* ==========================================================================
+   Typography
+   ========================================================================== */
+
+/**
+ * Address font sizes and margins set differently in IE 6/7.
+ * Address font sizes within `section` and `article` in Firefox 4+, Safari 5,
+ * and Chrome.
+ */
+
+h1 {
+    font-size: 2em;
+    margin: 0.67em 0;
+}
+
+h2 {
+    font-size: 1.5em;
+    margin: 0.83em 0;
+}
+
+h3 {
+    font-size: 1.17em;
+    margin: 1em 0;
+}
+
+h4 {
+    font-size: 1em;
+    margin: 1.33em 0;
+}
+
+h5 {
+    font-size: 0.83em;
+    margin: 1.67em 0;
+}
+
+h6 {
+    font-size: 0.67em;
+    margin: 2.33em 0;
+}
+
+/**
+ * Address styling not present in IE 7/8/9, Safari 5, and Chrome.
+ */
+
+abbr[title] {
+    border-bottom: 1px dotted;
+}
+
+/**
+ * Address style set to `bolder` in Firefox 3+, Safari 4/5, and Chrome.
+ */
+
+b,
+strong {
+    font-weight: bold;
+}
+
+blockquote {
+    margin: 1em 40px;
+}
+
+/**
+ * Address styling not present in Safari 5 and Chrome.
+ */
+
+dfn {
+    font-style: italic;
+}
+
+/**
+ * Address differences between Firefox and other browsers.
+ * Known issue: no IE 6/7 normalization.
+ */
+
+hr {
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+    height: 0;
+}
+
+/**
+ * Address styling not present in IE 6/7/8/9.
+ */
+
+mark {
+    background: #ff0;
+    color: #000;
+}
+
+/**
+ * Address margins set differently in IE 6/7.
+ */
+
+p,
+pre {
+    margin: 1em 0;
+}
+
+/**
+ * Correct font family set oddly in IE 6, Safari 4/5, and Chrome.
+ */
+
+code,
+kbd,
+pre,
+samp {
+    font-family: monospace, serif;
+    _font-family: 'courier new', monospace;
+    font-size: 1em;
+}
+
+/**
+ * Improve readability of pre-formatted text in all browsers.
+ */
+
+pre {
+    white-space: pre;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/**
+ * Address CSS quotes not supported in IE 6/7.
+ */
+
+q {
+    quotes: none;
+}
+
+/**
+ * Address `quotes` property not supported in Safari 4.
+ */
+
+q:before,
+q:after {
+    content: '';
+    content: none;
+}
+
+/**
+ * Address inconsistent and variable font size in all browsers.
+ */
+
+small {
+    font-size: 80%;
+}
+
+/**
+ * Prevent `sub` and `sup` affecting `line-height` in all browsers.
+ */
+
+sub,
+sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+
+sup {
+    top: -0.5em;
+}
+
+sub {
+    bottom: -0.25em;
+}
+
+/* ==========================================================================
+   Lists
+   ========================================================================== */
+
+/**
+ * Address margins set differently in IE 6/7.
+ */
+
+dl,
+menu,
+ol,
+ul {
+    margin: 1em 0;
+}
+
+dd {
+    margin: 0 0 0 40px;
+}
+
+/**
+ * Address paddings set differently in IE 6/7.
+ */
+
+menu,
+ol,
+ul {
+    padding: 0 0 0 40px;
+}
+
+/**
+ * Correct list images handled incorrectly in IE 7.
+ */
+
+nav ul,
+nav ol {
+    list-style: none;
+    list-style-image: none;
+}
+
+/* ==========================================================================
+   Embedded content
+   ========================================================================== */
+
+/**
+ * 1. Remove border when inside `a` element in IE 6/7/8/9 and Firefox 3.
+ * 2. Improve image quality when scaled in IE 7.
+ */
+
+img {
+    border: 0; /* 1 */
+    -ms-interpolation-mode: bicubic; /* 2 */
+}
+
+/**
+ * Correct overflow displayed oddly in IE 9.
+ */
+
+svg:not(:root) {
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   Figures
+   ========================================================================== */
+
+/**
+ * Address margin not present in IE 6/7/8/9, Safari 5, and Opera 11.
+ */
+
+figure {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+
+/**
+ * Correct margin displayed oddly in IE 6/7.
+ */
+
+form {
+    margin: 0;
+}
+
+/**
+ * Define consistent border, margin, and padding.
+ */
+
+fieldset {
+    border: 1px solid #c0c0c0;
+    margin: 0 2px;
+    padding: 0.35em 0.625em 0.75em;
+}
+
+/**
+ * 1. Correct color not being inherited in IE 6/7/8/9.
+ * 2. Correct text not wrapping in Firefox 3.
+ * 3. Correct alignment displayed oddly in IE 6/7.
+ */
+
+legend {
+    border: 0; /* 1 */
+    padding: 0;
+    white-space: normal; /* 2 */
+    *margin-left: -7px; /* 3 */
+}
+
+/**
+ * 1. Correct font size not being inherited in all browsers.
+ * 2. Address margins set differently in IE 6/7, Firefox 3+, Safari 5,
+ *    and Chrome.
+ * 3. Improve appearance and consistency in all browsers.
+ */
+
+button,
+input,
+select,
+textarea {
+    font-size: 100%; /* 1 */
+    margin: 0; /* 2 */
+    vertical-align: baseline; /* 3 */
+    *vertical-align: middle; /* 3 */
+}
+
+/**
+ * Address Firefox 3+ setting `line-height` on `input` using `!important` in
+ * the UA stylesheet.
+ */
+
+button,
+input {
+    line-height: normal;
+}
+
+/**
+ * Address inconsistent `text-transform` inheritance for `button` and `select`.
+ * All other form control elements do not inherit `text-transform` values.
+ * Correct `button` style inheritance in Chrome, Safari 5+, and IE 6+.
+ * Correct `select` style inheritance in Firefox 4+ and Opera.
+ */
+
+button,
+select {
+    text-transform: none;
+}
+
+/**
+ * 1. Avoid the WebKit bug in Android 4.0.* where (2) destroys native `audio`
+ *    and `video` controls.
+ * 2. Correct inability to style clickable `input` types in iOS.
+ * 3. Improve usability and consistency of cursor style between image-type
+ *    `input` and others.
+ * 4. Remove inner spacing in IE 7 without affecting normal text inputs.
+ *    Known issue: inner spacing remains in IE 6.
+ */
+
+button,
+html input[type="button"], /* 1 */
+input[type="reset"],
+input[type="submit"] {
+    -webkit-appearance: button; /* 2 */
+    cursor: pointer; /* 3 */
+    *overflow: visible;  /* 4 */
+}
+
+/**
+ * Re-set default cursor for disabled elements.
+ */
+
+button[disabled],
+html input[disabled] {
+    cursor: default;
+}
+
+/**
+ * 1. Address box sizing set to content-box in IE 8/9.
+ * 2. Remove excess padding in IE 8/9.
+ * 3. Remove excess padding in IE 7.
+ *    Known issue: excess padding remains in IE 6.
+ */
+
+input[type="checkbox"],
+input[type="radio"] {
+    box-sizing: border-box; /* 1 */
+    padding: 0; /* 2 */
+    *height: 13px; /* 3 */
+    *width: 13px; /* 3 */
+}
+
+/**
+ * 1. Address `appearance` set to `searchfield` in Safari 5 and Chrome.
+ * 2. Address `box-sizing` set to `border-box` in Safari 5 and Chrome
+ *    (include `-moz` to future-proof).
+ */
+
+input[type="search"] {
+    -webkit-appearance: textfield; /* 1 */
+    -moz-box-sizing: content-box;
+    -webkit-box-sizing: content-box; /* 2 */
+    box-sizing: content-box;
+}
+
+/**
+ * Remove inner padding and search cancel button in Safari 5 and Chrome
+ * on OS X.
+ */
+
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+}
+
+/**
+ * Remove inner padding and border in Firefox 3+.
+ */
+
+button::-moz-focus-inner,
+input::-moz-focus-inner {
+    border: 0;
+    padding: 0;
+}
+
+/**
+ * 1. Remove default vertical scrollbar in IE 6/7/8/9.
+ * 2. Improve readability and alignment in all browsers.
+ */
+
+textarea {
+    overflow: auto; /* 1 */
+    vertical-align: top; /* 2 */
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+/**
+ * Remove most spacing between table cells.
+ */
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+  </style>
+
+  <style type="text/css">
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+  }
+  body {
+    background: #fff;
+    font-family: "Source Sans Pro", "Helvetica Neueue", Helvetica, sans;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.6em;
+  }
+  #content {
+    width: 70%;
+    max-width: 850px;
+    float: left;
+    padding: 30px 60px;
+    border-left: 1px solid #ddd;
+  }
+  #sidebar {
+    width: 25%;
+    float: left;
+    padding: 30px;
+    overflow: hidden;
+  }
+  #nav {
+    font-size: 130%;
+    margin: 0 0 15px 0;
+  }
+
+  #top {
+    display: block;
+    position: fixed;
+    bottom: 5px;
+    left: 5px;
+    font-size: .85em;
+    text-transform: uppercase;
+  }
+
+  #footer {
+    font-size: .75em;
+    padding: 5px 30px;
+    border-top: 1px solid #ddd;
+    text-align: right;
+  }
+    #footer p {
+      margin: 0 0 0 30px;
+      display: inline-block;
+    }
+
+  h1, h2, h3, h4, h5 {
+    font-weight: 300;
+  }
+  h1 {
+    font-size: 2.5em;
+    line-height: 1.1em;
+    margin: 0 0 .50em 0;
+  }
+
+  h2 {
+    font-size: 1.75em;
+    margin: 1em 0 .50em 0;
+  }
+
+  h3 {
+    margin: 25px 0 10px 0;
+  }
+
+  h4 {
+    margin: 0;
+    font-size: 105%;
+  }
+
+  a {
+    color: #058;
+    text-decoration: none;
+    transition: color .3s ease-in-out;
+  }
+
+  a:hover {
+    color: #e08524;
+    transition: color .3s ease-in-out;
+  }
+
+  pre, code, .mono, .name {
+    font-family: "Ubuntu Mono", "Cousine", "DejaVu Sans Mono", monospace;
+  }
+
+  .title .name {
+    font-weight: bold;
+  }
+  .section-title {
+    margin-top: 2em;
+  }
+  .ident {
+    color: #900;
+  }
+
+  code {
+    background: #f9f9f9;
+  } 
+
+  pre {
+    background: #fefefe;
+    border: 1px solid #ddd;
+    box-shadow: 2px 2px 0 #f3f3f3;
+    margin: 0 30px;
+    padding: 15px 30px;
+  }
+
+  .codehilite {
+    margin: 0 30px 10px 30px;
+  }
+
+    .codehilite pre {
+      margin: 0;
+    }
+    .codehilite .err { background: #ff3300; color: #fff !important; } 
+
+  table#module-list {
+    font-size: 110%;
+  }
+
+    table#module-list tr td:first-child {
+      padding-right: 10px;
+      white-space: nowrap;
+    }
+
+    table#module-list td {
+      vertical-align: top;
+      padding-bottom: 8px;
+    }
+
+      table#module-list td p {
+        margin: 0 0 7px 0;
+      }
+
+  .def {
+    display: table;
+  }
+
+    .def p {
+      display: table-cell;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .def p:first-child {
+      white-space: nowrap;
+    }
+
+    .def p:last-child {
+      width: 100%;
+    }
+
+
+  #index {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+    ul#index .class_name {
+      /* font-size: 110%; */
+      font-weight: bold;
+    }
+    #index ul {
+      margin: 0;
+    }
+
+  .item {
+    margin: 0 0 15px 0;
+  }
+
+    .item .class {
+      margin: 0 0 25px 30px;
+    }
+
+      .item .class ul.class_list {
+        margin: 0 0 20px 0;
+      }
+
+    .item .name {
+      background: #fafafa;
+      margin: 0;
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 3px;
+      display: inline-block;
+      min-width: 40%;
+    }
+      .item .name:hover {
+        background: #f6f6f6;
+      }
+
+    .item .empty_desc {
+      margin: 0 0 5px 0;
+      padding: 0;
+    }
+
+    .item .inheritance {
+      margin: 3px 0 0 30px;
+    }
+
+    .item .inherited {
+      color: #666;
+    }
+
+    .item .desc {
+      padding: 0 8px;
+      margin: 0;
+    }
+
+      .item .desc p {
+        margin: 0 0 10px 0;
+      }
+
+    .source_cont {
+      margin: 0;
+      padding: 0;
+    }
+
+    .source_link a {
+      background: #ffc300;
+      font-weight: 400;
+      font-size: .75em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 1px 1px 0 #f4b700;
+      
+      padding: 3px 8px;
+      border-radius: 2px;
+      transition: background .3s ease-in-out;
+    }
+      .source_link a:hover {
+        background: #FF7200;
+        text-shadow: none;
+        transition: background .3s ease-in-out;
+      }
+
+    .source {
+      display: none;
+      max-height: 600px;
+      overflow-y: scroll;
+      margin-bottom: 15px;
+    }
+
+      .source .codehilite {
+        margin: 0;
+      }
+
+  .desc h1, .desc h2, .desc h3 {
+    font-size: 100% !important;
+  }
+  .clear {
+    clear: both;
+  }
+
+  @media all and (max-width: 950px) {
+    #sidebar {
+      width: 35%;
+    }
+    #content {
+      width: 65%;
+    }
+  }
+  @media all and (max-width: 650px) {
+    #top {
+      display: none;
+    }
+    #sidebar {
+      float: none;
+      width: auto;
+    }
+    #content {
+      float: none;
+      width: auto;
+      padding: 30px;
+    }
+
+    #index ul {
+      padding: 0;
+      margin-bottom: 15px;
+    }
+    #index ul li {
+      display: inline-block;
+      margin-right: 30px;
+    }
+    #footer {
+      text-align: left;
+    }
+    #footer p {
+      display: block;
+      margin: inherit;
+    }
+  }
+
+  /*****************************/
+
+  </style>
+
+
+  <style type="text/css">
+  
+/* ==========================================================================
+   EXAMPLE Media Queries for Responsive Design.
+   These examples override the primary ('mobile first') styles.
+   Modify as content requires.
+   ========================================================================== */
+
+@media only screen and (min-width: 35em) {
+    /* Style adjustments for viewports that meet the condition */
+}
+
+@media print,
+       (-o-min-device-pixel-ratio: 5/4),
+       (-webkit-min-device-pixel-ratio: 1.25),
+       (min-resolution: 120dpi) {
+    /* Style adjustments for high resolution devices */
+}
+
+/* ==========================================================================
+   Print styles.
+   Inlined to avoid required HTTP connection: h5bp.com/r
+   ========================================================================== */
+
+@media print {
+    * {
+        background: transparent !important;
+        color: #000 !important; /* Black prints faster: h5bp.com/s */
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    a,
+    a:visited {
+        text-decoration: underline;
+    }
+
+    a[href]:after {
+        content: " (" attr(href) ")";
+    }
+
+    abbr[title]:after {
+        content: " (" attr(title) ")";
+    }
+
+    /*
+     * Don't show links for images, or javascript/internal links
+     */
+
+    .ir a:after,
+    a[href^="javascript:"]:after,
+    a[href^="#"]:after {
+        content: "";
+    }
+
+    pre,
+    blockquote {
+        border: 1px solid #999;
+        page-break-inside: avoid;
+    }
+
+    thead {
+        display: table-header-group; /* h5bp.com/t */
+    }
+
+    tr,
+    img {
+        page-break-inside: avoid;
+    }
+
+    img {
+        max-width: 100% !important;
+    }
+
+    @page {
+        margin: 0.5cm;
+    }
+
+    p,
+    h2,
+    h3 {
+        orphans: 3;
+        widows: 3;
+    }
+
+    h2,
+    h3 {
+        page-break-after: avoid;
+    }
+}
+
+  </style>
+
+  <script type="text/javascript">
+  function toggle(id, $link) {
+    $node = document.getElementById(id);
+    if (!$node)
+    return;
+    if (!$node.style.display || $node.style.display == 'none') {
+    $node.style.display = 'block';
+    $link.innerHTML = 'Hide source &nequiv;';
+    } else {
+    $node.style.display = 'none';
+    $link.innerHTML = 'Show source &equiv;';
+    }
+  }
+  </script>
+</head>
+<body>
+<a href="#" id="top">Top</a>
+
+<div id="container">
+    
+  
+  <div id="sidebar">
+    <h1>Index</h1>
+    <ul id="index">
+    <li class="set"><h3><a href="#header-variables">Module variables</a></h3>
+      
+  <ul>
+    <li class="mono"><a href="#pylab.graph.DEFAULT_BASENODE_NAME_PREFIX">DEFAULT_BASENODE_NAME_PREFIX</a></li>
+    <li class="mono"><a href="#pylab.graph.DEFAULT_PRIOR_SUFFIX">DEFAULT_PRIOR_SUFFIX</a></li>
+  </ul>
+
+    </li>
+
+    <li class="set"><h3><a href="#header-functions">Functions</a></h3>
+      
+  <ul>
+    <li class="mono"><a href="#pylab.graph.clear_default_graph">clear_default_graph</a></li>
+    <li class="mono"><a href="#pylab.graph.get_default_graph">get_default_graph</a></li>
+    <li class="mono"><a href="#pylab.graph.hasprior">hasprior</a></li>
+    <li class="mono"><a href="#pylab.graph.isgraph">isgraph</a></li>
+    <li class="mono"><a href="#pylab.graph.isnode">isnode</a></li>
+  </ul>
+
+    </li>
+
+    <li class="set"><h3><a href="#header-classes">Classes</a></h3>
+      <ul>
+        <li class="mono">
+        <span class="class_name"><a href="#pylab.graph.BaseNode">BaseNode</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#pylab.graph.BaseNode.__init__">__init__</a></li>
+    <li class="mono"><a href="#pylab.graph.BaseNode.delete">delete</a></li>
+    <li class="mono"><a href="#pylab.graph.BaseNode.save">save</a></li>
+    <li class="mono"><a href="#pylab.graph.BaseNode.set_save_location">set_save_location</a></li>
+    <li class="mono"><a href="#pylab.graph.BaseNode.load">load</a></li>
+  </ul>
+
+        </li>
+        <li class="mono">
+        <span class="class_name"><a href="#pylab.graph.DataNode">DataNode</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#pylab.graph.DataNode.__init__">__init__</a></li>
+    <li class="mono"><a href="#pylab.graph.DataNode.delete">delete</a></li>
+    <li class="mono"><a href="#pylab.graph.DataNode.save">save</a></li>
+    <li class="mono"><a href="#pylab.graph.DataNode.set_save_location">set_save_location</a></li>
+    <li class="mono"><a href="#pylab.graph.DataNode.load">load</a></li>
+  </ul>
+
+        </li>
+        <li class="mono">
+        <span class="class_name"><a href="#pylab.graph.Graph">Graph</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#pylab.graph.Graph.__init__">__init__</a></li>
+    <li class="mono"><a href="#pylab.graph.Graph.as_default">as_default</a></li>
+    <li class="mono"><a href="#pylab.graph.Graph.get_descendants">get_descendants</a></li>
+    <li class="mono"><a href="#pylab.graph.Graph.render">render</a></li>
+    <li class="mono"><a href="#pylab.graph.Graph.save">save</a></li>
+    <li class="mono"><a href="#pylab.graph.Graph.set_save_location">set_save_location</a></li>
+    <li class="mono"><a href="#pylab.graph.Graph.set_seed">set_seed</a></li>
+    <li class="mono"><a href="#pylab.graph.Graph.load">load</a></li>
+  </ul>
+
+        </li>
+        <li class="mono">
+        <span class="class_name"><a href="#pylab.graph.Node">Node</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#pylab.graph.Node.__init__">__init__</a></li>
+    <li class="mono"><a href="#pylab.graph.Node.add_child">add_child</a></li>
+    <li class="mono"><a href="#pylab.graph.Node.add_parent">add_parent</a></li>
+    <li class="mono"><a href="#pylab.graph.Node.add_prior">add_prior</a></li>
+    <li class="mono"><a href="#pylab.graph.Node.add_undirected">add_undirected</a></li>
+    <li class="mono"><a href="#pylab.graph.Node.delete">delete</a></li>
+    <li class="mono"><a href="#pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></li>
+    <li class="mono"><a href="#pylab.graph.Node.save">save</a></li>
+    <li class="mono"><a href="#pylab.graph.Node.set_save_location">set_save_location</a></li>
+    <li class="mono"><a href="#pylab.graph.Node.load">load</a></li>
+  </ul>
+
+        </li>
+      </ul>
+    </li>
+
+    </ul>
+  </div>
+
+    <article id="content">
+      
+  
+
+  
+
+
+  <header id="section-intro">
+  <h1 class="title"><span class="name">pylab.graph</span> module</h1>
+  <p>Defines classes used for defining a graphical model.</p>
+<p>If no graph is specified when defining a node, the node gets
+added to a default graph, which is defined at the bottom of the module.</p>
+<p>The Node class is also defined here.</p>
+  
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph" class="source">
+    <pre><code>'''Defines classes used for defining a graphical model.
+
+If no graph is specified when defining a node, the node gets
+added to a default graph, which is defined at the bottom of the module.
+
+The Node class is also defined here.
+'''
+import numpy as np
+import networkx as nx
+import logging
+import matplotlib.pyplot as plt
+import copy
+import random
+import h5py
+
+from .base import Saveable
+from .random import seed as set_seed
+from .errors import GraphIDError, UndefinedError
+
+# Constants
+DEFAULT_BASENODE_NAME_PREFIX = 'node_'
+DEFAULT_PRIOR_SUFFIX = '_prior'
+
+_graph_dict = {}
+_PH_COUNT = 0
+
+def get_default_graph():
+    '''Returns the default graph object
+
+    Returns
+    -------
+    Graph
+    '''
+    return _graph_dict[_default_graph_id]
+
+def clear_default_graph():
+    '''Delete the old default graph. Make a new one
+
+    Returns
+    -------
+    dict(Graph)
+    '''
+    global _graph_dict
+    global _default_graph_id
+    _graph_dict.pop(_default_graph_id, None)
+    a = Graph()
+    _default_graph_id = a.id
+    _graph_dict[a.id] = a
+    return _graph_dict[_default_graph_id]
+
+def _get_graph(id):
+    '''Gets the graph by the ID. Only internal use
+
+    Returns
+    -------
+    Graph
+    '''
+    if id not in _graph_dict:
+        raise GraphIDError('Graph ID `{}` not recognized. Available graph IDs are:' \
+            ' {}'.format(id, list(_graph_dict.keys())))
+    return _graph_dict[id]
+
+def isgraph(x):
+    '''Checks if the type (or subtype) of `x` is a Graph
+
+    Parameters
+    ----------
+    x : any
+        Instance to check
+    
+    Returns
+    -------
+    bool
+        True if `x` is a subclass of a Graph, else False
+    '''
+    return x is not None and issubclass(x.__class__, Graph)
+
+def isnode(x):
+    '''Checks if the type (or subtype) of `x` is a Node
+
+    Parameters
+    ----------
+    x : any
+        Instance to check
+    
+    Returns
+    -------
+    bool
+        True if `x` is a subclass of a Node, else False
+    '''
+    return x is not None and issubclass(x.__class__, BaseNode)
+
+def hasprior(x):
+    '''Checks whether `x` has a prior defined. It must be a subclass of 
+    `pylab.graph.BaseNode` for it to be True.
+
+    Parameters
+    ----------
+    x : any
+        Instance to Check
+
+    Returns
+    -------
+    bool
+    '''
+    if isnode(x):
+        return x.prior is not None
+    return False
+
+class Graph(Saveable):
+    '''Graph class
+
+    Parameters
+    ----------
+    name : str
+        This is the name of the graph
+    seed : int
+        This is how we should seed the graph
+    '''
+
+    def __init__(self, name=None, seed=None):
+        global _graph_dict
+        global _PH_COUNT
+
+        if name is None:
+            name = 'graph_{}'.format(_PH_COUNT)
+            _PH_COUNT += 1
+
+        # Set seed if necessary
+        if seed is not None:
+            set_seed(x=seed)
+
+        self.seed = seed
+        self.name = name
+        self.nodes = {} # dict id -> Node or Node subclass
+        self.name2id = {} # dict name -> id
+        self.perturbations = None
+        self.data = None
+        self.inference = None
+        self.id = id(self)
+        self.tracer = None
+        # Add a persistent object to the graph so it knows 
+        # what variables have persistent workers. This is optional
+        # for the persistent Pool
+        self._persistent_pntr = []
+
+        # Add to the graph dict
+        _graph_dict[self.id] = self
+
+    def set_seed(self, seed):
+        '''Sets the seed of the graph
+
+        Parameters
+        ----------
+        seed : int
+            Seed to set for the graph
+        '''
+        self.seed = seed
+        set_seed(x=seed)
+
+    @property
+    def size(self):
+        '''Alias for `__len__`
+
+        Returns
+        -------
+        int
+            How many nodes in the graph
+        '''
+        return len(self.nodes)
+
+    def __len__(self):
+        return len(self.nodes)
+
+    def __getitem__(self,id):
+        '''Get a node either using the name or the id. First 
+        check if it is an id, then a str. If neither work to 
+        index the node then an error is thrown
+
+        Parameters
+        ----------
+        id : int, str
+            This is the identifier for the Node
+        '''
+        try:
+            ret = self.nodes[id]
+        except:
+            try:
+                ret = self.nodes[self.name2id[id]]
+            except:
+                raise UndefinedError('`id` ({}), "{}" not recognized in graph `{}`'.format( 
+                    type(id), id, self.name))
+        return ret
+
+    def __contains__(self,id):
+        return id in self.name2id or id in self.nodes
+
+    def __str__(self):
+        s = ''
+        for node in self.nodes.values():
+            s += node.name + ' ({})\n'.format(node.id)
+            if len(node.children) > 0:
+                s += '\tchildren:\n'
+                for child in node.children.values():
+                    s += '\t\t{} ({})\n'.format(child.name,child.id)
+            if len(node.parents) > 0:
+                s += '\tparents:\n'
+                for parent in node.parents.values():
+                    s += '\t\t{} ({})\n'.format(parent.name,parent.id)
+        return s
+
+    def render(self, filename, ax=None):
+        '''We save the graph in Cytoscape format so that we can
+        open it in Cytoscape.
+
+        Parameters
+        ----------
+        filename : str
+            - Place to save the figure
+        '''
+        from py2cytoscape.util import from_networkx
+        import json
+
+        G = nx.DiGraph()
+        cmap = []
+        labels = {}
+
+        if filename[-5:] != '.cyjs':
+            filename += '.cyjs'
+
+        # Add nodes
+        for id,node in self.nodes.items():
+            G.add_node(node.name)
+            G.nodes[node.name]['id'] = id
+            labels[node.name] = node.name
+            G.nodes[node.name]['class'] = node.__class__.__name__
+
+        # Add edges
+        for id,node in self.nodes.items():
+            try:
+                for parent in node.parents.values():
+                    G.add_edge(parent.name,node.name)
+            except:
+                pass
+
+        cyjs = from_networkx(G)
+        with open(filename, 'w') as outfile:
+            json.dump(cyjs, outfile)
+
+    def as_default(self):
+        '''Sets the current graph as the default graph
+
+        Returns
+        -------
+        Graph
+            self
+        '''
+        global _default_graph
+        _default_graph = self
+        return self
+
+    def get_descendants(self, name):
+        '''Returns a list of ids of variables that are dependent on
+        the input name(recursively returns all of the child ids).
+        The name can either be the name of the variable or the id. Right now
+        it DOES NOT look at undirected edges
+
+        Parameters
+        ----------
+        name : int, str
+            - Identifier of the node to get the descendants of
+        
+        Returns
+        -------
+        list
+            List of IDs of all of the descendants of this node
+        '''
+        id = None
+        if name in self.nodes:
+            id = name
+        elif name in self.name2id:
+            id = self.name2id[name]
+        else:
+            raise Exception('name `{}` not found in graph'.format(name))
+
+        node = self.nodes[id]
+        ret = []
+        for id in node.children:
+            ret.append(id)
+            ret += self.get_descendants(id)
+        return ret
+
+
+class BaseNode(Saveable):
+    '''This is the baseclass of a Node.
+
+    Parameters
+    ----------
+    name : str, Optional
+        - name of the node. If one is not provided, a unique one will be generated
+    name_prefix : str, Optional
+        - name prefix if `name` is not passed in
+    G : Graph, Optional
+        - Graph object to add the node to.
+        - If not specified it adds it to the default graph
+    '''
+
+    def __init__(self, name=None, name_prefix=None, G=None):
+        global _PH_COUNT
+        if name is None:
+            if name_prefix is None:
+                name_prefix = DEFAULT_BASENODE_NAME_PREFIX
+            name = name_prefix + '{}'.format(_PH_COUNT)
+            _PH_COUNT += 1
+        
+        if G is None:
+            G = get_default_graph()
+        self.G = G
+        self.name = name
+        self.id = id(self)
+        self.G.nodes[self.id] = self
+        self.G.name2id[self.name] = self.id
+        self.prior = None
+
+    def delete(self):
+        '''Delete itself from the graph
+        '''
+        self.G.name2id.pop(self.name, None)
+        self.G.nodes.pop(self.id)
+
+
+class DataNode(BaseNode):
+    '''Base class for an object that wants to be used as the data class in inference.
+
+    '''
+    def __init__(self, *args, **kwargs):
+        BaseNode.__init__(self, *args, **kwargs)
+        if self.G.data is not None:
+            logging.info('Overriding old data object in graph {}'.format(self))
+        self.G.data = self
+
+    def delete(self):
+        '''Deletes this data object from the graph it belogns to
+        '''
+        self.G.data=None
+        BaseNode.delete(self)
+
+
+class Node(BaseNode):
+    '''Variable that can be in the graph
+
+    ####################################
+    self.metropolis
+
+    This is the metropolis object that gets instantiated by the metropolis class
+    ####################################
+
+    Parameters
+    ----------
+    name : str
+        - name of the node
+    name_prefix : str
+        - name prefix if `name` is not passed in
+    G : Graph, int
+        - Graph object or graph id to add the node to.
+        - If not specified it adds it to the default graph
+    '''
+    def __init__(self, name=None, name_prefix=None, G=None):
+        BaseNode.__init__(self, name=name, name_prefix=name_prefix, G=G)
+        self.parents = {}
+        self.children = {}
+        self.undirected = {}
+        self._metropolis = None
+
+    @property
+    def metropolis(self):
+        '''Get the metropolis object
+        '''
+        return self._metropolis
+
+    def delete(self):
+        '''Delete itself from the graph
+        '''
+        if len(self.parents) > 0:
+            for pid in self.parents:
+                self.G.nodes[pid].children.pop(self.id, None)
+        if len(self.children) > 0:
+            for cid in self.children:
+                self.G.nodes[cid].parents.pop(self.id, None)
+        if len(self.undirected) > 0:
+            for uid in self.undirected:
+                self.G.nodes[uid].undirected.pop(self.id, None)
+        BaseNode.delete(self)
+
+    @property
+    def degree(self):
+        '''Get the degree of the node
+
+        Returns
+        -------
+        int
+        '''
+        # return the degree of the node
+        return len(self.parents) + len(self.children) + len(self.undirected)
+
+    def get_adjacent_keys(self):
+        '''Get the adjacent nodes
+
+        Returns
+        -------
+        list(int)
+            A list of all the IDs of the adjacent nodes
+        '''
+        return list(self.parents.keys()) + list(self.children.keys())
+
+    def add_parent(self, parent):
+        '''Adds `parent` as a parent to the node
+        Also adds self as a child to `parent`
+
+        Parameters
+        ----------
+        parent : Node
+            - node we want to set as a parent
+        '''
+        if not isnode(parent):
+            raise ValueError('parent ({}) must be a (subclass of) Node'.format( 
+                type(parent)))
+
+        if self.G.id != parent.G.id:
+            raise GraphIDError('Attempting to add a parent `{}` to `{}` ' \
+                'but they are not in the same graph'.format(self.name, parent.name))
+
+        self.parents[parent.id] = parent
+        parent.children[self.id] = self
+
+    def add_child(self, child):
+        '''Adds `child` as a child to the node
+        Also adds self as a parent to `child`
+
+        Parameters
+        ----------
+        child : Node
+            - node we want to set as a child
+        '''
+        if not isnode(child):
+            raise ValueError('child ({}) must be a (subclass of) Node'.format( 
+                type(child)))
+
+        if self.G.id != child.G.id:
+            raise GraphIDError('Attempting to add a child `{}` to `{}` ' \
+                'but they are not in the same graph'.format(self.name, child.name))
+
+        self.children[child.id] = child
+        child.parents[self.id] = self
+
+    def add_undirected(self, node):
+        '''Adds `node` as an undirected neighbor to the node
+        Does the same for `node`
+
+        Parameters
+        ----------
+        node : Node
+            - node we want to set as an undirected node
+        '''
+        if not isnode(node):
+            raise ValueError('node ({}) must be a (subclass of) Node'.format( 
+                type(node)))
+
+        if self.G.id != node.G.id:
+            raise GraphIDError('Attempting to add a node `{}` to `{}` ' \
+                'but they are not in the same graph'.format(self.name, node.name))
+        self.undirected[node.id] = node
+        node.undirected[self.id] = self
+
+    def add_prior(self, prior):
+        '''Override the name of the passed in distribution `prior`.
+
+        Parameters
+        ----------
+        prior : Node
+            - node we want to set as a prior
+        '''
+        if not isnode(prior):
+            raise ValueError('prior ({}) must be a (subclass of) Node'.format( 
+                type(prior)))
+
+        self.add_parent(prior)
+        self.prior = prior
+
+# Creates a background graph that we can add to
+_default_graph = Graph()
+_default_graph_id = _default_graph.id
+</code></pre>
+  </div>
+
+  </header>
+
+  <section id="section-items">
+    <h2 class="section-title" id="header-variables">Module variables</h2>
+      <div class="item">
+      <p id="pylab.graph.DEFAULT_BASENODE_NAME_PREFIX" class="name">var <span class="ident">DEFAULT_BASENODE_NAME_PREFIX</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="pylab.graph.DEFAULT_PRIOR_SUFFIX" class="name">var <span class="ident">DEFAULT_PRIOR_SUFFIX</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+
+    <h2 class="section-title" id="header-functions">Functions</h2>
+      
+  <div class="item">
+    <div class="name def" id="pylab.graph.clear_default_graph">
+    <p>def <span class="ident">clear_default_graph</span>(</p><p>)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Delete the old default graph. Make a new one</p>
+<h2>Returns</h2>
+<p>dict(Graph)</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.clear_default_graph', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.clear_default_graph" class="source">
+    <pre><code>def clear_default_graph():
+    '''Delete the old default graph. Make a new one
+
+    Returns
+    -------
+    dict(Graph)
+    '''
+    global _graph_dict
+    global _default_graph_id
+    _graph_dict.pop(_default_graph_id, None)
+    a = Graph()
+    _default_graph_id = a.id
+    _graph_dict[a.id] = a
+    return _graph_dict[_default_graph_id]
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.graph.get_default_graph">
+    <p>def <span class="ident">get_default_graph</span>(</p><p>)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Returns the default graph object</p>
+<h2>Returns</h2>
+<p>Graph</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.get_default_graph', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.get_default_graph" class="source">
+    <pre><code>def get_default_graph():
+    '''Returns the default graph object
+
+    Returns
+    -------
+    Graph
+    '''
+    return _graph_dict[_default_graph_id]
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.graph.hasprior">
+    <p>def <span class="ident">hasprior</span>(</p><p>x)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks whether <code>x</code> has a prior defined. It must be a subclass of 
+<a href="#pylab.graph.BaseNode"><code>BaseNode</code></a> for it to be True.</p>
+<h2>Parameters</h2>
+<p>x : any
+    Instance to Check</p>
+<h2>Returns</h2>
+<p>bool</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.hasprior', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.hasprior" class="source">
+    <pre><code>def hasprior(x):
+    '''Checks whether `x` has a prior defined. It must be a subclass of 
+    `pylab.graph.BaseNode` for it to be True.
+
+    Parameters
+    ----------
+    x : any
+        Instance to Check
+
+    Returns
+    -------
+    bool
+    '''
+    if isnode(x):
+        return x.prior is not None
+    return False
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.graph.isgraph">
+    <p>def <span class="ident">isgraph</span>(</p><p>x)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks if the type (or subtype) of <code>x</code> is a Graph</p>
+<h2>Parameters</h2>
+<p>x : any
+    Instance to check</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>x</code> is a subclass of a Graph, else False</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.isgraph', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.isgraph" class="source">
+    <pre><code>def isgraph(x):
+    '''Checks if the type (or subtype) of `x` is a Graph
+
+    Parameters
+    ----------
+    x : any
+        Instance to check
+    
+    Returns
+    -------
+    bool
+        True if `x` is a subclass of a Graph, else False
+    '''
+    return x is not None and issubclass(x.__class__, Graph)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.graph.isnode">
+    <p>def <span class="ident">isnode</span>(</p><p>x)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks if the type (or subtype) of <code>x</code> is a Node</p>
+<h2>Parameters</h2>
+<p>x : any
+    Instance to check</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>x</code> is a subclass of a Node, else False</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.isnode', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.isnode" class="source">
+    <pre><code>def isnode(x):
+    '''Checks if the type (or subtype) of `x` is a Node
+
+    Parameters
+    ----------
+    x : any
+        Instance to check
+    
+    Returns
+    -------
+    bool
+        True if `x` is a subclass of a Node, else False
+    '''
+    return x is not None and issubclass(x.__class__, BaseNode)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+
+    <h2 class="section-title" id="header-classes">Classes</h2>
+      
+      <div class="item">
+      <p id="pylab.graph.BaseNode" class="name">class <span class="ident">BaseNode</span></p>
+      
+  
+    <div class="desc"><p>This is the baseclass of a Node.</p>
+<h2>Parameters</h2>
+<p>name : str, Optional
+    - name of the node. If one is not provided, a unique one will be generated
+name_prefix : str, Optional
+    - name prefix if <code>name</code> is not passed in
+G : Graph, Optional
+    - Graph object to add the node to.
+    - If not specified it adds it to the default graph</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.BaseNode', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.BaseNode" class="source">
+    <pre><code>class BaseNode(Saveable):
+    '''This is the baseclass of a Node.
+
+    Parameters
+    ----------
+    name : str, Optional
+        - name of the node. If one is not provided, a unique one will be generated
+    name_prefix : str, Optional
+        - name prefix if `name` is not passed in
+    G : Graph, Optional
+        - Graph object to add the node to.
+        - If not specified it adds it to the default graph
+    '''
+
+    def __init__(self, name=None, name_prefix=None, G=None):
+        global _PH_COUNT
+        if name is None:
+            if name_prefix is None:
+                name_prefix = DEFAULT_BASENODE_NAME_PREFIX
+            name = name_prefix + '{}'.format(_PH_COUNT)
+            _PH_COUNT += 1
+        
+        if G is None:
+            G = get_default_graph()
+        self.G = G
+        self.name = name
+        self.id = id(self)
+        self.G.nodes[self.id] = self
+        self.G.name2id[self.name] = self.id
+        self.prior = None
+
+    def delete(self):
+        '''Delete itself from the graph
+        '''
+        self.G.name2id.pop(self.name, None)
+        self.G.nodes.pop(self.id)
+</code></pre>
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#pylab.graph.BaseNode">BaseNode</a></li>
+          <li>pylab.base.Saveable</li>
+          <li>builtins.object</li>
+          </ul>
+          <h3>Static methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.BaseNode.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, name=None, name_prefix=None, G=None)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Initialize self.  See help(type(self)) for accurate signature.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.BaseNode.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.BaseNode.__init__" class="source">
+    <pre><code>def __init__(self, name=None, name_prefix=None, G=None):
+    global _PH_COUNT
+    if name is None:
+        if name_prefix is None:
+            name_prefix = DEFAULT_BASENODE_NAME_PREFIX
+        name = name_prefix + '{}'.format(_PH_COUNT)
+        _PH_COUNT += 1
+    
+    if G is None:
+        G = get_default_graph()
+    self.G = G
+    self.name = name
+    self.id = id(self)
+    self.G.nodes[self.id] = self
+    self.G.name2id[self.name] = self.id
+    self.prior = None
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.BaseNode.delete">
+    <p>def <span class="ident">delete</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Delete itself from the graph</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.BaseNode.delete', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.BaseNode.delete" class="source">
+    <pre><code>def delete(self):
+    '''Delete itself from the graph
+    '''
+    self.G.name2id.pop(self.name, None)
+    self.G.nodes.pop(self.id)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.BaseNode.save">
+    <p>def <span class="ident">save</span>(</p><p>self, filename=None)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Pickle the object</p>
+<h2>Paramters</h2>
+<p>filename : str
+    This is the location to store the file. Overrides the location if
+    it is set using <code>pylab.base.Saveable.set_save_location</code>. If None
+    it means that we are using the file location set in 
+    set_location.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.BaseNode.save', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.BaseNode.save" class="source">
+    <pre><code>def save(self, filename=None):
+    '''Pickle the object
+    Paramters
+    ---------
+    filename : str
+        This is the location to store the file. Overrides the location if
+        it is set using `pylab.base.Saveable.set_save_location`. If None
+        it means that we are using the file location set in 
+        set_location. 
+    '''
+    if filename is None:
+        if not hasattr(self, '_save_loc'):
+            raise TypeError('`filename` must be specified if you have not ' \
+                'set the save location')
+        filename = self._save_loc
+    
+    with open(filename, 'wb') as output:  # Overwrites any existing file.
+        pickle.dump(self, output, protocol=pickle.HIGHEST_PROTOCOL)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.BaseNode.set_save_location">
+    <p>def <span class="ident">set_save_location</span>(</p><p>self, filename)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Set the save location for the object</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.BaseNode.set_save_location', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.BaseNode.set_save_location" class="source">
+    <pre><code>def set_save_location(self, filename):
+    '''Set the save location for the object
+    '''
+    if not isstr(filename):
+        raise TypeError('`filename` ({}) must be a str'.format(type(filename)))
+    self._save_loc = filename
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="pylab.graph.BaseNode.G" class="name">var <span class="ident">G</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.BaseNode.id" class="name">var <span class="ident">id</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.BaseNode.name" class="name">var <span class="ident">name</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.BaseNode.prior" class="name">var <span class="ident">prior</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.BaseNode.load">
+    <p>def <span class="ident">load</span>(</p><p>cls, filename)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Unpickle the object</p>
+<h2>Paramters</h2>
+<p>filename : str
+    This is the location of the file to unpickle</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.BaseNode.load', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.BaseNode.load" class="source">
+    <pre><code>@classmethod
+def load(cls, filename):
+    '''Unpickle the object
+    Paramters
+    ---------
+    filename : str
+        This is the location of the file to unpickle
+    '''
+    with open(filename, 'rb') as handle:
+        b = pickle.load(handle)
+    return b
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      </div>
+      </div>
+      
+      <div class="item">
+      <p id="pylab.graph.DataNode" class="name">class <span class="ident">DataNode</span></p>
+      
+  
+    <div class="desc"><p>Base class for an object that wants to be used as the data class in inference.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.DataNode', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.DataNode" class="source">
+    <pre><code>class DataNode(BaseNode):
+    '''Base class for an object that wants to be used as the data class in inference.
+
+    '''
+    def __init__(self, *args, **kwargs):
+        BaseNode.__init__(self, *args, **kwargs)
+        if self.G.data is not None:
+            logging.info('Overriding old data object in graph {}'.format(self))
+        self.G.data = self
+
+    def delete(self):
+        '''Deletes this data object from the graph it belogns to
+        '''
+        self.G.data=None
+        BaseNode.delete(self)
+</code></pre>
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#pylab.graph.DataNode">DataNode</a></li>
+          <li><a href="#pylab.graph.BaseNode">BaseNode</a></li>
+          <li>pylab.base.Saveable</li>
+          <li>builtins.object</li>
+          </ul>
+          <h3>Static methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.DataNode.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, *args, **kwargs)</p>
+    </div>
+    
+    <p class="inheritance">
+     <strong>Inheritance:</strong>
+       <code><a href="#pylab.graph.BaseNode">BaseNode</a></code>.<code><a href="#pylab.graph.BaseNode.__init__">__init__</a></code>
+    </p>
+
+    
+  
+    <div class="desc inherited"><p>Initialize self.  See help(type(self)) for accurate signature.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.DataNode.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.DataNode.__init__" class="source">
+    <pre><code>def __init__(self, *args, **kwargs):
+    BaseNode.__init__(self, *args, **kwargs)
+    if self.G.data is not None:
+        logging.info('Overriding old data object in graph {}'.format(self))
+    self.G.data = self
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.DataNode.delete">
+    <p>def <span class="ident">delete</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Deletes this data object from the graph it belogns to</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.DataNode.delete', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.DataNode.delete" class="source">
+    <pre><code>def delete(self):
+    '''Deletes this data object from the graph it belogns to
+    '''
+    self.G.data=None
+    BaseNode.delete(self)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.DataNode.save">
+    <p>def <span class="ident">save</span>(</p><p>self, filename=None)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Pickle the object</p>
+<h2>Paramters</h2>
+<p>filename : str
+    This is the location to store the file. Overrides the location if
+    it is set using <code>pylab.base.Saveable.set_save_location</code>. If None
+    it means that we are using the file location set in 
+    set_location.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.DataNode.save', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.DataNode.save" class="source">
+    <pre><code>def save(self, filename=None):
+    '''Pickle the object
+    Paramters
+    ---------
+    filename : str
+        This is the location to store the file. Overrides the location if
+        it is set using `pylab.base.Saveable.set_save_location`. If None
+        it means that we are using the file location set in 
+        set_location. 
+    '''
+    if filename is None:
+        if not hasattr(self, '_save_loc'):
+            raise TypeError('`filename` must be specified if you have not ' \
+                'set the save location')
+        filename = self._save_loc
+    
+    with open(filename, 'wb') as output:  # Overwrites any existing file.
+        pickle.dump(self, output, protocol=pickle.HIGHEST_PROTOCOL)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.DataNode.set_save_location">
+    <p>def <span class="ident">set_save_location</span>(</p><p>self, filename)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Set the save location for the object</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.DataNode.set_save_location', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.DataNode.set_save_location" class="source">
+    <pre><code>def set_save_location(self, filename):
+    '''Set the save location for the object
+    '''
+    if not isstr(filename):
+        raise TypeError('`filename` ({}) must be a str'.format(type(filename)))
+    self._save_loc = filename
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.DataNode.load">
+    <p>def <span class="ident">load</span>(</p><p>cls, filename)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Unpickle the object</p>
+<h2>Paramters</h2>
+<p>filename : str
+    This is the location of the file to unpickle</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.DataNode.load', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.DataNode.load" class="source">
+    <pre><code>@classmethod
+def load(cls, filename):
+    '''Unpickle the object
+    Paramters
+    ---------
+    filename : str
+        This is the location of the file to unpickle
+    '''
+    with open(filename, 'rb') as handle:
+        b = pickle.load(handle)
+    return b
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      </div>
+      </div>
+      
+      <div class="item">
+      <p id="pylab.graph.Graph" class="name">class <span class="ident">Graph</span></p>
+      
+  
+    <div class="desc"><p>Graph class</p>
+<h2>Parameters</h2>
+<p>name : str
+    This is the name of the graph
+seed : int
+    This is how we should seed the graph</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Graph', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Graph" class="source">
+    <pre><code>class Graph(Saveable):
+    '''Graph class
+
+    Parameters
+    ----------
+    name : str
+        This is the name of the graph
+    seed : int
+        This is how we should seed the graph
+    '''
+
+    def __init__(self, name=None, seed=None):
+        global _graph_dict
+        global _PH_COUNT
+
+        if name is None:
+            name = 'graph_{}'.format(_PH_COUNT)
+            _PH_COUNT += 1
+
+        # Set seed if necessary
+        if seed is not None:
+            set_seed(x=seed)
+
+        self.seed = seed
+        self.name = name
+        self.nodes = {} # dict id -> Node or Node subclass
+        self.name2id = {} # dict name -> id
+        self.perturbations = None
+        self.data = None
+        self.inference = None
+        self.id = id(self)
+        self.tracer = None
+        # Add a persistent object to the graph so it knows 
+        # what variables have persistent workers. This is optional
+        # for the persistent Pool
+        self._persistent_pntr = []
+
+        # Add to the graph dict
+        _graph_dict[self.id] = self
+
+    def set_seed(self, seed):
+        '''Sets the seed of the graph
+
+        Parameters
+        ----------
+        seed : int
+            Seed to set for the graph
+        '''
+        self.seed = seed
+        set_seed(x=seed)
+
+    @property
+    def size(self):
+        '''Alias for `__len__`
+
+        Returns
+        -------
+        int
+            How many nodes in the graph
+        '''
+        return len(self.nodes)
+
+    def __len__(self):
+        return len(self.nodes)
+
+    def __getitem__(self,id):
+        '''Get a node either using the name or the id. First 
+        check if it is an id, then a str. If neither work to 
+        index the node then an error is thrown
+
+        Parameters
+        ----------
+        id : int, str
+            This is the identifier for the Node
+        '''
+        try:
+            ret = self.nodes[id]
+        except:
+            try:
+                ret = self.nodes[self.name2id[id]]
+            except:
+                raise UndefinedError('`id` ({}), "{}" not recognized in graph `{}`'.format( 
+                    type(id), id, self.name))
+        return ret
+
+    def __contains__(self,id):
+        return id in self.name2id or id in self.nodes
+
+    def __str__(self):
+        s = ''
+        for node in self.nodes.values():
+            s += node.name + ' ({})\n'.format(node.id)
+            if len(node.children) > 0:
+                s += '\tchildren:\n'
+                for child in node.children.values():
+                    s += '\t\t{} ({})\n'.format(child.name,child.id)
+            if len(node.parents) > 0:
+                s += '\tparents:\n'
+                for parent in node.parents.values():
+                    s += '\t\t{} ({})\n'.format(parent.name,parent.id)
+        return s
+
+    def render(self, filename, ax=None):
+        '''We save the graph in Cytoscape format so that we can
+        open it in Cytoscape.
+
+        Parameters
+        ----------
+        filename : str
+            - Place to save the figure
+        '''
+        from py2cytoscape.util import from_networkx
+        import json
+
+        G = nx.DiGraph()
+        cmap = []
+        labels = {}
+
+        if filename[-5:] != '.cyjs':
+            filename += '.cyjs'
+
+        # Add nodes
+        for id,node in self.nodes.items():
+            G.add_node(node.name)
+            G.nodes[node.name]['id'] = id
+            labels[node.name] = node.name
+            G.nodes[node.name]['class'] = node.__class__.__name__
+
+        # Add edges
+        for id,node in self.nodes.items():
+            try:
+                for parent in node.parents.values():
+                    G.add_edge(parent.name,node.name)
+            except:
+                pass
+
+        cyjs = from_networkx(G)
+        with open(filename, 'w') as outfile:
+            json.dump(cyjs, outfile)
+
+    def as_default(self):
+        '''Sets the current graph as the default graph
+
+        Returns
+        -------
+        Graph
+            self
+        '''
+        global _default_graph
+        _default_graph = self
+        return self
+
+    def get_descendants(self, name):
+        '''Returns a list of ids of variables that are dependent on
+        the input name(recursively returns all of the child ids).
+        The name can either be the name of the variable or the id. Right now
+        it DOES NOT look at undirected edges
+
+        Parameters
+        ----------
+        name : int, str
+            - Identifier of the node to get the descendants of
+        
+        Returns
+        -------
+        list
+            List of IDs of all of the descendants of this node
+        '''
+        id = None
+        if name in self.nodes:
+            id = name
+        elif name in self.name2id:
+            id = self.name2id[name]
+        else:
+            raise Exception('name `{}` not found in graph'.format(name))
+
+        node = self.nodes[id]
+        ret = []
+        for id in node.children:
+            ret.append(id)
+            ret += self.get_descendants(id)
+        return ret
+</code></pre>
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#pylab.graph.Graph">Graph</a></li>
+          <li>pylab.base.Saveable</li>
+          <li>builtins.object</li>
+          </ul>
+          <h3>Static methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Graph.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, name=None, seed=None)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Initialize self.  See help(type(self)) for accurate signature.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Graph.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Graph.__init__" class="source">
+    <pre><code>def __init__(self, name=None, seed=None):
+    global _graph_dict
+    global _PH_COUNT
+    if name is None:
+        name = 'graph_{}'.format(_PH_COUNT)
+        _PH_COUNT += 1
+    # Set seed if necessary
+    if seed is not None:
+        set_seed(x=seed)
+    self.seed = seed
+    self.name = name
+    self.nodes = {} # dict id -> Node or Node subclass
+    self.name2id = {} # dict name -> id
+    self.perturbations = None
+    self.data = None
+    self.inference = None
+    self.id = id(self)
+    self.tracer = None
+    # Add a persistent object to the graph so it knows 
+    # what variables have persistent workers. This is optional
+    # for the persistent Pool
+    self._persistent_pntr = []
+    # Add to the graph dict
+    _graph_dict[self.id] = self
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Graph.as_default">
+    <p>def <span class="ident">as_default</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Sets the current graph as the default graph</p>
+<h2>Returns</h2>
+<p>Graph
+    self</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Graph.as_default', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Graph.as_default" class="source">
+    <pre><code>def as_default(self):
+    '''Sets the current graph as the default graph
+    Returns
+    -------
+    Graph
+        self
+    '''
+    global _default_graph
+    _default_graph = self
+    return self
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Graph.get_descendants">
+    <p>def <span class="ident">get_descendants</span>(</p><p>self, name)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Returns a list of ids of variables that are dependent on
+the input name(recursively returns all of the child ids).
+The name can either be the name of the variable or the id. Right now
+it DOES NOT look at undirected edges</p>
+<h2>Parameters</h2>
+<p>name : int, str
+    - Identifier of the node to get the descendants of</p>
+<h2>Returns</h2>
+<p>list
+    List of IDs of all of the descendants of this node</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Graph.get_descendants', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Graph.get_descendants" class="source">
+    <pre><code>def get_descendants(self, name):
+    '''Returns a list of ids of variables that are dependent on
+    the input name(recursively returns all of the child ids).
+    The name can either be the name of the variable or the id. Right now
+    it DOES NOT look at undirected edges
+    Parameters
+    ----------
+    name : int, str
+        - Identifier of the node to get the descendants of
+    
+    Returns
+    -------
+    list
+        List of IDs of all of the descendants of this node
+    '''
+    id = None
+    if name in self.nodes:
+        id = name
+    elif name in self.name2id:
+        id = self.name2id[name]
+    else:
+        raise Exception('name `{}` not found in graph'.format(name))
+    node = self.nodes[id]
+    ret = []
+    for id in node.children:
+        ret.append(id)
+        ret += self.get_descendants(id)
+    return ret
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Graph.render">
+    <p>def <span class="ident">render</span>(</p><p>self, filename, ax=None)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>We save the graph in Cytoscape format so that we can
+open it in Cytoscape.</p>
+<h2>Parameters</h2>
+<p>filename : str
+    - Place to save the figure</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Graph.render', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Graph.render" class="source">
+    <pre><code>def render(self, filename, ax=None):
+    '''We save the graph in Cytoscape format so that we can
+    open it in Cytoscape.
+    Parameters
+    ----------
+    filename : str
+        - Place to save the figure
+    '''
+    from py2cytoscape.util import from_networkx
+    import json
+    G = nx.DiGraph()
+    cmap = []
+    labels = {}
+    if filename[-5:] != '.cyjs':
+        filename += '.cyjs'
+    # Add nodes
+    for id,node in self.nodes.items():
+        G.add_node(node.name)
+        G.nodes[node.name]['id'] = id
+        labels[node.name] = node.name
+        G.nodes[node.name]['class'] = node.__class__.__name__
+    # Add edges
+    for id,node in self.nodes.items():
+        try:
+            for parent in node.parents.values():
+                G.add_edge(parent.name,node.name)
+        except:
+            pass
+    cyjs = from_networkx(G)
+    with open(filename, 'w') as outfile:
+        json.dump(cyjs, outfile)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Graph.save">
+    <p>def <span class="ident">save</span>(</p><p>self, filename=None)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Pickle the object</p>
+<h2>Paramters</h2>
+<p>filename : str
+    This is the location to store the file. Overrides the location if
+    it is set using <code>pylab.base.Saveable.set_save_location</code>. If None
+    it means that we are using the file location set in 
+    set_location.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Graph.save', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Graph.save" class="source">
+    <pre><code>def save(self, filename=None):
+    '''Pickle the object
+    Paramters
+    ---------
+    filename : str
+        This is the location to store the file. Overrides the location if
+        it is set using `pylab.base.Saveable.set_save_location`. If None
+        it means that we are using the file location set in 
+        set_location. 
+    '''
+    if filename is None:
+        if not hasattr(self, '_save_loc'):
+            raise TypeError('`filename` must be specified if you have not ' \
+                'set the save location')
+        filename = self._save_loc
+    
+    with open(filename, 'wb') as output:  # Overwrites any existing file.
+        pickle.dump(self, output, protocol=pickle.HIGHEST_PROTOCOL)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Graph.set_save_location">
+    <p>def <span class="ident">set_save_location</span>(</p><p>self, filename)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Set the save location for the object</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Graph.set_save_location', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Graph.set_save_location" class="source">
+    <pre><code>def set_save_location(self, filename):
+    '''Set the save location for the object
+    '''
+    if not isstr(filename):
+        raise TypeError('`filename` ({}) must be a str'.format(type(filename)))
+    self._save_loc = filename
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Graph.set_seed">
+    <p>def <span class="ident">set_seed</span>(</p><p>self, seed)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Sets the seed of the graph</p>
+<h2>Parameters</h2>
+<p>seed : int
+    Seed to set for the graph</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Graph.set_seed', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Graph.set_seed" class="source">
+    <pre><code>def set_seed(self, seed):
+    '''Sets the seed of the graph
+    Parameters
+    ----------
+    seed : int
+        Seed to set for the graph
+    '''
+    self.seed = seed
+    set_seed(x=seed)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="pylab.graph.Graph.data" class="name">var <span class="ident">data</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.Graph.id" class="name">var <span class="ident">id</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.Graph.inference" class="name">var <span class="ident">inference</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.Graph.name" class="name">var <span class="ident">name</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.Graph.name2id" class="name">var <span class="ident">name2id</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.Graph.nodes" class="name">var <span class="ident">nodes</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.Graph.perturbations" class="name">var <span class="ident">perturbations</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.Graph.seed" class="name">var <span class="ident">seed</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.Graph.size" class="name">var <span class="ident">size</span></p>
+            
+
+            
+  
+    <div class="desc"><p>Alias for <code>__len__</code></p>
+<h2>Returns</h2>
+<p>int
+    How many nodes in the graph</p></div>
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.Graph.tracer" class="name">var <span class="ident">tracer</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Graph.load">
+    <p>def <span class="ident">load</span>(</p><p>cls, filename)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Unpickle the object</p>
+<h2>Paramters</h2>
+<p>filename : str
+    This is the location of the file to unpickle</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Graph.load', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Graph.load" class="source">
+    <pre><code>@classmethod
+def load(cls, filename):
+    '''Unpickle the object
+    Paramters
+    ---------
+    filename : str
+        This is the location of the file to unpickle
+    '''
+    with open(filename, 'rb') as handle:
+        b = pickle.load(handle)
+    return b
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      </div>
+      </div>
+      
+      <div class="item">
+      <p id="pylab.graph.Node" class="name">class <span class="ident">Node</span></p>
+      
+  
+    <div class="desc"><p>Variable that can be in the graph</p>
+<h6></h6>
+<p>self.metropolis</p>
+<p>This is the metropolis object that gets instantiated by the metropolis class</p>
+<h6></h6>
+<h2>Parameters</h2>
+<p>name : str
+    - name of the node
+name_prefix : str
+    - name prefix if <code>name</code> is not passed in
+G : Graph, int
+    - Graph object or graph id to add the node to.
+    - If not specified it adds it to the default graph</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Node', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Node" class="source">
+    <pre><code>class Node(BaseNode):
+    '''Variable that can be in the graph
+
+    ####################################
+    self.metropolis
+
+    This is the metropolis object that gets instantiated by the metropolis class
+    ####################################
+
+    Parameters
+    ----------
+    name : str
+        - name of the node
+    name_prefix : str
+        - name prefix if `name` is not passed in
+    G : Graph, int
+        - Graph object or graph id to add the node to.
+        - If not specified it adds it to the default graph
+    '''
+    def __init__(self, name=None, name_prefix=None, G=None):
+        BaseNode.__init__(self, name=name, name_prefix=name_prefix, G=G)
+        self.parents = {}
+        self.children = {}
+        self.undirected = {}
+        self._metropolis = None
+
+    @property
+    def metropolis(self):
+        '''Get the metropolis object
+        '''
+        return self._metropolis
+
+    def delete(self):
+        '''Delete itself from the graph
+        '''
+        if len(self.parents) > 0:
+            for pid in self.parents:
+                self.G.nodes[pid].children.pop(self.id, None)
+        if len(self.children) > 0:
+            for cid in self.children:
+                self.G.nodes[cid].parents.pop(self.id, None)
+        if len(self.undirected) > 0:
+            for uid in self.undirected:
+                self.G.nodes[uid].undirected.pop(self.id, None)
+        BaseNode.delete(self)
+
+    @property
+    def degree(self):
+        '''Get the degree of the node
+
+        Returns
+        -------
+        int
+        '''
+        # return the degree of the node
+        return len(self.parents) + len(self.children) + len(self.undirected)
+
+    def get_adjacent_keys(self):
+        '''Get the adjacent nodes
+
+        Returns
+        -------
+        list(int)
+            A list of all the IDs of the adjacent nodes
+        '''
+        return list(self.parents.keys()) + list(self.children.keys())
+
+    def add_parent(self, parent):
+        '''Adds `parent` as a parent to the node
+        Also adds self as a child to `parent`
+
+        Parameters
+        ----------
+        parent : Node
+            - node we want to set as a parent
+        '''
+        if not isnode(parent):
+            raise ValueError('parent ({}) must be a (subclass of) Node'.format( 
+                type(parent)))
+
+        if self.G.id != parent.G.id:
+            raise GraphIDError('Attempting to add a parent `{}` to `{}` ' \
+                'but they are not in the same graph'.format(self.name, parent.name))
+
+        self.parents[parent.id] = parent
+        parent.children[self.id] = self
+
+    def add_child(self, child):
+        '''Adds `child` as a child to the node
+        Also adds self as a parent to `child`
+
+        Parameters
+        ----------
+        child : Node
+            - node we want to set as a child
+        '''
+        if not isnode(child):
+            raise ValueError('child ({}) must be a (subclass of) Node'.format( 
+                type(child)))
+
+        if self.G.id != child.G.id:
+            raise GraphIDError('Attempting to add a child `{}` to `{}` ' \
+                'but they are not in the same graph'.format(self.name, child.name))
+
+        self.children[child.id] = child
+        child.parents[self.id] = self
+
+    def add_undirected(self, node):
+        '''Adds `node` as an undirected neighbor to the node
+        Does the same for `node`
+
+        Parameters
+        ----------
+        node : Node
+            - node we want to set as an undirected node
+        '''
+        if not isnode(node):
+            raise ValueError('node ({}) must be a (subclass of) Node'.format( 
+                type(node)))
+
+        if self.G.id != node.G.id:
+            raise GraphIDError('Attempting to add a node `{}` to `{}` ' \
+                'but they are not in the same graph'.format(self.name, node.name))
+        self.undirected[node.id] = node
+        node.undirected[self.id] = self
+
+    def add_prior(self, prior):
+        '''Override the name of the passed in distribution `prior`.
+
+        Parameters
+        ----------
+        prior : Node
+            - node we want to set as a prior
+        '''
+        if not isnode(prior):
+            raise ValueError('prior ({}) must be a (subclass of) Node'.format( 
+                type(prior)))
+
+        self.add_parent(prior)
+        self.prior = prior
+</code></pre>
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#pylab.graph.Node">Node</a></li>
+          <li><a href="#pylab.graph.BaseNode">BaseNode</a></li>
+          <li>pylab.base.Saveable</li>
+          <li>builtins.object</li>
+          </ul>
+          <h3>Static methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Node.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, name=None, name_prefix=None, G=None)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Initialize self.  See help(type(self)) for accurate signature.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Node.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Node.__init__" class="source">
+    <pre><code>def __init__(self, name=None, name_prefix=None, G=None):
+    BaseNode.__init__(self, name=name, name_prefix=name_prefix, G=G)
+    self.parents = {}
+    self.children = {}
+    self.undirected = {}
+    self._metropolis = None
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Node.add_child">
+    <p>def <span class="ident">add_child</span>(</p><p>self, child)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Adds <code>child</code> as a child to the node
+Also adds self as a parent to <code>child</code></p>
+<h2>Parameters</h2>
+<p>child : Node
+    - node we want to set as a child</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Node.add_child', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Node.add_child" class="source">
+    <pre><code>def add_child(self, child):
+    '''Adds `child` as a child to the node
+    Also adds self as a parent to `child`
+    Parameters
+    ----------
+    child : Node
+        - node we want to set as a child
+    '''
+    if not isnode(child):
+        raise ValueError('child ({}) must be a (subclass of) Node'.format( 
+            type(child)))
+    if self.G.id != child.G.id:
+        raise GraphIDError('Attempting to add a child `{}` to `{}` ' \
+            'but they are not in the same graph'.format(self.name, child.name))
+    self.children[child.id] = child
+    child.parents[self.id] = self
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Node.add_parent">
+    <p>def <span class="ident">add_parent</span>(</p><p>self, parent)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Adds <code>parent</code> as a parent to the node
+Also adds self as a child to <code>parent</code></p>
+<h2>Parameters</h2>
+<p>parent : Node
+    - node we want to set as a parent</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Node.add_parent', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Node.add_parent" class="source">
+    <pre><code>def add_parent(self, parent):
+    '''Adds `parent` as a parent to the node
+    Also adds self as a child to `parent`
+    Parameters
+    ----------
+    parent : Node
+        - node we want to set as a parent
+    '''
+    if not isnode(parent):
+        raise ValueError('parent ({}) must be a (subclass of) Node'.format( 
+            type(parent)))
+    if self.G.id != parent.G.id:
+        raise GraphIDError('Attempting to add a parent `{}` to `{}` ' \
+            'but they are not in the same graph'.format(self.name, parent.name))
+    self.parents[parent.id] = parent
+    parent.children[self.id] = self
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Node.add_prior">
+    <p>def <span class="ident">add_prior</span>(</p><p>self, prior)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Override the name of the passed in distribution <code>prior</code>.</p>
+<h2>Parameters</h2>
+<p>prior : Node
+    - node we want to set as a prior</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Node.add_prior', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Node.add_prior" class="source">
+    <pre><code>def add_prior(self, prior):
+    '''Override the name of the passed in distribution `prior`.
+    Parameters
+    ----------
+    prior : Node
+        - node we want to set as a prior
+    '''
+    if not isnode(prior):
+        raise ValueError('prior ({}) must be a (subclass of) Node'.format( 
+            type(prior)))
+    self.add_parent(prior)
+    self.prior = prior
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Node.add_undirected">
+    <p>def <span class="ident">add_undirected</span>(</p><p>self, node)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Adds <code>node</code> as an undirected neighbor to the node
+Does the same for <code>node</code></p>
+<h2>Parameters</h2>
+<p>node : Node
+    - node we want to set as an undirected node</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Node.add_undirected', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Node.add_undirected" class="source">
+    <pre><code>def add_undirected(self, node):
+    '''Adds `node` as an undirected neighbor to the node
+    Does the same for `node`
+    Parameters
+    ----------
+    node : Node
+        - node we want to set as an undirected node
+    '''
+    if not isnode(node):
+        raise ValueError('node ({}) must be a (subclass of) Node'.format( 
+            type(node)))
+    if self.G.id != node.G.id:
+        raise GraphIDError('Attempting to add a node `{}` to `{}` ' \
+            'but they are not in the same graph'.format(self.name, node.name))
+    self.undirected[node.id] = node
+    node.undirected[self.id] = self
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Node.delete">
+    <p>def <span class="ident">delete</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Delete itself from the graph</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Node.delete', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Node.delete" class="source">
+    <pre><code>def delete(self):
+    '''Delete itself from the graph
+    '''
+    if len(self.parents) > 0:
+        for pid in self.parents:
+            self.G.nodes[pid].children.pop(self.id, None)
+    if len(self.children) > 0:
+        for cid in self.children:
+            self.G.nodes[cid].parents.pop(self.id, None)
+    if len(self.undirected) > 0:
+        for uid in self.undirected:
+            self.G.nodes[uid].undirected.pop(self.id, None)
+    BaseNode.delete(self)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Node.get_adjacent_keys">
+    <p>def <span class="ident">get_adjacent_keys</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Get the adjacent nodes</p>
+<h2>Returns</h2>
+<p>list(int)
+    A list of all the IDs of the adjacent nodes</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Node.get_adjacent_keys', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Node.get_adjacent_keys" class="source">
+    <pre><code>def get_adjacent_keys(self):
+    '''Get the adjacent nodes
+    Returns
+    -------
+    list(int)
+        A list of all the IDs of the adjacent nodes
+    '''
+    return list(self.parents.keys()) + list(self.children.keys())
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Node.save">
+    <p>def <span class="ident">save</span>(</p><p>self, filename=None)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Pickle the object</p>
+<h2>Paramters</h2>
+<p>filename : str
+    This is the location to store the file. Overrides the location if
+    it is set using <code>pylab.base.Saveable.set_save_location</code>. If None
+    it means that we are using the file location set in 
+    set_location.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Node.save', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Node.save" class="source">
+    <pre><code>def save(self, filename=None):
+    '''Pickle the object
+    Paramters
+    ---------
+    filename : str
+        This is the location to store the file. Overrides the location if
+        it is set using `pylab.base.Saveable.set_save_location`. If None
+        it means that we are using the file location set in 
+        set_location. 
+    '''
+    if filename is None:
+        if not hasattr(self, '_save_loc'):
+            raise TypeError('`filename` must be specified if you have not ' \
+                'set the save location')
+        filename = self._save_loc
+    
+    with open(filename, 'wb') as output:  # Overwrites any existing file.
+        pickle.dump(self, output, protocol=pickle.HIGHEST_PROTOCOL)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Node.set_save_location">
+    <p>def <span class="ident">set_save_location</span>(</p><p>self, filename)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Set the save location for the object</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Node.set_save_location', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Node.set_save_location" class="source">
+    <pre><code>def set_save_location(self, filename):
+    '''Set the save location for the object
+    '''
+    if not isstr(filename):
+        raise TypeError('`filename` ({}) must be a str'.format(type(filename)))
+    self._save_loc = filename
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="pylab.graph.Node.children" class="name">var <span class="ident">children</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.Node.degree" class="name">var <span class="ident">degree</span></p>
+            
+
+            
+  
+    <div class="desc"><p>Get the degree of the node</p>
+<h2>Returns</h2>
+<p>int</p></div>
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.Node.metropolis" class="name">var <span class="ident">metropolis</span></p>
+            
+
+            
+  
+    <div class="desc"><p>Get the metropolis object</p></div>
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.Node.parents" class="name">var <span class="ident">parents</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.graph.Node.undirected" class="name">var <span class="ident">undirected</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.graph.Node.load">
+    <p>def <span class="ident">load</span>(</p><p>cls, filename)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Unpickle the object</p>
+<h2>Paramters</h2>
+<p>filename : str
+    This is the location of the file to unpickle</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.graph.Node.load', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.graph.Node.load" class="source">
+    <pre><code>@classmethod
+def load(cls, filename):
+    '''Unpickle the object
+    Paramters
+    ---------
+    filename : str
+        This is the location of the file to unpickle
+    '''
+    with open(filename, 'rb') as handle:
+        b = pickle.load(handle)
+    return b
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      </div>
+      </div>
+
+  </section>
+
+    </article>
+  <div class="clear"> </div>
+  <footer id="footer">
+    <p>
+      Documentation generated by
+      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.2</a>
+    </p>
+
+    <p>pdoc is in the public domain with the
+      <a href="http://unlicense.org">UNLICENSE</a></p>
+
+    <p>Design by <a href="http://nadh.in">Kailash Nadh</a></p>
+  </footer>
+</div>
+</body>
+</html>

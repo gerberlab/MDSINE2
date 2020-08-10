@@ -1,0 +1,10 @@
+__pycache__
+._*
+*.pyc
+.dropbox
+.idea/*
+*.cpython*
+c_code/build*
+*.vscode/
+Icon*
+.DS_store

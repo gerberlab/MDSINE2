@@ -1,0 +1,2716 @@
+<!doctype html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+
+    <title>pylab.util API documentation</title>
+    <meta name="description" content="Utility functions used by multiple modules" />
+
+  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
+  
+  <style type="text/css">
+  
+* {
+  box-sizing: border-box;
+}
+/*! normalize.css v1.1.1 | MIT License | git.io/normalize */
+
+/* ==========================================================================
+   HTML5 display definitions
+   ========================================================================== */
+
+/**
+ * Correct `block` display not defined in IE 6/7/8/9 and Firefox 3.
+ */
+
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+main,
+nav,
+section,
+summary {
+    display: block;
+}
+
+/**
+ * Correct `inline-block` display not defined in IE 6/7/8/9 and Firefox 3.
+ */
+
+audio,
+canvas,
+video {
+    display: inline-block;
+    *display: inline;
+    *zoom: 1;
+}
+
+/**
+ * Prevent modern browsers from displaying `audio` without controls.
+ * Remove excess height in iOS 5 devices.
+ */
+
+audio:not([controls]) {
+    display: none;
+    height: 0;
+}
+
+/**
+ * Address styling not present in IE 7/8/9, Firefox 3, and Safari 4.
+ * Known issue: no IE 6 support.
+ */
+
+[hidden] {
+    display: none;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+/**
+ * 1. Prevent system color scheme's background color being used in Firefox, IE,
+ *    and Opera.
+ * 2. Prevent system color scheme's text color being used in Firefox, IE, and
+ *    Opera.
+ * 3. Correct text resizing oddly in IE 6/7 when body `font-size` is set using
+ *    `em` units.
+ * 4. Prevent iOS text size adjust after orientation change, without disabling
+ *    user zoom.
+ */
+
+html {
+    background: #fff; /* 1 */
+    color: #000; /* 2 */
+    font-size: 100%; /* 3 */
+    -webkit-text-size-adjust: 100%; /* 4 */
+    -ms-text-size-adjust: 100%; /* 4 */
+}
+
+/**
+ * Address `font-family` inconsistency between `textarea` and other form
+ * elements.
+ */
+
+html,
+button,
+input,
+select,
+textarea {
+    font-family: sans-serif;
+}
+
+/**
+ * Address margins handled incorrectly in IE 6/7.
+ */
+
+body {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Links
+   ========================================================================== */
+
+/**
+ * Address `outline` inconsistency between Chrome and other browsers.
+ */
+
+a:focus {
+    outline: thin dotted;
+}
+
+/**
+ * Improve readability when focused and also mouse hovered in all browsers.
+ */
+
+a:active,
+a:hover {
+    outline: 0;
+}
+
+/* ==========================================================================
+   Typography
+   ========================================================================== */
+
+/**
+ * Address font sizes and margins set differently in IE 6/7.
+ * Address font sizes within `section` and `article` in Firefox 4+, Safari 5,
+ * and Chrome.
+ */
+
+h1 {
+    font-size: 2em;
+    margin: 0.67em 0;
+}
+
+h2 {
+    font-size: 1.5em;
+    margin: 0.83em 0;
+}
+
+h3 {
+    font-size: 1.17em;
+    margin: 1em 0;
+}
+
+h4 {
+    font-size: 1em;
+    margin: 1.33em 0;
+}
+
+h5 {
+    font-size: 0.83em;
+    margin: 1.67em 0;
+}
+
+h6 {
+    font-size: 0.67em;
+    margin: 2.33em 0;
+}
+
+/**
+ * Address styling not present in IE 7/8/9, Safari 5, and Chrome.
+ */
+
+abbr[title] {
+    border-bottom: 1px dotted;
+}
+
+/**
+ * Address style set to `bolder` in Firefox 3+, Safari 4/5, and Chrome.
+ */
+
+b,
+strong {
+    font-weight: bold;
+}
+
+blockquote {
+    margin: 1em 40px;
+}
+
+/**
+ * Address styling not present in Safari 5 and Chrome.
+ */
+
+dfn {
+    font-style: italic;
+}
+
+/**
+ * Address differences between Firefox and other browsers.
+ * Known issue: no IE 6/7 normalization.
+ */
+
+hr {
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+    height: 0;
+}
+
+/**
+ * Address styling not present in IE 6/7/8/9.
+ */
+
+mark {
+    background: #ff0;
+    color: #000;
+}
+
+/**
+ * Address margins set differently in IE 6/7.
+ */
+
+p,
+pre {
+    margin: 1em 0;
+}
+
+/**
+ * Correct font family set oddly in IE 6, Safari 4/5, and Chrome.
+ */
+
+code,
+kbd,
+pre,
+samp {
+    font-family: monospace, serif;
+    _font-family: 'courier new', monospace;
+    font-size: 1em;
+}
+
+/**
+ * Improve readability of pre-formatted text in all browsers.
+ */
+
+pre {
+    white-space: pre;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/**
+ * Address CSS quotes not supported in IE 6/7.
+ */
+
+q {
+    quotes: none;
+}
+
+/**
+ * Address `quotes` property not supported in Safari 4.
+ */
+
+q:before,
+q:after {
+    content: '';
+    content: none;
+}
+
+/**
+ * Address inconsistent and variable font size in all browsers.
+ */
+
+small {
+    font-size: 80%;
+}
+
+/**
+ * Prevent `sub` and `sup` affecting `line-height` in all browsers.
+ */
+
+sub,
+sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+
+sup {
+    top: -0.5em;
+}
+
+sub {
+    bottom: -0.25em;
+}
+
+/* ==========================================================================
+   Lists
+   ========================================================================== */
+
+/**
+ * Address margins set differently in IE 6/7.
+ */
+
+dl,
+menu,
+ol,
+ul {
+    margin: 1em 0;
+}
+
+dd {
+    margin: 0 0 0 40px;
+}
+
+/**
+ * Address paddings set differently in IE 6/7.
+ */
+
+menu,
+ol,
+ul {
+    padding: 0 0 0 40px;
+}
+
+/**
+ * Correct list images handled incorrectly in IE 7.
+ */
+
+nav ul,
+nav ol {
+    list-style: none;
+    list-style-image: none;
+}
+
+/* ==========================================================================
+   Embedded content
+   ========================================================================== */
+
+/**
+ * 1. Remove border when inside `a` element in IE 6/7/8/9 and Firefox 3.
+ * 2. Improve image quality when scaled in IE 7.
+ */
+
+img {
+    border: 0; /* 1 */
+    -ms-interpolation-mode: bicubic; /* 2 */
+}
+
+/**
+ * Correct overflow displayed oddly in IE 9.
+ */
+
+svg:not(:root) {
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   Figures
+   ========================================================================== */
+
+/**
+ * Address margin not present in IE 6/7/8/9, Safari 5, and Opera 11.
+ */
+
+figure {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+
+/**
+ * Correct margin displayed oddly in IE 6/7.
+ */
+
+form {
+    margin: 0;
+}
+
+/**
+ * Define consistent border, margin, and padding.
+ */
+
+fieldset {
+    border: 1px solid #c0c0c0;
+    margin: 0 2px;
+    padding: 0.35em 0.625em 0.75em;
+}
+
+/**
+ * 1. Correct color not being inherited in IE 6/7/8/9.
+ * 2. Correct text not wrapping in Firefox 3.
+ * 3. Correct alignment displayed oddly in IE 6/7.
+ */
+
+legend {
+    border: 0; /* 1 */
+    padding: 0;
+    white-space: normal; /* 2 */
+    *margin-left: -7px; /* 3 */
+}
+
+/**
+ * 1. Correct font size not being inherited in all browsers.
+ * 2. Address margins set differently in IE 6/7, Firefox 3+, Safari 5,
+ *    and Chrome.
+ * 3. Improve appearance and consistency in all browsers.
+ */
+
+button,
+input,
+select,
+textarea {
+    font-size: 100%; /* 1 */
+    margin: 0; /* 2 */
+    vertical-align: baseline; /* 3 */
+    *vertical-align: middle; /* 3 */
+}
+
+/**
+ * Address Firefox 3+ setting `line-height` on `input` using `!important` in
+ * the UA stylesheet.
+ */
+
+button,
+input {
+    line-height: normal;
+}
+
+/**
+ * Address inconsistent `text-transform` inheritance for `button` and `select`.
+ * All other form control elements do not inherit `text-transform` values.
+ * Correct `button` style inheritance in Chrome, Safari 5+, and IE 6+.
+ * Correct `select` style inheritance in Firefox 4+ and Opera.
+ */
+
+button,
+select {
+    text-transform: none;
+}
+
+/**
+ * 1. Avoid the WebKit bug in Android 4.0.* where (2) destroys native `audio`
+ *    and `video` controls.
+ * 2. Correct inability to style clickable `input` types in iOS.
+ * 3. Improve usability and consistency of cursor style between image-type
+ *    `input` and others.
+ * 4. Remove inner spacing in IE 7 without affecting normal text inputs.
+ *    Known issue: inner spacing remains in IE 6.
+ */
+
+button,
+html input[type="button"], /* 1 */
+input[type="reset"],
+input[type="submit"] {
+    -webkit-appearance: button; /* 2 */
+    cursor: pointer; /* 3 */
+    *overflow: visible;  /* 4 */
+}
+
+/**
+ * Re-set default cursor for disabled elements.
+ */
+
+button[disabled],
+html input[disabled] {
+    cursor: default;
+}
+
+/**
+ * 1. Address box sizing set to content-box in IE 8/9.
+ * 2. Remove excess padding in IE 8/9.
+ * 3. Remove excess padding in IE 7.
+ *    Known issue: excess padding remains in IE 6.
+ */
+
+input[type="checkbox"],
+input[type="radio"] {
+    box-sizing: border-box; /* 1 */
+    padding: 0; /* 2 */
+    *height: 13px; /* 3 */
+    *width: 13px; /* 3 */
+}
+
+/**
+ * 1. Address `appearance` set to `searchfield` in Safari 5 and Chrome.
+ * 2. Address `box-sizing` set to `border-box` in Safari 5 and Chrome
+ *    (include `-moz` to future-proof).
+ */
+
+input[type="search"] {
+    -webkit-appearance: textfield; /* 1 */
+    -moz-box-sizing: content-box;
+    -webkit-box-sizing: content-box; /* 2 */
+    box-sizing: content-box;
+}
+
+/**
+ * Remove inner padding and search cancel button in Safari 5 and Chrome
+ * on OS X.
+ */
+
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+}
+
+/**
+ * Remove inner padding and border in Firefox 3+.
+ */
+
+button::-moz-focus-inner,
+input::-moz-focus-inner {
+    border: 0;
+    padding: 0;
+}
+
+/**
+ * 1. Remove default vertical scrollbar in IE 6/7/8/9.
+ * 2. Improve readability and alignment in all browsers.
+ */
+
+textarea {
+    overflow: auto; /* 1 */
+    vertical-align: top; /* 2 */
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+/**
+ * Remove most spacing between table cells.
+ */
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+  </style>
+
+  <style type="text/css">
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+  }
+  body {
+    background: #fff;
+    font-family: "Source Sans Pro", "Helvetica Neueue", Helvetica, sans;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.6em;
+  }
+  #content {
+    width: 70%;
+    max-width: 850px;
+    float: left;
+    padding: 30px 60px;
+    border-left: 1px solid #ddd;
+  }
+  #sidebar {
+    width: 25%;
+    float: left;
+    padding: 30px;
+    overflow: hidden;
+  }
+  #nav {
+    font-size: 130%;
+    margin: 0 0 15px 0;
+  }
+
+  #top {
+    display: block;
+    position: fixed;
+    bottom: 5px;
+    left: 5px;
+    font-size: .85em;
+    text-transform: uppercase;
+  }
+
+  #footer {
+    font-size: .75em;
+    padding: 5px 30px;
+    border-top: 1px solid #ddd;
+    text-align: right;
+  }
+    #footer p {
+      margin: 0 0 0 30px;
+      display: inline-block;
+    }
+
+  h1, h2, h3, h4, h5 {
+    font-weight: 300;
+  }
+  h1 {
+    font-size: 2.5em;
+    line-height: 1.1em;
+    margin: 0 0 .50em 0;
+  }
+
+  h2 {
+    font-size: 1.75em;
+    margin: 1em 0 .50em 0;
+  }
+
+  h3 {
+    margin: 25px 0 10px 0;
+  }
+
+  h4 {
+    margin: 0;
+    font-size: 105%;
+  }
+
+  a {
+    color: #058;
+    text-decoration: none;
+    transition: color .3s ease-in-out;
+  }
+
+  a:hover {
+    color: #e08524;
+    transition: color .3s ease-in-out;
+  }
+
+  pre, code, .mono, .name {
+    font-family: "Ubuntu Mono", "Cousine", "DejaVu Sans Mono", monospace;
+  }
+
+  .title .name {
+    font-weight: bold;
+  }
+  .section-title {
+    margin-top: 2em;
+  }
+  .ident {
+    color: #900;
+  }
+
+  code {
+    background: #f9f9f9;
+  } 
+
+  pre {
+    background: #fefefe;
+    border: 1px solid #ddd;
+    box-shadow: 2px 2px 0 #f3f3f3;
+    margin: 0 30px;
+    padding: 15px 30px;
+  }
+
+  .codehilite {
+    margin: 0 30px 10px 30px;
+  }
+
+    .codehilite pre {
+      margin: 0;
+    }
+    .codehilite .err { background: #ff3300; color: #fff !important; } 
+
+  table#module-list {
+    font-size: 110%;
+  }
+
+    table#module-list tr td:first-child {
+      padding-right: 10px;
+      white-space: nowrap;
+    }
+
+    table#module-list td {
+      vertical-align: top;
+      padding-bottom: 8px;
+    }
+
+      table#module-list td p {
+        margin: 0 0 7px 0;
+      }
+
+  .def {
+    display: table;
+  }
+
+    .def p {
+      display: table-cell;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .def p:first-child {
+      white-space: nowrap;
+    }
+
+    .def p:last-child {
+      width: 100%;
+    }
+
+
+  #index {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+    ul#index .class_name {
+      /* font-size: 110%; */
+      font-weight: bold;
+    }
+    #index ul {
+      margin: 0;
+    }
+
+  .item {
+    margin: 0 0 15px 0;
+  }
+
+    .item .class {
+      margin: 0 0 25px 30px;
+    }
+
+      .item .class ul.class_list {
+        margin: 0 0 20px 0;
+      }
+
+    .item .name {
+      background: #fafafa;
+      margin: 0;
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 3px;
+      display: inline-block;
+      min-width: 40%;
+    }
+      .item .name:hover {
+        background: #f6f6f6;
+      }
+
+    .item .empty_desc {
+      margin: 0 0 5px 0;
+      padding: 0;
+    }
+
+    .item .inheritance {
+      margin: 3px 0 0 30px;
+    }
+
+    .item .inherited {
+      color: #666;
+    }
+
+    .item .desc {
+      padding: 0 8px;
+      margin: 0;
+    }
+
+      .item .desc p {
+        margin: 0 0 10px 0;
+      }
+
+    .source_cont {
+      margin: 0;
+      padding: 0;
+    }
+
+    .source_link a {
+      background: #ffc300;
+      font-weight: 400;
+      font-size: .75em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 1px 1px 0 #f4b700;
+      
+      padding: 3px 8px;
+      border-radius: 2px;
+      transition: background .3s ease-in-out;
+    }
+      .source_link a:hover {
+        background: #FF7200;
+        text-shadow: none;
+        transition: background .3s ease-in-out;
+      }
+
+    .source {
+      display: none;
+      max-height: 600px;
+      overflow-y: scroll;
+      margin-bottom: 15px;
+    }
+
+      .source .codehilite {
+        margin: 0;
+      }
+
+  .desc h1, .desc h2, .desc h3 {
+    font-size: 100% !important;
+  }
+  .clear {
+    clear: both;
+  }
+
+  @media all and (max-width: 950px) {
+    #sidebar {
+      width: 35%;
+    }
+    #content {
+      width: 65%;
+    }
+  }
+  @media all and (max-width: 650px) {
+    #top {
+      display: none;
+    }
+    #sidebar {
+      float: none;
+      width: auto;
+    }
+    #content {
+      float: none;
+      width: auto;
+      padding: 30px;
+    }
+
+    #index ul {
+      padding: 0;
+      margin-bottom: 15px;
+    }
+    #index ul li {
+      display: inline-block;
+      margin-right: 30px;
+    }
+    #footer {
+      text-align: left;
+    }
+    #footer p {
+      display: block;
+      margin: inherit;
+    }
+  }
+
+  /*****************************/
+
+  </style>
+
+
+  <style type="text/css">
+  
+/* ==========================================================================
+   EXAMPLE Media Queries for Responsive Design.
+   These examples override the primary ('mobile first') styles.
+   Modify as content requires.
+   ========================================================================== */
+
+@media only screen and (min-width: 35em) {
+    /* Style adjustments for viewports that meet the condition */
+}
+
+@media print,
+       (-o-min-device-pixel-ratio: 5/4),
+       (-webkit-min-device-pixel-ratio: 1.25),
+       (min-resolution: 120dpi) {
+    /* Style adjustments for high resolution devices */
+}
+
+/* ==========================================================================
+   Print styles.
+   Inlined to avoid required HTTP connection: h5bp.com/r
+   ========================================================================== */
+
+@media print {
+    * {
+        background: transparent !important;
+        color: #000 !important; /* Black prints faster: h5bp.com/s */
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    a,
+    a:visited {
+        text-decoration: underline;
+    }
+
+    a[href]:after {
+        content: " (" attr(href) ")";
+    }
+
+    abbr[title]:after {
+        content: " (" attr(title) ")";
+    }
+
+    /*
+     * Don't show links for images, or javascript/internal links
+     */
+
+    .ir a:after,
+    a[href^="javascript:"]:after,
+    a[href^="#"]:after {
+        content: "";
+    }
+
+    pre,
+    blockquote {
+        border: 1px solid #999;
+        page-break-inside: avoid;
+    }
+
+    thead {
+        display: table-header-group; /* h5bp.com/t */
+    }
+
+    tr,
+    img {
+        page-break-inside: avoid;
+    }
+
+    img {
+        max-width: 100% !important;
+    }
+
+    @page {
+        margin: 0.5cm;
+    }
+
+    p,
+    h2,
+    h3 {
+        orphans: 3;
+        widows: 3;
+    }
+
+    h2,
+    h3 {
+        page-break-after: avoid;
+    }
+}
+
+  </style>
+
+  <script type="text/javascript">
+  function toggle(id, $link) {
+    $node = document.getElementById(id);
+    if (!$node)
+    return;
+    if (!$node.style.display || $node.style.display == 'none') {
+    $node.style.display = 'block';
+    $link.innerHTML = 'Hide source &nequiv;';
+    } else {
+    $node.style.display = 'none';
+    $link.innerHTML = 'Show source &equiv;';
+    }
+  }
+  </script>
+</head>
+<body>
+<a href="#" id="top">Top</a>
+
+<div id="container">
+    
+  
+  <div id="sidebar">
+    <h1>Index</h1>
+    <ul id="index">
+    <li class="set"><h3><a href="#header-variables">Module variables</a></h3>
+      
+  <ul>
+    <li class="mono"><a href="#pylab.util.CLASS_FORMATTER">CLASS_FORMATTER</a></li>
+    <li class="mono"><a href="#pylab.util.FAMILY_FORMATTER">FAMILY_FORMATTER</a></li>
+    <li class="mono"><a href="#pylab.util.GENUS_FORMATTER">GENUS_FORMATTER</a></li>
+    <li class="mono"><a href="#pylab.util.ID_FORMATTER">ID_FORMATTER</a></li>
+    <li class="mono"><a href="#pylab.util.INDEX_FORMATTER">INDEX_FORMATTER</a></li>
+    <li class="mono"><a href="#pylab.util.KINGDOM_FORMATTER">KINGDOM_FORMATTER</a></li>
+    <li class="mono"><a href="#pylab.util.NAME_FORMATTER">NAME_FORMATTER</a></li>
+    <li class="mono"><a href="#pylab.util.ORDER_FORMATTER">ORDER_FORMATTER</a></li>
+    <li class="mono"><a href="#pylab.util.PHYLUM_FORMATTER">PHYLUM_FORMATTER</a></li>
+    <li class="mono"><a href="#pylab.util.fast_index">fast_index</a></li>
+  </ul>
+
+    </li>
+
+    <li class="set"><h3><a href="#header-functions">Functions</a></h3>
+      
+  <ul>
+    <li class="mono"><a href="#pylab.util.isarray">isarray</a></li>
+    <li class="mono"><a href="#pylab.util.isbool">isbool</a></li>
+    <li class="mono"><a href="#pylab.util.iscomplex">iscomplex</a></li>
+    <li class="mono"><a href="#pylab.util.isdict">isdict</a></li>
+    <li class="mono"><a href="#pylab.util.isfloat">isfloat</a></li>
+    <li class="mono"><a href="#pylab.util.isint">isint</a></li>
+    <li class="mono"><a href="#pylab.util.isnumeric">isnumeric</a></li>
+    <li class="mono"><a href="#pylab.util.issquare">issquare</a></li>
+    <li class="mono"><a href="#pylab.util.isstr">isstr</a></li>
+    <li class="mono"><a href="#pylab.util.istuple">istuple</a></li>
+    <li class="mono"><a href="#pylab.util.istype">istype</a></li>
+    <li class="mono"><a href="#pylab.util.itercheck">itercheck</a></li>
+    <li class="mono"><a href="#pylab.util.otuname_formatter">otuname_formatter</a></li>
+    <li class="mono"><a href="#pylab.util.toarray">toarray</a></li>
+  </ul>
+
+    </li>
+
+    <li class="set"><h3><a href="#header-classes">Classes</a></h3>
+      <ul>
+        <li class="mono">
+        <span class="class_name"><a href="#pylab.util.Timer">Timer</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#pylab.util.Timer.__init__">__init__</a></li>
+  </ul>
+
+        </li>
+        <li class="mono">
+        <span class="class_name"><a href="#pylab.util.count_calls">count_calls</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#pylab.util.count_calls.__init__">__init__</a></li>
+  </ul>
+
+        </li>
+        <li class="mono">
+        <span class="class_name"><a href="#pylab.util.inspect_trace">inspect_trace</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#pylab.util.inspect_trace.__init__">__init__</a></li>
+  </ul>
+
+        </li>
+      </ul>
+    </li>
+
+    </ul>
+  </div>
+
+    <article id="content">
+      
+  
+
+  
+
+
+  <header id="section-intro">
+  <h1 class="title"><span class="name">pylab.util</span> module</h1>
+  <p>Utility functions used by multiple modules</p>
+  
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util" class="source">
+    <pre><code>'''Utility functions used by multiple modules
+'''
+import matplotlib.pyplot as plt
+import numpy as np
+import pickle
+import inspect
+import logging
+import random
+import scipy.sparse
+import numba
+from timeit import default_timer
+
+# Constants
+NAME_FORMATTER = '%(name)s'
+ID_FORMATTER = '%(id)s'
+INDEX_FORMATTER = '%(index)s'
+GENUS_FORMATTER = '%(genus)s'
+FAMILY_FORMATTER = '%(family)s'
+CLASS_FORMATTER = '%(class)s'
+ORDER_FORMATTER = '%(order)s'
+PHYLUM_FORMATTER = '%(phylum)s'
+KINGDOM_FORMATTER = '%(kingdom)s'
+
+def issquare(a):
+    '''Checks if the input array is a square
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+    
+    Returns
+    -------
+    bool
+        True if `a` is a square matrix
+    '''
+    try:
+        return (a.shape[0] == a.shape[1]) and (len(a.shape) == 2)
+    except:
+        return False
+
+def isbool(a):
+    '''Checks if `a` is a bool
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a bool
+    '''
+    return a is not None and np.issubdtype(type(a), np.bool_)
+
+def isint(a):
+    '''Checks if `a` is an int
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is an int
+    '''
+    return a is not None and np.issubdtype(type(a), np.integer)
+
+def isfloat(a):
+    '''Checks if `a` is a float
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a float
+    '''
+    return a is not None and np.issubdtype(type(a), np.floating)
+
+def iscomplex(a):
+    '''Checks if `a` is a complex number
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a complex number
+    '''
+    return a is not None and np.issubdtype(type(a), np.complexfloating)
+
+def isnumeric(a):
+    '''Checks if `a` is a float or an int - (cannot be a bool)
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a float or an int.
+    '''
+    return a is not None and np.issubdtype(type(a), np.number)
+
+def isarray(a):
+    '''Checks if `a` is an array
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is an array
+    '''
+    return (type(a) == np.ndarray or type(a) == list or \
+        scipy.sparse.issparse(a)) and a is not None
+
+def isstr(a):
+    '''Checks if `a` is a str
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a str
+    '''
+    return a is not None and type(a) == str
+
+def istype(a):
+    '''Checks if `a` is a Type object
+
+    Example
+    -------
+    >>> istype(5)
+    False
+    >>> istype(float)
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a tuple
+    '''
+    return type(a) == type
+
+def istuple(a):
+    '''Checks if `a` is a tuple object
+
+    Example
+    -------
+    >>> istype(5)
+    False
+    >>> istype((5,))
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a tuple
+    '''
+    return type(a) == tuple
+
+def isdict(a):
+    '''Checks if `a` is a dict object
+
+    Example
+    -------
+    >>> istype(5)
+    False
+    >>> istype({5:2})
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a dict
+    '''
+    return type(a) == dict
+
+def itercheck(xs, f):
+    '''Checks every element in xs with f and returns an array
+    for each entry
+
+    Parameters
+    ----------
+    xs : array_like(any)
+        - A list of instances to check the type of
+    f : callable
+        - Type checking function
+    Returns
+    -------
+    list(bool)
+        Checks for each element in the `xs`
+    '''
+    return [f(x) for x in xs]
+
+def otuname_formatter(format, otu, otus):
+    '''Format the label of an OTU. Specify the OTU by
+    it's index in the OTUSet `otus`
+
+    Example:
+        otu is an OTU object at index 0 where
+        otu.genus = 'A'
+        otu.id = 1234532
+
+        otuname_formatter(
+            format='%(genus)s: %(index)s',
+            otu=1234532,
+            otus=otus)
+        >>> 'A: 0'
+
+        otuname_formatter(
+            format='%(genus)s: %(genus)s',
+            otu=1234532,
+            otus=otus)
+        >>> 'A: A'
+
+        otuname_formatter(
+            format='%(index)s',
+            otu=1234532,
+            otus=otus)
+        >>> '0'
+
+        otuname_formatter(
+            format='%(geNus)s: %(genus)s',
+            otu=1234532,
+            otus=otus)
+        >>> '%(geNus)s: A'
+
+    Parameters
+    ----------
+    format : str
+        - This is the format for us to do the labels
+        - Formatting options:
+            - '%(name)s'
+                - Name of the OTU (pylab.base.OTU.name)
+            - '%(id)s'
+                - ID of the OTU (pylab.base.OTU.id)
+            - '%(index)s'
+                - The order that this appears in the OTUSet
+            - '%(genus)s'
+                - `'genus'` taxonomic classification of the OTU
+            - '%(family)s'
+                - `'family'` taxonomic classification of the OTU
+            - '%(class)s'
+                - `'class'` taxonomic classification of the OTU
+            - '%(order)s'
+                - `'order'` taxonomic classification of the OTU
+            - '%(phylum)s'
+                - `'phylum'` taxonomic classification of the OTU
+            - '%(kingdom)s'
+                - `'kingdom'` taxonomic classification of the OTU
+    otu : str, int, OTU
+        - Either the OTU or an id for the OTU
+    otus : pylab.base.OTUSet
+        - Dataset containing all of the information for the OTUs
+    '''
+    otu = otus[otu]
+    index = otu.idx
+
+    label = format.replace(NAME_FORMATTER, str(otu.name))
+    label = label.replace(ID_FORMATTER, str(otu.id))
+    label = label.replace(INDEX_FORMATTER,  str(index))
+    label = label.replace(GENUS_FORMATTER, str(otu.taxonomy['genus']))
+    label = label.replace(FAMILY_FORMATTER, str(otu.taxonomy['family']))
+    label = label.replace(CLASS_FORMATTER, str(otu.taxonomy['class']))
+    label = label.replace(ORDER_FORMATTER, str(otu.taxonomy['order']))
+    label = label.replace(PHYLUM_FORMATTER, str(otu.taxonomy['phylum']))
+    label = label.replace(KINGDOM_FORMATTER, str(otu.taxonomy['kingdom']))
+    return label
+
+@numba.jit(nopython=True, cache=True)
+def fast_index(M, rows, cols):
+    '''Fast index fancy indexing the matrix M. ~98% faster than regular
+    fancy indexing
+    M MUST BE C_CONTIGUOUS for this to actually help.
+        If it is not C_CONTIGUOUS then ravel will have to copy the 
+        array before it flattens it. --- super slow
+
+    Parameters
+    ----------
+    M : np.ndarray 2-dim
+        Matrix we are indexing at 2 dimensions
+    rows, cols : np.ndarray
+        rows and columns INDEX arrays. This will not work with bool arrays
+
+    Returns
+    -------
+    np.ndarray
+    '''
+    return (M.ravel()[(cols + (rows * M.shape[1]).reshape(
+        (-1,1))).ravel()]).reshape(rows.size, cols.size)
+
+def toarray(x, dest=None, T=False):
+    '''Converts `x` into a C_CONTIGUOUS numpy matrix if 
+    the matrix is sparse. If it is not sparse then it just returns
+    the matrix.
+
+    Parameters
+    ----------
+    x : scipy.sparse, np.ndarray
+        Array we are converting
+    dest : np.ndarray
+        If this is specified, send the array into this array. Assumes
+        the shapes are compatible. Else create a new array
+    T : bool
+        If True, set the transpose
+
+    Returns
+    -------
+    np.ndarray
+    '''
+    if scipy.sparse.issparse(x):
+        if dest is None:
+            if T:
+                dest = np.zeros(shape=x.T.shape, dtype=x.dtype)
+            else:
+                dest = np.zeros(shape=x.shape, dtype=x.dtype)
+        if T:
+            x.T.toarray(out=dest)
+        else:
+            x.toarray(out=dest)
+        return dest
+    else:
+        if T:
+            return x.T
+        else:
+            return x
+
+class inspect_trace:
+    '''This is a decorator that logs the trace of a function.
+
+    If the function throws an error when it is being called, it will produce the array 
+        [(file_name, line_no, function), ...]
+    where it produces the file name, line number, and function that was called, and then
+    it will throw the exception.
+    The functions are in order for how close they are to the error.
+
+    Example: (temp.py file)
+        1 def foo():
+        2     bar()
+        3
+        4 def bar():
+        5     mer()
+        6
+        7 def mer():
+        8     raise IndexError(...)
+        9
+        10 foo()
+        CRITICAL: [('temp.py', 8, 'mer'), ('temp.py', 5, 'bar'), ('temp.py', 2, 'foo'), ('temp.py', 10, '<module>')]
+        IndexError
+
+    Parameters
+    ----------
+    max_trace : int, Optional
+        If Specified it will only trace up to the number specified. Otherwise it will trace up to the module
+    '''
+
+    def __init__(self, max_trace=None):
+        if max_trace is not None:
+            if not isint(max_trace):
+                raise TypeError('`max_trace` ({}) must be an int'.format(type(max_trace)))
+            if max_trace <= 0:
+                raise TypeError('`max_trace` ({}) must be >= 1'.format(max_trace))
+        self.max_trace = max_trace
+
+    def __call__(self, f):
+        def wrapped_func(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except:
+                stack = inspect.stack()
+                trace = []
+                if self.max_trace is not None:
+                    l = self.max_trace
+                else:
+                    l = len(stack)
+                for i in range(1, l):
+                    trace.append((stack[i][1].split('/')[-1], stack[i][2], stack[i][3]))
+                logging.critical('Error thrown in "{}". Trace: {}'.format(f.__name__, trace))
+                raise
+        wrapped_func.__name__ = f.__name__
+        return wrapped_func
+
+
+class count_calls:
+    '''This is a decorator for counting how many times a function is called.
+
+    Parameters
+    ----------
+    max_calls : int, Optional
+        - If specified, it will throw an error if the number of calls
+          exceeds this number. If nothing is specified then it will not
+          throw an error
+    '''
+    def __init__(self, max_calls=None):
+        if max_calls is None:
+            max_calls = np.inf
+        self.max_calls = max_calls
+        self.calls = 0
+        # self.f = f
+
+    def __call__(self, f):
+        def wrapped_func(*args, **kwargs):
+            self.calls += 1
+            if self.calls > self.max_calls:
+                raise ValueError('In `{}` - Max calls reached: {}'.format(
+                    wrapped_func.__name__, self.max_calls))
+            return f(*args,**kwargs)
+        wrapped_func.__name__ = f.__name__
+        return wrapped_func
+
+
+class Timer:
+    '''Simple timer class
+
+    Example use:
+        >>> import numpy as np
+        >>> a = np.arange(10000000)
+        >>> b = 0
+        >>> with Timer():
+        >>>     for i in a:
+        >>>         b += i 
+        time: 2.00000001225 seconds
+    '''
+    def __init__(self):
+        self.start = None
+        self.end = None
+
+    def __enter__(self):
+        self.start = default_timer()
+        return self
+
+    def __exit__(self, *args):
+        self.end = default_timer()
+        print('time: {} seconds'.format(self.end - self.start)) 
+
+    
+</code></pre>
+  </div>
+
+  </header>
+
+  <section id="section-items">
+    <h2 class="section-title" id="header-variables">Module variables</h2>
+      <div class="item">
+      <p id="pylab.util.CLASS_FORMATTER" class="name">var <span class="ident">CLASS_FORMATTER</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="pylab.util.FAMILY_FORMATTER" class="name">var <span class="ident">FAMILY_FORMATTER</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="pylab.util.GENUS_FORMATTER" class="name">var <span class="ident">GENUS_FORMATTER</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="pylab.util.ID_FORMATTER" class="name">var <span class="ident">ID_FORMATTER</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="pylab.util.INDEX_FORMATTER" class="name">var <span class="ident">INDEX_FORMATTER</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="pylab.util.KINGDOM_FORMATTER" class="name">var <span class="ident">KINGDOM_FORMATTER</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="pylab.util.NAME_FORMATTER" class="name">var <span class="ident">NAME_FORMATTER</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="pylab.util.ORDER_FORMATTER" class="name">var <span class="ident">ORDER_FORMATTER</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="pylab.util.PHYLUM_FORMATTER" class="name">var <span class="ident">PHYLUM_FORMATTER</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+      <div class="item">
+      <p id="pylab.util.fast_index" class="name">var <span class="ident">fast_index</span></p>
+      
+  
+  <div class="source_cont">
+</div>
+
+      </div>
+
+    <h2 class="section-title" id="header-functions">Functions</h2>
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.isarray">
+    <p>def <span class="ident">isarray</span>(</p><p>a)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks if <code>a</code> is an array</p>
+<h2>Parameters</h2>
+<p>a : any
+    Instance we are checking</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>a</code> is an array</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.isarray', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.isarray" class="source">
+    <pre><code>def isarray(a):
+    '''Checks if `a` is an array
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is an array
+    '''
+    return (type(a) == np.ndarray or type(a) == list or \
+        scipy.sparse.issparse(a)) and a is not None
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.isbool">
+    <p>def <span class="ident">isbool</span>(</p><p>a)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks if <code>a</code> is a bool</p>
+<h2>Parameters</h2>
+<p>a : any
+    Instance we are checking</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>a</code> is a bool</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.isbool', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.isbool" class="source">
+    <pre><code>def isbool(a):
+    '''Checks if `a` is a bool
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a bool
+    '''
+    return a is not None and np.issubdtype(type(a), np.bool_)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.iscomplex">
+    <p>def <span class="ident">iscomplex</span>(</p><p>a)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks if <code>a</code> is a complex number</p>
+<h2>Parameters</h2>
+<p>a : any
+    Instance we are checking</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>a</code> is a complex number</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.iscomplex', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.iscomplex" class="source">
+    <pre><code>def iscomplex(a):
+    '''Checks if `a` is a complex number
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a complex number
+    '''
+    return a is not None and np.issubdtype(type(a), np.complexfloating)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.isdict">
+    <p>def <span class="ident">isdict</span>(</p><p>a)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks if <code>a</code> is a dict object</p>
+<h2>Example</h2>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>istype(5)
+False
+istype({5:2})
+True</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<h2>Parameters</h2>
+<p>a : any
+    Instance we are checking</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>a</code> is a dict</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.isdict', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.isdict" class="source">
+    <pre><code>def isdict(a):
+    '''Checks if `a` is a dict object
+
+    Example
+    -------
+    >>> istype(5)
+    False
+    >>> istype({5:2})
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a dict
+    '''
+    return type(a) == dict
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.isfloat">
+    <p>def <span class="ident">isfloat</span>(</p><p>a)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks if <code>a</code> is a float</p>
+<h2>Parameters</h2>
+<p>a : any
+    Instance we are checking</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>a</code> is a float</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.isfloat', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.isfloat" class="source">
+    <pre><code>def isfloat(a):
+    '''Checks if `a` is a float
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a float
+    '''
+    return a is not None and np.issubdtype(type(a), np.floating)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.isint">
+    <p>def <span class="ident">isint</span>(</p><p>a)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks if <code>a</code> is an int</p>
+<h2>Parameters</h2>
+<p>a : any
+    Instance we are checking</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>a</code> is an int</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.isint', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.isint" class="source">
+    <pre><code>def isint(a):
+    '''Checks if `a` is an int
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is an int
+    '''
+    return a is not None and np.issubdtype(type(a), np.integer)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.isnumeric">
+    <p>def <span class="ident">isnumeric</span>(</p><p>a)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks if <code>a</code> is a float or an int - (cannot be a bool)</p>
+<h2>Parameters</h2>
+<p>a : any
+    Instance we are checking</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>a</code> is a float or an int.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.isnumeric', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.isnumeric" class="source">
+    <pre><code>def isnumeric(a):
+    '''Checks if `a` is a float or an int - (cannot be a bool)
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a float or an int.
+    '''
+    return a is not None and np.issubdtype(type(a), np.number)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.issquare">
+    <p>def <span class="ident">issquare</span>(</p><p>a)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks if the input array is a square</p>
+<h2>Parameters</h2>
+<p>a : any
+    Instance we are checking</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>a</code> is a square matrix</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.issquare', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.issquare" class="source">
+    <pre><code>def issquare(a):
+    '''Checks if the input array is a square
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+    
+    Returns
+    -------
+    bool
+        True if `a` is a square matrix
+    '''
+    try:
+        return (a.shape[0] == a.shape[1]) and (len(a.shape) == 2)
+    except:
+        return False
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.isstr">
+    <p>def <span class="ident">isstr</span>(</p><p>a)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks if <code>a</code> is a str</p>
+<h2>Parameters</h2>
+<p>a : any
+    Instance we are checking</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>a</code> is a str</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.isstr', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.isstr" class="source">
+    <pre><code>def isstr(a):
+    '''Checks if `a` is a str
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a str
+    '''
+    return a is not None and type(a) == str
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.istuple">
+    <p>def <span class="ident">istuple</span>(</p><p>a)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks if <code>a</code> is a tuple object</p>
+<h2>Example</h2>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>istype(5)
+False
+istype((5,))
+True</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<h2>Parameters</h2>
+<p>a : any
+    Instance we are checking</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>a</code> is a tuple</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.istuple', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.istuple" class="source">
+    <pre><code>def istuple(a):
+    '''Checks if `a` is a tuple object
+
+    Example
+    -------
+    >>> istype(5)
+    False
+    >>> istype((5,))
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a tuple
+    '''
+    return type(a) == tuple
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.istype">
+    <p>def <span class="ident">istype</span>(</p><p>a)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks if <code>a</code> is a Type object</p>
+<h2>Example</h2>
+<blockquote>
+<blockquote>
+<blockquote>
+<p>istype(5)
+False
+istype(float)
+True</p>
+</blockquote>
+</blockquote>
+</blockquote>
+<h2>Parameters</h2>
+<p>a : any
+    Instance we are checking</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>a</code> is a tuple</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.istype', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.istype" class="source">
+    <pre><code>def istype(a):
+    '''Checks if `a` is a Type object
+
+    Example
+    -------
+    >>> istype(5)
+    False
+    >>> istype(float)
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a tuple
+    '''
+    return type(a) == type
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.itercheck">
+    <p>def <span class="ident">itercheck</span>(</p><p>xs, f)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Checks every element in xs with f and returns an array
+for each entry</p>
+<h2>Parameters</h2>
+<p>xs : array_like(any)
+    - A list of instances to check the type of
+f : callable
+    - Type checking function
+Returns</p>
+<hr />
+<p>list(bool)
+    Checks for each element in the <code>xs</code></p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.itercheck', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.itercheck" class="source">
+    <pre><code>def itercheck(xs, f):
+    '''Checks every element in xs with f and returns an array
+    for each entry
+
+    Parameters
+    ----------
+    xs : array_like(any)
+        - A list of instances to check the type of
+    f : callable
+        - Type checking function
+    Returns
+    -------
+    list(bool)
+        Checks for each element in the `xs`
+    '''
+    return [f(x) for x in xs]
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.otuname_formatter">
+    <p>def <span class="ident">otuname_formatter</span>(</p><p>format, otu, otus)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Format the label of an OTU. Specify the OTU by
+it's index in the OTUSet <code>otus</code></p>
+<p>Example:
+    otu is an OTU object at index 0 where
+    otu.genus = 'A'
+    otu.id = 1234532</p>
+<pre><code>otuname_formatter(
+    format='%(genus)s: %(index)s',
+    otu=1234532,
+    otus=otus)
+&gt;&gt;&gt; 'A: 0'
+
+otuname_formatter(
+    format='%(genus)s: %(genus)s',
+    otu=1234532,
+    otus=otus)
+&gt;&gt;&gt; 'A: A'
+
+otuname_formatter(
+    format='%(index)s',
+    otu=1234532,
+    otus=otus)
+&gt;&gt;&gt; '0'
+
+otuname_formatter(
+    format='%(geNus)s: %(genus)s',
+    otu=1234532,
+    otus=otus)
+&gt;&gt;&gt; '%(geNus)s: A'
+</code></pre>
+<h2>Parameters</h2>
+<p>format : str
+    - This is the format for us to do the labels
+    - Formatting options:
+        - '%(name)s'
+            - Name of the OTU (pylab.base.OTU.name)
+        - '%(id)s'
+            - ID of the OTU (pylab.base.OTU.id)
+        - '%(index)s'
+            - The order that this appears in the OTUSet
+        - '%(genus)s'
+            - <code>'genus'</code> taxonomic classification of the OTU
+        - '%(family)s'
+            - <code>'family'</code> taxonomic classification of the OTU
+        - '%(class)s'
+            - <code>'class'</code> taxonomic classification of the OTU
+        - '%(order)s'
+            - <code>'order'</code> taxonomic classification of the OTU
+        - '%(phylum)s'
+            - <code>'phylum'</code> taxonomic classification of the OTU
+        - '%(kingdom)s'
+            - <code>'kingdom'</code> taxonomic classification of the OTU
+otu : str, int, OTU
+    - Either the OTU or an id for the OTU
+otus : pylab.base.OTUSet
+    - Dataset containing all of the information for the OTUs</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.otuname_formatter', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.otuname_formatter" class="source">
+    <pre><code>def otuname_formatter(format, otu, otus):
+    '''Format the label of an OTU. Specify the OTU by
+    it's index in the OTUSet `otus`
+
+    Example:
+        otu is an OTU object at index 0 where
+        otu.genus = 'A'
+        otu.id = 1234532
+
+        otuname_formatter(
+            format='%(genus)s: %(index)s',
+            otu=1234532,
+            otus=otus)
+        >>> 'A: 0'
+
+        otuname_formatter(
+            format='%(genus)s: %(genus)s',
+            otu=1234532,
+            otus=otus)
+        >>> 'A: A'
+
+        otuname_formatter(
+            format='%(index)s',
+            otu=1234532,
+            otus=otus)
+        >>> '0'
+
+        otuname_formatter(
+            format='%(geNus)s: %(genus)s',
+            otu=1234532,
+            otus=otus)
+        >>> '%(geNus)s: A'
+
+    Parameters
+    ----------
+    format : str
+        - This is the format for us to do the labels
+        - Formatting options:
+            - '%(name)s'
+                - Name of the OTU (pylab.base.OTU.name)
+            - '%(id)s'
+                - ID of the OTU (pylab.base.OTU.id)
+            - '%(index)s'
+                - The order that this appears in the OTUSet
+            - '%(genus)s'
+                - `'genus'` taxonomic classification of the OTU
+            - '%(family)s'
+                - `'family'` taxonomic classification of the OTU
+            - '%(class)s'
+                - `'class'` taxonomic classification of the OTU
+            - '%(order)s'
+                - `'order'` taxonomic classification of the OTU
+            - '%(phylum)s'
+                - `'phylum'` taxonomic classification of the OTU
+            - '%(kingdom)s'
+                - `'kingdom'` taxonomic classification of the OTU
+    otu : str, int, OTU
+        - Either the OTU or an id for the OTU
+    otus : pylab.base.OTUSet
+        - Dataset containing all of the information for the OTUs
+    '''
+    otu = otus[otu]
+    index = otu.idx
+
+    label = format.replace(NAME_FORMATTER, str(otu.name))
+    label = label.replace(ID_FORMATTER, str(otu.id))
+    label = label.replace(INDEX_FORMATTER,  str(index))
+    label = label.replace(GENUS_FORMATTER, str(otu.taxonomy['genus']))
+    label = label.replace(FAMILY_FORMATTER, str(otu.taxonomy['family']))
+    label = label.replace(CLASS_FORMATTER, str(otu.taxonomy['class']))
+    label = label.replace(ORDER_FORMATTER, str(otu.taxonomy['order']))
+    label = label.replace(PHYLUM_FORMATTER, str(otu.taxonomy['phylum']))
+    label = label.replace(KINGDOM_FORMATTER, str(otu.taxonomy['kingdom']))
+    return label
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.util.toarray">
+    <p>def <span class="ident">toarray</span>(</p><p>x, dest=None, T=False)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Converts <code>x</code> into a C_CONTIGUOUS numpy matrix if 
+the matrix is sparse. If it is not sparse then it just returns
+the matrix.</p>
+<h2>Parameters</h2>
+<p>x : scipy.sparse, np.ndarray
+    Array we are converting
+dest : np.ndarray
+    If this is specified, send the array into this array. Assumes
+    the shapes are compatible. Else create a new array
+T : bool
+    If True, set the transpose</p>
+<h2>Returns</h2>
+<p>np.ndarray</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.toarray', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.toarray" class="source">
+    <pre><code>def toarray(x, dest=None, T=False):
+    '''Converts `x` into a C_CONTIGUOUS numpy matrix if 
+    the matrix is sparse. If it is not sparse then it just returns
+    the matrix.
+
+    Parameters
+    ----------
+    x : scipy.sparse, np.ndarray
+        Array we are converting
+    dest : np.ndarray
+        If this is specified, send the array into this array. Assumes
+        the shapes are compatible. Else create a new array
+    T : bool
+        If True, set the transpose
+
+    Returns
+    -------
+    np.ndarray
+    '''
+    if scipy.sparse.issparse(x):
+        if dest is None:
+            if T:
+                dest = np.zeros(shape=x.T.shape, dtype=x.dtype)
+            else:
+                dest = np.zeros(shape=x.shape, dtype=x.dtype)
+        if T:
+            x.T.toarray(out=dest)
+        else:
+            x.toarray(out=dest)
+        return dest
+    else:
+        if T:
+            return x.T
+        else:
+            return x
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+
+    <h2 class="section-title" id="header-classes">Classes</h2>
+      
+      <div class="item">
+      <p id="pylab.util.Timer" class="name">class <span class="ident">Timer</span></p>
+      
+  
+    <div class="desc"><p>Simple timer class</p>
+<p>Example use:
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; a = np.arange(10000000)
+    &gt;&gt;&gt; b = 0
+    &gt;&gt;&gt; with Timer():
+    &gt;&gt;&gt;     for i in a:
+    &gt;&gt;&gt;         b += i 
+    time: 2.00000001225 seconds</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.Timer', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.Timer" class="source">
+    <pre><code>class Timer:
+    '''Simple timer class
+
+    Example use:
+        >>> import numpy as np
+        >>> a = np.arange(10000000)
+        >>> b = 0
+        >>> with Timer():
+        >>>     for i in a:
+        >>>         b += i 
+        time: 2.00000001225 seconds
+    '''
+    def __init__(self):
+        self.start = None
+        self.end = None
+
+    def __enter__(self):
+        self.start = default_timer()
+        return self
+
+    def __exit__(self, *args):
+        self.end = default_timer()
+        print('time: {} seconds'.format(self.end - self.start)) 
+</code></pre>
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#pylab.util.Timer">Timer</a></li>
+          <li>builtins.object</li>
+          </ul>
+          <h3>Static methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.util.Timer.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Initialize self.  See help(type(self)) for accurate signature.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.Timer.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.Timer.__init__" class="source">
+    <pre><code>def __init__(self):
+    self.start = None
+    self.end = None
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="pylab.util.Timer.end" class="name">var <span class="ident">end</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.util.Timer.start" class="name">var <span class="ident">start</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+      </div>
+      </div>
+      
+      <div class="item">
+      <p id="pylab.util.count_calls" class="name">class <span class="ident">count_calls</span></p>
+      
+  
+    <div class="desc"><p>This is a decorator for counting how many times a function is called.</p>
+<h2>Parameters</h2>
+<p>max_calls : int, Optional
+    - If specified, it will throw an error if the number of calls
+      exceeds this number. If nothing is specified then it will not
+      throw an error</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.count_calls', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.count_calls" class="source">
+    <pre><code>class count_calls:
+    '''This is a decorator for counting how many times a function is called.
+
+    Parameters
+    ----------
+    max_calls : int, Optional
+        - If specified, it will throw an error if the number of calls
+          exceeds this number. If nothing is specified then it will not
+          throw an error
+    '''
+    def __init__(self, max_calls=None):
+        if max_calls is None:
+            max_calls = np.inf
+        self.max_calls = max_calls
+        self.calls = 0
+        # self.f = f
+
+    def __call__(self, f):
+        def wrapped_func(*args, **kwargs):
+            self.calls += 1
+            if self.calls > self.max_calls:
+                raise ValueError('In `{}` - Max calls reached: {}'.format(
+                    wrapped_func.__name__, self.max_calls))
+            return f(*args,**kwargs)
+        wrapped_func.__name__ = f.__name__
+        return wrapped_func
+</code></pre>
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#pylab.util.count_calls">count_calls</a></li>
+          <li>builtins.object</li>
+          </ul>
+          <h3>Static methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.util.count_calls.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, max_calls=None)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Initialize self.  See help(type(self)) for accurate signature.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.count_calls.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.count_calls.__init__" class="source">
+    <pre><code>def __init__(self, max_calls=None):
+    if max_calls is None:
+        max_calls = np.inf
+    self.max_calls = max_calls
+    self.calls = 0
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="pylab.util.count_calls.calls" class="name">var <span class="ident">calls</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.util.count_calls.max_calls" class="name">var <span class="ident">max_calls</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+      </div>
+      </div>
+      
+      <div class="item">
+      <p id="pylab.util.inspect_trace" class="name">class <span class="ident">inspect_trace</span></p>
+      
+  
+    <div class="desc"><p>This is a decorator that logs the trace of a function.</p>
+<p>If the function throws an error when it is being called, it will produce the array 
+    [(file_name, line_no, function), ...]
+where it produces the file name, line number, and function that was called, and then
+it will throw the exception.
+The functions are in order for how close they are to the error.</p>
+<p>Example: (temp.py file)
+    1 def foo():
+    2     bar()
+    3
+    4 def bar():
+    5     mer()
+    6
+    7 def mer():
+    8     raise IndexError(...)
+    9
+    10 foo()
+    CRITICAL: [('temp.py', 8, 'mer'), ('temp.py', 5, 'bar'), ('temp.py', 2, 'foo'), ('temp.py', 10, '<module>')]
+    IndexError</p>
+<h2>Parameters</h2>
+<p>max_trace : int, Optional
+    If Specified it will only trace up to the number specified. Otherwise it will trace up to the module</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.inspect_trace', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.inspect_trace" class="source">
+    <pre><code>class inspect_trace:
+    '''This is a decorator that logs the trace of a function.
+
+    If the function throws an error when it is being called, it will produce the array 
+        [(file_name, line_no, function), ...]
+    where it produces the file name, line number, and function that was called, and then
+    it will throw the exception.
+    The functions are in order for how close they are to the error.
+
+    Example: (temp.py file)
+        1 def foo():
+        2     bar()
+        3
+        4 def bar():
+        5     mer()
+        6
+        7 def mer():
+        8     raise IndexError(...)
+        9
+        10 foo()
+        CRITICAL: [('temp.py', 8, 'mer'), ('temp.py', 5, 'bar'), ('temp.py', 2, 'foo'), ('temp.py', 10, '<module>')]
+        IndexError
+
+    Parameters
+    ----------
+    max_trace : int, Optional
+        If Specified it will only trace up to the number specified. Otherwise it will trace up to the module
+    '''
+
+    def __init__(self, max_trace=None):
+        if max_trace is not None:
+            if not isint(max_trace):
+                raise TypeError('`max_trace` ({}) must be an int'.format(type(max_trace)))
+            if max_trace <= 0:
+                raise TypeError('`max_trace` ({}) must be >= 1'.format(max_trace))
+        self.max_trace = max_trace
+
+    def __call__(self, f):
+        def wrapped_func(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except:
+                stack = inspect.stack()
+                trace = []
+                if self.max_trace is not None:
+                    l = self.max_trace
+                else:
+                    l = len(stack)
+                for i in range(1, l):
+                    trace.append((stack[i][1].split('/')[-1], stack[i][2], stack[i][3]))
+                logging.critical('Error thrown in "{}". Trace: {}'.format(f.__name__, trace))
+                raise
+        wrapped_func.__name__ = f.__name__
+        return wrapped_func
+</code></pre>
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#pylab.util.inspect_trace">inspect_trace</a></li>
+          <li>builtins.object</li>
+          </ul>
+          <h3>Static methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.util.inspect_trace.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, max_trace=None)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Initialize self.  See help(type(self)) for accurate signature.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.util.inspect_trace.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.util.inspect_trace.__init__" class="source">
+    <pre><code>def __init__(self, max_trace=None):
+    if max_trace is not None:
+        if not isint(max_trace):
+            raise TypeError('`max_trace` ({}) must be an int'.format(type(max_trace)))
+        if max_trace <= 0:
+            raise TypeError('`max_trace` ({}) must be >= 1'.format(max_trace))
+    self.max_trace = max_trace
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="pylab.util.inspect_trace.max_trace" class="name">var <span class="ident">max_trace</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+      </div>
+      </div>
+
+  </section>
+
+    </article>
+  <div class="clear"> </div>
+  <footer id="footer">
+    <p>
+      Documentation generated by
+      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.2</a>
+    </p>
+
+    <p>pdoc is in the public domain with the
+      <a href="http://unlicense.org">UNLICENSE</a></p>
+
+    <p>Design by <a href="http://nadh.in">Kailash Nadh</a></p>
+  </footer>
+</div>
+</body>
+</html>

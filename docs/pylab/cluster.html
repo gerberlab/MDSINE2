@@ -1,0 +1,5093 @@
+<!doctype html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+
+    <title>pylab.cluster API documentation</title>
+    <meta name="description" content="" />
+
+  <link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:400,300' rel='stylesheet' type='text/css'>
+  
+  <style type="text/css">
+  
+* {
+  box-sizing: border-box;
+}
+/*! normalize.css v1.1.1 | MIT License | git.io/normalize */
+
+/* ==========================================================================
+   HTML5 display definitions
+   ========================================================================== */
+
+/**
+ * Correct `block` display not defined in IE 6/7/8/9 and Firefox 3.
+ */
+
+article,
+aside,
+details,
+figcaption,
+figure,
+footer,
+header,
+hgroup,
+main,
+nav,
+section,
+summary {
+    display: block;
+}
+
+/**
+ * Correct `inline-block` display not defined in IE 6/7/8/9 and Firefox 3.
+ */
+
+audio,
+canvas,
+video {
+    display: inline-block;
+    *display: inline;
+    *zoom: 1;
+}
+
+/**
+ * Prevent modern browsers from displaying `audio` without controls.
+ * Remove excess height in iOS 5 devices.
+ */
+
+audio:not([controls]) {
+    display: none;
+    height: 0;
+}
+
+/**
+ * Address styling not present in IE 7/8/9, Firefox 3, and Safari 4.
+ * Known issue: no IE 6 support.
+ */
+
+[hidden] {
+    display: none;
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+/**
+ * 1. Prevent system color scheme's background color being used in Firefox, IE,
+ *    and Opera.
+ * 2. Prevent system color scheme's text color being used in Firefox, IE, and
+ *    Opera.
+ * 3. Correct text resizing oddly in IE 6/7 when body `font-size` is set using
+ *    `em` units.
+ * 4. Prevent iOS text size adjust after orientation change, without disabling
+ *    user zoom.
+ */
+
+html {
+    background: #fff; /* 1 */
+    color: #000; /* 2 */
+    font-size: 100%; /* 3 */
+    -webkit-text-size-adjust: 100%; /* 4 */
+    -ms-text-size-adjust: 100%; /* 4 */
+}
+
+/**
+ * Address `font-family` inconsistency between `textarea` and other form
+ * elements.
+ */
+
+html,
+button,
+input,
+select,
+textarea {
+    font-family: sans-serif;
+}
+
+/**
+ * Address margins handled incorrectly in IE 6/7.
+ */
+
+body {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Links
+   ========================================================================== */
+
+/**
+ * Address `outline` inconsistency between Chrome and other browsers.
+ */
+
+a:focus {
+    outline: thin dotted;
+}
+
+/**
+ * Improve readability when focused and also mouse hovered in all browsers.
+ */
+
+a:active,
+a:hover {
+    outline: 0;
+}
+
+/* ==========================================================================
+   Typography
+   ========================================================================== */
+
+/**
+ * Address font sizes and margins set differently in IE 6/7.
+ * Address font sizes within `section` and `article` in Firefox 4+, Safari 5,
+ * and Chrome.
+ */
+
+h1 {
+    font-size: 2em;
+    margin: 0.67em 0;
+}
+
+h2 {
+    font-size: 1.5em;
+    margin: 0.83em 0;
+}
+
+h3 {
+    font-size: 1.17em;
+    margin: 1em 0;
+}
+
+h4 {
+    font-size: 1em;
+    margin: 1.33em 0;
+}
+
+h5 {
+    font-size: 0.83em;
+    margin: 1.67em 0;
+}
+
+h6 {
+    font-size: 0.67em;
+    margin: 2.33em 0;
+}
+
+/**
+ * Address styling not present in IE 7/8/9, Safari 5, and Chrome.
+ */
+
+abbr[title] {
+    border-bottom: 1px dotted;
+}
+
+/**
+ * Address style set to `bolder` in Firefox 3+, Safari 4/5, and Chrome.
+ */
+
+b,
+strong {
+    font-weight: bold;
+}
+
+blockquote {
+    margin: 1em 40px;
+}
+
+/**
+ * Address styling not present in Safari 5 and Chrome.
+ */
+
+dfn {
+    font-style: italic;
+}
+
+/**
+ * Address differences between Firefox and other browsers.
+ * Known issue: no IE 6/7 normalization.
+ */
+
+hr {
+    -moz-box-sizing: content-box;
+    box-sizing: content-box;
+    height: 0;
+}
+
+/**
+ * Address styling not present in IE 6/7/8/9.
+ */
+
+mark {
+    background: #ff0;
+    color: #000;
+}
+
+/**
+ * Address margins set differently in IE 6/7.
+ */
+
+p,
+pre {
+    margin: 1em 0;
+}
+
+/**
+ * Correct font family set oddly in IE 6, Safari 4/5, and Chrome.
+ */
+
+code,
+kbd,
+pre,
+samp {
+    font-family: monospace, serif;
+    _font-family: 'courier new', monospace;
+    font-size: 1em;
+}
+
+/**
+ * Improve readability of pre-formatted text in all browsers.
+ */
+
+pre {
+    white-space: pre;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/**
+ * Address CSS quotes not supported in IE 6/7.
+ */
+
+q {
+    quotes: none;
+}
+
+/**
+ * Address `quotes` property not supported in Safari 4.
+ */
+
+q:before,
+q:after {
+    content: '';
+    content: none;
+}
+
+/**
+ * Address inconsistent and variable font size in all browsers.
+ */
+
+small {
+    font-size: 80%;
+}
+
+/**
+ * Prevent `sub` and `sup` affecting `line-height` in all browsers.
+ */
+
+sub,
+sup {
+    font-size: 75%;
+    line-height: 0;
+    position: relative;
+    vertical-align: baseline;
+}
+
+sup {
+    top: -0.5em;
+}
+
+sub {
+    bottom: -0.25em;
+}
+
+/* ==========================================================================
+   Lists
+   ========================================================================== */
+
+/**
+ * Address margins set differently in IE 6/7.
+ */
+
+dl,
+menu,
+ol,
+ul {
+    margin: 1em 0;
+}
+
+dd {
+    margin: 0 0 0 40px;
+}
+
+/**
+ * Address paddings set differently in IE 6/7.
+ */
+
+menu,
+ol,
+ul {
+    padding: 0 0 0 40px;
+}
+
+/**
+ * Correct list images handled incorrectly in IE 7.
+ */
+
+nav ul,
+nav ol {
+    list-style: none;
+    list-style-image: none;
+}
+
+/* ==========================================================================
+   Embedded content
+   ========================================================================== */
+
+/**
+ * 1. Remove border when inside `a` element in IE 6/7/8/9 and Firefox 3.
+ * 2. Improve image quality when scaled in IE 7.
+ */
+
+img {
+    border: 0; /* 1 */
+    -ms-interpolation-mode: bicubic; /* 2 */
+}
+
+/**
+ * Correct overflow displayed oddly in IE 9.
+ */
+
+svg:not(:root) {
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   Figures
+   ========================================================================== */
+
+/**
+ * Address margin not present in IE 6/7/8/9, Safari 5, and Opera 11.
+ */
+
+figure {
+    margin: 0;
+}
+
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+
+/**
+ * Correct margin displayed oddly in IE 6/7.
+ */
+
+form {
+    margin: 0;
+}
+
+/**
+ * Define consistent border, margin, and padding.
+ */
+
+fieldset {
+    border: 1px solid #c0c0c0;
+    margin: 0 2px;
+    padding: 0.35em 0.625em 0.75em;
+}
+
+/**
+ * 1. Correct color not being inherited in IE 6/7/8/9.
+ * 2. Correct text not wrapping in Firefox 3.
+ * 3. Correct alignment displayed oddly in IE 6/7.
+ */
+
+legend {
+    border: 0; /* 1 */
+    padding: 0;
+    white-space: normal; /* 2 */
+    *margin-left: -7px; /* 3 */
+}
+
+/**
+ * 1. Correct font size not being inherited in all browsers.
+ * 2. Address margins set differently in IE 6/7, Firefox 3+, Safari 5,
+ *    and Chrome.
+ * 3. Improve appearance and consistency in all browsers.
+ */
+
+button,
+input,
+select,
+textarea {
+    font-size: 100%; /* 1 */
+    margin: 0; /* 2 */
+    vertical-align: baseline; /* 3 */
+    *vertical-align: middle; /* 3 */
+}
+
+/**
+ * Address Firefox 3+ setting `line-height` on `input` using `!important` in
+ * the UA stylesheet.
+ */
+
+button,
+input {
+    line-height: normal;
+}
+
+/**
+ * Address inconsistent `text-transform` inheritance for `button` and `select`.
+ * All other form control elements do not inherit `text-transform` values.
+ * Correct `button` style inheritance in Chrome, Safari 5+, and IE 6+.
+ * Correct `select` style inheritance in Firefox 4+ and Opera.
+ */
+
+button,
+select {
+    text-transform: none;
+}
+
+/**
+ * 1. Avoid the WebKit bug in Android 4.0.* where (2) destroys native `audio`
+ *    and `video` controls.
+ * 2. Correct inability to style clickable `input` types in iOS.
+ * 3. Improve usability and consistency of cursor style between image-type
+ *    `input` and others.
+ * 4. Remove inner spacing in IE 7 without affecting normal text inputs.
+ *    Known issue: inner spacing remains in IE 6.
+ */
+
+button,
+html input[type="button"], /* 1 */
+input[type="reset"],
+input[type="submit"] {
+    -webkit-appearance: button; /* 2 */
+    cursor: pointer; /* 3 */
+    *overflow: visible;  /* 4 */
+}
+
+/**
+ * Re-set default cursor for disabled elements.
+ */
+
+button[disabled],
+html input[disabled] {
+    cursor: default;
+}
+
+/**
+ * 1. Address box sizing set to content-box in IE 8/9.
+ * 2. Remove excess padding in IE 8/9.
+ * 3. Remove excess padding in IE 7.
+ *    Known issue: excess padding remains in IE 6.
+ */
+
+input[type="checkbox"],
+input[type="radio"] {
+    box-sizing: border-box; /* 1 */
+    padding: 0; /* 2 */
+    *height: 13px; /* 3 */
+    *width: 13px; /* 3 */
+}
+
+/**
+ * 1. Address `appearance` set to `searchfield` in Safari 5 and Chrome.
+ * 2. Address `box-sizing` set to `border-box` in Safari 5 and Chrome
+ *    (include `-moz` to future-proof).
+ */
+
+input[type="search"] {
+    -webkit-appearance: textfield; /* 1 */
+    -moz-box-sizing: content-box;
+    -webkit-box-sizing: content-box; /* 2 */
+    box-sizing: content-box;
+}
+
+/**
+ * Remove inner padding and search cancel button in Safari 5 and Chrome
+ * on OS X.
+ */
+
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+    -webkit-appearance: none;
+}
+
+/**
+ * Remove inner padding and border in Firefox 3+.
+ */
+
+button::-moz-focus-inner,
+input::-moz-focus-inner {
+    border: 0;
+    padding: 0;
+}
+
+/**
+ * 1. Remove default vertical scrollbar in IE 6/7/8/9.
+ * 2. Improve readability and alignment in all browsers.
+ */
+
+textarea {
+    overflow: auto; /* 1 */
+    vertical-align: top; /* 2 */
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+
+/**
+ * Remove most spacing between table cells.
+ */
+
+table {
+    border-collapse: collapse;
+    border-spacing: 0;
+}
+
+  </style>
+
+  <style type="text/css">
+  
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+  }
+  body {
+    background: #fff;
+    font-family: "Source Sans Pro", "Helvetica Neueue", Helvetica, sans;
+    font-weight: 300;
+    font-size: 16px;
+    line-height: 1.6em;
+  }
+  #content {
+    width: 70%;
+    max-width: 850px;
+    float: left;
+    padding: 30px 60px;
+    border-left: 1px solid #ddd;
+  }
+  #sidebar {
+    width: 25%;
+    float: left;
+    padding: 30px;
+    overflow: hidden;
+  }
+  #nav {
+    font-size: 130%;
+    margin: 0 0 15px 0;
+  }
+
+  #top {
+    display: block;
+    position: fixed;
+    bottom: 5px;
+    left: 5px;
+    font-size: .85em;
+    text-transform: uppercase;
+  }
+
+  #footer {
+    font-size: .75em;
+    padding: 5px 30px;
+    border-top: 1px solid #ddd;
+    text-align: right;
+  }
+    #footer p {
+      margin: 0 0 0 30px;
+      display: inline-block;
+    }
+
+  h1, h2, h3, h4, h5 {
+    font-weight: 300;
+  }
+  h1 {
+    font-size: 2.5em;
+    line-height: 1.1em;
+    margin: 0 0 .50em 0;
+  }
+
+  h2 {
+    font-size: 1.75em;
+    margin: 1em 0 .50em 0;
+  }
+
+  h3 {
+    margin: 25px 0 10px 0;
+  }
+
+  h4 {
+    margin: 0;
+    font-size: 105%;
+  }
+
+  a {
+    color: #058;
+    text-decoration: none;
+    transition: color .3s ease-in-out;
+  }
+
+  a:hover {
+    color: #e08524;
+    transition: color .3s ease-in-out;
+  }
+
+  pre, code, .mono, .name {
+    font-family: "Ubuntu Mono", "Cousine", "DejaVu Sans Mono", monospace;
+  }
+
+  .title .name {
+    font-weight: bold;
+  }
+  .section-title {
+    margin-top: 2em;
+  }
+  .ident {
+    color: #900;
+  }
+
+  code {
+    background: #f9f9f9;
+  } 
+
+  pre {
+    background: #fefefe;
+    border: 1px solid #ddd;
+    box-shadow: 2px 2px 0 #f3f3f3;
+    margin: 0 30px;
+    padding: 15px 30px;
+  }
+
+  .codehilite {
+    margin: 0 30px 10px 30px;
+  }
+
+    .codehilite pre {
+      margin: 0;
+    }
+    .codehilite .err { background: #ff3300; color: #fff !important; } 
+
+  table#module-list {
+    font-size: 110%;
+  }
+
+    table#module-list tr td:first-child {
+      padding-right: 10px;
+      white-space: nowrap;
+    }
+
+    table#module-list td {
+      vertical-align: top;
+      padding-bottom: 8px;
+    }
+
+      table#module-list td p {
+        margin: 0 0 7px 0;
+      }
+
+  .def {
+    display: table;
+  }
+
+    .def p {
+      display: table-cell;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    .def p:first-child {
+      white-space: nowrap;
+    }
+
+    .def p:last-child {
+      width: 100%;
+    }
+
+
+  #index {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+  }
+    ul#index .class_name {
+      /* font-size: 110%; */
+      font-weight: bold;
+    }
+    #index ul {
+      margin: 0;
+    }
+
+  .item {
+    margin: 0 0 15px 0;
+  }
+
+    .item .class {
+      margin: 0 0 25px 30px;
+    }
+
+      .item .class ul.class_list {
+        margin: 0 0 20px 0;
+      }
+
+    .item .name {
+      background: #fafafa;
+      margin: 0;
+      font-weight: bold;
+      padding: 5px 10px;
+      border-radius: 3px;
+      display: inline-block;
+      min-width: 40%;
+    }
+      .item .name:hover {
+        background: #f6f6f6;
+      }
+
+    .item .empty_desc {
+      margin: 0 0 5px 0;
+      padding: 0;
+    }
+
+    .item .inheritance {
+      margin: 3px 0 0 30px;
+    }
+
+    .item .inherited {
+      color: #666;
+    }
+
+    .item .desc {
+      padding: 0 8px;
+      margin: 0;
+    }
+
+      .item .desc p {
+        margin: 0 0 10px 0;
+      }
+
+    .source_cont {
+      margin: 0;
+      padding: 0;
+    }
+
+    .source_link a {
+      background: #ffc300;
+      font-weight: 400;
+      font-size: .75em;
+      text-transform: uppercase;
+      color: #fff;
+      text-shadow: 1px 1px 0 #f4b700;
+      
+      padding: 3px 8px;
+      border-radius: 2px;
+      transition: background .3s ease-in-out;
+    }
+      .source_link a:hover {
+        background: #FF7200;
+        text-shadow: none;
+        transition: background .3s ease-in-out;
+      }
+
+    .source {
+      display: none;
+      max-height: 600px;
+      overflow-y: scroll;
+      margin-bottom: 15px;
+    }
+
+      .source .codehilite {
+        margin: 0;
+      }
+
+  .desc h1, .desc h2, .desc h3 {
+    font-size: 100% !important;
+  }
+  .clear {
+    clear: both;
+  }
+
+  @media all and (max-width: 950px) {
+    #sidebar {
+      width: 35%;
+    }
+    #content {
+      width: 65%;
+    }
+  }
+  @media all and (max-width: 650px) {
+    #top {
+      display: none;
+    }
+    #sidebar {
+      float: none;
+      width: auto;
+    }
+    #content {
+      float: none;
+      width: auto;
+      padding: 30px;
+    }
+
+    #index ul {
+      padding: 0;
+      margin-bottom: 15px;
+    }
+    #index ul li {
+      display: inline-block;
+      margin-right: 30px;
+    }
+    #footer {
+      text-align: left;
+    }
+    #footer p {
+      display: block;
+      margin: inherit;
+    }
+  }
+
+  /*****************************/
+
+  </style>
+
+
+  <style type="text/css">
+  
+/* ==========================================================================
+   EXAMPLE Media Queries for Responsive Design.
+   These examples override the primary ('mobile first') styles.
+   Modify as content requires.
+   ========================================================================== */
+
+@media only screen and (min-width: 35em) {
+    /* Style adjustments for viewports that meet the condition */
+}
+
+@media print,
+       (-o-min-device-pixel-ratio: 5/4),
+       (-webkit-min-device-pixel-ratio: 1.25),
+       (min-resolution: 120dpi) {
+    /* Style adjustments for high resolution devices */
+}
+
+/* ==========================================================================
+   Print styles.
+   Inlined to avoid required HTTP connection: h5bp.com/r
+   ========================================================================== */
+
+@media print {
+    * {
+        background: transparent !important;
+        color: #000 !important; /* Black prints faster: h5bp.com/s */
+        box-shadow: none !important;
+        text-shadow: none !important;
+    }
+
+    a,
+    a:visited {
+        text-decoration: underline;
+    }
+
+    a[href]:after {
+        content: " (" attr(href) ")";
+    }
+
+    abbr[title]:after {
+        content: " (" attr(title) ")";
+    }
+
+    /*
+     * Don't show links for images, or javascript/internal links
+     */
+
+    .ir a:after,
+    a[href^="javascript:"]:after,
+    a[href^="#"]:after {
+        content: "";
+    }
+
+    pre,
+    blockquote {
+        border: 1px solid #999;
+        page-break-inside: avoid;
+    }
+
+    thead {
+        display: table-header-group; /* h5bp.com/t */
+    }
+
+    tr,
+    img {
+        page-break-inside: avoid;
+    }
+
+    img {
+        max-width: 100% !important;
+    }
+
+    @page {
+        margin: 0.5cm;
+    }
+
+    p,
+    h2,
+    h3 {
+        orphans: 3;
+        widows: 3;
+    }
+
+    h2,
+    h3 {
+        page-break-after: avoid;
+    }
+}
+
+  </style>
+
+  <script type="text/javascript">
+  function toggle(id, $link) {
+    $node = document.getElementById(id);
+    if (!$node)
+    return;
+    if (!$node.style.display || $node.style.display == 'none') {
+    $node.style.display = 'block';
+    $link.innerHTML = 'Hide source &nequiv;';
+    } else {
+    $node.style.display = 'none';
+    $link.innerHTML = 'Show source &equiv;';
+    }
+  }
+  </script>
+</head>
+<body>
+<a href="#" id="top">Top</a>
+
+<div id="container">
+    
+  
+  <div id="sidebar">
+    <h1>Index</h1>
+    <ul id="index">
+
+    <li class="set"><h3><a href="#header-functions">Functions</a></h3>
+      
+  <ul>
+    <li class="mono"><a href="#pylab.cluster.isclustering">isclustering</a></li>
+    <li class="mono"><a href="#pylab.cluster.isclusterproperty">isclusterproperty</a></li>
+    <li class="mono"><a href="#pylab.cluster.isclustervalue">isclustervalue</a></li>
+  </ul>
+
+    </li>
+
+    <li class="set"><h3><a href="#header-classes">Classes</a></h3>
+      <ul>
+        <li class="mono">
+        <span class="class_name"><a href="#pylab.cluster.ClusterProperty">ClusterProperty</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#pylab.cluster.ClusterProperty.__init__">__init__</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterProperty.assignments_changed">assignments_changed</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterProperty.clusters_changed">clusters_changed</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterProperty.reset">reset</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterProperty.set_signal_when_clusters_change">set_signal_when_clusters_change</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterProperty.set_signal_when_otu_assignment_changes">set_signal_when_otu_assignment_changes</a></li>
+  </ul>
+
+        </li>
+        <li class="mono">
+        <span class="class_name"><a href="#pylab.cluster.ClusterValue">ClusterValue</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.__init__">__init__</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.add_child">add_child</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.add_init_value">add_init_value</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.add_parent">add_parent</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.add_prior">add_prior</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.add_trace">add_trace</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.add_undirected">add_undirected</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.assignments_changed">assignments_changed</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.cluster_array">cluster_array</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.clusters_changed">clusters_changed</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.delete">delete</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.get_adjacent_keys">get_adjacent_keys</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.get_iter">get_iter</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.get_trace_from_disk">get_trace_from_disk</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.otu_array">otu_array</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.reset">reset</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.save">save</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.set_save_location">set_save_location</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.set_signal_when_clusters_change">set_signal_when_clusters_change</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.set_signal_when_otu_assignment_changes">set_signal_when_otu_assignment_changes</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.set_trace">set_trace</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.set_values_from_array">set_values_from_array</a></li>
+    <li class="mono"><a href="#pylab.cluster.ClusterValue.load">load</a></li>
+  </ul>
+
+        </li>
+        <li class="mono">
+        <span class="class_name"><a href="#pylab.cluster.Clustering">Clustering</a></span>
+        
+          
+  <ul>
+    <li class="mono"><a href="#pylab.cluster.Clustering.__init__">__init__</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.add_child">add_child</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.add_init_value">add_init_value</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.add_parent">add_parent</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.add_prior">add_prior</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.add_trace">add_trace</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.add_undirected">add_undirected</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.delete">delete</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.generate_cluster_assignments_posthoc">generate_cluster_assignments_posthoc</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.generate_coclusters">generate_coclusters</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.get_adjacent_keys">get_adjacent_keys</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.get_iter">get_iter</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.get_trace_from_disk">get_trace_from_disk</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.keys">keys</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.make_new_cluster_with">make_new_cluster_with</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.merge_clusters">merge_clusters</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.move_otu">move_otu</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.save">save</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.set_otu_strname">set_otu_strname</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.set_save_location">set_save_location</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.set_trace">set_trace</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.split_cluster">split_cluster</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.toarray">toarray</a></li>
+    <li class="mono"><a href="#pylab.cluster.Clustering.load">load</a></li>
+  </ul>
+
+        </li>
+        <li class="mono">
+        <span class="class_name"><a href="#pylab.cluster.float">DEFAULT_CLUSTERVALUE_DTYPE</a></span>
+        
+        </li>
+      </ul>
+    </li>
+
+    </ul>
+  </div>
+
+    <article id="content">
+      
+  
+
+  
+
+
+  <header id="section-intro">
+  <h1 class="title"><span class="name">pylab.cluster</span> module</h1>
+  
+  
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster" class="source">
+    <pre><code>import numpy as np
+import logging
+import copy
+import numba
+
+from sklearn.cluster import AgglomerativeClustering
+import scipy.stats
+
+from . import util
+from .errors import NeedToImplementError
+from .graph import Node
+from .base import isotuset, Traceable
+from .graph import Node
+from .variables import Variable, summary
+
+# Constants
+DEFAULT_CLUSTERVALUE_DTYPE = float
+
+def isclustering(x):
+    '''Type check if `x` is a subclass of Clustering
+
+    Parameters
+    ----------
+    x : any
+        Returns True if `x` is a subclass of Clustering
+    
+    Returns
+    -------
+    bool
+        True if `x` is the correct subtype
+    '''
+    return x is not None and issubclass(x.__class__, Clustering)
+
+def isclusterproperty(x):
+    '''Type check if `x` is a subclass of ClusterProperty
+
+    Parameters
+    ----------
+    x : any
+        Returns True if `x` is a subclass of ClusterProperty
+    
+    Returns
+    -------
+    bool
+        True if `x` is the correct subtype
+    '''
+    return x is not None and issubclass(x.__class__, ClusterProperty)
+
+def isclustervalue(x):
+    '''Type check if `x` is a subclass of ClusterValue
+
+    Parameters
+    ----------
+    x : any
+        Returns True if `x` is a subclass of ClusterValue
+    
+    Returns
+    -------
+    bool
+        True if `x` is the correct subtype
+    '''
+    return x is not None and issubclass(x.__class__, ClusterValue)
+
+
+class Clustering(Node, Traceable):
+    '''Base class for clustering. 
+    
+    Maps a unique cluster id (int) to a cluster object:
+        members : set
+            Which OTUs are assigned to this cluster (using their 
+            index specified in `otus`)
+        id : int
+            Python ID of the cluster
+        size : int
+            How many members are in the cluster
+
+    Accessing and Moving OTUs
+    -------------------------
+    It is strongly recommended that you only reassign OTUs from one cluster to
+    another cluster with the inner functions and do not do it manually by
+    directly accessing `self.clusters`. This is for 2 reasons: 
+    
+    (1) Calling the inner functions to change the cluster assignment also signals 
+    the properties assigned to this clusters so everything is kept synchronized 
+    with each other. 
+    
+    (2) there is no possibility that you can delete an OTU from the system if you 
+    use the inner functions. If you were to manually manipulate `self.clusters` 
+    and accidentally delete an OTU, the whole system would crash not know what to 
+    do.
+
+    Properties
+    ----------
+    There might be properties associated with this class. A property is signaled
+    when either the cluster assignment of the OTUs change or if a cluster 
+    got deleted and/or added. THE PRIORITY OF A CLUSTER BEING DELETED SUPERCEDES
+    THE PRIORITY OF AN OTU BEING MOVED.
+    Example:
+        clusters = [[1,2,3], [0], [4,5]]
+        If we moved oidx `0` to a different cluster using `move_otu`:
+        clusters = [[0,1,2,3], [4,5]]
+        Our signaling will call the function `clusters_changed`, even though
+        OTU `0` "effectively" moved.
+
+    Example:
+        clusters = [[1,2,3], [0], [4,5]]
+        If we moved oidx `1` to cluster [0] `move_otu`:
+        clusters = [[2,3], [0,1], [4,5]]
+        Our signaling will call the function `assignments_changed` because 
+        there was no deletion and/or additions of clusters
+
+    Tracing
+    -------
+    There are two variables that get traced. (1) `coclusters` (n_otus x n_otus matrix) 
+    records which OTUs were in the same cluster together at each iteration.
+    (2) `n_clusters` (int) records the number of clusters that were at each iteration.
+    
+    Parameters
+    ----------
+    clusters : list(list(int)), None
+        These are the cluster assignments of each OTU. Structure is as follows:
+        The index of the top list indicates the index of the cluster. The elements
+        in the second level lists are the indices of the OTUs in that cluster.
+        Example:
+            >>> clusters = [[0,1,2], [5,3], [4]]
+            OTUs 0,1,2 are in cluster 0
+            OTUs 3,5 are in cluster 1
+            OTU 4 is in cluster 4
+        If it is None, then assume that all of the OTUs are in their own cluster.
+        ALL OTUS MUST BE SPECIFIED AND ONLY SPECIFIED ONCE.
+    otus : pylab.base.OTUSet
+        This is the object that stores all of the information of the OTUs. The 
+        ordering of the OTUs in this object are assumed to be the global ordering
+        and that they do not change when this Object is instantiated
+    kwargs : dict
+        These are the additional arguments for the Node class (name, Graph, etc.)
+    '''
+    _KINGDOM = 0
+    _PHYLUM = 1
+    _CLASS = 2
+    _ORDER = 3
+    _FAMILY = 4
+    _GENUS = 5
+    _NAME = 6
+
+    def __init__(self, clusters, otus, **kwargs):
+        Node.__init__(self, **kwargs)
+        if not isotuset(otus):
+            raise TypeError('`otus` ({}) must be a pylab.base.OTUSet object'.format( 
+                type(otus)))
+        if clusters is None:
+            clusters = [[i] for i in range(len(otus))]
+        elif not util.isarray(clusters):
+            raise TypeError('`clusters` ({}) must either be None or an array'.format( 
+                type(clusters)))
+        else:
+            there = np.zeros(len(otus), dtype=int)
+            clusters = list(clusters)
+            for ele in clusters:
+                if not type(ele) == list:
+                    raise TypeError('Each element in `clusters` ({}) must be a list'.format(
+                        type(ele)))
+                if not np.all(util.itercheck(ele, util.isint)):
+                    raise TypeError('Each element in each cluster must be an int')
+                for idx in ele:
+                    if there[idx] > 0:
+                        raise ValueError('OTU index `{}` was specified more than once: {}'.format(
+                            idx, clusters))
+                    there[idx] = 1
+            if np.any(there == 0):
+                idxs = np.where(there==0)[0]
+                raise ValueError('OTU indices {} were not specified'.format(idxs))
+        
+        # Everything is good, make the cluster objects
+        self.otus = otus
+        self.clusters = {}
+        for cluster in clusters:
+            temp = _Cluster(members=cluster, parent=self)
+            self.clusters[temp.id] = temp
+        self.order = list(self.clusters.keys())
+        self.properties = _ClusterProperties()
+        self._strname = self._NAME
+        
+        # Maps the otu index to the cluster ID it is assigned to
+        self.oidx2cid = np.zeros(len(self.otus), dtype=int)
+        for oidx in range(len(self.otus)):
+            for cluster in self:
+                if oidx in cluster:
+                    self.oidx2cid[oidx] = cluster.id
+
+        # Maps the cluster ID to the cluster index
+        self.cid2cidx = {}
+        for cidx, cid in enumerate(self.order):
+            self.cid2cidx[cid] = cidx
+
+        # Make the tracing objects
+        self.coclusters = Variable(
+            name='{}_coclusters'.format(self.name),
+            shape=(len(self.otus), len(self.otus)),
+            dtype=bool, G=self.G, value=self.generate_coclusters())
+        self.n_clusters = Variable(
+            name='{}_n_clusters'.format(self.name), dtype=int, 
+            G=self.G, value=len(clusters))
+
+        # Make the inner lists for the properties
+        self._cids_added = []
+        self._cids_removed = []
+
+    def __iter__(self):
+        '''Return each cluster
+        '''
+        for key in self.order:
+            yield self.clusters[key]
+    
+    def __str__(self):
+        s = self.name + ', n_clusters: {}'.format(len(self))
+        for cluster in self:
+            s += '\n{}'.format(str(cluster))
+        return s
+
+    def __len__(self):
+        '''How many clusters
+
+        Returns
+        -------
+        int
+        '''
+        return len(self.order)
+
+    def __contains__(self, cid):
+        return cid in self.clusters
+
+    def __getitem__(self, cid):
+        return self.clusters[cid]
+
+    def keys(self):
+        '''Alias for `self.order`
+
+        Returns
+        -------
+        list(shape=(n_otus), dtype=int)
+        '''
+        return self.order
+
+    def add_init_value(self):
+        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
+        when first updating the variable. User should not use this function
+        '''
+        self._init_value = self.toarray()
+
+    def make_new_cluster_with(self, oidx):
+        '''Create a new cluster with the otu index `oidx`.
+        Removes `oidx` from the previous cluster.
+
+        If you want a custom function to initialize the values and indicator variables
+        for the new cluster, pass in the functions as parameters. If not, it will
+        use the defualt that was used during initialization
+
+        Parameters
+        ----------
+        oidx : int
+            This is the index of the OTU to make a new cluster with
+
+        Returns
+        -------
+        int
+            This is the ID of the new cluster that was created
+        '''
+        old_cid = self.oidx2cid[oidx]
+        self.clusters[old_cid].remove(oidx)
+        if self.clusters[old_cid].size == 0:
+            # Delete the cluster
+            self.clusters.pop(old_cid, None)
+            self._cids_removed.append(old_cid)
+        
+        temp = _Cluster(members=[oidx], parent=self)
+        self.clusters[temp.id] = temp
+        self.oidx2cid[oidx] = temp.id
+        self._cids_added.append(temp.id)
+        self.order = list(self.clusters.keys())
+        self.n_clusters.value = len(self.clusters)
+
+        self.cid2cidx = {}
+        for cidx, cid in enumerate(self.order):
+            self.cid2cidx[cid] = cidx
+
+        # Signal to the cluster properties
+        for prop in self.properties.signal_when_clusters_change:
+            prop.clusters_changed(
+                cids_added=self._cids_added,
+                cids_removed=self._cids_removed)
+        self._cids_added = []
+        self._cids_removed = []
+
+        return temp.id
+
+    def move_otu(self, oidx, cid):
+        '''Move `oidx` to cluster id `cid`. If `cid` does not exist, then we 
+        will create a new cluster.
+
+        Paramters
+        ---------
+        oidx : int
+            This is the index of the OTU to move clusters
+        cid : int
+            This is the Cluster ID to move `oidx` to
+
+        Returns
+        -------
+        int
+            This is the cluster ID it was moved to
+        '''
+        if cid not in self.clusters:
+            return self.make_new_cluster_with(oidx)
+        curr_cid = self.oidx2cid[oidx]
+        if cid == curr_cid:
+            # Do nothing
+            return cid
+        
+        self.clusters[curr_cid].remove(oidx)
+        old_cluster_deleted = False
+        if self.clusters[curr_cid].size == 0:
+            old_cluster_deleted = True
+            self.clusters.pop(curr_cid, None)
+            self._cids_removed.append(curr_cid)
+
+        self.clusters[cid].add(oidx)
+        self.oidx2cid[oidx] = cid
+        self.order = list(self.clusters.keys())
+        self.cid2cidx = {}
+        for cidx, cid in enumerate(self.order):
+            self.cid2cidx[cid] = cidx
+        self.n_clusters.value = len(self)
+
+        if old_cluster_deleted:
+            # Signal `clusters_changed`
+            for prop in self.properties.signal_when_clusters_change:
+                prop.clusters_changed(
+                    cids_added=[],
+                    cids_removed=self._cids_removed)
+        else:
+            # Signal `assignments_changed`
+            for prop in self.properties.signal_when_otu_assignment_changes:
+                prop.assignments_changed()
+
+        self._cids_removed = []
+        self._cids_added = []
+        return cid
+        
+    def merge_clusters(self, cid1, cid2):
+        raise NotImplementedError('Not Implemented')
+
+    def split_cluster(self, cid, members1, members2):
+        raise NotImplementedError('Not Implemented')
+
+    def generate_coclusters(self):
+        return _generate_coclusters_fast(oidx2cid=self.oidx2cid)
+    
+    def toarray(self):
+        '''Converts clusters into array format:
+        clusters = [clus1, ..., clusN],
+            clusters{i} = [otu_i1, ..., otu_iM]
+        each clusters{i} is a list of indices that are in that cluster
+
+        This is the same format was the input parameter for `__init__`
+        
+        Returns
+        -------
+        list
+            This is the array of values with the correct order 
+        '''
+        ret = []
+        for cluster in self:
+            ret.append(list(cluster.members))
+        return ret
+
+    def generate_cluster_assignments_posthoc(self, n_clusters='mode', linkage='average',
+        set_as_value=False):
+        '''Once the inference is complete, compute the clusters posthoc using
+        sklearn's AgglomerativeClustering function with distance matrix being
+        1 - cocluster matrix (we subtrace the cocluster matrix from 1 because
+        the cocluster matrix describes similarity, not distance).
+
+        Parameters
+        ----------
+        n_clusters : str, int, callable, Optional
+            This specifies the number of clusters that are used during
+            Agglomerative clustering.
+            If `n_clusters` is of type int, it will use that number as the number of
+            clusters.
+            If `n_clusters` is of type str, it calculates the number of clusters
+            based on the trace for the number of clusters (self.n_clusters_trace).
+            Possible calculation types are:
+                * 'median', 'mode', and 'mean'.
+            If `n_clusters` is callable, it will calculate n given the trace of n_clusters
+            Default is 'mode'.
+        linkage : str, Optional
+            Which linkage criterion to use. Determines which distance to use
+            between sets of observation. The AgglomerativeClustering algorithm
+            will merge the pairs of cluster that minimize the linkage criterion.
+            Possible types:
+        set_as_value : bool
+            If True then set the result as the value of the clustering object
+        
+        Returns
+        -------
+        np.ndarray(size=(n_otus,), dtype=int)
+            Each value is the cluster assignment for index i
+        '''
+        trace = self.n_clusters.get_trace_from_disk()
+        if callable(n_clusters):
+            n = n_clusters(trace)
+        elif type(n_clusters) == int:
+            n = n_clusters
+        elif type(n_clusters) == str:
+            if n_clusters == 'mode':
+                n = scipy.stats.mode(trace)[0][0]
+            elif n_clusters == 'mean':
+                n = np.mean(trace)
+            elif n_clusters == 'median':
+                n = np.median(trace)
+            else:
+                raise ValueError('`n_clusters` ({}) not recognized. Valid inputs are ' \
+                    '`mode`, `mean`, and `median`.'.format(n_clusters))
+        else:
+            raise ValueError('Type `n_clusters` ({}) not recognized. Must be of '\
+                'type `str`, `int`, or callable.'.format(type(n_clusters)))
+        if not util.isbool(set_as_value):
+            raise TypeError('`set_as_value` ({}) must be a bool'.format(type(set_as_value)))
+
+        A = summary(self.coclusters)['mean']
+        A = 1 - A
+        logging.info('Number of clusters: {}'.format(int(n)))
+        c = AgglomerativeClustering(
+            n_clusters=int(n),
+            affinity='precomputed',
+            linkage=linkage)
+        ret = c.fit_predict(A)
+        if set_as_value:
+            ca = {}
+            for idx, cidx in enumerate(ca):
+                if cidx in ca:
+                    ca[cidx].append(idx)
+                else:
+                    ca[cidx] = [idx]
+            for cluster in ca:
+                cid = self.make_new_cluster_with(oidx=cluster[0])
+                for oidx in cluster[1:]:
+                    self.move_otu(oidx=oidx, cid=cid)
+        return ret
+
+    def _strname_otu(self, otu):
+        if self._strname == self._NAME:
+            return self.otus[otu].name
+        if self._strname == self._GENUS:
+            return self.otus[otu].taxonomy['genus']
+        if self._strname == self._FAMILY:
+            return self.otus[otu].taxonomy['family']
+        if self._strname == self._KINGDOM:
+            return self.otus[otu].taxonomy['kingdom']
+        if self._strname == self._PHYLUM:
+            return self.otus[otu].taxonomy['phylum']
+        if self._strname == self._CLASS:
+            return self.otus[otu].taxonomy['class']
+        if self._strname == self._ORDER:
+            return self.otus[otu].taxonomy['order']
+
+    def set_otu_strname(self, strname):
+        '''This sets the type of name that gets printed for 
+        the OTU. Default is to print the name of the OTU
+
+        Parameters
+        ----------
+        strname : str
+            What to set it to. Options:
+                'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'name'
+        '''
+        if not util.isstr(strname):
+            raise ValueError('`strname` ({}) must be a str'.format(type(strname)))
+        if strname not in ['kingdom', 'phylum', 'class', 'order', 
+            'family', 'genus', 'name']:
+            raise ValueError('`strname` ({}) not recognized'.format(strname))
+        if strname == 'kingdom':
+            self._strname = self._KINGDOM
+        if strname == 'phylum':
+            self._strname = self._PHYLUM
+        if strname == 'class':
+            self._strname = self._CLASS
+        if strname == 'order':
+            self._strname = self._ORDER
+        if strname == 'family':
+            self._strname = self._FAMILY
+        if strname == 'genus':
+            self._strname = self._GENUS
+        if strname == 'name':
+            self._strname = self._NAME
+
+    def set_trace(self, *args, **kwargs):
+        self.coclusters.set_trace(*args, **kwargs)
+        self.n_clusters.set_trace(*args, **kwargs)
+
+    def add_trace(self):
+        self.coclusters.value = self.generate_coclusters()
+        self.coclusters.add_trace()
+        self.n_clusters.add_trace()
+
+
+class _Cluster:
+    '''Class for a single cluster.
+
+    Parameters
+    ----------
+    members : array_like, set
+        - Individual OTU indices that are within the cluster
+    parent : pylab.cluster._ClusterMap
+        - pointer to parent _ClusterMap
+    '''
+    def __init__(self, members, parent):
+        if type(members) == np.ndarray:
+            members = np.squeeze(members).flatten().tolist()
+        if type(members) == list:
+            members = set(members)
+        self.members = members
+        self.id = id(self) # Unique id for class
+        self.size = len(members)
+        self.parent = parent
+                
+    def __str__(self):
+        return 'Cluster {}\n' \
+            '\tmembers: {}\n' \
+            '\tsize: {}'.format(
+                self.id,
+                [self.parent._strname_otu(otu) for otu in self.members],
+                self.size)
+
+    def __contains__(self,otu):
+        '''For the `in` operator
+        '''
+        return otu in self.members
+
+    def __len__(self):
+        return self.size
+
+    def __iter__(self):
+        '''Let c = ClusterBase object.
+        Let c[i] (c.clusters[i]) be this object.
+        This method is useful for doing the command:
+            `for idx in c[i]`
+        That call iterates over every member that this cluster contains
+        '''
+        for otu in self.members:
+            yield otu
+
+    def add(self, otu):
+        '''Add the OTU `otu` to the cluster
+
+        Paramters
+        ---------
+        otu : int
+            This is the index of the OTU that we want to add
+        '''
+        if otu in self.members:
+            return True
+        self.members.add(otu)
+        self.size += 1
+        return True
+
+    def remove(self, otu):
+        '''Returns True if `otu` was deleted from the cluster. Returns False
+        if `otu` was not in the cluster so it could not be deleted.
+
+        Paramters
+        ---------
+        otu : int
+            This is the index of the OTU that we want to remove
+        '''
+        if otu in self.members:
+            self.members.remove(otu)
+            self.size -= 1
+            return True
+        return False
+
+
+class _ClusterProperties:
+    '''Manages the properties associated with the clusters
+    '''
+    def __init__(self):
+        self._d = {}
+        self.signal_when_clusters_change = []
+        self.signal_when_otu_assignment_changes = []
+        self._keys = []
+
+    def __len__(self):
+        return len(self._keys)
+
+    def __getitem__(self, key):
+        return self._d[key]
+
+    def __iter__(self):
+        for a in self._keys:
+            yield self._d[a]
+
+    def add(self, prop):
+        '''Add a property to the list of cluster properties. Additionally, add the property
+        to any of the required lists
+
+        Parameters
+        ----------
+        prop : ClusterProperty
+            ClusterProperty to add
+        '''
+        self._d[prop.id] = prop
+        if prop.signal_when_clusters_change:
+            self.signal_when_clusters_change.append(prop)
+        if prop.signal_when_otu_assignment_changes:
+            self.signal_when_otu_assignment_changes.append(prop)
+        self._keys = list(self._d.keys())
+
+    def toarray(self):
+        '''Make a list of the ClusterProperty's.
+        '''
+        return [self._d[key] for key in self._keys]
+
+    def keys(self):
+        return self._keys
+
+
+class ClusterProperty:
+    '''This is a class that stores the property of a set of clusters. The point
+    of this class to provide methods of signaling to the cluster property when
+    a cluster is added/removed or when the cluster assignment of an OTU changes. 
+    You must inherit this class and implement the `cluster_removed` and 
+    `cluster_added` manually.
+
+    An example of this is the ClusterPerturbation class in pylab.contrib - 
+    when a cluster is added/removed it must change the size of the indicator 
+    object associated with it.
+
+    Parameters
+    ----------
+    clustering : Clustering
+        This is the clustering object
+    signal_when_clusters_change : bool
+        Set this to True if you want to signal this property when the number
+        of clusters change/change cids
+    signal_when_otu_assignment_changes : bool
+        Set to True if you want this property to be signaled when an OTU
+        assignment changes but there is not necessarily a change in the number 
+        of clusters/cluster ids
+    '''
+    def __init__(self, clustering, signal_when_clusters_change,
+        signal_when_otu_assignment_changes):
+        if not isclustering(clustering):
+            raise ValueError('`clustering` ({}) must be a Clustering object'.format(
+                type(clustering)))
+        if not util.isbool(signal_when_clusters_change):
+            raise ValueError('`signal_when_clusters_change` ({}) must be a bool'.format(
+                type(signal_when_clusters_change)))
+        if not util.isbool(signal_when_otu_assignment_changes):
+            raise ValueError('`signal_when_otu_assignment_changes` ({}) must be a bool'.format(
+                type(signal_when_otu_assignment_changes)))
+        self.clustering = clustering
+        self.signal_when_clusters_change = signal_when_clusters_change
+        self.signal_when_otu_assignment_changes = signal_when_otu_assignment_changes
+        self.clustering.properties.add(self)
+
+    def assignments_changed(self):
+        raise NeedToImplementError('User needs to implement this function')
+
+    def clusters_changed(self, cids_added, cids_removed):
+        raise NeedToImplementError('User needs to implement this function')
+
+    def set_signal_when_clusters_change(self, value):
+        '''Switch the signal `signal_when_clusters_change` to `value`
+
+        Paramters
+        ---------
+        value : bool
+            This is what to set the `signal_when_clusters_change` flag to
+        '''
+        if not util.isbool(value):
+            raise ValueError('`value` ({}) must be a bool'.format(
+                type(value)))
+        # Only need to change if they are different
+        if self.signal_when_clusters_change != value:
+            if self.signal_when_clusters_change:
+                # We need to take it out
+                self.clustering.properties.signal_when_clusters_change.remove(self)
+            else:
+                self.clustering.properties.signal_when_clusters_change.append(self)
+        self.signal_when_clusters_change = value
+        self.reset()
+
+    def set_signal_when_otu_assignment_changes(self, value):
+        '''Switch the signal `signal_when_otu_assignment_changes` to `value`
+
+        Paramters
+        ---------
+        value : bool
+            This is what to set the `signal_when_otu_assignment_changes` flag to
+        '''
+        if not util.isbool(value):
+            raise ValueError('`value` ({}) must be a bool'.format(
+                type(value)))
+        # Only need to chagne if they are different
+        if self.signal_when_otu_assignment_changes != value:
+            if self.signal_when_otu_assignment_changes:
+                # We need to take it out
+                self.clustering.properties.signal_when_otu_assignment_changes.remove(self)
+            else:
+                self.clustering.properties.signal_when_otu_assignment_changes.append(self)
+        self.signal_when_otu_assignment_changes = value
+        self.reset()
+
+    def reset(self):
+        '''Call this function after you set the `signal_when_otu_assignment_changes` or
+        `signal_when_clusters_change`.
+        '''
+        raise NeedToImplementError('User needs to implement this function')
+
+
+class ClusterValue(ClusterProperty, Node, Traceable):
+    '''This is an object that has a value per cluster.
+    The value is a dictionary, then there are functions to convert
+    that dictionary into an OTU array or a cluster array.
+    This records the data on an otu-otu basis.
+
+    User nees to implement the signaling methods and reset if necessary
+
+    Paramters
+    ---------
+    clustering : Clustering
+        This is the clustering object you are adding it to
+    signal_when_clusters_change : bool
+        Flag for ClusterProperty
+    signal_when_otu_assignment_changes : bool
+        Flag for ClusterProperty
+    dtype : type
+        This is the datatype to set the output to
+    kwargs : dict
+        These are the extra arguements for Node
+    '''
+    def __init__(self, clustering, signal_when_clusters_change,
+        signal_when_otu_assignment_changes, dtype=None, **kwargs):
+        if dtype is None:
+            dtype = DEFAULT_CLUSTERVALUE_DTYPE
+        Node.__init__(self, **kwargs)
+        self.value = {}
+        self.dtype = dtype
+        ClusterProperty.__init__(self, clustering=clustering,
+            signal_when_clusters_change=signal_when_clusters_change,
+            signal_when_otu_assignment_changes=signal_when_otu_assignment_changes)
+        for cid in self.clustering.order:
+            self.value[cid] = np.nan
+
+    def otu_array(self):
+        '''Converts these values per OTU
+
+        Returns
+        -------
+        np.ndarray((n,), dtype=self.dtype)
+            Array of the values expanded to the OTUs in the overall OTU order
+            specified in OTUSet
+        '''
+        ret = np.zeros(len(self.clustering.otus), dtype=self.dtype)
+        for cluster in self.clustering:
+            oidxs = list(cluster.members)
+            ret[oidxs] = self.value[cluster.id]
+        return ret
+
+    def cluster_array(self):
+        '''Converts the dictionary into a cluster array in the order of the clusters
+
+        Returns
+        -------
+        np.ndarray((n,), dtype=self.dtype)
+            Array of the values expanded for each cluster in the overall cluster order
+        '''
+        return np.asarray([self.value[cid] for cid in self.clustering.order], dtype=self.dtype)
+
+    def add_init_value(self):
+        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
+        when first updating the variable. User should not use this function
+        '''
+        self._init_value = self.otu_array()
+
+    def set_values_from_array(self, values):
+        '''Set the values from an array of the same order as the clusters
+
+        Paramters
+        ---------
+        values : array_like
+            An array of the values
+            Must be the same length as the number of clusters
+        '''
+        if not util.isarray(values):
+            raise ValueError('`values` ({}) must be an array'.format(type(values)))
+        if len(values) != len(self.clustering):
+            raise ValueError('`values` ({}) must be the same length as the number ' \
+                'of clusters ({})'.format(len(values), len(self.clustering)))
+        self.value = {}
+        for cidx, cid in enumerate(self.clustering.order):
+            self.value[cid] = values[cidx]
+
+    def set_trace(self):
+        tracer = self.G.tracer
+        tracer.set_trace(
+            self.name, 
+            shape=(len(self.clustering.otus), ), 
+            dtype=self.dtype)
+        self.ckpt_iter = 0
+        self.sample_iter = 0
+        self.trace = np.full(shape=(tracer.ckpt, len(self.clustering.otus)),
+            dtype=self.dtype, fill_value=np.nan)
+
+    def add_trace(self):
+        '''Adds the current value to the trace on an otu-basis. Writes to disk if
+        local buffer is full
+        '''
+        value = self.otu_array()
+        self.trace[self.ckpt_iter] = value
+        self.ckpt_iter += 1
+        self.sample_iter += 1
+        if self.ckpt_iter == len(self.trace):
+            # We have gotten the largest we can in the local buffer, write to disk
+            self.G.tracer.write_to_disk(name=self.name)
+            self.trace = np.full(shape=(self.G.tracer.ckpt, len(self.clustering.otus)),
+                dtype=self.dtype, fill_value=np.nan)
+            self.ckpt_iter = 0
+
+
+@numba.jit(nopython=True, fastmath=True, cache=True)
+def _generate_coclusters_fast(oidx2cid):
+    '''Generates a cocluster matrix for the current cluster assignment.
+    If two elements are in the same cluster, then the assignment is 1
+    If two elements are in different clusters, then the assignment is 0
+
+    A single element is in the same cluster as itself always, so the assignment
+    for this is always 1 on the diagonal.
+
+    The elemets are in the order of the elements in `oidx2cid`
+
+    Parameters
+    ----------
+    oidx2cid : np.ndarray(shape=(n_otus,), dtype=int)
+        Each index (corresponds to an OTU index) maps to the cluster ID
+
+    Returns
+    -------
+    np.ndarray(shape=(n_otus, n_otus))
+    '''
+    n_otus = len(oidx2cid)
+    ret = np.diag(np.ones(n_otus))
+    for i in range(n_otus):
+        for j in range(n_otus):
+            if i != j:
+                if oidx2cid[i] == oidx2cid[j]:
+                    ret[i,j] = 1
+    return ret
+
+</code></pre>
+  </div>
+
+  </header>
+
+  <section id="section-items">
+
+    <h2 class="section-title" id="header-functions">Functions</h2>
+      
+  <div class="item">
+    <div class="name def" id="pylab.cluster.isclustering">
+    <p>def <span class="ident">isclustering</span>(</p><p>x)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Type check if <code>x</code> is a subclass of Clustering</p>
+<h2>Parameters</h2>
+<p>x : any
+    Returns True if <code>x</code> is a subclass of Clustering</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>x</code> is the correct subtype</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.isclustering', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.isclustering" class="source">
+    <pre><code>def isclustering(x):
+    '''Type check if `x` is a subclass of Clustering
+
+    Parameters
+    ----------
+    x : any
+        Returns True if `x` is a subclass of Clustering
+    
+    Returns
+    -------
+    bool
+        True if `x` is the correct subtype
+    '''
+    return x is not None and issubclass(x.__class__, Clustering)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.cluster.isclusterproperty">
+    <p>def <span class="ident">isclusterproperty</span>(</p><p>x)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Type check if <code>x</code> is a subclass of ClusterProperty</p>
+<h2>Parameters</h2>
+<p>x : any
+    Returns True if <code>x</code> is a subclass of ClusterProperty</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>x</code> is the correct subtype</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.isclusterproperty', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.isclusterproperty" class="source">
+    <pre><code>def isclusterproperty(x):
+    '''Type check if `x` is a subclass of ClusterProperty
+
+    Parameters
+    ----------
+    x : any
+        Returns True if `x` is a subclass of ClusterProperty
+    
+    Returns
+    -------
+    bool
+        True if `x` is the correct subtype
+    '''
+    return x is not None and issubclass(x.__class__, ClusterProperty)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      
+  <div class="item">
+    <div class="name def" id="pylab.cluster.isclustervalue">
+    <p>def <span class="ident">isclustervalue</span>(</p><p>x)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Type check if <code>x</code> is a subclass of ClusterValue</p>
+<h2>Parameters</h2>
+<p>x : any
+    Returns True if <code>x</code> is a subclass of ClusterValue</p>
+<h2>Returns</h2>
+<p>bool
+    True if <code>x</code> is the correct subtype</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.isclustervalue', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.isclustervalue" class="source">
+    <pre><code>def isclustervalue(x):
+    '''Type check if `x` is a subclass of ClusterValue
+
+    Parameters
+    ----------
+    x : any
+        Returns True if `x` is a subclass of ClusterValue
+    
+    Returns
+    -------
+    bool
+        True if `x` is the correct subtype
+    '''
+    return x is not None and issubclass(x.__class__, ClusterValue)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+
+    <h2 class="section-title" id="header-classes">Classes</h2>
+      
+      <div class="item">
+      <p id="pylab.cluster.ClusterProperty" class="name">class <span class="ident">ClusterProperty</span></p>
+      
+  
+    <div class="desc"><p>This is a class that stores the property of a set of clusters. The point
+of this class to provide methods of signaling to the cluster property when
+a cluster is added/removed or when the cluster assignment of an OTU changes. 
+You must inherit this class and implement the <code>cluster_removed</code> and 
+<code>cluster_added</code> manually.</p>
+<p>An example of this is the ClusterPerturbation class in pylab.contrib - 
+when a cluster is added/removed it must change the size of the indicator 
+object associated with it.</p>
+<h2>Parameters</h2>
+<p>clustering : Clustering
+    This is the clustering object
+signal_when_clusters_change : bool
+    Set this to True if you want to signal this property when the number
+    of clusters change/change cids
+signal_when_otu_assignment_changes : bool
+    Set to True if you want this property to be signaled when an OTU
+    assignment changes but there is not necessarily a change in the number 
+    of clusters/cluster ids</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterProperty', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterProperty" class="source">
+    <pre><code>class ClusterProperty:
+    '''This is a class that stores the property of a set of clusters. The point
+    of this class to provide methods of signaling to the cluster property when
+    a cluster is added/removed or when the cluster assignment of an OTU changes. 
+    You must inherit this class and implement the `cluster_removed` and 
+    `cluster_added` manually.
+
+    An example of this is the ClusterPerturbation class in pylab.contrib - 
+    when a cluster is added/removed it must change the size of the indicator 
+    object associated with it.
+
+    Parameters
+    ----------
+    clustering : Clustering
+        This is the clustering object
+    signal_when_clusters_change : bool
+        Set this to True if you want to signal this property when the number
+        of clusters change/change cids
+    signal_when_otu_assignment_changes : bool
+        Set to True if you want this property to be signaled when an OTU
+        assignment changes but there is not necessarily a change in the number 
+        of clusters/cluster ids
+    '''
+    def __init__(self, clustering, signal_when_clusters_change,
+        signal_when_otu_assignment_changes):
+        if not isclustering(clustering):
+            raise ValueError('`clustering` ({}) must be a Clustering object'.format(
+                type(clustering)))
+        if not util.isbool(signal_when_clusters_change):
+            raise ValueError('`signal_when_clusters_change` ({}) must be a bool'.format(
+                type(signal_when_clusters_change)))
+        if not util.isbool(signal_when_otu_assignment_changes):
+            raise ValueError('`signal_when_otu_assignment_changes` ({}) must be a bool'.format(
+                type(signal_when_otu_assignment_changes)))
+        self.clustering = clustering
+        self.signal_when_clusters_change = signal_when_clusters_change
+        self.signal_when_otu_assignment_changes = signal_when_otu_assignment_changes
+        self.clustering.properties.add(self)
+
+    def assignments_changed(self):
+        raise NeedToImplementError('User needs to implement this function')
+
+    def clusters_changed(self, cids_added, cids_removed):
+        raise NeedToImplementError('User needs to implement this function')
+
+    def set_signal_when_clusters_change(self, value):
+        '''Switch the signal `signal_when_clusters_change` to `value`
+
+        Paramters
+        ---------
+        value : bool
+            This is what to set the `signal_when_clusters_change` flag to
+        '''
+        if not util.isbool(value):
+            raise ValueError('`value` ({}) must be a bool'.format(
+                type(value)))
+        # Only need to change if they are different
+        if self.signal_when_clusters_change != value:
+            if self.signal_when_clusters_change:
+                # We need to take it out
+                self.clustering.properties.signal_when_clusters_change.remove(self)
+            else:
+                self.clustering.properties.signal_when_clusters_change.append(self)
+        self.signal_when_clusters_change = value
+        self.reset()
+
+    def set_signal_when_otu_assignment_changes(self, value):
+        '''Switch the signal `signal_when_otu_assignment_changes` to `value`
+
+        Paramters
+        ---------
+        value : bool
+            This is what to set the `signal_when_otu_assignment_changes` flag to
+        '''
+        if not util.isbool(value):
+            raise ValueError('`value` ({}) must be a bool'.format(
+                type(value)))
+        # Only need to chagne if they are different
+        if self.signal_when_otu_assignment_changes != value:
+            if self.signal_when_otu_assignment_changes:
+                # We need to take it out
+                self.clustering.properties.signal_when_otu_assignment_changes.remove(self)
+            else:
+                self.clustering.properties.signal_when_otu_assignment_changes.append(self)
+        self.signal_when_otu_assignment_changes = value
+        self.reset()
+
+    def reset(self):
+        '''Call this function after you set the `signal_when_otu_assignment_changes` or
+        `signal_when_clusters_change`.
+        '''
+        raise NeedToImplementError('User needs to implement this function')
+</code></pre>
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#pylab.cluster.ClusterProperty">ClusterProperty</a></li>
+          <li>builtins.object</li>
+          </ul>
+          <h3>Static methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterProperty.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, clustering, signal_when_clusters_change, signal_when_otu_assignment_changes)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Initialize self.  See help(type(self)) for accurate signature.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterProperty.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterProperty.__init__" class="source">
+    <pre><code>def __init__(self, clustering, signal_when_clusters_change,
+    signal_when_otu_assignment_changes):
+    if not isclustering(clustering):
+        raise ValueError('`clustering` ({}) must be a Clustering object'.format(
+            type(clustering)))
+    if not util.isbool(signal_when_clusters_change):
+        raise ValueError('`signal_when_clusters_change` ({}) must be a bool'.format(
+            type(signal_when_clusters_change)))
+    if not util.isbool(signal_when_otu_assignment_changes):
+        raise ValueError('`signal_when_otu_assignment_changes` ({}) must be a bool'.format(
+            type(signal_when_otu_assignment_changes)))
+    self.clustering = clustering
+    self.signal_when_clusters_change = signal_when_clusters_change
+    self.signal_when_otu_assignment_changes = signal_when_otu_assignment_changes
+    self.clustering.properties.add(self)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterProperty.assignments_changed">
+    <p>def <span class="ident">assignments_changed</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterProperty.assignments_changed', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterProperty.assignments_changed" class="source">
+    <pre><code>def assignments_changed(self):
+    raise NeedToImplementError('User needs to implement this function')
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterProperty.clusters_changed">
+    <p>def <span class="ident">clusters_changed</span>(</p><p>self, cids_added, cids_removed)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterProperty.clusters_changed', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterProperty.clusters_changed" class="source">
+    <pre><code>def clusters_changed(self, cids_added, cids_removed):
+    raise NeedToImplementError('User needs to implement this function')
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterProperty.reset">
+    <p>def <span class="ident">reset</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Call this function after you set the <code>signal_when_otu_assignment_changes</code> or
+<code>signal_when_clusters_change</code>.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterProperty.reset', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterProperty.reset" class="source">
+    <pre><code>def reset(self):
+    '''Call this function after you set the `signal_when_otu_assignment_changes` or
+    `signal_when_clusters_change`.
+    '''
+    raise NeedToImplementError('User needs to implement this function')
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterProperty.set_signal_when_clusters_change">
+    <p>def <span class="ident">set_signal_when_clusters_change</span>(</p><p>self, value)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Switch the signal <code>signal_when_clusters_change</code> to <code>value</code></p>
+<h2>Paramters</h2>
+<p>value : bool
+    This is what to set the <code>signal_when_clusters_change</code> flag to</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterProperty.set_signal_when_clusters_change', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterProperty.set_signal_when_clusters_change" class="source">
+    <pre><code>def set_signal_when_clusters_change(self, value):
+    '''Switch the signal `signal_when_clusters_change` to `value`
+    Paramters
+    ---------
+    value : bool
+        This is what to set the `signal_when_clusters_change` flag to
+    '''
+    if not util.isbool(value):
+        raise ValueError('`value` ({}) must be a bool'.format(
+            type(value)))
+    # Only need to change if they are different
+    if self.signal_when_clusters_change != value:
+        if self.signal_when_clusters_change:
+            # We need to take it out
+            self.clustering.properties.signal_when_clusters_change.remove(self)
+        else:
+            self.clustering.properties.signal_when_clusters_change.append(self)
+    self.signal_when_clusters_change = value
+    self.reset()
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterProperty.set_signal_when_otu_assignment_changes">
+    <p>def <span class="ident">set_signal_when_otu_assignment_changes</span>(</p><p>self, value)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Switch the signal <code>signal_when_otu_assignment_changes</code> to <code>value</code></p>
+<h2>Paramters</h2>
+<p>value : bool
+    This is what to set the <code>signal_when_otu_assignment_changes</code> flag to</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterProperty.set_signal_when_otu_assignment_changes', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterProperty.set_signal_when_otu_assignment_changes" class="source">
+    <pre><code>def set_signal_when_otu_assignment_changes(self, value):
+    '''Switch the signal `signal_when_otu_assignment_changes` to `value`
+    Paramters
+    ---------
+    value : bool
+        This is what to set the `signal_when_otu_assignment_changes` flag to
+    '''
+    if not util.isbool(value):
+        raise ValueError('`value` ({}) must be a bool'.format(
+            type(value)))
+    # Only need to chagne if they are different
+    if self.signal_when_otu_assignment_changes != value:
+        if self.signal_when_otu_assignment_changes:
+            # We need to take it out
+            self.clustering.properties.signal_when_otu_assignment_changes.remove(self)
+        else:
+            self.clustering.properties.signal_when_otu_assignment_changes.append(self)
+    self.signal_when_otu_assignment_changes = value
+    self.reset()
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="pylab.cluster.ClusterProperty.clustering" class="name">var <span class="ident">clustering</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.ClusterProperty.signal_when_clusters_change" class="name">var <span class="ident">signal_when_clusters_change</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.ClusterProperty.signal_when_otu_assignment_changes" class="name">var <span class="ident">signal_when_otu_assignment_changes</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+      </div>
+      </div>
+      
+      <div class="item">
+      <p id="pylab.cluster.ClusterValue" class="name">class <span class="ident">ClusterValue</span></p>
+      
+  
+    <div class="desc"><p>This is an object that has a value per cluster.
+The value is a dictionary, then there are functions to convert
+that dictionary into an OTU array or a cluster array.
+This records the data on an otu-otu basis.</p>
+<p>User nees to implement the signaling methods and reset if necessary</p>
+<h2>Paramters</h2>
+<p>clustering : Clustering
+    This is the clustering object you are adding it to
+signal_when_clusters_change : bool
+    Flag for ClusterProperty
+signal_when_otu_assignment_changes : bool
+    Flag for ClusterProperty
+dtype : type
+    This is the datatype to set the output to
+kwargs : dict
+    These are the extra arguements for Node</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue" class="source">
+    <pre><code>class ClusterValue(ClusterProperty, Node, Traceable):
+    '''This is an object that has a value per cluster.
+    The value is a dictionary, then there are functions to convert
+    that dictionary into an OTU array or a cluster array.
+    This records the data on an otu-otu basis.
+
+    User nees to implement the signaling methods and reset if necessary
+
+    Paramters
+    ---------
+    clustering : Clustering
+        This is the clustering object you are adding it to
+    signal_when_clusters_change : bool
+        Flag for ClusterProperty
+    signal_when_otu_assignment_changes : bool
+        Flag for ClusterProperty
+    dtype : type
+        This is the datatype to set the output to
+    kwargs : dict
+        These are the extra arguements for Node
+    '''
+    def __init__(self, clustering, signal_when_clusters_change,
+        signal_when_otu_assignment_changes, dtype=None, **kwargs):
+        if dtype is None:
+            dtype = DEFAULT_CLUSTERVALUE_DTYPE
+        Node.__init__(self, **kwargs)
+        self.value = {}
+        self.dtype = dtype
+        ClusterProperty.__init__(self, clustering=clustering,
+            signal_when_clusters_change=signal_when_clusters_change,
+            signal_when_otu_assignment_changes=signal_when_otu_assignment_changes)
+        for cid in self.clustering.order:
+            self.value[cid] = np.nan
+
+    def otu_array(self):
+        '''Converts these values per OTU
+
+        Returns
+        -------
+        np.ndarray((n,), dtype=self.dtype)
+            Array of the values expanded to the OTUs in the overall OTU order
+            specified in OTUSet
+        '''
+        ret = np.zeros(len(self.clustering.otus), dtype=self.dtype)
+        for cluster in self.clustering:
+            oidxs = list(cluster.members)
+            ret[oidxs] = self.value[cluster.id]
+        return ret
+
+    def cluster_array(self):
+        '''Converts the dictionary into a cluster array in the order of the clusters
+
+        Returns
+        -------
+        np.ndarray((n,), dtype=self.dtype)
+            Array of the values expanded for each cluster in the overall cluster order
+        '''
+        return np.asarray([self.value[cid] for cid in self.clustering.order], dtype=self.dtype)
+
+    def add_init_value(self):
+        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
+        when first updating the variable. User should not use this function
+        '''
+        self._init_value = self.otu_array()
+
+    def set_values_from_array(self, values):
+        '''Set the values from an array of the same order as the clusters
+
+        Paramters
+        ---------
+        values : array_like
+            An array of the values
+            Must be the same length as the number of clusters
+        '''
+        if not util.isarray(values):
+            raise ValueError('`values` ({}) must be an array'.format(type(values)))
+        if len(values) != len(self.clustering):
+            raise ValueError('`values` ({}) must be the same length as the number ' \
+                'of clusters ({})'.format(len(values), len(self.clustering)))
+        self.value = {}
+        for cidx, cid in enumerate(self.clustering.order):
+            self.value[cid] = values[cidx]
+
+    def set_trace(self):
+        tracer = self.G.tracer
+        tracer.set_trace(
+            self.name, 
+            shape=(len(self.clustering.otus), ), 
+            dtype=self.dtype)
+        self.ckpt_iter = 0
+        self.sample_iter = 0
+        self.trace = np.full(shape=(tracer.ckpt, len(self.clustering.otus)),
+            dtype=self.dtype, fill_value=np.nan)
+
+    def add_trace(self):
+        '''Adds the current value to the trace on an otu-basis. Writes to disk if
+        local buffer is full
+        '''
+        value = self.otu_array()
+        self.trace[self.ckpt_iter] = value
+        self.ckpt_iter += 1
+        self.sample_iter += 1
+        if self.ckpt_iter == len(self.trace):
+            # We have gotten the largest we can in the local buffer, write to disk
+            self.G.tracer.write_to_disk(name=self.name)
+            self.trace = np.full(shape=(self.G.tracer.ckpt, len(self.clustering.otus)),
+                dtype=self.dtype, fill_value=np.nan)
+            self.ckpt_iter = 0
+</code></pre>
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#pylab.cluster.ClusterValue">ClusterValue</a></li>
+          <li><a href="#pylab.cluster.ClusterProperty">ClusterProperty</a></li>
+          <li>pylab.graph.Node</li>
+          <li>pylab.graph.BaseNode</li>
+          <li>pylab.base.Saveable</li>
+          <li>pylab.base.Traceable</li>
+          <li>builtins.object</li>
+          </ul>
+          <h3>Static methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, clustering, signal_when_clusters_change, signal_when_otu_assignment_changes, dtype=None, **kwargs)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Initialize self.  See help(type(self)) for accurate signature.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.__init__" class="source">
+    <pre><code>def __init__(self, clustering, signal_when_clusters_change,
+    signal_when_otu_assignment_changes, dtype=None, **kwargs):
+    if dtype is None:
+        dtype = DEFAULT_CLUSTERVALUE_DTYPE
+    Node.__init__(self, **kwargs)
+    self.value = {}
+    self.dtype = dtype
+    ClusterProperty.__init__(self, clustering=clustering,
+        signal_when_clusters_change=signal_when_clusters_change,
+        signal_when_otu_assignment_changes=signal_when_otu_assignment_changes)
+    for cid in self.clustering.order:
+        self.value[cid] = np.nan
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.add_child">
+    <p>def <span class="ident">add_child</span>(</p><p>self, child)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Adds <code>child</code> as a child to the node
+Also adds self as a parent to <code>child</code></p>
+<h2>Parameters</h2>
+<p>child : Node
+    - node we want to set as a child</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.add_child', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.add_child" class="source">
+    <pre><code>def add_child(self, child):
+    '''Adds `child` as a child to the node
+    Also adds self as a parent to `child`
+    Parameters
+    ----------
+    child : Node
+        - node we want to set as a child
+    '''
+    if not isnode(child):
+        raise ValueError('child ({}) must be a (subclass of) Node'.format( 
+            type(child)))
+    if self.G.id != child.G.id:
+        raise GraphIDError('Attempting to add a child `{}` to `{}` ' \
+            'but they are not in the same graph'.format(self.name, child.name))
+    self.children[child.id] = child
+    child.parents[self.id] = self
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.add_init_value">
+    <p>def <span class="ident">add_init_value</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Set the initialization value. This is called by <code>pylab.inference.BaseMCMC.run</code>
+when first updating the variable. User should not use this function</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.add_init_value', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.add_init_value" class="source">
+    <pre><code>def add_init_value(self):
+    '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
+    when first updating the variable. User should not use this function
+    '''
+    self._init_value = self.otu_array()
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.add_parent">
+    <p>def <span class="ident">add_parent</span>(</p><p>self, parent)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Adds <code>parent</code> as a parent to the node
+Also adds self as a child to <code>parent</code></p>
+<h2>Parameters</h2>
+<p>parent : Node
+    - node we want to set as a parent</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.add_parent', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.add_parent" class="source">
+    <pre><code>def add_parent(self, parent):
+    '''Adds `parent` as a parent to the node
+    Also adds self as a child to `parent`
+    Parameters
+    ----------
+    parent : Node
+        - node we want to set as a parent
+    '''
+    if not isnode(parent):
+        raise ValueError('parent ({}) must be a (subclass of) Node'.format( 
+            type(parent)))
+    if self.G.id != parent.G.id:
+        raise GraphIDError('Attempting to add a parent `{}` to `{}` ' \
+            'but they are not in the same graph'.format(self.name, parent.name))
+    self.parents[parent.id] = parent
+    parent.children[self.id] = self
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.add_prior">
+    <p>def <span class="ident">add_prior</span>(</p><p>self, prior)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Override the name of the passed in distribution <code>prior</code>.</p>
+<h2>Parameters</h2>
+<p>prior : Node
+    - node we want to set as a prior</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.add_prior', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.add_prior" class="source">
+    <pre><code>def add_prior(self, prior):
+    '''Override the name of the passed in distribution `prior`.
+    Parameters
+    ----------
+    prior : Node
+        - node we want to set as a prior
+    '''
+    if not isnode(prior):
+        raise ValueError('prior ({}) must be a (subclass of) Node'.format( 
+            type(prior)))
+    self.add_parent(prior)
+    self.prior = prior
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.add_trace">
+    <p>def <span class="ident">add_trace</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Adds the current value to the trace on an otu-basis. Writes to disk if
+local buffer is full</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.add_trace', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.add_trace" class="source">
+    <pre><code>def add_trace(self):
+    '''Adds the current value to the trace on an otu-basis. Writes to disk if
+    local buffer is full
+    '''
+    value = self.otu_array()
+    self.trace[self.ckpt_iter] = value
+    self.ckpt_iter += 1
+    self.sample_iter += 1
+    if self.ckpt_iter == len(self.trace):
+        # We have gotten the largest we can in the local buffer, write to disk
+        self.G.tracer.write_to_disk(name=self.name)
+        self.trace = np.full(shape=(self.G.tracer.ckpt, len(self.clustering.otus)),
+            dtype=self.dtype, fill_value=np.nan)
+        self.ckpt_iter = 0
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.add_undirected">
+    <p>def <span class="ident">add_undirected</span>(</p><p>self, node)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Adds <code>node</code> as an undirected neighbor to the node
+Does the same for <code>node</code></p>
+<h2>Parameters</h2>
+<p>node : Node
+    - node we want to set as an undirected node</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.add_undirected', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.add_undirected" class="source">
+    <pre><code>def add_undirected(self, node):
+    '''Adds `node` as an undirected neighbor to the node
+    Does the same for `node`
+    Parameters
+    ----------
+    node : Node
+        - node we want to set as an undirected node
+    '''
+    if not isnode(node):
+        raise ValueError('node ({}) must be a (subclass of) Node'.format( 
+            type(node)))
+    if self.G.id != node.G.id:
+        raise GraphIDError('Attempting to add a node `{}` to `{}` ' \
+            'but they are not in the same graph'.format(self.name, node.name))
+    self.undirected[node.id] = node
+    node.undirected[self.id] = self
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.assignments_changed">
+    <p>def <span class="ident">assignments_changed</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.assignments_changed', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.assignments_changed" class="source">
+    <pre><code>def assignments_changed(self):
+    raise NeedToImplementError('User needs to implement this function')
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.cluster_array">
+    <p>def <span class="ident">cluster_array</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Converts the dictionary into a cluster array in the order of the clusters</p>
+<h2>Returns</h2>
+<p>np.ndarray((n,), dtype=self.dtype)
+    Array of the values expanded for each cluster in the overall cluster order</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.cluster_array', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.cluster_array" class="source">
+    <pre><code>def cluster_array(self):
+    '''Converts the dictionary into a cluster array in the order of the clusters
+    Returns
+    -------
+    np.ndarray((n,), dtype=self.dtype)
+        Array of the values expanded for each cluster in the overall cluster order
+    '''
+    return np.asarray([self.value[cid] for cid in self.clustering.order], dtype=self.dtype)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.clusters_changed">
+    <p>def <span class="ident">clusters_changed</span>(</p><p>self, cids_added, cids_removed)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.clusters_changed', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.clusters_changed" class="source">
+    <pre><code>def clusters_changed(self, cids_added, cids_removed):
+    raise NeedToImplementError('User needs to implement this function')
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.delete">
+    <p>def <span class="ident">delete</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Delete itself from the graph</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.delete', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.delete" class="source">
+    <pre><code>def delete(self):
+    '''Delete itself from the graph
+    '''
+    if len(self.parents) > 0:
+        for pid in self.parents:
+            self.G.nodes[pid].children.pop(self.id, None)
+    if len(self.children) > 0:
+        for cid in self.children:
+            self.G.nodes[cid].parents.pop(self.id, None)
+    if len(self.undirected) > 0:
+        for uid in self.undirected:
+            self.G.nodes[uid].undirected.pop(self.id, None)
+    BaseNode.delete(self)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.get_adjacent_keys">
+    <p>def <span class="ident">get_adjacent_keys</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Get the adjacent nodes</p>
+<h2>Returns</h2>
+<p>list(int)
+    A list of all the IDs of the adjacent nodes</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.get_adjacent_keys', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.get_adjacent_keys" class="source">
+    <pre><code>def get_adjacent_keys(self):
+    '''Get the adjacent nodes
+    Returns
+    -------
+    list(int)
+        A list of all the IDs of the adjacent nodes
+    '''
+    return list(self.parents.keys()) + list(self.children.keys())
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.get_iter">
+    <p>def <span class="ident">get_iter</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Get the number of iterations saved to the hdf5 file of the variable</p>
+<h2>Returns</h2>
+<p>int</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.get_iter', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.get_iter" class="source">
+    <pre><code>def get_iter(self):
+    '''Get the number of iterations saved to the hdf5 file of the variable
+    Returns
+    -------
+    int
+    '''
+    return self.G.tracer.get_iter(name=self.name)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.get_trace_from_disk">
+    <p>def <span class="ident">get_trace_from_disk</span>(</p><p>self, *args, **kwargs)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Returns the entire trace (after burnin) writen on the disk. NOTE: This may/may not 
+include the samples in the local buffer trace and could be very large</p>
+<h2>Returns</h2>
+<p>np.ndarray</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.get_trace_from_disk', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.get_trace_from_disk" class="source">
+    <pre><code>def get_trace_from_disk(self, *args, **kwargs):
+    '''Returns the entire trace (after burnin) writen on the disk. NOTE: This may/may not 
+    include the samples in the local buffer trace and could be very large
+    Returns
+    -------
+    np.ndarray
+    '''
+    return self.G.tracer.get_trace(name=self.name, *args, **kwargs)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.otu_array">
+    <p>def <span class="ident">otu_array</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Converts these values per OTU</p>
+<h2>Returns</h2>
+<p>np.ndarray((n,), dtype=self.dtype)
+    Array of the values expanded to the OTUs in the overall OTU order
+    specified in OTUSet</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.otu_array', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.otu_array" class="source">
+    <pre><code>def otu_array(self):
+    '''Converts these values per OTU
+    Returns
+    -------
+    np.ndarray((n,), dtype=self.dtype)
+        Array of the values expanded to the OTUs in the overall OTU order
+        specified in OTUSet
+    '''
+    ret = np.zeros(len(self.clustering.otus), dtype=self.dtype)
+    for cluster in self.clustering:
+        oidxs = list(cluster.members)
+        ret[oidxs] = self.value[cluster.id]
+    return ret
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.overwrite_entire_trace_on_disk">
+    <p>def <span class="ident">overwrite_entire_trace_on_disk</span>(</p><p>self, data, **kwargs)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Overwrites the entire trace of the variable with the given data.</p>
+<h2>Parameters</h2>
+<p>data : np.ndarray
+    Data you are overwriting the trace with.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.overwrite_entire_trace_on_disk', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.overwrite_entire_trace_on_disk" class="source">
+    <pre><code>def overwrite_entire_trace_on_disk(self, data, **kwargs):
+    '''Overwrites the entire trace of the variable with the given data.
+    Parameters
+    ----------
+    data : np.ndarray
+        Data you are overwriting the trace with.
+    '''
+    self.G.tracer.overwrite_entire_trace_on_disk(
+        name=self.name, data=data, dtype=self.dtype, **kwargs)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.reset">
+    <p>def <span class="ident">reset</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Call this function after you set the <code>signal_when_otu_assignment_changes</code> or
+<code>signal_when_clusters_change</code>.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.reset', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.reset" class="source">
+    <pre><code>def reset(self):
+    '''Call this function after you set the `signal_when_otu_assignment_changes` or
+    `signal_when_clusters_change`.
+    '''
+    raise NeedToImplementError('User needs to implement this function')
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.save">
+    <p>def <span class="ident">save</span>(</p><p>self, filename=None)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Pickle the object</p>
+<h2>Paramters</h2>
+<p>filename : str
+    This is the location to store the file. Overrides the location if
+    it is set using <code>pylab.base.Saveable.set_save_location</code>. If None
+    it means that we are using the file location set in 
+    set_location.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.save', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.save" class="source">
+    <pre><code>def save(self, filename=None):
+    '''Pickle the object
+    Paramters
+    ---------
+    filename : str
+        This is the location to store the file. Overrides the location if
+        it is set using `pylab.base.Saveable.set_save_location`. If None
+        it means that we are using the file location set in 
+        set_location. 
+    '''
+    if filename is None:
+        if not hasattr(self, '_save_loc'):
+            raise TypeError('`filename` must be specified if you have not ' \
+                'set the save location')
+        filename = self._save_loc
+    
+    with open(filename, 'wb') as output:  # Overwrites any existing file.
+        pickle.dump(self, output, protocol=pickle.HIGHEST_PROTOCOL)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.set_save_location">
+    <p>def <span class="ident">set_save_location</span>(</p><p>self, filename)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Set the save location for the object</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.set_save_location', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.set_save_location" class="source">
+    <pre><code>def set_save_location(self, filename):
+    '''Set the save location for the object
+    '''
+    if not isstr(filename):
+        raise TypeError('`filename` ({}) must be a str'.format(type(filename)))
+    self._save_loc = filename
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.set_signal_when_clusters_change">
+    <p>def <span class="ident">set_signal_when_clusters_change</span>(</p><p>self, value)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Switch the signal <code>signal_when_clusters_change</code> to <code>value</code></p>
+<h2>Paramters</h2>
+<p>value : bool
+    This is what to set the <code>signal_when_clusters_change</code> flag to</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.set_signal_when_clusters_change', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.set_signal_when_clusters_change" class="source">
+    <pre><code>def set_signal_when_clusters_change(self, value):
+    '''Switch the signal `signal_when_clusters_change` to `value`
+    Paramters
+    ---------
+    value : bool
+        This is what to set the `signal_when_clusters_change` flag to
+    '''
+    if not util.isbool(value):
+        raise ValueError('`value` ({}) must be a bool'.format(
+            type(value)))
+    # Only need to change if they are different
+    if self.signal_when_clusters_change != value:
+        if self.signal_when_clusters_change:
+            # We need to take it out
+            self.clustering.properties.signal_when_clusters_change.remove(self)
+        else:
+            self.clustering.properties.signal_when_clusters_change.append(self)
+    self.signal_when_clusters_change = value
+    self.reset()
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.set_signal_when_otu_assignment_changes">
+    <p>def <span class="ident">set_signal_when_otu_assignment_changes</span>(</p><p>self, value)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Switch the signal <code>signal_when_otu_assignment_changes</code> to <code>value</code></p>
+<h2>Paramters</h2>
+<p>value : bool
+    This is what to set the <code>signal_when_otu_assignment_changes</code> flag to</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.set_signal_when_otu_assignment_changes', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.set_signal_when_otu_assignment_changes" class="source">
+    <pre><code>def set_signal_when_otu_assignment_changes(self, value):
+    '''Switch the signal `signal_when_otu_assignment_changes` to `value`
+    Paramters
+    ---------
+    value : bool
+        This is what to set the `signal_when_otu_assignment_changes` flag to
+    '''
+    if not util.isbool(value):
+        raise ValueError('`value` ({}) must be a bool'.format(
+            type(value)))
+    # Only need to chagne if they are different
+    if self.signal_when_otu_assignment_changes != value:
+        if self.signal_when_otu_assignment_changes:
+            # We need to take it out
+            self.clustering.properties.signal_when_otu_assignment_changes.remove(self)
+        else:
+            self.clustering.properties.signal_when_otu_assignment_changes.append(self)
+    self.signal_when_otu_assignment_changes = value
+    self.reset()
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.set_trace">
+    <p>def <span class="ident">set_trace</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Initialize the trace arrays for the variable in the Tracer object. </p>
+<p>It will initialize a buffer the size of the checkpoint size in Tracer</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.set_trace', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.set_trace" class="source">
+    <pre><code>def set_trace(self):
+    tracer = self.G.tracer
+    tracer.set_trace(
+        self.name, 
+        shape=(len(self.clustering.otus), ), 
+        dtype=self.dtype)
+    self.ckpt_iter = 0
+    self.sample_iter = 0
+    self.trace = np.full(shape=(tracer.ckpt, len(self.clustering.otus)),
+        dtype=self.dtype, fill_value=np.nan)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.set_values_from_array">
+    <p>def <span class="ident">set_values_from_array</span>(</p><p>self, values)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Set the values from an array of the same order as the clusters</p>
+<h2>Paramters</h2>
+<p>values : array_like
+    An array of the values
+    Must be the same length as the number of clusters</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.set_values_from_array', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.set_values_from_array" class="source">
+    <pre><code>def set_values_from_array(self, values):
+    '''Set the values from an array of the same order as the clusters
+    Paramters
+    ---------
+    values : array_like
+        An array of the values
+        Must be the same length as the number of clusters
+    '''
+    if not util.isarray(values):
+        raise ValueError('`values` ({}) must be an array'.format(type(values)))
+    if len(values) != len(self.clustering):
+        raise ValueError('`values` ({}) must be the same length as the number ' \
+            'of clusters ({})'.format(len(values), len(self.clustering)))
+    self.value = {}
+    for cidx, cid in enumerate(self.clustering.order):
+        self.value[cid] = values[cidx]
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="pylab.cluster.ClusterValue.degree" class="name">var <span class="ident">degree</span></p>
+            
+
+            
+  
+    <div class="desc"><p>Get the degree of the node</p>
+<h2>Returns</h2>
+<p>int</p></div>
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.ClusterValue.dtype" class="name">var <span class="ident">dtype</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.ClusterValue.initialization_value" class="name">var <span class="ident">initialization_value</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.ClusterValue.metropolis" class="name">var <span class="ident">metropolis</span></p>
+            
+
+            
+  
+    <div class="desc"><p>Get the metropolis object</p></div>
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.ClusterValue.value" class="name">var <span class="ident">value</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.ClusterValue.load">
+    <p>def <span class="ident">load</span>(</p><p>cls, filename)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Unpickle the object</p>
+<h2>Paramters</h2>
+<p>filename : str
+    This is the location of the file to unpickle</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.ClusterValue.load', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.ClusterValue.load" class="source">
+    <pre><code>@classmethod
+def load(cls, filename):
+    '''Unpickle the object
+    Paramters
+    ---------
+    filename : str
+        This is the location of the file to unpickle
+    '''
+    with open(filename, 'rb') as handle:
+        b = pickle.load(handle)
+    return b
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      </div>
+      </div>
+      
+      <div class="item">
+      <p id="pylab.cluster.Clustering" class="name">class <span class="ident">Clustering</span></p>
+      
+  
+    <div class="desc"><p>Base class for clustering. </p>
+<p>Maps a unique cluster id (int) to a cluster object:
+    members : set
+        Which OTUs are assigned to this cluster (using their 
+        index specified in <code>otus</code>)
+    id : int
+        Python ID of the cluster
+    size : int
+        How many members are in the cluster</p>
+<h2>Accessing and Moving OTUs</h2>
+<p>It is strongly recommended that you only reassign OTUs from one cluster to
+another cluster with the inner functions and do not do it manually by
+directly accessing <code>self.clusters</code>. This is for 2 reasons: </p>
+<p>(1) Calling the inner functions to change the cluster assignment also signals 
+the properties assigned to this clusters so everything is kept synchronized 
+with each other. </p>
+<p>(2) there is no possibility that you can delete an OTU from the system if you 
+use the inner functions. If you were to manually manipulate <code>self.clusters</code> 
+and accidentally delete an OTU, the whole system would crash not know what to 
+do.</p>
+<h2>Properties</h2>
+<p>There might be properties associated with this class. A property is signaled
+when either the cluster assignment of the OTUs change or if a cluster 
+got deleted and/or added. THE PRIORITY OF A CLUSTER BEING DELETED SUPERCEDES
+THE PRIORITY OF AN OTU BEING MOVED.
+Example:
+    clusters = [[1,2,3], [0], [4,5]]
+    If we moved oidx <code>0</code> to a different cluster using <code>move_otu</code>:
+    clusters = [[0,1,2,3], [4,5]]
+    Our signaling will call the function <code>clusters_changed</code>, even though
+    OTU <code>0</code> "effectively" moved.</p>
+<p>Example:
+    clusters = [[1,2,3], [0], [4,5]]
+    If we moved oidx <code>1</code> to cluster [0] <code>move_otu</code>:
+    clusters = [[2,3], [0,1], [4,5]]
+    Our signaling will call the function <code>assignments_changed</code> because 
+    there was no deletion and/or additions of clusters</p>
+<h2>Tracing</h2>
+<p>There are two variables that get traced. (1) <code>coclusters</code> (n_otus x n_otus matrix) 
+records which OTUs were in the same cluster together at each iteration.
+(2) <code>n_clusters</code> (int) records the number of clusters that were at each iteration.</p>
+<h2>Parameters</h2>
+<p>clusters : list(list(int)), None
+    These are the cluster assignments of each OTU. Structure is as follows:
+    The index of the top list indicates the index of the cluster. The elements
+    in the second level lists are the indices of the OTUs in that cluster.
+    Example:
+        &gt;&gt;&gt; clusters = [[0,1,2], [5,3], [4]]
+        OTUs 0,1,2 are in cluster 0
+        OTUs 3,5 are in cluster 1
+        OTU 4 is in cluster 4
+    If it is None, then assume that all of the OTUs are in their own cluster.
+    ALL OTUS MUST BE SPECIFIED AND ONLY SPECIFIED ONCE.
+otus : pylab.base.OTUSet
+    This is the object that stores all of the information of the OTUs. The 
+    ordering of the OTUs in this object are assumed to be the global ordering
+    and that they do not change when this Object is instantiated
+kwargs : dict
+    These are the additional arguments for the Node class (name, Graph, etc.)</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering" class="source">
+    <pre><code>class Clustering(Node, Traceable):
+    '''Base class for clustering. 
+    
+    Maps a unique cluster id (int) to a cluster object:
+        members : set
+            Which OTUs are assigned to this cluster (using their 
+            index specified in `otus`)
+        id : int
+            Python ID of the cluster
+        size : int
+            How many members are in the cluster
+
+    Accessing and Moving OTUs
+    -------------------------
+    It is strongly recommended that you only reassign OTUs from one cluster to
+    another cluster with the inner functions and do not do it manually by
+    directly accessing `self.clusters`. This is for 2 reasons: 
+    
+    (1) Calling the inner functions to change the cluster assignment also signals 
+    the properties assigned to this clusters so everything is kept synchronized 
+    with each other. 
+    
+    (2) there is no possibility that you can delete an OTU from the system if you 
+    use the inner functions. If you were to manually manipulate `self.clusters` 
+    and accidentally delete an OTU, the whole system would crash not know what to 
+    do.
+
+    Properties
+    ----------
+    There might be properties associated with this class. A property is signaled
+    when either the cluster assignment of the OTUs change or if a cluster 
+    got deleted and/or added. THE PRIORITY OF A CLUSTER BEING DELETED SUPERCEDES
+    THE PRIORITY OF AN OTU BEING MOVED.
+    Example:
+        clusters = [[1,2,3], [0], [4,5]]
+        If we moved oidx `0` to a different cluster using `move_otu`:
+        clusters = [[0,1,2,3], [4,5]]
+        Our signaling will call the function `clusters_changed`, even though
+        OTU `0` "effectively" moved.
+
+    Example:
+        clusters = [[1,2,3], [0], [4,5]]
+        If we moved oidx `1` to cluster [0] `move_otu`:
+        clusters = [[2,3], [0,1], [4,5]]
+        Our signaling will call the function `assignments_changed` because 
+        there was no deletion and/or additions of clusters
+
+    Tracing
+    -------
+    There are two variables that get traced. (1) `coclusters` (n_otus x n_otus matrix) 
+    records which OTUs were in the same cluster together at each iteration.
+    (2) `n_clusters` (int) records the number of clusters that were at each iteration.
+    
+    Parameters
+    ----------
+    clusters : list(list(int)), None
+        These are the cluster assignments of each OTU. Structure is as follows:
+        The index of the top list indicates the index of the cluster. The elements
+        in the second level lists are the indices of the OTUs in that cluster.
+        Example:
+            >>> clusters = [[0,1,2], [5,3], [4]]
+            OTUs 0,1,2 are in cluster 0
+            OTUs 3,5 are in cluster 1
+            OTU 4 is in cluster 4
+        If it is None, then assume that all of the OTUs are in their own cluster.
+        ALL OTUS MUST BE SPECIFIED AND ONLY SPECIFIED ONCE.
+    otus : pylab.base.OTUSet
+        This is the object that stores all of the information of the OTUs. The 
+        ordering of the OTUs in this object are assumed to be the global ordering
+        and that they do not change when this Object is instantiated
+    kwargs : dict
+        These are the additional arguments for the Node class (name, Graph, etc.)
+    '''
+    _KINGDOM = 0
+    _PHYLUM = 1
+    _CLASS = 2
+    _ORDER = 3
+    _FAMILY = 4
+    _GENUS = 5
+    _NAME = 6
+
+    def __init__(self, clusters, otus, **kwargs):
+        Node.__init__(self, **kwargs)
+        if not isotuset(otus):
+            raise TypeError('`otus` ({}) must be a pylab.base.OTUSet object'.format( 
+                type(otus)))
+        if clusters is None:
+            clusters = [[i] for i in range(len(otus))]
+        elif not util.isarray(clusters):
+            raise TypeError('`clusters` ({}) must either be None or an array'.format( 
+                type(clusters)))
+        else:
+            there = np.zeros(len(otus), dtype=int)
+            clusters = list(clusters)
+            for ele in clusters:
+                if not type(ele) == list:
+                    raise TypeError('Each element in `clusters` ({}) must be a list'.format(
+                        type(ele)))
+                if not np.all(util.itercheck(ele, util.isint)):
+                    raise TypeError('Each element in each cluster must be an int')
+                for idx in ele:
+                    if there[idx] > 0:
+                        raise ValueError('OTU index `{}` was specified more than once: {}'.format(
+                            idx, clusters))
+                    there[idx] = 1
+            if np.any(there == 0):
+                idxs = np.where(there==0)[0]
+                raise ValueError('OTU indices {} were not specified'.format(idxs))
+        
+        # Everything is good, make the cluster objects
+        self.otus = otus
+        self.clusters = {}
+        for cluster in clusters:
+            temp = _Cluster(members=cluster, parent=self)
+            self.clusters[temp.id] = temp
+        self.order = list(self.clusters.keys())
+        self.properties = _ClusterProperties()
+        self._strname = self._NAME
+        
+        # Maps the otu index to the cluster ID it is assigned to
+        self.oidx2cid = np.zeros(len(self.otus), dtype=int)
+        for oidx in range(len(self.otus)):
+            for cluster in self:
+                if oidx in cluster:
+                    self.oidx2cid[oidx] = cluster.id
+
+        # Maps the cluster ID to the cluster index
+        self.cid2cidx = {}
+        for cidx, cid in enumerate(self.order):
+            self.cid2cidx[cid] = cidx
+
+        # Make the tracing objects
+        self.coclusters = Variable(
+            name='{}_coclusters'.format(self.name),
+            shape=(len(self.otus), len(self.otus)),
+            dtype=bool, G=self.G, value=self.generate_coclusters())
+        self.n_clusters = Variable(
+            name='{}_n_clusters'.format(self.name), dtype=int, 
+            G=self.G, value=len(clusters))
+
+        # Make the inner lists for the properties
+        self._cids_added = []
+        self._cids_removed = []
+
+    def __iter__(self):
+        '''Return each cluster
+        '''
+        for key in self.order:
+            yield self.clusters[key]
+    
+    def __str__(self):
+        s = self.name + ', n_clusters: {}'.format(len(self))
+        for cluster in self:
+            s += '\n{}'.format(str(cluster))
+        return s
+
+    def __len__(self):
+        '''How many clusters
+
+        Returns
+        -------
+        int
+        '''
+        return len(self.order)
+
+    def __contains__(self, cid):
+        return cid in self.clusters
+
+    def __getitem__(self, cid):
+        return self.clusters[cid]
+
+    def keys(self):
+        '''Alias for `self.order`
+
+        Returns
+        -------
+        list(shape=(n_otus), dtype=int)
+        '''
+        return self.order
+
+    def add_init_value(self):
+        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
+        when first updating the variable. User should not use this function
+        '''
+        self._init_value = self.toarray()
+
+    def make_new_cluster_with(self, oidx):
+        '''Create a new cluster with the otu index `oidx`.
+        Removes `oidx` from the previous cluster.
+
+        If you want a custom function to initialize the values and indicator variables
+        for the new cluster, pass in the functions as parameters. If not, it will
+        use the defualt that was used during initialization
+
+        Parameters
+        ----------
+        oidx : int
+            This is the index of the OTU to make a new cluster with
+
+        Returns
+        -------
+        int
+            This is the ID of the new cluster that was created
+        '''
+        old_cid = self.oidx2cid[oidx]
+        self.clusters[old_cid].remove(oidx)
+        if self.clusters[old_cid].size == 0:
+            # Delete the cluster
+            self.clusters.pop(old_cid, None)
+            self._cids_removed.append(old_cid)
+        
+        temp = _Cluster(members=[oidx], parent=self)
+        self.clusters[temp.id] = temp
+        self.oidx2cid[oidx] = temp.id
+        self._cids_added.append(temp.id)
+        self.order = list(self.clusters.keys())
+        self.n_clusters.value = len(self.clusters)
+
+        self.cid2cidx = {}
+        for cidx, cid in enumerate(self.order):
+            self.cid2cidx[cid] = cidx
+
+        # Signal to the cluster properties
+        for prop in self.properties.signal_when_clusters_change:
+            prop.clusters_changed(
+                cids_added=self._cids_added,
+                cids_removed=self._cids_removed)
+        self._cids_added = []
+        self._cids_removed = []
+
+        return temp.id
+
+    def move_otu(self, oidx, cid):
+        '''Move `oidx` to cluster id `cid`. If `cid` does not exist, then we 
+        will create a new cluster.
+
+        Paramters
+        ---------
+        oidx : int
+            This is the index of the OTU to move clusters
+        cid : int
+            This is the Cluster ID to move `oidx` to
+
+        Returns
+        -------
+        int
+            This is the cluster ID it was moved to
+        '''
+        if cid not in self.clusters:
+            return self.make_new_cluster_with(oidx)
+        curr_cid = self.oidx2cid[oidx]
+        if cid == curr_cid:
+            # Do nothing
+            return cid
+        
+        self.clusters[curr_cid].remove(oidx)
+        old_cluster_deleted = False
+        if self.clusters[curr_cid].size == 0:
+            old_cluster_deleted = True
+            self.clusters.pop(curr_cid, None)
+            self._cids_removed.append(curr_cid)
+
+        self.clusters[cid].add(oidx)
+        self.oidx2cid[oidx] = cid
+        self.order = list(self.clusters.keys())
+        self.cid2cidx = {}
+        for cidx, cid in enumerate(self.order):
+            self.cid2cidx[cid] = cidx
+        self.n_clusters.value = len(self)
+
+        if old_cluster_deleted:
+            # Signal `clusters_changed`
+            for prop in self.properties.signal_when_clusters_change:
+                prop.clusters_changed(
+                    cids_added=[],
+                    cids_removed=self._cids_removed)
+        else:
+            # Signal `assignments_changed`
+            for prop in self.properties.signal_when_otu_assignment_changes:
+                prop.assignments_changed()
+
+        self._cids_removed = []
+        self._cids_added = []
+        return cid
+        
+    def merge_clusters(self, cid1, cid2):
+        raise NotImplementedError('Not Implemented')
+
+    def split_cluster(self, cid, members1, members2):
+        raise NotImplementedError('Not Implemented')
+
+    def generate_coclusters(self):
+        return _generate_coclusters_fast(oidx2cid=self.oidx2cid)
+    
+    def toarray(self):
+        '''Converts clusters into array format:
+        clusters = [clus1, ..., clusN],
+            clusters{i} = [otu_i1, ..., otu_iM]
+        each clusters{i} is a list of indices that are in that cluster
+
+        This is the same format was the input parameter for `__init__`
+        
+        Returns
+        -------
+        list
+            This is the array of values with the correct order 
+        '''
+        ret = []
+        for cluster in self:
+            ret.append(list(cluster.members))
+        return ret
+
+    def generate_cluster_assignments_posthoc(self, n_clusters='mode', linkage='average',
+        set_as_value=False):
+        '''Once the inference is complete, compute the clusters posthoc using
+        sklearn's AgglomerativeClustering function with distance matrix being
+        1 - cocluster matrix (we subtrace the cocluster matrix from 1 because
+        the cocluster matrix describes similarity, not distance).
+
+        Parameters
+        ----------
+        n_clusters : str, int, callable, Optional
+            This specifies the number of clusters that are used during
+            Agglomerative clustering.
+            If `n_clusters` is of type int, it will use that number as the number of
+            clusters.
+            If `n_clusters` is of type str, it calculates the number of clusters
+            based on the trace for the number of clusters (self.n_clusters_trace).
+            Possible calculation types are:
+                * 'median', 'mode', and 'mean'.
+            If `n_clusters` is callable, it will calculate n given the trace of n_clusters
+            Default is 'mode'.
+        linkage : str, Optional
+            Which linkage criterion to use. Determines which distance to use
+            between sets of observation. The AgglomerativeClustering algorithm
+            will merge the pairs of cluster that minimize the linkage criterion.
+            Possible types:
+        set_as_value : bool
+            If True then set the result as the value of the clustering object
+        
+        Returns
+        -------
+        np.ndarray(size=(n_otus,), dtype=int)
+            Each value is the cluster assignment for index i
+        '''
+        trace = self.n_clusters.get_trace_from_disk()
+        if callable(n_clusters):
+            n = n_clusters(trace)
+        elif type(n_clusters) == int:
+            n = n_clusters
+        elif type(n_clusters) == str:
+            if n_clusters == 'mode':
+                n = scipy.stats.mode(trace)[0][0]
+            elif n_clusters == 'mean':
+                n = np.mean(trace)
+            elif n_clusters == 'median':
+                n = np.median(trace)
+            else:
+                raise ValueError('`n_clusters` ({}) not recognized. Valid inputs are ' \
+                    '`mode`, `mean`, and `median`.'.format(n_clusters))
+        else:
+            raise ValueError('Type `n_clusters` ({}) not recognized. Must be of '\
+                'type `str`, `int`, or callable.'.format(type(n_clusters)))
+        if not util.isbool(set_as_value):
+            raise TypeError('`set_as_value` ({}) must be a bool'.format(type(set_as_value)))
+
+        A = summary(self.coclusters)['mean']
+        A = 1 - A
+        logging.info('Number of clusters: {}'.format(int(n)))
+        c = AgglomerativeClustering(
+            n_clusters=int(n),
+            affinity='precomputed',
+            linkage=linkage)
+        ret = c.fit_predict(A)
+        if set_as_value:
+            ca = {}
+            for idx, cidx in enumerate(ca):
+                if cidx in ca:
+                    ca[cidx].append(idx)
+                else:
+                    ca[cidx] = [idx]
+            for cluster in ca:
+                cid = self.make_new_cluster_with(oidx=cluster[0])
+                for oidx in cluster[1:]:
+                    self.move_otu(oidx=oidx, cid=cid)
+        return ret
+
+    def _strname_otu(self, otu):
+        if self._strname == self._NAME:
+            return self.otus[otu].name
+        if self._strname == self._GENUS:
+            return self.otus[otu].taxonomy['genus']
+        if self._strname == self._FAMILY:
+            return self.otus[otu].taxonomy['family']
+        if self._strname == self._KINGDOM:
+            return self.otus[otu].taxonomy['kingdom']
+        if self._strname == self._PHYLUM:
+            return self.otus[otu].taxonomy['phylum']
+        if self._strname == self._CLASS:
+            return self.otus[otu].taxonomy['class']
+        if self._strname == self._ORDER:
+            return self.otus[otu].taxonomy['order']
+
+    def set_otu_strname(self, strname):
+        '''This sets the type of name that gets printed for 
+        the OTU. Default is to print the name of the OTU
+
+        Parameters
+        ----------
+        strname : str
+            What to set it to. Options:
+                'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'name'
+        '''
+        if not util.isstr(strname):
+            raise ValueError('`strname` ({}) must be a str'.format(type(strname)))
+        if strname not in ['kingdom', 'phylum', 'class', 'order', 
+            'family', 'genus', 'name']:
+            raise ValueError('`strname` ({}) not recognized'.format(strname))
+        if strname == 'kingdom':
+            self._strname = self._KINGDOM
+        if strname == 'phylum':
+            self._strname = self._PHYLUM
+        if strname == 'class':
+            self._strname = self._CLASS
+        if strname == 'order':
+            self._strname = self._ORDER
+        if strname == 'family':
+            self._strname = self._FAMILY
+        if strname == 'genus':
+            self._strname = self._GENUS
+        if strname == 'name':
+            self._strname = self._NAME
+
+    def set_trace(self, *args, **kwargs):
+        self.coclusters.set_trace(*args, **kwargs)
+        self.n_clusters.set_trace(*args, **kwargs)
+
+    def add_trace(self):
+        self.coclusters.value = self.generate_coclusters()
+        self.coclusters.add_trace()
+        self.n_clusters.add_trace()
+</code></pre>
+  </div>
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#pylab.cluster.Clustering">Clustering</a></li>
+          <li>pylab.graph.Node</li>
+          <li>pylab.graph.BaseNode</li>
+          <li>pylab.base.Saveable</li>
+          <li>pylab.base.Traceable</li>
+          <li>builtins.object</li>
+          </ul>
+          <h3>Static methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.__init__">
+    <p>def <span class="ident">__init__</span>(</p><p>self, clusters, otus, **kwargs)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Initialize self.  See help(type(self)) for accurate signature.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.__init__', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.__init__" class="source">
+    <pre><code>def __init__(self, clusters, otus, **kwargs):
+    Node.__init__(self, **kwargs)
+    if not isotuset(otus):
+        raise TypeError('`otus` ({}) must be a pylab.base.OTUSet object'.format( 
+            type(otus)))
+    if clusters is None:
+        clusters = [[i] for i in range(len(otus))]
+    elif not util.isarray(clusters):
+        raise TypeError('`clusters` ({}) must either be None or an array'.format( 
+            type(clusters)))
+    else:
+        there = np.zeros(len(otus), dtype=int)
+        clusters = list(clusters)
+        for ele in clusters:
+            if not type(ele) == list:
+                raise TypeError('Each element in `clusters` ({}) must be a list'.format(
+                    type(ele)))
+            if not np.all(util.itercheck(ele, util.isint)):
+                raise TypeError('Each element in each cluster must be an int')
+            for idx in ele:
+                if there[idx] > 0:
+                    raise ValueError('OTU index `{}` was specified more than once: {}'.format(
+                        idx, clusters))
+                there[idx] = 1
+        if np.any(there == 0):
+            idxs = np.where(there==0)[0]
+            raise ValueError('OTU indices {} were not specified'.format(idxs))
+    
+    # Everything is good, make the cluster objects
+    self.otus = otus
+    self.clusters = {}
+    for cluster in clusters:
+        temp = _Cluster(members=cluster, parent=self)
+        self.clusters[temp.id] = temp
+    self.order = list(self.clusters.keys())
+    self.properties = _ClusterProperties()
+    self._strname = self._NAME
+    
+    # Maps the otu index to the cluster ID it is assigned to
+    self.oidx2cid = np.zeros(len(self.otus), dtype=int)
+    for oidx in range(len(self.otus)):
+        for cluster in self:
+            if oidx in cluster:
+                self.oidx2cid[oidx] = cluster.id
+    # Maps the cluster ID to the cluster index
+    self.cid2cidx = {}
+    for cidx, cid in enumerate(self.order):
+        self.cid2cidx[cid] = cidx
+    # Make the tracing objects
+    self.coclusters = Variable(
+        name='{}_coclusters'.format(self.name),
+        shape=(len(self.otus), len(self.otus)),
+        dtype=bool, G=self.G, value=self.generate_coclusters())
+    self.n_clusters = Variable(
+        name='{}_n_clusters'.format(self.name), dtype=int, 
+        G=self.G, value=len(clusters))
+    # Make the inner lists for the properties
+    self._cids_added = []
+    self._cids_removed = []
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.add_child">
+    <p>def <span class="ident">add_child</span>(</p><p>self, child)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Adds <code>child</code> as a child to the node
+Also adds self as a parent to <code>child</code></p>
+<h2>Parameters</h2>
+<p>child : Node
+    - node we want to set as a child</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.add_child', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.add_child" class="source">
+    <pre><code>def add_child(self, child):
+    '''Adds `child` as a child to the node
+    Also adds self as a parent to `child`
+    Parameters
+    ----------
+    child : Node
+        - node we want to set as a child
+    '''
+    if not isnode(child):
+        raise ValueError('child ({}) must be a (subclass of) Node'.format( 
+            type(child)))
+    if self.G.id != child.G.id:
+        raise GraphIDError('Attempting to add a child `{}` to `{}` ' \
+            'but they are not in the same graph'.format(self.name, child.name))
+    self.children[child.id] = child
+    child.parents[self.id] = self
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.add_init_value">
+    <p>def <span class="ident">add_init_value</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Set the initialization value. This is called by <code>pylab.inference.BaseMCMC.run</code>
+when first updating the variable. User should not use this function</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.add_init_value', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.add_init_value" class="source">
+    <pre><code>def add_init_value(self):
+    '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
+    when first updating the variable. User should not use this function
+    '''
+    self._init_value = self.toarray()
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.add_parent">
+    <p>def <span class="ident">add_parent</span>(</p><p>self, parent)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Adds <code>parent</code> as a parent to the node
+Also adds self as a child to <code>parent</code></p>
+<h2>Parameters</h2>
+<p>parent : Node
+    - node we want to set as a parent</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.add_parent', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.add_parent" class="source">
+    <pre><code>def add_parent(self, parent):
+    '''Adds `parent` as a parent to the node
+    Also adds self as a child to `parent`
+    Parameters
+    ----------
+    parent : Node
+        - node we want to set as a parent
+    '''
+    if not isnode(parent):
+        raise ValueError('parent ({}) must be a (subclass of) Node'.format( 
+            type(parent)))
+    if self.G.id != parent.G.id:
+        raise GraphIDError('Attempting to add a parent `{}` to `{}` ' \
+            'but they are not in the same graph'.format(self.name, parent.name))
+    self.parents[parent.id] = parent
+    parent.children[self.id] = self
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.add_prior">
+    <p>def <span class="ident">add_prior</span>(</p><p>self, prior)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Override the name of the passed in distribution <code>prior</code>.</p>
+<h2>Parameters</h2>
+<p>prior : Node
+    - node we want to set as a prior</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.add_prior', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.add_prior" class="source">
+    <pre><code>def add_prior(self, prior):
+    '''Override the name of the passed in distribution `prior`.
+    Parameters
+    ----------
+    prior : Node
+        - node we want to set as a prior
+    '''
+    if not isnode(prior):
+        raise ValueError('prior ({}) must be a (subclass of) Node'.format( 
+            type(prior)))
+    self.add_parent(prior)
+    self.prior = prior
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.add_trace">
+    <p>def <span class="ident">add_trace</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Adds the current value to the trace. If the buffer is full
+it will end it to disk</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.add_trace', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.add_trace" class="source">
+    <pre><code>def add_trace(self):
+    self.coclusters.value = self.generate_coclusters()
+    self.coclusters.add_trace()
+    self.n_clusters.add_trace()
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.add_undirected">
+    <p>def <span class="ident">add_undirected</span>(</p><p>self, node)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Adds <code>node</code> as an undirected neighbor to the node
+Does the same for <code>node</code></p>
+<h2>Parameters</h2>
+<p>node : Node
+    - node we want to set as an undirected node</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.add_undirected', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.add_undirected" class="source">
+    <pre><code>def add_undirected(self, node):
+    '''Adds `node` as an undirected neighbor to the node
+    Does the same for `node`
+    Parameters
+    ----------
+    node : Node
+        - node we want to set as an undirected node
+    '''
+    if not isnode(node):
+        raise ValueError('node ({}) must be a (subclass of) Node'.format( 
+            type(node)))
+    if self.G.id != node.G.id:
+        raise GraphIDError('Attempting to add a node `{}` to `{}` ' \
+            'but they are not in the same graph'.format(self.name, node.name))
+    self.undirected[node.id] = node
+    node.undirected[self.id] = self
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.delete">
+    <p>def <span class="ident">delete</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Delete itself from the graph</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.delete', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.delete" class="source">
+    <pre><code>def delete(self):
+    '''Delete itself from the graph
+    '''
+    if len(self.parents) > 0:
+        for pid in self.parents:
+            self.G.nodes[pid].children.pop(self.id, None)
+    if len(self.children) > 0:
+        for cid in self.children:
+            self.G.nodes[cid].parents.pop(self.id, None)
+    if len(self.undirected) > 0:
+        for uid in self.undirected:
+            self.G.nodes[uid].undirected.pop(self.id, None)
+    BaseNode.delete(self)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.generate_cluster_assignments_posthoc">
+    <p>def <span class="ident">generate_cluster_assignments_posthoc</span>(</p><p>self, n_clusters=&#39;mode&#39;, linkage=&#39;average&#39;, set_as_value=False)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Once the inference is complete, compute the clusters posthoc using
+sklearn's AgglomerativeClustering function with distance matrix being
+1 - cocluster matrix (we subtrace the cocluster matrix from 1 because
+the cocluster matrix describes similarity, not distance).</p>
+<h2>Parameters</h2>
+<p>n_clusters : str, int, callable, Optional
+    This specifies the number of clusters that are used during
+    Agglomerative clustering.
+    If <code>n_clusters</code> is of type int, it will use that number as the number of
+    clusters.
+    If <code>n_clusters</code> is of type str, it calculates the number of clusters
+    based on the trace for the number of clusters (self.n_clusters_trace).
+    Possible calculation types are:
+        * 'median', 'mode', and 'mean'.
+    If <code>n_clusters</code> is callable, it will calculate n given the trace of n_clusters
+    Default is 'mode'.
+linkage : str, Optional
+    Which linkage criterion to use. Determines which distance to use
+    between sets of observation. The AgglomerativeClustering algorithm
+    will merge the pairs of cluster that minimize the linkage criterion.
+    Possible types:
+set_as_value : bool
+    If True then set the result as the value of the clustering object</p>
+<h2>Returns</h2>
+<p>np.ndarray(size=(n_otus,), dtype=int)
+    Each value is the cluster assignment for index i</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.generate_cluster_assignments_posthoc', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.generate_cluster_assignments_posthoc" class="source">
+    <pre><code>def generate_cluster_assignments_posthoc(self, n_clusters='mode', linkage='average',
+    set_as_value=False):
+    '''Once the inference is complete, compute the clusters posthoc using
+    sklearn's AgglomerativeClustering function with distance matrix being
+    1 - cocluster matrix (we subtrace the cocluster matrix from 1 because
+    the cocluster matrix describes similarity, not distance).
+    Parameters
+    ----------
+    n_clusters : str, int, callable, Optional
+        This specifies the number of clusters that are used during
+        Agglomerative clustering.
+        If `n_clusters` is of type int, it will use that number as the number of
+        clusters.
+        If `n_clusters` is of type str, it calculates the number of clusters
+        based on the trace for the number of clusters (self.n_clusters_trace).
+        Possible calculation types are:
+            * 'median', 'mode', and 'mean'.
+        If `n_clusters` is callable, it will calculate n given the trace of n_clusters
+        Default is 'mode'.
+    linkage : str, Optional
+        Which linkage criterion to use. Determines which distance to use
+        between sets of observation. The AgglomerativeClustering algorithm
+        will merge the pairs of cluster that minimize the linkage criterion.
+        Possible types:
+    set_as_value : bool
+        If True then set the result as the value of the clustering object
+    
+    Returns
+    -------
+    np.ndarray(size=(n_otus,), dtype=int)
+        Each value is the cluster assignment for index i
+    '''
+    trace = self.n_clusters.get_trace_from_disk()
+    if callable(n_clusters):
+        n = n_clusters(trace)
+    elif type(n_clusters) == int:
+        n = n_clusters
+    elif type(n_clusters) == str:
+        if n_clusters == 'mode':
+            n = scipy.stats.mode(trace)[0][0]
+        elif n_clusters == 'mean':
+            n = np.mean(trace)
+        elif n_clusters == 'median':
+            n = np.median(trace)
+        else:
+            raise ValueError('`n_clusters` ({}) not recognized. Valid inputs are ' \
+                '`mode`, `mean`, and `median`.'.format(n_clusters))
+    else:
+        raise ValueError('Type `n_clusters` ({}) not recognized. Must be of '\
+            'type `str`, `int`, or callable.'.format(type(n_clusters)))
+    if not util.isbool(set_as_value):
+        raise TypeError('`set_as_value` ({}) must be a bool'.format(type(set_as_value)))
+    A = summary(self.coclusters)['mean']
+    A = 1 - A
+    logging.info('Number of clusters: {}'.format(int(n)))
+    c = AgglomerativeClustering(
+        n_clusters=int(n),
+        affinity='precomputed',
+        linkage=linkage)
+    ret = c.fit_predict(A)
+    if set_as_value:
+        ca = {}
+        for idx, cidx in enumerate(ca):
+            if cidx in ca:
+                ca[cidx].append(idx)
+            else:
+                ca[cidx] = [idx]
+        for cluster in ca:
+            cid = self.make_new_cluster_with(oidx=cluster[0])
+            for oidx in cluster[1:]:
+                self.move_otu(oidx=oidx, cid=cid)
+    return ret
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.generate_coclusters">
+    <p>def <span class="ident">generate_coclusters</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.generate_coclusters', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.generate_coclusters" class="source">
+    <pre><code>def generate_coclusters(self):
+    return _generate_coclusters_fast(oidx2cid=self.oidx2cid)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.get_adjacent_keys">
+    <p>def <span class="ident">get_adjacent_keys</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Get the adjacent nodes</p>
+<h2>Returns</h2>
+<p>list(int)
+    A list of all the IDs of the adjacent nodes</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.get_adjacent_keys', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.get_adjacent_keys" class="source">
+    <pre><code>def get_adjacent_keys(self):
+    '''Get the adjacent nodes
+    Returns
+    -------
+    list(int)
+        A list of all the IDs of the adjacent nodes
+    '''
+    return list(self.parents.keys()) + list(self.children.keys())
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.get_iter">
+    <p>def <span class="ident">get_iter</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Get the number of iterations saved to the hdf5 file of the variable</p>
+<h2>Returns</h2>
+<p>int</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.get_iter', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.get_iter" class="source">
+    <pre><code>def get_iter(self):
+    '''Get the number of iterations saved to the hdf5 file of the variable
+    Returns
+    -------
+    int
+    '''
+    return self.G.tracer.get_iter(name=self.name)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.get_trace_from_disk">
+    <p>def <span class="ident">get_trace_from_disk</span>(</p><p>self, *args, **kwargs)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Returns the entire trace (after burnin) writen on the disk. NOTE: This may/may not 
+include the samples in the local buffer trace and could be very large</p>
+<h2>Returns</h2>
+<p>np.ndarray</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.get_trace_from_disk', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.get_trace_from_disk" class="source">
+    <pre><code>def get_trace_from_disk(self, *args, **kwargs):
+    '''Returns the entire trace (after burnin) writen on the disk. NOTE: This may/may not 
+    include the samples in the local buffer trace and could be very large
+    Returns
+    -------
+    np.ndarray
+    '''
+    return self.G.tracer.get_trace(name=self.name, *args, **kwargs)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.keys">
+    <p>def <span class="ident">keys</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Alias for <code>self.order</code></p>
+<h2>Returns</h2>
+<p>list(shape=(n_otus), dtype=int)</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.keys', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.keys" class="source">
+    <pre><code>def keys(self):
+    '''Alias for `self.order`
+    Returns
+    -------
+    list(shape=(n_otus), dtype=int)
+    '''
+    return self.order
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.make_new_cluster_with">
+    <p>def <span class="ident">make_new_cluster_with</span>(</p><p>self, oidx)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Create a new cluster with the otu index <code>oidx</code>.
+Removes <code>oidx</code> from the previous cluster.</p>
+<p>If you want a custom function to initialize the values and indicator variables
+for the new cluster, pass in the functions as parameters. If not, it will
+use the defualt that was used during initialization</p>
+<h2>Parameters</h2>
+<p>oidx : int
+    This is the index of the OTU to make a new cluster with</p>
+<h2>Returns</h2>
+<p>int
+    This is the ID of the new cluster that was created</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.make_new_cluster_with', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.make_new_cluster_with" class="source">
+    <pre><code>def make_new_cluster_with(self, oidx):
+    '''Create a new cluster with the otu index `oidx`.
+    Removes `oidx` from the previous cluster.
+    If you want a custom function to initialize the values and indicator variables
+    for the new cluster, pass in the functions as parameters. If not, it will
+    use the defualt that was used during initialization
+    Parameters
+    ----------
+    oidx : int
+        This is the index of the OTU to make a new cluster with
+    Returns
+    -------
+    int
+        This is the ID of the new cluster that was created
+    '''
+    old_cid = self.oidx2cid[oidx]
+    self.clusters[old_cid].remove(oidx)
+    if self.clusters[old_cid].size == 0:
+        # Delete the cluster
+        self.clusters.pop(old_cid, None)
+        self._cids_removed.append(old_cid)
+    
+    temp = _Cluster(members=[oidx], parent=self)
+    self.clusters[temp.id] = temp
+    self.oidx2cid[oidx] = temp.id
+    self._cids_added.append(temp.id)
+    self.order = list(self.clusters.keys())
+    self.n_clusters.value = len(self.clusters)
+    self.cid2cidx = {}
+    for cidx, cid in enumerate(self.order):
+        self.cid2cidx[cid] = cidx
+    # Signal to the cluster properties
+    for prop in self.properties.signal_when_clusters_change:
+        prop.clusters_changed(
+            cids_added=self._cids_added,
+            cids_removed=self._cids_removed)
+    self._cids_added = []
+    self._cids_removed = []
+    return temp.id
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.merge_clusters">
+    <p>def <span class="ident">merge_clusters</span>(</p><p>self, cid1, cid2)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.merge_clusters', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.merge_clusters" class="source">
+    <pre><code>def merge_clusters(self, cid1, cid2):
+    raise NotImplementedError('Not Implemented')
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.move_otu">
+    <p>def <span class="ident">move_otu</span>(</p><p>self, oidx, cid)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Move <code>oidx</code> to cluster id <code>cid</code>. If <code>cid</code> does not exist, then we 
+will create a new cluster.</p>
+<h2>Paramters</h2>
+<p>oidx : int
+    This is the index of the OTU to move clusters
+cid : int
+    This is the Cluster ID to move <code>oidx</code> to</p>
+<h2>Returns</h2>
+<p>int
+    This is the cluster ID it was moved to</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.move_otu', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.move_otu" class="source">
+    <pre><code>def move_otu(self, oidx, cid):
+    '''Move `oidx` to cluster id `cid`. If `cid` does not exist, then we 
+    will create a new cluster.
+    Paramters
+    ---------
+    oidx : int
+        This is the index of the OTU to move clusters
+    cid : int
+        This is the Cluster ID to move `oidx` to
+    Returns
+    -------
+    int
+        This is the cluster ID it was moved to
+    '''
+    if cid not in self.clusters:
+        return self.make_new_cluster_with(oidx)
+    curr_cid = self.oidx2cid[oidx]
+    if cid == curr_cid:
+        # Do nothing
+        return cid
+    
+    self.clusters[curr_cid].remove(oidx)
+    old_cluster_deleted = False
+    if self.clusters[curr_cid].size == 0:
+        old_cluster_deleted = True
+        self.clusters.pop(curr_cid, None)
+        self._cids_removed.append(curr_cid)
+    self.clusters[cid].add(oidx)
+    self.oidx2cid[oidx] = cid
+    self.order = list(self.clusters.keys())
+    self.cid2cidx = {}
+    for cidx, cid in enumerate(self.order):
+        self.cid2cidx[cid] = cidx
+    self.n_clusters.value = len(self)
+    if old_cluster_deleted:
+        # Signal `clusters_changed`
+        for prop in self.properties.signal_when_clusters_change:
+            prop.clusters_changed(
+                cids_added=[],
+                cids_removed=self._cids_removed)
+    else:
+        # Signal `assignments_changed`
+        for prop in self.properties.signal_when_otu_assignment_changes:
+            prop.assignments_changed()
+    self._cids_removed = []
+    self._cids_added = []
+    return cid
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.overwrite_entire_trace_on_disk">
+    <p>def <span class="ident">overwrite_entire_trace_on_disk</span>(</p><p>self, data, **kwargs)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Overwrites the entire trace of the variable with the given data.</p>
+<h2>Parameters</h2>
+<p>data : np.ndarray
+    Data you are overwriting the trace with.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.overwrite_entire_trace_on_disk', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.overwrite_entire_trace_on_disk" class="source">
+    <pre><code>def overwrite_entire_trace_on_disk(self, data, **kwargs):
+    '''Overwrites the entire trace of the variable with the given data.
+    Parameters
+    ----------
+    data : np.ndarray
+        Data you are overwriting the trace with.
+    '''
+    self.G.tracer.overwrite_entire_trace_on_disk(
+        name=self.name, data=data, dtype=self.dtype, **kwargs)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.save">
+    <p>def <span class="ident">save</span>(</p><p>self, filename=None)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Pickle the object</p>
+<h2>Paramters</h2>
+<p>filename : str
+    This is the location to store the file. Overrides the location if
+    it is set using <code>pylab.base.Saveable.set_save_location</code>. If None
+    it means that we are using the file location set in 
+    set_location.</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.save', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.save" class="source">
+    <pre><code>def save(self, filename=None):
+    '''Pickle the object
+    Paramters
+    ---------
+    filename : str
+        This is the location to store the file. Overrides the location if
+        it is set using `pylab.base.Saveable.set_save_location`. If None
+        it means that we are using the file location set in 
+        set_location. 
+    '''
+    if filename is None:
+        if not hasattr(self, '_save_loc'):
+            raise TypeError('`filename` must be specified if you have not ' \
+                'set the save location')
+        filename = self._save_loc
+    
+    with open(filename, 'wb') as output:  # Overwrites any existing file.
+        pickle.dump(self, output, protocol=pickle.HIGHEST_PROTOCOL)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.set_otu_strname">
+    <p>def <span class="ident">set_otu_strname</span>(</p><p>self, strname)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>This sets the type of name that gets printed for 
+the OTU. Default is to print the name of the OTU</p>
+<h2>Parameters</h2>
+<p>strname : str
+    What to set it to. Options:
+        'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'name'</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.set_otu_strname', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.set_otu_strname" class="source">
+    <pre><code>def set_otu_strname(self, strname):
+    '''This sets the type of name that gets printed for 
+    the OTU. Default is to print the name of the OTU
+    Parameters
+    ----------
+    strname : str
+        What to set it to. Options:
+            'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'name'
+    '''
+    if not util.isstr(strname):
+        raise ValueError('`strname` ({}) must be a str'.format(type(strname)))
+    if strname not in ['kingdom', 'phylum', 'class', 'order', 
+        'family', 'genus', 'name']:
+        raise ValueError('`strname` ({}) not recognized'.format(strname))
+    if strname == 'kingdom':
+        self._strname = self._KINGDOM
+    if strname == 'phylum':
+        self._strname = self._PHYLUM
+    if strname == 'class':
+        self._strname = self._CLASS
+    if strname == 'order':
+        self._strname = self._ORDER
+    if strname == 'family':
+        self._strname = self._FAMILY
+    if strname == 'genus':
+        self._strname = self._GENUS
+    if strname == 'name':
+        self._strname = self._NAME
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.set_save_location">
+    <p>def <span class="ident">set_save_location</span>(</p><p>self, filename)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Set the save location for the object</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.set_save_location', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.set_save_location" class="source">
+    <pre><code>def set_save_location(self, filename):
+    '''Set the save location for the object
+    '''
+    if not isstr(filename):
+        raise TypeError('`filename` ({}) must be a str'.format(type(filename)))
+    self._save_loc = filename
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.set_trace">
+    <p>def <span class="ident">set_trace</span>(</p><p>self, *args, **kwargs)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Initialize the trace arrays for the variable in the Tracer object. </p>
+<p>It will initialize a buffer the size of the checkpoint size in Tracer</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.set_trace', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.set_trace" class="source">
+    <pre><code>def set_trace(self, *args, **kwargs):
+    self.coclusters.set_trace(*args, **kwargs)
+    self.n_clusters.set_trace(*args, **kwargs)
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.split_cluster">
+    <p>def <span class="ident">split_cluster</span>(</p><p>self, cid, members1, members2)</p>
+    </div>
+    
+
+    
+  
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.split_cluster', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.split_cluster" class="source">
+    <pre><code>def split_cluster(self, cid, members1, members2):
+    raise NotImplementedError('Not Implemented')
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.toarray">
+    <p>def <span class="ident">toarray</span>(</p><p>self)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Converts clusters into array format:
+clusters = [clus1, ..., clusN],
+    clusters{i} = [otu_i1, ..., otu_iM]
+each clusters{i} is a list of indices that are in that cluster</p>
+<p>This is the same format was the input parameter for <code>__init__</code></p>
+<h2>Returns</h2>
+<p>list
+    This is the array of values with the correct order</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.toarray', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.toarray" class="source">
+    <pre><code>def toarray(self):
+    '''Converts clusters into array format:
+    clusters = [clus1, ..., clusN],
+        clusters{i} = [otu_i1, ..., otu_iM]
+    each clusters{i} is a list of indices that are in that cluster
+    This is the same format was the input parameter for `__init__`
+    
+    Returns
+    -------
+    list
+        This is the array of values with the correct order 
+    '''
+    ret = []
+    for cluster in self:
+        ret.append(list(cluster.members))
+    return ret
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+          <h3>Instance variables</h3>
+            <div class="item">
+            <p id="pylab.cluster.Clustering.cid2cidx" class="name">var <span class="ident">cid2cidx</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.Clustering.clusters" class="name">var <span class="ident">clusters</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.Clustering.coclusters" class="name">var <span class="ident">coclusters</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.Clustering.degree" class="name">var <span class="ident">degree</span></p>
+            
+
+            
+  
+    <div class="desc"><p>Get the degree of the node</p>
+<h2>Returns</h2>
+<p>int</p></div>
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.Clustering.initialization_value" class="name">var <span class="ident">initialization_value</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.Clustering.metropolis" class="name">var <span class="ident">metropolis</span></p>
+            
+
+            
+  
+    <div class="desc"><p>Get the metropolis object</p></div>
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.Clustering.n_clusters" class="name">var <span class="ident">n_clusters</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.Clustering.oidx2cid" class="name">var <span class="ident">oidx2cid</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.Clustering.order" class="name">var <span class="ident">order</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.Clustering.otus" class="name">var <span class="ident">otus</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.Clustering.properties" class="name">var <span class="ident">properties</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+          <h3>Methods</h3>
+            
+  <div class="item">
+    <div class="name def" id="pylab.cluster.Clustering.load">
+    <p>def <span class="ident">load</span>(</p><p>cls, filename)</p>
+    </div>
+    
+
+    
+  
+    <div class="desc"><p>Unpickle the object</p>
+<h2>Paramters</h2>
+<p>filename : str
+    This is the location of the file to unpickle</p></div>
+  <div class="source_cont">
+  <p class="source_link"><a href="javascript:void(0);" onclick="toggle('source-pylab.cluster.Clustering.load', this);">Show source &equiv;</a></p>
+  <div id="source-pylab.cluster.Clustering.load" class="source">
+    <pre><code>@classmethod
+def load(cls, filename):
+    '''Unpickle the object
+    Paramters
+    ---------
+    filename : str
+        This is the location of the file to unpickle
+    '''
+    with open(filename, 'rb') as handle:
+        b = pickle.load(handle)
+    return b
+</code></pre>
+  </div>
+</div>
+
+  </div>
+  
+      </div>
+      </div>
+      
+      <div class="item">
+      <p id="pylab.cluster.float" class="name">class <span class="ident">DEFAULT_CLUSTERVALUE_DTYPE</span></p>
+      
+  
+    <div class="desc"><p>Convert a string or number to a floating point number, if possible.</p></div>
+  <div class="source_cont">
+</div>
+
+
+      <div class="class">
+          <h3>Ancestors (in MRO)</h3>
+          <ul class="class_list">
+          <li><a href="#pylab.cluster.float">DEFAULT_CLUSTERVALUE_DTYPE</a></li>
+          <li>builtins.object</li>
+          </ul>
+          <h3>Class variables</h3>
+            <div class="item">
+            <p id="pylab.cluster.float.imag" class="name">var <span class="ident">imag</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+            <div class="item">
+            <p id="pylab.cluster.float.real" class="name">var <span class="ident">real</span></p>
+            
+
+            
+  
+  <div class="source_cont">
+</div>
+
+            </div>
+      </div>
+      </div>
+
+  </section>
+
+    </article>
+  <div class="clear"> </div>
+  <footer id="footer">
+    <p>
+      Documentation generated by
+      <a href="https://github.com/BurntSushi/pdoc">pdoc 0.3.2</a>
+    </p>
+
+    <p>pdoc is in the public domain with the
+      <a href="http://unlicense.org">UNLICENSE</a></p>
+
+    <p>Design by <a href="http://nadh.in">Kailash Nadh</a></p>
+  </footer>
+</div>
+</body>
+</html>

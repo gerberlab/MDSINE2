@@ -1,0 +1,522 @@
+Future Changes:
+  - Data should be directly tied to inference.BaseMCMC, not graph, as 
+    data is not directly related to the model, rather inference
+  - Change the name of the local trace from `trace` to `RAM_trace`
+  - Make it so that you can add or subtract OTUs/elements into the clustering
+  - Put backend in PyTorch
+
+--------------------------------------
+Version 2.6.0 (7/29/20)
+--------------------------------------
+Major Changes:
+  - Does not require setting a tracer to do inference.
+  - Added `pylab.base.SubjectSet.matrix`
+
+--------------------------------------
+Version 2.5.1 (7/13/20)
+--------------------------------------
+Major Changes:
+  - Added the function `pylab.inference.BaseMCMC.continue_inference` where
+    you can keep doing inference at the Gibbs step that you want.
+  - Lognormal distribution sampler and variable
+
+--------------------------------------
+Version 2.5.0 (6/4/20)
+--------------------------------------
+Major Changes:
+  - Added phylogenetic tree component to the ASVSet
+  - Added `pylab.util.coarsen_phylogenetic_tree` function
+Minor Changes:
+  - Minor documentation changes
+
+--------------------------------------
+Version 2.4.0 (6/4/20)
+--------------------------------------
+Major Changes:
+  - Added functionality for species
+Minor Changes:
+  - Extra options for shadding in perturbations for visualization
+  - `pylab.base.ASV.tax_is_defined`
+  - `smart_unspec` parameter in `pylab.base.Subject.cluster_by_taxlevel`.
+  - Minor bug fixes
+
+--------------------------------------
+Version 2.3.0 (6/2/20)
+--------------------------------------
+Major Changes:
+  - OTU -> ASV
+  - Added functionality to `pylab.visualization.taxonomic_distribution_over_time`.
+
+--------------------------------------
+Version 2.2.2 (5/29/20)
+--------------------------------------
+Major Changes:
+  - '%(lca)s' - Least common ancestor for naming in otuname_formatter
+
+--------------------------------------
+Version 2.2.1 (5/22/20)
+--------------------------------------
+Major Changes:
+  - No numba in functions that dont need it.
+Minor Changes:
+  - Rasterize capability for matplotlib
+
+--------------------------------------
+Version 2.2.0 (5/11/20)
+--------------------------------------
+Major Cahnges:
+  - Added `pylab.random.multivariate_normal.logpdf`
+  - Set safe percent error: `pylab.math.metrics.PE_safe`
+  - More descriptive error in `pylab.graph.Graph.__getitem__`
+  - Changed name spaces for perturbations.
+
+--------------------------------------
+Version 2.1.3 (5/6/20)
+--------------------------------------
+Major Changes:
+  - Added `pylab.util.subsample_timepoints`
+Minor Changes
+  - Deleted local traces of variables after inference
+  - Round up on float `n_timepoints` in pylab.dynamics.integrate
+
+
+--------------------------------------
+Version 2.1.2 (5/4/20)
+--------------------------------------
+Major Changes:
+  - Change output type for pylab.inference.rhat
+  - Added percent error metric to pylab.math.metrics
+  - Added pylab.cluster.toarray_from_cocluster
+Minor Changes:
+  - No parameter checking for `low` and `high` parameters for 
+    pylab.variables.Uniform during initialization.
+
+--------------------------------------
+Version 2.1.0 (4/28/20)
+--------------------------------------
+Major Changes:
+  - Dynamically change the parallelization type in `pylab.multiprocessing.PersistentPool`
+
+--------------------------------------
+Version 2.0.1 (4/21/20)
+--------------------------------------
+Major changes:
+  - Added pylab.contrib.Perturbation
+Minor changes:
+  - Added some functions, made some compatibility with pytorch
+
+--------------------------------------
+Version 2.0.0 (4/18/20)
+--------------------------------------
+Major Changes:
+  - Able to do L2 and L2 constrained regression within these data structures.
+  - Additional dependencies (qpsolvers, quadprog)
+  - Made an abstract class for clustering called `pylab.base.Clusterable`
+    - Changed names from *otu* to *item*:
+      `pylab.cluster.Clustering.move_otu` --> `pylab.cluster.Clustering.move_item`
+      `pylab.cluster.ClusterProperty.signal_when_otu_assignment_changes` -->
+        `pylab.cluster.ClusterProperty.signal_when_item_assignment_changes`
+      `pylab.cluster.ClusterValue.otu_array` --> `pylab.cluster.ClusterValue.item_array`
+      `pylab.cluster.Clustering.oidx2cid` --> `pylab.cluster.Clustering.idx2cid`
+      `pylab.contrib.ClusterPerturbationIndictor.otu_bool_array`- -->
+        `pylab.contrib.ClusterPerturbationIndictor.item_bool_array`
+      `pylab.contrib.ClusterPerturbationIndictor.otu_arg_array` -->
+        `pylab.contrib.ClusterPerturbationIndictor.item_arg_array`
+      `pylab.contrib.ClusterPerturbationIndictor.num_on_otus` -->
+        `pylab.contrib.ClusterPerturbationIndictor.num_on_items`
+      `pylab.contrib.ClusterPerturbationIndictor.get_otus_on` -->
+        `pylab.contrib.ClusterPerturbationIndictor.get_items_on`
+      `pylab.contrib.ClusterPerturbation.otu_array` -->
+        `pylab.contrib.ClusterPerturbation.item_array`
+Minor Changes:
+  - Iterate over nodes in graph.
+  - Plot specfic is no longer by name in the pandas dataframe rather the by the
+    original OTU index.
+  - `pylab.base.qPCRData.scaled_data` --> `pylab.base.qPCRData.data`
+  - Added geometric mean of teh data of qPCR with the function `pylab.base.qPCRData.gmean()`
+
+
+--------------------------------------
+Version 1.4.0 (4/05/20)
+--------------------------------------
+Major Changes:
+  - Able to install on Windows, not just MacOS.
+
+--------------------------------------
+Version 1.3.0 (3/27/20)
+--------------------------------------
+Major Changes:
+  - Changed the parameterization of the qPCR to a lognormal
+    instead of a normal 
+Minor changes:
+  - Change the rest of the code to reflect that
+  - Extra arguments in various functions to give us more control
+    of which part of the chain to extract.
+
+--------------------------------------
+Version 1.2.16 (3/25/20)
+--------------------------------------
+Major Changes:
+  - Updated Documentation
+  - Minor debugging
+Minor Changes:
+  - Removed exit messages from multiprocessing workers.
+
+--------------------------------------
+Version 1.2.15 (3/12/20)
+--------------------------------------
+Major Changes:
+  - Added full functionality for SICS distribution and implemented C version for
+    normal distribution
+Minor Changes:
+  - Documentation changes and minor debugging.
+
+--------------------------------------
+Version 1.2.13 (2/12/20)
+--------------------------------------
+Major Changes:
+  - Fixed log_scale in `pylab.visualization.render_trace`.
+  - Implemented `pylab.contrib.Interactions.generate_in_out_degree_posthoc`.
+
+--------------------------------------
+Version 1.2.12 (2/05/20)
+--------------------------------------
+Major Changes:
+  - Rename `pylab.baseSubjectSet.delete_subject` to `SubjectSet.pop_subject` and return 
+    the subjects that were deleted.
+  - Added the function `pop_times` to `pylab.base.SubjectSet`.
+Minor Changes:
+  - Better error message when mutliprocessing fails.
+  - Argument added in `pylab.cluster.Clustering.generate_bayes_factors_posthoc`: 
+    `set_as_value` -> set the result as the value of the clustering object.
+
+--------------------------------------
+Version 1.2.11 (1/31/20)
+--------------------------------------
+Major Changes:
+  - Save the initialized value before running the first time during inference.
+    Use this during the plotting of the inference.
+  - Added a function to check if a  `pylab.graph.Node` has a prior or not with
+    `pylab.graph.hasprior`
+  - Pushed the rest of the sampling functions from variables module into random.
+  - Added R^ Calculation into inference module with the function
+    `pylab.inference.r_hat`.
+
+--------------------------------------
+Version 1.2.10 (12/23/19)
+--------------------------------------
+Major Changes:
+  - `pylab.contrib.Interactions.key_pairs` now accepts `only_valid` argument and is
+    made faster.
+
+--------------------------------------
+Version 1.2.9 (12/16/19)
+--------------------------------------
+Major Changes:
+  - Added a metrics class into pylab to consolidate all of the metrics that we use
+  - Added `variation_of_information` metric for clustering
+Minor Changes:
+  - You can now plot the burnin trace using pylab.visualization.render_trace of 
+    an array if you also pass in the keyword `n_burnin`
+  - scipy.sparse toarray is wrapped to be more useful and reduce the amount
+    of copying
+
+--------------------------------------
+Version 1.2.8 (12/12/19)
+--------------------------------------
+Major Changes:
+  - Condensed the functions to get the trace from disk into one function
+    `pylab.variables.Variable.get_trace_from_disk` calls 
+    `pylab.Traceable.get_trace_from_disk` which calls
+    `inference.Tracer.get_trace_from_disk`
+  - Pass in slices into the hdf5 file directly instead of in numpy
+
+--------------------------------------
+Version 1.2.7 (12/6/19)
+--------------------------------------
+Major Changes:
+  - `multiprocessing.PersistentPool` is made more organized and debugged by
+    making users manually specify either DASW or SADW types of multiprocessing
+Minor Changes:
+  - Minor bug fixes
+
+--------------------------------------
+Version 1.2.6 (12/3/19)
+--------------------------------------
+Major Changes:
+  - cluster.Clustering.cid2cidx is now a Numba Typed dictionary
+Minor Changes:
+  - Names of classes in cluster.Clustering set to private
+
+--------------------------------------
+Version 1.2.5 (11/19/19)
+--------------------------------------
+Major Changes:
+  - `pylab.contrib.ClusterPerturbationIndicator.get_cids_on`
+  - `pylab.contrib.ClusterPerturbationIndicator.get_otus_on`
+  - `pylab.contrib.Interactions.get_adjacent`
+  
+
+--------------------------------------
+Version 1.2.4 (11/13/19)
+--------------------------------------
+Major Changes:
+  - Added `target_cid` and `source_cid` arguments to `contrib.Interactions.get_indicators`
+    and `contrib.Interactions.get_arg_indicators`
+  - Added a cluster ID to cluster index dictionary property `cid2cidx` to `cluster.Clustering`
+  - Added `iloc` function to `contrib.Interactions`
+  - `contrib.ClusterPerturbation` magnitude can be a ClusterValue as well as a scalar
+Minor Changes:
+
+--------------------------------------
+Version 1.2.3 (11/11/19)
+--------------------------------------
+Major Changes:
+  - Deleted `label_formatter` in util
+  - Made way to specify how to make the label when `cluster_by_taxlevel`
+  - Made `taxonomic_distribution_over_time` better
+Minor Changes:
+  - Minor bug fixes
+
+--------------------------------------
+Version 1.2.2 (10/22/19)
+--------------------------------------
+Major changes:
+  - Made PersistentPool object pickle safe
+  - Made PersistentPool __main__ to be a passed in function
+  - combined `visualization.qpcr_over_time` into `visualization.abundance_over_time`
+  - Put the labels of perturbations above where they occur 
+Minor changes
+  - Minor bug fixes
+
+--------------------------------------
+Version 1.2.1 (10/15/19)
+--------------------------------------
+Major Changes:
+  - PersistentPool and Persistent worker made
+  - Added abundance plotting functions
+  - Moved Interactions from cluster to contrib
+  - Fixed serialization issues with multiprocessing
+Minor Changes:
+  - Minor bug fixes
+
+
+--------------------------------------
+Version 1.1.1 (10/13/19)
+--------------------------------------
+Major Changes:
+  - Single Write, Multiple Read mode for h5py
+Minor Changes:
+  - Minor bugs
+
+
+--------------------------------------
+Version 1.1.0 (09/26/19)
+--------------------------------------
+Major Changes:
+  - Set the automatic save location for a Saveable with `set_save_location`
+    so we cal call `save` without passing in a filename.
+  - `Tracer.copy()` and `Tracer.deepcopy()` implemented.
+  - Saving to disk in Tracer also saves the graph, self, and mcmc object so
+    that we can plot the posterior before the inference is over.
+Minor Changes:
+  - Minor bug fixes.
+
+
+--------------------------------------
+Version 1.0.1 (09/23/19)
+--------------------------------------
+Major Changes:
+  - Context manager for inference.Tracer
+  - OTUSet is now Saveable
+Minor Changes:
+  - Minor bug fixes
+  - `overwrite_to_disk` functionality in inference.Tracer and 
+    base.Tracable objects.
+  - `cluster.Interactions.generate_bayes_factors_posthoc` set
+  - Made function `inference.BaseMCMC.is_in_inference_order`
+  - Getitem for cluster.Clustering
+
+
+--------------------------------------
+Version 1.0.0 (09/23/19)
+--------------------------------------
+Major Changes:
+  - Deleted `constants.py`
+  - Renamed '_errors.py' to 'errors.py'
+  - Compile and import custom C distributions automatically in setup.py and 
+    made it more robust (specifying package and python versions)
+  - renamed `rvs` in random to `sample`
+  - 5% faster fast 2d normal sample and standard uniform and standard normal
+    sample
+  - Timing context manager in util
+  - `cluster_by_taxlevel` function for base.Subject added
+  - Normalization of qPCR in SubjectSet
+  - `iloc` function in SubjectSet
+  - Able to change the otu printout of OTUs in the clustering str method with 
+    `cluster.Clustering.set_otu_strname`
+  - Dissociated Interactions from the core Clustering object and set it as a 
+    property
+  - No more `learn` parameters in graph or Node nor is there `being_traced`.
+  - No more `n_samples` or `burnin` in variables, only in inference
+  - We no longer need `finish_tracing`
+  - Use hdf5 format for tracing instead of pickling (Tracer in inference)
+  - No more MCMCChainResult, just returns itself (BaseMCMC)
+  - No more MultiVariable - just set the shape in Variable now
+  - Removed `override_name` in `add_prior` in `graph.Node`
+Minor Changes:
+  - Minor bug fixes
+  - `start_tuning` parameter in the metropolis kernel
+  - You can add a perturbation to a subject set by indicating the start and stop
+    time as well as an actual perturbation object
+  - Switched checking for nodes in inference to when you initialize the inference order
+  - `variables.ckpt_iter` now global
+  - `metropolis.acceptance_rate` only takes np.ndarrays, not `pylab.Variables` anymore
+  - No longer raising a warning when the C distributions are working - only show a working 
+    if it is not working
+  - Standard default arguments for `uniform`, `bernoulli`, and `normal`
+  - Started tagging
+
+
+--------------------------------------
+Version 0.8 (09/03/19)
+--------------------------------------
+Major Changes:
+  - Changed from Python 3.6.5 to 3.7.3
+Minor Changes:
+  - Minor bug fixes
+
+
+--------------------------------------
+Version 0.7 (08/29/19)
+--------------------------------------
+Major Changes:
+  - Documentation in the format of NumPy docstrings 
+  - Added `NeedToImplementError` in _errors
+Minor Changes:
+  - Minor bug fixes
+
+
+--------------------------------------
+Version 0.6 (08/21/19)
+--------------------------------------
+Major Changes:
+  - Implement a baseline ClusterPerturbationIndicator class in contrib
+  - Make the signaling for cluster properties a switch
+Minor Changes:
+  - Minor bug fixes
+  - Changed `otu_array` for ClusterPerturbationIndicator to
+    `otu_bool_array` and `cluster_array` to `cluster_bool_array`
+  - Added the function `otu_arg_array` and `cluster_bool_array` for
+    ClusterPerturbationIndicator and
+  - Moved `num_on_clusters` and `num_on_otus` to PertrubationClusterIndicator
+
+
+--------------------------------------
+Version 0.6 (08/21/19)
+--------------------------------------
+Major Changes:
+  - Added perturbations as an attribute to MCMCChainResult
+  - ClusterPerturbation is now a traceable. Get the indicators posthoc with np.isnan
+  - Pointer to inference object from graph
+Minor Changes:
+  - Added __str__ method for base.BasePerturbation
+  - Pass in `signal_when_clusters_change` and `signal_when_otu_assignment_changes`
+    into ClusterValue
+  - Added `set_values_from_array` to ClusterValue
+  - Added `dtype` to ClusterValue
+  - No initialization requirements for ClusterPerturbation
+  - `override_name` in graph now robust
+  - Made __getitem__ faster in Graph class
+  - Minor bug fixes
+  - Change the requirement of visualization.render_trace to be a subclass of
+    Traceable instead of Variable
+
+
+--------------------------------------
+Version 0.5 (08/19/19)
+--------------------------------------
+Major Changes:
+  - ClusterValue is now a dictionary (was an array)
+    - Still must implement the `add_trace` into it through contrib
+  - Get rid of `parent_pert` from BaseNode
+  - contrib.ClusterPerturbation
+    - Added `probability` as a direct pointer in the class
+Minor Changes:
+  - Improved cluster property signaling
+  - Added functionality to input scalars and vectors when initializing a
+    `contrib.ClusterPerturbation` object
+  - Minor bug fixes
+  - Added description how on/off perturbations work
+  - Graph initialization for perturbations as None not an empty array
+  - renamed `ClusterValue.values_per_otu` to `ClusterValue.otu_array`
+
+
+--------------------------------------
+Version 0.4 (08/13/19)
+--------------------------------------
+Major Changes:
+  - Added contrib module for complex objects
+  - Made ClusterValue Object
+  - Made a cluster perturbation object for contrib
+Minor Changes:
+  - Minor bug fixes
+  - Return NaN instead of throwing an error when checking the number of
+    clusters when there are no clusters
+  - Added CHANGELOG to github
+  - Added `parent_pert` flag to Node
+
+
+--------------------------------------
+Version 0.3 (08/09/19)
+--------------------------------------
+Major Changes:
+  - Changed the the default way OTUs are indexed. They use their index, not
+    their ID
+  - Added indexing into OTUSet
+  - Removed distance metric in OTUSet
+Minor Changes:
+  - Added fast 2-dim multivariate normal sampling
+  - Added a miscellaneous class for random
+  - Removed `value_per_otu` flag for BasePerturbation
+  - Minor bug fixes
+
+
+--------------------------------------
+Version 0.2 (08/06/19)
+--------------------------------------
+Major Changes:
+  - C code for truncated normal
+  - Added Subject and SubjectSet classes for data storage
+  - Got rid of most of functionality for perturbations, moved the
+    BasePerturbation class to base.py
+  - Deleted perturbations
+Minor Changes:
+  - Improved cluster property signaling
+  - Converting negative binomial parameters to and from scipy parameterization
+  - Added jitter flag for calculating log determinant
+  - Equality (==) function for OTUs
+  - Local ordering functionality for OTUs within clusters
+  - Minor bug fixes
+
+
+--------------------------------------
+Version 0.1 (07/23/19)
+--------------------------------------
+Major Changes:
+  - linalg.py -> math.py
+  - Moved design matrix construction outside of pylab, only connection
+    is the DataNode object.
+  - Made perturbation.py module
+  - Made base.py module for the major, miscellaneous classes
+Minor Changes:
+  - Moved RMSE from util.py to math.py
+  - Moved Traceable and Saveable to base.py from util.py
+  - Moved otuname_formatter to util.py
+  - Minor bug fixes
+
+
+--------------------------------------
+Version 0.0 (07/22/19)
+--------------------------------------
+First Full Version
