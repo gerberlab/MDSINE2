@@ -913,8 +913,13 @@ def render_trace(var, idx=None, ax=None, plt_type=None, include_burnin=True,
         else:
             points = np.arange(len(trace))
 
-    if trace[idxs].ndim > 1:
-        raise ValueError('`render_trace` only supports vectors ({})'.format(trace.shape))
+    try:
+        if trace.ndim > 1:
+            raise ValueError('`render_trace` only supports vectors ({})'.format(trace.shape))
+    except:
+        print(trace.shape)
+        print(idxs)
+        raise
 
     if ax is None:
         fig = plt.figure()

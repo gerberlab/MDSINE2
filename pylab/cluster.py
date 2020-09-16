@@ -381,7 +381,7 @@ class Clustering(Node, Traceable):
                 raise TypeError('Each element in `a` ({}) must be an array'.format(
                     type(ele)))
             for idx in ele:
-                if not pl.isint(idx):
+                if not util.isint(idx):
                     raise TypeError('Each element to be set in clustering ' \
                         'must be an int ({}-{})'.format(type(ele),ele))
                 if idx < 0:
@@ -465,6 +465,7 @@ class Clustering(Node, Traceable):
             affinity='precomputed',
             linkage=linkage)
         ret = c.fit_predict(A)
+        logging.info(ret)
         if set_as_value:
             ca = {}
             for idx, cidx in enumerate(ca):
