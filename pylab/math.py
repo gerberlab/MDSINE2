@@ -2,6 +2,7 @@ import numpy as np
 import scipy.sparse
 import scipy
 import scipy.linalg
+import sklearn.metrics
 # import torch
 
 import sys
@@ -12,8 +13,9 @@ import matplotlib.pyplot as plt
 import math
 
 from .cluster import isclustering
-from .util import count_calls, issquare, inspect_trace
+from .util import count_calls, issquare, inspect_trace, isarray
 from .errors import MathError
+from .variables import summary as variable_summary
 
 # Constants
 ERROR_TOLERANCE_FORCE_SYMMETRY = 1e-20
@@ -86,6 +88,86 @@ def safe_cholesky(M, jitter=False, save_if_crash=False):
 class metrics:
     '''A class defining different metrics
     '''
+    @staticmethod
+    def rocauc_posterior_interactions(pred, truth, signed=False, average='weighted', per_gibb=False):
+        '''Calculate the Area Under Curve (AUC) between `pred` and `truth` between 
+        interaction matrices. If `signed` is True, then we distinguish betwen possitive
+        and negative interactions. Else we just check if the interaction is there. This
+        is a wrapper for `sklearn.metrics.roc_auc_score` [1]. THIS ASSUMES THAT `pred` and `truth`
+        ARE SQUARE MATRICES.
+
+        Example
+        -------
+        
+        Parameters
+        ----------
+        pred : np.array(n_gibbs, n_asvs, n_asvs)
+            This is the raw interaction matrix over each gibb step
+        truth : np.array(n_asvs, n_asvs)
+            This is the true raw interaction matrix
+        signed : bool
+            If True, then we take the sign into consideration. Essentially, 0, (+), and (-) are 
+            treated as separate classes.
+        weighted : str
+            How the scores are returned for each class (only applicable if `signed` is True). Look in [1]
+            for more details.
+        per_gibb : bool
+            If True, return the ROCAUC for every gibb step individually. Else return a 'summary' of the 
+            ROCAUC (pylab.variables.summary)
+
+        Returns
+        -------
+        float, np.ndarray
+
+        See Also
+        --------
+        [1] https://scikit-learn.org/stable/modules/generated/sklearn.metrics.roc_auc_score.html
+        '''
+        if per_gibb or (not per_gibb and pred.ndim == 3):
+            ret = np.zeros(pred.shape[0], dtype=float)
+            for i in range(pred.shape[0]):
+                ret[i] = metrics.rocauc_posterior_interactions(pred=pred[i], truth=truth, signed=signed, average=average, per_gibb=False)
+            if per_gibb:
+                return ret
+            else:
+                return variable_summary(ret)
+
+        else:
+            pred = np.array(pred)
+            truth = np.array(truth)
+
+            if pred.ndim == 1:
+                pred = pred.reshape(1,1,len(pred))
+            if pred.ndim == 2:
+                pred = pred.reshape(1,pred.shape[0], pred.shape[1])
+            elif pred.ndim > 3:
+                raise ValueError('Too many dimensions ({})'.format(pred.ndim))
+
+            pred[np.isnan(pred)] = 0
+            truth[np.isnan(truth)] = 0
+
+            if signed:
+                pred = pred.reshape(pred.shape[0], pred.shape[1]*pred.shape[2])
+                truth = truth.ravel()
+
+
+                pred_ = np.zeros(shape=(len(truth), 3), dtype=float)
+                truth_ = np.zeros(shape=(len(truth), 3), dtype=bool)
+
+                pred_[:,0] = np.sum(pred==0, axis=0)
+                pred_[:,1] = np.sum(pred<0, axis=0)
+                pred_[:,2] = np.sum(pred>0, axis=0)
+                pred_ = pred_/pred.shape[0]
+
+                truth_[truth==0,0] = True
+                truth_[truth<0,1] = True
+                truth_[truth>0,2] = True
+
+            else:
+                truth_ = (truth != 0).ravel()
+                pred_ = (np.sum(pred != 0, axis=0)/pred.shape[0]).ravel()
+
+            return sklearn.metrics.roc_auc_score(y_true=truth_, y_score=pred_, average=average)
 
     @staticmethod
     def RMSE(arr1, arr2, force_reshape=False):
