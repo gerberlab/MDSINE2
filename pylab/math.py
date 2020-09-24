@@ -170,7 +170,7 @@ class metrics:
             return sklearn.metrics.roc_auc_score(y_true=truth_, y_score=pred_, average=average)
 
     @staticmethod
-    def RMSE(arr1, arr2, force_reshape=False):
+    def RMSE(arr1, arr2, axis=None):
         '''Root Mean Square Error between `arr1` and `arr2`
 
         Parameters
@@ -187,17 +187,17 @@ class metrics:
         '''
         arr1 = np.asarray(arr1)
         arr2 = np.asarray(arr2)
-        if arr1.shape != arr2.shape:
-            if not force_reshape:
-                raise ValueError('arr1.shape ({}) != arr2.shape ({})'.format(
-                    arr1.shape, arr2.shape))
-            arr1 = arr1.ravel()
-            arr2 = arr2.ravel()
+        # if arr1.shape != arr2.shape:
+        #     if not force_reshape:
+        #         raise ValueError('arr1.shape ({}) != arr2.shape ({})'.format(
+        #             arr1.shape, arr2.shape))
+        #     arr1 = arr1.ravel()
+        #     arr2 = arr2.ravel()
 
-            if len(arr1) != len(arr2):
-                raise ValueError('len(arr1) ({}) != len(arr2) ({})'.format(
-                    len(arr1), len(arr2)))
-        return np.sqrt(np.nanmean((arr1 - arr2) ** 2))
+        #     if len(arr1) != len(arr2):
+        #         raise ValueError('len(arr1) ({}) != len(arr2) ({})'.format(
+        #             len(arr1), len(arr2)))
+        return np.sqrt(np.nanmean((arr1 - arr2) ** 2, axis=axis))
 
     @staticmethod
     def variation_of_information(X, Y, n):
@@ -277,7 +277,7 @@ class metrics:
         return abs(sigma)
 
     @staticmethod
-    def PE(truth, predicted, fillvalue=None):
+    def PE(truth, predicted, axis=None, fillvalue=None):
         '''Percent error between the truth and predicted. If 
         `truth=0`, then we substitute it with `fillvalue`
 
@@ -305,10 +305,10 @@ class metrics:
                 truth = truth[truth !=  0]
             else:
                 truth[truth == 0] = fillvalue
-        return np.mean(np.absolute((truth-predicted)/truth))
+        return np.mean(np.absolute((truth-predicted)/truth), axis=axis)
 
     @staticmethod
-    def logPE(truth, predicted, fillvalue=None):
+    def logPE(truth, predicted, axis=None, fillvalue=None):
         '''Percent error between the truth and predicted in log space.
 
         If any of the values in truth or predicted are 0 or negative, we
@@ -344,7 +344,7 @@ class metrics:
                 truth[truth <= 0] = fillvalue
                 predicted[predicted <= 0] = fillvalue
         logtruth = np.log(truth)
-        return np.mean(np.absolute((logtruth-np.log(predicted))/logtruth))
+        return np.mean(np.absolute((logtruth-np.log(predicted))/logtruth), axis=axis)
 
 @count_calls(max_calls=None)
 def force_symmetry(M, check=True):

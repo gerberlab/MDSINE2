@@ -42,6 +42,7 @@ import scipy.spatial.distance
 import pandas as pd
 import logging
 import ete3
+import os
 
 from .util import isint, isnumeric, isarray, isstr, isbool, asvname_formatter, istree
 from .errors import NeedToImplementError
@@ -280,8 +281,14 @@ class Saveable:
                     'set the save location')
             filename = self._save_loc
         
-        with open(filename, 'wb') as output:  # Overwrites any existing file.
-            pickle.dump(self, output, protocol=pickle.HIGHEST_PROTOCOL)
+        try:
+            with open(filename, 'wb') as output:  # Overwrites any existing file.
+                pickle.dump(self, output, protocol=pickle.HIGHEST_PROTOCOL)
+        except:
+            os.system('rm {}'.format(filename))
+            with open(filename, 'wb') as output:  # Overwrites any existing file.
+                pickle.dump(self, output, protocol=pickle.HIGHEST_PROTOCOL)
+
 
     @classmethod
     def load(cls, filename):
