@@ -172,6 +172,17 @@ def shade_in_perturbations(ax, perturbations, textcolor='black', textsize=None, 
     if label:
         # Set the names on the top x-axis
         ax2 = ax.twiny()
+
+        # Set the visibility of the twin axis to see through
+        ax2.spines['top'].set_visible(False)
+        ax2.spines['bottom'].set_visible(False)
+        ax2.spines['left'].set_visible(False)
+        ax2.spines['right'].set_visible(False)
+        ax2.xaxis.set_major_locator(plt.NullLocator())
+        ax2.xaxis.set_minor_locator(plt.NullLocator())
+        ax2.yaxis.set_major_locator(plt.NullLocator())
+        ax2.yaxis.set_minor_locator(plt.NullLocator())
+
         left,right = ax.get_xlim()
         ax2.set_xlim(ax.get_xlim())
         pl = []
