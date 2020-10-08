@@ -934,7 +934,7 @@ def toarray_vec_from_coclusters(coclusters):
     ret = np.zeros(coclusters.shape[0], dtype=int)
     toarray = toarray_from_cocluster(coclusters)
 
-    for cidx, cluster in toarray:
+    for cidx, cluster in enumerate(toarray):
         for idx in cluster:
             ret[idx] = cidx
     return ret
