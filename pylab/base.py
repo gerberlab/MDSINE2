@@ -310,6 +310,12 @@ class Saveable:
             raise TypeError('`filename` ({}) must be a str'.format(type(filename)))
         self._save_loc = filename
 
+    def get_save_location(self):
+        try:
+            return self._save_loc
+        except:
+            raise AttributeError('Save location is not set.')
+
 
 class Traceable:
     '''Defines the functionality for a Node to interact with the Graph tracer object

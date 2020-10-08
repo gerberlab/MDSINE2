@@ -37,7 +37,7 @@ if os.name == 'nt':
 
     build_ext.build_ext.get_export_symbols = get_export_symbols
 
-VERSION = '2.6.0'
+VERSION = '3.0.0'
 SHORT_DESC = 'Base classes for dynamical inference'
 LONG_DESC = \
     '''

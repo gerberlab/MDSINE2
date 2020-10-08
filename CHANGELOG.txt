@@ -6,6 +6,14 @@ Future Changes:
   - Put backend in PyTorch
 
 --------------------------------------
+Version 3.0.0 (10/06/20)
+--------------------------------------
+Major Changes:
+  - Excute partial validation during semi synthetic execution
+Minor Changes:
+  - `toarray_vec` in pylab.cluster.Clustering
+
+--------------------------------------
 Version 2.6.0 (7/29/20)
 --------------------------------------
 Major Changes:

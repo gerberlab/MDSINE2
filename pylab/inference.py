@@ -1,10 +1,12 @@
 import sys
+import os
 import copy
 import h5py
 import collections
 import logging
 import time
 import shutil
+import inspect
 
 import numpy as np
 import numpy.random as npr
@@ -161,6 +163,10 @@ class BaseMCMC(BaseModel):
         self.tracer = None
         self.start_step = None
 
+        self._intermediate_func = None
+        self._intermediate_t = None
+        self._intermediate_kwargs = None
+
     def names(self):
         '''Get the names of the nodes in the inference object
 
@@ -287,6 +293,54 @@ class BaseMCMC(BaseModel):
         self.ckpt = ckpt
         self.tracer = Tracer(mcmc=self, filename=filename)
 
+    def set_intermediate_validation(self, t, func, kwargs=None):
+        '''Every `t`, run the function `func` during validation in a new process during inference.
+
+        Parameters
+        ----------
+        t : int
+            How often to run in number of seconds
+        func : callable
+            This is the function the intermediate must call. It assumes the
+            only parameters are:
+                chain : this is the chain object (self)
+                burnin : number of burnin
+                n_samples : number of total samples
+                sample_iter : current iteration number
+        kwargs : dict
+            Extra arguments
+        '''
+        if not util.isint(t):
+            raise TypeError('`t` ({}) must be an int'.format(type(t)))
+        if t < 0:
+            raise ValueError('`t` ({}) must be > 0'.format(t))
+        if kwargs is None:
+            kwargs = {}
+        for k,v in kwargs.items():
+            if not util.isstr(k):
+                raise ValueError('Keys in kwargs ({}) must be strings'.format(type(k)))
+        if not callable(func):
+            raise TypeError('`func` ({}) must be callable'.format(type(str)))
+
+        # Check if the function has the right arguments
+        kwarg_keys = list(kwargs.keys())
+        valid_args = set(['burnin', 'n_samples', 'chain', 'sample_iter'] + kwarg_keys)
+        args = inspect.getargspec(func).args
+        for arg in args:
+            if arg not in valid_args:
+                raise ValueError('Function `{}` does not have the correct arguments. ' \
+                    'It has the argument `{}` when it should only have the arguments {}.'.format(
+                        func.__name__, arg, list(valid_args)))
+        for arg in valid_args:
+            if arg not in args:
+                raise ValueError('Function `{}` does not have the correct arguments. ' \
+                    'It is excluding the argument `{}`, which must be included'.format(
+                        func.__name__, arg))
+
+        self._intermediate_t = t
+        self._intermediate_func = func
+        self._intermediate_kwargs = kwargs
+
     def run(self, log_every=1):
         '''Run the inference.
 
@@ -330,8 +384,31 @@ class BaseMCMC(BaseModel):
                 log_every = DEFAULT_LOG_EVERY
 
             start = time.time()
+            intermediate_time = time.time()
             for i in range(self.start_step, self.n_samples):
                 self.sample_iter = i
+
+                # Check if we need to run the intermediate script
+                try:
+                    if self._intermediate_t is not None:
+                        if time.time() - intermediate_time > self._intermediate_t:
+                            logging.info('Running intermediate script {}'.format(
+                                self._intermediate_func.__name__))
+                            kwargs = {
+                                'chain': self, 'burnin': self.burnin, 
+                                'n_samples': self.n_samples, 'sample_iter': self.sample_iter}
+                            for k,v in self._intermediate_kwargs.items():
+                                kwargs[k] = v
+                            try:
+                                self._intermediate_func(**kwargs)
+                            except:
+                                raise ValueError('failed in intermediate function')
+                            intermediate_time = time.time() 
+                except AttributeError:
+                    logging.info('Pre Pylab 3.0.0 implementation. Ignore')
+                except:
+                    logging.critical('unknown error')
+                    raise
 
                 # Log where necessary
                 if i % log_every == 0:

@@ -363,6 +363,21 @@ class Clustering(Node, Traceable):
             ret.append(list(cluster.members))
         return ret
 
+    def toarray_vec(self):
+        '''Converts clusters into array format
+
+        array = [cidx(idx1), cidx(idx2), ..., cidx(idxM)]
+        This is the format for sklearn and scikit
+
+        Returns
+        -------
+        np.ndarray
+        '''
+        ret = np.zeros(len(self.items), dtype=int)
+        for idx in range(len(ret)):
+            ret[idx] = self.cid2cidx[self.idx2cid[idx]]
+        return ret
+
     def from_array(self, a):
         '''Set the clustering from a list of lists - note that this resets
         all of the properties of these clusterings
@@ -879,4 +894,47 @@ def toarray_from_cocluster(coclusters):
                     a[k] = i
             i += 1
     ret = [list(np.where(a == m)[0]) for m in range(np.max(a)+1)]
+    return ret
+
+def toarray_vec_from_coclusters(coclusters):
+    '''Generate the output that would be given from 
+    `clustering.toarray` from the cocluster matrix.
+
+    Numba is about 10X faster.
+
+    Example:
+        coclusters = 
+            [[1,0,0,1],
+             [0,1,0,0],
+             [0,0,1,0],
+             [1,0,0,1]]
+        >>> toarray_from_coclusters(coclusters)
+        [0,1,2,0]
+
+    Parameters
+    ----------
+    coclusters : 2-dim square np.ndarray
+        Cocluster matrix
+    
+    Returns
+    -------
+    np.ndarray
+        The index of the array is the item index, the value of the array is the cluster index
+    '''
+
+    '''Converts clusters into array format
+
+    array = [cidx(idx1), cidx(idx2), ..., cidx(idxM)]
+    This is the format for sklearn and scikit
+
+        Returns
+        -------
+        np.ndarray
+    '''
+    ret = np.zeros(coclusters.shape[0], dtype=int)
+    toarray = toarray_from_cocluster(coclusters)
+
+    for cidx, cluster in toarray:
+        for idx in cluster:
+            ret[idx] = cidx
     return ret
