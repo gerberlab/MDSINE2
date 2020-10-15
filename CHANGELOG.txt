@@ -6,6 +6,12 @@ Future Changes:
   - Put backend in PyTorch
 
 --------------------------------------
+Version 3.0.1 (10/15/20)
+--------------------------------------
+Major Changes:
+  - Get tracer disk iteration number
+
+--------------------------------------
 Version 3.0.0 (10/06/20)
 --------------------------------------
 Major Changes:

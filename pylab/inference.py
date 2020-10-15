@@ -664,18 +664,6 @@ class Tracer(Saveable):
         dset.attrs['end_iter'] = i + l
         self.close()
 
-        # Save the other objects
-        try:
-            self.save()
-            self.mcmc.save()
-            self.graph.save()
-        except:
-            logging.critical('If you want to checkpoint, you must set the save location ' \
-                'of tracer, graph, and mcmc using the function self.set_save_location()')
-            print(self._save_loc)
-            print(self.mcmc._save_loc)
-            print(self.graph._save_loc)
-            raise
 
     def overwrite_entire_trace_on_disk(self, name, data, dtype=None):
         '''Overwrite all the data we have on disk for the variable 
@@ -728,6 +716,20 @@ class Tracer(Saveable):
 
             self.graph[name].trace = None
         self.close()
+
+    def get_disk_trace_iteration(self):
+        '''Returns the last iteration the disk is saved to
+
+        Returns
+        -------
+        int
+        '''
+        self.open()
+        name = list(self.f.keys())[0]
+        dset = self.f[name]
+        n = dset.attrs['end_iter']
+        self.close()
+        return n
 
     def get_trace(self, name, section='posterior', slices=None):
         '''Return the trace that corresponds with the name.

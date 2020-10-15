@@ -524,6 +524,19 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
                 shape += self._shape
             self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
             self.ckpt_iter = 0
+
+            # Save the other objects
+            try:
+                self.G.inference.save()
+                self.G.tracer.save()
+                self.G.save()
+            except:
+                logging.critical('If you want to checkpoint, you must set the save location ' \
+                    'of tracer, graph, and mcmc using the function self.set_save_location()')
+                print(self.G.tracer_save_loc)
+                print(self.G.inference._save_loc)
+                print(self.G._save_loc)
+                raise
         if self.ckpt_iter > len(self.trace):
             raise ValueError('Iteration {} too long for RAM trace {}'.format(self.ckpt_iter, 
                 len(self.trace)))
