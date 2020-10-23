@@ -1091,7 +1091,7 @@ def alpha_diversity_over_time(subjs, metric, taxlevel=None, lca=True,
     if colors is None and 'color' not in kwargs:
         colors = sns.color_palette(cmap, n_colors=len(subjs))
     for sidx, subj in enumerate(subjs):
-        df = subj.cluster_by_taxlevel(dtype='raw', lca=lca, taxlevel=taxlevel)
+        df = subj.cluster_by_taxlevel(dtype='raw', lca=lca, taxlevel=taxlevel)[0]
 
         # Calculate the alpha diversity over time and plot
         vals = np.zeros(len(df.columns))
@@ -1411,7 +1411,7 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
             df = subj.df()[dtype]
         else:
             df = subj.cluster_by_taxlevel(dtype=dtype, lca=lca, taxlevel=taxlevel,
-                index_formatter=label_formatter)
+                index_formatter=label_formatter)[0]
         times = subj.times
 
         if 'title' not in kwargs:
@@ -1681,7 +1681,7 @@ def taxonomic_distribution_over_time(subj, taxlevel=None, lca=True,
 
     else:
         df = subj.cluster_by_taxlevel(dtype=dtype, lca=lca, taxlevel=taxlevel, 
-            index_formatter=label_formatter)
+            index_formatter=label_formatter)[0]
 
     if plot_abundant is not None:
         matrix = df.values

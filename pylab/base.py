@@ -1369,6 +1369,13 @@ class Subject(Saveable):
             example, you cannot cluster at the 'class' level and then specify '%(genus)s' 
             in the index formatter.
             If nothing is specified then only return the specified taxonomic level
+
+        Returns
+        -------
+        pandas.DataFrame
+            Dataframe of the data
+        dict (str->str)
+            Maps ASV name to the row it got allocated to
         '''
         # Type checking
         if not isstr(dtype):
@@ -1396,6 +1403,7 @@ class Subject(Saveable):
         index_formatter = index_formatter.replace('%(asv)s', '%(name)s')
 
         # Everything is valid, get the data dataframe and the return dataframe
+        asvname_map = {}
         df = self.df(min_rel_abund=None)[dtype]
         cols = list(df.columns)
         cols.append(taxlevel)
@@ -1429,8 +1437,12 @@ class Subject(Saveable):
                 toadd = pd.DataFrame(np.array(list(df.loc[row])).reshape(1,-1),
                     index=[taxas[tax]], columns=dfnew.columns)
                 dfnew = dfnew.append(toadd)
+            
+            if taxas[tax] not in asvname_map:
+                asvname_map[taxas[tax]] = []
+            asvname_map[taxas[tax]].append(asv.name)
         
-        return dfnew
+        return dfnew, asvname_map
 
     def _split_on_perturbations(self):
         '''If there are perturbations, then we take out the data on perturbations
