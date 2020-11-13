@@ -1,9 +1,7 @@
-Future Changes:
-  - Data should be directly tied to inference.BaseMCMC, not graph, as 
-    data is not directly related to the model, rather inference
-  - Change the name of the local trace from `trace` to `RAM_trace`
-  - Make it so that you can add or subtract OTUs/elements into the clustering
-  - Put backend in PyTorch
+--------------------------------------
+Version 4.0.0 (11/11/20)
+--------------------------------------
+Refactored core mdsine code into once was PyLab
 
 --------------------------------------
 Version 3.0.1 (10/15/20)
