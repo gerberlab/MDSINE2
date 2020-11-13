@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.1" />
+<title>mdsine2.processvariance API documentation</title>
+<meta name="description" content="Process variance parameters for the posterior" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>mdsine2.processvariance</code></h1>
+</header>
+<section id="section-intro">
+<p>Process variance parameters for the posterior</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#39;&#39;&#39;Process variance parameters for the posterior
+&#39;&#39;&#39;
+import logging
+import time
+import numpy as np
+import scipy.sparse
+import scipy
+
+from .util import build_prior_covariance, build_prior_mean
+from .names import STRNAMES, REPRNAMES
+from . import pylab as pl
+
+class ProcessVarGlobal(pl.variables.SICS):
+    &#39;&#39;&#39;Learn a Process variance where we learn th same process variance
+    for each ASV. This assumes that the model we&#39;re using uses the logscale
+    of the data.
+    &#39;&#39;&#39;
+    def __init__(self, prior, **kwargs):
+        &#39;&#39;&#39;
+        Parameters
+        ----------
+        prior : pl.variables.SICS
+            This is the prior of the distribution
+        kwargs : dict
+            These are the extra parameters for the Variable class
+        &#39;&#39;&#39;
+        kwargs[&#39;name&#39;] = STRNAMES.PROCESSVAR
+        pl.variables.SICS.__init__(self, dtype=float, **kwargs)
+        self.add_prior(prior)
+        self.global_variance = True
+        self._strr = &#39;NA&#39;
+
+    def __str__(self):
+        return self._strr
+
+    def initialize(self, dof_option, scale_option, value_option, 
+        dof=None, scale=None, value=None, variance_scaling=1,
+        delay=0):
+        &#39;&#39;&#39;Initialize the value and hyperparameter.
+
+        Parameters
+        ----------
+        dof_option : str
+            How to initialize the `dof` parameter. Options:
+                &#39;manual&#39;
+                    Manually specify the dof with the parameter `dof`
+                &#39;half&#39;
+                    Set the degrees of freedom to the number of data points
+                &#39;auto&#39;, &#39;diffuse&#39;
+                    Set the degrees of freedom to a sparse number (2.5)
+        scale_option : str
+            How to initialize the scale of the parameter. Options:
+                &#39;manual&#39;
+                    Need to also specify `scale` parameter
+                &#39;med&#39;, &#39;auto&#39;
+                    Set the scale such that mean of the distribution
+                    has medium noise (20%)
+                &#39;low&#39;
+                    Set the scale such that mean of the distribution
+                    has low noise (10%)
+                &#39;high&#39;
+                    Set the scale such that mean of the distribution
+                    has high noise (30%)
+        value_option : str
+            How to initialize the value
+                &#39;manual&#39;
+                    Set the value with the `value` parameter
+                &#39;prior-mean&#39;, &#39;auto&#39;
+                    Set the value to the mean of the prior
+        variance_scaling : float, None
+            How much to inflate the variance
+        &#39;&#39;&#39;
+        if not pl.isint(delay):
+            raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+        if delay &lt; 0:
+            raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+        self.delay = delay
+
+        # Set the dof
+        if not pl.isstr(dof_option):
+            raise TypeError(&#39;`dof_option` ({}) must be a str&#39;.format(type(dof_option)))
+        if dof_option == &#39;manual&#39;:
+            if not pl.isnumeric(dof):
+                raise TypeError(&#39;`dof` ({}) must be a numeric&#39;.format(type(dof)))
+            if dof &lt;= 0:
+                raise ValueError(&#39;`dof` must be &gt; 0&#39;.format(dof))
+            if dof &lt;= 2:
+                logging.critical(&#39;Process Variance dof ({}) is set unproper&#39;.format(dof))
+        elif dof_option == &#39;half&#39;:
+            dof = len(self.G.data.lhs)
+        elif dof_option in [&#39;auto&#39;, &#39;diffuse&#39;]:
+            dof = 2.5
+        else:
+            raise ValueError(&#39;`dof_option` ({}) not recognized&#39;.format(dof_option))
+        self.prior.dof.override_value(dof)
+
+        # Set the scale
+        if not pl.isstr(scale_option):
+            raise TypeError(&#39;`scale_option` ({}) must be a str&#39;.format(type(scale_option)))
+        if scale_option == &#39;manual&#39;:
+            if not pl.isnumeric(scale):
+                raise TypeError(&#39;`scale` ({}) must be a numeric&#39;.format(type(scale)))
+            if scale &lt;= 0:
+                raise ValueError(&#39;`scale` ({}) must be &gt; 0&#39;.format(scale))
+        elif scale_option in [&#39;auto&#39;, &#39;med&#39;]:
+            scale = (0.2 ** 2) * (self.prior.dof.value - 2) / self.prior.dof.value
+        elif scale_option ==  &#39;low&#39;:
+            scale = (0.1 ** 2) * (self.prior.dof.value - 2) / self.prior.dof.value
+        elif scale_option ==  &#39;high&#39;:
+            scale = (0.3 ** 2) * (self.prior.dof.value - 2) / self.prior.dof.value
+        else:
+            raise ValueError(&#39;`scale_option` ({}) not recognized&#39;.format(scale_option))
+        self.prior.scale.override_value(scale)
+
+        # Set the value
+        if not pl.isstr(value_option):
+            raise TypeError(&#39;`value_option` ({}) must be a str&#39;.format(type(value_option)))
+        if value_option == &#39;manual&#39;:
+            if not pl.isnumeric(dof):
+                raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(value)))
+            if value &lt;= 0:
+                raise ValueError(&#39;`value` ({}) must be &gt; 0&#39;.format(value))
+        elif value_option in [&#39;prior-mean&#39;, &#39;auto&#39;]:
+            value = self.prior.mean()
+        else:
+            raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
+        self.value = value
+        
+        self.rebuild_diag()
+        self._there_are_perturbations = self.G.perturbations is not None
+
+    def build_matrix(self, cov, sparse=True):
+        &#39;&#39;&#39;Builds the process variance as a covariance or precision
+        matrix.
+
+        Parameters
+        ----------
+        cov : bool
+            If True, make the covariance matrix
+        sparse : bool
+            If True, return the matrix as a sparse matrix
+
+        Returns
+        -------
+        np.ndarray or scipy.sparse
+            Either sparse or dense covariance/precision matrix
+        &#39;&#39;&#39;
+        a = self.diag
+        if not cov:
+            a = 1/a
+        if sparse:
+            return scipy.sparse.dia_matrix((a,[0]), shape=(len(a),len(a))).tocsc()
+        else:
+            return np.diag(a)
+
+    def rebuild_diag(self):
+        &#39;&#39;&#39;Builds up the process variance diagonal that we use to make the matrix
+        &#39;&#39;&#39;
+        a = self.value / self.G.data.dt_vec
+        if self.G.data.zero_inflation_transition_policy is not None:
+            a = a[self.G.data.rows_to_include_zero_inflation]
+        
+        self.diag = a
+        self.prec = 1/a
+
+    def update(self):
+        &#39;&#39;&#39;Update the process variance
+
+        y = (log(x_{k+1}) - log(x_k))/dt
+        Xb = a_1 (1 + \gamma) + A x
+
+        % These are our dynamics with the process variance
+        y ~ Normal(Xb , \sigma^2_w / dt)
+
+        % Subtract the mean
+        y - Xb ~ Normal( 0, \sigma^2_w / dt)
+        
+        % Substitute
+        z = y - Xb 
+
+        z ~ Normal (0, \sigma^2_w / dt)
+        z * \sqrt{dt} ~ Normal (0, \sigma^2_w)
+
+        This is now in a form we can use to calculate the posterior
+        &#39;&#39;&#39;
+        if self._there_are_perturbations:
+            lhs = [
+                REPRNAMES.GROWTH_VALUE, 
+                REPRNAMES.SELF_INTERACTION_VALUE,
+                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+        else:
+            lhs = [
+                REPRNAMES.GROWTH_VALUE, 
+                REPRNAMES.SELF_INTERACTION_VALUE,
+                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+        
+        # This is the residual z = y - Xb
+        z = self.G.data.construct_lhs(lhs, 
+            kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+                &#39;with_perturbations&#39;: self._there_are_perturbations}})
+        z = np.asarray(z).ravel()
+        if self.G.data.zero_inflation_transition_policy is not None:
+            z = z * self.G.data.sqrt_dt_vec[self.G.data.rows_to_include_zero_inflation]
+        else:
+            z = z * self.G.data.sqrt_dt_vec
+        residual = np.sum(np.square(z))
+
+        self.dof.value = self.prior.dof.value + len(z)
+        self.scale.value = ((self.prior.scale.value * self.prior.dof.value) + \
+           residual)/self.dof.value
+        
+        # shape = 2 + (len(residual)/2)
+        # scale = 0.00001 + np.sum(np.square(residual))/2
+        # self.value = pl.random.invgamma.sample(shape=shape, scale=scale)
+        self.sample()
+        self.rebuild_diag()
+
+        self._strr = &#39;{}, empirical_variance: {:.5f}&#39;.format(self.value, 
+            residual/len(z))</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="mdsine2.processvariance.ProcessVarGlobal"><code class="flex name class">
+<span>class <span class="ident">ProcessVarGlobal</span></span>
+<span>(</span><span>prior, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Learn a Process variance where we learn th same process variance
+for each ASV. This assumes that the model we're using uses the logscale
+of the data.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>prior</code></strong> :&ensp;<code>pl.variables.SICS</code></dt>
+<dd>This is the prior of the distribution</dd>
+<dt><strong><code>kwargs</code></strong> :&ensp;<code>dict</code></dt>
+<dd>These are the extra parameters for the Variable class</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ProcessVarGlobal(pl.variables.SICS):
+    &#39;&#39;&#39;Learn a Process variance where we learn th same process variance
+    for each ASV. This assumes that the model we&#39;re using uses the logscale
+    of the data.
+    &#39;&#39;&#39;
+    def __init__(self, prior, **kwargs):
+        &#39;&#39;&#39;
+        Parameters
+        ----------
+        prior : pl.variables.SICS
+            This is the prior of the distribution
+        kwargs : dict
+            These are the extra parameters for the Variable class
+        &#39;&#39;&#39;
+        kwargs[&#39;name&#39;] = STRNAMES.PROCESSVAR
+        pl.variables.SICS.__init__(self, dtype=float, **kwargs)
+        self.add_prior(prior)
+        self.global_variance = True
+        self._strr = &#39;NA&#39;
+
+    def __str__(self):
+        return self._strr
+
+    def initialize(self, dof_option, scale_option, value_option, 
+        dof=None, scale=None, value=None, variance_scaling=1,
+        delay=0):
+        &#39;&#39;&#39;Initialize the value and hyperparameter.
+
+        Parameters
+        ----------
+        dof_option : str
+            How to initialize the `dof` parameter. Options:
+                &#39;manual&#39;
+                    Manually specify the dof with the parameter `dof`
+                &#39;half&#39;
+                    Set the degrees of freedom to the number of data points
+                &#39;auto&#39;, &#39;diffuse&#39;
+                    Set the degrees of freedom to a sparse number (2.5)
+        scale_option : str
+            How to initialize the scale of the parameter. Options:
+                &#39;manual&#39;
+                    Need to also specify `scale` parameter
+                &#39;med&#39;, &#39;auto&#39;
+                    Set the scale such that mean of the distribution
+                    has medium noise (20%)
+                &#39;low&#39;
+                    Set the scale such that mean of the distribution
+                    has low noise (10%)
+                &#39;high&#39;
+                    Set the scale such that mean of the distribution
+                    has high noise (30%)
+        value_option : str
+            How to initialize the value
+                &#39;manual&#39;
+                    Set the value with the `value` parameter
+                &#39;prior-mean&#39;, &#39;auto&#39;
+                    Set the value to the mean of the prior
+        variance_scaling : float, None
+            How much to inflate the variance
+        &#39;&#39;&#39;
+        if not pl.isint(delay):
+            raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+        if delay &lt; 0:
+            raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+        self.delay = delay
+
+        # Set the dof
+        if not pl.isstr(dof_option):
+            raise TypeError(&#39;`dof_option` ({}) must be a str&#39;.format(type(dof_option)))
+        if dof_option == &#39;manual&#39;:
+            if not pl.isnumeric(dof):
+                raise TypeError(&#39;`dof` ({}) must be a numeric&#39;.format(type(dof)))
+            if dof &lt;= 0:
+                raise ValueError(&#39;`dof` must be &gt; 0&#39;.format(dof))
+            if dof &lt;= 2:
+                logging.critical(&#39;Process Variance dof ({}) is set unproper&#39;.format(dof))
+        elif dof_option == &#39;half&#39;:
+            dof = len(self.G.data.lhs)
+        elif dof_option in [&#39;auto&#39;, &#39;diffuse&#39;]:
+            dof = 2.5
+        else:
+            raise ValueError(&#39;`dof_option` ({}) not recognized&#39;.format(dof_option))
+        self.prior.dof.override_value(dof)
+
+        # Set the scale
+        if not pl.isstr(scale_option):
+            raise TypeError(&#39;`scale_option` ({}) must be a str&#39;.format(type(scale_option)))
+        if scale_option == &#39;manual&#39;:
+            if not pl.isnumeric(scale):
+                raise TypeError(&#39;`scale` ({}) must be a numeric&#39;.format(type(scale)))
+            if scale &lt;= 0:
+                raise ValueError(&#39;`scale` ({}) must be &gt; 0&#39;.format(scale))
+        elif scale_option in [&#39;auto&#39;, &#39;med&#39;]:
+            scale = (0.2 ** 2) * (self.prior.dof.value - 2) / self.prior.dof.value
+        elif scale_option ==  &#39;low&#39;:
+            scale = (0.1 ** 2) * (self.prior.dof.value - 2) / self.prior.dof.value
+        elif scale_option ==  &#39;high&#39;:
+            scale = (0.3 ** 2) * (self.prior.dof.value - 2) / self.prior.dof.value
+        else:
+            raise ValueError(&#39;`scale_option` ({}) not recognized&#39;.format(scale_option))
+        self.prior.scale.override_value(scale)
+
+        # Set the value
+        if not pl.isstr(value_option):
+            raise TypeError(&#39;`value_option` ({}) must be a str&#39;.format(type(value_option)))
+        if value_option == &#39;manual&#39;:
+            if not pl.isnumeric(dof):
+                raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(value)))
+            if value &lt;= 0:
+                raise ValueError(&#39;`value` ({}) must be &gt; 0&#39;.format(value))
+        elif value_option in [&#39;prior-mean&#39;, &#39;auto&#39;]:
+            value = self.prior.mean()
+        else:
+            raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
+        self.value = value
+        
+        self.rebuild_diag()
+        self._there_are_perturbations = self.G.perturbations is not None
+
+    def build_matrix(self, cov, sparse=True):
+        &#39;&#39;&#39;Builds the process variance as a covariance or precision
+        matrix.
+
+        Parameters
+        ----------
+        cov : bool
+            If True, make the covariance matrix
+        sparse : bool
+            If True, return the matrix as a sparse matrix
+
+        Returns
+        -------
+        np.ndarray or scipy.sparse
+            Either sparse or dense covariance/precision matrix
+        &#39;&#39;&#39;
+        a = self.diag
+        if not cov:
+            a = 1/a
+        if sparse:
+            return scipy.sparse.dia_matrix((a,[0]), shape=(len(a),len(a))).tocsc()
+        else:
+            return np.diag(a)
+
+    def rebuild_diag(self):
+        &#39;&#39;&#39;Builds up the process variance diagonal that we use to make the matrix
+        &#39;&#39;&#39;
+        a = self.value / self.G.data.dt_vec
+        if self.G.data.zero_inflation_transition_policy is not None:
+            a = a[self.G.data.rows_to_include_zero_inflation]
+        
+        self.diag = a
+        self.prec = 1/a
+
+    def update(self):
+        &#39;&#39;&#39;Update the process variance
+
+        y = (log(x_{k+1}) - log(x_k))/dt
+        Xb = a_1 (1 + \gamma) + A x
+
+        % These are our dynamics with the process variance
+        y ~ Normal(Xb , \sigma^2_w / dt)
+
+        % Subtract the mean
+        y - Xb ~ Normal( 0, \sigma^2_w / dt)
+        
+        % Substitute
+        z = y - Xb 
+
+        z ~ Normal (0, \sigma^2_w / dt)
+        z * \sqrt{dt} ~ Normal (0, \sigma^2_w)
+
+        This is now in a form we can use to calculate the posterior
+        &#39;&#39;&#39;
+        if self._there_are_perturbations:
+            lhs = [
+                REPRNAMES.GROWTH_VALUE, 
+                REPRNAMES.SELF_INTERACTION_VALUE,
+                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+        else:
+            lhs = [
+                REPRNAMES.GROWTH_VALUE, 
+                REPRNAMES.SELF_INTERACTION_VALUE,
+                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+        
+        # This is the residual z = y - Xb
+        z = self.G.data.construct_lhs(lhs, 
+            kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+                &#39;with_perturbations&#39;: self._there_are_perturbations}})
+        z = np.asarray(z).ravel()
+        if self.G.data.zero_inflation_transition_policy is not None:
+            z = z * self.G.data.sqrt_dt_vec[self.G.data.rows_to_include_zero_inflation]
+        else:
+            z = z * self.G.data.sqrt_dt_vec
+        residual = np.sum(np.square(z))
+
+        self.dof.value = self.prior.dof.value + len(z)
+        self.scale.value = ((self.prior.scale.value * self.prior.dof.value) + \
+           residual)/self.dof.value
+        
+        # shape = 2 + (len(residual)/2)
+        # scale = 0.00001 + np.sum(np.square(residual))/2
+        # self.value = pl.random.invgamma.sample(shape=shape, scale=scale)
+        self.sample()
+        self.rebuild_diag()
+
+        self._strr = &#39;{}, empirical_variance: {:.5f}&#39;.format(self.value, 
+            residual/len(z))</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.variables.SICS" href="pylab/variables.html#mdsine2.pylab.variables.SICS">SICS</a></li>
+<li><a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a></li>
+<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
+<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+<li>mdsine2.pylab.variables._BaseArithmeticClass</li>
+<li><a title="mdsine2.pylab.base.Traceable" href="pylab/base.html#mdsine2.pylab.base.Traceable">Traceable</a></li>
+<li>mdsine2.pylab.variables._RandomBase</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.processvariance.ProcessVarGlobal.build_matrix"><code class="name flex">
+<span>def <span class="ident">build_matrix</span></span>(<span>self, cov, sparse=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Builds the process variance as a covariance or precision
+matrix.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>cov</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True, make the covariance matrix</dd>
+<dt><strong><code>sparse</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True, return the matrix as a sparse matrix</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code> or <code>scipy.sparse</code></dt>
+<dd>Either sparse or dense covariance/precision matrix</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def build_matrix(self, cov, sparse=True):
+    &#39;&#39;&#39;Builds the process variance as a covariance or precision
+    matrix.
+
+    Parameters
+    ----------
+    cov : bool
+        If True, make the covariance matrix
+    sparse : bool
+        If True, return the matrix as a sparse matrix
+
+    Returns
+    -------
+    np.ndarray or scipy.sparse
+        Either sparse or dense covariance/precision matrix
+    &#39;&#39;&#39;
+    a = self.diag
+    if not cov:
+        a = 1/a
+    if sparse:
+        return scipy.sparse.dia_matrix((a,[0]), shape=(len(a),len(a))).tocsc()
+    else:
+        return np.diag(a)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.processvariance.ProcessVarGlobal.initialize"><code class="name flex">
+<span>def <span class="ident">initialize</span></span>(<span>self, dof_option, scale_option, value_option, dof=None, scale=None, value=None, variance_scaling=1, delay=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialize the value and hyperparameter.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>dof_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to initialize the <code>dof</code> parameter. Options:
+'manual'
+Manually specify the dof with the parameter <code>dof</code>
+'half'
+Set the degrees of freedom to the number of data points
+'auto', 'diffuse'
+Set the degrees of freedom to a sparse number (2.5)</dd>
+<dt><strong><code>scale_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to initialize the scale of the parameter. Options:
+'manual'
+Need to also specify <code>scale</code> parameter
+'med', 'auto'
+Set the scale such that mean of the distribution
+has medium noise (20%)
+'low'
+Set the scale such that mean of the distribution
+has low noise (10%)
+'high'
+Set the scale such that mean of the distribution
+has high noise (30%)</dd>
+<dt><strong><code>value_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to initialize the value
+'manual'
+Set the value with the <code>value</code> parameter
+'prior-mean', 'auto'
+Set the value to the mean of the prior</dd>
+<dt><strong><code>variance_scaling</code></strong> :&ensp;<code>float, None</code></dt>
+<dd>How much to inflate the variance</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def initialize(self, dof_option, scale_option, value_option, 
+    dof=None, scale=None, value=None, variance_scaling=1,
+    delay=0):
+    &#39;&#39;&#39;Initialize the value and hyperparameter.
+
+    Parameters
+    ----------
+    dof_option : str
+        How to initialize the `dof` parameter. Options:
+            &#39;manual&#39;
+                Manually specify the dof with the parameter `dof`
+            &#39;half&#39;
+                Set the degrees of freedom to the number of data points
+            &#39;auto&#39;, &#39;diffuse&#39;
+                Set the degrees of freedom to a sparse number (2.5)
+    scale_option : str
+        How to initialize the scale of the parameter. Options:
+            &#39;manual&#39;
+                Need to also specify `scale` parameter
+            &#39;med&#39;, &#39;auto&#39;
+                Set the scale such that mean of the distribution
+                has medium noise (20%)
+            &#39;low&#39;
+                Set the scale such that mean of the distribution
+                has low noise (10%)
+            &#39;high&#39;
+                Set the scale such that mean of the distribution
+                has high noise (30%)
+    value_option : str
+        How to initialize the value
+            &#39;manual&#39;
+                Set the value with the `value` parameter
+            &#39;prior-mean&#39;, &#39;auto&#39;
+                Set the value to the mean of the prior
+    variance_scaling : float, None
+        How much to inflate the variance
+    &#39;&#39;&#39;
+    if not pl.isint(delay):
+        raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+    if delay &lt; 0:
+        raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+    self.delay = delay
+
+    # Set the dof
+    if not pl.isstr(dof_option):
+        raise TypeError(&#39;`dof_option` ({}) must be a str&#39;.format(type(dof_option)))
+    if dof_option == &#39;manual&#39;:
+        if not pl.isnumeric(dof):
+            raise TypeError(&#39;`dof` ({}) must be a numeric&#39;.format(type(dof)))
+        if dof &lt;= 0:
+            raise ValueError(&#39;`dof` must be &gt; 0&#39;.format(dof))
+        if dof &lt;= 2:
+            logging.critical(&#39;Process Variance dof ({}) is set unproper&#39;.format(dof))
+    elif dof_option == &#39;half&#39;:
+        dof = len(self.G.data.lhs)
+    elif dof_option in [&#39;auto&#39;, &#39;diffuse&#39;]:
+        dof = 2.5
+    else:
+        raise ValueError(&#39;`dof_option` ({}) not recognized&#39;.format(dof_option))
+    self.prior.dof.override_value(dof)
+
+    # Set the scale
+    if not pl.isstr(scale_option):
+        raise TypeError(&#39;`scale_option` ({}) must be a str&#39;.format(type(scale_option)))
+    if scale_option == &#39;manual&#39;:
+        if not pl.isnumeric(scale):
+            raise TypeError(&#39;`scale` ({}) must be a numeric&#39;.format(type(scale)))
+        if scale &lt;= 0:
+            raise ValueError(&#39;`scale` ({}) must be &gt; 0&#39;.format(scale))
+    elif scale_option in [&#39;auto&#39;, &#39;med&#39;]:
+        scale = (0.2 ** 2) * (self.prior.dof.value - 2) / self.prior.dof.value
+    elif scale_option ==  &#39;low&#39;:
+        scale = (0.1 ** 2) * (self.prior.dof.value - 2) / self.prior.dof.value
+    elif scale_option ==  &#39;high&#39;:
+        scale = (0.3 ** 2) * (self.prior.dof.value - 2) / self.prior.dof.value
+    else:
+        raise ValueError(&#39;`scale_option` ({}) not recognized&#39;.format(scale_option))
+    self.prior.scale.override_value(scale)
+
+    # Set the value
+    if not pl.isstr(value_option):
+        raise TypeError(&#39;`value_option` ({}) must be a str&#39;.format(type(value_option)))
+    if value_option == &#39;manual&#39;:
+        if not pl.isnumeric(dof):
+            raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(value)))
+        if value &lt;= 0:
+            raise ValueError(&#39;`value` ({}) must be &gt; 0&#39;.format(value))
+    elif value_option in [&#39;prior-mean&#39;, &#39;auto&#39;]:
+        value = self.prior.mean()
+    else:
+        raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
+    self.value = value
+    
+    self.rebuild_diag()
+    self._there_are_perturbations = self.G.perturbations is not None</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.processvariance.ProcessVarGlobal.rebuild_diag"><code class="name flex">
+<span>def <span class="ident">rebuild_diag</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Builds up the process variance diagonal that we use to make the matrix</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rebuild_diag(self):
+    &#39;&#39;&#39;Builds up the process variance diagonal that we use to make the matrix
+    &#39;&#39;&#39;
+    a = self.value / self.G.data.dt_vec
+    if self.G.data.zero_inflation_transition_policy is not None:
+        a = a[self.G.data.rows_to_include_zero_inflation]
+    
+    self.diag = a
+    self.prec = 1/a</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.processvariance.ProcessVarGlobal.update"><code class="name flex">
+<span>def <span class="ident">update</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Update the process variance</p>
+<p>y = (log(x_{k+1}) - log(x_k))/dt
+Xb = a_1 (1 + \gamma) + A x</p>
+<p>% These are our dynamics with the process variance
+y ~ Normal(Xb , \sigma^2_w / dt)</p>
+<p>% Subtract the mean
+y - Xb ~ Normal( 0, \sigma^2_w / dt)</p>
+<p>% Substitute
+z = y - Xb </p>
+<p>z ~ Normal (0, \sigma^2_w / dt)
+z * \sqrt{dt} ~ Normal (0, \sigma^2_w)</p>
+<p>This is now in a form we can use to calculate the posterior</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update(self):
+    &#39;&#39;&#39;Update the process variance
+
+    y = (log(x_{k+1}) - log(x_k))/dt
+    Xb = a_1 (1 + \gamma) + A x
+
+    % These are our dynamics with the process variance
+    y ~ Normal(Xb , \sigma^2_w / dt)
+
+    % Subtract the mean
+    y - Xb ~ Normal( 0, \sigma^2_w / dt)
+    
+    % Substitute
+    z = y - Xb 
+
+    z ~ Normal (0, \sigma^2_w / dt)
+    z * \sqrt{dt} ~ Normal (0, \sigma^2_w)
+
+    This is now in a form we can use to calculate the posterior
+    &#39;&#39;&#39;
+    if self._there_are_perturbations:
+        lhs = [
+            REPRNAMES.GROWTH_VALUE, 
+            REPRNAMES.SELF_INTERACTION_VALUE,
+            REPRNAMES.CLUSTER_INTERACTION_VALUE]
+    else:
+        lhs = [
+            REPRNAMES.GROWTH_VALUE, 
+            REPRNAMES.SELF_INTERACTION_VALUE,
+            REPRNAMES.CLUSTER_INTERACTION_VALUE]
+    
+    # This is the residual z = y - Xb
+    z = self.G.data.construct_lhs(lhs, 
+        kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+            &#39;with_perturbations&#39;: self._there_are_perturbations}})
+    z = np.asarray(z).ravel()
+    if self.G.data.zero_inflation_transition_policy is not None:
+        z = z * self.G.data.sqrt_dt_vec[self.G.data.rows_to_include_zero_inflation]
+    else:
+        z = z * self.G.data.sqrt_dt_vec
+    residual = np.sum(np.square(z))
+
+    self.dof.value = self.prior.dof.value + len(z)
+    self.scale.value = ((self.prior.scale.value * self.prior.dof.value) + \
+       residual)/self.dof.value
+    
+    # shape = 2 + (len(residual)/2)
+    # scale = 0.00001 + np.sum(np.square(residual))/2
+    # self.value = pl.random.invgamma.sample(shape=shape, scale=scale)
+    self.sample()
+    self.rebuild_diag()
+
+    self._strr = &#39;{}, empirical_variance: {:.5f}&#39;.format(self.value, 
+        residual/len(z))</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.variables.SICS" href="pylab/variables.html#mdsine2.pylab.variables.SICS">SICS</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.variables.SICS.T" href="pylab/variables.html#mdsine2.pylab.variables.Variable.T">T</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_init_value" href="pylab/variables.html#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.get_iter" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_iter">get_iter</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.get_trace_from_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_trace_from_disk">get_trace_from_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.logpdf" href="pylab/variables.html#mdsine2.pylab.variables.SICS.logpdf">logpdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.overwrite_entire_trace_on_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.pdf" href="pylab/variables.html#mdsine2.pylab.variables.SICS.pdf">pdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.sample" href="pylab/variables.html#mdsine2.pylab.variables.SICS.sample">sample</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.set_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.set_value_shape" href="pylab/variables.html#mdsine2.pylab.variables.Variable.set_value_shape">set_value_shape</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="mdsine2" href="index.html">mdsine2</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="mdsine2.processvariance.ProcessVarGlobal" href="#mdsine2.processvariance.ProcessVarGlobal">ProcessVarGlobal</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.processvariance.ProcessVarGlobal.build_matrix" href="#mdsine2.processvariance.ProcessVarGlobal.build_matrix">build_matrix</a></code></li>
+<li><code><a title="mdsine2.processvariance.ProcessVarGlobal.initialize" href="#mdsine2.processvariance.ProcessVarGlobal.initialize">initialize</a></code></li>
+<li><code><a title="mdsine2.processvariance.ProcessVarGlobal.rebuild_diag" href="#mdsine2.processvariance.ProcessVarGlobal.rebuild_diag">rebuild_diag</a></code></li>
+<li><code><a title="mdsine2.processvariance.ProcessVarGlobal.update" href="#mdsine2.processvariance.ProcessVarGlobal.update">update</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.1</a>.</p>
+</footer>
+</body>
+</html>

@@ -1,0 +1,1872 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.1" />
+<title>mdsine2.pylab.graph API documentation</title>
+<meta name="description" content="Defines classes used for defining a graphical model …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>mdsine2.pylab.graph</code></h1>
+</header>
+<section id="section-intro">
+<p>Defines classes used for defining a graphical model.</p>
+<p>If no graph is specified when defining a node, the node gets
+added to a default graph, which is defined at the bottom of the module.</p>
+<p>The Node class is also defined here.</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#39;&#39;&#39;Defines classes used for defining a graphical model.
+
+If no graph is specified when defining a node, the node gets
+added to a default graph, which is defined at the bottom of the module.
+
+The Node class is also defined here.
+&#39;&#39;&#39;
+import numpy as np
+import networkx as nx
+import logging
+import matplotlib.pyplot as plt
+import copy
+import random
+import h5py
+
+from .base import Saveable
+from .random import seed as set_seed
+from .errors import GraphIDError, UndefinedError
+
+# Constants
+DEFAULT_BASENODE_NAME_PREFIX = &#39;node_&#39;
+DEFAULT_PRIOR_SUFFIX = &#39;_prior&#39;
+
+_graph_dict = {}
+_PH_COUNT = 0
+
+def get_default_graph():
+    &#39;&#39;&#39;Returns the default graph object
+
+    Returns
+    -------
+    Graph
+    &#39;&#39;&#39;
+    return _graph_dict[_default_graph_id]
+
+def clear_default_graph():
+    &#39;&#39;&#39;Delete the old default graph. Make a new one
+
+    Returns
+    -------
+    dict(Graph)
+    &#39;&#39;&#39;
+    global _graph_dict
+    global _default_graph_id
+    _graph_dict.pop(_default_graph_id, None)
+    a = Graph()
+    _default_graph_id = a.id
+    _graph_dict[a.id] = a
+    return _graph_dict[_default_graph_id]
+
+def _get_graph(id):
+    &#39;&#39;&#39;Gets the graph by the ID. Only internal use
+
+    Returns
+    -------
+    Graph
+    &#39;&#39;&#39;
+    if id not in _graph_dict:
+        raise GraphIDError(&#39;Graph ID `{}` not recognized. Available graph IDs are:&#39; \
+            &#39; {}&#39;.format(id, list(_graph_dict.keys())))
+    return _graph_dict[id]
+
+def isgraph(x):
+    &#39;&#39;&#39;Checks if the type (or subtype) of `x` is a Graph
+
+    Parameters
+    ----------
+    x : any
+        Instance to check
+    
+    Returns
+    -------
+    bool
+        True if `x` is a subclass of a Graph, else False
+    &#39;&#39;&#39;
+    return x is not None and issubclass(x.__class__, Graph)
+
+def isnode(x):
+    &#39;&#39;&#39;Checks if the type (or subtype) of `x` is a Node
+
+    Parameters
+    ----------
+    x : any
+        Instance to check
+    
+    Returns
+    -------
+    bool
+        True if `x` is a subclass of a Node, else False
+    &#39;&#39;&#39;
+    return x is not None and issubclass(x.__class__, BaseNode)
+
+def hasprior(x):
+    &#39;&#39;&#39;Checks whether `x` has a prior defined. It must be a subclass of 
+    `pylab.graph.BaseNode` for it to be True.
+
+    Parameters
+    ----------
+    x : any
+        Instance to Check
+
+    Returns
+    -------
+    bool
+    &#39;&#39;&#39;
+    if isnode(x):
+        return x.prior is not None
+    return False
+
+class Graph(Saveable):
+    &#39;&#39;&#39;Graph class
+
+    Parameters
+    ----------
+    name : str
+        This is the name of the graph
+    seed : int
+        This is how we should seed the graph
+    &#39;&#39;&#39;
+
+    def __init__(self, name=None, seed=None):
+        global _graph_dict
+        global _PH_COUNT
+
+        if name is None:
+            name = &#39;graph_{}&#39;.format(_PH_COUNT)
+            _PH_COUNT += 1
+
+        # Set seed if necessary
+        if seed is not None:
+            set_seed(x=seed)
+
+        self.seed = seed
+        self.name = name
+        self.nodes = {} # dict id -&gt; Node or Node subclass
+        self.name2id = {} # dict name -&gt; id
+        self.perturbations = None
+        self.data = None
+        self.inference = None
+        self.id = id(self)
+        self.tracer = None
+        # Add a persistent object to the graph so it knows 
+        # what variables have persistent workers. This is optional
+        # for the persistent Pool
+        self._persistent_pntr = []
+
+        # Add to the graph dict
+        _graph_dict[self.id] = self
+
+    def set_seed(self, seed):
+        &#39;&#39;&#39;Sets the seed of the graph
+
+        Parameters
+        ----------
+        seed : int
+            Seed to set for the graph
+        &#39;&#39;&#39;
+        self.seed = seed
+        set_seed(x=seed)
+
+    @property
+    def size(self):
+        &#39;&#39;&#39;Alias for `__len__`
+
+        Returns
+        -------
+        int
+            How many nodes in the graph
+        &#39;&#39;&#39;
+        return len(self.nodes)
+
+    def __len__(self):
+        return len(self.nodes)
+
+    def __getitem__(self, nid):
+        &#39;&#39;&#39;Get a node either using the name or the id. First 
+        check if it is an id, then a str. If neither work to 
+        index the node then an error is thrown
+
+        Parameters
+        ----------
+        id : int, str
+            This is the identifier for the Node
+        &#39;&#39;&#39;
+        try:
+            ret = self.nodes[nid]
+        except:
+            try:
+                ret = self.nodes[self.name2id[nid]]
+            except:
+                raise UndefinedError(&#39;`id` ({}), &#34;{}&#34; not recognized in graph `{}`&#39;.format( 
+                    type(nid), nid, self.name))
+        return ret
+
+    def __contains__(self, nid):
+        return nid in self.name2id or nid in self.nodes
+
+    def __str__(self):
+        s = &#39;&#39;
+        for node in self.nodes.values():
+            s += node.name + &#39; ({})\n&#39;.format(node.id)
+            if len(node.children) &gt; 0:
+                s += &#39;\tchildren:\n&#39;
+                for child in node.children.values():
+                    s += &#39;\t\t{} ({})\n&#39;.format(child.name,child.id)
+            if len(node.parents) &gt; 0:
+                s += &#39;\tparents:\n&#39;
+                for parent in node.parents.values():
+                    s += &#39;\t\t{} ({})\n&#39;.format(parent.name,parent.id)
+        return s
+
+    def __iter__(self):
+        for _id in self.nodes:
+            yield self.nodes[_id]
+
+    def render(self, filename, ax=None):
+        &#39;&#39;&#39;We save the graph in Cytoscape format so that we can
+        open it in Cytoscape.
+
+        Parameters
+        ----------
+        filename : str
+            - Place to save the figure
+        &#39;&#39;&#39;
+        from py2cytoscape.util import from_networkx
+        import json
+
+        G = nx.DiGraph()
+        cmap = []
+        labels = {}
+
+        if filename[-5:] != &#39;.cyjs&#39;:
+            filename += &#39;.cyjs&#39;
+
+        # Add nodes
+        for id,node in self.nodes.items():
+            G.add_node(node.name)
+            G.nodes[node.name][&#39;id&#39;] = id
+            labels[node.name] = node.name
+            G.nodes[node.name][&#39;class&#39;] = node.__class__.__name__
+
+        # Add edges
+        for id,node in self.nodes.items():
+            try:
+                for parent in node.parents.values():
+                    G.add_edge(parent.name,node.name)
+            except:
+                pass
+
+        cyjs = from_networkx(G)
+        with open(filename, &#39;w&#39;) as outfile:
+            json.dump(cyjs, outfile)
+
+    def as_default(self):
+        &#39;&#39;&#39;Sets the current graph as the default graph
+
+        Returns
+        -------
+        Graph
+            self
+        &#39;&#39;&#39;
+        global _default_graph
+        _default_graph = self
+        return self
+
+    def get_descendants(self, name):
+        &#39;&#39;&#39;Returns a list of ids of variables that are dependent on
+        the input name(recursively returns all of the child ids).
+        The name can either be the name of the variable or the id. Right now
+        it DOES NOT look at undirected edges
+
+        Parameters
+        ----------
+        name : int, str
+            - Identifier of the node to get the descendants of
+        
+        Returns
+        -------
+        list
+            List of IDs of all of the descendants of this node
+        &#39;&#39;&#39;
+        id = None
+        if name in self.nodes:
+            id = name
+        elif name in self.name2id:
+            id = self.name2id[name]
+        else:
+            raise Exception(&#39;name `{}` not found in graph&#39;.format(name))
+
+        node = self.nodes[id]
+        ret = []
+        for id in node.children:
+            ret.append(id)
+            ret += self.get_descendants(id)
+        return ret
+
+
+class BaseNode(Saveable):
+    &#39;&#39;&#39;This is the baseclass of a Node.
+
+    Parameters
+    ----------
+    name : str, Optional
+        - name of the node. If one is not provided, a unique one will be generated
+    name_prefix : str, Optional
+        - name prefix if `name` is not passed in
+    G : Graph, Optional
+        - Graph object to add the node to.
+        - If not specified it adds it to the default graph
+    &#39;&#39;&#39;
+
+    def __init__(self, name=None, name_prefix=None, G=None):
+        global _PH_COUNT
+        if name is None:
+            if name_prefix is None:
+                name_prefix = DEFAULT_BASENODE_NAME_PREFIX
+            name = name_prefix + &#39;{}&#39;.format(_PH_COUNT)
+            _PH_COUNT += 1
+        
+        if G is None:
+            G = get_default_graph()
+        self.G = G
+        self.name = name
+        self.id = id(self)
+        self.G.nodes[self.id] = self
+        self.G.name2id[self.name] = self.id
+        self.prior = None
+
+    def delete(self):
+        &#39;&#39;&#39;Delete itself from the graph
+        &#39;&#39;&#39;
+        self.G.name2id.pop(self.name, None)
+        self.G.nodes.pop(self.id)
+
+
+class DataNode(BaseNode):
+    &#39;&#39;&#39;Base class for an object that wants to be used as the data class in inference.
+
+    &#39;&#39;&#39;
+    def __init__(self, *args, **kwargs):
+        BaseNode.__init__(self, *args, **kwargs)
+        if self.G.data is not None:
+            logging.info(&#39;Overriding old data object in graph {}&#39;.format(self))
+        self.G.data = self
+
+    def delete(self):
+        &#39;&#39;&#39;Deletes this data object from the graph it belogns to
+        &#39;&#39;&#39;
+        self.G.data=None
+        BaseNode.delete(self)
+
+
+class Node(BaseNode):
+    &#39;&#39;&#39;Variable that can be in the graph
+
+    ####################################
+    self.metropolis
+
+    This is the metropolis object that gets instantiated by the metropolis class
+    ####################################
+
+    Parameters
+    ----------
+    name : str
+        - name of the node
+    name_prefix : str
+        - name prefix if `name` is not passed in
+    G : Graph, int
+        - Graph object or graph id to add the node to.
+        - If not specified it adds it to the default graph
+    &#39;&#39;&#39;
+    def __init__(self, name=None, name_prefix=None, G=None):
+        BaseNode.__init__(self, name=name, name_prefix=name_prefix, G=G)
+        self.parents = {}
+        self.children = {}
+        self.undirected = {}
+        self._metropolis = None
+
+    @property
+    def metropolis(self):
+        &#39;&#39;&#39;Get the metropolis object
+        &#39;&#39;&#39;
+        return self._metropolis
+
+    def delete(self):
+        &#39;&#39;&#39;Delete itself from the graph
+        &#39;&#39;&#39;
+        if len(self.parents) &gt; 0:
+            for pid in self.parents:
+                self.G.nodes[pid].children.pop(self.id, None)
+        if len(self.children) &gt; 0:
+            for cid in self.children:
+                self.G.nodes[cid].parents.pop(self.id, None)
+        if len(self.undirected) &gt; 0:
+            for uid in self.undirected:
+                self.G.nodes[uid].undirected.pop(self.id, None)
+        BaseNode.delete(self)
+
+    @property
+    def degree(self):
+        &#39;&#39;&#39;Get the degree of the node
+
+        Returns
+        -------
+        int
+        &#39;&#39;&#39;
+        # return the degree of the node
+        return len(self.parents) + len(self.children) + len(self.undirected)
+
+    def get_adjacent_keys(self):
+        &#39;&#39;&#39;Get the adjacent nodes
+
+        Returns
+        -------
+        list(int)
+            A list of all the IDs of the adjacent nodes
+        &#39;&#39;&#39;
+        return list(self.parents.keys()) + list(self.children.keys())
+
+    def add_parent(self, parent):
+        &#39;&#39;&#39;Adds `parent` as a parent to the node
+        Also adds self as a child to `parent`
+
+        Parameters
+        ----------
+        parent : Node
+            - node we want to set as a parent
+        &#39;&#39;&#39;
+        if not isnode(parent):
+            raise ValueError(&#39;parent ({}) must be a (subclass of) Node&#39;.format( 
+                type(parent)))
+
+        if self.G.id != parent.G.id:
+            raise GraphIDError(&#39;Attempting to add a parent `{}` to `{}` &#39; \
+                &#39;but they are not in the same graph&#39;.format(self.name, parent.name))
+
+        self.parents[parent.id] = parent
+        parent.children[self.id] = self
+
+    def add_child(self, child):
+        &#39;&#39;&#39;Adds `child` as a child to the node
+        Also adds self as a parent to `child`
+
+        Parameters
+        ----------
+        child : Node
+            - node we want to set as a child
+        &#39;&#39;&#39;
+        if not isnode(child):
+            raise ValueError(&#39;child ({}) must be a (subclass of) Node&#39;.format( 
+                type(child)))
+
+        if self.G.id != child.G.id:
+            raise GraphIDError(&#39;Attempting to add a child `{}` to `{}` &#39; \
+                &#39;but they are not in the same graph&#39;.format(self.name, child.name))
+
+        self.children[child.id] = child
+        child.parents[self.id] = self
+
+    def add_undirected(self, node):
+        &#39;&#39;&#39;Adds `node` as an undirected neighbor to the node
+        Does the same for `node`
+
+        Parameters
+        ----------
+        node : Node
+            - node we want to set as an undirected node
+        &#39;&#39;&#39;
+        if not isnode(node):
+            raise ValueError(&#39;node ({}) must be a (subclass of) Node&#39;.format( 
+                type(node)))
+
+        if self.G.id != node.G.id:
+            raise GraphIDError(&#39;Attempting to add a node `{}` to `{}` &#39; \
+                &#39;but they are not in the same graph&#39;.format(self.name, node.name))
+        self.undirected[node.id] = node
+        node.undirected[self.id] = self
+
+    def add_prior(self, prior):
+        &#39;&#39;&#39;Override the name of the passed in distribution `prior`.
+
+        Parameters
+        ----------
+        prior : Node
+            - node we want to set as a prior
+        &#39;&#39;&#39;
+        if not isnode(prior):
+            raise ValueError(&#39;prior ({}) must be a (subclass of) Node&#39;.format( 
+                type(prior)))
+
+        self.add_parent(prior)
+        self.prior = prior
+
+
+class Data(DataNode):
+    &#39;&#39;&#39;Simple class defining the covariates `X` and the observations `y`
+
+    Parameters
+    ----------
+    X : array_like
+        Defines the covariates
+    y : array_like
+        Defines the observations
+    **kwargs
+        See `pylab.graph.DataNode`
+    &#39;&#39;&#39;
+    def __init__(self, X, y, **kwargs):
+        DataNode.__init__(self, **kwargs)
+        self.X = X
+        self.y = y
+
+# Creates a background graph that we can add to
+_default_graph = Graph()
+_default_graph_id = _default_graph.id</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="mdsine2.pylab.graph.clear_default_graph"><code class="name flex">
+<span>def <span class="ident">clear_default_graph</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete the old default graph. Make a new one</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>dict(<a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a>)</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def clear_default_graph():
+    &#39;&#39;&#39;Delete the old default graph. Make a new one
+
+    Returns
+    -------
+    dict(Graph)
+    &#39;&#39;&#39;
+    global _graph_dict
+    global _default_graph_id
+    _graph_dict.pop(_default_graph_id, None)
+    a = Graph()
+    _default_graph_id = a.id
+    _graph_dict[a.id] = a
+    return _graph_dict[_default_graph_id]</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.graph.get_default_graph"><code class="name flex">
+<span>def <span class="ident">get_default_graph</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns the default graph object</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a></code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_default_graph():
+    &#39;&#39;&#39;Returns the default graph object
+
+    Returns
+    -------
+    Graph
+    &#39;&#39;&#39;
+    return _graph_dict[_default_graph_id]</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.graph.hasprior"><code class="name flex">
+<span>def <span class="ident">hasprior</span></span>(<span>x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks whether <code>x</code> has a prior defined. It must be a subclass of
+<code>pylab.graph.BaseNode</code> for it to be True.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance to Check</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def hasprior(x):
+    &#39;&#39;&#39;Checks whether `x` has a prior defined. It must be a subclass of 
+    `pylab.graph.BaseNode` for it to be True.
+
+    Parameters
+    ----------
+    x : any
+        Instance to Check
+
+    Returns
+    -------
+    bool
+    &#39;&#39;&#39;
+    if isnode(x):
+        return x.prior is not None
+    return False</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.graph.isgraph"><code class="name flex">
+<span>def <span class="ident">isgraph</span></span>(<span>x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if the type (or subtype) of <code>x</code> is a Graph</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance to check</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>x</code> is a subclass of a Graph, else False</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isgraph(x):
+    &#39;&#39;&#39;Checks if the type (or subtype) of `x` is a Graph
+
+    Parameters
+    ----------
+    x : any
+        Instance to check
+    
+    Returns
+    -------
+    bool
+        True if `x` is a subclass of a Graph, else False
+    &#39;&#39;&#39;
+    return x is not None and issubclass(x.__class__, Graph)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.graph.isnode"><code class="name flex">
+<span>def <span class="ident">isnode</span></span>(<span>x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if the type (or subtype) of <code>x</code> is a Node</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance to check</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>x</code> is a subclass of a Node, else False</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isnode(x):
+    &#39;&#39;&#39;Checks if the type (or subtype) of `x` is a Node
+
+    Parameters
+    ----------
+    x : any
+        Instance to check
+    
+    Returns
+    -------
+    bool
+        True if `x` is a subclass of a Node, else False
+    &#39;&#39;&#39;
+    return x is not None and issubclass(x.__class__, BaseNode)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="mdsine2.pylab.graph.BaseNode"><code class="flex name class">
+<span>class <span class="ident">BaseNode</span></span>
+<span>(</span><span>name=None, name_prefix=None, G=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is the baseclass of a Node.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str, Optional</code></dt>
+<dd>
+<ul>
+<li>name of the node. If one is not provided, a unique one will be generated</li>
+</ul>
+</dd>
+<dt><strong><code>name_prefix</code></strong> :&ensp;<code>str, Optional</code></dt>
+<dd>
+<ul>
+<li>name prefix if <code>name</code> is not passed in</li>
+</ul>
+</dd>
+<dt><strong><code>G</code></strong> :&ensp;<code><a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a>, Optional</code></dt>
+<dd>
+<ul>
+<li>Graph object to add the node to.</li>
+<li>If not specified it adds it to the default graph</li>
+</ul>
+</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class BaseNode(Saveable):
+    &#39;&#39;&#39;This is the baseclass of a Node.
+
+    Parameters
+    ----------
+    name : str, Optional
+        - name of the node. If one is not provided, a unique one will be generated
+    name_prefix : str, Optional
+        - name prefix if `name` is not passed in
+    G : Graph, Optional
+        - Graph object to add the node to.
+        - If not specified it adds it to the default graph
+    &#39;&#39;&#39;
+
+    def __init__(self, name=None, name_prefix=None, G=None):
+        global _PH_COUNT
+        if name is None:
+            if name_prefix is None:
+                name_prefix = DEFAULT_BASENODE_NAME_PREFIX
+            name = name_prefix + &#39;{}&#39;.format(_PH_COUNT)
+            _PH_COUNT += 1
+        
+        if G is None:
+            G = get_default_graph()
+        self.G = G
+        self.name = name
+        self.id = id(self)
+        self.G.nodes[self.id] = self
+        self.G.name2id[self.name] = self.id
+        self.prior = None
+
+    def delete(self):
+        &#39;&#39;&#39;Delete itself from the graph
+        &#39;&#39;&#39;
+        self.G.name2id.pop(self.name, None)
+        self.G.nodes.pop(self.id)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.base.Saveable" href="base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.graph.DataNode" href="#mdsine2.pylab.graph.DataNode">DataNode</a></li>
+<li><a title="mdsine2.pylab.graph.Node" href="#mdsine2.pylab.graph.Node">Node</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.pylab.graph.BaseNode.delete"><code class="name flex">
+<span>def <span class="ident">delete</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete itself from the graph</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def delete(self):
+    &#39;&#39;&#39;Delete itself from the graph
+    &#39;&#39;&#39;
+    self.G.name2id.pop(self.name, None)
+    self.G.nodes.pop(self.id)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.base.Saveable" href="base.html#mdsine2.pylab.base.Saveable">Saveable</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.base.Saveable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.pylab.graph.Data"><code class="flex name class">
+<span>class <span class="ident">Data</span></span>
+<span>(</span><span>X, y, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Simple class defining the covariates <code>X</code> and the observations <code>y</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>X</code></strong> :&ensp;<code>array_like</code></dt>
+<dd>Defines the covariates</dd>
+<dt><strong><code>y</code></strong> :&ensp;<code>array_like</code></dt>
+<dd>Defines the observations</dd>
+<dt><strong><code>**kwargs</code></strong></dt>
+<dd>See <code>pylab.graph.DataNode</code></dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Data(DataNode):
+    &#39;&#39;&#39;Simple class defining the covariates `X` and the observations `y`
+
+    Parameters
+    ----------
+    X : array_like
+        Defines the covariates
+    y : array_like
+        Defines the observations
+    **kwargs
+        See `pylab.graph.DataNode`
+    &#39;&#39;&#39;
+    def __init__(self, X, y, **kwargs):
+        DataNode.__init__(self, **kwargs)
+        self.X = X
+        self.y = y</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.graph.DataNode" href="#mdsine2.pylab.graph.DataNode">DataNode</a></li>
+<li><a title="mdsine2.pylab.graph.BaseNode" href="#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.graph.DataNode" href="#mdsine2.pylab.graph.DataNode">DataNode</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.graph.DataNode.delete" href="#mdsine2.pylab.graph.DataNode.delete">delete</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.DataNode.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.DataNode.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.DataNode.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.pylab.graph.DataNode"><code class="flex name class">
+<span>class <span class="ident">DataNode</span></span>
+<span>(</span><span>*args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Base class for an object that wants to be used as the data class in inference.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class DataNode(BaseNode):
+    &#39;&#39;&#39;Base class for an object that wants to be used as the data class in inference.
+
+    &#39;&#39;&#39;
+    def __init__(self, *args, **kwargs):
+        BaseNode.__init__(self, *args, **kwargs)
+        if self.G.data is not None:
+            logging.info(&#39;Overriding old data object in graph {}&#39;.format(self))
+        self.G.data = self
+
+    def delete(self):
+        &#39;&#39;&#39;Deletes this data object from the graph it belogns to
+        &#39;&#39;&#39;
+        self.G.data=None
+        BaseNode.delete(self)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.graph.BaseNode" href="#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="mdsine2.design_matrices.Data" href="../design_matrices.html#mdsine2.design_matrices.Data">Data</a></li>
+<li><a title="mdsine2.pylab.graph.Data" href="#mdsine2.pylab.graph.Data">Data</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.pylab.graph.DataNode.delete"><code class="name flex">
+<span>def <span class="ident">delete</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Deletes this data object from the graph it belogns to</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def delete(self):
+    &#39;&#39;&#39;Deletes this data object from the graph it belogns to
+    &#39;&#39;&#39;
+    self.G.data=None
+    BaseNode.delete(self)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.graph.BaseNode" href="#mdsine2.pylab.graph.BaseNode">BaseNode</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.graph.BaseNode.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.BaseNode.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.BaseNode.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.pylab.graph.Graph"><code class="flex name class">
+<span>class <span class="ident">Graph</span></span>
+<span>(</span><span>name=None, seed=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Graph class</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the name of the graph</dd>
+<dt><strong><code>seed</code></strong> :&ensp;<code>int</code></dt>
+<dd>This is how we should seed the graph</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Graph(Saveable):
+    &#39;&#39;&#39;Graph class
+
+    Parameters
+    ----------
+    name : str
+        This is the name of the graph
+    seed : int
+        This is how we should seed the graph
+    &#39;&#39;&#39;
+
+    def __init__(self, name=None, seed=None):
+        global _graph_dict
+        global _PH_COUNT
+
+        if name is None:
+            name = &#39;graph_{}&#39;.format(_PH_COUNT)
+            _PH_COUNT += 1
+
+        # Set seed if necessary
+        if seed is not None:
+            set_seed(x=seed)
+
+        self.seed = seed
+        self.name = name
+        self.nodes = {} # dict id -&gt; Node or Node subclass
+        self.name2id = {} # dict name -&gt; id
+        self.perturbations = None
+        self.data = None
+        self.inference = None
+        self.id = id(self)
+        self.tracer = None
+        # Add a persistent object to the graph so it knows 
+        # what variables have persistent workers. This is optional
+        # for the persistent Pool
+        self._persistent_pntr = []
+
+        # Add to the graph dict
+        _graph_dict[self.id] = self
+
+    def set_seed(self, seed):
+        &#39;&#39;&#39;Sets the seed of the graph
+
+        Parameters
+        ----------
+        seed : int
+            Seed to set for the graph
+        &#39;&#39;&#39;
+        self.seed = seed
+        set_seed(x=seed)
+
+    @property
+    def size(self):
+        &#39;&#39;&#39;Alias for `__len__`
+
+        Returns
+        -------
+        int
+            How many nodes in the graph
+        &#39;&#39;&#39;
+        return len(self.nodes)
+
+    def __len__(self):
+        return len(self.nodes)
+
+    def __getitem__(self, nid):
+        &#39;&#39;&#39;Get a node either using the name or the id. First 
+        check if it is an id, then a str. If neither work to 
+        index the node then an error is thrown
+
+        Parameters
+        ----------
+        id : int, str
+            This is the identifier for the Node
+        &#39;&#39;&#39;
+        try:
+            ret = self.nodes[nid]
+        except:
+            try:
+                ret = self.nodes[self.name2id[nid]]
+            except:
+                raise UndefinedError(&#39;`id` ({}), &#34;{}&#34; not recognized in graph `{}`&#39;.format( 
+                    type(nid), nid, self.name))
+        return ret
+
+    def __contains__(self, nid):
+        return nid in self.name2id or nid in self.nodes
+
+    def __str__(self):
+        s = &#39;&#39;
+        for node in self.nodes.values():
+            s += node.name + &#39; ({})\n&#39;.format(node.id)
+            if len(node.children) &gt; 0:
+                s += &#39;\tchildren:\n&#39;
+                for child in node.children.values():
+                    s += &#39;\t\t{} ({})\n&#39;.format(child.name,child.id)
+            if len(node.parents) &gt; 0:
+                s += &#39;\tparents:\n&#39;
+                for parent in node.parents.values():
+                    s += &#39;\t\t{} ({})\n&#39;.format(parent.name,parent.id)
+        return s
+
+    def __iter__(self):
+        for _id in self.nodes:
+            yield self.nodes[_id]
+
+    def render(self, filename, ax=None):
+        &#39;&#39;&#39;We save the graph in Cytoscape format so that we can
+        open it in Cytoscape.
+
+        Parameters
+        ----------
+        filename : str
+            - Place to save the figure
+        &#39;&#39;&#39;
+        from py2cytoscape.util import from_networkx
+        import json
+
+        G = nx.DiGraph()
+        cmap = []
+        labels = {}
+
+        if filename[-5:] != &#39;.cyjs&#39;:
+            filename += &#39;.cyjs&#39;
+
+        # Add nodes
+        for id,node in self.nodes.items():
+            G.add_node(node.name)
+            G.nodes[node.name][&#39;id&#39;] = id
+            labels[node.name] = node.name
+            G.nodes[node.name][&#39;class&#39;] = node.__class__.__name__
+
+        # Add edges
+        for id,node in self.nodes.items():
+            try:
+                for parent in node.parents.values():
+                    G.add_edge(parent.name,node.name)
+            except:
+                pass
+
+        cyjs = from_networkx(G)
+        with open(filename, &#39;w&#39;) as outfile:
+            json.dump(cyjs, outfile)
+
+    def as_default(self):
+        &#39;&#39;&#39;Sets the current graph as the default graph
+
+        Returns
+        -------
+        Graph
+            self
+        &#39;&#39;&#39;
+        global _default_graph
+        _default_graph = self
+        return self
+
+    def get_descendants(self, name):
+        &#39;&#39;&#39;Returns a list of ids of variables that are dependent on
+        the input name(recursively returns all of the child ids).
+        The name can either be the name of the variable or the id. Right now
+        it DOES NOT look at undirected edges
+
+        Parameters
+        ----------
+        name : int, str
+            - Identifier of the node to get the descendants of
+        
+        Returns
+        -------
+        list
+            List of IDs of all of the descendants of this node
+        &#39;&#39;&#39;
+        id = None
+        if name in self.nodes:
+            id = name
+        elif name in self.name2id:
+            id = self.name2id[name]
+        else:
+            raise Exception(&#39;name `{}` not found in graph&#39;.format(name))
+
+        node = self.nodes[id]
+        ret = []
+        for id in node.children:
+            ret.append(id)
+            ret += self.get_descendants(id)
+        return ret</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.base.Saveable" href="base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="mdsine2.pylab.graph.Graph.size"><code class="name">var <span class="ident">size</span></code></dt>
+<dd>
+<div class="desc"><p>Alias for <code>__len__</code></p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>How many nodes in the graph</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def size(self):
+    &#39;&#39;&#39;Alias for `__len__`
+
+    Returns
+    -------
+    int
+        How many nodes in the graph
+    &#39;&#39;&#39;
+    return len(self.nodes)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.pylab.graph.Graph.as_default"><code class="name flex">
+<span>def <span class="ident">as_default</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Sets the current graph as the default graph</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a></code></dt>
+<dd>self</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def as_default(self):
+    &#39;&#39;&#39;Sets the current graph as the default graph
+
+    Returns
+    -------
+    Graph
+        self
+    &#39;&#39;&#39;
+    global _default_graph
+    _default_graph = self
+    return self</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.graph.Graph.get_descendants"><code class="name flex">
+<span>def <span class="ident">get_descendants</span></span>(<span>self, name)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Returns a list of ids of variables that are dependent on
+the input name(recursively returns all of the child ids).
+The name can either be the name of the variable or the id. Right now
+it DOES NOT look at undirected edges</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>int, str</code></dt>
+<dd>
+<ul>
+<li>Identifier of the node to get the descendants of</li>
+</ul>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list</code></dt>
+<dd>List of IDs of all of the descendants of this node</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_descendants(self, name):
+    &#39;&#39;&#39;Returns a list of ids of variables that are dependent on
+    the input name(recursively returns all of the child ids).
+    The name can either be the name of the variable or the id. Right now
+    it DOES NOT look at undirected edges
+
+    Parameters
+    ----------
+    name : int, str
+        - Identifier of the node to get the descendants of
+    
+    Returns
+    -------
+    list
+        List of IDs of all of the descendants of this node
+    &#39;&#39;&#39;
+    id = None
+    if name in self.nodes:
+        id = name
+    elif name in self.name2id:
+        id = self.name2id[name]
+    else:
+        raise Exception(&#39;name `{}` not found in graph&#39;.format(name))
+
+    node = self.nodes[id]
+    ret = []
+    for id in node.children:
+        ret.append(id)
+        ret += self.get_descendants(id)
+    return ret</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.graph.Graph.render"><code class="name flex">
+<span>def <span class="ident">render</span></span>(<span>self, filename, ax=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>We save the graph in Cytoscape format so that we can
+open it in Cytoscape.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>filename</code></strong> :&ensp;<code>str</code></dt>
+<dd>
+<ul>
+<li>Place to save the figure</li>
+</ul>
+</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def render(self, filename, ax=None):
+    &#39;&#39;&#39;We save the graph in Cytoscape format so that we can
+    open it in Cytoscape.
+
+    Parameters
+    ----------
+    filename : str
+        - Place to save the figure
+    &#39;&#39;&#39;
+    from py2cytoscape.util import from_networkx
+    import json
+
+    G = nx.DiGraph()
+    cmap = []
+    labels = {}
+
+    if filename[-5:] != &#39;.cyjs&#39;:
+        filename += &#39;.cyjs&#39;
+
+    # Add nodes
+    for id,node in self.nodes.items():
+        G.add_node(node.name)
+        G.nodes[node.name][&#39;id&#39;] = id
+        labels[node.name] = node.name
+        G.nodes[node.name][&#39;class&#39;] = node.__class__.__name__
+
+    # Add edges
+    for id,node in self.nodes.items():
+        try:
+            for parent in node.parents.values():
+                G.add_edge(parent.name,node.name)
+        except:
+            pass
+
+    cyjs = from_networkx(G)
+    with open(filename, &#39;w&#39;) as outfile:
+        json.dump(cyjs, outfile)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.graph.Graph.set_seed"><code class="name flex">
+<span>def <span class="ident">set_seed</span></span>(<span>self, seed)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Sets the seed of the graph</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>seed</code></strong> :&ensp;<code>int</code></dt>
+<dd>Seed to set for the graph</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def set_seed(self, seed):
+    &#39;&#39;&#39;Sets the seed of the graph
+
+    Parameters
+    ----------
+    seed : int
+        Seed to set for the graph
+    &#39;&#39;&#39;
+    self.seed = seed
+    set_seed(x=seed)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.base.Saveable" href="base.html#mdsine2.pylab.base.Saveable">Saveable</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.base.Saveable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.pylab.graph.Node"><code class="flex name class">
+<span>class <span class="ident">Node</span></span>
+<span>(</span><span>name=None, name_prefix=None, G=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Variable that can be in the graph</p>
+<h6 id="_1"></h6>
+<p>self.metropolis</p>
+<p>This is the metropolis object that gets instantiated by the metropolis class</p>
+<h6 id="_2"></h6>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>
+<ul>
+<li>name of the node</li>
+</ul>
+</dd>
+<dt><strong><code>name_prefix</code></strong> :&ensp;<code>str</code></dt>
+<dd>
+<ul>
+<li>name prefix if <code>name</code> is not passed in</li>
+</ul>
+</dd>
+<dt><strong><code>G</code></strong> :&ensp;<code><a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a>, int</code></dt>
+<dd>
+<ul>
+<li>Graph object or graph id to add the node to.</li>
+<li>If not specified it adds it to the default graph</li>
+</ul>
+</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Node(BaseNode):
+    &#39;&#39;&#39;Variable that can be in the graph
+
+    ####################################
+    self.metropolis
+
+    This is the metropolis object that gets instantiated by the metropolis class
+    ####################################
+
+    Parameters
+    ----------
+    name : str
+        - name of the node
+    name_prefix : str
+        - name prefix if `name` is not passed in
+    G : Graph, int
+        - Graph object or graph id to add the node to.
+        - If not specified it adds it to the default graph
+    &#39;&#39;&#39;
+    def __init__(self, name=None, name_prefix=None, G=None):
+        BaseNode.__init__(self, name=name, name_prefix=name_prefix, G=G)
+        self.parents = {}
+        self.children = {}
+        self.undirected = {}
+        self._metropolis = None
+
+    @property
+    def metropolis(self):
+        &#39;&#39;&#39;Get the metropolis object
+        &#39;&#39;&#39;
+        return self._metropolis
+
+    def delete(self):
+        &#39;&#39;&#39;Delete itself from the graph
+        &#39;&#39;&#39;
+        if len(self.parents) &gt; 0:
+            for pid in self.parents:
+                self.G.nodes[pid].children.pop(self.id, None)
+        if len(self.children) &gt; 0:
+            for cid in self.children:
+                self.G.nodes[cid].parents.pop(self.id, None)
+        if len(self.undirected) &gt; 0:
+            for uid in self.undirected:
+                self.G.nodes[uid].undirected.pop(self.id, None)
+        BaseNode.delete(self)
+
+    @property
+    def degree(self):
+        &#39;&#39;&#39;Get the degree of the node
+
+        Returns
+        -------
+        int
+        &#39;&#39;&#39;
+        # return the degree of the node
+        return len(self.parents) + len(self.children) + len(self.undirected)
+
+    def get_adjacent_keys(self):
+        &#39;&#39;&#39;Get the adjacent nodes
+
+        Returns
+        -------
+        list(int)
+            A list of all the IDs of the adjacent nodes
+        &#39;&#39;&#39;
+        return list(self.parents.keys()) + list(self.children.keys())
+
+    def add_parent(self, parent):
+        &#39;&#39;&#39;Adds `parent` as a parent to the node
+        Also adds self as a child to `parent`
+
+        Parameters
+        ----------
+        parent : Node
+            - node we want to set as a parent
+        &#39;&#39;&#39;
+        if not isnode(parent):
+            raise ValueError(&#39;parent ({}) must be a (subclass of) Node&#39;.format( 
+                type(parent)))
+
+        if self.G.id != parent.G.id:
+            raise GraphIDError(&#39;Attempting to add a parent `{}` to `{}` &#39; \
+                &#39;but they are not in the same graph&#39;.format(self.name, parent.name))
+
+        self.parents[parent.id] = parent
+        parent.children[self.id] = self
+
+    def add_child(self, child):
+        &#39;&#39;&#39;Adds `child` as a child to the node
+        Also adds self as a parent to `child`
+
+        Parameters
+        ----------
+        child : Node
+            - node we want to set as a child
+        &#39;&#39;&#39;
+        if not isnode(child):
+            raise ValueError(&#39;child ({}) must be a (subclass of) Node&#39;.format( 
+                type(child)))
+
+        if self.G.id != child.G.id:
+            raise GraphIDError(&#39;Attempting to add a child `{}` to `{}` &#39; \
+                &#39;but they are not in the same graph&#39;.format(self.name, child.name))
+
+        self.children[child.id] = child
+        child.parents[self.id] = self
+
+    def add_undirected(self, node):
+        &#39;&#39;&#39;Adds `node` as an undirected neighbor to the node
+        Does the same for `node`
+
+        Parameters
+        ----------
+        node : Node
+            - node we want to set as an undirected node
+        &#39;&#39;&#39;
+        if not isnode(node):
+            raise ValueError(&#39;node ({}) must be a (subclass of) Node&#39;.format( 
+                type(node)))
+
+        if self.G.id != node.G.id:
+            raise GraphIDError(&#39;Attempting to add a node `{}` to `{}` &#39; \
+                &#39;but they are not in the same graph&#39;.format(self.name, node.name))
+        self.undirected[node.id] = node
+        node.undirected[self.id] = self
+
+    def add_prior(self, prior):
+        &#39;&#39;&#39;Override the name of the passed in distribution `prior`.
+
+        Parameters
+        ----------
+        prior : Node
+            - node we want to set as a prior
+        &#39;&#39;&#39;
+        if not isnode(prior):
+            raise ValueError(&#39;prior ({}) must be a (subclass of) Node&#39;.format( 
+                type(prior)))
+
+        self.add_parent(prior)
+        self.prior = prior</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.graph.BaseNode" href="#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+</ul>
+<h3>Subclasses</h3>
+<ul class="hlist">
+<li><a title="mdsine2.clustering.ClusterAssignments" href="../clustering.html#mdsine2.clustering.ClusterAssignments">ClusterAssignments</a></li>
+<li><a title="mdsine2.design_matrices.DesignMatrix" href="../design_matrices.html#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></li>
+<li><a title="mdsine2.design_matrices.ObservationVector" href="../design_matrices.html#mdsine2.design_matrices.ObservationVector">ObservationVector</a></li>
+<li><a title="mdsine2.filtering.FilteringLogMP" href="../filtering.html#mdsine2.filtering.FilteringLogMP">FilteringLogMP</a></li>
+<li><a title="mdsine2.filtering.TrajectorySet" href="../filtering.html#mdsine2.filtering.TrajectorySet">TrajectorySet</a></li>
+<li><a title="mdsine2.filtering.ZeroInflation" href="../filtering.html#mdsine2.filtering.ZeroInflation">ZeroInflation</a></li>
+<li><a title="mdsine2.perturbations.PerturbationIndicators" href="../perturbations.html#mdsine2.perturbations.PerturbationIndicators">PerturbationIndicators</a></li>
+<li><a title="mdsine2.perturbations.PerturbationProbabilities" href="../perturbations.html#mdsine2.perturbations.PerturbationProbabilities">PerturbationProbabilities</a></li>
+<li><a title="mdsine2.pylab.cluster.ClusterValue" href="cluster.html#mdsine2.pylab.cluster.ClusterValue">ClusterValue</a></li>
+<li><a title="mdsine2.pylab.cluster.Clustering" href="cluster.html#mdsine2.pylab.cluster.Clustering">Clustering</a></li>
+<li><a title="mdsine2.pylab.contrib.Interactions" href="contrib.html#mdsine2.pylab.contrib.Interactions">Interactions</a></li>
+<li><a title="mdsine2.pylab.variables.Constant" href="variables.html#mdsine2.pylab.variables.Constant">Constant</a></li>
+<li><a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a></li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="mdsine2.pylab.graph.Node.degree"><code class="name">var <span class="ident">degree</span></code></dt>
+<dd>
+<div class="desc"><p>Get the degree of the node</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def degree(self):
+    &#39;&#39;&#39;Get the degree of the node
+
+    Returns
+    -------
+    int
+    &#39;&#39;&#39;
+    # return the degree of the node
+    return len(self.parents) + len(self.children) + len(self.undirected)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.graph.Node.metropolis"><code class="name">var <span class="ident">metropolis</span></code></dt>
+<dd>
+<div class="desc"><p>Get the metropolis object</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def metropolis(self):
+    &#39;&#39;&#39;Get the metropolis object
+    &#39;&#39;&#39;
+    return self._metropolis</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.pylab.graph.Node.add_child"><code class="name flex">
+<span>def <span class="ident">add_child</span></span>(<span>self, child)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Adds <code>child</code> as a child to the node
+Also adds self as a parent to <code>child</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>child</code></strong> :&ensp;<code><a title="mdsine2.pylab.graph.Node" href="#mdsine2.pylab.graph.Node">Node</a></code></dt>
+<dd>
+<ul>
+<li>node we want to set as a child</li>
+</ul>
+</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_child(self, child):
+    &#39;&#39;&#39;Adds `child` as a child to the node
+    Also adds self as a parent to `child`
+
+    Parameters
+    ----------
+    child : Node
+        - node we want to set as a child
+    &#39;&#39;&#39;
+    if not isnode(child):
+        raise ValueError(&#39;child ({}) must be a (subclass of) Node&#39;.format( 
+            type(child)))
+
+    if self.G.id != child.G.id:
+        raise GraphIDError(&#39;Attempting to add a child `{}` to `{}` &#39; \
+            &#39;but they are not in the same graph&#39;.format(self.name, child.name))
+
+    self.children[child.id] = child
+    child.parents[self.id] = self</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.graph.Node.add_parent"><code class="name flex">
+<span>def <span class="ident">add_parent</span></span>(<span>self, parent)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Adds <code>parent</code> as a parent to the node
+Also adds self as a child to <code>parent</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>parent</code></strong> :&ensp;<code><a title="mdsine2.pylab.graph.Node" href="#mdsine2.pylab.graph.Node">Node</a></code></dt>
+<dd>
+<ul>
+<li>node we want to set as a parent</li>
+</ul>
+</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_parent(self, parent):
+    &#39;&#39;&#39;Adds `parent` as a parent to the node
+    Also adds self as a child to `parent`
+
+    Parameters
+    ----------
+    parent : Node
+        - node we want to set as a parent
+    &#39;&#39;&#39;
+    if not isnode(parent):
+        raise ValueError(&#39;parent ({}) must be a (subclass of) Node&#39;.format( 
+            type(parent)))
+
+    if self.G.id != parent.G.id:
+        raise GraphIDError(&#39;Attempting to add a parent `{}` to `{}` &#39; \
+            &#39;but they are not in the same graph&#39;.format(self.name, parent.name))
+
+    self.parents[parent.id] = parent
+    parent.children[self.id] = self</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.graph.Node.add_prior"><code class="name flex">
+<span>def <span class="ident">add_prior</span></span>(<span>self, prior)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Override the name of the passed in distribution <code>prior</code>.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>prior</code></strong> :&ensp;<code><a title="mdsine2.pylab.graph.Node" href="#mdsine2.pylab.graph.Node">Node</a></code></dt>
+<dd>
+<ul>
+<li>node we want to set as a prior</li>
+</ul>
+</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_prior(self, prior):
+    &#39;&#39;&#39;Override the name of the passed in distribution `prior`.
+
+    Parameters
+    ----------
+    prior : Node
+        - node we want to set as a prior
+    &#39;&#39;&#39;
+    if not isnode(prior):
+        raise ValueError(&#39;prior ({}) must be a (subclass of) Node&#39;.format( 
+            type(prior)))
+
+    self.add_parent(prior)
+    self.prior = prior</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.graph.Node.add_undirected"><code class="name flex">
+<span>def <span class="ident">add_undirected</span></span>(<span>self, node)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Adds <code>node</code> as an undirected neighbor to the node
+Does the same for <code>node</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>node</code></strong> :&ensp;<code><a title="mdsine2.pylab.graph.Node" href="#mdsine2.pylab.graph.Node">Node</a></code></dt>
+<dd>
+<ul>
+<li>node we want to set as an undirected node</li>
+</ul>
+</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_undirected(self, node):
+    &#39;&#39;&#39;Adds `node` as an undirected neighbor to the node
+    Does the same for `node`
+
+    Parameters
+    ----------
+    node : Node
+        - node we want to set as an undirected node
+    &#39;&#39;&#39;
+    if not isnode(node):
+        raise ValueError(&#39;node ({}) must be a (subclass of) Node&#39;.format( 
+            type(node)))
+
+    if self.G.id != node.G.id:
+        raise GraphIDError(&#39;Attempting to add a node `{}` to `{}` &#39; \
+            &#39;but they are not in the same graph&#39;.format(self.name, node.name))
+    self.undirected[node.id] = node
+    node.undirected[self.id] = self</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.graph.Node.get_adjacent_keys"><code class="name flex">
+<span>def <span class="ident">get_adjacent_keys</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Get the adjacent nodes</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list(int)</code></dt>
+<dd>A list of all the IDs of the adjacent nodes</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def get_adjacent_keys(self):
+    &#39;&#39;&#39;Get the adjacent nodes
+
+    Returns
+    -------
+    list(int)
+        A list of all the IDs of the adjacent nodes
+    &#39;&#39;&#39;
+    return list(self.parents.keys()) + list(self.children.keys())</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.graph.BaseNode" href="#mdsine2.pylab.graph.BaseNode">BaseNode</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.graph.BaseNode.delete" href="#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.BaseNode.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.BaseNode.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.BaseNode.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="mdsine2.pylab" href="index.html">mdsine2.pylab</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="mdsine2.pylab.graph.clear_default_graph" href="#mdsine2.pylab.graph.clear_default_graph">clear_default_graph</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.get_default_graph" href="#mdsine2.pylab.graph.get_default_graph">get_default_graph</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.hasprior" href="#mdsine2.pylab.graph.hasprior">hasprior</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.isgraph" href="#mdsine2.pylab.graph.isgraph">isgraph</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.isnode" href="#mdsine2.pylab.graph.isnode">isnode</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="mdsine2.pylab.graph.BaseNode" href="#mdsine2.pylab.graph.BaseNode">BaseNode</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.pylab.graph.BaseNode.delete" href="#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="mdsine2.pylab.graph.Data" href="#mdsine2.pylab.graph.Data">Data</a></code></h4>
+</li>
+<li>
+<h4><code><a title="mdsine2.pylab.graph.DataNode" href="#mdsine2.pylab.graph.DataNode">DataNode</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.pylab.graph.DataNode.delete" href="#mdsine2.pylab.graph.DataNode.delete">delete</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.pylab.graph.Graph.as_default" href="#mdsine2.pylab.graph.Graph.as_default">as_default</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Graph.get_descendants" href="#mdsine2.pylab.graph.Graph.get_descendants">get_descendants</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Graph.render" href="#mdsine2.pylab.graph.Graph.render">render</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Graph.set_seed" href="#mdsine2.pylab.graph.Graph.set_seed">set_seed</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Graph.size" href="#mdsine2.pylab.graph.Graph.size">size</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="mdsine2.pylab.graph.Node" href="#mdsine2.pylab.graph.Node">Node</a></code></h4>
+<ul class="two-column">
+<li><code><a title="mdsine2.pylab.graph.Node.add_child" href="#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.add_parent" href="#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.add_prior" href="#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.add_undirected" href="#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.degree" href="#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.get_adjacent_keys" href="#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.metropolis" href="#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.1</a>.</p>
+</footer>
+</body>
+</html>

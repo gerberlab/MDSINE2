@@ -1,0 +1,3042 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.1" />
+<title>mdsine2.config API documentation</title>
+<meta name="description" content="This module holds classes for the logging and model configuration
+parameters that are set manually in here. There are also the filtering
+functions …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>mdsine2.config</code></h1>
+</header>
+<section id="section-intro">
+<p>This module holds classes for the logging and model configuration
+parameters that are set manually in here. There are also the filtering
+functions used to preprocess the data</p>
+<h2 id="learned-negative-binomial-dispersion-parameters">Learned Negative Binomial Dispersion Parameters</h2>
+<p>a0
+median: 3.021173158076349e-05
+mean: 3.039336514482573e-05
+25th percentile: 2.8907661553542307e-05
+75th percentile: 3.1848563862236224e-05
+acceptance rate: 0.3636
+a1
+median: 0.03610445832385458
+mean: 0.036163868481381596
+25th percentile: 0.034369620675005035
+75th percentile: 0.0378392670993046
+acceptance rate: 0.5324</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#39;&#39;&#39;This module holds classes for the logging and model configuration
+parameters that are set manually in here. There are also the filtering
+functions used to preprocess the data
+
+Learned negative binomial dispersion parameters
+-----------------------------------------------
+a0
+        median: 3.021173158076349e-05
+        mean: 3.039336514482573e-05
+        25th percentile: 2.8907661553542307e-05
+        75th percentile: 3.1848563862236224e-05
+        acceptance rate: 0.3636
+a1
+        median: 0.03610445832385458
+        mean: 0.036163868481381596
+        25th percentile: 0.034369620675005035
+        75th percentile: 0.0378392670993046
+        acceptance rate: 0.5324
+
+&#39;&#39;&#39;
+import logging
+import numpy as np
+import pandas as pd
+import sys
+
+from .names import STRNAMES
+from . import pylab as pl
+
+# Parameters for a0 and a1
+NEGBIN_A0 = 3.039336514482573e-05
+NEGBIN_A1 = 0.036163868481381596
+LEARNED_LOGNORMAL_SCALE = 0.3411239239789811
+
+# File locations
+GRAPH_NAME = &#39;graph&#39;
+MCMC_FILENAME = &#39;mcmc.pkl&#39;
+SUBJSET_FILENAME = &#39;subjset.pkl&#39;
+VALIDATION_SUBJSET_FILENAME = &#39;validate_subjset.pkl&#39;
+SYNDATA_FILENAME = &#39;syndata.pkl&#39;
+GRAPH_FILENAME = &#39;graph.pkl&#39;
+HDF5_FILENAME = &#39;traces.hdf5&#39;
+TRACER_FILENAME = &#39;tracer.pkl&#39;
+PARAMS_FILENAME = &#39;params.pkl&#39;
+FPARAMS_FILENAME = &#39;filtering_params.pkl&#39;
+SYNPARAMS_FILENAME = &#39;synthetic_params.pkl&#39;
+MLCRR_RESULTS_FILENAME = &#39;mlcrr_results.pkl&#39;
+RESTART_INFERENCE_SEED_RECORD = &#39;restart_seed_record.tsv&#39;
+INTERMEDIATE_RESULTS_FILENAME = &#39;intermediate_results.tsv&#39;
+
+
+PHYLOGENETIC_TREE_FILENAME = &#39;raw_data/phylogenetic_tree_branch_len_preserved.nhx&#39;
+
+def calculate_reads_a0a1(desired_percent_variation):
+    &#39;&#39;&#39;
+    At the full noise level, in terms of % noise of the signal at:
+        10000 reads, the signal is ~10% noise
+        100 reads, the signal is ~20% noise
+        10 reads, the signal is ~30% noise
+
+    When we scale the a0 and a1 terms, we are assuming that you want to
+    scale the high abundance bacteria for that signal and we scale the
+    a0 parameter such that they stay relative to each other.
+
+    If == -1 we set to the full noise
+    &#39;&#39;&#39;
+    if desired_percent_variation == -1:
+        desired_percent_variation = 0.05
+    p = desired_percent_variation / 0.05
+    return NEGBIN_A0*p, NEGBIN_A1*p
+
+def isModelConfig(x):
+    &#39;&#39;&#39;Checks if the input array is a model config object
+
+    Parameters
+    ----------
+    x : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `x` is a a model config object
+    &#39;&#39;&#39;
+    return x is not None and issubclass(x.__class__, _BaseModelConfig)
+
+
+class _BaseModelConfig(pl.Saveable):
+
+    def __str__(self):
+        s = &#39;{}&#39;.format(self.__class__.__name__)
+        for k,v in vars(self).items():
+            s += &#39;\n\t{}: {}&#39;.format(k,v)
+        return s
+
+    def suffix(self):
+        raise NotImplementedError(&#39;Need to implement&#39;)
+
+
+class ModelConfigICML(_BaseModelConfig):
+    &#39;&#39;&#39;Configuration parameters for the model
+
+
+    System initialization
+    ---------------------
+    SEED : int
+        The random seed - set for all different modules (through pylab)
+    DATA_FILENAME : str
+        Location of the real data
+    BURNIN : int
+        Number of initial iterations to throw away
+    N_SAMPLES : int
+        Total number of iterations to perform
+    CHECKPOINT : int
+        This is the number of iterations that are saved to RAM until it is written
+        to disk
+    INTERMEDIATE_STEP : float, None
+        This is the time step to do the intermediate points
+        If there are no intermediate points added then we add no time points
+    ADD_MIN_REL_ABUDANCE : bool
+        If this is True, it will add the minimum relative abundance to all the data
+    PROCESS_VARIANCE_TYPE : str
+        Type of process variance to learn
+        Options
+            &#39;homoscedastic&#39;
+                Not Implemented
+            &#39;heteroscedastic-global&#39;
+                Learn a heteroscadastic process variance (scales with the abundance)
+                with global parameters (same v1 and v2 for every ASV)
+            &#39;heteroscedastic-per-asv&#39;
+                Learn v1 and v2 for each ASV separately
+    DATA_DTYPE : str
+        Type of data we are going to regress on
+        Options:
+            &#39;abs&#39;: absolute abundance (qPCR*relative_abundance) data
+            &#39;rel&#39;: relative abundance data
+            &#39;raw&#39;: raw count data
+    DIAGNOSTIC_VARIABLES : list(str)
+        These are the names of the variables that you want to trace that are not
+        necessarily variables we are learning. These are more for monitoring the
+        inference
+    QPCR_NORMALIZATION_MAX_VALUE : int, None
+        Max value to set the qpcr value to. Rescale everything so that it is proportional
+        to each other. If None there are no rescalings
+    C_M : numeric
+        This is the level of reintroduction of microbes each day
+
+    Which parameters to learn
+    -------------------------
+    If the following parameters are true, then we add them to the inference order.
+    These should all be `bool`s except for `INFERENCE_ORDER` which should be a list
+    of `str`s.
+
+    LEARN_BETA : bool
+        Growth, self-interactions, interactions
+    LEARN_CONCENTRATION : bool
+        Concentration parameter of the clustering of the interactions
+    LEARN_CLUSTER_ASSIGNMENTS : bool
+        Cluster assignments to cluster the interactions
+    LEARN_INDICATORS : bool
+        Clustered interaction indicators of the interactions
+    LEARN_INDICATOR_PROBABILITY : bool
+        Probability of a positive interaction indicator
+    LEARN_PRIOR_VAR_GROWTH : bool
+        Prior variance of the growth
+    LEARN_PRIOR_VAR_SELF_INTERACTIONS : bool
+        Prior variance of the self-interactions
+    LEARN_PRIOR_VAR_INTERACTIONS : bool
+        Prior variance of the clustered interactions
+    LEARN_PROCESS_VAR : bool
+        Process variance parameters
+    LEARN_FILTERING : bool
+        Learn the auxiliary and the latent trajectory
+    LEARN_PERT_VALUE : bool
+        Magnitudes of the perturbation effects
+    LEARN_PERT_INDICATOR : bool
+        Clustered indicators of the perturbation effects
+    LEARN_PERT_INDICATOR_PROBABILITY : bool
+        Probability of a cluster ebing affected by the perturbation
+    INFERENCE_ORDER : list
+        This is the global order to learn the paramters. If one of the above parameters are
+        False, then their respective name is removed from the inference order
+
+    Initialization parameters
+    -------------------------
+    These are the arguments to send to the initialization. These should all be dictionaries
+    which maps a string (argument) to its value to be passed into the `initialize` function.
+    Last parameter is the initialization order, which is the order that we call the
+    `initialize` function. These functions are called whether if the variables are being
+    learned or not
+    &#39;&#39;&#39;
+    def __init__(self, output_basepath, data_path, data_seed, init_seed, a0, a1,
+        n_samples, burnin, pcc, clustering_on):
+        &#39;&#39;&#39;Initialize
+        &#39;&#39;&#39;
+        self.OUTPUT_BASEPATH = output_basepath
+        self.DATA_PATH = data_path
+        self.DATA_SEED = data_seed
+        self.INIT_SEED = init_seed
+        self.VALIDATION_SEED = 11195573
+
+        self.DATA_FILENAME = &#39;pickles/real_subjectset.pkl&#39;
+        self.BURNIN = burnin
+        self.N_SAMPLES = n_samples
+        self.CHECKPOINT = 100 #50
+        self.ADD_MIN_REL_ABUNDANCE = False
+        self.PROCESS_VARIANCE_TYPE = &#39;multiplicative-global&#39;
+        self.DATA_DTYPE = &#39;abs&#39;
+        self.DIAGNOSTIC_VARIABLES = [&#39;n_clusters&#39;]
+        self.DELETE_FIRST_TIMEPOINT = False
+
+        self.GROWTH_TRUNCATION_SETTINGS = &#39;positive&#39; #&#39;in-vivo&#39;
+        self.SELF_INTERACTIONS_TRUNCATION_SETTINGS = &#39;positive&#39;
+
+        self.QPCR_NORMALIZATION_MAX_VALUE = 100
+        self.C_M = 1e5
+
+        # This is whether to use the log-scale dynamics or not
+
+        self.MP_FILTERING = &#39;full&#39;
+        self.MP_INDICATORS = None
+        self.MP_CLUSTERING = &#39;full-8&#39;
+        self.MP_ZERO_INFLATION = None
+        self.RELATIVE_LOG_MARGINAL_INDICATORS = True
+        self.RELATIVE_LOG_MARGINAL_PERT_INDICATORS = True
+        self.RELATIVE_LOG_MARGINAL_CLUSTERING = False
+        self.PERCENT_CHANGE_CLUSTERING = pcc
+
+        self.NEGBIN_A0 = a0
+        self.NEGBIN_A1 = a1
+        self.CLUSTERING_ON = clustering_on
+        self.N_QPCR_BUCKETS = 3
+        
+        self.LEARN = {
+            STRNAMES.REGRESSCOEFF: True,
+            STRNAMES.PROCESSVAR: True,
+            STRNAMES.PRIOR_VAR_GROWTH: False,
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS: False,
+            STRNAMES.PRIOR_VAR_INTERACTIONS: True,
+            STRNAMES.PRIOR_VAR_PERT: True,
+            STRNAMES.PRIOR_MEAN_GROWTH: True,
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS: True,
+            STRNAMES.PRIOR_MEAN_INTERACTIONS: True,
+            STRNAMES.PRIOR_MEAN_PERT: True,
+            STRNAMES.FILTERING: True,
+            STRNAMES.ZERO_INFLATION: False,
+            STRNAMES.CLUSTERING: True, #clustering_on,
+            STRNAMES.CONCENTRATION: True, #clustering_on,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR: True,
+            STRNAMES.INDICATOR_PROB: True,
+            STRNAMES.PERT_INDICATOR: True,
+            STRNAMES.PERT_INDICATOR_PROB: True,
+            STRNAMES.QPCR_SCALES: False,
+            STRNAMES.QPCR_DOFS: False,
+            STRNAMES.QPCR_VARIANCES: False}
+
+        self.INFERENCE_ORDER = [
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR,
+            STRNAMES.INDICATOR_PROB,
+            STRNAMES.PERT_INDICATOR,
+            STRNAMES.PERT_INDICATOR_PROB,
+            STRNAMES.REGRESSCOEFF,
+            STRNAMES.PRIOR_MEAN_INTERACTIONS,
+            STRNAMES.PRIOR_MEAN_PERT,
+            STRNAMES.PRIOR_MEAN_GROWTH,
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_GROWTH,
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_PERT,
+            STRNAMES.PROCESSVAR,
+            STRNAMES.ZERO_INFLATION,
+            STRNAMES.QPCR_SCALES,
+            STRNAMES.QPCR_DOFS,
+            STRNAMES.QPCR_VARIANCES,
+            STRNAMES.FILTERING,
+            STRNAMES.CLUSTERING,
+            STRNAMES.CONCENTRATION]
+
+        self.INITIALIZATION_KWARGS = {
+            STRNAMES.QPCR_VARIANCES: {
+                &#39;value_option&#39;: &#39;empirical&#39;},
+            STRNAMES.QPCR_SCALES: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;empirical&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;:0},
+            STRNAMES.QPCR_DOFS: {
+                &#39;value_option&#39;: &#39;diffuse&#39;,
+                &#39;low_option&#39;: &#39;valid&#39;,
+                &#39;high_option&#39;: &#39;med&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;: 0},
+            STRNAMES.PERT_VALUE: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PERT_INDICATOR_PROB: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;hyperparam_option&#39;: &#39;weak-agnostic&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PERT_INDICATOR: {
+                &#39;value_option&#39;: &#39;all-off&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_VAR_PERT: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;diffuse&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_MEAN_PERT: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;zero&#39;,
+                &#39;var_option&#39;: &#39;diffuse&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_VAR_GROWTH: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;inflated-median&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;proposal_option&#39;: &#39;tight&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_MEAN_GROWTH: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;manual&#39;,
+                &#39;var_option&#39;: &#39;diffuse-linear-regression&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: 0.44,
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;truncation_settings&#39;: self.GROWTH_TRUNCATION_SETTINGS,
+                &#39;delay&#39;:0, &#39;mean&#39;: 1},
+            STRNAMES.GROWTH_VALUE: {
+                &#39;value_option&#39;: &#39;linear-regression&#39;, #&#39;prior-mean&#39;,
+                &#39;truncation_settings&#39;: self.GROWTH_TRUNCATION_SETTINGS,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;inflated-median&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;proposal_option&#39;: &#39;tight&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;median-linear-regression&#39;,
+                &#39;var_option&#39;: &#39;diffuse-linear-regression&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: 0.44,
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;truncation_settings&#39;: self.SELF_INTERACTIONS_TRUNCATION_SETTINGS,
+                &#39;delay&#39;:0},
+            STRNAMES.SELF_INTERACTION_VALUE: {
+                &#39;value_option&#39;: &#39;linear-regression&#39;,
+                &#39;truncation_settings&#39;: self.SELF_INTERACTIONS_TRUNCATION_SETTINGS,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_VAR_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;auto&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;scale_option&#39;: &#39;same-as-aii&#39;,
+                &#39;mean_scaling_factor&#39;: 1,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_MEAN_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;zero&#39;,
+                &#39;var_option&#39;: &#39;same-as-aii&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.CLUSTER_INTERACTION_VALUE: {
+                &#39;value_option&#39;: &#39;all-off&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR: {
+                &#39;delay&#39;:0,
+                &#39;run_every_n_iterations&#39;: 1},
+            STRNAMES.INDICATOR_PROB: {
+                &#39;value_option&#39;: &#39;auto&#39;,
+                &#39;hyperparam_option&#39;: &#39;weak-agnostic&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.FILTERING: {
+                &#39;x_value_option&#39;:  &#39;loess&#39;,
+                # &#39;q_value_option&#39;: &#39;coupling&#39;, #&#39;loess&#39;,
+                # &#39;hyperparam_option&#39;: &#39;manual&#39;,
+                &#39;tune&#39;: (int(self.BURNIN/2), 50),
+                &#39;a0&#39;: self.NEGBIN_A0,
+                &#39;a1&#39;: self.NEGBIN_A1,
+                &#39;v1&#39;: 1e-4,
+                &#39;v2&#39;: 1e-4,
+                &#39;proposal_init_scale&#39;:.001,
+                &#39;intermediate_interpolation&#39;: &#39;linear-interpolation&#39;,
+                &#39;intermediate_step&#39;: None, #(&#39;step&#39;, (1, None)), 
+                &#39;essential_timepoints&#39;: &#39;union&#39;,
+                &#39;delay&#39;: 1,
+                &#39;window&#39;: 6,
+                &#39;plot_initial&#39;: False,
+                &#39;target_acceptance_rate&#39;: 0.44},
+            STRNAMES.ZERO_INFLATION: {
+                &#39;value_option&#39;: &#39;manual&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.CONCENTRATION: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;hyperparam_option&#39;: &#39;diffuse&#39;,
+                &#39;delay&#39;: 0, &#39;n_iter&#39;: 20},
+            STRNAMES.CLUSTERING: {
+                &#39;value_option&#39;: &#39;spearman&#39;,
+                &#39;delay&#39;: 2,
+                &#39;n_clusters&#39;: 10,
+                &#39;percent_mix&#39;: self.PERCENT_CHANGE_CLUSTERING,
+                &#39;run_every_n_iterations&#39;: 4},
+            STRNAMES.REGRESSCOEFF: {
+                &#39;update_jointly_pert_inter&#39;: True,
+                &#39;update_jointly_growth_si&#39;: False,
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;},
+            STRNAMES.PROCESSVAR: {
+                # &#39;v1&#39;: 0.2**2,
+                # &#39;v2&#39;: 1,
+                # &#39;q_option&#39;: &#39;previous-t&#39;}, #&#39;previous-t&#39;},
+                &#39;dof_option&#39;: &#39;diffuse&#39;, # &#39;half&#39;, 
+                &#39;scale_option&#39;: &#39;med&#39;,
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;delay&#39;: 0}
+        }
+
+        self.INITIALIZATION_ORDER = [
+            STRNAMES.FILTERING,
+            STRNAMES.ZERO_INFLATION,
+            STRNAMES.CONCENTRATION,
+            STRNAMES.CLUSTERING,
+            STRNAMES.PROCESSVAR,
+            STRNAMES.PRIOR_MEAN_GROWTH,
+            STRNAMES.PRIOR_VAR_GROWTH,
+            STRNAMES.GROWTH_VALUE,
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS,
+            STRNAMES.SELF_INTERACTION_VALUE,
+            STRNAMES.PRIOR_MEAN_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_INTERACTIONS,
+            STRNAMES.CLUSTER_INTERACTION_VALUE,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR,
+            STRNAMES.INDICATOR_PROB,
+            STRNAMES.PRIOR_MEAN_PERT,
+            STRNAMES.PRIOR_VAR_PERT,
+            STRNAMES.PERT_INDICATOR,
+                        STRNAMES.PERT_VALUE,
+            STRNAMES.PERT_INDICATOR_PROB,
+            STRNAMES.REGRESSCOEFF,
+            STRNAMES.QPCR_SCALES,
+            STRNAMES.QPCR_DOFS,
+            STRNAMES.QPCR_VARIANCES]
+
+    def suffix(self):
+        &#39;&#39;&#39;Create a suffix with the parameters
+        &#39;&#39;&#39;        
+        s = &#39;_ds{}_is{}_b{}_ns{}_co{}_perts{}&#39;.format(
+            self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES,
+            self.CLUSTERING_ON, &#39;mult&#39;)
+        return s
+
+
+class ModelConfigReal(_BaseModelConfig):
+    &#39;&#39;&#39;Configuration parameters for the model
+
+
+    System initialization
+    ---------------------
+    SEED : int
+        The random seed - set for all different modules (through pylab)
+    DATA_FILENAME : str
+        Location of the real data
+    BURNIN : int
+        Number of initial iterations to throw away
+    N_SAMPLES : int
+        Total number of iterations to perform
+    CHECKPOINT : int
+        This is the number of iterations that are saved to RAM until it is written
+        to disk
+    INTERMEDIATE_STEP : float, None
+        This is the time step to do the intermediate points
+        If there are no intermediate points added then we add no time points
+    UPDATE_DYNAMICS_JOINTLY : bool
+        If True, we sample the growth, self_interactions, and interactions
+        jointly from a multivariate normal distribution. If False, we sample
+        the separately (growth from a positively truncated normal, self-interactions
+        from a negatively truncated normal, and interactions from a multivariate normal)
+    ADD_MIN_REL_ABUDANCE : bool
+        If this is True, it will add the minimum relative abundance to all the data
+    PROCESS_VARIANCE_TYPE : str
+        Type of process variance to learn
+        Options
+            &#39;homoscedastic&#39;
+                Not Implemented
+            &#39;heteroscedastic-global&#39;
+                Learn a heteroscadastic process variance (scales with the abundance)
+                with global parameters (same v1 and v2 for every ASV)
+            &#39;heteroscedastic-per-asv&#39;
+                Learn v1 and v2 for each ASV separately
+    DATA_DTYPE : str
+        Type of data we are going to regress on
+        Options:
+            &#39;abs&#39;: absolute abundance (qPCR*relative_abundance) data
+            &#39;rel&#39;: relative abundance data
+            &#39;raw&#39;: raw count data
+    DIAGNOSTIC_VARIABLES : list(str)
+        These are the names of the variables that you want to trace that are not
+        necessarily variables we are learning. These are more for monitoring the
+        inference
+    QPCR_NORMALIZATION_MAX_VALUE : int, None
+        Max value to set the qpcr value to. Rescale everything so that it is proportional
+        to each other. If None there are no rescalings
+    C_M : numeric
+        This is the level of reintroduction of microbes each day
+
+    Which parameters to learn
+    -------------------------
+    If the following parameters are true, then we add them to the inference order.
+    These should all be `bool`s except for `INFERENCE_ORDER` which should be a list
+    of `str`s.
+
+    LEARN_BETA : bool
+        Growth, self-interactions, interactions
+    LEARN_CONCENTRATION : bool
+        Concentration parameter of the clustering of the interactions
+    LEARN_CLUSTER_ASSIGNMENTS : bool
+        Cluster assignments to cluster the interactions
+    LEARN_INDICATORS : bool
+        Clustered interaction indicators of the interactions
+    LEARN_INDICATOR_PROBABILITY : bool
+        Probability of a positive interaction indicator
+    LEARN_PRIOR_VAR_GROWTH : bool
+        Prior variance of the growth
+    LEARN_PRIOR_VAR_SELF_INTERACTIONS : bool
+        Prior variance of the self-interactions
+    LEARN_PRIOR_VAR_INTERACTIONS : bool
+        Prior variance of the clustered interactions
+    LEARN_PROCESS_VAR : bool
+        Process variance parameters
+    LEARN_FILTERING : bool
+        Learn the auxiliary and the latent trajectory
+    LEARN_PERT_VALUE : bool
+        Magnitudes of the perturbation effects
+    LEARN_PERT_INDICATOR : bool
+        Clustered indicators of the perturbation effects
+    LEARN_PERT_INDICATOR_PROBABILITY : bool
+        Probability of a cluster ebing affected by the perturbation
+    INFERENCE_ORDER : list
+        This is the global order to learn the paramters. If one of the above parameters are
+        False, then their respective name is removed from the inference order
+
+    Initialization parameters
+    -------------------------
+    These are the arguments to send to the initialization. These should all be dictionaries
+    which maps a string (argument) to its value to be passed into the `initialize` function.
+    Last parameter is the initialization order, which is the order that we call the
+    `initialize` function. These functions are called whether if the variables are being
+    learned or not
+    &#39;&#39;&#39;
+    def __init__(self, output_basepath, data_seed, init_seed, burnin, n_samples, pcc,
+        leave_out, max_n_asvs, cross_validate, use_bsub, dataset, checkpoint):
+        &#39;&#39;&#39;Customization parameters
+
+        Parameters
+        ----------
+        output_basepath : str
+            This is the basepath to save the output
+        data_seed, init_seed : int
+            This is the seed to initialize the data and the model, respectively.
+        burnin, n_samples : int
+            These are the number of iterations to initially throw away and the
+            total number of samples for the MCMC chain, respectively
+        pcc : float
+            [0,1]. (Percent Change Clustering). What proportion of the ASVs to
+            change clusters during each iteration.
+        leave_out : list(str), str, None
+            These are the subject name/s to leave out during inference and to use to test
+            the predictive accuracy. If `None` then we leave non of them out.
+        &#39;&#39;&#39;
+
+        self.OUTPUT_BASEPATH = output_basepath
+        self.DATA_SEED = data_seed
+        self.INIT_SEED = init_seed
+        self.VALIDATION_SEED = 11195573
+
+        self.CROSS_VALIDATE = cross_validate
+        self.USE_BSUB = use_bsub
+
+        self.N_CPUS = 3
+        self.MEMORY_MBS = 7000
+
+        self.DATA_FILENAME = &#39;pickles/real_subjectset.pkl&#39;
+        self.BURNIN = burnin
+        self.N_SAMPLES = n_samples
+        self.CHECKPOINT = checkpoint
+        self.ADD_MIN_REL_ABUNDANCE = False
+        self.PROCESS_VARIANCE_TYPE = &#39;multiplicative-global&#39;
+        self.DATA_DTYPE = &#39;abs&#39;
+        self.DIAGNOSTIC_VARIABLES = [&#39;n_clusters&#39;]
+        self.DELETE_FIRST_TIMEPOINT = True
+
+        self.QPCR_NORMALIZATION_MAX_VALUE = 100
+        self.C_M = 1e5
+        self.LEAVE_OUT = leave_out
+        self.MAX_N_ASVS = max_n_asvs
+        self.ZERO_INFLATION_TRANSITION_POLICY = None #&#39;ignore&#39;
+
+        self.GROWTH_TRUNCATION_SETTINGS = &#39;positive&#39;
+        self.SELF_INTERACTIONS_TRUNCATION_SETTINGS = &#39;positive&#39;
+
+        self.MP_FILTERING = &#39;full&#39;
+        self.MP_INDICATORS = None
+        self.MP_CLUSTERING = &#39;full-5&#39; #&#39;full-8&#39;
+        self.MP_ZERO_INFLATION = None
+        self.RELATIVE_LOG_MARGINAL_INDICATORS = True
+        self.RELATIVE_LOG_MARGINAL_PERT_INDICATORS = True
+        self.RELATIVE_LOG_MARGINAL_CLUSTERING = False
+        self.PERCENT_CHANGE_CLUSTERING = pcc
+
+        self.NEGBIN_A0 = NEGBIN_A0
+        self.NEGBIN_A1 = NEGBIN_A1
+        self.QPCR_NOISE_SCALE = LEARNED_LOGNORMAL_SCALE
+        self.N_QPCR_BUCKETS = 3
+
+        self.INTERMEDIATE_VALIDATION_T = 20 #8 * 3600 # Every 8 hours
+        self.INTERMEDIATE_VALIDATION_KWARGS = None
+
+        self.LEARN = {
+            STRNAMES.REGRESSCOEFF: True,
+            STRNAMES.PROCESSVAR: True,
+            STRNAMES.PRIOR_VAR_GROWTH: False,
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS: False,
+            STRNAMES.PRIOR_VAR_INTERACTIONS: True,
+            STRNAMES.PRIOR_VAR_PERT: True,
+            STRNAMES.PRIOR_MEAN_GROWTH: True,
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS: True,
+            STRNAMES.PRIOR_MEAN_INTERACTIONS: True,
+            STRNAMES.PRIOR_MEAN_PERT: True,
+            STRNAMES.FILTERING: True,
+            STRNAMES.ZERO_INFLATION: False,
+            STRNAMES.CLUSTERING: False,
+            STRNAMES.CONCENTRATION: False, 
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR: True,
+            STRNAMES.INDICATOR_PROB: True,
+            STRNAMES.PERT_INDICATOR: True,
+            STRNAMES.PERT_INDICATOR_PROB: True,
+            STRNAMES.QPCR_SCALES: False,
+            STRNAMES.QPCR_DOFS: False,
+            STRNAMES.QPCR_VARIANCES: False}
+
+        self.INFERENCE_ORDER = [
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR,
+            STRNAMES.INDICATOR_PROB,
+            STRNAMES.PERT_INDICATOR,
+            STRNAMES.PERT_INDICATOR_PROB,
+            STRNAMES.REGRESSCOEFF,
+            STRNAMES.PRIOR_MEAN_INTERACTIONS,
+            STRNAMES.PRIOR_MEAN_PERT,
+            STRNAMES.PRIOR_MEAN_GROWTH,
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_GROWTH,
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_PERT,
+            STRNAMES.PROCESSVAR,
+            STRNAMES.ZERO_INFLATION,
+            STRNAMES.QPCR_SCALES,
+            STRNAMES.QPCR_DOFS,
+            STRNAMES.QPCR_VARIANCES,
+            STRNAMES.FILTERING,
+            STRNAMES.CLUSTERING,
+            STRNAMES.CONCENTRATION]
+
+        self.INITIALIZATION_KWARGS = {
+            STRNAMES.QPCR_VARIANCES: {
+                &#39;value_option&#39;: &#39;empirical&#39;},
+            STRNAMES.QPCR_SCALES: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;empirical&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;:0},
+            STRNAMES.QPCR_DOFS: {
+                &#39;value_option&#39;: &#39;diffuse&#39;,
+                &#39;low_option&#39;: &#39;valid&#39;,
+                &#39;high_option&#39;: &#39;med&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;: 0},
+            STRNAMES.PERT_VALUE: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PERT_INDICATOR_PROB: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;hyperparam_option&#39;: &#39;strong-sparse&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PERT_INDICATOR: {
+                &#39;value_option&#39;: &#39;all-off&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_VAR_PERT: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;diffuse&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_MEAN_PERT: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;zero&#39;,
+                &#39;var_option&#39;: &#39;diffuse&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_VAR_GROWTH: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;inflated-median&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;proposal_option&#39;: &#39;tight&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_MEAN_GROWTH: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;manual&#39;,
+                &#39;var_option&#39;: &#39;diffuse-linear-regression&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: 0.44,
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;truncation_settings&#39;: self.GROWTH_TRUNCATION_SETTINGS,
+                &#39;delay&#39;:0, &#39;mean&#39;: 1},
+            STRNAMES.GROWTH_VALUE: {
+                &#39;value_option&#39;: &#39;linear-regression&#39;, #&#39;prior-mean&#39;,
+                &#39;truncation_settings&#39;: self.GROWTH_TRUNCATION_SETTINGS,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;inflated-median&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;proposal_option&#39;: &#39;tight&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;median-linear-regression&#39;,
+                &#39;var_option&#39;: &#39;diffuse-linear-regression&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: 0.44,
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;truncation_settings&#39;: self.SELF_INTERACTIONS_TRUNCATION_SETTINGS,
+                &#39;delay&#39;:0},
+            STRNAMES.SELF_INTERACTION_VALUE: {
+                &#39;value_option&#39;: &#39;linear-regression&#39;,
+                &#39;truncation_settings&#39;: self.SELF_INTERACTIONS_TRUNCATION_SETTINGS,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_VAR_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;auto&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;scale_option&#39;: &#39;same-as-aii&#39;,
+                &#39;mean_scaling_factor&#39;: 1,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_MEAN_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;zero&#39;,
+                &#39;var_option&#39;: &#39;same-as-aii&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.CLUSTER_INTERACTION_VALUE: {
+                &#39;value_option&#39;: &#39;all-off&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR: {
+                &#39;delay&#39;:0,
+                &#39;run_every_n_iterations&#39;: 1},
+            STRNAMES.INDICATOR_PROB: {
+                &#39;value_option&#39;: &#39;auto&#39;,
+                &#39;hyperparam_option&#39;: &#39;strong-sparse&#39;,
+                &#39;N&#39;: 25,
+                &#39;delay&#39;: 0},
+            STRNAMES.FILTERING: {
+                &#39;x_value_option&#39;:  &#39;loess&#39;,
+                # &#39;q_value_option&#39;: &#39;coupling&#39;, #&#39;loess&#39;,
+                # &#39;hyperparam_option&#39;: &#39;manual&#39;,
+                &#39;tune&#39;: (int(self.BURNIN/2), 50),
+                &#39;a0&#39;: self.NEGBIN_A0,
+                &#39;a1&#39;: self.NEGBIN_A1,
+                &#39;v1&#39;: 1e-4,
+                &#39;v2&#39;: 1e-4,
+                &#39;proposal_init_scale&#39;:.001,
+                &#39;intermediate_interpolation&#39;: &#39;linear-interpolation&#39;,
+                &#39;intermediate_step&#39;: None, #(&#39;step&#39;, (1, None)), 
+                &#39;essential_timepoints&#39;: &#39;union&#39;,
+                &#39;delay&#39;: 1,
+                &#39;window&#39;: 6,
+                &#39;plot_initial&#39;: False,
+                &#39;target_acceptance_rate&#39;: 0.44},
+            STRNAMES.ZERO_INFLATION: {
+                &#39;value_option&#39;: None,
+                &#39;delay&#39;: 0},
+            STRNAMES.CONCENTRATION: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;hyperparam_option&#39;: &#39;diffuse&#39;,
+                &#39;delay&#39;: 0, &#39;n_iter&#39;: 20},
+            STRNAMES.CLUSTERING: {
+                &#39;value_option&#39;: &#39;fixed-topology&#39;,
+                &#39;value&#39;: &#39;output_real/pylab24/real_runs/strong_priors/healthy1_5_0.0001_rel_2_5/ds0_is0_b5000_ns15000_mo-1_logTrue_pertsmult/graph_leave_out-1/mcmc.pkl&#39;,
+                &#39;delay&#39;: 2,
+                # &#39;n_clusters&#39;: 30,
+                &#39;percent_mix&#39;: self.PERCENT_CHANGE_CLUSTERING,
+                &#39;run_every_n_iterations&#39;: 4},
+            STRNAMES.REGRESSCOEFF: {
+                &#39;update_jointly_pert_inter&#39;: True,
+                &#39;update_jointly_growth_si&#39;: False,
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;},
+            STRNAMES.PROCESSVAR: {
+                # &#39;v1&#39;: 0.2**2,
+                # &#39;v2&#39;: 1,
+                # &#39;q_option&#39;: &#39;previous-t&#39;}, #&#39;previous-t&#39;},
+                &#39;dof_option&#39;: &#39;diffuse&#39;, # &#39;half&#39;, 
+                &#39;scale_option&#39;: &#39;med&#39;,
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;delay&#39;: 0}
+        }
+
+        self.INITIALIZATION_ORDER = [
+            STRNAMES.FILTERING,
+            STRNAMES.ZERO_INFLATION,
+            STRNAMES.CONCENTRATION,
+            STRNAMES.CLUSTERING,
+            STRNAMES.PROCESSVAR,
+            STRNAMES.PRIOR_MEAN_GROWTH,
+            STRNAMES.PRIOR_VAR_GROWTH,
+            STRNAMES.GROWTH_VALUE,
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS,
+            STRNAMES.SELF_INTERACTION_VALUE,
+            STRNAMES.PRIOR_MEAN_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_INTERACTIONS,
+            STRNAMES.CLUSTER_INTERACTION_VALUE,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR,
+            STRNAMES.INDICATOR_PROB,
+            STRNAMES.PRIOR_MEAN_PERT,
+            STRNAMES.PRIOR_VAR_PERT,
+            STRNAMES.PERT_INDICATOR,
+                        STRNAMES.PERT_VALUE,
+            STRNAMES.PERT_INDICATOR_PROB,
+            STRNAMES.REGRESSCOEFF,
+            STRNAMES.QPCR_SCALES,
+            STRNAMES.QPCR_DOFS,
+            STRNAMES.QPCR_VARIANCES]
+
+    def suffix(self):
+        &#39;&#39;&#39;Create a suffix with the parameters
+        &#39;&#39;&#39;
+        if self.LEAVE_OUT is not None:
+            try:
+                lo = str(tuple(list(self.LEAVE_OUT))).replace(&#39;,&#39;,&#39;_&#39;).replace(
+                    &#39;(&#39;,&#39;&#39;).replace(&#39;)&#39;,&#39;&#39;).replace(&#39; &#39;,&#39;&#39;)
+            except:
+                lo = str(self.LEAVE_OUT)
+        else:
+            lo = None
+        s = &#39;ds{}_is{}_b{}_ns{}_lo{}_mo{}_log{}_perts{}&#39;.format(
+            self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES, lo,
+            self.MAX_N_ASVS, True, &#39;mult&#39;)
+        return s
+
+    def cv_suffix(self):
+        &#39;&#39;&#39;Create a master suffix with the parameters
+        &#39;&#39;&#39;
+        s = &#39;ds{}_is{}_b{}_ns{}_mo{}_log{}_perts{}&#39;.format(
+            self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES,
+            self.MAX_N_ASVS, True, &#39;mult&#39;)
+        return s
+
+    def cv_single_suffix(self):
+        &#39;&#39;&#39;Create a suffix for a single cv round
+        &#39;&#39;&#39;
+        return &#39;leave_out{}&#39;.format(self.LEAVE_OUT)
+
+
+class SimulationConfig(_BaseModelConfig):
+    &#39;&#39;&#39;These are the paramters used to make a synthetic dataset
+
+    System Parameters
+    -----------------
+    pv_value : float
+        What to set the process variance as
+    simulation_dt : dt
+        The smaller step size we use for froward integration so the integration
+        does not become unstable
+    n_days : int
+        Total number of days to run the simulation for
+    times : str, int, float
+        How to generate the times
+        if str:
+            &#39;darpa-study-sampling&#39;
+                Denser in the beginning, and around the ends of perturbations
+        if int/float
+            This is the density to sample at (0.5 means sample every half of
+            a day)
+    n_replicates : int
+        How many replicates of subjects to run the inference with
+    init_low, init_high : float
+        The low and high to initialize the data at using a uniform
+        distribution
+    max_abundance : float
+        Max abundance
+    n_asvs : int
+        How many ASVs to simulate
+    healthy_patients : bool
+        Which consortia of mice to use as noise approximators
+    process_variance_level : float
+        What to set the process variance to
+    measurement_noise_level : float
+        What to set the measurement noise to
+
+    &#39;&#39;&#39;
+    def __init__(self, times, n_replicates, n_asvs, healthy,
+        process_variance_level, measurement_noise_level):
+        self.PV_VALUE = process_variance_level**2
+        self.SIMULATION_DT = 0.001
+        self.N_DAYS = &#39;from-data&#39;
+        self.TIMES = times
+        self.N_REPLICATES = n_replicates
+        self.INIT_LOW = 3 #1e5 #5e6
+        self.INIT_HIGH = 10 #1e7 #5e7
+        self.MAX_ABUNDANCE = None #1e8
+        self.N_ASVS = n_asvs
+        self.HEALTHY_PATIENTS = healthy
+        self.PROCESS_VARIANCE_LEVEL = process_variance_level
+        self.MEASUREMENT_NOISE_LEVEL = measurement_noise_level
+
+        self.PERTURBATIONS = True #(0.3, &#39;2&#39;, [0.1, 0.4, 0.5], [0.5, 1, 2], 0.1)
+
+        self.NEGBIN_A0, self.NEGBIN_A1 = calculate_reads_a0a1(measurement_noise_level)
+        self.QPCR_NOISE_SCALE = measurement_noise_level
+
+    def suffix(self):
+        max_abund = self.MAX_ABUNDANCE
+        if max_abund is not None:
+            max_abund = &#39;{:.2E}&#39;.format(max_abund)
+
+        if self.PERTURBATIONS is None:
+            perts = None
+        else:
+            perts = True
+        s = &#39;_nr{}_no{}_nd{}_ms{}_pv{}_ma{}_np{}_nt{}&#39;.format(
+            self.N_REPLICATES,
+            self.N_ASVS,
+            self.N_DAYS,
+            self.MEASUREMENT_NOISE_LEVEL,
+            self.PROCESS_VARIANCE_LEVEL,
+            max_abund, perts,
+            self.TIMES)
+        return s
+
+
+class FilteringConfig(pl.Saveable):
+    &#39;&#39;&#39;These are the parameters for Filtering
+
+    Different types of filtering
+    ----------------------------
+    `at_least_counts`
+        For each ASV in the subjectset `subjset`, delete all ASVs that
+        do not have at least a minimum number of counts `min_counts`
+        for less than `min_num_subjects` subjects.
+
+        Parameters
+        ----------
+        colonization_time : numeric, None
+            This is the day that you want to start taking the relative abundance.
+            We only lok at the relative abundance after the colonization period.
+            If this is `None` then it is set to 0.
+        min_counts : numeric
+            This is the minimum number of counts it needs to have
+        min_num_subjects : int
+            This is the minimum number of subjects that there must be a relative
+            abundance
+
+    `consistency`
+        Filters the subjects by looking at the consistency of the counts.
+        There must be at least `min_num_counts` for at least
+        `min_num_consecutive` consecutive timepoints for at least
+        `min_num_subjects` subjects for the ASV to be classified as valid.
+
+        Parameters
+        ----------
+        min_num_consecutive: int
+            This is the minimum number of consecutive timepoints that there
+            must be at least `min_num_counts`
+        min_num_counts : int
+            This is the minimum number of counts that there must be at each
+            consecutive timepoint
+        min_num_subjects : int, None
+            This is how many subjects this must be true for for the ASV to be
+            valid. If it is None then it only requires one subject.
+
+    Additional Parameters
+    ---------------------
+    healthy : bool
+        If True, do regression on the healthy patients
+    &#39;&#39;&#39;
+    def __init__(self, healthy, dataset):
+        self.DATASET = dataset
+
+        if self.DATASET == &#39;gibson&#39;:
+            self.COLONIZATION_TIME = 5
+            self.THRESHOLD = 0.0001
+            self.DTYPE = &#39;rel&#39;
+            self.MIN_NUM_SUBJECTS = 2 #&#39;all&#39;
+            self.MIN_NUM_CONSECUTIVE = 5
+            self.HEALTHY = healthy
+        elif self.DATASET == &#39;mdsine-cdiff&#39;:
+            pass
+        else:
+            raise ValueError(&#39;`dataset` ({}) not recognized&#39;.format(self.DATASET))
+
+    def __str__(self):
+        if self.DATASET == &#39;gibson&#39;:
+            return &#39;healthy{}_{}_{}_{}_{}_{}&#39;.format(
+                self.HEALTHY,
+                self.COLONIZATION_TIME,
+                self.THRESHOLD,
+                self.DTYPE,
+                self.MIN_NUM_SUBJECTS,
+                self.MIN_NUM_CONSECUTIVE)
+        elif self.DATASET == &#39;mdsine-cdiff&#39;:
+            return &#39;mdsine_cdiff_dset&#39;
+        else:
+            raise ValueError(&#39;`dataset` ({}) not recognized&#39;.format(self.DATASET))
+
+    def suffix(self):
+        return str(self)
+
+
+class LoggingConfig(pl.Saveable):
+    &#39;&#39;&#39;These are the parameters for logging
+
+    FORMAT : str
+        This is the logging format for stdout
+    LEVEL : logging constant, int
+        This is the level to log at for stdout
+    NUMPY_PRINTOPTIONS : dict
+        These are the printing options for numpy.
+
+    Parameters
+    ----------
+    basepath : str
+        If this is specified, then we also want to log to a file. Set up a
+        steam and a file
+    &#39;&#39;&#39;
+    def __init__(self, basepath=None):
+        self.FORMAT = &#39;%(levelname)s:%(module)s.%(lineno)s: %(message)s&#39;
+        self.LEVEL = logging.INFO
+        self.NUMPY_PRINTOPTIONS = {
+            &#39;threshold&#39;: sys.maxsize, &#39;linewidth&#39;: sys.maxsize}
+
+        if basepath is not None:
+            path = basepath + &#39;logging.log&#39;
+            self.PATH = path
+            handlers = [
+                logging.FileHandler(self.PATH, mode=&#39;w&#39;),
+                logging.StreamHandler()]
+            for handler in logging.root.handlers[:]:
+                logging.root.removeHandler(handler)
+            logging.basicConfig(level=self.LEVEL, format=self.FORMAT, handlers=handlers)
+        else:
+            self.PATH = None
+            logging.basicConfig(format=self.FORMAT, level=self.LEVEL)
+        
+        np.set_printoptions(**self.NUMPY_PRINTOPTIONS)
+        pd.set_option(&#39;display.max_columns&#39;, None)
+
+
+class NegBinConfig(_BaseModelConfig):
+    &#39;&#39;&#39;Configuration class for learning the negative binomial dispersion
+    parameters. Note that these parameters are learned offline.
+
+    Parameters
+    ----------
+    seed : int
+        Seed to start the inderence
+    burnin, n_samples : int
+        How many iterations for burn-in and total samples, respectively.
+    basepath : str
+        This is the basepath to save the graph. A separate folder within
+        `basepath` will be created for the specific graph.
+    synth : bool
+        If True, run with the synthetic data, where the parameters needed
+        to learn are `SYNTHETIC_A0` AND `SYNTHETIC_A1`.
+    &#39;&#39;&#39;
+
+    def __init__(self, seed, burnin, n_samples, basepath, synth):
+        if basepath[-1] != &#39;/&#39;:
+            basepath += &#39;/&#39;
+
+        self.RAW_COUNTS_FILENAME = &#39;raw_data/replicate_data/counts.txt&#39;
+        self.MAIN_INFERENCE_SUBJSET_FILENAME = &#39;pickles/real_subjectset.pkl&#39;
+        self.SEED = seed
+        self.OUTPUT_BASEPATH = basepath
+        self.BURNIN = burnin
+        self.N_SAMPLES = n_samples
+        self.CKPT = 100
+        self.DADA_SEUQUENCE_COL_NAME = [&#39;sequences&#39;]
+        self.DADA_ASVSET_COL_NAMES = [&#39;Kingdom&#39;, &#39;Phylum&#39;, &#39;Class&#39;, &#39;Order&#39;, &#39;Family&#39;, &#39;Genus&#39;]
+        self.REPLICATE_DATA_COLS = [
+            (10, [&#39;M2-D10-1A&#39;,&#39;M2-D10-1B&#39;,&#39;M2-D10-2A&#39;,&#39;M2-D10-2B&#39;,&#39;M2-D10-3A&#39;,&#39;M2-D10-3B&#39;]),    
+            (8, [&#39;M2-D8-1A&#39;,    &#39;M2-D8-1B&#39;,     &#39;M2-D8-2A&#39;,     &#39;M2-D8-2B&#39;,     &#39;M2-D8-3A&#39;,     &#39;M2-D8-3B&#39;]),   
+            (9, [&#39;M2-D9-1A&#39;,    &#39;M2-D9-1B&#39;,     &#39;M2-D9-2A&#39;,     &#39;M2-D9-2B&#39;,     &#39;M2-D9-3A&#39;,     &#39;M2-D9-3B&#39;])]
+        self.MOUSE_ID = &#39;2&#39;
+
+        self.MP_FILTERING = &#39;full&#39;
+
+        # Synthetic arguments
+        self.SYNTHETIC = synth
+        self.SYNTHETIC_A0 = 1e-5
+        self.SYNTHETIC_A1 = 0.056
+        self.SYNTHETIC_N_REPLICATES = 3
+        self.SYNTHETIC_DAYS = [10,9,8]
+
+        self.INFERENCE_ORDER = [
+            STRNAMES.NEGBIN_A0,
+            STRNAMES.NEGBIN_A1,
+            STRNAMES.FILTERING]
+
+        self.LEARN = {
+            STRNAMES.NEGBIN_A0: True,
+            STRNAMES.NEGBIN_A1: True,
+            STRNAMES.FILTERING: True}
+
+        self.INITIALIZATION_ORDER = [
+            STRNAMES.FILTERING,
+            STRNAMES.NEGBIN_A0,
+            STRNAMES.NEGBIN_A1
+        ]
+
+        self.INITIALIZATION_KWARGS = {
+            STRNAMES.NEGBIN_A0: {
+                &#39;value&#39;: 1e-4,
+                &#39;truncation_settings&#39;: (0, 1e5),
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: int(self.BURNIN/2),
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;, 
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.NEGBIN_A1: {
+                &#39;value&#39;: 0.5,
+                &#39;tune&#39;: 50,
+                &#39;truncation_settings&#39;: (0, 1e5),
+                &#39;end_tune&#39;: int(self.BURNIN/2),
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;, 
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.FILTERING: {
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: int(self.BURNIN/2),
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;, 
+                &#39;qpcr_variance_inflation&#39;: 100,
+                &#39;delay&#39;: 100}}
+
+    def suffix(self):
+        if self.SYNTHETIC:
+            s = &#39;syn_nreps{}_ndays{}_&#39;.format(self.SYNTHETIC_N_REPLICATES, 
+                len(self.SYNTHETIC_DAYS))
+        else:
+            s = &#39;real_&#39;
+
+        s += &#39;seed{}_nb{}_ns{}&#39;.format(self.SEED, self.BURNIN, self.N_SAMPLES)
+        return s</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="mdsine2.config.calculate_reads_a0a1"><code class="name flex">
+<span>def <span class="ident">calculate_reads_a0a1</span></span>(<span>desired_percent_variation)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>At the full noise level, in terms of % noise of the signal at:
+10000 reads, the signal is ~10% noise
+100 reads, the signal is ~20% noise
+10 reads, the signal is ~30% noise</p>
+<p>When we scale the a0 and a1 terms, we are assuming that you want to
+scale the high abundance bacteria for that signal and we scale the
+a0 parameter such that they stay relative to each other.</p>
+<p>If == -1 we set to the full noise</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calculate_reads_a0a1(desired_percent_variation):
+    &#39;&#39;&#39;
+    At the full noise level, in terms of % noise of the signal at:
+        10000 reads, the signal is ~10% noise
+        100 reads, the signal is ~20% noise
+        10 reads, the signal is ~30% noise
+
+    When we scale the a0 and a1 terms, we are assuming that you want to
+    scale the high abundance bacteria for that signal and we scale the
+    a0 parameter such that they stay relative to each other.
+
+    If == -1 we set to the full noise
+    &#39;&#39;&#39;
+    if desired_percent_variation == -1:
+        desired_percent_variation = 0.05
+    p = desired_percent_variation / 0.05
+    return NEGBIN_A0*p, NEGBIN_A1*p</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.config.isModelConfig"><code class="name flex">
+<span>def <span class="ident">isModelConfig</span></span>(<span>x)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if the input array is a model config object</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>x</code> is a a model config object</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isModelConfig(x):
+    &#39;&#39;&#39;Checks if the input array is a model config object
+
+    Parameters
+    ----------
+    x : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `x` is a a model config object
+    &#39;&#39;&#39;
+    return x is not None and issubclass(x.__class__, _BaseModelConfig)</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="mdsine2.config.FilteringConfig"><code class="flex name class">
+<span>class <span class="ident">FilteringConfig</span></span>
+<span>(</span><span>healthy, dataset)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>These are the parameters for Filtering</p>
+<h2 id="different-types-of-filtering">Different Types Of Filtering</h2>
+<p><code>at_least_counts</code>
+For each ASV in the subjectset <code>subjset</code>, delete all ASVs that
+do not have at least a minimum number of counts <code>min_counts</code>
+for less than <code>min_num_subjects</code> subjects.</p>
+<pre><code>Parameters
+----------
+colonization_time : numeric, None
+    This is the day that you want to start taking the relative abundance.
+    We only lok at the relative abundance after the colonization period.
+    If this is &lt;code&gt;None&lt;/code&gt; then it is set to 0.
+min_counts : numeric
+    This is the minimum number of counts it needs to have
+min_num_subjects : int
+    This is the minimum number of subjects that there must be a relative
+    abundance
+</code></pre>
+<p><code>consistency</code>
+Filters the subjects by looking at the consistency of the counts.
+There must be at least <code>min_num_counts</code> for at least
+<code>min_num_consecutive</code> consecutive timepoints for at least
+<code>min_num_subjects</code> subjects for the ASV to be classified as valid.</p>
+<pre><code>Parameters
+----------
+min_num_consecutive: int
+    This is the minimum number of consecutive timepoints that there
+    must be at least &lt;code&gt;min\_num\_counts&lt;/code&gt;
+min_num_counts : int
+    This is the minimum number of counts that there must be at each
+    consecutive timepoint
+min_num_subjects : int, None
+    This is how many subjects this must be true for for the ASV to be
+    valid. If it is None then it only requires one subject.
+</code></pre>
+<h2 id="additional-parameters">Additional Parameters</h2>
+<p>healthy : bool
+If True, do regression on the healthy patients</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class FilteringConfig(pl.Saveable):
+    &#39;&#39;&#39;These are the parameters for Filtering
+
+    Different types of filtering
+    ----------------------------
+    `at_least_counts`
+        For each ASV in the subjectset `subjset`, delete all ASVs that
+        do not have at least a minimum number of counts `min_counts`
+        for less than `min_num_subjects` subjects.
+
+        Parameters
+        ----------
+        colonization_time : numeric, None
+            This is the day that you want to start taking the relative abundance.
+            We only lok at the relative abundance after the colonization period.
+            If this is `None` then it is set to 0.
+        min_counts : numeric
+            This is the minimum number of counts it needs to have
+        min_num_subjects : int
+            This is the minimum number of subjects that there must be a relative
+            abundance
+
+    `consistency`
+        Filters the subjects by looking at the consistency of the counts.
+        There must be at least `min_num_counts` for at least
+        `min_num_consecutive` consecutive timepoints for at least
+        `min_num_subjects` subjects for the ASV to be classified as valid.
+
+        Parameters
+        ----------
+        min_num_consecutive: int
+            This is the minimum number of consecutive timepoints that there
+            must be at least `min_num_counts`
+        min_num_counts : int
+            This is the minimum number of counts that there must be at each
+            consecutive timepoint
+        min_num_subjects : int, None
+            This is how many subjects this must be true for for the ASV to be
+            valid. If it is None then it only requires one subject.
+
+    Additional Parameters
+    ---------------------
+    healthy : bool
+        If True, do regression on the healthy patients
+    &#39;&#39;&#39;
+    def __init__(self, healthy, dataset):
+        self.DATASET = dataset
+
+        if self.DATASET == &#39;gibson&#39;:
+            self.COLONIZATION_TIME = 5
+            self.THRESHOLD = 0.0001
+            self.DTYPE = &#39;rel&#39;
+            self.MIN_NUM_SUBJECTS = 2 #&#39;all&#39;
+            self.MIN_NUM_CONSECUTIVE = 5
+            self.HEALTHY = healthy
+        elif self.DATASET == &#39;mdsine-cdiff&#39;:
+            pass
+        else:
+            raise ValueError(&#39;`dataset` ({}) not recognized&#39;.format(self.DATASET))
+
+    def __str__(self):
+        if self.DATASET == &#39;gibson&#39;:
+            return &#39;healthy{}_{}_{}_{}_{}_{}&#39;.format(
+                self.HEALTHY,
+                self.COLONIZATION_TIME,
+                self.THRESHOLD,
+                self.DTYPE,
+                self.MIN_NUM_SUBJECTS,
+                self.MIN_NUM_CONSECUTIVE)
+        elif self.DATASET == &#39;mdsine-cdiff&#39;:
+            return &#39;mdsine_cdiff_dset&#39;
+        else:
+            raise ValueError(&#39;`dataset` ({}) not recognized&#39;.format(self.DATASET))
+
+    def suffix(self):
+        return str(self)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.config.FilteringConfig.suffix"><code class="name flex">
+<span>def <span class="ident">suffix</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def suffix(self):
+    return str(self)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.base.Saveable.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.config.LoggingConfig"><code class="flex name class">
+<span>class <span class="ident">LoggingConfig</span></span>
+<span>(</span><span>basepath=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>These are the parameters for logging</p>
+<p>FORMAT : str
+This is the logging format for stdout
+LEVEL : logging constant, int
+This is the level to log at for stdout
+NUMPY_PRINTOPTIONS : dict
+These are the printing options for numpy.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>basepath</code></strong> :&ensp;<code>str</code></dt>
+<dd>If this is specified, then we also want to log to a file. Set up a
+steam and a file</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class LoggingConfig(pl.Saveable):
+    &#39;&#39;&#39;These are the parameters for logging
+
+    FORMAT : str
+        This is the logging format for stdout
+    LEVEL : logging constant, int
+        This is the level to log at for stdout
+    NUMPY_PRINTOPTIONS : dict
+        These are the printing options for numpy.
+
+    Parameters
+    ----------
+    basepath : str
+        If this is specified, then we also want to log to a file. Set up a
+        steam and a file
+    &#39;&#39;&#39;
+    def __init__(self, basepath=None):
+        self.FORMAT = &#39;%(levelname)s:%(module)s.%(lineno)s: %(message)s&#39;
+        self.LEVEL = logging.INFO
+        self.NUMPY_PRINTOPTIONS = {
+            &#39;threshold&#39;: sys.maxsize, &#39;linewidth&#39;: sys.maxsize}
+
+        if basepath is not None:
+            path = basepath + &#39;logging.log&#39;
+            self.PATH = path
+            handlers = [
+                logging.FileHandler(self.PATH, mode=&#39;w&#39;),
+                logging.StreamHandler()]
+            for handler in logging.root.handlers[:]:
+                logging.root.removeHandler(handler)
+            logging.basicConfig(level=self.LEVEL, format=self.FORMAT, handlers=handlers)
+        else:
+            self.PATH = None
+            logging.basicConfig(format=self.FORMAT, level=self.LEVEL)
+        
+        np.set_printoptions(**self.NUMPY_PRINTOPTIONS)
+        pd.set_option(&#39;display.max_columns&#39;, None)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.base.Saveable.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.config.ModelConfigICML"><code class="flex name class">
+<span>class <span class="ident">ModelConfigICML</span></span>
+<span>(</span><span>output_basepath, data_path, data_seed, init_seed, a0, a1, n_samples, burnin, pcc, clustering_on)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Configuration parameters for the model</p>
+<h2 id="system-initialization">System Initialization</h2>
+<p>SEED : int
+The random seed - set for all different modules (through pylab)
+DATA_FILENAME : str
+Location of the real data
+BURNIN : int
+Number of initial iterations to throw away
+N_SAMPLES : int
+Total number of iterations to perform
+CHECKPOINT : int
+This is the number of iterations that are saved to RAM until it is written
+to disk
+INTERMEDIATE_STEP : float, None
+This is the time step to do the intermediate points
+If there are no intermediate points added then we add no time points
+ADD_MIN_REL_ABUDANCE : bool
+If this is True, it will add the minimum relative abundance to all the data
+PROCESS_VARIANCE_TYPE : str
+Type of process variance to learn
+Options
+'homoscedastic'
+Not Implemented
+'heteroscedastic-global'
+Learn a heteroscadastic process variance (scales with the abundance)
+with global parameters (same v1 and v2 for every ASV)
+'heteroscedastic-per-asv'
+Learn v1 and v2 for each ASV separately
+DATA_DTYPE : str
+Type of data we are going to regress on
+Options:
+'abs': absolute abundance (qPCR*relative_abundance) data
+'rel': relative abundance data
+'raw': raw count data
+DIAGNOSTIC_VARIABLES : list(str)
+These are the names of the variables that you want to trace that are not
+necessarily variables we are learning. These are more for monitoring the
+inference
+QPCR_NORMALIZATION_MAX_VALUE : int, None
+Max value to set the qpcr value to. Rescale everything so that it is proportional
+to each other. If None there are no rescalings
+C_M : numeric
+This is the level of reintroduction of microbes each day</p>
+<h2 id="which-parameters-to-learn">Which Parameters To Learn</h2>
+<p>If the following parameters are true, then we add them to the inference order.
+These should all be <code>bool</code>s except for <code>INFERENCE_ORDER</code> which should be a list
+of <code>str</code>s.</p>
+<p>LEARN_BETA : bool
+Growth, self-interactions, interactions
+LEARN_CONCENTRATION : bool
+Concentration parameter of the clustering of the interactions
+LEARN_CLUSTER_ASSIGNMENTS : bool
+Cluster assignments to cluster the interactions
+LEARN_INDICATORS : bool
+Clustered interaction indicators of the interactions
+LEARN_INDICATOR_PROBABILITY : bool
+Probability of a positive interaction indicator
+LEARN_PRIOR_VAR_GROWTH : bool
+Prior variance of the growth
+LEARN_PRIOR_VAR_SELF_INTERACTIONS : bool
+Prior variance of the self-interactions
+LEARN_PRIOR_VAR_INTERACTIONS : bool
+Prior variance of the clustered interactions
+LEARN_PROCESS_VAR : bool
+Process variance parameters
+LEARN_FILTERING : bool
+Learn the auxiliary and the latent trajectory
+LEARN_PERT_VALUE : bool
+Magnitudes of the perturbation effects
+LEARN_PERT_INDICATOR : bool
+Clustered indicators of the perturbation effects
+LEARN_PERT_INDICATOR_PROBABILITY : bool
+Probability of a cluster ebing affected by the perturbation
+INFERENCE_ORDER : list
+This is the global order to learn the paramters. If one of the above parameters are
+False, then their respective name is removed from the inference order</p>
+<h2 id="initialization-parameters">Initialization Parameters</h2>
+<p>These are the arguments to send to the initialization. These should all be dictionaries
+which maps a string (argument) to its value to be passed into the <code>initialize</code> function.
+Last parameter is the initialization order, which is the order that we call the
+<code>initialize</code> function. These functions are called whether if the variables are being
+learned or not</p>
+<p>Initialize</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ModelConfigICML(_BaseModelConfig):
+    &#39;&#39;&#39;Configuration parameters for the model
+
+
+    System initialization
+    ---------------------
+    SEED : int
+        The random seed - set for all different modules (through pylab)
+    DATA_FILENAME : str
+        Location of the real data
+    BURNIN : int
+        Number of initial iterations to throw away
+    N_SAMPLES : int
+        Total number of iterations to perform
+    CHECKPOINT : int
+        This is the number of iterations that are saved to RAM until it is written
+        to disk
+    INTERMEDIATE_STEP : float, None
+        This is the time step to do the intermediate points
+        If there are no intermediate points added then we add no time points
+    ADD_MIN_REL_ABUDANCE : bool
+        If this is True, it will add the minimum relative abundance to all the data
+    PROCESS_VARIANCE_TYPE : str
+        Type of process variance to learn
+        Options
+            &#39;homoscedastic&#39;
+                Not Implemented
+            &#39;heteroscedastic-global&#39;
+                Learn a heteroscadastic process variance (scales with the abundance)
+                with global parameters (same v1 and v2 for every ASV)
+            &#39;heteroscedastic-per-asv&#39;
+                Learn v1 and v2 for each ASV separately
+    DATA_DTYPE : str
+        Type of data we are going to regress on
+        Options:
+            &#39;abs&#39;: absolute abundance (qPCR*relative_abundance) data
+            &#39;rel&#39;: relative abundance data
+            &#39;raw&#39;: raw count data
+    DIAGNOSTIC_VARIABLES : list(str)
+        These are the names of the variables that you want to trace that are not
+        necessarily variables we are learning. These are more for monitoring the
+        inference
+    QPCR_NORMALIZATION_MAX_VALUE : int, None
+        Max value to set the qpcr value to. Rescale everything so that it is proportional
+        to each other. If None there are no rescalings
+    C_M : numeric
+        This is the level of reintroduction of microbes each day
+
+    Which parameters to learn
+    -------------------------
+    If the following parameters are true, then we add them to the inference order.
+    These should all be `bool`s except for `INFERENCE_ORDER` which should be a list
+    of `str`s.
+
+    LEARN_BETA : bool
+        Growth, self-interactions, interactions
+    LEARN_CONCENTRATION : bool
+        Concentration parameter of the clustering of the interactions
+    LEARN_CLUSTER_ASSIGNMENTS : bool
+        Cluster assignments to cluster the interactions
+    LEARN_INDICATORS : bool
+        Clustered interaction indicators of the interactions
+    LEARN_INDICATOR_PROBABILITY : bool
+        Probability of a positive interaction indicator
+    LEARN_PRIOR_VAR_GROWTH : bool
+        Prior variance of the growth
+    LEARN_PRIOR_VAR_SELF_INTERACTIONS : bool
+        Prior variance of the self-interactions
+    LEARN_PRIOR_VAR_INTERACTIONS : bool
+        Prior variance of the clustered interactions
+    LEARN_PROCESS_VAR : bool
+        Process variance parameters
+    LEARN_FILTERING : bool
+        Learn the auxiliary and the latent trajectory
+    LEARN_PERT_VALUE : bool
+        Magnitudes of the perturbation effects
+    LEARN_PERT_INDICATOR : bool
+        Clustered indicators of the perturbation effects
+    LEARN_PERT_INDICATOR_PROBABILITY : bool
+        Probability of a cluster ebing affected by the perturbation
+    INFERENCE_ORDER : list
+        This is the global order to learn the paramters. If one of the above parameters are
+        False, then their respective name is removed from the inference order
+
+    Initialization parameters
+    -------------------------
+    These are the arguments to send to the initialization. These should all be dictionaries
+    which maps a string (argument) to its value to be passed into the `initialize` function.
+    Last parameter is the initialization order, which is the order that we call the
+    `initialize` function. These functions are called whether if the variables are being
+    learned or not
+    &#39;&#39;&#39;
+    def __init__(self, output_basepath, data_path, data_seed, init_seed, a0, a1,
+        n_samples, burnin, pcc, clustering_on):
+        &#39;&#39;&#39;Initialize
+        &#39;&#39;&#39;
+        self.OUTPUT_BASEPATH = output_basepath
+        self.DATA_PATH = data_path
+        self.DATA_SEED = data_seed
+        self.INIT_SEED = init_seed
+        self.VALIDATION_SEED = 11195573
+
+        self.DATA_FILENAME = &#39;pickles/real_subjectset.pkl&#39;
+        self.BURNIN = burnin
+        self.N_SAMPLES = n_samples
+        self.CHECKPOINT = 100 #50
+        self.ADD_MIN_REL_ABUNDANCE = False
+        self.PROCESS_VARIANCE_TYPE = &#39;multiplicative-global&#39;
+        self.DATA_DTYPE = &#39;abs&#39;
+        self.DIAGNOSTIC_VARIABLES = [&#39;n_clusters&#39;]
+        self.DELETE_FIRST_TIMEPOINT = False
+
+        self.GROWTH_TRUNCATION_SETTINGS = &#39;positive&#39; #&#39;in-vivo&#39;
+        self.SELF_INTERACTIONS_TRUNCATION_SETTINGS = &#39;positive&#39;
+
+        self.QPCR_NORMALIZATION_MAX_VALUE = 100
+        self.C_M = 1e5
+
+        # This is whether to use the log-scale dynamics or not
+
+        self.MP_FILTERING = &#39;full&#39;
+        self.MP_INDICATORS = None
+        self.MP_CLUSTERING = &#39;full-8&#39;
+        self.MP_ZERO_INFLATION = None
+        self.RELATIVE_LOG_MARGINAL_INDICATORS = True
+        self.RELATIVE_LOG_MARGINAL_PERT_INDICATORS = True
+        self.RELATIVE_LOG_MARGINAL_CLUSTERING = False
+        self.PERCENT_CHANGE_CLUSTERING = pcc
+
+        self.NEGBIN_A0 = a0
+        self.NEGBIN_A1 = a1
+        self.CLUSTERING_ON = clustering_on
+        self.N_QPCR_BUCKETS = 3
+        
+        self.LEARN = {
+            STRNAMES.REGRESSCOEFF: True,
+            STRNAMES.PROCESSVAR: True,
+            STRNAMES.PRIOR_VAR_GROWTH: False,
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS: False,
+            STRNAMES.PRIOR_VAR_INTERACTIONS: True,
+            STRNAMES.PRIOR_VAR_PERT: True,
+            STRNAMES.PRIOR_MEAN_GROWTH: True,
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS: True,
+            STRNAMES.PRIOR_MEAN_INTERACTIONS: True,
+            STRNAMES.PRIOR_MEAN_PERT: True,
+            STRNAMES.FILTERING: True,
+            STRNAMES.ZERO_INFLATION: False,
+            STRNAMES.CLUSTERING: True, #clustering_on,
+            STRNAMES.CONCENTRATION: True, #clustering_on,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR: True,
+            STRNAMES.INDICATOR_PROB: True,
+            STRNAMES.PERT_INDICATOR: True,
+            STRNAMES.PERT_INDICATOR_PROB: True,
+            STRNAMES.QPCR_SCALES: False,
+            STRNAMES.QPCR_DOFS: False,
+            STRNAMES.QPCR_VARIANCES: False}
+
+        self.INFERENCE_ORDER = [
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR,
+            STRNAMES.INDICATOR_PROB,
+            STRNAMES.PERT_INDICATOR,
+            STRNAMES.PERT_INDICATOR_PROB,
+            STRNAMES.REGRESSCOEFF,
+            STRNAMES.PRIOR_MEAN_INTERACTIONS,
+            STRNAMES.PRIOR_MEAN_PERT,
+            STRNAMES.PRIOR_MEAN_GROWTH,
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_GROWTH,
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_PERT,
+            STRNAMES.PROCESSVAR,
+            STRNAMES.ZERO_INFLATION,
+            STRNAMES.QPCR_SCALES,
+            STRNAMES.QPCR_DOFS,
+            STRNAMES.QPCR_VARIANCES,
+            STRNAMES.FILTERING,
+            STRNAMES.CLUSTERING,
+            STRNAMES.CONCENTRATION]
+
+        self.INITIALIZATION_KWARGS = {
+            STRNAMES.QPCR_VARIANCES: {
+                &#39;value_option&#39;: &#39;empirical&#39;},
+            STRNAMES.QPCR_SCALES: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;empirical&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;:0},
+            STRNAMES.QPCR_DOFS: {
+                &#39;value_option&#39;: &#39;diffuse&#39;,
+                &#39;low_option&#39;: &#39;valid&#39;,
+                &#39;high_option&#39;: &#39;med&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;: 0},
+            STRNAMES.PERT_VALUE: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PERT_INDICATOR_PROB: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;hyperparam_option&#39;: &#39;weak-agnostic&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PERT_INDICATOR: {
+                &#39;value_option&#39;: &#39;all-off&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_VAR_PERT: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;diffuse&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_MEAN_PERT: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;zero&#39;,
+                &#39;var_option&#39;: &#39;diffuse&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_VAR_GROWTH: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;inflated-median&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;proposal_option&#39;: &#39;tight&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_MEAN_GROWTH: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;manual&#39;,
+                &#39;var_option&#39;: &#39;diffuse-linear-regression&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: 0.44,
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;truncation_settings&#39;: self.GROWTH_TRUNCATION_SETTINGS,
+                &#39;delay&#39;:0, &#39;mean&#39;: 1},
+            STRNAMES.GROWTH_VALUE: {
+                &#39;value_option&#39;: &#39;linear-regression&#39;, #&#39;prior-mean&#39;,
+                &#39;truncation_settings&#39;: self.GROWTH_TRUNCATION_SETTINGS,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;inflated-median&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;proposal_option&#39;: &#39;tight&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;median-linear-regression&#39;,
+                &#39;var_option&#39;: &#39;diffuse-linear-regression&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: 0.44,
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;truncation_settings&#39;: self.SELF_INTERACTIONS_TRUNCATION_SETTINGS,
+                &#39;delay&#39;:0},
+            STRNAMES.SELF_INTERACTION_VALUE: {
+                &#39;value_option&#39;: &#39;linear-regression&#39;,
+                &#39;truncation_settings&#39;: self.SELF_INTERACTIONS_TRUNCATION_SETTINGS,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_VAR_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;auto&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;scale_option&#39;: &#39;same-as-aii&#39;,
+                &#39;mean_scaling_factor&#39;: 1,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_MEAN_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;zero&#39;,
+                &#39;var_option&#39;: &#39;same-as-aii&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.CLUSTER_INTERACTION_VALUE: {
+                &#39;value_option&#39;: &#39;all-off&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR: {
+                &#39;delay&#39;:0,
+                &#39;run_every_n_iterations&#39;: 1},
+            STRNAMES.INDICATOR_PROB: {
+                &#39;value_option&#39;: &#39;auto&#39;,
+                &#39;hyperparam_option&#39;: &#39;weak-agnostic&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.FILTERING: {
+                &#39;x_value_option&#39;:  &#39;loess&#39;,
+                # &#39;q_value_option&#39;: &#39;coupling&#39;, #&#39;loess&#39;,
+                # &#39;hyperparam_option&#39;: &#39;manual&#39;,
+                &#39;tune&#39;: (int(self.BURNIN/2), 50),
+                &#39;a0&#39;: self.NEGBIN_A0,
+                &#39;a1&#39;: self.NEGBIN_A1,
+                &#39;v1&#39;: 1e-4,
+                &#39;v2&#39;: 1e-4,
+                &#39;proposal_init_scale&#39;:.001,
+                &#39;intermediate_interpolation&#39;: &#39;linear-interpolation&#39;,
+                &#39;intermediate_step&#39;: None, #(&#39;step&#39;, (1, None)), 
+                &#39;essential_timepoints&#39;: &#39;union&#39;,
+                &#39;delay&#39;: 1,
+                &#39;window&#39;: 6,
+                &#39;plot_initial&#39;: False,
+                &#39;target_acceptance_rate&#39;: 0.44},
+            STRNAMES.ZERO_INFLATION: {
+                &#39;value_option&#39;: &#39;manual&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.CONCENTRATION: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;hyperparam_option&#39;: &#39;diffuse&#39;,
+                &#39;delay&#39;: 0, &#39;n_iter&#39;: 20},
+            STRNAMES.CLUSTERING: {
+                &#39;value_option&#39;: &#39;spearman&#39;,
+                &#39;delay&#39;: 2,
+                &#39;n_clusters&#39;: 10,
+                &#39;percent_mix&#39;: self.PERCENT_CHANGE_CLUSTERING,
+                &#39;run_every_n_iterations&#39;: 4},
+            STRNAMES.REGRESSCOEFF: {
+                &#39;update_jointly_pert_inter&#39;: True,
+                &#39;update_jointly_growth_si&#39;: False,
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;},
+            STRNAMES.PROCESSVAR: {
+                # &#39;v1&#39;: 0.2**2,
+                # &#39;v2&#39;: 1,
+                # &#39;q_option&#39;: &#39;previous-t&#39;}, #&#39;previous-t&#39;},
+                &#39;dof_option&#39;: &#39;diffuse&#39;, # &#39;half&#39;, 
+                &#39;scale_option&#39;: &#39;med&#39;,
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;delay&#39;: 0}
+        }
+
+        self.INITIALIZATION_ORDER = [
+            STRNAMES.FILTERING,
+            STRNAMES.ZERO_INFLATION,
+            STRNAMES.CONCENTRATION,
+            STRNAMES.CLUSTERING,
+            STRNAMES.PROCESSVAR,
+            STRNAMES.PRIOR_MEAN_GROWTH,
+            STRNAMES.PRIOR_VAR_GROWTH,
+            STRNAMES.GROWTH_VALUE,
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS,
+            STRNAMES.SELF_INTERACTION_VALUE,
+            STRNAMES.PRIOR_MEAN_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_INTERACTIONS,
+            STRNAMES.CLUSTER_INTERACTION_VALUE,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR,
+            STRNAMES.INDICATOR_PROB,
+            STRNAMES.PRIOR_MEAN_PERT,
+            STRNAMES.PRIOR_VAR_PERT,
+            STRNAMES.PERT_INDICATOR,
+                        STRNAMES.PERT_VALUE,
+            STRNAMES.PERT_INDICATOR_PROB,
+            STRNAMES.REGRESSCOEFF,
+            STRNAMES.QPCR_SCALES,
+            STRNAMES.QPCR_DOFS,
+            STRNAMES.QPCR_VARIANCES]
+
+    def suffix(self):
+        &#39;&#39;&#39;Create a suffix with the parameters
+        &#39;&#39;&#39;        
+        s = &#39;_ds{}_is{}_b{}_ns{}_co{}_perts{}&#39;.format(
+            self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES,
+            self.CLUSTERING_ON, &#39;mult&#39;)
+        return s</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>mdsine2.config._BaseModelConfig</li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.config.ModelConfigICML.suffix"><code class="name flex">
+<span>def <span class="ident">suffix</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a suffix with the parameters</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def suffix(self):
+    &#39;&#39;&#39;Create a suffix with the parameters
+    &#39;&#39;&#39;        
+    s = &#39;_ds{}_is{}_b{}_ns{}_co{}_perts{}&#39;.format(
+        self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES,
+        self.CLUSTERING_ON, &#39;mult&#39;)
+    return s</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.base.Saveable.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.config.ModelConfigReal"><code class="flex name class">
+<span>class <span class="ident">ModelConfigReal</span></span>
+<span>(</span><span>output_basepath, data_seed, init_seed, burnin, n_samples, pcc, leave_out, max_n_asvs, cross_validate, use_bsub, dataset, checkpoint)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Configuration parameters for the model</p>
+<h2 id="system-initialization">System Initialization</h2>
+<p>SEED : int
+The random seed - set for all different modules (through pylab)
+DATA_FILENAME : str
+Location of the real data
+BURNIN : int
+Number of initial iterations to throw away
+N_SAMPLES : int
+Total number of iterations to perform
+CHECKPOINT : int
+This is the number of iterations that are saved to RAM until it is written
+to disk
+INTERMEDIATE_STEP : float, None
+This is the time step to do the intermediate points
+If there are no intermediate points added then we add no time points
+UPDATE_DYNAMICS_JOINTLY : bool
+If True, we sample the growth, self_interactions, and interactions
+jointly from a multivariate normal distribution. If False, we sample
+the separately (growth from a positively truncated normal, self-interactions
+from a negatively truncated normal, and interactions from a multivariate normal)
+ADD_MIN_REL_ABUDANCE : bool
+If this is True, it will add the minimum relative abundance to all the data
+PROCESS_VARIANCE_TYPE : str
+Type of process variance to learn
+Options
+'homoscedastic'
+Not Implemented
+'heteroscedastic-global'
+Learn a heteroscadastic process variance (scales with the abundance)
+with global parameters (same v1 and v2 for every ASV)
+'heteroscedastic-per-asv'
+Learn v1 and v2 for each ASV separately
+DATA_DTYPE : str
+Type of data we are going to regress on
+Options:
+'abs': absolute abundance (qPCR*relative_abundance) data
+'rel': relative abundance data
+'raw': raw count data
+DIAGNOSTIC_VARIABLES : list(str)
+These are the names of the variables that you want to trace that are not
+necessarily variables we are learning. These are more for monitoring the
+inference
+QPCR_NORMALIZATION_MAX_VALUE : int, None
+Max value to set the qpcr value to. Rescale everything so that it is proportional
+to each other. If None there are no rescalings
+C_M : numeric
+This is the level of reintroduction of microbes each day</p>
+<h2 id="which-parameters-to-learn">Which Parameters To Learn</h2>
+<p>If the following parameters are true, then we add them to the inference order.
+These should all be <code>bool</code>s except for <code>INFERENCE_ORDER</code> which should be a list
+of <code>str</code>s.</p>
+<p>LEARN_BETA : bool
+Growth, self-interactions, interactions
+LEARN_CONCENTRATION : bool
+Concentration parameter of the clustering of the interactions
+LEARN_CLUSTER_ASSIGNMENTS : bool
+Cluster assignments to cluster the interactions
+LEARN_INDICATORS : bool
+Clustered interaction indicators of the interactions
+LEARN_INDICATOR_PROBABILITY : bool
+Probability of a positive interaction indicator
+LEARN_PRIOR_VAR_GROWTH : bool
+Prior variance of the growth
+LEARN_PRIOR_VAR_SELF_INTERACTIONS : bool
+Prior variance of the self-interactions
+LEARN_PRIOR_VAR_INTERACTIONS : bool
+Prior variance of the clustered interactions
+LEARN_PROCESS_VAR : bool
+Process variance parameters
+LEARN_FILTERING : bool
+Learn the auxiliary and the latent trajectory
+LEARN_PERT_VALUE : bool
+Magnitudes of the perturbation effects
+LEARN_PERT_INDICATOR : bool
+Clustered indicators of the perturbation effects
+LEARN_PERT_INDICATOR_PROBABILITY : bool
+Probability of a cluster ebing affected by the perturbation
+INFERENCE_ORDER : list
+This is the global order to learn the paramters. If one of the above parameters are
+False, then their respective name is removed from the inference order</p>
+<h2 id="initialization-parameters">Initialization Parameters</h2>
+<p>These are the arguments to send to the initialization. These should all be dictionaries
+which maps a string (argument) to its value to be passed into the <code>initialize</code> function.
+Last parameter is the initialization order, which is the order that we call the
+<code>initialize</code> function. These functions are called whether if the variables are being
+learned or not</p>
+<p>Customization parameters</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>output_basepath</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the basepath to save the output</dd>
+<dt><strong><code>data_seed</code></strong>, <strong><code>init_seed</code></strong> :&ensp;<code>int</code></dt>
+<dd>This is the seed to initialize the data and the model, respectively.</dd>
+<dt><strong><code>burnin</code></strong>, <strong><code>n_samples</code></strong> :&ensp;<code>int</code></dt>
+<dd>These are the number of iterations to initially throw away and the
+total number of samples for the MCMC chain, respectively</dd>
+<dt><strong><code>pcc</code></strong> :&ensp;<code>float</code></dt>
+<dd>[0,1]. (Percent Change Clustering). What proportion of the ASVs to
+change clusters during each iteration.</dd>
+<dt><strong><code>leave_out</code></strong> :&ensp;<code>list(str), str, None</code></dt>
+<dd>These are the subject name/s to leave out during inference and to use to test
+the predictive accuracy. If <code>None</code> then we leave non of them out.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class ModelConfigReal(_BaseModelConfig):
+    &#39;&#39;&#39;Configuration parameters for the model
+
+
+    System initialization
+    ---------------------
+    SEED : int
+        The random seed - set for all different modules (through pylab)
+    DATA_FILENAME : str
+        Location of the real data
+    BURNIN : int
+        Number of initial iterations to throw away
+    N_SAMPLES : int
+        Total number of iterations to perform
+    CHECKPOINT : int
+        This is the number of iterations that are saved to RAM until it is written
+        to disk
+    INTERMEDIATE_STEP : float, None
+        This is the time step to do the intermediate points
+        If there are no intermediate points added then we add no time points
+    UPDATE_DYNAMICS_JOINTLY : bool
+        If True, we sample the growth, self_interactions, and interactions
+        jointly from a multivariate normal distribution. If False, we sample
+        the separately (growth from a positively truncated normal, self-interactions
+        from a negatively truncated normal, and interactions from a multivariate normal)
+    ADD_MIN_REL_ABUDANCE : bool
+        If this is True, it will add the minimum relative abundance to all the data
+    PROCESS_VARIANCE_TYPE : str
+        Type of process variance to learn
+        Options
+            &#39;homoscedastic&#39;
+                Not Implemented
+            &#39;heteroscedastic-global&#39;
+                Learn a heteroscadastic process variance (scales with the abundance)
+                with global parameters (same v1 and v2 for every ASV)
+            &#39;heteroscedastic-per-asv&#39;
+                Learn v1 and v2 for each ASV separately
+    DATA_DTYPE : str
+        Type of data we are going to regress on
+        Options:
+            &#39;abs&#39;: absolute abundance (qPCR*relative_abundance) data
+            &#39;rel&#39;: relative abundance data
+            &#39;raw&#39;: raw count data
+    DIAGNOSTIC_VARIABLES : list(str)
+        These are the names of the variables that you want to trace that are not
+        necessarily variables we are learning. These are more for monitoring the
+        inference
+    QPCR_NORMALIZATION_MAX_VALUE : int, None
+        Max value to set the qpcr value to. Rescale everything so that it is proportional
+        to each other. If None there are no rescalings
+    C_M : numeric
+        This is the level of reintroduction of microbes each day
+
+    Which parameters to learn
+    -------------------------
+    If the following parameters are true, then we add them to the inference order.
+    These should all be `bool`s except for `INFERENCE_ORDER` which should be a list
+    of `str`s.
+
+    LEARN_BETA : bool
+        Growth, self-interactions, interactions
+    LEARN_CONCENTRATION : bool
+        Concentration parameter of the clustering of the interactions
+    LEARN_CLUSTER_ASSIGNMENTS : bool
+        Cluster assignments to cluster the interactions
+    LEARN_INDICATORS : bool
+        Clustered interaction indicators of the interactions
+    LEARN_INDICATOR_PROBABILITY : bool
+        Probability of a positive interaction indicator
+    LEARN_PRIOR_VAR_GROWTH : bool
+        Prior variance of the growth
+    LEARN_PRIOR_VAR_SELF_INTERACTIONS : bool
+        Prior variance of the self-interactions
+    LEARN_PRIOR_VAR_INTERACTIONS : bool
+        Prior variance of the clustered interactions
+    LEARN_PROCESS_VAR : bool
+        Process variance parameters
+    LEARN_FILTERING : bool
+        Learn the auxiliary and the latent trajectory
+    LEARN_PERT_VALUE : bool
+        Magnitudes of the perturbation effects
+    LEARN_PERT_INDICATOR : bool
+        Clustered indicators of the perturbation effects
+    LEARN_PERT_INDICATOR_PROBABILITY : bool
+        Probability of a cluster ebing affected by the perturbation
+    INFERENCE_ORDER : list
+        This is the global order to learn the paramters. If one of the above parameters are
+        False, then their respective name is removed from the inference order
+
+    Initialization parameters
+    -------------------------
+    These are the arguments to send to the initialization. These should all be dictionaries
+    which maps a string (argument) to its value to be passed into the `initialize` function.
+    Last parameter is the initialization order, which is the order that we call the
+    `initialize` function. These functions are called whether if the variables are being
+    learned or not
+    &#39;&#39;&#39;
+    def __init__(self, output_basepath, data_seed, init_seed, burnin, n_samples, pcc,
+        leave_out, max_n_asvs, cross_validate, use_bsub, dataset, checkpoint):
+        &#39;&#39;&#39;Customization parameters
+
+        Parameters
+        ----------
+        output_basepath : str
+            This is the basepath to save the output
+        data_seed, init_seed : int
+            This is the seed to initialize the data and the model, respectively.
+        burnin, n_samples : int
+            These are the number of iterations to initially throw away and the
+            total number of samples for the MCMC chain, respectively
+        pcc : float
+            [0,1]. (Percent Change Clustering). What proportion of the ASVs to
+            change clusters during each iteration.
+        leave_out : list(str), str, None
+            These are the subject name/s to leave out during inference and to use to test
+            the predictive accuracy. If `None` then we leave non of them out.
+        &#39;&#39;&#39;
+
+        self.OUTPUT_BASEPATH = output_basepath
+        self.DATA_SEED = data_seed
+        self.INIT_SEED = init_seed
+        self.VALIDATION_SEED = 11195573
+
+        self.CROSS_VALIDATE = cross_validate
+        self.USE_BSUB = use_bsub
+
+        self.N_CPUS = 3
+        self.MEMORY_MBS = 7000
+
+        self.DATA_FILENAME = &#39;pickles/real_subjectset.pkl&#39;
+        self.BURNIN = burnin
+        self.N_SAMPLES = n_samples
+        self.CHECKPOINT = checkpoint
+        self.ADD_MIN_REL_ABUNDANCE = False
+        self.PROCESS_VARIANCE_TYPE = &#39;multiplicative-global&#39;
+        self.DATA_DTYPE = &#39;abs&#39;
+        self.DIAGNOSTIC_VARIABLES = [&#39;n_clusters&#39;]
+        self.DELETE_FIRST_TIMEPOINT = True
+
+        self.QPCR_NORMALIZATION_MAX_VALUE = 100
+        self.C_M = 1e5
+        self.LEAVE_OUT = leave_out
+        self.MAX_N_ASVS = max_n_asvs
+        self.ZERO_INFLATION_TRANSITION_POLICY = None #&#39;ignore&#39;
+
+        self.GROWTH_TRUNCATION_SETTINGS = &#39;positive&#39;
+        self.SELF_INTERACTIONS_TRUNCATION_SETTINGS = &#39;positive&#39;
+
+        self.MP_FILTERING = &#39;full&#39;
+        self.MP_INDICATORS = None
+        self.MP_CLUSTERING = &#39;full-5&#39; #&#39;full-8&#39;
+        self.MP_ZERO_INFLATION = None
+        self.RELATIVE_LOG_MARGINAL_INDICATORS = True
+        self.RELATIVE_LOG_MARGINAL_PERT_INDICATORS = True
+        self.RELATIVE_LOG_MARGINAL_CLUSTERING = False
+        self.PERCENT_CHANGE_CLUSTERING = pcc
+
+        self.NEGBIN_A0 = NEGBIN_A0
+        self.NEGBIN_A1 = NEGBIN_A1
+        self.QPCR_NOISE_SCALE = LEARNED_LOGNORMAL_SCALE
+        self.N_QPCR_BUCKETS = 3
+
+        self.INTERMEDIATE_VALIDATION_T = 20 #8 * 3600 # Every 8 hours
+        self.INTERMEDIATE_VALIDATION_KWARGS = None
+
+        self.LEARN = {
+            STRNAMES.REGRESSCOEFF: True,
+            STRNAMES.PROCESSVAR: True,
+            STRNAMES.PRIOR_VAR_GROWTH: False,
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS: False,
+            STRNAMES.PRIOR_VAR_INTERACTIONS: True,
+            STRNAMES.PRIOR_VAR_PERT: True,
+            STRNAMES.PRIOR_MEAN_GROWTH: True,
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS: True,
+            STRNAMES.PRIOR_MEAN_INTERACTIONS: True,
+            STRNAMES.PRIOR_MEAN_PERT: True,
+            STRNAMES.FILTERING: True,
+            STRNAMES.ZERO_INFLATION: False,
+            STRNAMES.CLUSTERING: False,
+            STRNAMES.CONCENTRATION: False, 
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR: True,
+            STRNAMES.INDICATOR_PROB: True,
+            STRNAMES.PERT_INDICATOR: True,
+            STRNAMES.PERT_INDICATOR_PROB: True,
+            STRNAMES.QPCR_SCALES: False,
+            STRNAMES.QPCR_DOFS: False,
+            STRNAMES.QPCR_VARIANCES: False}
+
+        self.INFERENCE_ORDER = [
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR,
+            STRNAMES.INDICATOR_PROB,
+            STRNAMES.PERT_INDICATOR,
+            STRNAMES.PERT_INDICATOR_PROB,
+            STRNAMES.REGRESSCOEFF,
+            STRNAMES.PRIOR_MEAN_INTERACTIONS,
+            STRNAMES.PRIOR_MEAN_PERT,
+            STRNAMES.PRIOR_MEAN_GROWTH,
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_GROWTH,
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_PERT,
+            STRNAMES.PROCESSVAR,
+            STRNAMES.ZERO_INFLATION,
+            STRNAMES.QPCR_SCALES,
+            STRNAMES.QPCR_DOFS,
+            STRNAMES.QPCR_VARIANCES,
+            STRNAMES.FILTERING,
+            STRNAMES.CLUSTERING,
+            STRNAMES.CONCENTRATION]
+
+        self.INITIALIZATION_KWARGS = {
+            STRNAMES.QPCR_VARIANCES: {
+                &#39;value_option&#39;: &#39;empirical&#39;},
+            STRNAMES.QPCR_SCALES: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;empirical&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;:0},
+            STRNAMES.QPCR_DOFS: {
+                &#39;value_option&#39;: &#39;diffuse&#39;,
+                &#39;low_option&#39;: &#39;valid&#39;,
+                &#39;high_option&#39;: &#39;med&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;: 0},
+            STRNAMES.PERT_VALUE: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PERT_INDICATOR_PROB: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;hyperparam_option&#39;: &#39;strong-sparse&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PERT_INDICATOR: {
+                &#39;value_option&#39;: &#39;all-off&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_VAR_PERT: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;diffuse&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_MEAN_PERT: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;zero&#39;,
+                &#39;var_option&#39;: &#39;diffuse&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_VAR_GROWTH: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;inflated-median&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;proposal_option&#39;: &#39;tight&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_MEAN_GROWTH: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;manual&#39;,
+                &#39;var_option&#39;: &#39;diffuse-linear-regression&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: 0.44,
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;truncation_settings&#39;: self.GROWTH_TRUNCATION_SETTINGS,
+                &#39;delay&#39;:0, &#39;mean&#39;: 1},
+            STRNAMES.GROWTH_VALUE: {
+                &#39;value_option&#39;: &#39;linear-regression&#39;, #&#39;prior-mean&#39;,
+                &#39;truncation_settings&#39;: self.GROWTH_TRUNCATION_SETTINGS,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;scale_option&#39;: &#39;inflated-median&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;proposal_option&#39;: &#39;tight&#39;,
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;tune&#39;: 50,
+                &#39;delay&#39;:0},
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;median-linear-regression&#39;,
+                &#39;var_option&#39;: &#39;diffuse-linear-regression&#39;,
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;target_acceptance_rate&#39;: 0.44,
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;,
+                &#39;truncation_settings&#39;: self.SELF_INTERACTIONS_TRUNCATION_SETTINGS,
+                &#39;delay&#39;:0},
+            STRNAMES.SELF_INTERACTION_VALUE: {
+                &#39;value_option&#39;: &#39;linear-regression&#39;,
+                &#39;truncation_settings&#39;: self.SELF_INTERACTIONS_TRUNCATION_SETTINGS,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_VAR_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;auto&#39;,
+                &#39;dof_option&#39;: &#39;diffuse&#39;,
+                &#39;scale_option&#39;: &#39;same-as-aii&#39;,
+                &#39;mean_scaling_factor&#39;: 1,
+                &#39;delay&#39;: 0},
+            STRNAMES.PRIOR_MEAN_INTERACTIONS: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;mean_option&#39;: &#39;zero&#39;,
+                &#39;var_option&#39;: &#39;same-as-aii&#39;,
+                &#39;delay&#39;:0},
+            STRNAMES.CLUSTER_INTERACTION_VALUE: {
+                &#39;value_option&#39;: &#39;all-off&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR: {
+                &#39;delay&#39;:0,
+                &#39;run_every_n_iterations&#39;: 1},
+            STRNAMES.INDICATOR_PROB: {
+                &#39;value_option&#39;: &#39;auto&#39;,
+                &#39;hyperparam_option&#39;: &#39;strong-sparse&#39;,
+                &#39;N&#39;: 25,
+                &#39;delay&#39;: 0},
+            STRNAMES.FILTERING: {
+                &#39;x_value_option&#39;:  &#39;loess&#39;,
+                # &#39;q_value_option&#39;: &#39;coupling&#39;, #&#39;loess&#39;,
+                # &#39;hyperparam_option&#39;: &#39;manual&#39;,
+                &#39;tune&#39;: (int(self.BURNIN/2), 50),
+                &#39;a0&#39;: self.NEGBIN_A0,
+                &#39;a1&#39;: self.NEGBIN_A1,
+                &#39;v1&#39;: 1e-4,
+                &#39;v2&#39;: 1e-4,
+                &#39;proposal_init_scale&#39;:.001,
+                &#39;intermediate_interpolation&#39;: &#39;linear-interpolation&#39;,
+                &#39;intermediate_step&#39;: None, #(&#39;step&#39;, (1, None)), 
+                &#39;essential_timepoints&#39;: &#39;union&#39;,
+                &#39;delay&#39;: 1,
+                &#39;window&#39;: 6,
+                &#39;plot_initial&#39;: False,
+                &#39;target_acceptance_rate&#39;: 0.44},
+            STRNAMES.ZERO_INFLATION: {
+                &#39;value_option&#39;: None,
+                &#39;delay&#39;: 0},
+            STRNAMES.CONCENTRATION: {
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;hyperparam_option&#39;: &#39;diffuse&#39;,
+                &#39;delay&#39;: 0, &#39;n_iter&#39;: 20},
+            STRNAMES.CLUSTERING: {
+                &#39;value_option&#39;: &#39;fixed-topology&#39;,
+                &#39;value&#39;: &#39;output_real/pylab24/real_runs/strong_priors/healthy1_5_0.0001_rel_2_5/ds0_is0_b5000_ns15000_mo-1_logTrue_pertsmult/graph_leave_out-1/mcmc.pkl&#39;,
+                &#39;delay&#39;: 2,
+                # &#39;n_clusters&#39;: 30,
+                &#39;percent_mix&#39;: self.PERCENT_CHANGE_CLUSTERING,
+                &#39;run_every_n_iterations&#39;: 4},
+            STRNAMES.REGRESSCOEFF: {
+                &#39;update_jointly_pert_inter&#39;: True,
+                &#39;update_jointly_growth_si&#39;: False,
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: &#39;half-burnin&#39;},
+            STRNAMES.PROCESSVAR: {
+                # &#39;v1&#39;: 0.2**2,
+                # &#39;v2&#39;: 1,
+                # &#39;q_option&#39;: &#39;previous-t&#39;}, #&#39;previous-t&#39;},
+                &#39;dof_option&#39;: &#39;diffuse&#39;, # &#39;half&#39;, 
+                &#39;scale_option&#39;: &#39;med&#39;,
+                &#39;value_option&#39;: &#39;prior-mean&#39;,
+                &#39;delay&#39;: 0}
+        }
+
+        self.INITIALIZATION_ORDER = [
+            STRNAMES.FILTERING,
+            STRNAMES.ZERO_INFLATION,
+            STRNAMES.CONCENTRATION,
+            STRNAMES.CLUSTERING,
+            STRNAMES.PROCESSVAR,
+            STRNAMES.PRIOR_MEAN_GROWTH,
+            STRNAMES.PRIOR_VAR_GROWTH,
+            STRNAMES.GROWTH_VALUE,
+            STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_SELF_INTERACTIONS,
+            STRNAMES.SELF_INTERACTION_VALUE,
+            STRNAMES.PRIOR_MEAN_INTERACTIONS,
+            STRNAMES.PRIOR_VAR_INTERACTIONS,
+            STRNAMES.CLUSTER_INTERACTION_VALUE,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR,
+            STRNAMES.INDICATOR_PROB,
+            STRNAMES.PRIOR_MEAN_PERT,
+            STRNAMES.PRIOR_VAR_PERT,
+            STRNAMES.PERT_INDICATOR,
+                        STRNAMES.PERT_VALUE,
+            STRNAMES.PERT_INDICATOR_PROB,
+            STRNAMES.REGRESSCOEFF,
+            STRNAMES.QPCR_SCALES,
+            STRNAMES.QPCR_DOFS,
+            STRNAMES.QPCR_VARIANCES]
+
+    def suffix(self):
+        &#39;&#39;&#39;Create a suffix with the parameters
+        &#39;&#39;&#39;
+        if self.LEAVE_OUT is not None:
+            try:
+                lo = str(tuple(list(self.LEAVE_OUT))).replace(&#39;,&#39;,&#39;_&#39;).replace(
+                    &#39;(&#39;,&#39;&#39;).replace(&#39;)&#39;,&#39;&#39;).replace(&#39; &#39;,&#39;&#39;)
+            except:
+                lo = str(self.LEAVE_OUT)
+        else:
+            lo = None
+        s = &#39;ds{}_is{}_b{}_ns{}_lo{}_mo{}_log{}_perts{}&#39;.format(
+            self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES, lo,
+            self.MAX_N_ASVS, True, &#39;mult&#39;)
+        return s
+
+    def cv_suffix(self):
+        &#39;&#39;&#39;Create a master suffix with the parameters
+        &#39;&#39;&#39;
+        s = &#39;ds{}_is{}_b{}_ns{}_mo{}_log{}_perts{}&#39;.format(
+            self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES,
+            self.MAX_N_ASVS, True, &#39;mult&#39;)
+        return s
+
+    def cv_single_suffix(self):
+        &#39;&#39;&#39;Create a suffix for a single cv round
+        &#39;&#39;&#39;
+        return &#39;leave_out{}&#39;.format(self.LEAVE_OUT)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>mdsine2.config._BaseModelConfig</li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.config.ModelConfigReal.cv_single_suffix"><code class="name flex">
+<span>def <span class="ident">cv_single_suffix</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a suffix for a single cv round</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cv_single_suffix(self):
+    &#39;&#39;&#39;Create a suffix for a single cv round
+    &#39;&#39;&#39;
+    return &#39;leave_out{}&#39;.format(self.LEAVE_OUT)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.config.ModelConfigReal.cv_suffix"><code class="name flex">
+<span>def <span class="ident">cv_suffix</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a master suffix with the parameters</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def cv_suffix(self):
+    &#39;&#39;&#39;Create a master suffix with the parameters
+    &#39;&#39;&#39;
+    s = &#39;ds{}_is{}_b{}_ns{}_mo{}_log{}_perts{}&#39;.format(
+        self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES,
+        self.MAX_N_ASVS, True, &#39;mult&#39;)
+    return s</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.config.ModelConfigReal.suffix"><code class="name flex">
+<span>def <span class="ident">suffix</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Create a suffix with the parameters</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def suffix(self):
+    &#39;&#39;&#39;Create a suffix with the parameters
+    &#39;&#39;&#39;
+    if self.LEAVE_OUT is not None:
+        try:
+            lo = str(tuple(list(self.LEAVE_OUT))).replace(&#39;,&#39;,&#39;_&#39;).replace(
+                &#39;(&#39;,&#39;&#39;).replace(&#39;)&#39;,&#39;&#39;).replace(&#39; &#39;,&#39;&#39;)
+        except:
+            lo = str(self.LEAVE_OUT)
+    else:
+        lo = None
+    s = &#39;ds{}_is{}_b{}_ns{}_lo{}_mo{}_log{}_perts{}&#39;.format(
+        self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES, lo,
+        self.MAX_N_ASVS, True, &#39;mult&#39;)
+    return s</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.base.Saveable.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.config.NegBinConfig"><code class="flex name class">
+<span>class <span class="ident">NegBinConfig</span></span>
+<span>(</span><span>seed, burnin, n_samples, basepath, synth)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Configuration class for learning the negative binomial dispersion
+parameters. Note that these parameters are learned offline.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>seed</code></strong> :&ensp;<code>int</code></dt>
+<dd>Seed to start the inderence</dd>
+<dt><strong><code>burnin</code></strong>, <strong><code>n_samples</code></strong> :&ensp;<code>int</code></dt>
+<dd>How many iterations for burn-in and total samples, respectively.</dd>
+<dt><strong><code>basepath</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the basepath to save the graph. A separate folder within
+<code>basepath</code> will be created for the specific graph.</dd>
+<dt><strong><code>synth</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True, run with the synthetic data, where the parameters needed
+to learn are <code>SYNTHETIC_A0</code> AND <code>SYNTHETIC_A1</code>.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class NegBinConfig(_BaseModelConfig):
+    &#39;&#39;&#39;Configuration class for learning the negative binomial dispersion
+    parameters. Note that these parameters are learned offline.
+
+    Parameters
+    ----------
+    seed : int
+        Seed to start the inderence
+    burnin, n_samples : int
+        How many iterations for burn-in and total samples, respectively.
+    basepath : str
+        This is the basepath to save the graph. A separate folder within
+        `basepath` will be created for the specific graph.
+    synth : bool
+        If True, run with the synthetic data, where the parameters needed
+        to learn are `SYNTHETIC_A0` AND `SYNTHETIC_A1`.
+    &#39;&#39;&#39;
+
+    def __init__(self, seed, burnin, n_samples, basepath, synth):
+        if basepath[-1] != &#39;/&#39;:
+            basepath += &#39;/&#39;
+
+        self.RAW_COUNTS_FILENAME = &#39;raw_data/replicate_data/counts.txt&#39;
+        self.MAIN_INFERENCE_SUBJSET_FILENAME = &#39;pickles/real_subjectset.pkl&#39;
+        self.SEED = seed
+        self.OUTPUT_BASEPATH = basepath
+        self.BURNIN = burnin
+        self.N_SAMPLES = n_samples
+        self.CKPT = 100
+        self.DADA_SEUQUENCE_COL_NAME = [&#39;sequences&#39;]
+        self.DADA_ASVSET_COL_NAMES = [&#39;Kingdom&#39;, &#39;Phylum&#39;, &#39;Class&#39;, &#39;Order&#39;, &#39;Family&#39;, &#39;Genus&#39;]
+        self.REPLICATE_DATA_COLS = [
+            (10, [&#39;M2-D10-1A&#39;,&#39;M2-D10-1B&#39;,&#39;M2-D10-2A&#39;,&#39;M2-D10-2B&#39;,&#39;M2-D10-3A&#39;,&#39;M2-D10-3B&#39;]),    
+            (8, [&#39;M2-D8-1A&#39;,    &#39;M2-D8-1B&#39;,     &#39;M2-D8-2A&#39;,     &#39;M2-D8-2B&#39;,     &#39;M2-D8-3A&#39;,     &#39;M2-D8-3B&#39;]),   
+            (9, [&#39;M2-D9-1A&#39;,    &#39;M2-D9-1B&#39;,     &#39;M2-D9-2A&#39;,     &#39;M2-D9-2B&#39;,     &#39;M2-D9-3A&#39;,     &#39;M2-D9-3B&#39;])]
+        self.MOUSE_ID = &#39;2&#39;
+
+        self.MP_FILTERING = &#39;full&#39;
+
+        # Synthetic arguments
+        self.SYNTHETIC = synth
+        self.SYNTHETIC_A0 = 1e-5
+        self.SYNTHETIC_A1 = 0.056
+        self.SYNTHETIC_N_REPLICATES = 3
+        self.SYNTHETIC_DAYS = [10,9,8]
+
+        self.INFERENCE_ORDER = [
+            STRNAMES.NEGBIN_A0,
+            STRNAMES.NEGBIN_A1,
+            STRNAMES.FILTERING]
+
+        self.LEARN = {
+            STRNAMES.NEGBIN_A0: True,
+            STRNAMES.NEGBIN_A1: True,
+            STRNAMES.FILTERING: True}
+
+        self.INITIALIZATION_ORDER = [
+            STRNAMES.FILTERING,
+            STRNAMES.NEGBIN_A0,
+            STRNAMES.NEGBIN_A1
+        ]
+
+        self.INITIALIZATION_KWARGS = {
+            STRNAMES.NEGBIN_A0: {
+                &#39;value&#39;: 1e-4,
+                &#39;truncation_settings&#39;: (0, 1e5),
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: int(self.BURNIN/2),
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;, 
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.NEGBIN_A1: {
+                &#39;value&#39;: 0.5,
+                &#39;tune&#39;: 50,
+                &#39;truncation_settings&#39;: (0, 1e5),
+                &#39;end_tune&#39;: int(self.BURNIN/2),
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;, 
+                &#39;proposal_option&#39;: &#39;auto&#39;,
+                &#39;delay&#39;: 0},
+            STRNAMES.FILTERING: {
+                &#39;tune&#39;: 50,
+                &#39;end_tune&#39;: int(self.BURNIN/2),
+                &#39;target_acceptance_rate&#39;: &#39;optimal&#39;, 
+                &#39;qpcr_variance_inflation&#39;: 100,
+                &#39;delay&#39;: 100}}
+
+    def suffix(self):
+        if self.SYNTHETIC:
+            s = &#39;syn_nreps{}_ndays{}_&#39;.format(self.SYNTHETIC_N_REPLICATES, 
+                len(self.SYNTHETIC_DAYS))
+        else:
+            s = &#39;real_&#39;
+
+        s += &#39;seed{}_nb{}_ns{}&#39;.format(self.SEED, self.BURNIN, self.N_SAMPLES)
+        return s</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>mdsine2.config._BaseModelConfig</li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.config.NegBinConfig.suffix"><code class="name flex">
+<span>def <span class="ident">suffix</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def suffix(self):
+    if self.SYNTHETIC:
+        s = &#39;syn_nreps{}_ndays{}_&#39;.format(self.SYNTHETIC_N_REPLICATES, 
+            len(self.SYNTHETIC_DAYS))
+    else:
+        s = &#39;real_&#39;
+
+    s += &#39;seed{}_nb{}_ns{}&#39;.format(self.SEED, self.BURNIN, self.N_SAMPLES)
+    return s</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.base.Saveable.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.config.SimulationConfig"><code class="flex name class">
+<span>class <span class="ident">SimulationConfig</span></span>
+<span>(</span><span>times, n_replicates, n_asvs, healthy, process_variance_level, measurement_noise_level)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>These are the paramters used to make a synthetic dataset</p>
+<h2 id="system-parameters">System Parameters</h2>
+<p>pv_value : float
+What to set the process variance as
+simulation_dt : dt
+The smaller step size we use for froward integration so the integration
+does not become unstable
+n_days : int
+Total number of days to run the simulation for
+times : str, int, float
+How to generate the times
+if str:
+'darpa-study-sampling'
+Denser in the beginning, and around the ends of perturbations
+if int/float
+This is the density to sample at (0.5 means sample every half of
+a day)
+n_replicates : int
+How many replicates of subjects to run the inference with
+init_low, init_high : float
+The low and high to initialize the data at using a uniform
+distribution
+max_abundance : float
+Max abundance
+n_asvs : int
+How many ASVs to simulate
+healthy_patients : bool
+Which consortia of mice to use as noise approximators
+process_variance_level : float
+What to set the process variance to
+measurement_noise_level : float
+What to set the measurement noise to</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class SimulationConfig(_BaseModelConfig):
+    &#39;&#39;&#39;These are the paramters used to make a synthetic dataset
+
+    System Parameters
+    -----------------
+    pv_value : float
+        What to set the process variance as
+    simulation_dt : dt
+        The smaller step size we use for froward integration so the integration
+        does not become unstable
+    n_days : int
+        Total number of days to run the simulation for
+    times : str, int, float
+        How to generate the times
+        if str:
+            &#39;darpa-study-sampling&#39;
+                Denser in the beginning, and around the ends of perturbations
+        if int/float
+            This is the density to sample at (0.5 means sample every half of
+            a day)
+    n_replicates : int
+        How many replicates of subjects to run the inference with
+    init_low, init_high : float
+        The low and high to initialize the data at using a uniform
+        distribution
+    max_abundance : float
+        Max abundance
+    n_asvs : int
+        How many ASVs to simulate
+    healthy_patients : bool
+        Which consortia of mice to use as noise approximators
+    process_variance_level : float
+        What to set the process variance to
+    measurement_noise_level : float
+        What to set the measurement noise to
+
+    &#39;&#39;&#39;
+    def __init__(self, times, n_replicates, n_asvs, healthy,
+        process_variance_level, measurement_noise_level):
+        self.PV_VALUE = process_variance_level**2
+        self.SIMULATION_DT = 0.001
+        self.N_DAYS = &#39;from-data&#39;
+        self.TIMES = times
+        self.N_REPLICATES = n_replicates
+        self.INIT_LOW = 3 #1e5 #5e6
+        self.INIT_HIGH = 10 #1e7 #5e7
+        self.MAX_ABUNDANCE = None #1e8
+        self.N_ASVS = n_asvs
+        self.HEALTHY_PATIENTS = healthy
+        self.PROCESS_VARIANCE_LEVEL = process_variance_level
+        self.MEASUREMENT_NOISE_LEVEL = measurement_noise_level
+
+        self.PERTURBATIONS = True #(0.3, &#39;2&#39;, [0.1, 0.4, 0.5], [0.5, 1, 2], 0.1)
+
+        self.NEGBIN_A0, self.NEGBIN_A1 = calculate_reads_a0a1(measurement_noise_level)
+        self.QPCR_NOISE_SCALE = measurement_noise_level
+
+    def suffix(self):
+        max_abund = self.MAX_ABUNDANCE
+        if max_abund is not None:
+            max_abund = &#39;{:.2E}&#39;.format(max_abund)
+
+        if self.PERTURBATIONS is None:
+            perts = None
+        else:
+            perts = True
+        s = &#39;_nr{}_no{}_nd{}_ms{}_pv{}_ma{}_np{}_nt{}&#39;.format(
+            self.N_REPLICATES,
+            self.N_ASVS,
+            self.N_DAYS,
+            self.MEASUREMENT_NOISE_LEVEL,
+            self.PROCESS_VARIANCE_LEVEL,
+            max_abund, perts,
+            self.TIMES)
+        return s</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>mdsine2.config._BaseModelConfig</li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.config.SimulationConfig.suffix"><code class="name flex">
+<span>def <span class="ident">suffix</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def suffix(self):
+    max_abund = self.MAX_ABUNDANCE
+    if max_abund is not None:
+        max_abund = &#39;{:.2E}&#39;.format(max_abund)
+
+    if self.PERTURBATIONS is None:
+        perts = None
+    else:
+        perts = True
+    s = &#39;_nr{}_no{}_nd{}_ms{}_pv{}_ma{}_np{}_nt{}&#39;.format(
+        self.N_REPLICATES,
+        self.N_ASVS,
+        self.N_DAYS,
+        self.MEASUREMENT_NOISE_LEVEL,
+        self.PROCESS_VARIANCE_LEVEL,
+        max_abund, perts,
+        self.TIMES)
+    return s</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.base.Saveable.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Saveable.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul>
+<li><a href="#learned-negative-binomial-dispersion-parameters">Learned negative binomial dispersion parameters</a></li>
+</ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="mdsine2" href="index.html">mdsine2</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="mdsine2.config.calculate_reads_a0a1" href="#mdsine2.config.calculate_reads_a0a1">calculate_reads_a0a1</a></code></li>
+<li><code><a title="mdsine2.config.isModelConfig" href="#mdsine2.config.isModelConfig">isModelConfig</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="mdsine2.config.FilteringConfig" href="#mdsine2.config.FilteringConfig">FilteringConfig</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.config.FilteringConfig.suffix" href="#mdsine2.config.FilteringConfig.suffix">suffix</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="mdsine2.config.LoggingConfig" href="#mdsine2.config.LoggingConfig">LoggingConfig</a></code></h4>
+</li>
+<li>
+<h4><code><a title="mdsine2.config.ModelConfigICML" href="#mdsine2.config.ModelConfigICML">ModelConfigICML</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.config.ModelConfigICML.suffix" href="#mdsine2.config.ModelConfigICML.suffix">suffix</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="mdsine2.config.ModelConfigReal" href="#mdsine2.config.ModelConfigReal">ModelConfigReal</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.config.ModelConfigReal.cv_single_suffix" href="#mdsine2.config.ModelConfigReal.cv_single_suffix">cv_single_suffix</a></code></li>
+<li><code><a title="mdsine2.config.ModelConfigReal.cv_suffix" href="#mdsine2.config.ModelConfigReal.cv_suffix">cv_suffix</a></code></li>
+<li><code><a title="mdsine2.config.ModelConfigReal.suffix" href="#mdsine2.config.ModelConfigReal.suffix">suffix</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="mdsine2.config.NegBinConfig" href="#mdsine2.config.NegBinConfig">NegBinConfig</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.config.NegBinConfig.suffix" href="#mdsine2.config.NegBinConfig.suffix">suffix</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="mdsine2.config.SimulationConfig" href="#mdsine2.config.SimulationConfig">SimulationConfig</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.config.SimulationConfig.suffix" href="#mdsine2.config.SimulationConfig.suffix">suffix</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.1</a>.</p>
+</footer>
+</body>
+</html>

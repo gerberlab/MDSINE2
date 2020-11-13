@@ -1,0 +1,2105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.1" />
+<title>mdsine2.pylab.util API documentation</title>
+<meta name="description" content="Utility functions used by multiple modules" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>mdsine2.pylab.util</code></h1>
+</header>
+<section id="section-intro">
+<p>Utility functions used by multiple modules</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#39;&#39;&#39;Utility functions used by multiple modules
+&#39;&#39;&#39;
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import pickle
+import inspect
+import logging
+import random
+import scipy.sparse
+import numba
+from timeit import default_timer
+import itertools
+import re
+import ete3
+
+import os
+from pathlib import Path
+
+import scipy.spatial
+
+# Constants
+NAME_FORMATTER = &#39;%(name)s&#39;
+ID_FORMATTER = &#39;%(id)s&#39;
+INDEX_FORMATTER = &#39;%(index)s&#39;
+SPECIES_FORMATTER = &#39;%(species)s&#39;
+SPECIESX_FORMATTER = &#39;%(speciesX)s&#39;
+GENUS_FORMATTER = &#39;%(genus)s&#39;
+FAMILY_FORMATTER = &#39;%(family)s&#39;
+CLASS_FORMATTER = &#39;%(class)s&#39;
+ORDER_FORMATTER = &#39;%(order)s&#39;
+PHYLUM_FORMATTER = &#39;%(phylum)s&#39;
+KINGDOM_FORMATTER = &#39;%(kingdom)s&#39;
+LCA_FORMATTER = &#39;%(lca)s&#39;
+
+_TAXLEVELS = [&#39;species&#39;, &#39;genus&#39;, &#39;family&#39;, &#39;class&#39;, &#39;order&#39;, &#39;phylum&#39;, &#39;kingdom&#39;]
+_TAXFORMATTERS = [&#39;%(species)s&#39;, &#39;%(genus)s&#39;, &#39;%(family)s&#39;, &#39;%(class)s&#39;, &#39;%(order)s&#39;, &#39;%(phylum)s&#39;, &#39;%(kingdom)s&#39;]
+_SPECIESX_SEARCH = re.compile(&#39;\%\(species[0-9]+\)s&#39;)
+
+def isdataframe(a):
+    &#39;&#39;&#39;Checks if `a` is a pandas.DataFrame
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a pandas.DataFrame
+    &#39;&#39;&#39;
+    return type(a) == pd.DataFrame
+
+def issquare(a):
+    &#39;&#39;&#39;Checks if the input array is a square
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+    
+    Returns
+    -------
+    bool
+        True if `a` is a square matrix
+    &#39;&#39;&#39;
+    try:
+        return (a.shape[0] == a.shape[1]) and (len(a.shape) == 2)
+    except:
+        return False
+
+def isbool(a):
+    &#39;&#39;&#39;Checks if `a` is a bool
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a bool
+    &#39;&#39;&#39;
+    return a is not None and np.issubdtype(type(a), np.bool_)
+
+def isint(a):
+    &#39;&#39;&#39;Checks if `a` is an int
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is an int
+    &#39;&#39;&#39;
+    return a is not None and np.issubdtype(type(a), np.integer)
+
+def isfloat(a):
+    &#39;&#39;&#39;Checks if `a` is a float
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a float
+    &#39;&#39;&#39;
+    return a is not None and np.issubdtype(type(a), np.floating)
+
+def iscomplex(a):
+    &#39;&#39;&#39;Checks if `a` is a complex number
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a complex number
+    &#39;&#39;&#39;
+    return a is not None and np.issubdtype(type(a), np.complexfloating)
+
+def isnumeric(a):
+    &#39;&#39;&#39;Checks if `a` is a float or an int - (cannot be a bool)
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a float or an int.
+    &#39;&#39;&#39;
+    return a is not None and np.issubdtype(type(a), np.number)
+
+def isarray(a):
+    &#39;&#39;&#39;Checks if `a` is an array
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is an array
+    &#39;&#39;&#39;
+    return (type(a) == np.ndarray or type(a) == list or \
+        scipy.sparse.issparse(a)) and a is not None
+
+def isstr(a):
+    &#39;&#39;&#39;Checks if `a` is a str
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a str
+    &#39;&#39;&#39;
+    return a is not None and type(a) == str
+
+def istype(a):
+    &#39;&#39;&#39;Checks if `a` is a Type object
+
+    Example
+    -------
+    &gt;&gt;&gt; istype(5)
+    False
+    &gt;&gt;&gt; istype(float)
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a tuple
+    &#39;&#39;&#39;
+    return type(a) == type
+
+def istuple(a):
+    &#39;&#39;&#39;Checks if `a` is a tuple object
+
+    Example
+    -------
+    &gt;&gt;&gt; istuple(5)
+    False
+    &gt;&gt;&gt; istuple((5,))
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a tuple
+    &#39;&#39;&#39;
+    return type(a) == tuple
+
+def isdict(a):
+    &#39;&#39;&#39;Checks if `a` is a dict object
+
+    Example
+    -------
+    &gt;&gt;&gt; isdict(5)
+    False
+    &gt;&gt;&gt; isdict({5:2})
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a dict
+    &#39;&#39;&#39;
+    return type(a) == dict
+
+def istree(a):
+    &#39;&#39;&#39;Checks if `a` is an ete3 Tree object
+
+    Example
+    -------
+    &gt;&gt;&gt; istree(5)
+    False
+    &gt;&gt;&gt; a = ete3.Tree(&#34;((a,b),c);&#34;)
+    &gt;&gt;&gt; istree(a)
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a ete3 Tree
+    &#39;&#39;&#39;
+    return type(a) == ete3.Tree
+
+def itercheck(xs, f):
+    &#39;&#39;&#39;Checks every element in xs with f and returns an array
+    for each entry
+
+    Parameters
+    ----------
+    xs : array_like(any)
+        - A list of instances to check the type of
+    f : callable
+        - Type checking function
+    Returns
+    -------
+    list(bool)
+        Checks for each element in the `xs`
+    &#39;&#39;&#39;
+    return [f(x) for x in xs]
+
+def asvname_formatter(format, asv, asvs, lca=True):
+    &#39;&#39;&#39;Format the label of an ASV. Specify the ASV by
+    it&#39;s index in the ASVSet `asvs`
+
+    Example:
+        asv is an ASV object at index 0 where
+        asv.genus = &#39;A&#39;
+        asv.id = 1234532
+
+        asvname_formatter(
+            format=&#39;%(genus)s: %(index)s&#39;,
+            asv=1234532,
+            asvs=asvs)
+        &gt;&gt;&gt; &#39;A: 0&#39;
+
+        asvname_formatter(
+            format=&#39;%(genus)s: %(genus)s&#39;,
+            asv=1234532,
+            asvs=asvs)
+        &gt;&gt;&gt; &#39;A: A&#39;
+
+        asvname_formatter(
+            format=&#39;%(index)s&#39;,
+            asv=1234532,
+            asvs=asvs)
+        &gt;&gt;&gt; &#39;0&#39;
+
+        asvname_formatter(
+            format=&#39;%(geNus)s: %(genus)s&#39;,
+            asv=1234532,
+            asvs=asvs)
+        &gt;&gt;&gt; &#39;%(geNus)s: A&#39;
+
+    Parameters
+    ----------
+    format : str
+        This is the format for us to do the labels
+        Formatting options:
+            &#39;%(name)s&#39;
+                Name of the ASV (pylab.base.ASV.name)
+            &#39;%(id)s&#39;
+                ID of the ASV (pylab.base.ASV.id)
+            &#39;%(index)s&#39;
+                The order that this appears in the ASVSet
+            &#39;%(species)s&#39;
+                `&#39;species&#39;` taxonomic classification of the ASV
+            &#39;%(speciesX)s&#39;
+                `&#39;species&#39;` taxonomic classification of the ASV for only up to the first 
+                `X` spceified
+            &#39;%(genus)s&#39;
+                `&#39;genus&#39;` taxonomic classification of the ASV
+            &#39;%(family)s&#39;
+                `&#39;family&#39;` taxonomic classification of the ASV
+            &#39;%(class)s&#39;
+                `&#39;class&#39;` taxonomic classification of the ASV
+            &#39;%(order)s&#39;
+                `&#39;order&#39;` taxonomic classification of the ASV
+            &#39;%(phylum)s&#39;
+                `&#39;phylum&#39;` taxonomic classification of the ASV
+            &#39;%(kingdom)s&#39;
+                `&#39;kingdom&#39;` taxonomic classification of the ASV
+            &#39;%(lca)s&#39;
+                Least common ancestor. If species is &#39;NA&#39;, then it will go to family.
+                It will keep travelling up the tree until it finds something not nan.
+                Example:
+                asv is an ASV object at index 0 where
+                asv.genus = &#39;nan&#39;
+                asvs.family = &#39;B&#39;
+                asv.id = 1234532
+
+    asv : str, int, ASV
+        Either the ASV or an id for the ASV
+    asvs : pylab.base.ASVSet
+        Dataset containing all of the information for the ASVs
+    lca : bool
+        If True and the specified taxonomic level is not specified (nan), then
+        we substitute it with the least common ancestor up from the current level
+
+    &#39;&#39;&#39;
+    asv = asvs[asv]
+    index = asv.idx
+
+    label = format.replace(NAME_FORMATTER, str(asv.name))
+    label = label.replace(ID_FORMATTER, str(asv.id))
+    label = label.replace(INDEX_FORMATTER,  str(index))
+
+    
+    # Replcate speciesX formatter
+    X = _SPECIESX_SEARCH.search(format)
+    if X is not None:
+        while True:
+            X = X[0]
+            n = int(X.replace(&#39;%(species&#39;, &#39;&#39;).replace(&#39;)s&#39;,&#39;&#39;))
+            try:
+                a = &#39;/&#39;.join(asv.get_taxonomy(&#39;species&#39;).split(&#39;/&#39;)[:n])
+            except:
+                a = &#39;nan&#39;
+            format = format.replace(X,a)
+            X = _SPECIESX_SEARCH.search(format)
+            if X is None:
+                break
+    
+    for i in range(len(_TAXLEVELS)):
+        taxlevel = _TAXLEVELS[i]
+        fmt = _TAXFORMATTERS[i]
+        try:
+            label = label.replace(fmt, str(asv.get_taxonomy(taxlevel, lca=False)))
+        except:
+            logging.critical(&#39;asv: {}&#39;.format(asv))
+            logging.critical(&#39;fmt: {}&#39;.format(fmt))
+            logging.critical(&#39;label: {}&#39;.format(label))
+            raise
+
+    if LCA_FORMATTER in label:
+        lineage = list(asv.get_lineage(level=&#39;species&#39;))
+        while len(lineage) &gt; 0:
+            if str(lineage[-1]) != &#39;nan&#39;:
+                label = label.replace(LCA_FORMATTER, str(lineage[-1]))
+                break
+            else:
+                lineage = lineage[:-1]
+        if len(lineage) == 0:
+            logging.warning(&#39;All taxonomic levels are nans: {}&#39;.format(asv.get_lineage(level=&#39;species&#39;)))
+
+    return label
+
+@numba.jit(nopython=True, cache=True)
+def fast_index(M, rows, cols):
+    &#39;&#39;&#39;Fast index fancy indexing the matrix M. ~98% faster than regular
+    fancy indexing
+    M MUST BE C_CONTIGUOUS for this to actually help.
+        If it is not C_CONTIGUOUS then ravel will have to copy the 
+        array before it flattens it. --- super slow
+
+    Parameters
+    ----------
+    M : np.ndarray 2-dim
+        Matrix we are indexing at 2 dimensions
+    rows, cols : np.ndarray
+        rows and columns INDEX arrays. This will not work with bool arrays
+
+    Returns
+    -------
+    np.ndarray
+    &#39;&#39;&#39;
+    return (M.ravel()[(cols + (rows * M.shape[1]).reshape(
+        (-1,1))).ravel()]).reshape(rows.size, cols.size)
+
+def toarray(x, dest=None, T=False):
+    &#39;&#39;&#39;Converts `x` into a C_CONTIGUOUS numpy matrix if 
+    the matrix is sparse. If it is not sparse then it just returns
+    the matrix.
+
+    Parameters
+    ----------
+    x : scipy.sparse, np.ndarray
+        Array we are converting
+    dest : np.ndarray
+        If this is specified, send the array into this array. Assumes
+        the shapes are compatible. Else create a new array
+    T : bool
+        If True, set the transpose
+
+    Returns
+    -------
+    np.ndarray
+    &#39;&#39;&#39;
+    if scipy.sparse.issparse(x):
+        if dest is None:
+            if T:
+                dest = np.zeros(shape=x.T.shape, dtype=x.dtype)
+            else:
+                dest = np.zeros(shape=x.shape, dtype=x.dtype)
+        if T:
+            x.T.toarray(out=dest)
+        else:
+            x.toarray(out=dest)
+        return dest
+    else:
+        if T:
+            return x.T
+        else:
+            return x
+
+def subsample_timeseries(T, sizes, approx=True):
+    &#39;&#39;&#39;Subsample the time-series `T` into size in `sizes`. Note that
+    this algorithm does not guarentee any timepoints to stay.
+
+    The baseline algorithm calculates:
+    d(R) = \sum_{i \neq j} 1 / (R[i] - R[j])^2
+    for every *COMBINATION* of T of size size. If |T| = 75 and size = 45,
+    then there are 45! * (75 - 45)! = 3.2e88 combinations - this is not 
+    doable.
+
+    Approximation
+    -------------
+    To approximate this, we divide the current size of the of the elements 
+    into `size+1` (approximately) equal intervals
+    Example:
+        T = [0, 0.5, 1, 2, 4, 4.5, 5, 7, 8, 10]
+        len(T) = 10
+        sizes = [8, 6]
+
+        time_indexes for T:
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+
+        Make 8 point interval:
+            Need to delete 2 time points,
+            10 - 8 = 2
+            floor(10 / 3) = 3
+            Delete every 3 elements
+            0 , 1 , 3, 4, 6, 7, 9, 10
+
+            T_8 = []
+    
+
+        
+        
+        
+
+    Parameters
+    ----------
+    T : array_like
+        These are the times that we want to subsample
+    sizes : int, array(int)
+        These are the sizes we want to subsample to. 
+
+    Returns
+    -------
+    list(np.ndarray(sizes))
+        A list of time series for each size in decreasing size order
+    &#39;&#39;&#39;
+    if not isarray(T):
+        raise TypeError(&#39;`T` ({}) must be an array&#39;.format(type(T)))
+    if isint(sizes):
+        sizes = [sizes]
+    elif isarray(sizes):
+        for size in sizes:
+            if not isint(size):
+                raise TypeError(&#39;Each size in `sizes` ({}) must be an int ({})&#39;.format(
+                    type(size), sizes))
+    else:
+        raise ValueError(&#39;`sizes` ({}) must be an int or an array f ints&#39;.format(type(sizes)))
+
+    T = np.asarray(T)
+    sizes = np.unique(np.asarray(sizes, dtype=int))
+    sizes[::-1].sort()
+    ret = []
+    l = len(T)
+
+    prev_tp = np.arange(len(T))
+    for n in sizes:
+        spacings = []
+        subsets = []
+
+        for subset in itertools.combinations(prev_tp, n):
+            subsets.append(subset)
+            subset = list(subset)
+            subset = [-1] + subset + [l+1]
+            subset = np.array(subset)
+            spacings.append((1/np.power(scipy.spatial.distance.pdist(
+                subset[:, np.newaxis]), 2)).sum())
+
+        idxs = np.array(subsets[spacings.index(min(spacings))])
+        ret.append(T[idxs])
+        prev_tp = idxs
+
+    return ret
+
+def coarsen_phylogenetic_tree(tree, depth):
+    &#39;&#39;&#39;Coarsen the tree to the maximum depth `depth`.
+
+    This is a recursive algorithm:
+        We stop on two conditions:
+            when 
+
+    Parameters
+    ----------
+    tree : ete3.Tree
+        Phylogenetic tree
+    depth : float
+        Depth to coarsen to
+
+    Returns
+    -------
+    ete3.Tree, dict
+        ete3.Tree : is the coarsened tree
+        dict : is a dictionary mapping the name of the new leaves
+            to the ASVs that are contained within it
+    &#39;&#39;&#39;
+    if not istree(tree):
+        raise TypeError(&#39;`tree` ({}) must be of type tree&#39;.format(type(tree)))
+    if not isnumeric(depth):
+        raise TypeError(&#39;`depth` ({}) must be numeric&#39;.format(type(depth)))
+    if depth &lt; 0:
+        raise ValueError(&#39;`depth` ({}) must be &gt;= 0&#39;.format(depth))
+
+    tree = _coarsen_loop(tree=tree, root=tree, depth=depth)
+
+    # Rename all of the leaves and make a mapping
+    mapping = {}
+    for node_name, leaf in enumerate(tree.get_leaves()):
+        mapping[str(node_name)] = leaf.name.split(&#39;|&#39;)
+        leaf.name = str(node_name)
+
+    return tree, mapping
+
+def _coarsen_loop(tree, root, depth):
+    &#39;&#39;&#39;Set the temporary name for a cluster to be:
+        &#39;name1|name2|...&#39; where name1... are the 
+        children of the node
+    &#39;&#39;&#39;
+    children = tree.get_children()
+    if len(children) == 0:
+        # This is a leaf node
+        return tree
+
+    for child in children:
+        # Check the childs distance from the root
+        dist = root.get_distance(child)
+        dist_node = tree.get_distance(child)
+        if dist &lt; depth:
+            # We are not at the desired depth yet, keep recurring
+            child2 = _coarsen_loop(tree=child, root=root, depth=depth)
+            tree.remove_child(child)
+            tree.add_child(child2, dist=dist_node)
+        else:
+            # We have hit the threshold for the depth, set all children
+            # as a new cluster and the name
+            name = &#39;|&#39;.join(child.get_leaf_names())
+
+            # Make the distance `depth`
+            tree_dist = root.get_distance(tree)
+            dist_node = np.min([dist_node, depth-tree_dist])
+
+            child2 = ete3.Tree(name=name)
+            tree.remove_child(child)
+            tree.add_child(child2, dist=dist_node)
+
+    return tree
+
+class inspect_trace:
+    &#39;&#39;&#39;This is a decorator that logs the trace of a function.
+
+    If the function throws an error when it is being called, it will produce the array 
+        [(file_name, line_no, function), ...]
+    where it produces the file name, line number, and function that was called, and then
+    it will throw the exception.
+    The functions are in order for how close they are to the error.
+
+    Example: (temp.py file)
+        1 def foo():
+        2     bar()
+        3
+        4 def bar():
+        5     mer()
+        6
+        7 def mer():
+        8     raise IndexError(...)
+        9
+        10 foo()
+        CRITICAL: [(&#39;temp.py&#39;, 8, &#39;mer&#39;), (&#39;temp.py&#39;, 5, &#39;bar&#39;), (&#39;temp.py&#39;, 2, &#39;foo&#39;), (&#39;temp.py&#39;, 10, &#39;&lt;module&gt;&#39;)]
+        IndexError
+
+    Parameters
+    ----------
+    max_trace : int, Optional
+        If Specified it will only trace up to the number specified. Otherwise it will trace up to the module
+    &#39;&#39;&#39;
+
+    def __init__(self, max_trace=None):
+        if max_trace is not None:
+            if not isint(max_trace):
+                raise TypeError(&#39;`max_trace` ({}) must be an int&#39;.format(type(max_trace)))
+            if max_trace &lt;= 0:
+                raise TypeError(&#39;`max_trace` ({}) must be &gt;= 1&#39;.format(max_trace))
+        self.max_trace = max_trace
+
+    def __call__(self, f):
+        def wrapped_func(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except:
+                stack = inspect.stack()
+                trace = []
+                if self.max_trace is not None:
+                    l = self.max_trace
+                else:
+                    l = len(stack)
+                for i in range(1, l):
+                    trace.append((stack[i][1].split(&#39;/&#39;)[-1], stack[i][2], stack[i][3]))
+                logging.critical(&#39;Error thrown in &#34;{}&#34;. Trace: {}&#39;.format(f.__name__, trace))
+                raise
+        wrapped_func.__name__ = f.__name__
+        return wrapped_func
+
+
+class count_calls:
+    &#39;&#39;&#39;This is a decorator for counting how many times a function is called.
+
+    Parameters
+    ----------
+    max_calls : int, Optional
+        - If specified, it will throw an error if the number of calls
+          exceeds this number. If nothing is specified then it will not
+          throw an error
+    &#39;&#39;&#39;
+    def __init__(self, max_calls=None):
+        if max_calls is None:
+            max_calls = np.inf
+        self.max_calls = max_calls
+        self.calls = 0
+        # self.f = f
+
+    def __call__(self, f):
+        def wrapped_func(*args, **kwargs):
+            self.calls += 1
+            if self.calls &gt; self.max_calls:
+                raise ValueError(&#39;In `{}` - Max calls reached: {}&#39;.format(
+                    wrapped_func.__name__, self.max_calls))
+            return f(*args,**kwargs)
+        wrapped_func.__name__ = f.__name__
+        return wrapped_func
+
+
+class Timer:
+    &#39;&#39;&#39;Simple timer class
+
+    Example use:
+        &gt;&gt;&gt; import numpy as np
+        &gt;&gt;&gt; a = np.arange(10000000)
+        &gt;&gt;&gt; b = 0
+        &gt;&gt;&gt; with Timer():
+        &gt;&gt;&gt;     for i in a:
+        &gt;&gt;&gt;         b += i 
+        time: 2.00000001225 seconds
+    &#39;&#39;&#39;
+    def __init__(self):
+        self.start = None
+        self.end = None
+
+    def __enter__(self):
+        self.start = default_timer()
+        return self
+
+    def __exit__(self, *args):
+        self.end = default_timer()
+        print(&#39;time: {} seconds&#39;.format(self.end - self.start)) </code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="mdsine2.pylab.util.asvname_formatter"><code class="name flex">
+<span>def <span class="ident">asvname_formatter</span></span>(<span>format, asv, asvs, lca=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Format the label of an ASV. Specify the ASV by
+it's index in the ASVSet <code>asvs</code></p>
+<h2 id="example">Example</h2>
+<p>asv is an ASV object at index 0 where
+asv.genus = 'A'
+asv.id = 1234532</p>
+<p>asvname_formatter(
+format='%(genus)s: %(index)s',
+asv=1234532,
+asvs=asvs)</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; 'A: 0'
+</code></pre>
+<p>asvname_formatter(
+format='%(genus)s: %(genus)s',
+asv=1234532,
+asvs=asvs)</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; 'A: A'
+</code></pre>
+<p>asvname_formatter(
+format='%(index)s',
+asv=1234532,
+asvs=asvs)</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; '0'
+</code></pre>
+<p>asvname_formatter(
+format='%(geNus)s: %(genus)s',
+asv=1234532,
+asvs=asvs)</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; '%(geNus)s: A'
+</code></pre>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>format</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the format for us to do the labels
+Formatting options:
+'%(name)s'
+Name of the ASV (pylab.base.ASV.name)
+'%(id)s'
+ID of the ASV (pylab.base.ASV.id)
+'%(index)s'
+The order that this appears in the ASVSet
+'%(species)s'
+<code>'species'</code> taxonomic classification of the ASV
+'%(speciesX)s'
+<code>'species'</code> taxonomic classification of the ASV for only up to the first
+<code>X</code> spceified
+'%(genus)s'
+<code>'genus'</code> taxonomic classification of the ASV
+'%(family)s'
+<code>'family'</code> taxonomic classification of the ASV
+'%(class)s'
+<code>'class'</code> taxonomic classification of the ASV
+'%(order)s'
+<code>'order'</code> taxonomic classification of the ASV
+'%(phylum)s'
+<code>'phylum'</code> taxonomic classification of the ASV
+'%(kingdom)s'
+<code>'kingdom'</code> taxonomic classification of the ASV
+'%(lca)s'
+Least common ancestor. If species is 'NA', then it will go to family.
+It will keep travelling up the tree until it finds something not nan.
+Example:
+asv is an ASV object at index 0 where
+asv.genus = 'nan'
+asvs.family = 'B'
+asv.id = 1234532</dd>
+<dt><strong><code>asv</code></strong> :&ensp;<code>str, int, ASV</code></dt>
+<dd>Either the ASV or an id for the ASV</dd>
+<dt><strong><code>asvs</code></strong> :&ensp;<code>pylab.base.ASVSet</code></dt>
+<dd>Dataset containing all of the information for the ASVs</dd>
+<dt><strong><code>lca</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True and the specified taxonomic level is not specified (nan), then
+we substitute it with the least common ancestor up from the current level</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def asvname_formatter(format, asv, asvs, lca=True):
+    &#39;&#39;&#39;Format the label of an ASV. Specify the ASV by
+    it&#39;s index in the ASVSet `asvs`
+
+    Example:
+        asv is an ASV object at index 0 where
+        asv.genus = &#39;A&#39;
+        asv.id = 1234532
+
+        asvname_formatter(
+            format=&#39;%(genus)s: %(index)s&#39;,
+            asv=1234532,
+            asvs=asvs)
+        &gt;&gt;&gt; &#39;A: 0&#39;
+
+        asvname_formatter(
+            format=&#39;%(genus)s: %(genus)s&#39;,
+            asv=1234532,
+            asvs=asvs)
+        &gt;&gt;&gt; &#39;A: A&#39;
+
+        asvname_formatter(
+            format=&#39;%(index)s&#39;,
+            asv=1234532,
+            asvs=asvs)
+        &gt;&gt;&gt; &#39;0&#39;
+
+        asvname_formatter(
+            format=&#39;%(geNus)s: %(genus)s&#39;,
+            asv=1234532,
+            asvs=asvs)
+        &gt;&gt;&gt; &#39;%(geNus)s: A&#39;
+
+    Parameters
+    ----------
+    format : str
+        This is the format for us to do the labels
+        Formatting options:
+            &#39;%(name)s&#39;
+                Name of the ASV (pylab.base.ASV.name)
+            &#39;%(id)s&#39;
+                ID of the ASV (pylab.base.ASV.id)
+            &#39;%(index)s&#39;
+                The order that this appears in the ASVSet
+            &#39;%(species)s&#39;
+                `&#39;species&#39;` taxonomic classification of the ASV
+            &#39;%(speciesX)s&#39;
+                `&#39;species&#39;` taxonomic classification of the ASV for only up to the first 
+                `X` spceified
+            &#39;%(genus)s&#39;
+                `&#39;genus&#39;` taxonomic classification of the ASV
+            &#39;%(family)s&#39;
+                `&#39;family&#39;` taxonomic classification of the ASV
+            &#39;%(class)s&#39;
+                `&#39;class&#39;` taxonomic classification of the ASV
+            &#39;%(order)s&#39;
+                `&#39;order&#39;` taxonomic classification of the ASV
+            &#39;%(phylum)s&#39;
+                `&#39;phylum&#39;` taxonomic classification of the ASV
+            &#39;%(kingdom)s&#39;
+                `&#39;kingdom&#39;` taxonomic classification of the ASV
+            &#39;%(lca)s&#39;
+                Least common ancestor. If species is &#39;NA&#39;, then it will go to family.
+                It will keep travelling up the tree until it finds something not nan.
+                Example:
+                asv is an ASV object at index 0 where
+                asv.genus = &#39;nan&#39;
+                asvs.family = &#39;B&#39;
+                asv.id = 1234532
+
+    asv : str, int, ASV
+        Either the ASV or an id for the ASV
+    asvs : pylab.base.ASVSet
+        Dataset containing all of the information for the ASVs
+    lca : bool
+        If True and the specified taxonomic level is not specified (nan), then
+        we substitute it with the least common ancestor up from the current level
+
+    &#39;&#39;&#39;
+    asv = asvs[asv]
+    index = asv.idx
+
+    label = format.replace(NAME_FORMATTER, str(asv.name))
+    label = label.replace(ID_FORMATTER, str(asv.id))
+    label = label.replace(INDEX_FORMATTER,  str(index))
+
+    
+    # Replcate speciesX formatter
+    X = _SPECIESX_SEARCH.search(format)
+    if X is not None:
+        while True:
+            X = X[0]
+            n = int(X.replace(&#39;%(species&#39;, &#39;&#39;).replace(&#39;)s&#39;,&#39;&#39;))
+            try:
+                a = &#39;/&#39;.join(asv.get_taxonomy(&#39;species&#39;).split(&#39;/&#39;)[:n])
+            except:
+                a = &#39;nan&#39;
+            format = format.replace(X,a)
+            X = _SPECIESX_SEARCH.search(format)
+            if X is None:
+                break
+    
+    for i in range(len(_TAXLEVELS)):
+        taxlevel = _TAXLEVELS[i]
+        fmt = _TAXFORMATTERS[i]
+        try:
+            label = label.replace(fmt, str(asv.get_taxonomy(taxlevel, lca=False)))
+        except:
+            logging.critical(&#39;asv: {}&#39;.format(asv))
+            logging.critical(&#39;fmt: {}&#39;.format(fmt))
+            logging.critical(&#39;label: {}&#39;.format(label))
+            raise
+
+    if LCA_FORMATTER in label:
+        lineage = list(asv.get_lineage(level=&#39;species&#39;))
+        while len(lineage) &gt; 0:
+            if str(lineage[-1]) != &#39;nan&#39;:
+                label = label.replace(LCA_FORMATTER, str(lineage[-1]))
+                break
+            else:
+                lineage = lineage[:-1]
+        if len(lineage) == 0:
+            logging.warning(&#39;All taxonomic levels are nans: {}&#39;.format(asv.get_lineage(level=&#39;species&#39;)))
+
+    return label</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.coarsen_phylogenetic_tree"><code class="name flex">
+<span>def <span class="ident">coarsen_phylogenetic_tree</span></span>(<span>tree, depth)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Coarsen the tree to the maximum depth <code>depth</code>.</p>
+<p>This is a recursive algorithm:
+We stop on two conditions:
+when </p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>tree</code></strong> :&ensp;<code>ete3.Tree</code></dt>
+<dd>Phylogenetic tree</dd>
+<dt><strong><code>depth</code></strong> :&ensp;<code>float</code></dt>
+<dd>Depth to coarsen to</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>ete3.Tree, dict</code></dt>
+<dd>ete3.Tree : is the coarsened tree
+dict : is a dictionary mapping the name of the new leaves
+to the ASVs that are contained within it</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def coarsen_phylogenetic_tree(tree, depth):
+    &#39;&#39;&#39;Coarsen the tree to the maximum depth `depth`.
+
+    This is a recursive algorithm:
+        We stop on two conditions:
+            when 
+
+    Parameters
+    ----------
+    tree : ete3.Tree
+        Phylogenetic tree
+    depth : float
+        Depth to coarsen to
+
+    Returns
+    -------
+    ete3.Tree, dict
+        ete3.Tree : is the coarsened tree
+        dict : is a dictionary mapping the name of the new leaves
+            to the ASVs that are contained within it
+    &#39;&#39;&#39;
+    if not istree(tree):
+        raise TypeError(&#39;`tree` ({}) must be of type tree&#39;.format(type(tree)))
+    if not isnumeric(depth):
+        raise TypeError(&#39;`depth` ({}) must be numeric&#39;.format(type(depth)))
+    if depth &lt; 0:
+        raise ValueError(&#39;`depth` ({}) must be &gt;= 0&#39;.format(depth))
+
+    tree = _coarsen_loop(tree=tree, root=tree, depth=depth)
+
+    # Rename all of the leaves and make a mapping
+    mapping = {}
+    for node_name, leaf in enumerate(tree.get_leaves()):
+        mapping[str(node_name)] = leaf.name.split(&#39;|&#39;)
+        leaf.name = str(node_name)
+
+    return tree, mapping</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.fast_index"><code class="name flex">
+<span>def <span class="ident">fast_index</span></span>(<span>M, rows, cols)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Fast index fancy indexing the matrix M. ~98% faster than regular
+fancy indexing
+M MUST BE C_CONTIGUOUS for this to actually help.
+If it is not C_CONTIGUOUS then ravel will have to copy the
+array before it flattens it. &mdash; super slow</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>M</code></strong> :&ensp;<code>np.ndarray 2-dim</code></dt>
+<dd>Matrix we are indexing at 2 dimensions</dd>
+<dt><strong><code>rows</code></strong>, <strong><code>cols</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>rows and columns INDEX arrays. This will not work with bool arrays</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@numba.jit(nopython=True, cache=True)
+def fast_index(M, rows, cols):
+    &#39;&#39;&#39;Fast index fancy indexing the matrix M. ~98% faster than regular
+    fancy indexing
+    M MUST BE C_CONTIGUOUS for this to actually help.
+        If it is not C_CONTIGUOUS then ravel will have to copy the 
+        array before it flattens it. --- super slow
+
+    Parameters
+    ----------
+    M : np.ndarray 2-dim
+        Matrix we are indexing at 2 dimensions
+    rows, cols : np.ndarray
+        rows and columns INDEX arrays. This will not work with bool arrays
+
+    Returns
+    -------
+    np.ndarray
+    &#39;&#39;&#39;
+    return (M.ravel()[(cols + (rows * M.shape[1]).reshape(
+        (-1,1))).ravel()]).reshape(rows.size, cols.size)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.isarray"><code class="name flex">
+<span>def <span class="ident">isarray</span></span>(<span>a)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if <code>a</code> is an array</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>a</code> is an array</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isarray(a):
+    &#39;&#39;&#39;Checks if `a` is an array
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is an array
+    &#39;&#39;&#39;
+    return (type(a) == np.ndarray or type(a) == list or \
+        scipy.sparse.issparse(a)) and a is not None</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.isbool"><code class="name flex">
+<span>def <span class="ident">isbool</span></span>(<span>a)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if <code>a</code> is a bool</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>a</code> is a bool</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isbool(a):
+    &#39;&#39;&#39;Checks if `a` is a bool
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a bool
+    &#39;&#39;&#39;
+    return a is not None and np.issubdtype(type(a), np.bool_)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.iscomplex"><code class="name flex">
+<span>def <span class="ident">iscomplex</span></span>(<span>a)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if <code>a</code> is a complex number</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>a</code> is a complex number</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def iscomplex(a):
+    &#39;&#39;&#39;Checks if `a` is a complex number
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a complex number
+    &#39;&#39;&#39;
+    return a is not None and np.issubdtype(type(a), np.complexfloating)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.isdataframe"><code class="name flex">
+<span>def <span class="ident">isdataframe</span></span>(<span>a)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if <code>a</code> is a pandas.DataFrame</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>a</code> is a pandas.DataFrame</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isdataframe(a):
+    &#39;&#39;&#39;Checks if `a` is a pandas.DataFrame
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a pandas.DataFrame
+    &#39;&#39;&#39;
+    return type(a) == pd.DataFrame</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.isdict"><code class="name flex">
+<span>def <span class="ident">isdict</span></span>(<span>a)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if <code>a</code> is a dict object</p>
+<h2 id="example">Example</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; isdict(5)
+False
+&gt;&gt;&gt; isdict({5:2})
+True
+</code></pre>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>a</code> is a dict</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isdict(a):
+    &#39;&#39;&#39;Checks if `a` is a dict object
+
+    Example
+    -------
+    &gt;&gt;&gt; isdict(5)
+    False
+    &gt;&gt;&gt; isdict({5:2})
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a dict
+    &#39;&#39;&#39;
+    return type(a) == dict</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.isfloat"><code class="name flex">
+<span>def <span class="ident">isfloat</span></span>(<span>a)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if <code>a</code> is a float</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>a</code> is a float</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isfloat(a):
+    &#39;&#39;&#39;Checks if `a` is a float
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a float
+    &#39;&#39;&#39;
+    return a is not None and np.issubdtype(type(a), np.floating)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.isint"><code class="name flex">
+<span>def <span class="ident">isint</span></span>(<span>a)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if <code>a</code> is an int</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>a</code> is an int</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isint(a):
+    &#39;&#39;&#39;Checks if `a` is an int
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is an int
+    &#39;&#39;&#39;
+    return a is not None and np.issubdtype(type(a), np.integer)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.isnumeric"><code class="name flex">
+<span>def <span class="ident">isnumeric</span></span>(<span>a)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if <code>a</code> is a float or an int - (cannot be a bool)</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>a</code> is a float or an int.</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isnumeric(a):
+    &#39;&#39;&#39;Checks if `a` is a float or an int - (cannot be a bool)
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a float or an int.
+    &#39;&#39;&#39;
+    return a is not None and np.issubdtype(type(a), np.number)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.issquare"><code class="name flex">
+<span>def <span class="ident">issquare</span></span>(<span>a)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if the input array is a square</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>a</code> is a square matrix</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def issquare(a):
+    &#39;&#39;&#39;Checks if the input array is a square
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+    
+    Returns
+    -------
+    bool
+        True if `a` is a square matrix
+    &#39;&#39;&#39;
+    try:
+        return (a.shape[0] == a.shape[1]) and (len(a.shape) == 2)
+    except:
+        return False</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.isstr"><code class="name flex">
+<span>def <span class="ident">isstr</span></span>(<span>a)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if <code>a</code> is a str</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>a</code> is a str</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def isstr(a):
+    &#39;&#39;&#39;Checks if `a` is a str
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a str
+    &#39;&#39;&#39;
+    return a is not None and type(a) == str</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.istree"><code class="name flex">
+<span>def <span class="ident">istree</span></span>(<span>a)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if <code>a</code> is an ete3 Tree object</p>
+<h2 id="example">Example</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; istree(5)
+False
+&gt;&gt;&gt; a = ete3.Tree(&quot;((a,b),c);&quot;)
+&gt;&gt;&gt; istree(a)
+True
+</code></pre>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>a</code> is a ete3 Tree</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def istree(a):
+    &#39;&#39;&#39;Checks if `a` is an ete3 Tree object
+
+    Example
+    -------
+    &gt;&gt;&gt; istree(5)
+    False
+    &gt;&gt;&gt; a = ete3.Tree(&#34;((a,b),c);&#34;)
+    &gt;&gt;&gt; istree(a)
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a ete3 Tree
+    &#39;&#39;&#39;
+    return type(a) == ete3.Tree</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.istuple"><code class="name flex">
+<span>def <span class="ident">istuple</span></span>(<span>a)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if <code>a</code> is a tuple object</p>
+<h2 id="example">Example</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; istuple(5)
+False
+&gt;&gt;&gt; istuple((5,))
+True
+</code></pre>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>a</code> is a tuple</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def istuple(a):
+    &#39;&#39;&#39;Checks if `a` is a tuple object
+
+    Example
+    -------
+    &gt;&gt;&gt; istuple(5)
+    False
+    &gt;&gt;&gt; istuple((5,))
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a tuple
+    &#39;&#39;&#39;
+    return type(a) == tuple</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.istype"><code class="name flex">
+<span>def <span class="ident">istype</span></span>(<span>a)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks if <code>a</code> is a Type object</p>
+<h2 id="example">Example</h2>
+<pre><code class="language-python-repl">&gt;&gt;&gt; istype(5)
+False
+&gt;&gt;&gt; istype(float)
+True
+</code></pre>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong> :&ensp;<code>any</code></dt>
+<dd>Instance we are checking</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>True if <code>a</code> is a tuple</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def istype(a):
+    &#39;&#39;&#39;Checks if `a` is a Type object
+
+    Example
+    -------
+    &gt;&gt;&gt; istype(5)
+    False
+    &gt;&gt;&gt; istype(float)
+    True
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a tuple
+    &#39;&#39;&#39;
+    return type(a) == type</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.itercheck"><code class="name flex">
+<span>def <span class="ident">itercheck</span></span>(<span>xs, f)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Checks every element in xs with f and returns an array
+for each entry</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>xs</code></strong> :&ensp;<code>array_like(any)</code></dt>
+<dd>
+<ul>
+<li>A list of instances to check the type of</li>
+</ul>
+</dd>
+<dt><strong><code>f</code></strong> :&ensp;<code>callable</code></dt>
+<dd>
+<ul>
+<li>Type checking function</li>
+</ul>
+</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>list(bool)</code></dt>
+<dd>Checks for each element in the <code>xs</code></dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def itercheck(xs, f):
+    &#39;&#39;&#39;Checks every element in xs with f and returns an array
+    for each entry
+
+    Parameters
+    ----------
+    xs : array_like(any)
+        - A list of instances to check the type of
+    f : callable
+        - Type checking function
+    Returns
+    -------
+    list(bool)
+        Checks for each element in the `xs`
+    &#39;&#39;&#39;
+    return [f(x) for x in xs]</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.subsample_timeseries"><code class="name flex">
+<span>def <span class="ident">subsample_timeseries</span></span>(<span>T, sizes, approx=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Subsample the time-series <code>T</code> into size in <code>sizes</code>. Note that
+this algorithm does not guarentee any timepoints to stay.</p>
+<pre><code>The baseline algorithm calculates:
+d(R) = \sum_{i
+</code></pre>
+<p>eq j} 1 / (R[i] - R[j])^2
+for every <em>COMBINATION</em> of T of size size. If |T| = 75 and size = 45,
+then there are 45! * (75 - 45)! = 3.2e88 combinations - this is not
+doable.</p>
+<pre><code>Approximation
+-------------
+To approximate this, we divide the current size of the of the elements 
+into `size+1` (approximately) equal intervals
+Example:
+    T = [0, 0.5, 1, 2, 4, 4.5, 5, 7, 8, 10]
+    len(T) = 10
+    sizes = [8, 6]
+
+    time_indexes for T:
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+
+    Make 8 point interval:
+        Need to delete 2 time points,
+        10 - 8 = 2
+        floor(10 / 3) = 3
+        Delete every 3 elements
+        0 , 1 , 3, 4, 6, 7, 9, 10
+
+        T_8 = []
+
+
+
+
+
+
+Parameters
+----------
+T : array_like
+    These are the times that we want to subsample
+sizes : int, array(int)
+    These are the sizes we want to subsample to.
+
+Returns
+-------
+list(np.ndarray(sizes))
+    A list of time series for each size in decreasing size order
+</code></pre></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def subsample_timeseries(T, sizes, approx=True):
+    &#39;&#39;&#39;Subsample the time-series `T` into size in `sizes`. Note that
+    this algorithm does not guarentee any timepoints to stay.
+
+    The baseline algorithm calculates:
+    d(R) = \sum_{i \neq j} 1 / (R[i] - R[j])^2
+    for every *COMBINATION* of T of size size. If |T| = 75 and size = 45,
+    then there are 45! * (75 - 45)! = 3.2e88 combinations - this is not 
+    doable.
+
+    Approximation
+    -------------
+    To approximate this, we divide the current size of the of the elements 
+    into `size+1` (approximately) equal intervals
+    Example:
+        T = [0, 0.5, 1, 2, 4, 4.5, 5, 7, 8, 10]
+        len(T) = 10
+        sizes = [8, 6]
+
+        time_indexes for T:
+            0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+
+        Make 8 point interval:
+            Need to delete 2 time points,
+            10 - 8 = 2
+            floor(10 / 3) = 3
+            Delete every 3 elements
+            0 , 1 , 3, 4, 6, 7, 9, 10
+
+            T_8 = []
+    
+
+        
+        
+        
+
+    Parameters
+    ----------
+    T : array_like
+        These are the times that we want to subsample
+    sizes : int, array(int)
+        These are the sizes we want to subsample to. 
+
+    Returns
+    -------
+    list(np.ndarray(sizes))
+        A list of time series for each size in decreasing size order
+    &#39;&#39;&#39;
+    if not isarray(T):
+        raise TypeError(&#39;`T` ({}) must be an array&#39;.format(type(T)))
+    if isint(sizes):
+        sizes = [sizes]
+    elif isarray(sizes):
+        for size in sizes:
+            if not isint(size):
+                raise TypeError(&#39;Each size in `sizes` ({}) must be an int ({})&#39;.format(
+                    type(size), sizes))
+    else:
+        raise ValueError(&#39;`sizes` ({}) must be an int or an array f ints&#39;.format(type(sizes)))
+
+    T = np.asarray(T)
+    sizes = np.unique(np.asarray(sizes, dtype=int))
+    sizes[::-1].sort()
+    ret = []
+    l = len(T)
+
+    prev_tp = np.arange(len(T))
+    for n in sizes:
+        spacings = []
+        subsets = []
+
+        for subset in itertools.combinations(prev_tp, n):
+            subsets.append(subset)
+            subset = list(subset)
+            subset = [-1] + subset + [l+1]
+            subset = np.array(subset)
+            spacings.append((1/np.power(scipy.spatial.distance.pdist(
+                subset[:, np.newaxis]), 2)).sum())
+
+        idxs = np.array(subsets[spacings.index(min(spacings))])
+        ret.append(T[idxs])
+        prev_tp = idxs
+
+    return ret</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.toarray"><code class="name flex">
+<span>def <span class="ident">toarray</span></span>(<span>x, dest=None, T=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Converts <code>x</code> into a C_CONTIGUOUS numpy matrix if
+the matrix is sparse. If it is not sparse then it just returns
+the matrix.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>scipy.sparse, np.ndarray</code></dt>
+<dd>Array we are converting</dd>
+<dt><strong><code>dest</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>If this is specified, send the array into this array. Assumes
+the shapes are compatible. Else create a new array</dd>
+<dt><strong><code>T</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True, set the transpose</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def toarray(x, dest=None, T=False):
+    &#39;&#39;&#39;Converts `x` into a C_CONTIGUOUS numpy matrix if 
+    the matrix is sparse. If it is not sparse then it just returns
+    the matrix.
+
+    Parameters
+    ----------
+    x : scipy.sparse, np.ndarray
+        Array we are converting
+    dest : np.ndarray
+        If this is specified, send the array into this array. Assumes
+        the shapes are compatible. Else create a new array
+    T : bool
+        If True, set the transpose
+
+    Returns
+    -------
+    np.ndarray
+    &#39;&#39;&#39;
+    if scipy.sparse.issparse(x):
+        if dest is None:
+            if T:
+                dest = np.zeros(shape=x.T.shape, dtype=x.dtype)
+            else:
+                dest = np.zeros(shape=x.shape, dtype=x.dtype)
+        if T:
+            x.T.toarray(out=dest)
+        else:
+            x.toarray(out=dest)
+        return dest
+    else:
+        if T:
+            return x.T
+        else:
+            return x</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="mdsine2.pylab.util.Timer"><code class="flex name class">
+<span>class <span class="ident">Timer</span></span>
+</code></dt>
+<dd>
+<div class="desc"><p>Simple timer class</p>
+<p>Example use:
+&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; a = np.arange(10000000)
+&gt;&gt;&gt; b = 0
+&gt;&gt;&gt; with Timer():
+&gt;&gt;&gt;
+for i in a:
+&gt;&gt;&gt;
+b += i
+time: 2.00000001225 seconds</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Timer:
+    &#39;&#39;&#39;Simple timer class
+
+    Example use:
+        &gt;&gt;&gt; import numpy as np
+        &gt;&gt;&gt; a = np.arange(10000000)
+        &gt;&gt;&gt; b = 0
+        &gt;&gt;&gt; with Timer():
+        &gt;&gt;&gt;     for i in a:
+        &gt;&gt;&gt;         b += i 
+        time: 2.00000001225 seconds
+    &#39;&#39;&#39;
+    def __init__(self):
+        self.start = None
+        self.end = None
+
+    def __enter__(self):
+        self.start = default_timer()
+        return self
+
+    def __exit__(self, *args):
+        self.end = default_timer()
+        print(&#39;time: {} seconds&#39;.format(self.end - self.start)) </code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.count_calls"><code class="flex name class">
+<span>class <span class="ident">count_calls</span></span>
+<span>(</span><span>max_calls=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is a decorator for counting how many times a function is called.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>max_calls</code></strong> :&ensp;<code>int, Optional</code></dt>
+<dd>
+<ul>
+<li>If specified, it will throw an error if the number of calls
+exceeds this number. If nothing is specified then it will not
+throw an error</li>
+</ul>
+</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class count_calls:
+    &#39;&#39;&#39;This is a decorator for counting how many times a function is called.
+
+    Parameters
+    ----------
+    max_calls : int, Optional
+        - If specified, it will throw an error if the number of calls
+          exceeds this number. If nothing is specified then it will not
+          throw an error
+    &#39;&#39;&#39;
+    def __init__(self, max_calls=None):
+        if max_calls is None:
+            max_calls = np.inf
+        self.max_calls = max_calls
+        self.calls = 0
+        # self.f = f
+
+    def __call__(self, f):
+        def wrapped_func(*args, **kwargs):
+            self.calls += 1
+            if self.calls &gt; self.max_calls:
+                raise ValueError(&#39;In `{}` - Max calls reached: {}&#39;.format(
+                    wrapped_func.__name__, self.max_calls))
+            return f(*args,**kwargs)
+        wrapped_func.__name__ = f.__name__
+        return wrapped_func</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.util.inspect_trace"><code class="flex name class">
+<span>class <span class="ident">inspect_trace</span></span>
+<span>(</span><span>max_trace=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is a decorator that logs the trace of a function.</p>
+<p>If the function throws an error when it is being called, it will produce the array
+[(file_name, line_no, function), &hellip;]
+where it produces the file name, line number, and function that was called, and then
+it will throw the exception.
+The functions are in order for how close they are to the error.</p>
+<p>Example: (temp.py file)
+1 def foo():
+2
+bar()
+3
+4 def bar():
+5
+mer()
+6
+7 def mer():
+8
+raise IndexError(&hellip;)
+9
+10 foo()
+CRITICAL: [('temp.py', 8, 'mer'), ('temp.py', 5, 'bar'), ('temp.py', 2, 'foo'), ('temp.py', 10, '<module>')]
+IndexError</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>max_trace</code></strong> :&ensp;<code>int, Optional</code></dt>
+<dd>If Specified it will only trace up to the number specified. Otherwise it will trace up to the module</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class inspect_trace:
+    &#39;&#39;&#39;This is a decorator that logs the trace of a function.
+
+    If the function throws an error when it is being called, it will produce the array 
+        [(file_name, line_no, function), ...]
+    where it produces the file name, line number, and function that was called, and then
+    it will throw the exception.
+    The functions are in order for how close they are to the error.
+
+    Example: (temp.py file)
+        1 def foo():
+        2     bar()
+        3
+        4 def bar():
+        5     mer()
+        6
+        7 def mer():
+        8     raise IndexError(...)
+        9
+        10 foo()
+        CRITICAL: [(&#39;temp.py&#39;, 8, &#39;mer&#39;), (&#39;temp.py&#39;, 5, &#39;bar&#39;), (&#39;temp.py&#39;, 2, &#39;foo&#39;), (&#39;temp.py&#39;, 10, &#39;&lt;module&gt;&#39;)]
+        IndexError
+
+    Parameters
+    ----------
+    max_trace : int, Optional
+        If Specified it will only trace up to the number specified. Otherwise it will trace up to the module
+    &#39;&#39;&#39;
+
+    def __init__(self, max_trace=None):
+        if max_trace is not None:
+            if not isint(max_trace):
+                raise TypeError(&#39;`max_trace` ({}) must be an int&#39;.format(type(max_trace)))
+            if max_trace &lt;= 0:
+                raise TypeError(&#39;`max_trace` ({}) must be &gt;= 1&#39;.format(max_trace))
+        self.max_trace = max_trace
+
+    def __call__(self, f):
+        def wrapped_func(*args, **kwargs):
+            try:
+                return f(*args, **kwargs)
+            except:
+                stack = inspect.stack()
+                trace = []
+                if self.max_trace is not None:
+                    l = self.max_trace
+                else:
+                    l = len(stack)
+                for i in range(1, l):
+                    trace.append((stack[i][1].split(&#39;/&#39;)[-1], stack[i][2], stack[i][3]))
+                logging.critical(&#39;Error thrown in &#34;{}&#34;. Trace: {}&#39;.format(f.__name__, trace))
+                raise
+        wrapped_func.__name__ = f.__name__
+        return wrapped_func</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="mdsine2.pylab" href="index.html">mdsine2.pylab</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="mdsine2.pylab.util.asvname_formatter" href="#mdsine2.pylab.util.asvname_formatter">asvname_formatter</a></code></li>
+<li><code><a title="mdsine2.pylab.util.coarsen_phylogenetic_tree" href="#mdsine2.pylab.util.coarsen_phylogenetic_tree">coarsen_phylogenetic_tree</a></code></li>
+<li><code><a title="mdsine2.pylab.util.fast_index" href="#mdsine2.pylab.util.fast_index">fast_index</a></code></li>
+<li><code><a title="mdsine2.pylab.util.isarray" href="#mdsine2.pylab.util.isarray">isarray</a></code></li>
+<li><code><a title="mdsine2.pylab.util.isbool" href="#mdsine2.pylab.util.isbool">isbool</a></code></li>
+<li><code><a title="mdsine2.pylab.util.iscomplex" href="#mdsine2.pylab.util.iscomplex">iscomplex</a></code></li>
+<li><code><a title="mdsine2.pylab.util.isdataframe" href="#mdsine2.pylab.util.isdataframe">isdataframe</a></code></li>
+<li><code><a title="mdsine2.pylab.util.isdict" href="#mdsine2.pylab.util.isdict">isdict</a></code></li>
+<li><code><a title="mdsine2.pylab.util.isfloat" href="#mdsine2.pylab.util.isfloat">isfloat</a></code></li>
+<li><code><a title="mdsine2.pylab.util.isint" href="#mdsine2.pylab.util.isint">isint</a></code></li>
+<li><code><a title="mdsine2.pylab.util.isnumeric" href="#mdsine2.pylab.util.isnumeric">isnumeric</a></code></li>
+<li><code><a title="mdsine2.pylab.util.issquare" href="#mdsine2.pylab.util.issquare">issquare</a></code></li>
+<li><code><a title="mdsine2.pylab.util.isstr" href="#mdsine2.pylab.util.isstr">isstr</a></code></li>
+<li><code><a title="mdsine2.pylab.util.istree" href="#mdsine2.pylab.util.istree">istree</a></code></li>
+<li><code><a title="mdsine2.pylab.util.istuple" href="#mdsine2.pylab.util.istuple">istuple</a></code></li>
+<li><code><a title="mdsine2.pylab.util.istype" href="#mdsine2.pylab.util.istype">istype</a></code></li>
+<li><code><a title="mdsine2.pylab.util.itercheck" href="#mdsine2.pylab.util.itercheck">itercheck</a></code></li>
+<li><code><a title="mdsine2.pylab.util.subsample_timeseries" href="#mdsine2.pylab.util.subsample_timeseries">subsample_timeseries</a></code></li>
+<li><code><a title="mdsine2.pylab.util.toarray" href="#mdsine2.pylab.util.toarray">toarray</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="mdsine2.pylab.util.Timer" href="#mdsine2.pylab.util.Timer">Timer</a></code></h4>
+</li>
+<li>
+<h4><code><a title="mdsine2.pylab.util.count_calls" href="#mdsine2.pylab.util.count_calls">count_calls</a></code></h4>
+</li>
+<li>
+<h4><code><a title="mdsine2.pylab.util.inspect_trace" href="#mdsine2.pylab.util.inspect_trace">inspect_trace</a></code></h4>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.1</a>.</p>
+</footer>
+</body>
+</html>

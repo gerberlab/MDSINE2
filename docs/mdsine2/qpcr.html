@@ -1,0 +1,2904 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.1" />
+<title>mdsine2.qpcr API documentation</title>
+<meta name="description" content="qPCR variance parameters for the posterior" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>mdsine2.qpcr</code></h1>
+</header>
+<section id="section-intro">
+<p>qPCR variance parameters for the posterior</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#39;&#39;&#39;qPCR variance parameters for the posterior
+&#39;&#39;&#39;
+import time
+import numpy as np
+
+from .util import build_prior_covariance, build_prior_mean
+from .names import STRNAMES, REPRNAMES
+
+from . import pylab as pl
+
+class _qPCRBase(pl.Variable):
+    &#39;&#39;&#39;Base class for qPCR measurements
+    &#39;&#39;&#39;
+    def __init__(self, L, **kwargs):
+
+        pl.Variable.__init__(self, **kwargs)
+        self._sample_iter = 0
+        self.L = L
+        self.n_replicates = self.G.data.n_replicates
+        self.value = []
+
+    def __getitem__(self, key):
+        return self.value[key]
+
+    def __str__(self):
+        # Make them into an array?
+        try:
+            s = &#39;&#39;
+            for a in self.value:
+                s += str(a) + &#39;\n&#39;
+        except:
+            s = &#39;not set&#39;
+        return s
+
+    def update(self):
+        &#39;&#39;&#39;Update each of the qPCR variances
+        &#39;&#39;&#39;
+        for a in self.value:
+            a.update()
+        self._sample_iter += 1
+
+    def initialize(self, **kwargs):
+        &#39;&#39;&#39;Every variance gets the same initialization
+        &#39;&#39;&#39;
+        for a in self.value:
+            a.initialize(**kwargs)
+
+    def add_trace(self, *args, **kwargs):
+        for a in self.value:
+            a.add_trace(*args, **kwargs)
+
+    def set_trace(self, *args, **kwargs):
+        for a in self.value:
+            a.set_trace(*args, **kwargs)
+
+    def add_init_value(self):
+        for a in self.value:
+            a.add_init_value()
+
+
+class _qPCRPriorAggVar(_qPCRBase):
+    &#39;&#39;&#39;Base class for `qPCRDegsOfFreedoms` and `qPCRScales`
+    &#39;&#39;&#39;
+    def __init__(self, L, child,**kwargs):
+        _qPCRBase.__init__(self, L, **kwargs)
+        for l in range(self.L):
+            self.value.append(
+                child(L=L, l=l, **kwargs))
+
+    def add_qpcr_measurement(self, ridx, tidx, l):
+        &#39;&#39;&#39;Add a qPCR measurement for subject `ridx` at time index
+        `tidx` to qPCR set `l`
+
+        Parameters
+        ----------
+        ridx : int
+            Subject index
+        tidx : int
+            Time index
+        l : int
+            qPCR set index
+        &#39;&#39;&#39;
+        if not pl.isint(ridx):
+            raise TypeError(&#39;`ridx` ({}) must be an int&#39;.format(type(ridx)))
+        if ridx &gt;= self.G.data.n_replicates:
+            raise ValueError(&#39;`ridx` ({}) out of range ({})&#39;.format(ridx, 
+                self.G.data.n_replicates))
+        if not pl.isint(tidx):
+            raise TypeError(&#39;`tidx` ({}) must be an int&#39;.format(type(tidx)))
+        if tidx &gt;= len(self.G.data.given_timepoints[ridx]):
+            raise ValueError(&#39;`tidx` ({}) out of range ({})&#39;.format(tidx, 
+                len(self.G.data.given_timepoints[ridx])))
+        if not pl.isint(l):
+            raise TypeError(&#39;`l` ({}) must be an int&#39;.format(type(l)))
+        if l &gt;= self.L:
+            raise ValueError(&#39;`l` ({}) out of range ({})&#39;.format(tidx, 
+                self.L))
+        self.value[l].add_qpcr_measurement(ridx=ridx, tidx=tidx)
+
+    def set_shape(self):
+        for a in self.value:
+            a.set_shape()
+
+
+class qPCRVariances(_qPCRBase):
+    &#39;&#39;&#39;Aggregation class for qPCR variance for a set of qPCR variances. 
+    The qPCR variances are 
+
+    Parameters
+    ----------
+    L : int
+        How many qPCR variance groupings there are
+    &#39;&#39;&#39;
+    def __init__(self, **kwargs):
+        kwargs[&#39;name&#39;] = STRNAMES.QPCR_VARIANCES
+        _qPCRBase.__init__(self, **kwargs)
+        self.G.data.qpcr_variances = self
+        
+        for ridx in range(self.n_replicates):
+            self.value.append( 
+                qPCRVarianceReplicate(ridx=ridx, **kwargs))
+
+    def add_qpcr_measurement(self, ridx, tidx, l):
+        &#39;&#39;&#39;Add a qPCR measurement for subject `ridx` at time index
+        `tidx` to qPCR set `l`
+
+        Parameters
+        ----------
+        ridx : int
+            Subject index
+        tidx : int
+            Time index
+        l : int
+            qPCR set index
+        &#39;&#39;&#39;
+        if not pl.isint(ridx):
+            raise TypeError(&#39;`ridx` ({}) must be an int&#39;.format(type(ridx)))
+        if ridx &gt;= self.G.data.n_replicates:
+            raise ValueError(&#39;`ridx` ({}) out of range ({})&#39;.format(ridx, 
+                self.G.data.n_replicates))
+        if not pl.isint(tidx):
+            raise TypeError(&#39;`tidx` ({}) must be an int&#39;.format(type(tidx)))
+        if tidx &gt;= len(self.G.data.given_timepoints[ridx]):
+            raise ValueError(&#39;`tidx` ({}) out of range ({})&#39;.format(tidx, 
+                len(self.G.data.given_timepoints[ridx])))
+        if not pl.isint(l):
+            raise TypeError(&#39;`l` ({}) must be an int&#39;.format(type(l)))
+        if l &gt;= self.L:
+            raise ValueError(&#39;`l` ({}) out of range ({})&#39;.format(tidx, 
+                self.L))
+        self.value[ridx].add_qpcr_measurement(tidx=tidx, l=l)        
+
+
+class qPCRVarianceReplicate(pl.variables.SICS):
+    &#39;&#39;&#39;Posterior for a set of single qPCR variances for replicate `ridx`
+
+    Parameters
+    ----------
+    ridx : int
+        Which subject replicate index this set of qPCR variances belongs
+        to.
+    L : int
+        How many qPCR variance groupings there are
+    &#39;&#39;&#39;
+    def __init__(self, ridx, L, **kwargs):
+        self.ridx = ridx
+        self.L = L
+        kwargs[&#39;name&#39;] = STRNAMES.QPCR_VARIANCES + &#39;_{}&#39;.format(ridx)
+        pl.variables.SICS.__init__(self, **kwargs)
+        self.priors_idx = np.full(len(self.G.data.given_timepoints[ridx]), -1, dtype=int)
+        self.set_value_shape(shape=(len(self.G.data.given_timepoints[ridx]),))
+
+    def initialize(self, value_option, value=None, inflated=None):
+        &#39;&#39;&#39;Initialize the values. We do not set any hyperparameters because those are
+        set in their own classes.
+
+        Parameters
+        ----------
+        value_option : str
+            How to initialize the variances
+                &#39;empirical&#39;, &#39;auto&#39;
+                    Set to the empirical variance of the respective measurements
+                &#39;inflated&#39;
+                    Set to an inflated value of the empirical variance.
+                &#39;manual&#39;
+                    Set the values manually
+        value : float, np.ndarray(float)
+            If float, set all the values to the same number. If array then set the 
+            values to each of the parameters
+        inflated : float, None
+            Necessary if `value_option` == &#39;inflated&#39;
+        &#39;&#39;&#39;
+        if not pl.isstr(value_option):
+            raise TypeError(&#39;`value_option` ({}) must be a str&#39;.format(type(value_option)))
+        if value_option in [&#39;empirical&#39;, &#39;auto&#39;]:
+            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
+            for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
+                self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data)
+
+        elif value_option == &#39;inflated&#39;:
+            if not pl.isnumeric(inflated):
+                raise TypeError(&#39;`inflated` ({}) must be a numeric&#39;.format(type(inflated)))
+            if inflated &lt; 0:
+                raise ValueError(&#39;`inflated` ({}) must be positive&#39;.format(inflated))
+            # Set each variance by the empirical variance * inflated
+            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
+            for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
+                self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data) * inflated
+
+        elif value_option == &#39;manual&#39;:
+            raise NotImplementedError(&#39;Need to implement&#39;)
+        else:
+            raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
+
+        # Set the qPCR measurements
+        self.qpcr_measurements = []
+        for tidx, t in enumerate(self.G.data.given_timepoints[self.ridx]):
+            self.qpcr_measurements.append(self.G.data.qpcr[self.ridx][t].log_data)
+
+    def update(self):
+
+        prior_dofs = []
+        prior_scales = []
+        for l in range(self.L):
+            prior_dofs.append(self.G[REPRNAMES.QPCR_DOFS].value[l].value)
+            prior_scales.append(self.G[REPRNAMES.QPCR_SCALES].value[l].value)
+
+        for tidx in range(len(self.priors_idx)):
+            t = self.G.data.given_timepoints[self.ridx][tidx]
+            l = self.priors_idx[tidx]
+            prior_dof = prior_dofs[l]
+            prior_scale = prior_scales[l]
+
+            # qPCR measurements (these are already in log space)
+            values = self.qpcr_measurements[tidx]
+
+            # Current mean is the log of the sum of latent abundance
+            tidx_in_arr = self.G.data.timepoint2index[self.ridx][t]
+            mean = np.log(np.sum(self.G.data.data[self.ridx][:, tidx_in_arr]))
+
+            # Calculate the residual sum
+            resid_sum = np.sum(np.square(values - mean))
+
+            # posterior
+            dof = prior_dof + len(values)
+            scale = ((prior_scale * prior_dof) + resid_sum)/dof
+            self.value[tidx] = pl.random.sics.sample(dof, scale)
+
+    def add_qpcr_measurement(self, tidx, l):
+        &#39;&#39;&#39;Add qPCR measurement for subject index `ridx` and time index `tidx`
+
+        Parameters
+        ----------
+        ridx : int
+            Subject index
+        tidx : int
+            Time index
+        &#39;&#39;&#39;
+        if not pl.isint(tidx):
+            raise TypeError(&#39;`tidx` ({}) must be an int&#39;.format(type(tidx)))
+        if tidx &gt;= len(self.G.data.given_timepoints[self.ridx]):
+            raise ValueError(&#39;`tidx` ({}) out of range ({})&#39;.format(tidx, 
+                len(self.G.data.given_timepoints[self.ridx])))
+        if not pl.isint(l):
+            raise TypeError(&#39;`l` ({}) must be an int&#39;.format(type(l)))
+        self.priors_idx[tidx] = l
+
+
+class qPCRDegsOfFreedoms(_qPCRPriorAggVar):
+    &#39;&#39;&#39;Aggregation class for a degree of freedom parameter of qPCR variance
+
+    Parameters
+    ----------
+    L : int
+        How many qPCR variance groupings there are
+    &#39;&#39;&#39;
+    def __init__(self, L, **kwargs):
+        kwargs[&#39;name&#39;] = STRNAMES.QPCR_DOFS
+        _qPCRPriorAggVar.__init__(self, L=L, child=qPCRDegsOfFreedomL, **kwargs)
+
+
+class qPCRDegsOfFreedomL(pl.variables.Uniform):
+    &#39;&#39;&#39;Posterior for a single qPCR degrees of freedom parameter for a SICS set
+    
+    Parameters
+    ----------
+    L : int
+        How many qPCR variance groupings there are
+    l : int
+        Which specific grouping this hyperprior is
+    &#39;&#39;&#39;
+    def __init__(self, L, l, **kwargs):
+
+        self.L = L
+        self.l = l
+        kwargs[&#39;name&#39;] = STRNAMES.QPCR_DOFS + &#39;_{}&#39;.format(l)
+        pl.variables.Uniform.__init__(self, **kwargs)
+
+        self.data_locs = []
+        self.proposal = pl.variables.TruncatedNormal(mean=None, var=None, value=None)
+
+    def __str__(self):
+        # If this fails, it is because we are dividing by 0 sampler_iter
+        # If which case we just return the value 
+        try:
+            s = &#39;Value: {}, Acceptance rate: {}&#39;.format(
+                self.value, np.mean(self.acceptances[
+                    np.max([self.sample_iter-50, 0]):self.sample_iter]))
+        except:
+            s = str(self.value)
+        return s
+
+    def set_shape(self):
+        &#39;&#39;&#39;Set the shape of the array (how many qPCR variances this is a prior for)
+        &#39;&#39;&#39;
+        self.set_value_shape(shape=(len(self.data_locs), ))
+
+    def add_qpcr_measurement(self, ridx, tidx):
+        &#39;&#39;&#39;Add the qPCR measurement for subject index `ridx` and time index
+        `tidx` to 
+        &#39;&#39;&#39;
+        self.data_locs.append((ridx, tidx))
+
+    def initialize(self, value_option, low_option, high_option, proposal_option, 
+        target_acceptance_rate, tune, end_tune, value=None, low=None, high=None, 
+        proposal_var=None, delay=0):
+        &#39;&#39;&#39;Initialize the values and hyperparameters. The proposal truncation is 
+        always set to the same as the parameterization of the prior.
+
+        Parameters
+        ----------
+        value_option : str
+            How to initialize the value. Options:
+                &#39;auto&#39;, &#39;diffuse&#39;
+                    Set the value to 2.5
+                &#39;strong&#39;
+                    Set to be 50% of the data
+                &#39;manual&#39;
+                    `value` must also be specified
+        low_option : str
+            How to set the low parameter of the prior
+            &#39;auto&#39;, &#39;valid&#39;
+                Set to 2 so that the prior stays proper during inference
+            &#39;zero&#39;
+                Set to 0
+            &#39;manual&#39;
+                Specify the value with the parameter `low`
+        high_option : str
+            How to set the high parameter of the prior
+            &#39;auto&#39;, &#39;med&#39;
+                Set to 10 X the maximum in the set
+            &#39;high&#39;
+                Set to 100 X the maximum in the set
+            &#39;low&#39;
+                Set to 1 X the maximum in the set
+            &#39;manual&#39;
+                Set the value with the parameter `high`
+        proposal_option : str
+            How to initialize the proposal variance:
+                &#39;auto&#39;
+                    mean**2 / 100
+                &#39;manual&#39;
+                    `proposal_var` must also be supplied
+        &#39;&#39;&#39;
+        if not pl.isint(delay):
+            raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+        if delay &lt; 0:
+            raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+        self.delay = delay
+
+        self.qpcr_data = []
+        for ridx, tidx in self.data_locs:
+            t = self.G.data.given_timepoints[ridx][tidx]
+            self.qpcr_data = np.append(self.qpcr_data, 
+                self.G.data.qpcr[ridx][t].log_data)
+        
+        # Set the prior low
+        if not pl.isstr(low_option):
+            raise TypeError(&#39;`low_option` ({}) must be a str&#39;.format(type(low_option)))
+        if low_option == &#39;manual&#39;:
+            if not pl.isnumeric(low):
+                raise TypeError(&#39;`low` ({}) must be a numeric&#39;.format(type(low)))
+            if low &lt; 2:
+                raise ValueError(&#39;`low` ({}) must be &gt;= 2&#39;.format(low))
+        elif low_option in [&#39;valid&#39;, &#39;auto&#39;]:
+            low = 2
+        elif low_option == &#39;zero&#39;:
+            low = 0
+        else:
+            raise ValueError(&#39;`low_option` ({}) not recognized&#39;.format(low_option))
+        self.prior.low.override_value(low)  
+
+        # Set the prior high
+        if not pl.isstr(high_option):
+            raise TypeError(&#39;`high_option` ({}) must be a str&#39;.format(type(high_option)))
+        if high_option == &#39;manual&#39;:
+            if not pl.isnumeric(high):
+                raise TypeError(&#39;`high` ({}) must be a numeric&#39;.format(type(high)))
+        elif high_option in [&#39;med&#39;, &#39;auto&#39;]:
+            high = 10 * len(self.data_locs)
+        elif high_option == &#39;low&#39;:
+            high = len(self.data_locs)
+        elif high_option == &#39;high&#39;:
+            high = 100 * len(self.data_locs)
+        else:
+            raise ValueError(&#39;`high_option` ({}) not recognized&#39;.format(high_option))
+        if high &lt; self.prior.low.value:
+            raise ValueError(&#39;`high` ({}) must be &gt;= low ({})&#39;.format(high, 
+                self.prior.low.value))
+        self.prior.high.override_value(high)
+
+        # Set the value
+        if not pl.isstr(value_option):
+            raise TypeError(&#39;`value_option` ({}) must be a str&#39;.format(type(value_option)))
+        if value_option == &#39;manual&#39;:
+            if not pl.isnumeric(value):
+                raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(value)))
+        elif value_option in [&#39;auto&#39;, &#39;diffuse&#39;]:
+            value = 2.5
+        elif value_option == &#39;strong&#39;:
+            value = len(self.data_locs)
+        else:
+            raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
+        self.value = value
+        if self.value &lt;= self.prior.low.value or self.value &gt;= self.prior.high.value:
+            raise ValueError(&#39;`value` ({}) out of range ({})&#39;.format(self.value))
+
+        # Set the propsal parameters
+        if pl.isstr(target_acceptance_rate):
+            if target_acceptance_rate in [&#39;optimal&#39;, &#39;auto&#39;]:
+                target_acceptance_rate = 0.44
+            else:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) not recognized&#39;.format(
+                    target_acceptance_rate))
+        elif pl.isfloat(target_acceptance_rate):
+            if target_acceptance_rate &lt; 0 or target_acceptance_rate &gt; 1:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) out of range&#39;.format(
+                    target_acceptance_rate))
+        else:
+            raise TypeError(&#39;`target_acceptance_rate` ({}) type not recognized&#39;.format(
+                type(target_acceptance_rate)))
+        self.target_acceptance_rate = target_acceptance_rate
+        
+        if pl.isstr(tune):
+            if tune in [&#39;auto&#39;]:
+                tune = 50
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(tune))
+        elif pl.isint(tune):
+            if tune &lt; 0:
+                raise ValueError(&#39;`tune` ({}) must be &gt; 0&#39;.format(
+                    tune))
+        else:
+            raise TypeError(&#39;`tune` ({}) type not recognized&#39;.format(type(tune)))
+        self.tune = tune
+
+        if pl.isstr(end_tune):
+            if end_tune in [&#39;auto&#39;, &#39;half-burnin&#39;]:
+                end_tune = int(self.G.inference.burnin/2)
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(end_tune))
+        elif pl.isint(end_tune):
+            if end_tune &lt; 0 or end_tune &gt; self.G.inference.burnin:
+                raise ValueError(&#39;`end_tune` ({}) out of range (0, {})&#39;.format(
+                    end_tune, self.G.inference.burnin))
+        else:
+            raise TypeError(&#39;`end_tune` ({}) type not recognized&#39;.format(type(end_tune)))
+        self.end_tune = end_tune
+
+        # Set the proposal variance
+        if not pl.isstr(proposal_option):
+            raise TypeError(&#39;`proposal_option` ({}) must be a str&#39;.format(
+                type(proposal_option)))
+        elif proposal_option == &#39;manual&#39;:
+            if not pl.isnumeric(proposal_var):
+                raise TypeError(&#39;`proposal_var` ({}) must be a numeric&#39;.format(
+                    type(proposal_var)))
+            if proposal_var &lt;= 0:
+                raise ValueError(&#39;`proposal_var` ({}) not proper&#39;.format(proposal_var))
+        elif proposal_option in [&#39;auto&#39;]:
+            proposal_var = (self.value ** 2)/10
+        else:
+            raise ValueError(&#39;`proposal_option` ({}) not recognized&#39;.format(
+                proposal_option))
+        self.proposal.var.value = proposal_var
+        self.proposal.low = self.prior.low.value
+        self.proposal.high = self.prior.high.value
+
+    def update_var(self):
+        &#39;&#39;&#39;Update the variance of the proposal
+        &#39;&#39;&#39;
+        if self.sample_iter == 0:
+            self.temp_acceptances = 0
+            self.acceptances = np.zeros(self.G.inference.n_samples, dtype=bool)
+        
+        elif self.sample_iter &gt; self.end_tune:
+            # Don&#39;t do any more updates
+            return
+        
+        elif self.sample_iter % self.tune == 0:
+            # Update var
+            acceptance_rate = self.temp_acceptances / self.tune
+            if acceptance_rate &gt; self.target_acceptance_rate:
+                self.proposal.var.value *= 1.5
+            else:
+                self.proposal.var.value /= 1.5
+            self.temp_acceptances = 0
+
+    def update(self):
+        &#39;&#39;&#39;First we update the proposal (if necessary) and then we do a MH step
+        &#39;&#39;&#39;
+        self.update_var()
+        proposal_std = np.sqrt(self.proposal.var.value)
+
+        # Get the data
+        xs = []
+        for ridx, tidx in self.data_locs:
+            xs.append(self.G[REPRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
+
+        # Get the scale
+        scale = self.G[REPRNAMES.QPCR_SCALES].value[self.l].value
+
+        # Propose a new value for the dof
+        prev_dof = self.value
+        self.proposal.mean.value = self.value
+        new_dof = self.proposal.sample()
+
+        if new_dof &lt; self.prior.low.value or new_dof &gt; self.prior.high.value:
+            # Automatic reject
+            self.value = prev_dof
+            return
+
+        # Calculate the target distribution log likelihood
+        prev_target_ll = 0
+        for x in xs:
+            prev_target_ll += pl.random.sics.logpdf(value=x,
+                scale=scale, dof=prev_dof)
+        new_target_ll = 0
+        for x in xs:
+            new_target_ll += pl.random.sics.logpdf(value=x,
+                scale=scale, dof=new_dof)
+
+        # Normalize by the loglikelihood of the proposal
+        prev_prop_ll = pl.random.truncnormal.logpdf(
+            value=prev_dof, mean=new_dof, std=proposal_std,
+            low=self.proposal.low, high=self.proposal.high)
+        new_prop_ll = pl.random.truncnormal.logpdf(
+            value=new_dof, mean=prev_dof, std=proposal_std,
+            low=self.proposal.low, high=self.proposal.high)
+
+        # Accept or reject
+        r = (new_target_ll - prev_prop_ll) - \
+            (prev_target_ll - new_prop_ll)
+        u = np.log(pl.random.misc.fast_sample_standard_uniform())
+
+        # print(&#39;\n\n\n{} prior_mean\n----------&#39;.format(self.child_name))
+        # print(&#39;x&#39;, x)
+        # print(&#39;prev_dof&#39;, prev_dof)
+        # print(&#39;prev_target_ll&#39;, prev_target_ll)
+        # print(&#39;prev_prop_ll&#39;, prev_prop_ll)
+        # print(&#39;new dof&#39;, new_dof)
+        # print(&#39;new_target_ll&#39;, new_target_ll)
+        # print(&#39;new_prop_ll&#39;, new_prop_ll)
+        # print(&#39;\nr&#39;, r, u)
+            
+        if r &gt;= u:
+            self.acceptances[self.sample_iter] = True
+            self.value = new_dof
+            self.temp_acceptances += 1
+        else:
+            self.value = prev_dof
+
+
+class qPCRScales(_qPCRPriorAggVar):
+    &#39;&#39;&#39;Aggregation class for a scale parameter of qPCR variance
+
+    Parameters
+    ----------
+    L : int
+        How many qPCR variance groupings there are
+    &#39;&#39;&#39;
+    def __init__(self, L, **kwargs):
+        kwargs[&#39;name&#39;] = STRNAMES.QPCR_SCALES
+        _qPCRPriorAggVar.__init__(self, L=L, child=qPCRScaleL, **kwargs)
+
+
+class qPCRScaleL(pl.variables.SICS):
+    &#39;&#39;&#39;Posterior for a single qPCR scale set
+    &#39;&#39;&#39;
+    def __init__(self, L, l, **kwargs):
+
+        self.L = L
+        self.l = l
+        kwargs[&#39;name&#39;] = STRNAMES.QPCR_SCALES + &#39;_{}&#39;.format(l)
+        pl.variables.Uniform.__init__(self, **kwargs)
+
+        self.data_locs = []
+        self.proposal = pl.variables.TruncatedNormal(mean=None, var=None, value=None)
+
+    def __str__(self):
+        # If this fails, it is because we are dividing by 0 sampler_iter
+        # If which case we just return the value 
+        try:
+            s = &#39;Value: {}, Acceptance rate: {}&#39;.format(
+                self.value, np.mean(self.acceptances[
+                    np.max([self.sample_iter-50, 0]):self.sample_iter]))
+        except:
+            s = str(self.value)
+        return s
+
+    def set_shape(self):
+        &#39;&#39;&#39;Set the shape of the array (how many qPCR variances this is a prior for)
+        &#39;&#39;&#39;
+        self.set_value_shape(shape=(len(self.data_locs), ))
+
+    def add_qpcr_measurement(self, ridx, tidx):
+        &#39;&#39;&#39;Add the qPCR measurement for subject index `ridx` and time index
+        `tidx` to 
+        &#39;&#39;&#39;
+        self.data_locs.append((ridx, tidx))
+
+    def initialize(self, value_option, scale_option, dof_option, proposal_option, 
+        target_acceptance_rate, tune, end_tune, value=None, dof=None, scale=None,
+        proposal_var=None, delay=0):
+        &#39;&#39;&#39;Initialize the values and hyperparameters
+
+        Parameters
+        ----------
+        value_option : str
+            How to initialize the value. Options:
+                &#39;auto&#39;, &#39;prior-mean&#39;
+                    Set to the prior mean
+                &#39;manual&#39;
+                    `value` must also be specified
+        dof_option : str
+            How to set the prior dof
+                &#39;auto&#39;, &#39;diffuse&#39;
+                    2.5
+                &#39;manual&#39;:
+                    set with `dof`
+        scale_option : str
+            How to set the prior scale
+                &#39;empirical&#39;, &#39;auto&#39;
+                    Set to the variance of the data assigned to the set
+                &#39;manual&#39;
+                    Set with the parameter `scale`
+        proposal_option : str
+            How to initialize the proposal variance:
+                &#39;auto&#39;
+                    mean**2 / 100
+                &#39;manual&#39;
+                    `proposal_var` must also be supplied     
+        &#39;&#39;&#39;
+        if not pl.isint(delay):
+            raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+        if delay &lt; 0:
+            raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+        self.delay = delay
+
+        self.qpcr_data = []
+        for ridx, tidx in self.data_locs:
+            t = self.G.data.given_timepoints[ridx][tidx]
+            self.qpcr_data = np.append(self.qpcr_data, 
+                self.G.data.qpcr[ridx][t].log_data)
+
+        # Set the prior dof
+        if not pl.isstr(dof_option):
+            raise TypeError(&#39;`dof_option` ({}) must be a str&#39;.format(type(dof_option)))
+        if dof_option == &#39;manual&#39;:
+            if not pl.isnumeric(dof):
+                raise TypeError(&#39;`dof` ({}) must be a numeric&#39;.format(type(dof)))
+            if dof &lt; 2:
+                raise ValueError(&#39;`dof` ({}) must be &gt;= 2&#39;.format(dof))
+        elif dof_option in [&#39;diffuse&#39;, &#39;auto&#39;]:
+            dof = 2.5
+        else:
+            raise ValueError(&#39;`dof_option` ({}) not recognized&#39;.format(dof_option))
+        if dof &lt; 2:
+            raise ValueError(&#39;`dof` ({}) must be strictly larger than 2 to be a proper&#39; \
+                &#39; prior&#39;.format(dof))
+        self.prior.dof.override_value(dof)
+
+        # Set the prior scale
+        if not pl.isstr(scale_option):
+            raise TypeError(&#39;`scale_option` ({}) must be a str&#39;.format(type(scale_option)))
+        if scale_option == &#39;manual&#39;:
+            if not pl.isnumeric(scale):
+                raise TypeError(&#39;`scale` ({}) must be a numeric&#39;.format(type(scale)))
+            if scale &lt;= 0:
+                raise ValueError(&#39;`scale` ({}) must be positive&#39;.format(scale))
+        elif scale_option in [&#39;auto&#39;, &#39;empirical&#39;]:
+            v = np.var(self.qpcr_data)
+            scale = v * (self.prior.dof.value - 2) / self.prior.dof.value
+        else:
+            raise ValueError(&#39;`scale_option` ({}) not recognized&#39;.format(scale_option))
+        self.prior.scale.override_value(scale)
+
+        # Set the value
+        if not pl.isstr(value_option):
+            raise TypeError(&#39;`value_option` ({}) must be a str&#39;.format(type(value_option)))
+        if value_option == &#39;manual&#39;:
+            if not pl.isnumeric(value):
+                raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(value)))
+        elif value_option in [&#39;auto&#39;, &#39;prior-mean&#39;]:
+            value = self.prior.mean()
+        else:
+            raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
+        self.value = value
+
+        # Set the propsal parameters
+        if pl.isstr(target_acceptance_rate):
+            if target_acceptance_rate in [&#39;optimal&#39;, &#39;auto&#39;]:
+                target_acceptance_rate = 0.44
+            else:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) not recognized&#39;.format(
+                    target_acceptance_rate))
+        elif pl.isfloat(target_acceptance_rate):
+            if target_acceptance_rate &lt; 0 or target_acceptance_rate &gt; 1:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) out of range&#39;.format(
+                    target_acceptance_rate))
+        else:
+            raise TypeError(&#39;`target_acceptance_rate` ({}) type not recognized&#39;.format(
+                type(target_acceptance_rate)))
+        self.target_acceptance_rate = target_acceptance_rate
+
+        if pl.isstr(tune):
+            if tune in [&#39;auto&#39;]:
+                tune = 50
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(tune))
+        elif pl.isint(tune):
+            if tune &lt; 0:
+                raise ValueError(&#39;`tune` ({}) must be &gt; 0&#39;.format(
+                    tune))
+        else:
+            raise TypeError(&#39;`tune` ({}) type not recognized&#39;.format(type(tune)))
+        self.tune = tune
+
+        if pl.isstr(end_tune):
+            if end_tune in [&#39;auto&#39;, &#39;half-burnin&#39;]:
+                end_tune = int(self.G.inference.burnin/2)
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(end_tune))
+        elif pl.isint(end_tune):
+            if end_tune &lt; 0 or end_tune &gt; self.G.inference.burnin:
+                raise ValueError(&#39;`end_tune` ({}) out of range (0, {})&#39;.format(
+                    end_tune, self.G.inference.burnin))
+        else:
+            raise TypeError(&#39;`end_tune` ({}) type not recognized&#39;.format(type(end_tune)))
+        self.end_tune = end_tune
+
+        # Set the proposal variance
+        if not pl.isstr(proposal_option):
+            raise TypeError(&#39;`proposal_option` ({}) must be a str&#39;.format(
+                type(proposal_option)))
+        elif proposal_option == &#39;manual&#39;:
+            if not pl.isnumeric(proposal_var):
+                raise TypeError(&#39;`proposal_var` ({}) must be a numeric&#39;.format(
+                    type(proposal_var)))
+            if proposal_var &lt;= 0:
+                raise ValueError(&#39;`proposal_var` ({}) not proper&#39;.format(proposal_var))
+        elif proposal_option in [&#39;auto&#39;]:
+            proposal_var = (self.value ** 2)/10
+        else:
+            raise ValueError(&#39;`proposal_option` ({}) not recognized&#39;.format(
+                proposal_option))
+        self.proposal.var.value = proposal_var
+        self.proposal.low = 0
+        self.proposal.high = float(&#39;inf&#39;)
+
+    def update_var(self):
+        &#39;&#39;&#39;Update the variance of the proposal
+        &#39;&#39;&#39;
+        if self.sample_iter == 0:
+            self.temp_acceptances = 0
+            self.acceptances = np.zeros(self.G.inference.n_samples, dtype=bool)
+        
+        elif self.sample_iter &gt; self.end_tune:
+            # Don&#39;t do any more updates
+            return
+        
+        elif self.sample_iter % self.tune == 0:
+            # Update var
+            acceptance_rate = self.temp_acceptances / self.tune
+            if acceptance_rate &gt; self.target_acceptance_rate:
+                self.proposal.var.value *= 1.5
+            else:
+                self.proposal.var.value /= 1.5
+            self.temp_acceptances = 0
+
+    def update(self):
+        &#39;&#39;&#39;First we update the proposal (if necessary) and then we do a MH step
+        &#39;&#39;&#39;
+        self.update_var()
+        proposal_std = np.sqrt(self.proposal.var.value)
+
+        # Get the data
+        xs = []
+        for ridx, tidx in self.data_locs:
+            xs.append(self.G[REPRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
+
+        # Get the dof
+        dof = self.G[REPRNAMES.QPCR_DOFS].value[self.l].value
+
+        # Propose a new value for the scale
+        prev_scale = self.value
+        self.proposal.mean.value = self.value
+        new_scale = self.proposal.sample()
+
+        # Calculate the target distribution log likelihood
+        prev_target_ll = pl.random.sics.logpdf(value=prev_scale, 
+            dof=self.prior.dof.value, scale=self.prior.scale.value)
+        for x in xs:
+            prev_target_ll += pl.random.sics.logpdf(value=x,
+                scale=prev_scale, dof=dof)
+        new_target_ll = pl.random.sics.logpdf(value=new_scale, 
+            dof=self.prior.dof.value, scale=self.prior.scale.value)
+        for x in xs:
+            new_target_ll += pl.random.sics.logpdf(value=x,
+                scale=new_scale, dof=dof)
+
+        # Normalize by the loglikelihood of the proposal
+        prev_prop_ll = pl.random.truncnormal.logpdf(
+            value=prev_scale, mean=new_scale, std=proposal_std,
+            low=self.proposal.low, high=self.proposal.high)
+        new_prop_ll = pl.random.truncnormal.logpdf(
+            value=new_scale, mean=prev_scale, std=proposal_std,
+            low=self.proposal.low, high=self.proposal.high)
+
+        # Accept or reject
+        r = (new_target_ll - prev_prop_ll) - \
+            (prev_target_ll - new_prop_ll)
+        u = np.log(pl.random.misc.fast_sample_standard_uniform())
+
+        # print(&#39;\n\n\n{} prior_mean\n----------&#39;.format(self.child_name))
+        # print(&#39;x&#39;, x)
+        # print(&#39;prev_scale&#39;, prev_scale)
+        # print(&#39;prev_target_ll&#39;, prev_target_ll)
+        # print(&#39;prev_prop_ll&#39;, prev_prop_ll)
+        # print(&#39;new scale&#39;, new_scale)
+        # print(&#39;new_target_ll&#39;, new_target_ll)
+        # print(&#39;new_prop_ll&#39;, new_prop_ll)
+        # print(&#39;\nr&#39;, r, u)
+            
+        if r &gt;= u:
+            self.acceptances[self.sample_iter] = True
+            self.value = new_scale
+            self.temp_acceptances += 1
+        else:
+            self.value = prev_scale</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="mdsine2.qpcr.qPCRDegsOfFreedomL"><code class="flex name class">
+<span>class <span class="ident">qPCRDegsOfFreedomL</span></span>
+<span>(</span><span>L, l, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Posterior for a single qPCR degrees of freedom parameter for a SICS set</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>L</code></strong> :&ensp;<code>int</code></dt>
+<dd>How many qPCR variance groupings there are</dd>
+<dt><strong><code>l</code></strong> :&ensp;<code>int</code></dt>
+<dd>Which specific grouping this hyperprior is</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class qPCRDegsOfFreedomL(pl.variables.Uniform):
+    &#39;&#39;&#39;Posterior for a single qPCR degrees of freedom parameter for a SICS set
+    
+    Parameters
+    ----------
+    L : int
+        How many qPCR variance groupings there are
+    l : int
+        Which specific grouping this hyperprior is
+    &#39;&#39;&#39;
+    def __init__(self, L, l, **kwargs):
+
+        self.L = L
+        self.l = l
+        kwargs[&#39;name&#39;] = STRNAMES.QPCR_DOFS + &#39;_{}&#39;.format(l)
+        pl.variables.Uniform.__init__(self, **kwargs)
+
+        self.data_locs = []
+        self.proposal = pl.variables.TruncatedNormal(mean=None, var=None, value=None)
+
+    def __str__(self):
+        # If this fails, it is because we are dividing by 0 sampler_iter
+        # If which case we just return the value 
+        try:
+            s = &#39;Value: {}, Acceptance rate: {}&#39;.format(
+                self.value, np.mean(self.acceptances[
+                    np.max([self.sample_iter-50, 0]):self.sample_iter]))
+        except:
+            s = str(self.value)
+        return s
+
+    def set_shape(self):
+        &#39;&#39;&#39;Set the shape of the array (how many qPCR variances this is a prior for)
+        &#39;&#39;&#39;
+        self.set_value_shape(shape=(len(self.data_locs), ))
+
+    def add_qpcr_measurement(self, ridx, tidx):
+        &#39;&#39;&#39;Add the qPCR measurement for subject index `ridx` and time index
+        `tidx` to 
+        &#39;&#39;&#39;
+        self.data_locs.append((ridx, tidx))
+
+    def initialize(self, value_option, low_option, high_option, proposal_option, 
+        target_acceptance_rate, tune, end_tune, value=None, low=None, high=None, 
+        proposal_var=None, delay=0):
+        &#39;&#39;&#39;Initialize the values and hyperparameters. The proposal truncation is 
+        always set to the same as the parameterization of the prior.
+
+        Parameters
+        ----------
+        value_option : str
+            How to initialize the value. Options:
+                &#39;auto&#39;, &#39;diffuse&#39;
+                    Set the value to 2.5
+                &#39;strong&#39;
+                    Set to be 50% of the data
+                &#39;manual&#39;
+                    `value` must also be specified
+        low_option : str
+            How to set the low parameter of the prior
+            &#39;auto&#39;, &#39;valid&#39;
+                Set to 2 so that the prior stays proper during inference
+            &#39;zero&#39;
+                Set to 0
+            &#39;manual&#39;
+                Specify the value with the parameter `low`
+        high_option : str
+            How to set the high parameter of the prior
+            &#39;auto&#39;, &#39;med&#39;
+                Set to 10 X the maximum in the set
+            &#39;high&#39;
+                Set to 100 X the maximum in the set
+            &#39;low&#39;
+                Set to 1 X the maximum in the set
+            &#39;manual&#39;
+                Set the value with the parameter `high`
+        proposal_option : str
+            How to initialize the proposal variance:
+                &#39;auto&#39;
+                    mean**2 / 100
+                &#39;manual&#39;
+                    `proposal_var` must also be supplied
+        &#39;&#39;&#39;
+        if not pl.isint(delay):
+            raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+        if delay &lt; 0:
+            raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+        self.delay = delay
+
+        self.qpcr_data = []
+        for ridx, tidx in self.data_locs:
+            t = self.G.data.given_timepoints[ridx][tidx]
+            self.qpcr_data = np.append(self.qpcr_data, 
+                self.G.data.qpcr[ridx][t].log_data)
+        
+        # Set the prior low
+        if not pl.isstr(low_option):
+            raise TypeError(&#39;`low_option` ({}) must be a str&#39;.format(type(low_option)))
+        if low_option == &#39;manual&#39;:
+            if not pl.isnumeric(low):
+                raise TypeError(&#39;`low` ({}) must be a numeric&#39;.format(type(low)))
+            if low &lt; 2:
+                raise ValueError(&#39;`low` ({}) must be &gt;= 2&#39;.format(low))
+        elif low_option in [&#39;valid&#39;, &#39;auto&#39;]:
+            low = 2
+        elif low_option == &#39;zero&#39;:
+            low = 0
+        else:
+            raise ValueError(&#39;`low_option` ({}) not recognized&#39;.format(low_option))
+        self.prior.low.override_value(low)  
+
+        # Set the prior high
+        if not pl.isstr(high_option):
+            raise TypeError(&#39;`high_option` ({}) must be a str&#39;.format(type(high_option)))
+        if high_option == &#39;manual&#39;:
+            if not pl.isnumeric(high):
+                raise TypeError(&#39;`high` ({}) must be a numeric&#39;.format(type(high)))
+        elif high_option in [&#39;med&#39;, &#39;auto&#39;]:
+            high = 10 * len(self.data_locs)
+        elif high_option == &#39;low&#39;:
+            high = len(self.data_locs)
+        elif high_option == &#39;high&#39;:
+            high = 100 * len(self.data_locs)
+        else:
+            raise ValueError(&#39;`high_option` ({}) not recognized&#39;.format(high_option))
+        if high &lt; self.prior.low.value:
+            raise ValueError(&#39;`high` ({}) must be &gt;= low ({})&#39;.format(high, 
+                self.prior.low.value))
+        self.prior.high.override_value(high)
+
+        # Set the value
+        if not pl.isstr(value_option):
+            raise TypeError(&#39;`value_option` ({}) must be a str&#39;.format(type(value_option)))
+        if value_option == &#39;manual&#39;:
+            if not pl.isnumeric(value):
+                raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(value)))
+        elif value_option in [&#39;auto&#39;, &#39;diffuse&#39;]:
+            value = 2.5
+        elif value_option == &#39;strong&#39;:
+            value = len(self.data_locs)
+        else:
+            raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
+        self.value = value
+        if self.value &lt;= self.prior.low.value or self.value &gt;= self.prior.high.value:
+            raise ValueError(&#39;`value` ({}) out of range ({})&#39;.format(self.value))
+
+        # Set the propsal parameters
+        if pl.isstr(target_acceptance_rate):
+            if target_acceptance_rate in [&#39;optimal&#39;, &#39;auto&#39;]:
+                target_acceptance_rate = 0.44
+            else:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) not recognized&#39;.format(
+                    target_acceptance_rate))
+        elif pl.isfloat(target_acceptance_rate):
+            if target_acceptance_rate &lt; 0 or target_acceptance_rate &gt; 1:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) out of range&#39;.format(
+                    target_acceptance_rate))
+        else:
+            raise TypeError(&#39;`target_acceptance_rate` ({}) type not recognized&#39;.format(
+                type(target_acceptance_rate)))
+        self.target_acceptance_rate = target_acceptance_rate
+        
+        if pl.isstr(tune):
+            if tune in [&#39;auto&#39;]:
+                tune = 50
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(tune))
+        elif pl.isint(tune):
+            if tune &lt; 0:
+                raise ValueError(&#39;`tune` ({}) must be &gt; 0&#39;.format(
+                    tune))
+        else:
+            raise TypeError(&#39;`tune` ({}) type not recognized&#39;.format(type(tune)))
+        self.tune = tune
+
+        if pl.isstr(end_tune):
+            if end_tune in [&#39;auto&#39;, &#39;half-burnin&#39;]:
+                end_tune = int(self.G.inference.burnin/2)
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(end_tune))
+        elif pl.isint(end_tune):
+            if end_tune &lt; 0 or end_tune &gt; self.G.inference.burnin:
+                raise ValueError(&#39;`end_tune` ({}) out of range (0, {})&#39;.format(
+                    end_tune, self.G.inference.burnin))
+        else:
+            raise TypeError(&#39;`end_tune` ({}) type not recognized&#39;.format(type(end_tune)))
+        self.end_tune = end_tune
+
+        # Set the proposal variance
+        if not pl.isstr(proposal_option):
+            raise TypeError(&#39;`proposal_option` ({}) must be a str&#39;.format(
+                type(proposal_option)))
+        elif proposal_option == &#39;manual&#39;:
+            if not pl.isnumeric(proposal_var):
+                raise TypeError(&#39;`proposal_var` ({}) must be a numeric&#39;.format(
+                    type(proposal_var)))
+            if proposal_var &lt;= 0:
+                raise ValueError(&#39;`proposal_var` ({}) not proper&#39;.format(proposal_var))
+        elif proposal_option in [&#39;auto&#39;]:
+            proposal_var = (self.value ** 2)/10
+        else:
+            raise ValueError(&#39;`proposal_option` ({}) not recognized&#39;.format(
+                proposal_option))
+        self.proposal.var.value = proposal_var
+        self.proposal.low = self.prior.low.value
+        self.proposal.high = self.prior.high.value
+
+    def update_var(self):
+        &#39;&#39;&#39;Update the variance of the proposal
+        &#39;&#39;&#39;
+        if self.sample_iter == 0:
+            self.temp_acceptances = 0
+            self.acceptances = np.zeros(self.G.inference.n_samples, dtype=bool)
+        
+        elif self.sample_iter &gt; self.end_tune:
+            # Don&#39;t do any more updates
+            return
+        
+        elif self.sample_iter % self.tune == 0:
+            # Update var
+            acceptance_rate = self.temp_acceptances / self.tune
+            if acceptance_rate &gt; self.target_acceptance_rate:
+                self.proposal.var.value *= 1.5
+            else:
+                self.proposal.var.value /= 1.5
+            self.temp_acceptances = 0
+
+    def update(self):
+        &#39;&#39;&#39;First we update the proposal (if necessary) and then we do a MH step
+        &#39;&#39;&#39;
+        self.update_var()
+        proposal_std = np.sqrt(self.proposal.var.value)
+
+        # Get the data
+        xs = []
+        for ridx, tidx in self.data_locs:
+            xs.append(self.G[REPRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
+
+        # Get the scale
+        scale = self.G[REPRNAMES.QPCR_SCALES].value[self.l].value
+
+        # Propose a new value for the dof
+        prev_dof = self.value
+        self.proposal.mean.value = self.value
+        new_dof = self.proposal.sample()
+
+        if new_dof &lt; self.prior.low.value or new_dof &gt; self.prior.high.value:
+            # Automatic reject
+            self.value = prev_dof
+            return
+
+        # Calculate the target distribution log likelihood
+        prev_target_ll = 0
+        for x in xs:
+            prev_target_ll += pl.random.sics.logpdf(value=x,
+                scale=scale, dof=prev_dof)
+        new_target_ll = 0
+        for x in xs:
+            new_target_ll += pl.random.sics.logpdf(value=x,
+                scale=scale, dof=new_dof)
+
+        # Normalize by the loglikelihood of the proposal
+        prev_prop_ll = pl.random.truncnormal.logpdf(
+            value=prev_dof, mean=new_dof, std=proposal_std,
+            low=self.proposal.low, high=self.proposal.high)
+        new_prop_ll = pl.random.truncnormal.logpdf(
+            value=new_dof, mean=prev_dof, std=proposal_std,
+            low=self.proposal.low, high=self.proposal.high)
+
+        # Accept or reject
+        r = (new_target_ll - prev_prop_ll) - \
+            (prev_target_ll - new_prop_ll)
+        u = np.log(pl.random.misc.fast_sample_standard_uniform())
+
+        # print(&#39;\n\n\n{} prior_mean\n----------&#39;.format(self.child_name))
+        # print(&#39;x&#39;, x)
+        # print(&#39;prev_dof&#39;, prev_dof)
+        # print(&#39;prev_target_ll&#39;, prev_target_ll)
+        # print(&#39;prev_prop_ll&#39;, prev_prop_ll)
+        # print(&#39;new dof&#39;, new_dof)
+        # print(&#39;new_target_ll&#39;, new_target_ll)
+        # print(&#39;new_prop_ll&#39;, new_prop_ll)
+        # print(&#39;\nr&#39;, r, u)
+            
+        if r &gt;= u:
+            self.acceptances[self.sample_iter] = True
+            self.value = new_dof
+            self.temp_acceptances += 1
+        else:
+            self.value = prev_dof</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.variables.Uniform" href="pylab/variables.html#mdsine2.pylab.variables.Uniform">Uniform</a></li>
+<li><a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a></li>
+<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
+<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+<li>mdsine2.pylab.variables._BaseArithmeticClass</li>
+<li><a title="mdsine2.pylab.base.Traceable" href="pylab/base.html#mdsine2.pylab.base.Traceable">Traceable</a></li>
+<li>mdsine2.pylab.variables._RandomBase</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.qpcr.qPCRDegsOfFreedomL.add_qpcr_measurement"><code class="name flex">
+<span>def <span class="ident">add_qpcr_measurement</span></span>(<span>self, ridx, tidx)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Add the qPCR measurement for subject index <code>ridx</code> and time index
+<code>tidx</code> to</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_qpcr_measurement(self, ridx, tidx):
+    &#39;&#39;&#39;Add the qPCR measurement for subject index `ridx` and time index
+    `tidx` to 
+    &#39;&#39;&#39;
+    self.data_locs.append((ridx, tidx))</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.qpcr.qPCRDegsOfFreedomL.initialize"><code class="name flex">
+<span>def <span class="ident">initialize</span></span>(<span>self, value_option, low_option, high_option, proposal_option, target_acceptance_rate, tune, end_tune, value=None, low=None, high=None, proposal_var=None, delay=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialize the values and hyperparameters. The proposal truncation is
+always set to the same as the parameterization of the prior.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to initialize the value. Options:
+'auto', 'diffuse'
+Set the value to 2.5
+'strong'
+Set to be 50% of the data
+'manual'
+<code>value</code> must also be specified</dd>
+<dt><strong><code>low_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to set the low parameter of the prior
+'auto', 'valid'
+Set to 2 so that the prior stays proper during inference
+'zero'
+Set to 0
+'manual'
+Specify the value with the parameter <code>low</code></dd>
+<dt><strong><code>high_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to set the high parameter of the prior
+'auto', 'med'
+Set to 10 X the maximum in the set
+'high'
+Set to 100 X the maximum in the set
+'low'
+Set to 1 X the maximum in the set
+'manual'
+Set the value with the parameter <code>high</code></dd>
+<dt><strong><code>proposal_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to initialize the proposal variance:
+'auto'
+mean**2 / 100
+'manual'
+<code>proposal_var</code> must also be supplied</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def initialize(self, value_option, low_option, high_option, proposal_option, 
+    target_acceptance_rate, tune, end_tune, value=None, low=None, high=None, 
+    proposal_var=None, delay=0):
+    &#39;&#39;&#39;Initialize the values and hyperparameters. The proposal truncation is 
+    always set to the same as the parameterization of the prior.
+
+    Parameters
+    ----------
+    value_option : str
+        How to initialize the value. Options:
+            &#39;auto&#39;, &#39;diffuse&#39;
+                Set the value to 2.5
+            &#39;strong&#39;
+                Set to be 50% of the data
+            &#39;manual&#39;
+                `value` must also be specified
+    low_option : str
+        How to set the low parameter of the prior
+        &#39;auto&#39;, &#39;valid&#39;
+            Set to 2 so that the prior stays proper during inference
+        &#39;zero&#39;
+            Set to 0
+        &#39;manual&#39;
+            Specify the value with the parameter `low`
+    high_option : str
+        How to set the high parameter of the prior
+        &#39;auto&#39;, &#39;med&#39;
+            Set to 10 X the maximum in the set
+        &#39;high&#39;
+            Set to 100 X the maximum in the set
+        &#39;low&#39;
+            Set to 1 X the maximum in the set
+        &#39;manual&#39;
+            Set the value with the parameter `high`
+    proposal_option : str
+        How to initialize the proposal variance:
+            &#39;auto&#39;
+                mean**2 / 100
+            &#39;manual&#39;
+                `proposal_var` must also be supplied
+    &#39;&#39;&#39;
+    if not pl.isint(delay):
+        raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+    if delay &lt; 0:
+        raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+    self.delay = delay
+
+    self.qpcr_data = []
+    for ridx, tidx in self.data_locs:
+        t = self.G.data.given_timepoints[ridx][tidx]
+        self.qpcr_data = np.append(self.qpcr_data, 
+            self.G.data.qpcr[ridx][t].log_data)
+    
+    # Set the prior low
+    if not pl.isstr(low_option):
+        raise TypeError(&#39;`low_option` ({}) must be a str&#39;.format(type(low_option)))
+    if low_option == &#39;manual&#39;:
+        if not pl.isnumeric(low):
+            raise TypeError(&#39;`low` ({}) must be a numeric&#39;.format(type(low)))
+        if low &lt; 2:
+            raise ValueError(&#39;`low` ({}) must be &gt;= 2&#39;.format(low))
+    elif low_option in [&#39;valid&#39;, &#39;auto&#39;]:
+        low = 2
+    elif low_option == &#39;zero&#39;:
+        low = 0
+    else:
+        raise ValueError(&#39;`low_option` ({}) not recognized&#39;.format(low_option))
+    self.prior.low.override_value(low)  
+
+    # Set the prior high
+    if not pl.isstr(high_option):
+        raise TypeError(&#39;`high_option` ({}) must be a str&#39;.format(type(high_option)))
+    if high_option == &#39;manual&#39;:
+        if not pl.isnumeric(high):
+            raise TypeError(&#39;`high` ({}) must be a numeric&#39;.format(type(high)))
+    elif high_option in [&#39;med&#39;, &#39;auto&#39;]:
+        high = 10 * len(self.data_locs)
+    elif high_option == &#39;low&#39;:
+        high = len(self.data_locs)
+    elif high_option == &#39;high&#39;:
+        high = 100 * len(self.data_locs)
+    else:
+        raise ValueError(&#39;`high_option` ({}) not recognized&#39;.format(high_option))
+    if high &lt; self.prior.low.value:
+        raise ValueError(&#39;`high` ({}) must be &gt;= low ({})&#39;.format(high, 
+            self.prior.low.value))
+    self.prior.high.override_value(high)
+
+    # Set the value
+    if not pl.isstr(value_option):
+        raise TypeError(&#39;`value_option` ({}) must be a str&#39;.format(type(value_option)))
+    if value_option == &#39;manual&#39;:
+        if not pl.isnumeric(value):
+            raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(value)))
+    elif value_option in [&#39;auto&#39;, &#39;diffuse&#39;]:
+        value = 2.5
+    elif value_option == &#39;strong&#39;:
+        value = len(self.data_locs)
+    else:
+        raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
+    self.value = value
+    if self.value &lt;= self.prior.low.value or self.value &gt;= self.prior.high.value:
+        raise ValueError(&#39;`value` ({}) out of range ({})&#39;.format(self.value))
+
+    # Set the propsal parameters
+    if pl.isstr(target_acceptance_rate):
+        if target_acceptance_rate in [&#39;optimal&#39;, &#39;auto&#39;]:
+            target_acceptance_rate = 0.44
+        else:
+            raise ValueError(&#39;`target_acceptance_rate` ({}) not recognized&#39;.format(
+                target_acceptance_rate))
+    elif pl.isfloat(target_acceptance_rate):
+        if target_acceptance_rate &lt; 0 or target_acceptance_rate &gt; 1:
+            raise ValueError(&#39;`target_acceptance_rate` ({}) out of range&#39;.format(
+                target_acceptance_rate))
+    else:
+        raise TypeError(&#39;`target_acceptance_rate` ({}) type not recognized&#39;.format(
+            type(target_acceptance_rate)))
+    self.target_acceptance_rate = target_acceptance_rate
+    
+    if pl.isstr(tune):
+        if tune in [&#39;auto&#39;]:
+            tune = 50
+        else:
+            raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(tune))
+    elif pl.isint(tune):
+        if tune &lt; 0:
+            raise ValueError(&#39;`tune` ({}) must be &gt; 0&#39;.format(
+                tune))
+    else:
+        raise TypeError(&#39;`tune` ({}) type not recognized&#39;.format(type(tune)))
+    self.tune = tune
+
+    if pl.isstr(end_tune):
+        if end_tune in [&#39;auto&#39;, &#39;half-burnin&#39;]:
+            end_tune = int(self.G.inference.burnin/2)
+        else:
+            raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(end_tune))
+    elif pl.isint(end_tune):
+        if end_tune &lt; 0 or end_tune &gt; self.G.inference.burnin:
+            raise ValueError(&#39;`end_tune` ({}) out of range (0, {})&#39;.format(
+                end_tune, self.G.inference.burnin))
+    else:
+        raise TypeError(&#39;`end_tune` ({}) type not recognized&#39;.format(type(end_tune)))
+    self.end_tune = end_tune
+
+    # Set the proposal variance
+    if not pl.isstr(proposal_option):
+        raise TypeError(&#39;`proposal_option` ({}) must be a str&#39;.format(
+            type(proposal_option)))
+    elif proposal_option == &#39;manual&#39;:
+        if not pl.isnumeric(proposal_var):
+            raise TypeError(&#39;`proposal_var` ({}) must be a numeric&#39;.format(
+                type(proposal_var)))
+        if proposal_var &lt;= 0:
+            raise ValueError(&#39;`proposal_var` ({}) not proper&#39;.format(proposal_var))
+    elif proposal_option in [&#39;auto&#39;]:
+        proposal_var = (self.value ** 2)/10
+    else:
+        raise ValueError(&#39;`proposal_option` ({}) not recognized&#39;.format(
+            proposal_option))
+    self.proposal.var.value = proposal_var
+    self.proposal.low = self.prior.low.value
+    self.proposal.high = self.prior.high.value</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.qpcr.qPCRDegsOfFreedomL.set_shape"><code class="name flex">
+<span>def <span class="ident">set_shape</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Set the shape of the array (how many qPCR variances this is a prior for)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def set_shape(self):
+    &#39;&#39;&#39;Set the shape of the array (how many qPCR variances this is a prior for)
+    &#39;&#39;&#39;
+    self.set_value_shape(shape=(len(self.data_locs), ))</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.qpcr.qPCRDegsOfFreedomL.update"><code class="name flex">
+<span>def <span class="ident">update</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>First we update the proposal (if necessary) and then we do a MH step</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update(self):
+    &#39;&#39;&#39;First we update the proposal (if necessary) and then we do a MH step
+    &#39;&#39;&#39;
+    self.update_var()
+    proposal_std = np.sqrt(self.proposal.var.value)
+
+    # Get the data
+    xs = []
+    for ridx, tidx in self.data_locs:
+        xs.append(self.G[REPRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
+
+    # Get the scale
+    scale = self.G[REPRNAMES.QPCR_SCALES].value[self.l].value
+
+    # Propose a new value for the dof
+    prev_dof = self.value
+    self.proposal.mean.value = self.value
+    new_dof = self.proposal.sample()
+
+    if new_dof &lt; self.prior.low.value or new_dof &gt; self.prior.high.value:
+        # Automatic reject
+        self.value = prev_dof
+        return
+
+    # Calculate the target distribution log likelihood
+    prev_target_ll = 0
+    for x in xs:
+        prev_target_ll += pl.random.sics.logpdf(value=x,
+            scale=scale, dof=prev_dof)
+    new_target_ll = 0
+    for x in xs:
+        new_target_ll += pl.random.sics.logpdf(value=x,
+            scale=scale, dof=new_dof)
+
+    # Normalize by the loglikelihood of the proposal
+    prev_prop_ll = pl.random.truncnormal.logpdf(
+        value=prev_dof, mean=new_dof, std=proposal_std,
+        low=self.proposal.low, high=self.proposal.high)
+    new_prop_ll = pl.random.truncnormal.logpdf(
+        value=new_dof, mean=prev_dof, std=proposal_std,
+        low=self.proposal.low, high=self.proposal.high)
+
+    # Accept or reject
+    r = (new_target_ll - prev_prop_ll) - \
+        (prev_target_ll - new_prop_ll)
+    u = np.log(pl.random.misc.fast_sample_standard_uniform())
+
+    # print(&#39;\n\n\n{} prior_mean\n----------&#39;.format(self.child_name))
+    # print(&#39;x&#39;, x)
+    # print(&#39;prev_dof&#39;, prev_dof)
+    # print(&#39;prev_target_ll&#39;, prev_target_ll)
+    # print(&#39;prev_prop_ll&#39;, prev_prop_ll)
+    # print(&#39;new dof&#39;, new_dof)
+    # print(&#39;new_target_ll&#39;, new_target_ll)
+    # print(&#39;new_prop_ll&#39;, new_prop_ll)
+    # print(&#39;\nr&#39;, r, u)
+        
+    if r &gt;= u:
+        self.acceptances[self.sample_iter] = True
+        self.value = new_dof
+        self.temp_acceptances += 1
+    else:
+        self.value = prev_dof</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.qpcr.qPCRDegsOfFreedomL.update_var"><code class="name flex">
+<span>def <span class="ident">update_var</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Update the variance of the proposal</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update_var(self):
+    &#39;&#39;&#39;Update the variance of the proposal
+    &#39;&#39;&#39;
+    if self.sample_iter == 0:
+        self.temp_acceptances = 0
+        self.acceptances = np.zeros(self.G.inference.n_samples, dtype=bool)
+    
+    elif self.sample_iter &gt; self.end_tune:
+        # Don&#39;t do any more updates
+        return
+    
+    elif self.sample_iter % self.tune == 0:
+        # Update var
+        acceptance_rate = self.temp_acceptances / self.tune
+        if acceptance_rate &gt; self.target_acceptance_rate:
+            self.proposal.var.value *= 1.5
+        else:
+            self.proposal.var.value /= 1.5
+        self.temp_acceptances = 0</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.variables.Uniform" href="pylab/variables.html#mdsine2.pylab.variables.Uniform">Uniform</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.variables.Uniform.T" href="pylab/variables.html#mdsine2.pylab.variables.Variable.T">T</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.add_init_value" href="pylab/variables.html#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.add_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.cdf" href="pylab/variables.html#mdsine2.pylab.variables.Uniform.cdf">cdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.get_iter" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_iter">get_iter</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.get_trace_from_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_trace_from_disk">get_trace_from_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.logcdf" href="pylab/variables.html#mdsine2.pylab.variables.Uniform.logcdf">logcdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.logpdf" href="pylab/variables.html#mdsine2.pylab.variables.Uniform.logpdf">logpdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.overwrite_entire_trace_on_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.pdf" href="pylab/variables.html#mdsine2.pylab.variables.Uniform.pdf">pdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.sample" href="pylab/variables.html#mdsine2.pylab.variables.Uniform.sample">sample</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.set_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.set_value_shape" href="pylab/variables.html#mdsine2.pylab.variables.Variable.set_value_shape">set_value_shape</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.qpcr.qPCRDegsOfFreedoms"><code class="flex name class">
+<span>class <span class="ident">qPCRDegsOfFreedoms</span></span>
+<span>(</span><span>L, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Aggregation class for a degree of freedom parameter of qPCR variance</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>L</code></strong> :&ensp;<code>int</code></dt>
+<dd>How many qPCR variance groupings there are</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class qPCRDegsOfFreedoms(_qPCRPriorAggVar):
+    &#39;&#39;&#39;Aggregation class for a degree of freedom parameter of qPCR variance
+
+    Parameters
+    ----------
+    L : int
+        How many qPCR variance groupings there are
+    &#39;&#39;&#39;
+    def __init__(self, L, **kwargs):
+        kwargs[&#39;name&#39;] = STRNAMES.QPCR_DOFS
+        _qPCRPriorAggVar.__init__(self, L=L, child=qPCRDegsOfFreedomL, **kwargs)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>mdsine2.qpcr._qPCRPriorAggVar</li>
+<li>mdsine2.qpcr._qPCRBase</li>
+<li><a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a></li>
+<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
+<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+<li>mdsine2.pylab.variables._BaseArithmeticClass</li>
+<li><a title="mdsine2.pylab.base.Traceable" href="pylab/base.html#mdsine2.pylab.base.Traceable">Traceable</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.variables.Variable.T" href="pylab/variables.html#mdsine2.pylab.variables.Variable.T">T</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="pylab/variables.html#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.get_iter" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_iter">get_iter</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.get_trace_from_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_trace_from_disk">get_trace_from_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.set_value_shape" href="pylab/variables.html#mdsine2.pylab.variables.Variable.set_value_shape">set_value_shape</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.qpcr.qPCRScaleL"><code class="flex name class">
+<span>class <span class="ident">qPCRScaleL</span></span>
+<span>(</span><span>L, l, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Posterior for a single qPCR scale set</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class qPCRScaleL(pl.variables.SICS):
+    &#39;&#39;&#39;Posterior for a single qPCR scale set
+    &#39;&#39;&#39;
+    def __init__(self, L, l, **kwargs):
+
+        self.L = L
+        self.l = l
+        kwargs[&#39;name&#39;] = STRNAMES.QPCR_SCALES + &#39;_{}&#39;.format(l)
+        pl.variables.Uniform.__init__(self, **kwargs)
+
+        self.data_locs = []
+        self.proposal = pl.variables.TruncatedNormal(mean=None, var=None, value=None)
+
+    def __str__(self):
+        # If this fails, it is because we are dividing by 0 sampler_iter
+        # If which case we just return the value 
+        try:
+            s = &#39;Value: {}, Acceptance rate: {}&#39;.format(
+                self.value, np.mean(self.acceptances[
+                    np.max([self.sample_iter-50, 0]):self.sample_iter]))
+        except:
+            s = str(self.value)
+        return s
+
+    def set_shape(self):
+        &#39;&#39;&#39;Set the shape of the array (how many qPCR variances this is a prior for)
+        &#39;&#39;&#39;
+        self.set_value_shape(shape=(len(self.data_locs), ))
+
+    def add_qpcr_measurement(self, ridx, tidx):
+        &#39;&#39;&#39;Add the qPCR measurement for subject index `ridx` and time index
+        `tidx` to 
+        &#39;&#39;&#39;
+        self.data_locs.append((ridx, tidx))
+
+    def initialize(self, value_option, scale_option, dof_option, proposal_option, 
+        target_acceptance_rate, tune, end_tune, value=None, dof=None, scale=None,
+        proposal_var=None, delay=0):
+        &#39;&#39;&#39;Initialize the values and hyperparameters
+
+        Parameters
+        ----------
+        value_option : str
+            How to initialize the value. Options:
+                &#39;auto&#39;, &#39;prior-mean&#39;
+                    Set to the prior mean
+                &#39;manual&#39;
+                    `value` must also be specified
+        dof_option : str
+            How to set the prior dof
+                &#39;auto&#39;, &#39;diffuse&#39;
+                    2.5
+                &#39;manual&#39;:
+                    set with `dof`
+        scale_option : str
+            How to set the prior scale
+                &#39;empirical&#39;, &#39;auto&#39;
+                    Set to the variance of the data assigned to the set
+                &#39;manual&#39;
+                    Set with the parameter `scale`
+        proposal_option : str
+            How to initialize the proposal variance:
+                &#39;auto&#39;
+                    mean**2 / 100
+                &#39;manual&#39;
+                    `proposal_var` must also be supplied     
+        &#39;&#39;&#39;
+        if not pl.isint(delay):
+            raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+        if delay &lt; 0:
+            raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+        self.delay = delay
+
+        self.qpcr_data = []
+        for ridx, tidx in self.data_locs:
+            t = self.G.data.given_timepoints[ridx][tidx]
+            self.qpcr_data = np.append(self.qpcr_data, 
+                self.G.data.qpcr[ridx][t].log_data)
+
+        # Set the prior dof
+        if not pl.isstr(dof_option):
+            raise TypeError(&#39;`dof_option` ({}) must be a str&#39;.format(type(dof_option)))
+        if dof_option == &#39;manual&#39;:
+            if not pl.isnumeric(dof):
+                raise TypeError(&#39;`dof` ({}) must be a numeric&#39;.format(type(dof)))
+            if dof &lt; 2:
+                raise ValueError(&#39;`dof` ({}) must be &gt;= 2&#39;.format(dof))
+        elif dof_option in [&#39;diffuse&#39;, &#39;auto&#39;]:
+            dof = 2.5
+        else:
+            raise ValueError(&#39;`dof_option` ({}) not recognized&#39;.format(dof_option))
+        if dof &lt; 2:
+            raise ValueError(&#39;`dof` ({}) must be strictly larger than 2 to be a proper&#39; \
+                &#39; prior&#39;.format(dof))
+        self.prior.dof.override_value(dof)
+
+        # Set the prior scale
+        if not pl.isstr(scale_option):
+            raise TypeError(&#39;`scale_option` ({}) must be a str&#39;.format(type(scale_option)))
+        if scale_option == &#39;manual&#39;:
+            if not pl.isnumeric(scale):
+                raise TypeError(&#39;`scale` ({}) must be a numeric&#39;.format(type(scale)))
+            if scale &lt;= 0:
+                raise ValueError(&#39;`scale` ({}) must be positive&#39;.format(scale))
+        elif scale_option in [&#39;auto&#39;, &#39;empirical&#39;]:
+            v = np.var(self.qpcr_data)
+            scale = v * (self.prior.dof.value - 2) / self.prior.dof.value
+        else:
+            raise ValueError(&#39;`scale_option` ({}) not recognized&#39;.format(scale_option))
+        self.prior.scale.override_value(scale)
+
+        # Set the value
+        if not pl.isstr(value_option):
+            raise TypeError(&#39;`value_option` ({}) must be a str&#39;.format(type(value_option)))
+        if value_option == &#39;manual&#39;:
+            if not pl.isnumeric(value):
+                raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(value)))
+        elif value_option in [&#39;auto&#39;, &#39;prior-mean&#39;]:
+            value = self.prior.mean()
+        else:
+            raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
+        self.value = value
+
+        # Set the propsal parameters
+        if pl.isstr(target_acceptance_rate):
+            if target_acceptance_rate in [&#39;optimal&#39;, &#39;auto&#39;]:
+                target_acceptance_rate = 0.44
+            else:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) not recognized&#39;.format(
+                    target_acceptance_rate))
+        elif pl.isfloat(target_acceptance_rate):
+            if target_acceptance_rate &lt; 0 or target_acceptance_rate &gt; 1:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) out of range&#39;.format(
+                    target_acceptance_rate))
+        else:
+            raise TypeError(&#39;`target_acceptance_rate` ({}) type not recognized&#39;.format(
+                type(target_acceptance_rate)))
+        self.target_acceptance_rate = target_acceptance_rate
+
+        if pl.isstr(tune):
+            if tune in [&#39;auto&#39;]:
+                tune = 50
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(tune))
+        elif pl.isint(tune):
+            if tune &lt; 0:
+                raise ValueError(&#39;`tune` ({}) must be &gt; 0&#39;.format(
+                    tune))
+        else:
+            raise TypeError(&#39;`tune` ({}) type not recognized&#39;.format(type(tune)))
+        self.tune = tune
+
+        if pl.isstr(end_tune):
+            if end_tune in [&#39;auto&#39;, &#39;half-burnin&#39;]:
+                end_tune = int(self.G.inference.burnin/2)
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(end_tune))
+        elif pl.isint(end_tune):
+            if end_tune &lt; 0 or end_tune &gt; self.G.inference.burnin:
+                raise ValueError(&#39;`end_tune` ({}) out of range (0, {})&#39;.format(
+                    end_tune, self.G.inference.burnin))
+        else:
+            raise TypeError(&#39;`end_tune` ({}) type not recognized&#39;.format(type(end_tune)))
+        self.end_tune = end_tune
+
+        # Set the proposal variance
+        if not pl.isstr(proposal_option):
+            raise TypeError(&#39;`proposal_option` ({}) must be a str&#39;.format(
+                type(proposal_option)))
+        elif proposal_option == &#39;manual&#39;:
+            if not pl.isnumeric(proposal_var):
+                raise TypeError(&#39;`proposal_var` ({}) must be a numeric&#39;.format(
+                    type(proposal_var)))
+            if proposal_var &lt;= 0:
+                raise ValueError(&#39;`proposal_var` ({}) not proper&#39;.format(proposal_var))
+        elif proposal_option in [&#39;auto&#39;]:
+            proposal_var = (self.value ** 2)/10
+        else:
+            raise ValueError(&#39;`proposal_option` ({}) not recognized&#39;.format(
+                proposal_option))
+        self.proposal.var.value = proposal_var
+        self.proposal.low = 0
+        self.proposal.high = float(&#39;inf&#39;)
+
+    def update_var(self):
+        &#39;&#39;&#39;Update the variance of the proposal
+        &#39;&#39;&#39;
+        if self.sample_iter == 0:
+            self.temp_acceptances = 0
+            self.acceptances = np.zeros(self.G.inference.n_samples, dtype=bool)
+        
+        elif self.sample_iter &gt; self.end_tune:
+            # Don&#39;t do any more updates
+            return
+        
+        elif self.sample_iter % self.tune == 0:
+            # Update var
+            acceptance_rate = self.temp_acceptances / self.tune
+            if acceptance_rate &gt; self.target_acceptance_rate:
+                self.proposal.var.value *= 1.5
+            else:
+                self.proposal.var.value /= 1.5
+            self.temp_acceptances = 0
+
+    def update(self):
+        &#39;&#39;&#39;First we update the proposal (if necessary) and then we do a MH step
+        &#39;&#39;&#39;
+        self.update_var()
+        proposal_std = np.sqrt(self.proposal.var.value)
+
+        # Get the data
+        xs = []
+        for ridx, tidx in self.data_locs:
+            xs.append(self.G[REPRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
+
+        # Get the dof
+        dof = self.G[REPRNAMES.QPCR_DOFS].value[self.l].value
+
+        # Propose a new value for the scale
+        prev_scale = self.value
+        self.proposal.mean.value = self.value
+        new_scale = self.proposal.sample()
+
+        # Calculate the target distribution log likelihood
+        prev_target_ll = pl.random.sics.logpdf(value=prev_scale, 
+            dof=self.prior.dof.value, scale=self.prior.scale.value)
+        for x in xs:
+            prev_target_ll += pl.random.sics.logpdf(value=x,
+                scale=prev_scale, dof=dof)
+        new_target_ll = pl.random.sics.logpdf(value=new_scale, 
+            dof=self.prior.dof.value, scale=self.prior.scale.value)
+        for x in xs:
+            new_target_ll += pl.random.sics.logpdf(value=x,
+                scale=new_scale, dof=dof)
+
+        # Normalize by the loglikelihood of the proposal
+        prev_prop_ll = pl.random.truncnormal.logpdf(
+            value=prev_scale, mean=new_scale, std=proposal_std,
+            low=self.proposal.low, high=self.proposal.high)
+        new_prop_ll = pl.random.truncnormal.logpdf(
+            value=new_scale, mean=prev_scale, std=proposal_std,
+            low=self.proposal.low, high=self.proposal.high)
+
+        # Accept or reject
+        r = (new_target_ll - prev_prop_ll) - \
+            (prev_target_ll - new_prop_ll)
+        u = np.log(pl.random.misc.fast_sample_standard_uniform())
+
+        # print(&#39;\n\n\n{} prior_mean\n----------&#39;.format(self.child_name))
+        # print(&#39;x&#39;, x)
+        # print(&#39;prev_scale&#39;, prev_scale)
+        # print(&#39;prev_target_ll&#39;, prev_target_ll)
+        # print(&#39;prev_prop_ll&#39;, prev_prop_ll)
+        # print(&#39;new scale&#39;, new_scale)
+        # print(&#39;new_target_ll&#39;, new_target_ll)
+        # print(&#39;new_prop_ll&#39;, new_prop_ll)
+        # print(&#39;\nr&#39;, r, u)
+            
+        if r &gt;= u:
+            self.acceptances[self.sample_iter] = True
+            self.value = new_scale
+            self.temp_acceptances += 1
+        else:
+            self.value = prev_scale</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.variables.SICS" href="pylab/variables.html#mdsine2.pylab.variables.SICS">SICS</a></li>
+<li><a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a></li>
+<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
+<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+<li>mdsine2.pylab.variables._BaseArithmeticClass</li>
+<li><a title="mdsine2.pylab.base.Traceable" href="pylab/base.html#mdsine2.pylab.base.Traceable">Traceable</a></li>
+<li>mdsine2.pylab.variables._RandomBase</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.qpcr.qPCRScaleL.add_qpcr_measurement"><code class="name flex">
+<span>def <span class="ident">add_qpcr_measurement</span></span>(<span>self, ridx, tidx)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Add the qPCR measurement for subject index <code>ridx</code> and time index
+<code>tidx</code> to</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_qpcr_measurement(self, ridx, tidx):
+    &#39;&#39;&#39;Add the qPCR measurement for subject index `ridx` and time index
+    `tidx` to 
+    &#39;&#39;&#39;
+    self.data_locs.append((ridx, tidx))</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.qpcr.qPCRScaleL.initialize"><code class="name flex">
+<span>def <span class="ident">initialize</span></span>(<span>self, value_option, scale_option, dof_option, proposal_option, target_acceptance_rate, tune, end_tune, value=None, dof=None, scale=None, proposal_var=None, delay=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialize the values and hyperparameters</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to initialize the value. Options:
+'auto', 'prior-mean'
+Set to the prior mean
+'manual'
+<code>value</code> must also be specified</dd>
+<dt><strong><code>dof_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to set the prior dof
+'auto', 'diffuse'
+2.5
+'manual':
+set with <code>dof</code></dd>
+<dt><strong><code>scale_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to set the prior scale
+'empirical', 'auto'
+Set to the variance of the data assigned to the set
+'manual'
+Set with the parameter <code>scale</code></dd>
+<dt><strong><code>proposal_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to initialize the proposal variance:
+'auto'
+mean**2 / 100
+'manual'
+<code>proposal_var</code> must also be supplied</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def initialize(self, value_option, scale_option, dof_option, proposal_option, 
+    target_acceptance_rate, tune, end_tune, value=None, dof=None, scale=None,
+    proposal_var=None, delay=0):
+    &#39;&#39;&#39;Initialize the values and hyperparameters
+
+    Parameters
+    ----------
+    value_option : str
+        How to initialize the value. Options:
+            &#39;auto&#39;, &#39;prior-mean&#39;
+                Set to the prior mean
+            &#39;manual&#39;
+                `value` must also be specified
+    dof_option : str
+        How to set the prior dof
+            &#39;auto&#39;, &#39;diffuse&#39;
+                2.5
+            &#39;manual&#39;:
+                set with `dof`
+    scale_option : str
+        How to set the prior scale
+            &#39;empirical&#39;, &#39;auto&#39;
+                Set to the variance of the data assigned to the set
+            &#39;manual&#39;
+                Set with the parameter `scale`
+    proposal_option : str
+        How to initialize the proposal variance:
+            &#39;auto&#39;
+                mean**2 / 100
+            &#39;manual&#39;
+                `proposal_var` must also be supplied     
+    &#39;&#39;&#39;
+    if not pl.isint(delay):
+        raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+    if delay &lt; 0:
+        raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+    self.delay = delay
+
+    self.qpcr_data = []
+    for ridx, tidx in self.data_locs:
+        t = self.G.data.given_timepoints[ridx][tidx]
+        self.qpcr_data = np.append(self.qpcr_data, 
+            self.G.data.qpcr[ridx][t].log_data)
+
+    # Set the prior dof
+    if not pl.isstr(dof_option):
+        raise TypeError(&#39;`dof_option` ({}) must be a str&#39;.format(type(dof_option)))
+    if dof_option == &#39;manual&#39;:
+        if not pl.isnumeric(dof):
+            raise TypeError(&#39;`dof` ({}) must be a numeric&#39;.format(type(dof)))
+        if dof &lt; 2:
+            raise ValueError(&#39;`dof` ({}) must be &gt;= 2&#39;.format(dof))
+    elif dof_option in [&#39;diffuse&#39;, &#39;auto&#39;]:
+        dof = 2.5
+    else:
+        raise ValueError(&#39;`dof_option` ({}) not recognized&#39;.format(dof_option))
+    if dof &lt; 2:
+        raise ValueError(&#39;`dof` ({}) must be strictly larger than 2 to be a proper&#39; \
+            &#39; prior&#39;.format(dof))
+    self.prior.dof.override_value(dof)
+
+    # Set the prior scale
+    if not pl.isstr(scale_option):
+        raise TypeError(&#39;`scale_option` ({}) must be a str&#39;.format(type(scale_option)))
+    if scale_option == &#39;manual&#39;:
+        if not pl.isnumeric(scale):
+            raise TypeError(&#39;`scale` ({}) must be a numeric&#39;.format(type(scale)))
+        if scale &lt;= 0:
+            raise ValueError(&#39;`scale` ({}) must be positive&#39;.format(scale))
+    elif scale_option in [&#39;auto&#39;, &#39;empirical&#39;]:
+        v = np.var(self.qpcr_data)
+        scale = v * (self.prior.dof.value - 2) / self.prior.dof.value
+    else:
+        raise ValueError(&#39;`scale_option` ({}) not recognized&#39;.format(scale_option))
+    self.prior.scale.override_value(scale)
+
+    # Set the value
+    if not pl.isstr(value_option):
+        raise TypeError(&#39;`value_option` ({}) must be a str&#39;.format(type(value_option)))
+    if value_option == &#39;manual&#39;:
+        if not pl.isnumeric(value):
+            raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(value)))
+    elif value_option in [&#39;auto&#39;, &#39;prior-mean&#39;]:
+        value = self.prior.mean()
+    else:
+        raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
+    self.value = value
+
+    # Set the propsal parameters
+    if pl.isstr(target_acceptance_rate):
+        if target_acceptance_rate in [&#39;optimal&#39;, &#39;auto&#39;]:
+            target_acceptance_rate = 0.44
+        else:
+            raise ValueError(&#39;`target_acceptance_rate` ({}) not recognized&#39;.format(
+                target_acceptance_rate))
+    elif pl.isfloat(target_acceptance_rate):
+        if target_acceptance_rate &lt; 0 or target_acceptance_rate &gt; 1:
+            raise ValueError(&#39;`target_acceptance_rate` ({}) out of range&#39;.format(
+                target_acceptance_rate))
+    else:
+        raise TypeError(&#39;`target_acceptance_rate` ({}) type not recognized&#39;.format(
+            type(target_acceptance_rate)))
+    self.target_acceptance_rate = target_acceptance_rate
+
+    if pl.isstr(tune):
+        if tune in [&#39;auto&#39;]:
+            tune = 50
+        else:
+            raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(tune))
+    elif pl.isint(tune):
+        if tune &lt; 0:
+            raise ValueError(&#39;`tune` ({}) must be &gt; 0&#39;.format(
+                tune))
+    else:
+        raise TypeError(&#39;`tune` ({}) type not recognized&#39;.format(type(tune)))
+    self.tune = tune
+
+    if pl.isstr(end_tune):
+        if end_tune in [&#39;auto&#39;, &#39;half-burnin&#39;]:
+            end_tune = int(self.G.inference.burnin/2)
+        else:
+            raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(end_tune))
+    elif pl.isint(end_tune):
+        if end_tune &lt; 0 or end_tune &gt; self.G.inference.burnin:
+            raise ValueError(&#39;`end_tune` ({}) out of range (0, {})&#39;.format(
+                end_tune, self.G.inference.burnin))
+    else:
+        raise TypeError(&#39;`end_tune` ({}) type not recognized&#39;.format(type(end_tune)))
+    self.end_tune = end_tune
+
+    # Set the proposal variance
+    if not pl.isstr(proposal_option):
+        raise TypeError(&#39;`proposal_option` ({}) must be a str&#39;.format(
+            type(proposal_option)))
+    elif proposal_option == &#39;manual&#39;:
+        if not pl.isnumeric(proposal_var):
+            raise TypeError(&#39;`proposal_var` ({}) must be a numeric&#39;.format(
+                type(proposal_var)))
+        if proposal_var &lt;= 0:
+            raise ValueError(&#39;`proposal_var` ({}) not proper&#39;.format(proposal_var))
+    elif proposal_option in [&#39;auto&#39;]:
+        proposal_var = (self.value ** 2)/10
+    else:
+        raise ValueError(&#39;`proposal_option` ({}) not recognized&#39;.format(
+            proposal_option))
+    self.proposal.var.value = proposal_var
+    self.proposal.low = 0
+    self.proposal.high = float(&#39;inf&#39;)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.qpcr.qPCRScaleL.set_shape"><code class="name flex">
+<span>def <span class="ident">set_shape</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Set the shape of the array (how many qPCR variances this is a prior for)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def set_shape(self):
+    &#39;&#39;&#39;Set the shape of the array (how many qPCR variances this is a prior for)
+    &#39;&#39;&#39;
+    self.set_value_shape(shape=(len(self.data_locs), ))</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.qpcr.qPCRScaleL.update"><code class="name flex">
+<span>def <span class="ident">update</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>First we update the proposal (if necessary) and then we do a MH step</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update(self):
+    &#39;&#39;&#39;First we update the proposal (if necessary) and then we do a MH step
+    &#39;&#39;&#39;
+    self.update_var()
+    proposal_std = np.sqrt(self.proposal.var.value)
+
+    # Get the data
+    xs = []
+    for ridx, tidx in self.data_locs:
+        xs.append(self.G[REPRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
+
+    # Get the dof
+    dof = self.G[REPRNAMES.QPCR_DOFS].value[self.l].value
+
+    # Propose a new value for the scale
+    prev_scale = self.value
+    self.proposal.mean.value = self.value
+    new_scale = self.proposal.sample()
+
+    # Calculate the target distribution log likelihood
+    prev_target_ll = pl.random.sics.logpdf(value=prev_scale, 
+        dof=self.prior.dof.value, scale=self.prior.scale.value)
+    for x in xs:
+        prev_target_ll += pl.random.sics.logpdf(value=x,
+            scale=prev_scale, dof=dof)
+    new_target_ll = pl.random.sics.logpdf(value=new_scale, 
+        dof=self.prior.dof.value, scale=self.prior.scale.value)
+    for x in xs:
+        new_target_ll += pl.random.sics.logpdf(value=x,
+            scale=new_scale, dof=dof)
+
+    # Normalize by the loglikelihood of the proposal
+    prev_prop_ll = pl.random.truncnormal.logpdf(
+        value=prev_scale, mean=new_scale, std=proposal_std,
+        low=self.proposal.low, high=self.proposal.high)
+    new_prop_ll = pl.random.truncnormal.logpdf(
+        value=new_scale, mean=prev_scale, std=proposal_std,
+        low=self.proposal.low, high=self.proposal.high)
+
+    # Accept or reject
+    r = (new_target_ll - prev_prop_ll) - \
+        (prev_target_ll - new_prop_ll)
+    u = np.log(pl.random.misc.fast_sample_standard_uniform())
+
+    # print(&#39;\n\n\n{} prior_mean\n----------&#39;.format(self.child_name))
+    # print(&#39;x&#39;, x)
+    # print(&#39;prev_scale&#39;, prev_scale)
+    # print(&#39;prev_target_ll&#39;, prev_target_ll)
+    # print(&#39;prev_prop_ll&#39;, prev_prop_ll)
+    # print(&#39;new scale&#39;, new_scale)
+    # print(&#39;new_target_ll&#39;, new_target_ll)
+    # print(&#39;new_prop_ll&#39;, new_prop_ll)
+    # print(&#39;\nr&#39;, r, u)
+        
+    if r &gt;= u:
+        self.acceptances[self.sample_iter] = True
+        self.value = new_scale
+        self.temp_acceptances += 1
+    else:
+        self.value = prev_scale</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.qpcr.qPCRScaleL.update_var"><code class="name flex">
+<span>def <span class="ident">update_var</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Update the variance of the proposal</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update_var(self):
+    &#39;&#39;&#39;Update the variance of the proposal
+    &#39;&#39;&#39;
+    if self.sample_iter == 0:
+        self.temp_acceptances = 0
+        self.acceptances = np.zeros(self.G.inference.n_samples, dtype=bool)
+    
+    elif self.sample_iter &gt; self.end_tune:
+        # Don&#39;t do any more updates
+        return
+    
+    elif self.sample_iter % self.tune == 0:
+        # Update var
+        acceptance_rate = self.temp_acceptances / self.tune
+        if acceptance_rate &gt; self.target_acceptance_rate:
+            self.proposal.var.value *= 1.5
+        else:
+            self.proposal.var.value /= 1.5
+        self.temp_acceptances = 0</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.variables.SICS" href="pylab/variables.html#mdsine2.pylab.variables.SICS">SICS</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.variables.SICS.T" href="pylab/variables.html#mdsine2.pylab.variables.Variable.T">T</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_init_value" href="pylab/variables.html#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.get_iter" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_iter">get_iter</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.get_trace_from_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_trace_from_disk">get_trace_from_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.logpdf" href="pylab/variables.html#mdsine2.pylab.variables.SICS.logpdf">logpdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.overwrite_entire_trace_on_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.pdf" href="pylab/variables.html#mdsine2.pylab.variables.SICS.pdf">pdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.sample" href="pylab/variables.html#mdsine2.pylab.variables.SICS.sample">sample</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.set_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.set_value_shape" href="pylab/variables.html#mdsine2.pylab.variables.Variable.set_value_shape">set_value_shape</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.qpcr.qPCRScales"><code class="flex name class">
+<span>class <span class="ident">qPCRScales</span></span>
+<span>(</span><span>L, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Aggregation class for a scale parameter of qPCR variance</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>L</code></strong> :&ensp;<code>int</code></dt>
+<dd>How many qPCR variance groupings there are</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class qPCRScales(_qPCRPriorAggVar):
+    &#39;&#39;&#39;Aggregation class for a scale parameter of qPCR variance
+
+    Parameters
+    ----------
+    L : int
+        How many qPCR variance groupings there are
+    &#39;&#39;&#39;
+    def __init__(self, L, **kwargs):
+        kwargs[&#39;name&#39;] = STRNAMES.QPCR_SCALES
+        _qPCRPriorAggVar.__init__(self, L=L, child=qPCRScaleL, **kwargs)</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>mdsine2.qpcr._qPCRPriorAggVar</li>
+<li>mdsine2.qpcr._qPCRBase</li>
+<li><a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a></li>
+<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
+<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+<li>mdsine2.pylab.variables._BaseArithmeticClass</li>
+<li><a title="mdsine2.pylab.base.Traceable" href="pylab/base.html#mdsine2.pylab.base.Traceable">Traceable</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.variables.Variable.T" href="pylab/variables.html#mdsine2.pylab.variables.Variable.T">T</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="pylab/variables.html#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.get_iter" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_iter">get_iter</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.get_trace_from_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_trace_from_disk">get_trace_from_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.set_value_shape" href="pylab/variables.html#mdsine2.pylab.variables.Variable.set_value_shape">set_value_shape</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.qpcr.qPCRVarianceReplicate"><code class="flex name class">
+<span>class <span class="ident">qPCRVarianceReplicate</span></span>
+<span>(</span><span>ridx, L, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Posterior for a set of single qPCR variances for replicate <code>ridx</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>ridx</code></strong> :&ensp;<code>int</code></dt>
+<dd>Which subject replicate index this set of qPCR variances belongs
+to.</dd>
+<dt><strong><code>L</code></strong> :&ensp;<code>int</code></dt>
+<dd>How many qPCR variance groupings there are</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class qPCRVarianceReplicate(pl.variables.SICS):
+    &#39;&#39;&#39;Posterior for a set of single qPCR variances for replicate `ridx`
+
+    Parameters
+    ----------
+    ridx : int
+        Which subject replicate index this set of qPCR variances belongs
+        to.
+    L : int
+        How many qPCR variance groupings there are
+    &#39;&#39;&#39;
+    def __init__(self, ridx, L, **kwargs):
+        self.ridx = ridx
+        self.L = L
+        kwargs[&#39;name&#39;] = STRNAMES.QPCR_VARIANCES + &#39;_{}&#39;.format(ridx)
+        pl.variables.SICS.__init__(self, **kwargs)
+        self.priors_idx = np.full(len(self.G.data.given_timepoints[ridx]), -1, dtype=int)
+        self.set_value_shape(shape=(len(self.G.data.given_timepoints[ridx]),))
+
+    def initialize(self, value_option, value=None, inflated=None):
+        &#39;&#39;&#39;Initialize the values. We do not set any hyperparameters because those are
+        set in their own classes.
+
+        Parameters
+        ----------
+        value_option : str
+            How to initialize the variances
+                &#39;empirical&#39;, &#39;auto&#39;
+                    Set to the empirical variance of the respective measurements
+                &#39;inflated&#39;
+                    Set to an inflated value of the empirical variance.
+                &#39;manual&#39;
+                    Set the values manually
+        value : float, np.ndarray(float)
+            If float, set all the values to the same number. If array then set the 
+            values to each of the parameters
+        inflated : float, None
+            Necessary if `value_option` == &#39;inflated&#39;
+        &#39;&#39;&#39;
+        if not pl.isstr(value_option):
+            raise TypeError(&#39;`value_option` ({}) must be a str&#39;.format(type(value_option)))
+        if value_option in [&#39;empirical&#39;, &#39;auto&#39;]:
+            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
+            for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
+                self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data)
+
+        elif value_option == &#39;inflated&#39;:
+            if not pl.isnumeric(inflated):
+                raise TypeError(&#39;`inflated` ({}) must be a numeric&#39;.format(type(inflated)))
+            if inflated &lt; 0:
+                raise ValueError(&#39;`inflated` ({}) must be positive&#39;.format(inflated))
+            # Set each variance by the empirical variance * inflated
+            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
+            for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
+                self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data) * inflated
+
+        elif value_option == &#39;manual&#39;:
+            raise NotImplementedError(&#39;Need to implement&#39;)
+        else:
+            raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
+
+        # Set the qPCR measurements
+        self.qpcr_measurements = []
+        for tidx, t in enumerate(self.G.data.given_timepoints[self.ridx]):
+            self.qpcr_measurements.append(self.G.data.qpcr[self.ridx][t].log_data)
+
+    def update(self):
+
+        prior_dofs = []
+        prior_scales = []
+        for l in range(self.L):
+            prior_dofs.append(self.G[REPRNAMES.QPCR_DOFS].value[l].value)
+            prior_scales.append(self.G[REPRNAMES.QPCR_SCALES].value[l].value)
+
+        for tidx in range(len(self.priors_idx)):
+            t = self.G.data.given_timepoints[self.ridx][tidx]
+            l = self.priors_idx[tidx]
+            prior_dof = prior_dofs[l]
+            prior_scale = prior_scales[l]
+
+            # qPCR measurements (these are already in log space)
+            values = self.qpcr_measurements[tidx]
+
+            # Current mean is the log of the sum of latent abundance
+            tidx_in_arr = self.G.data.timepoint2index[self.ridx][t]
+            mean = np.log(np.sum(self.G.data.data[self.ridx][:, tidx_in_arr]))
+
+            # Calculate the residual sum
+            resid_sum = np.sum(np.square(values - mean))
+
+            # posterior
+            dof = prior_dof + len(values)
+            scale = ((prior_scale * prior_dof) + resid_sum)/dof
+            self.value[tidx] = pl.random.sics.sample(dof, scale)
+
+    def add_qpcr_measurement(self, tidx, l):
+        &#39;&#39;&#39;Add qPCR measurement for subject index `ridx` and time index `tidx`
+
+        Parameters
+        ----------
+        ridx : int
+            Subject index
+        tidx : int
+            Time index
+        &#39;&#39;&#39;
+        if not pl.isint(tidx):
+            raise TypeError(&#39;`tidx` ({}) must be an int&#39;.format(type(tidx)))
+        if tidx &gt;= len(self.G.data.given_timepoints[self.ridx]):
+            raise ValueError(&#39;`tidx` ({}) out of range ({})&#39;.format(tidx, 
+                len(self.G.data.given_timepoints[self.ridx])))
+        if not pl.isint(l):
+            raise TypeError(&#39;`l` ({}) must be an int&#39;.format(type(l)))
+        self.priors_idx[tidx] = l</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.variables.SICS" href="pylab/variables.html#mdsine2.pylab.variables.SICS">SICS</a></li>
+<li><a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a></li>
+<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
+<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+<li>mdsine2.pylab.variables._BaseArithmeticClass</li>
+<li><a title="mdsine2.pylab.base.Traceable" href="pylab/base.html#mdsine2.pylab.base.Traceable">Traceable</a></li>
+<li>mdsine2.pylab.variables._RandomBase</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.qpcr.qPCRVarianceReplicate.add_qpcr_measurement"><code class="name flex">
+<span>def <span class="ident">add_qpcr_measurement</span></span>(<span>self, tidx, l)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Add qPCR measurement for subject index <code>ridx</code> and time index <code>tidx</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>ridx</code></strong> :&ensp;<code>int</code></dt>
+<dd>Subject index</dd>
+<dt><strong><code>tidx</code></strong> :&ensp;<code>int</code></dt>
+<dd>Time index</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_qpcr_measurement(self, tidx, l):
+    &#39;&#39;&#39;Add qPCR measurement for subject index `ridx` and time index `tidx`
+
+    Parameters
+    ----------
+    ridx : int
+        Subject index
+    tidx : int
+        Time index
+    &#39;&#39;&#39;
+    if not pl.isint(tidx):
+        raise TypeError(&#39;`tidx` ({}) must be an int&#39;.format(type(tidx)))
+    if tidx &gt;= len(self.G.data.given_timepoints[self.ridx]):
+        raise ValueError(&#39;`tidx` ({}) out of range ({})&#39;.format(tidx, 
+            len(self.G.data.given_timepoints[self.ridx])))
+    if not pl.isint(l):
+        raise TypeError(&#39;`l` ({}) must be an int&#39;.format(type(l)))
+    self.priors_idx[tidx] = l</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.qpcr.qPCRVarianceReplicate.initialize"><code class="name flex">
+<span>def <span class="ident">initialize</span></span>(<span>self, value_option, value=None, inflated=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialize the values. We do not set any hyperparameters because those are
+set in their own classes.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to initialize the variances
+'empirical', 'auto'
+Set to the empirical variance of the respective measurements
+'inflated'
+Set to an inflated value of the empirical variance.
+'manual'
+Set the values manually</dd>
+<dt><strong><code>value</code></strong> :&ensp;<code>float, np.ndarray(float)</code></dt>
+<dd>If float, set all the values to the same number. If array then set the
+values to each of the parameters</dd>
+<dt><strong><code>inflated</code></strong> :&ensp;<code>float, None</code></dt>
+<dd>Necessary if <code>value_option</code> == 'inflated'</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def initialize(self, value_option, value=None, inflated=None):
+    &#39;&#39;&#39;Initialize the values. We do not set any hyperparameters because those are
+    set in their own classes.
+
+    Parameters
+    ----------
+    value_option : str
+        How to initialize the variances
+            &#39;empirical&#39;, &#39;auto&#39;
+                Set to the empirical variance of the respective measurements
+            &#39;inflated&#39;
+                Set to an inflated value of the empirical variance.
+            &#39;manual&#39;
+                Set the values manually
+    value : float, np.ndarray(float)
+        If float, set all the values to the same number. If array then set the 
+        values to each of the parameters
+    inflated : float, None
+        Necessary if `value_option` == &#39;inflated&#39;
+    &#39;&#39;&#39;
+    if not pl.isstr(value_option):
+        raise TypeError(&#39;`value_option` ({}) must be a str&#39;.format(type(value_option)))
+    if value_option in [&#39;empirical&#39;, &#39;auto&#39;]:
+        self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
+        for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
+            self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data)
+
+    elif value_option == &#39;inflated&#39;:
+        if not pl.isnumeric(inflated):
+            raise TypeError(&#39;`inflated` ({}) must be a numeric&#39;.format(type(inflated)))
+        if inflated &lt; 0:
+            raise ValueError(&#39;`inflated` ({}) must be positive&#39;.format(inflated))
+        # Set each variance by the empirical variance * inflated
+        self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
+        for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
+            self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data) * inflated
+
+    elif value_option == &#39;manual&#39;:
+        raise NotImplementedError(&#39;Need to implement&#39;)
+    else:
+        raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
+
+    # Set the qPCR measurements
+    self.qpcr_measurements = []
+    for tidx, t in enumerate(self.G.data.given_timepoints[self.ridx]):
+        self.qpcr_measurements.append(self.G.data.qpcr[self.ridx][t].log_data)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.qpcr.qPCRVarianceReplicate.update"><code class="name flex">
+<span>def <span class="ident">update</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update(self):
+
+    prior_dofs = []
+    prior_scales = []
+    for l in range(self.L):
+        prior_dofs.append(self.G[REPRNAMES.QPCR_DOFS].value[l].value)
+        prior_scales.append(self.G[REPRNAMES.QPCR_SCALES].value[l].value)
+
+    for tidx in range(len(self.priors_idx)):
+        t = self.G.data.given_timepoints[self.ridx][tidx]
+        l = self.priors_idx[tidx]
+        prior_dof = prior_dofs[l]
+        prior_scale = prior_scales[l]
+
+        # qPCR measurements (these are already in log space)
+        values = self.qpcr_measurements[tidx]
+
+        # Current mean is the log of the sum of latent abundance
+        tidx_in_arr = self.G.data.timepoint2index[self.ridx][t]
+        mean = np.log(np.sum(self.G.data.data[self.ridx][:, tidx_in_arr]))
+
+        # Calculate the residual sum
+        resid_sum = np.sum(np.square(values - mean))
+
+        # posterior
+        dof = prior_dof + len(values)
+        scale = ((prior_scale * prior_dof) + resid_sum)/dof
+        self.value[tidx] = pl.random.sics.sample(dof, scale)</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.variables.SICS" href="pylab/variables.html#mdsine2.pylab.variables.SICS">SICS</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.variables.SICS.T" href="pylab/variables.html#mdsine2.pylab.variables.Variable.T">T</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_init_value" href="pylab/variables.html#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.get_iter" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_iter">get_iter</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.get_trace_from_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_trace_from_disk">get_trace_from_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.logpdf" href="pylab/variables.html#mdsine2.pylab.variables.SICS.logpdf">logpdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.overwrite_entire_trace_on_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.pdf" href="pylab/variables.html#mdsine2.pylab.variables.SICS.pdf">pdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.sample" href="pylab/variables.html#mdsine2.pylab.variables.SICS.sample">sample</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.set_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.SICS.set_value_shape" href="pylab/variables.html#mdsine2.pylab.variables.Variable.set_value_shape">set_value_shape</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.qpcr.qPCRVariances"><code class="flex name class">
+<span>class <span class="ident">qPCRVariances</span></span>
+<span>(</span><span>**kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Aggregation class for qPCR variance for a set of qPCR variances.
+The qPCR variances are </p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>L</code></strong> :&ensp;<code>int</code></dt>
+<dd>How many qPCR variance groupings there are</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class qPCRVariances(_qPCRBase):
+    &#39;&#39;&#39;Aggregation class for qPCR variance for a set of qPCR variances. 
+    The qPCR variances are 
+
+    Parameters
+    ----------
+    L : int
+        How many qPCR variance groupings there are
+    &#39;&#39;&#39;
+    def __init__(self, **kwargs):
+        kwargs[&#39;name&#39;] = STRNAMES.QPCR_VARIANCES
+        _qPCRBase.__init__(self, **kwargs)
+        self.G.data.qpcr_variances = self
+        
+        for ridx in range(self.n_replicates):
+            self.value.append( 
+                qPCRVarianceReplicate(ridx=ridx, **kwargs))
+
+    def add_qpcr_measurement(self, ridx, tidx, l):
+        &#39;&#39;&#39;Add a qPCR measurement for subject `ridx` at time index
+        `tidx` to qPCR set `l`
+
+        Parameters
+        ----------
+        ridx : int
+            Subject index
+        tidx : int
+            Time index
+        l : int
+            qPCR set index
+        &#39;&#39;&#39;
+        if not pl.isint(ridx):
+            raise TypeError(&#39;`ridx` ({}) must be an int&#39;.format(type(ridx)))
+        if ridx &gt;= self.G.data.n_replicates:
+            raise ValueError(&#39;`ridx` ({}) out of range ({})&#39;.format(ridx, 
+                self.G.data.n_replicates))
+        if not pl.isint(tidx):
+            raise TypeError(&#39;`tidx` ({}) must be an int&#39;.format(type(tidx)))
+        if tidx &gt;= len(self.G.data.given_timepoints[ridx]):
+            raise ValueError(&#39;`tidx` ({}) out of range ({})&#39;.format(tidx, 
+                len(self.G.data.given_timepoints[ridx])))
+        if not pl.isint(l):
+            raise TypeError(&#39;`l` ({}) must be an int&#39;.format(type(l)))
+        if l &gt;= self.L:
+            raise ValueError(&#39;`l` ({}) out of range ({})&#39;.format(tidx, 
+                self.L))
+        self.value[ridx].add_qpcr_measurement(tidx=tidx, l=l)        </code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>mdsine2.qpcr._qPCRBase</li>
+<li><a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a></li>
+<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
+<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+<li>mdsine2.pylab.variables._BaseArithmeticClass</li>
+<li><a title="mdsine2.pylab.base.Traceable" href="pylab/base.html#mdsine2.pylab.base.Traceable">Traceable</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.qpcr.qPCRVariances.add_qpcr_measurement"><code class="name flex">
+<span>def <span class="ident">add_qpcr_measurement</span></span>(<span>self, ridx, tidx, l)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Add a qPCR measurement for subject <code>ridx</code> at time index
+<code>tidx</code> to qPCR set <code>l</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>ridx</code></strong> :&ensp;<code>int</code></dt>
+<dd>Subject index</dd>
+<dt><strong><code>tidx</code></strong> :&ensp;<code>int</code></dt>
+<dd>Time index</dd>
+<dt><strong><code>l</code></strong> :&ensp;<code>int</code></dt>
+<dd>qPCR set index</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_qpcr_measurement(self, ridx, tidx, l):
+    &#39;&#39;&#39;Add a qPCR measurement for subject `ridx` at time index
+    `tidx` to qPCR set `l`
+
+    Parameters
+    ----------
+    ridx : int
+        Subject index
+    tidx : int
+        Time index
+    l : int
+        qPCR set index
+    &#39;&#39;&#39;
+    if not pl.isint(ridx):
+        raise TypeError(&#39;`ridx` ({}) must be an int&#39;.format(type(ridx)))
+    if ridx &gt;= self.G.data.n_replicates:
+        raise ValueError(&#39;`ridx` ({}) out of range ({})&#39;.format(ridx, 
+            self.G.data.n_replicates))
+    if not pl.isint(tidx):
+        raise TypeError(&#39;`tidx` ({}) must be an int&#39;.format(type(tidx)))
+    if tidx &gt;= len(self.G.data.given_timepoints[ridx]):
+        raise ValueError(&#39;`tidx` ({}) out of range ({})&#39;.format(tidx, 
+            len(self.G.data.given_timepoints[ridx])))
+    if not pl.isint(l):
+        raise TypeError(&#39;`l` ({}) must be an int&#39;.format(type(l)))
+    if l &gt;= self.L:
+        raise ValueError(&#39;`l` ({}) out of range ({})&#39;.format(tidx, 
+            self.L))
+    self.value[ridx].add_qpcr_measurement(tidx=tidx, l=l)        </code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.variables.Variable.T" href="pylab/variables.html#mdsine2.pylab.variables.Variable.T">T</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="pylab/variables.html#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.get_iter" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_iter">get_iter</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.get_trace_from_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_trace_from_disk">get_trace_from_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.set_value_shape" href="pylab/variables.html#mdsine2.pylab.variables.Variable.set_value_shape">set_value_shape</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="mdsine2" href="index.html">mdsine2</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="mdsine2.qpcr.qPCRDegsOfFreedomL" href="#mdsine2.qpcr.qPCRDegsOfFreedomL">qPCRDegsOfFreedomL</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.qpcr.qPCRDegsOfFreedomL.add_qpcr_measurement" href="#mdsine2.qpcr.qPCRDegsOfFreedomL.add_qpcr_measurement">add_qpcr_measurement</a></code></li>
+<li><code><a title="mdsine2.qpcr.qPCRDegsOfFreedomL.initialize" href="#mdsine2.qpcr.qPCRDegsOfFreedomL.initialize">initialize</a></code></li>
+<li><code><a title="mdsine2.qpcr.qPCRDegsOfFreedomL.set_shape" href="#mdsine2.qpcr.qPCRDegsOfFreedomL.set_shape">set_shape</a></code></li>
+<li><code><a title="mdsine2.qpcr.qPCRDegsOfFreedomL.update" href="#mdsine2.qpcr.qPCRDegsOfFreedomL.update">update</a></code></li>
+<li><code><a title="mdsine2.qpcr.qPCRDegsOfFreedomL.update_var" href="#mdsine2.qpcr.qPCRDegsOfFreedomL.update_var">update_var</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="mdsine2.qpcr.qPCRDegsOfFreedoms" href="#mdsine2.qpcr.qPCRDegsOfFreedoms">qPCRDegsOfFreedoms</a></code></h4>
+</li>
+<li>
+<h4><code><a title="mdsine2.qpcr.qPCRScaleL" href="#mdsine2.qpcr.qPCRScaleL">qPCRScaleL</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.qpcr.qPCRScaleL.add_qpcr_measurement" href="#mdsine2.qpcr.qPCRScaleL.add_qpcr_measurement">add_qpcr_measurement</a></code></li>
+<li><code><a title="mdsine2.qpcr.qPCRScaleL.initialize" href="#mdsine2.qpcr.qPCRScaleL.initialize">initialize</a></code></li>
+<li><code><a title="mdsine2.qpcr.qPCRScaleL.set_shape" href="#mdsine2.qpcr.qPCRScaleL.set_shape">set_shape</a></code></li>
+<li><code><a title="mdsine2.qpcr.qPCRScaleL.update" href="#mdsine2.qpcr.qPCRScaleL.update">update</a></code></li>
+<li><code><a title="mdsine2.qpcr.qPCRScaleL.update_var" href="#mdsine2.qpcr.qPCRScaleL.update_var">update_var</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="mdsine2.qpcr.qPCRScales" href="#mdsine2.qpcr.qPCRScales">qPCRScales</a></code></h4>
+</li>
+<li>
+<h4><code><a title="mdsine2.qpcr.qPCRVarianceReplicate" href="#mdsine2.qpcr.qPCRVarianceReplicate">qPCRVarianceReplicate</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.qpcr.qPCRVarianceReplicate.add_qpcr_measurement" href="#mdsine2.qpcr.qPCRVarianceReplicate.add_qpcr_measurement">add_qpcr_measurement</a></code></li>
+<li><code><a title="mdsine2.qpcr.qPCRVarianceReplicate.initialize" href="#mdsine2.qpcr.qPCRVarianceReplicate.initialize">initialize</a></code></li>
+<li><code><a title="mdsine2.qpcr.qPCRVarianceReplicate.update" href="#mdsine2.qpcr.qPCRVarianceReplicate.update">update</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="mdsine2.qpcr.qPCRVariances" href="#mdsine2.qpcr.qPCRVariances">qPCRVariances</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.qpcr.qPCRVariances.add_qpcr_measurement" href="#mdsine2.qpcr.qPCRVariances.add_qpcr_measurement">add_qpcr_measurement</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.1</a>.</p>
+</footer>
+</body>
+</html>
