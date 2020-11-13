@@ -2,6 +2,7 @@
 '''
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import pickle
 import inspect
 import logging
@@ -35,6 +36,21 @@ LCA_FORMATTER = '%(lca)s'
 _TAXLEVELS = ['species', 'genus', 'family', 'class', 'order', 'phylum', 'kingdom']
 _TAXFORMATTERS = ['%(species)s', '%(genus)s', '%(family)s', '%(class)s', '%(order)s', '%(phylum)s', '%(kingdom)s']
 _SPECIESX_SEARCH = re.compile('\%\(species[0-9]+\)s')
+
+def isdataframe(a):
+    '''Checks if `a` is a pandas.DataFrame
+
+    Parameters
+    ----------
+    a : any
+        Instance we are checking
+
+    Returns
+    -------
+    bool
+        True if `a` is a pandas.DataFrame
+    '''
+    return type(a) == pd.DataFrame
 
 def issquare(a):
     '''Checks if the input array is a square

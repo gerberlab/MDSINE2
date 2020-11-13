@@ -26,7 +26,8 @@ try:
 
     C_SAMPLE = c_sample.Sample()
     CUSTOM_DIST_AVAIL = True
-except ImportError:
+except ImportError as e:
+    print(e)
     warnings.warn('PYLAB - WAS NOT ABLE TO IMPORT C VERSIONS OF DISTRIBUTIONS.' \
         ' USING DEFAULT PYTHON INSTEAD.')
     CUSTOM_DIST_AVAIL = False

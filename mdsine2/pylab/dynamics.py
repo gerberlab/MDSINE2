@@ -18,10 +18,7 @@ import logging
 import math
 
 from . import util as plu
-from . import random as plr
-from . import base as plb
-from . import graph as plg
-from .errors import NeedToImplementError, MathError
+from .errors import NeedToImplementError
 
 _ADDITIVE = 0
 _MULTIPLICATIVE = 1
@@ -74,13 +71,7 @@ def isintegratable(x):
 
 class Integratable:
     '''These are the functions needed for integrating
-    '''
-
-    def __init__(self, asvs):
-        if not plb.isasvset(asvs):
-            raise TypeError('`asvs` ({}) must be an ASVSet'.format(type(asvs)))
-        self.asvs = asvs
-        
+    '''  
     def init_integration(self):
         '''This is the function that `integrate` calls to start the integration
         '''
@@ -142,24 +133,18 @@ class _NoProcessVariance(Integratable):
         return x
 
 
-def integrate(dynamics, initial_conditions, dt, processvar=None,
-    n_days=None, n_time_steps=None, subsample=False, times=None,
-    log_every=10000):
+def integrate(dynamics, initial_conditions, dt, n_days, processvar=None,
+    subsample=False, times=None, log_every=10000):
     '''Numerically integrates the ODE given the dynamics and the initial 
     conditions. If the process variance is not None, then this integrates
     a stochastic ODE.
 
     Subsampling
-    ===========
+    -----------
     If the dynamics are complex and the process variance is high, numerical
     integration with large time steps can lead to numerical instability, so we 
     integrate at smaller time steps than what our data is. This smaller time
     scale in this function is specified by `dt`.
-
-    The total number of time steps to simulate can be given by either `n_days` 
-    (how many days to simulate for) or by `n_time_steps` (how many time steps
-    to simulate for). If `n_days` is specified, it is automatically converted
-    to `n_time_steps` by `n_time_steps = n_days/dt`.
 
     We can then subsample our densely integrated trajectories with the flag
     `subsample`. If `subsample=False`, we return the whole trajectory. If
@@ -176,62 +161,31 @@ def integrate(dynamics, initial_conditions, dt, processvar=None,
         These are the initial conditions to integrate from. This must be a 
         column array.
     dt : float
-        Time between each time step during integration
-    n_time_steps : int
+        Time between each time step (in days) during integration
     n_days : float
-        How many iterations to integrate for. Either `n_days` or `n_time_steps`
-        needs to be specified, not both.
+        How many days to simulate for
     subsample : bool
         If True, we subsample the integration at the time points indicated in
         `times`. If False we do not subsample
     times : int, np.ndarray((t,), dtype=numeric), None
-        The meaning of `times` depends on whether `n_days` or `n_time_steps` is
-        specified:
-            If `n_days` is specified:
-                `times` must be a list of floats/ints, where each element 
-                corresponds to a time of day to take the sample at. The last time 
-                point must not exceed `n_days`, each time must be >= 0, and there
-                must not be duplicates.
-                Example: (assuming `subsample` is True)
-                    n_days = 6
-                    times = [0, 0.1, 1.1, 3, 5] - This is valid
-                    times = [0.1, 0, 1.1, 3, 5] - This is valid:
-                        (0 is automatically reordered)
-                    times = [0, 0.1, 1.1, 3, 6] - This is invalid: 
-                        (6 is not inclusive)
-                    times = [-0.1, 0, 1.1, 3, 5] - This is invalid:
-                        (-0.1 < 0)
-                    times = [0, 0, 1.1, 3, 5] - This is valid:
-                        (duplicate points for `0`, but we discard 1)
+        `times` must be a list of floats/ints, where each element 
+        corresponds to a time of day to take the sample at. The last time 
+        point must not exceed `n_days`, each time must be >= 0, and there
+        must not be duplicates.
+        Example: (assuming `subsample` is True)
+            n_days = 6
+            times = [0, 0.1, 1.1, 3, 5] - This is valid
+            times = [0.1, 0, 1.1, 3, 5] - This is valid:
+                (0 is automatically reordered)
+            times = [0, 0.1, 1.1, 3, 6] - This is invalid: 
+                (6 is not inclusive)
+            times = [-0.1, 0, 1.1, 3, 5] - This is invalid:
+                (-0.1 < 0)
+            times = [0, 0, 1.1, 3, 5] - This is valid:
+                (duplicate points for `0`, but we discard 1)
 
-                If `subsample` is True and `times` is None, we automatically 
-                return 1 timepoint per day.
-            If `n_time_steps` is specified:
-                `times` can either be an int or a list of ints. If it is an int,
-                then this indicates how many times you should return. It will
-                return `times` evenly spaced time steps (starting at 0). If
-                it is an array, each element corresponds to an index of which
-                time step to return. The indices must be ints, must be non-repeating,
-                and must be larger than 0.
-                Example: (assuming `subsample` is True)
-                    n_time_steps = 500
-
-                    times = 5
-                        >>> [0, 100, 200, 300, 400]
-                    times = -1
-                        >>> This is invalid
-                    times = None
-                        >>> This is invalid
-                    times = [0, 150, 200, 489]
-                        >>> This is valid
-                    times = [0, 150, 500]
-                        >>> This is invalid (500 not inclusive)
-                    times = [-1, 0 , 150]
-                        >>> This is invalid (-1 < 0)
-                    times = [0, 0, 150, 450]
-                        >>> This is valid (0 repeats, but we discard it)
-                    times = [150, 0, 250, 450]
-                        >>> This is valid (automatically reordered)
+        If `subsample` is True and `times` is None, we automatically 
+        return 1 timepoint per day.
     log_every : int, None
         - This is how oftent o log the progress of the integration. If None, it 
           will never log
@@ -250,7 +204,7 @@ def integrate(dynamics, initial_conditions, dt, processvar=None,
             'BaseDynamics'.format(type(dynamics)))
 
     if processvar is None:
-        processvar = _NoProcessVariance(asvs=dynamics.asvs)
+        processvar = _NoProcessVariance()
     elif not isprocessvariance(processvar):
         raise TypeError('`processvar` ({}) must be a (subclass of) ' \
             'BaseProcessVariance'.format(type(processvar)))
@@ -265,75 +219,39 @@ def integrate(dynamics, initial_conditions, dt, processvar=None,
     if initial_conditions.shape[1] != 1:
         raise ValueError('`initial_conditions` ({}) must be a column vector'.format( 
             initial_conditions.shape))
-    # if initial_conditions.shape[0] != len(dynamics.asvs):
-    #     raise ValueError('`initial_conditions` ({}) must have the ({}) rows ' \
-    #         '(the number of ASVs)'.format(initial_conditions.shape[0],
-    #         len(dynamics.asvs)))
 
     if not plu.isnumeric(dt):
         raise TypeError('`dt` ({}) must be a numeric'.format(type(dt)))
     if dt <= 0:
         raise ValueError('`dt` ({}) must be strictly greater than 0'.format(dt))
-    
-    if n_days is None and n_time_steps is None:
-        raise ValueError('You must specify either `n_days` or `n_time_steps`')
-    if n_days is not None and n_time_steps is not None:
-        raise ValueError('You must specify either `n_days` or `n_time_steps`, '\
-            'not both')
+
     if not plu.isbool(subsample):
         raise TypeError('`subsample` ({}) must be a bool'.format(type(subsample)))
     
-    if n_days is not None:
-        if not plu.isnumeric(n_days):
-            raise TypeError('`n_days` ({}) must be an int'.format(type(n_days)))
-        if n_days <= 0:
-            raise ValueError('`n_days` ({}) must be > 0'.format(n_days))
-        n_days += dt
-        n_timepoints_to_integrate = n_days/dt
-        if n_timepoints_to_integrate - int(n_timepoints_to_integrate) != 0:
-            # raise ValueError('`days`/`dt` ({}) must be an int'.format(n_timepoints_to_integrate))
-            # logging.info('1n_timepoints_to_integrate` ({}) rounded to {}'.format(n_timepoints_to_integrate,
-            #         int(n_timepoints_to_integrate)+1) )
-            n_timepoints_to_integrate = int(n_timepoints_to_integrate)+1
-        n_timepoints_to_integrate = int(n_timepoints_to_integrate)
-        if subsample:
-            if times is None:
-                times = np.arange(n_days, dtype=float)
-            elif not plu.isarray(times):
-                raise TypeError('If `subsample` is True, then `times` ({}) must either ' \
-                    'be an array or None'.format(type(times)))
-            times = np.asarray(times, dtype=float).ravel()
-            times = np.unique(times)
-            times = np.sort(times)
-            if np.any(times < 0):
-                raise ValueError('All `times` ({}) must be > 0 '.format(times))
-            if np.any(times > n_days):
-                raise ValueError('All `times` ({}) must be < `n_days` ({})'.format( 
-                    times, n_days))
-    else:
-        if not plu.isint(n_time_steps):
-            raise TypeError('n_time_steps ({}) must be an int'.format(
-                type(n_time_steps)))
-        if n_time_steps <= 0:
-            raise ValueError('`n_time_steps` ({}) must be > 0'.format(n_time_steps))
-        n_timepoints_to_integrate = n_time_steps
-        if subsample:
-            if times is None:
-                raise TypeError('If `n_time_steps` is specified, `times` must also be '\
-                    'specified')
-            if plu.isint(times):
-                times = np.arange(0, n_time_steps, int(n_time_steps / times), dtype=int)
-            elif plu.isarray(times):
-                times = np.asarray(times, dtype=int).ravel()
-                times = np.unique(times)
-                times = np.sort(times)
-                if np.any(times < 0):
-                    raise ValueError('All `times` ({}) must be > 0 '.format(times))
-                if np.any(times >= n_time_steps):
-                    raise ValueError('All `times` ({}) must be < `n_time_steps` ({})'.format( 
-                        times, n_time_steps))
-            else:
-                raise TypeError('Type for `times` ({}) not recognized'.format(type(times)))
+    if not plu.isnumeric(n_days):
+        raise TypeError('`n_days` ({}) must be an int'.format(type(n_days)))
+    if n_days <= 0:
+        raise ValueError('`n_days` ({}) must be > 0'.format(n_days))
+    
+    n_days += dt
+    n_timepoints_to_integrate = n_days/dt
+    if n_timepoints_to_integrate - int(n_timepoints_to_integrate) != 0:
+        n_timepoints_to_integrate = int(n_timepoints_to_integrate)+1
+    n_timepoints_to_integrate = int(n_timepoints_to_integrate)
+    
+    if subsample:
+        if times is None:
+            times = np.arange(int(n_days), dtype=float)
+        elif not plu.isarray(times):
+            raise TypeError('If `subsample` is True, then `times` ({}) must either ' \
+                'be an array or None'.format(type(times)))
+        times = np.asarray(times, dtype=float).ravel()
+        times = np.sort(np.unique(times))
+        if np.any(times < 0):
+            raise ValueError('All `times` ({}) must be > 0 '.format(times))
+        if np.any(times > n_days):
+            raise ValueError('All `times` ({}) must be < `n_days` ({})'.format( 
+                times, n_days))
     
     if log_every is None:
         log_every = float('inf')
@@ -364,18 +282,10 @@ def integrate(dynamics, initial_conditions, dt, processvar=None,
     processvar.finish_integration()
 
     if subsample:
-        if n_days is not None:
-            steps_per_day = int(n_timepoints_to_integrate/n_days)
-            idxs = []
-            for t in times:
-                idxs.append(int(steps_per_day*t))
-
-                # transform into an index
-                if t != 0:
-                    idxs[-1] -= 1
-        else:
-            idxs = times
-            times = times * dt
+        steps_per_day = int(n_timepoints_to_integrate/n_days)
+        idxs = []
+        for t in times:
+            idxs.append(int(steps_per_day*t))
         X = X[:, idxs]
     else:
         times = np.arange(n_timepoints_to_integrate, dtype=float) * dt

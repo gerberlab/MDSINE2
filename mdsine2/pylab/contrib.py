@@ -7,6 +7,7 @@ import numpy as np
 import numpy.random as npr
 import sys
 import logging
+import scipy.special
 
 from .base import BasePerturbation, Traceable
 from . import variables
@@ -1340,33 +1341,6 @@ class Interactions(ClusterProperty, Node, Traceable):
                 for sidx in self.clustering.clusters[interaction.source_cid].members:
                     ret[tidx, sidx] = True
         return ret
-
-    def generate_bayes_factors_posthoc(self, prior, section='posterior'):
-        '''Generates the bayes factors on an item-item level, given the passed in prior.
-
-        All negative indicators are set as `np.nan`s in the trace, so we do `~np.isnan`
-        to get the indicators.
-
-        Parameters
-        ----------
-        prior : pylab.variables.Beta
-            This assumes this is a beta distribution for the prior
-        section : str
-            This is the section of the MH samples to take the samples
-
-        Returns
-        -------
-        np.ndarray((n,n), dtpye=float)
-            These are the bayes factors for each of the interactions on an item-item level
-        '''
-        prior_factor = (prior.b + 1) / (prior.a + 1)
-        trace = self.get_trace_from_disk(section=section)
-        trace = ~ np.isnan(trace)
-
-        cnts_1 = np.sum(trace, axis=0)
-        cnts_0 = np.sum(1-trace, axis=0)
-
-        return prior_factor * cnts_1 / cnts_0
 
     def generate_in_out_degree_posthoc(self, section='posterior'):
         '''Returns a dictionary of arrays

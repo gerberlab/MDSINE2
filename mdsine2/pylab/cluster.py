@@ -3,9 +3,6 @@ import logging
 import copy
 import numba
 
-from sklearn.cluster import AgglomerativeClustering
-import scipy.stats
-
 from . import util
 from .errors import NeedToImplementError
 from .graph import Node
@@ -415,84 +412,6 @@ class Clustering(Node, Traceable):
             cid = self.make_new_cluster_with(first)
             for b in rest:
                 self.move_item(b, cid=cid)
-
-    def generate_cluster_assignments_posthoc(self, n_clusters='mode', linkage='average',
-        set_as_value=False, section='posterior'):
-        '''Once the inference is complete, compute the clusters posthoc using
-        sklearn's AgglomerativeClustering function with distance matrix being
-        1 - cocluster matrix (we subtrace the cocluster matrix from 1 because
-        the cocluster matrix describes similarity, not distance).
-
-        Parameters
-        ----------
-        n_clusters : str, int, callable, Optional
-            This specifies the number of clusters that are used during
-            Agglomerative clustering.
-            If `n_clusters` is of type int, it will use that number as the number of
-            clusters.
-            If `n_clusters` is of type str, it calculates the number of clusters
-            based on the trace for the number of clusters (self.n_clusters_trace).
-            Possible calculation types are:
-                * 'median', 'mode', and 'mean'.
-            If `n_clusters` is callable, it will calculate n given the trace of n_clusters
-            Default is 'mode'.
-        linkage : str, Optional
-            Which linkage criterion to use. Determines which distance to use
-            between sets of observation. The AgglomerativeClustering algorithm
-            will merge the pairs of cluster that minimize the linkage criterion.
-            Possible types:
-        set_as_value : bool
-            If True then set the result as the value of the clustering object
-        section : str
-            What part of the chain to take the samples from
-        
-        Returns
-        -------
-        np.ndarray(size=(len(items), ), dtype=int)
-            Each value is the cluster assignment for index i
-        '''
-        trace = self.n_clusters.get_trace_from_disk(section=section)
-        if callable(n_clusters):
-            n = n_clusters(trace)
-        elif type(n_clusters) == int:
-            n = n_clusters
-        elif type(n_clusters) == str:
-            if n_clusters == 'mode':
-                n = scipy.stats.mode(trace)[0][0]
-            elif n_clusters == 'mean':
-                n = np.mean(trace)
-            elif n_clusters == 'median':
-                n = np.median(trace)
-            else:
-                raise ValueError('`n_clusters` ({}) not recognized. Valid inputs are ' \
-                    '`mode`, `mean`, and `median`.'.format(n_clusters))
-        else:
-            raise ValueError('Type `n_clusters` ({}) not recognized. Must be of '\
-                'type `str`, `int`, or callable.'.format(type(n_clusters)))
-        if not util.isbool(set_as_value):
-            raise TypeError('`set_as_value` ({}) must be a bool'.format(type(set_as_value)))
-
-        A = summary(self.coclusters, section=section)['mean']
-        A = 1 - A
-        logging.info('Number of clusters: {}'.format(int(n)))
-        c = AgglomerativeClustering(
-            n_clusters=int(n),
-            affinity='precomputed',
-            linkage=linkage)
-        ret = c.fit_predict(A)
-        logging.info(ret)
-        if set_as_value:
-            ca = {}
-            for idx, cidx in enumerate(ca):
-                if cidx in ca:
-                    ca[cidx].append(idx)
-                else:
-                    ca[cidx] = [idx]
-            for cluster in ca:
-                cid = self.make_new_cluster_with(idx=cluster[0])
-                for oidx in cluster[1:]:
-                    self.move_item(idx=oidx, cid=cid)
-        return ret
 
     def set_trace(self, *args, **kwargs):
         self.coclusters.set_trace(*args, **kwargs)

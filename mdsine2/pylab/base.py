@@ -13,8 +13,8 @@ How perturbations are switched on and off
 
 Example: Pertubtion period (2,5) - this is **3** doses
 
-                   |-->|-->|-->
-perturbation on    #############
+                   
+perturbation on    |-->|-->|-->
 Days           1   2   3   4   5   6
 
 `d1` indicates the perturbation parameter that gets added for the day that it
@@ -44,7 +44,7 @@ import logging
 import ete3
 import os
 
-from .util import isint, isnumeric, isarray, isstr, isbool, asvname_formatter, istree
+from .util import isint, isnumeric, isarray, isstr, isbool, asvname_formatter, istree, isdataframe
 from .errors import NeedToImplementError
 
 # Constants
@@ -145,6 +145,36 @@ def isasv(x):
     '''
     return x is not None and issubclass(x.__class__, ASV)
 
+def isagglomeratedasv(x):
+    '''Checks whether the input is a subclass of AgglomerateASV
+
+    Parameters
+    ----------
+    x : any
+        Input instance to check the type of ASV
+    
+    Returns
+    -------
+    bool
+        True if `x` is of type ASV, else False
+    '''
+    return x is not None and issubclass(x.__class__, AgglomerateASV)
+
+def isasvtype(x):
+    '''Checks whether the input is a subclass of AgglomerateASV or ASV
+
+    Parameters
+    ----------
+    x : any
+        Input instance to check the type of AgglomerateASV or ASV
+    
+    Returns
+    -------
+    bool
+        True if `x` is of type AgglomerateASV or ASV, else False
+    '''
+    return isasv(x) or isagglomeratedasv(x)
+
 def issubject(x):
     '''Checks whether the input is a subclass of Subject
 
@@ -160,20 +190,20 @@ def issubject(x):
     '''
     return x is not None and issubclass(x.__class__, Subject)
 
-def issubjectset(x):
-    '''Checks whether the input is a subclass of SubjectSet
+def isstudy(x):
+    '''Checks whether the input is a subclass of Study
 
     Parameters
     ----------
     x : any
-        Input instance to check the type of SubjectSet
+        Input instance to check the type of Study
     
     Returns
     -------
     bool
-        True if `x` is of type SubjectSet, else False
+        True if `x` is of type Study, else False
     '''
-    return x is not None and issubclass(x.__class__, SubjectSet)
+    return x is not None and issubclass(x.__class__, Study)
 
 def isperturbation(x):
     '''Checks whether the input is a subclass of BasePerturbation
@@ -282,11 +312,11 @@ class Saveable:
             filename = self._save_loc
         
         try:
-            with open(filename, 'wb') as output:  # Overwrites any existing file.
+            with open(str(filename), 'wb') as output:  # Overwrites any existing file.
                 pickle.dump(self, output, protocol=pickle.HIGHEST_PROTOCOL)
         except:
             os.system('rm {}'.format(filename))
-            with open(filename, 'wb') as output:  # Overwrites any existing file.
+            with open(str(filename), 'wb') as output:  # Overwrites any existing file.
                 pickle.dump(self, output, protocol=pickle.HIGHEST_PROTOCOL)
 
 
@@ -299,7 +329,7 @@ class Saveable:
         filename : str
             This is the location of the file to unpickle
         '''
-        with open(filename, 'rb') as handle:
+        with open(str(filename), 'rb') as handle:
             b = pickle.load(handle)
         return b
 
@@ -465,10 +495,6 @@ class ASV(ClusterItem):
         ClusterItem.__init__(self, name=name)
         self.sequence = sequence
         self.idx = idx
-        if sequence is not None:
-            self._sequence_as_array = np.array(list(sequence))
-        else:
-            self._sequence_as_array = None
         # Initialize the taxonomies to nothing
         self.taxonomy = {
             'kingdom': DEFAULT_TAXA_NAME,
@@ -524,21 +550,20 @@ class ASV(ClusterItem):
             'kingdom', 'phylum', 'class', 'order', 'family', 'genus'
             Name of the taxa for each respective level
         '''
-        if tax_kingdom is not None:
+        if tax_kingdom is not None and tax_kingdom != '' and isstr(tax_kingdom):
             self.taxonomy['kingdom'] = tax_kingdom
-        if tax_phylum is not None:
+        if tax_phylum is not None and tax_phylum != '' and isstr(tax_phylum):
             self.taxonomy['phylum'] = tax_phylum
-        if tax_class is not None:
+        if tax_class is not None and tax_class != '' and isstr(tax_class):
             self.taxonomy['class'] = tax_class
-        if tax_order is not None:
+        if tax_order is not None and tax_order != '' and isstr(tax_order):
             self.taxonomy['order'] = tax_order
-        if tax_family is not None:
+        if tax_family is not None and tax_family != '' and isstr(tax_family):
             self.taxonomy['family'] = tax_family
-        if tax_genus is not None:
+        if tax_genus is not None and tax_genus != '' and isstr(tax_genus):
             self.taxonomy['genus'] = tax_genus
-        if tax_species is not None:
+        if tax_species is not None and tax_species != '' and isstr(tax_species):
             self.taxonomy['species'] = tax_species
-
         return self
 
     def get_lineage(self, level=None, lca=False):
@@ -624,7 +649,60 @@ class ASV(ClusterItem):
         except:
             raise KeyError('`tax` ({}) not defined. Available taxs: {}'.format(level, 
                 list(self.taxonomy.keys())))
-        return (type(tax) != float) and (tax != DEFAULT_TAXA_NAME)
+        return (type(tax) != float) and (tax != DEFAULT_TAXA_NAME) and (tax != '')
+
+
+class AgglomerateASV(ASV):
+    '''Agglomerates ASVs together
+
+    Parameters
+    ----------
+    anchor, other : mdsine2.ASV, mdsine2.AgglomerateASV
+        These are the ASVs/Agglomerates that you're joining together. The anchor is
+        the one you are setting the sequeunce and taxonomy to
+    '''
+    def __init__(self, anchor, other):
+        name = anchor.name + '_agg'
+        ASV.__init__(self, name=name, idx=anchor.idx, sequence=anchor.sequence)
+
+        if isagglomeratedasv(anchor):
+            if other.name in anchor.agglomerated_asvs:
+                raise ValueError('`other` ({}) already agglomerated with anchor ' \
+                    '({}) ({})'.format(other.name, anchor.name, anchor.agglomerated_asvs))
+            agg1 = anchor.agglomerated_asvs
+            agg1_seq = anchor.agglomerated_seqs
+        else:
+            agg1 = [anchor.name]
+            agg1_seq = {anchor.name: anchor.sequence}
+
+        if isagglomeratedasv(other):
+            if anchor.name in other.agglomerated_asvs:
+                raise ValueError('`anchor` ({}) already agglomerated with other ' \
+                    '({}) ({})'.format(anchor.name, other.name, other.agglomerated_asvs))
+            agg2 = other.agglomerated_asvs
+            agg2_seq = other.agglomerated_seqs
+        else:
+            agg2 = [other.name]
+            agg2_seq = {other.name: other.sequence}
+
+        self.agglomerated_asvs = agg1 + agg2
+        self.agglomerated_seqs = agg1_seq
+        for k,v in agg2_seq.items():
+            self.agglomerated_seqs[k] = v
+
+        self.taxonomy = anchor.taxonomy
+
+    def __str__(self):
+        return 'AgglomerateASV\n\tid: {}\n\tidx: {}\n\tname: {}\n' \
+            '\tAgglomerates: {}\n' \
+            '\ttaxonomy:\n\t\tkingdom: {}\n\t\tphylum: {}\n' \
+            '\t\tclass: {}\n\t\torder: {}\n\t\tfamily: {}\n' \
+            '\t\tgenus: {}\n\t\tspecies: {}'.format(
+            self.id, self.idx, self.name, self.agglomerated_asvs,
+            self.taxonomy['kingdom'], self.taxonomy['phylum'],
+            self.taxonomy['class'], self.taxonomy['order'],
+            self.taxonomy['family'], self.taxonomy['genus'],
+            self.taxonomy['species'])
 
 
 class Clusterable(Saveable):
@@ -654,77 +732,73 @@ class Clusterable(Saveable):
 
 class ASVSet(Clusterable):
     '''Wraps a set of `ASV` objects. You can get the ASV object via the
-    ASV id, ASV name, or ASV sequence.
+    ASV id, ASV name.
     Provides functionality for aggregating and getting subsets for lineages.
 
-    Phylogenetic tree
-    -----------------
-    You can set the phylogenetic tree by calling `set_phylogenetic_tree`. 
-    That package that we use the for phylogenetic tree is `ete3` 
-    (https://github.com/etetoolkit/ete). You can pass in a file of the 
-    saved newick tree or a `ete` tree object. Any object that is set as
-    the phylogenetic tree will be immediately pruned to be only the asvs
-    in the ASVSet using either the name or id, which you can set using the
-    `identifier` keyword in `set_phylogenetic_tree`. If you delete an asv
-    from the phylogenetic tree then we delete if from the tree as well.
+    `taxonomy_table`
+    ----------------
+    This is a dataframe that contains the taxonomic information for each ASV.
+    The columns that must be included are:
+        'name' : name of the asv
+        'sequence' : sequence of the asv
+    All of the taxonomy specifications are optional:
+        'kingdom' : kingdom taxonomy
+        'phylum' : phylum taxonomy
+        'class' : class taxonomy
+        'family' : family taxonomy
+        'genus' : genus taxonomy
+        'species' : species taxonomy
 
-    We need to cast the names as strings so that it is backwards compatible
-
-    If you add OTUs to the set and there is a phylogenetic tree is there, 
-    # then it will delete the phylogenetic Tree. NOTE: Is this necessary?
+    Parameters
+    ----------
+    taxonomy_table : pandas.DataFrame, Optional
+        DataFrame conttaxaining the required information (Taxonomy, sequence).
+        If nothing is passed in, it will be an empty ASVSet
     '''
 
-    def __init__(self, df=None, use_sequences=True):
-        '''Load data from a dataframe
-
-        Assumes the frame has the following columns:
-            - sequence
-            - name
-            - taxonomy
-                * kingdom, phylum, class, order, family, genus, species, asv
-
-        Parameters
-        ----------
-        df - pandas.DataFrame, Optional
-            DataFrame containing the required information (Taxonomy, sequence).
-            If nothing is passed in, it will be an empty set.
-        use_sequences : bool
-            If True, Each ASV must have an associated sequence. Else 
-        '''
-        if not isbool(use_sequences):
-            raise TypeError('`use_sequences` ({}) must be a bool'.format(
-                type(use_sequences)))
-        self.use_sequences = use_sequences
-
+    def __init__(self, taxonomy_table=None):
+        self.taxonomy_table = taxonomy_table
         self.ids = CustomOrderedDict()
         self.names = CustomOrderedDict()
-        if self.use_sequences:
-            self.seqs = CustomOrderedDict()
-        else:
-            self.seqs = None
         self.index = []
         self._len = 0
-        self._phylogenetic_tree = None
 
         # Add all of the ASVs from the dataframe if necessary
-        if df is not None:
-            df = df.rename(str.lower, axis='columns')
-            for name in df.index:
-                if self.use_sequences and SEQUENCE_COLUMN_LABEL in df:
-                    seq = df[SEQUENCE_COLUMN_LABEL][name]
-                else:
-                    seq = None
-                self.add_asv(
-                    name=name,
-                    sequence=seq)
-                self.names[name].set_taxonomy(
-                    tax_kingdom=df.loc[name]['kingdom'],
-                    tax_phylum=df.loc[name]['phylum'],
-                    tax_class=df.loc[name]['class'],
-                    tax_order=df.loc[name]['order'],
-                    tax_family=df.loc[name]['family'],
-                    tax_genus=df.loc[name]['genus'],
-                    tax_species=df.loc[name]['species'])
+        if taxonomy_table is not None:
+            taxonomy_table = taxonomy_table.rename(str.lower, axis='columns')
+            if 'name' not in taxonomy_table.columns:
+                raise ValueError('`"name"` ({}) not found as a column in `taxonomy_table`'.format(
+                    taxonomy_table.columns))
+            if SEQUENCE_COLUMN_LABEL not in taxonomy_table.columns:
+                raise ValueError('`"{}"` ({}) not found as a column in `taxonomy_table`'.format(
+                    SEQUENCE_COLUMN_LABEL, taxonomy_table.columns))
+
+            for tax in _TAX_REV_IDXS[:-1]:
+                if tax not in taxonomy_table.columns:
+                    logging.info('Adding in `{}` column'.format(tax))
+                    taxonomy_table = taxonomy_table.insert(-1, tax, 
+                        [DEFAULT_TAXA_NAME for _ in range(len(taxonomy_table.index))])
+
+            for i in taxonomy_table.index:
+                seq = taxonomy_table[SEQUENCE_COLUMN_LABEL][i]
+                name = taxonomy_table['name'][i]
+                asv = ASV(name=name, sequence=seq, idx=self._len)
+                asv.set_taxonomy(
+                    tax_kingdom=taxonomy_table.loc[i]['kingdom'],
+                    tax_phylum=taxonomy_table.loc[i]['phylum'],
+                    tax_class=taxonomy_table.loc[i]['class'],
+                    tax_order=taxonomy_table.loc[i]['order'],
+                    tax_family=taxonomy_table.loc[i]['family'],
+                    tax_genus=taxonomy_table.loc[i]['genus'],
+                    tax_species=taxonomy_table.loc[i]['species'])
+
+                self.ids[asv.id] = asv
+                self.names[asv.name] = asv
+                self.index.append(asv)  
+                self._len += 1
+
+            self.ids.update_order()
+            self.names.update_order()
 
     def __contains__(self,key):
         try:
@@ -741,7 +815,7 @@ class ASVSet(Clusterable):
         key : str, int
             Key to reference the ASV
         '''
-        if isasv(key):
+        if isasvtype(key):
             return key
         if key in self.ids:
             return self.ids[key]
@@ -751,9 +825,6 @@ class ASVSet(Clusterable):
             return self.names[key]
         elif isasv(key):
             return key
-        elif self.use_sequences:
-            if key in self.seqs:
-                return self.seqs[key]
         else:
             raise IndexError('`{}` ({}) was not found as a name, sequence, index, or id'.format(
                 key, type(key)))
@@ -775,10 +846,6 @@ class ASVSet(Clusterable):
         '''
         return self._len
 
-    @property
-    def phylogenetic_tree(self):
-        return self._phylogenetic_tree
-
     def add_asv(self, name, sequence=None):
         '''Adds an ASV to the set
 
@@ -791,34 +858,23 @@ class ASVSet(Clusterable):
         '''
         asv = ASV(name=name, sequence=sequence, idx=self._len)
         self.ids[asv.id] = asv
-        if self.use_sequences:
-            self.seqs[asv.sequence] = asv
         self.names[asv.name] = asv
         self.index.append(asv)
 
         # update the order of the ASVs
         self.ids.update_order()
-        if self.use_sequences:
-            self.seqs.update_order()
         self.names.update_order()
         self._len += 1
 
-        self._phylogenetic_tree = None
-
         return self
 
-    def del_asv(self, asv, preserve_branch_length=False):
-        '''Deletes the ASV from the set. If there is a phylogenetic
-        tree
+    def del_asv(self, asv):
+        '''Deletes the ASV from the set.
 
         Parameters
         ----------
         asv : str, int, ASV
             Can either be the name, sequence, or the ID of the ASV
-        preserve_branch_length : bool
-            Only used if a phylogenetic tree is set
-            Read the documentation for the function `ete3.Tree.prune`.
-            Defualt is set to the default of the function.
         '''
         # Get the ID
         asv = self[asv]
@@ -827,64 +883,20 @@ class ASVSet(Clusterable):
         # Delete the ASV from everything
         # asv = self[asv]
         self.ids.pop(asv.id, None)
-        if self.use_sequences:
-            self.seqs.pop(asv.sequence, None)
         self.names.pop(asv.name, None)
         self.index.pop(oidx)
 
         # update the order of the ASVs
         self.ids.update_order()
-        if self.use_sequences:
-            self.seqs.update_order()
         self.names.update_order()
 
         # Update the indices of the asvs
         # Since everything points to the same object we only need to do it once
-        for idx,asv in enumerate(self.ids.values()):
-            asv.idx = idx
+        for aidx, asv in enumerate(self.index):
+            asv.idx = aidx
 
         self._len -= 1
-
-        # Update the phylogenetic tree if necessary
-        if self._phylogenetic_tree is not None:
-            self._phylogenetic_tree.prune(self.names.order)
-
         return self
-
-    def set_phylogenetic_tree(self, tree, identifier='name', preserve_branch_length=False):
-        '''Set the phylogenetic tree for the ASV set
-
-        Parameters
-        ----------
-        tree : str, ete3.Tree
-            Location, newick specification of a tree, or a ete3 Tree 
-            phylogenetic tree object
-        identifier : str
-            How the ASVs are specified in the tree.
-            'name'
-                Use the name to index
-            'id'
-                use the id of the asv
-        preserve_branch_length : bool
-            Read the documentation for the function `ete3.Tree.prune`.
-            Defualt is set to the default of the function.
-        '''
-        if not isstr(identifier):
-            raise TypeError('`identifier` ({}) must be a string'.format(type(identifier)))
-        if identifier == 'id':
-            raise NotImplementedError('This functionality is not yet implemented, mus tuse "name".')
-        elif identifier != 'name':
-            raise ValueError('`identifier` ({}) not recognized'.format(identifier))
-
-        if isstr(tree):
-            self._phylogenetic_tree = ete3.Tree(tree)
-        elif istree(tree):
-            self._phylogenetic_tree = tree
-        else:
-            raise TypeError('`tree` ({}) type not recognized'.format(type(tree)))
-            
-        logging.info('Tree accepted - pruning to only the asvs')
-        self._phylogenetic_tree.prune(nodes=self.names.order, preserve_branch_length=preserve_branch_length)
 
     def taxonomic_similarity(self,oid1,oid2):
         '''Calculate the taxonomic similarity between ASV1 and ASV2
@@ -925,23 +937,39 @@ class ASVSet(Clusterable):
                 break
         return i/8 # including ASV
 
-    def phylogenetic_distance(self, a, b):
-        '''Wrapper for ete3.Tree.get_distance
-
-        You can pass in index, id, or name instead of just name
+    def agglomerate_asvs(self, anchor, other):
+        '''Create an agglomerate asv with the anchor `anchor` and other asv  `other`.
+        The agglomerate takes the sequence and the taxonomy from the anchor.
 
         Parameters
         ----------
-        a,b : int, str  
-            Identifier for ASV `a` and ASV `b` to calculate the distance between
-
-        Returns
-        -------
-        float
+        anchor, other : str, int, mdsine2.ASV, mdsine2.AgglomerateASV
+            These are the ASVs/Agglomerates that you're joining together. The anchor is
+            the one you are setting the sequeunce and taxonomy to
         '''
-        a = str(self[a].name)
-        b = str(self[b].name)
-        return self._phylogenetic_tree.get_distance(a,b)
+        anchor = self[anchor]
+        other = self[other]
+        
+        agg = AgglomerateASV(anchor=anchor, other=other)
+
+        self.index[agg.idx] = agg
+        self.index.pop(other.idx)
+
+        self.ids = CustomOrderedDict()
+        self.names = CustomOrderedDict()
+
+        for idx, asv in enumerate(self.index):
+            asv.idx = idx
+            self.ids[asv.id] = asv
+            self.names[asv.name] = asv
+        
+        # update the order of the ASVs
+        self.ids.update_order()
+        self.names.update_order()
+
+        self._len = len(self.index)
+
+        return agg
 
 
 class qPCRdata:
@@ -1078,7 +1106,8 @@ class CustomOrderedDict(dict):
         self.index = None
 
     def update_order(self):
-        '''This will update the reverse dictionary
+        '''This will update the reverse dictionary based on the index. It will 
+        also redo the indexes if an ASV was deleted
         '''
         self.order = np.array(list(self.keys()))
         self.index = {}
@@ -1091,7 +1120,7 @@ class Subject(Saveable):
     The ASVSet order is done with respect to the ordering in the `reads_table`
     Parameters
     ----------
-    parent : SubjectSet
+    parent : Study
         This is the parent class (we have a reverse pointer)
     name : str
         This is the name of the subject
@@ -1104,6 +1133,16 @@ class Subject(Saveable):
         self.qpcr = {}
         self.reads = {}
         self.times = np.asarray([])
+
+    def add_time(self, timepoint):
+        '''Add the timepoint `timepoint`. Set the reads and qpcr at that timepoint
+        to None
+        '''
+        if timepoint in self.times:
+            return
+        self.times = np.sort(np.append(self.times, timepoint))
+        self.reads[timepoint] = None
+        self.qpcr[timepoint] = None
 
     def add_reads(self, timepoints, reads):
         '''Add the reads for timepoint `timepoint`
@@ -1138,7 +1177,7 @@ class Subject(Saveable):
 
         for tidx, timepoint in enumerate(timepoints):
             if timepoint in self.reads:
-                logging.info('There are already reads specified at time `{}` for subject `{}`, overwriting'.format(
+                logging.debug('There are already reads specified at time `{}` for subject `{}`, overwriting'.format(
                     timepoint, self.name))
                 
             self.reads[timepoint] = reads[:,tidx]
@@ -1210,7 +1249,7 @@ class Subject(Saveable):
 
         for tidx, timepoint in enumerate(timepoints):
             if timepoint in self.qpcr:
-                logging.info('There are already qpcr measurements specified at time `{}` for subject `{}`, overwriting'.format(
+                logging.debug('There are already qpcr measurements specified at time `{}` for subject `{}`, overwriting'.format(
                     timepoint, self.name))
             if masses is not None:
                 mass = masses[tidx]
@@ -1228,83 +1267,34 @@ class Subject(Saveable):
                 self.times = np.sort(np.append(self.times, timepoint))
         return self
 
-    def set_from_tables(self, qpcr_table, reads_table):
-        '''Set the qpcr and reads from pandas DataFrames
-
-        Parameters
-        ----------
-        qpcr_table : pandas.DataFrame
-            This is the qPCR table that holds all of the information for each of the samples
-        reads_table : pandas.DataFrame
-            This is the data for the reads table
-
-        TODO add descritpion for how the table should be laid out
-        '''
-        raise NotImplementedError('This still needs to be tested/clarified if this is ' \
-            'the format to have')
-        qpcr = qpcr_table.values
-        masses = qpcr[:,0].flatten()
-        dilution_factor = qpcr[:,1].flatten()
-        qpcr = qpcr[:,2:]
-        times = np.asarray(qpcr_table.index)
-        idxs = np.argsort(times)
-        self.times = times[idxs]
-        for idx in idxs:
-            self.qpcr[times[idx]] = qPCRdata(
-                cfus=qpcr[idx,:],
-                mass=masses[idx],
-                dilution_factor=dilution_factor[idx])
-
-        # Reads - add in time ascending order (using times from qpcr)
-        for t in self.times:
-            self.reads[t] = np.asarray(reads_table[t])
-
     @property
     def perturbations(self):
         '''Returns the number of perturbation
         '''
         return self.parent.perturbations
 
-    def matrix(self, min_rel_abund=None):
+    def matrix(self):
         '''Make a numpy matrix out of our data - returns the raw reads,
         the relative abundance, and the absolute abundance.
 
         If there is no qPCR data, then the absolute abundance is set to None.
-
-        Parameters
-        ----------
-        min_rel_abund : float, int, Optional
-            This is the minimum relative abundance to add to the 'rel' matrix.
-            If nothing is specified then nothing gets added
         '''
-        if np.issubdtype(type(min_rel_abund), np.bool_):
-            if not min_rel_abund:
-                min_rel_abund = None
-            else:
-                raise ValueError('Invalid `min_rel_abund` type ({})'.format(
-                    type(min_rel_abund)))
-
-        if min_rel_abund is not None:
-            if type(min_rel_abund) != float or type(min_rel_abund) != int:
-                raise ValueError('if `min_rel_abund` ({}) is specified, it must ' \
-                    'be a float or an int'.format(type(min_rel_abund)))
 
         shape = (len(self.asvs), len(self.times))
         raw = np.zeros(shape=shape, dtype=int)
         rel = np.zeros(shape=shape, dtype=float)
         abs = np.zeros(shape=shape, dtype=float)
 
-        if min_rel_abund is not None:
-            rel += min_rel_abund
-
         for i,t in enumerate(self.times):
             raw[:,i] = self.reads[t]
             rel[:,i] = raw[:,i]/np.sum(raw[:,i])
         
-        if len(self.qpcr) > 0:
+        try:
             for i,t in enumerate(self.times):
                 abs[:,i] = rel[:,i] * self.qpcr[t].mean()
-        else:
+        except AttributeError as e:
+            logging.info('Attribute Error ({}) for absolute abundance. This is likely ' \
+                'because you did not set the qPCR abundances. Skipping `abs`'.format(e))
             abs = None
 
         return {'raw':raw, 'rel': rel, 'abs':abs}
@@ -1404,7 +1394,7 @@ class Subject(Saveable):
 
         # Everything is valid, get the data dataframe and the return dataframe
         asvname_map = {}
-        df = self.df(min_rel_abund=None)[dtype]
+        df = self.df()[dtype]
         cols = list(df.columns)
         cols.append(taxlevel)
         dfnew = pd.DataFrame(columns = cols).set_index(taxlevel)
@@ -1501,96 +1491,25 @@ class Subject(Saveable):
             self.parent[mid].times = self.times[start:end]
 
 
-class SubjectSet(Saveable):
+class Study(Saveable):
     '''Holds data for all the subjects
 
     Paramters
     ---------
-    sequences : pd.DataFrame, Optional
-        index: ASV names
-        column: sequences
-        These are the sequences for each one of the ASVs
-    taxonomy_table : pd.DataFrame, Optional
-        index:
-            - ASV names
-            - Must be identical to the keys in `sequences` and the
-              index in `reads_table`
-        columns:
-            - Must contain 'kingdom', 'phylum', 'class', 'order',
-              'family', 'genus', 'species
-        data:
-            - These are the names
     asvs : ASVSet, Optional
-        If you already have an ASVSetobject, you can just use that
+        Contains all of the ASVs
     '''
-    def __init__(self, sequences=None, taxonomy_table=None, asvs=None):
+    def __init__(self, asvs):
         self.id = id(self)
         self._subjects = {}
         self.perturbations = None
         self.qpcr_normalization_factor = None
-        if asvs is not None:
-            if not isasvset(asvs):
-                raise ValueError('If `asvs` ({}) is specified, it must be an ASVSet' \
-                    ' type'.format(type(asvs)))
-            self.asvs = asvs
-            return
+        if not isasvset(asvs):
+            raise ValueError('If `asvs` ({}) is specified, it must be an ASVSet' \
+                ' type'.format(type(asvs)))
+        self.asvs = asvs
 
-        if type(sequences) != pd.DataFrame:
-            raise ValueError('`sequences` ({}) must be a dict'.format(
-                type(sequences)))
-        if taxonomy_table is not None:
-            if type(taxonomy_table) != pd.DataFrame:
-                raise ValueError('`taxonomy_table` ({}) must be a pandas.DataFrame object'.format(
-                    type(taxonomy_table)))
-
-        valid_cols = ['sequences']
-        seq_cols = list(sequences.columns)
-        for col in seq_cols:
-            if col not in valid_cols:
-                raise ValueError('column `{}` not in valid columns: {}'.format(
-                    col, valid_cols))
-        for col in valid_cols:
-            if col not in seq_cols:
-                raise ValueError('column `{}` not in sequence columns: {}'.format(
-                    col, seq_cols))
-
-        seq_keys = sequences.index
-        if taxonomy_table is not None:
-            tax_index = taxonomy_table.index
-            for key in seq_keys:
-                if key not in tax_index:
-                    raise ValueError("key '{}' not in taxonomy index ({})".format(
-                        key, tax_index))
-            for key in tax_index:
-                if key not in seq_keys:
-                    raise ValueError("key '{}' not in sequence keys ({})".format(
-                        key, seq_keys))
-
-        # Check the columns for taxonomy_table if necessary
-        # Every column in taxonomy_table has to be in valid_cols
-        # NOT every column in valid_cols has to be in taxonomy_table
-        if taxonomy_table is not None:
-            valid_cols = ['tax_kingdom', 'tax_phylum', 'tax_class', 'tax_order', 
-                'tax_family', 'tax_genus', 'tax_species']
-            tax_cols = list(taxonomy_table.columns)
-            tax_cols = ['tax_{}'.format(str(col).lower()) for col in tax_cols]
-            taxonomy_table.columns = tax_cols
-            for col in tax_cols:
-                if col not in valid_cols:
-                    raise ValueError("col '{}' not in valid columns for taxonomy ({})".format(
-                        col, valid_cols))
-
-        # Everything is valid, make the asvset
-        # ASVs
-        self.asvs = ASVSet()
-        seq_data = sequences.to_numpy().ravel()
-        for oidx, asv_name in enumerate(sequences.index):
-            self.asvs.add_asv(name=asv_name, sequence=seq_data[oidx])
-            if taxonomy_table is not None:
-                kwargs = {}
-                for tax in tax_cols:
-                    kwargs[tax] = taxonomy_table[tax][asv_name]
-                self.asvs[asv_name].set_taxonomy(**kwargs)
+        self._samples = {}
 
     def __getitem__(self, key):
         return self._subjects[key]
@@ -1604,6 +1523,123 @@ class SubjectSet(Saveable):
 
     def __contains__(self, key):
         return key in self._subjects
+
+    def parse_samples(self, sampleids, reads=None, qpcr=None):
+        '''Parse tables of samples and cast in Subject sets. Automatically creates
+        the subject classes with the respective names.
+
+        Parameters
+        ----------
+        sampleids : pandas.DataFrame
+            Contains the meta data for each one of the samples
+            Columns:
+                'sampleID' -> str : This is the name of the sample
+                'subject' -> str : This is the name of the subject
+                'time' -> float : This is the time the sample takes place
+                'perturbation:`name`' -> int : This is a perturbation meta data where the
+                    name of the perturbation is `name`
+        reads : pandas.DataFrame, None
+            Contains the reads for each one of the samples and asvs
+                index (str) : indexes the ASV name
+                columns (str) : indexes the sample ID
+            If nothing is passed in, the reads are set to None
+        qpcr : pandas.DataFrame, None
+            Contains the qpcr measurements for each sample
+                index (str) : indexes the sample ID
+                columns (str) : Name is ignored. the values are set to the 
+        '''
+        if not isdataframe(sampleids):
+            raise TypeError('`sampleids` ({}) must be a pandas.DataFrame'.format(type(sampleids)))
+        
+        # Add the samples
+        # ---------------
+        if 'sampleID' in sampleids.columns:
+            sampleids = sampleids.set_index('sampleID')
+        for sampleid in sampleids.index:
+
+            sid = str(sampleids['subject'][sampleid])
+            t = float(sampleids['time'][sampleid])
+
+            if sid not in self:
+                self.add_subject(name=sid)
+            if t not in self[sid].times:
+                self[sid].add_time(timepoint=t)
+
+            self._samples[str(sampleid)] = (sid,t)
+
+        # Add the perturbations if there are any
+        # --------------------------------------
+        for col in sampleids.columns:
+            pert_name = col.replace('perturbation:', '')
+            if 'perturbation:' in col:
+                min_time = None
+                max_time = None
+                for sampleid in sampleids.index:
+                    if sampleids[col][sampleid] == 1:
+                        t = float(sampleids['time'][sampleid])
+                        if min_time is None:
+                            min_time = t
+                        else:
+                            if t < min_time:
+                                min_time = t
+                        if max_time is None:
+                            max_time = t
+                        else:
+                            if t > max_time:
+                                max_time = t
+                if max_time is None or min_time is None:
+                    raise ValueError('Perturbation `{}` for column `{}` did not find any ' \
+                        'times'.format(pert_name, col))
+
+                self.add_perturbation(min_time, end=max_time, name=pert_name)
+
+        # Add the reads if necessary
+        # --------------------------
+        if reads is not None:
+            if not isdataframe(reads):
+                raise TypeError('`reads` ({}) must be a pandas.DataFrame'.format(type(reads)))
+            
+            if 'name' in reads.columns:
+                reads = reads.set_index('name')
+
+            for sampleid in reads.columns:
+                if sampleid == SEQUENCE_COLUMN_LABEL:
+                    continue
+                try:
+                    sid, t = self._samples[sampleid]
+                except:
+                    raise ValueError('Sample ID `{}` not found in metadata ({}). Make sure ' \
+                        'you set the sample ID as the columns in the `reads` dataframe'.format(
+                            sampleid, list(self._samples.keys())))
+                self[sid].add_reads(timepoints=t, reads=reads[sampleid].to_numpy())
+
+        # Add the qPCR measurements if necessary
+        # --------------------------------------
+        if qpcr is not None:
+            if not isdataframe(qpcr):
+                raise TypeError('`qpcr` ({}) must be a pandas.DataFrame'.format(type(qpcr)))
+
+            if 'sampleID' in qpcr.columns:
+                qpcr = qpcr.set_index('sampleID')
+
+            for sampleid in qpcr.index:
+                try:
+                    sid, t = self._samples[sampleid]
+                except:
+                    raise ValueError('Sample ID `{}` not found in metadata ({}). Make sure ' \
+                        'you set the sample ID as the index in the `qpcr` dataframe'.format(
+                            sampleid, list(self._samples.keys())))
+                cfuspergram = qpcr.loc[sampleid].to_numpy()
+                self[sid].add_qpcr(timepoints=t, qpcr=cfuspergram)
+            
+    def write_metadata_to_table(self, path, sep='\t'):
+        raise NotImplementedError('Need to implement it')
+
+    def write_reads_to_table(self, path, sep='\t'):
+        raise NotImplementedError('Need to implement it')
+
+    def write_qpcr_to_table(self, path, sep='\t'):
+        raise NotImplementedError('Need to implement it')
 
     def iloc(self, idx):
         '''Get the subject as an index
@@ -1622,7 +1658,7 @@ class SubjectSet(Saveable):
                 return self._subjects[sid]
         raise IndexError('Index ({}) not found'.format(idx))
 
-    def add(self, name):
+    def add_subject(self, name):
         '''Create a subject with the name `name`
 
         Parameters
@@ -1634,98 +1670,6 @@ class SubjectSet(Saveable):
             self._subjects[name] = Subject(name=name, parent=self)
         return self
 
-    def add_from_table(self, name, reads_table, qpcr_table):
-        '''Adds a subject to the subject set
-
-        Parameters
-        ----------
-        name : str
-            This is the name of the subject
-        qpcr_table, reads_table : pandas.DataFrame
-            These specify the qpcr measurements
-            index:
-                - ['1.0','1.3', '2.2', ...] these are the time points in string
-                  format
-            columns:
-                - ['mass', 'dilution factor', '1', '2', '3'] (for each of the 3 measurements)
-            data:
-                - these are the triplicate qpcr measurements
-        reads_table : pandas.DataFrame
-            index:
-                - ASV names
-                - Must be identical to the keys in `sequences` and the
-                  index in `taxonomy_table`
-            columns:
-                - These are the time points in string format
-                - These must be identical to the index in `qpcr_table`
-            data:
-                - Each one of the reads for each one of the ASVs
-        '''
-        # Type check
-        if type(name) != str:
-            raise ValueError('`name` ({}) must be a str'.format(type(name)))
-        if type(qpcr_table) != pd.DataFrame:
-            raise ValueError('`qpcr_table` ({}) must be a pandas.DataFrame object'.format(
-                type(qpcr_table)))
-        if type(reads_table) != pd.DataFrame:
-            raise ValueError('`reads_table` ({}) must be a pandas.DataFrame object'.format(
-                type(reads_table)))
-
-        # Check ASV names are consistent
-        read_index = reads_table.index
-        for key in self.asvs.names:
-            if key not in read_index:
-                raise ValueError("key '{}' not in reads index ({})".format(
-                    key, read_index))
-        for key in read_index:
-            if key not in self.asvs.names:
-                raise ValueError("key '{}' not in sequence keys ({})".format(
-                    key, self.asvs.names))
-
-
-        # Check time labels are consistent
-        # First convert both to strs of floats where necessary
-        reads_table.columns = [float(t) for t in reads_table.columns]
-        qpcr_table.index = [float(t) for t in qpcr_table.index]
-
-        qpcr_times = qpcr_table.index
-        reads_times = reads_table.columns
-        for key in qpcr_times:
-            if key not in reads_times:
-                raise ValueError("key '{}' not in times for reads ({})".format(
-                    key, reads_times))
-        for key in reads_times:
-            if key not in qpcr_times:
-                raise ValueError("key '{}' not in times for qpcr ({})".format(
-                    key, qpcr_table))
-
-        # Check the columns for qpcr_table
-        valid_cols = ['dilution factor', 'mass', '1', '2', '3']
-        qpcr_cols = list(qpcr_table.columns)
-        qpcr_cols = [str(col).lower() for col in qpcr_cols]
-        for col in qpcr_cols:
-            if col not in valid_cols:
-                raise ValueError("col '{}' not in valid columns for qpcr ({})".format(
-                    col, valid_cols))
-        for col in valid_cols:
-            if col not in qpcr_cols:
-                raise ValueError("col '{}' not in qpcr columns ({})".format(
-                    col, qpcr_cols))
-
-        # Check ordering of reads index is consistent with the asvset order
-        if len(reads_table.index) != len(self.asvs):
-            raise ValueError('length of reads ({}) does not equal the right number ' \
-                'of ASVs ({})'.format(len(reads_table.index), len(self.asvs)))
-        for i,name in enumerate(self.asvs.names.order):
-            if name != reads_table.index[i]:
-                raise ValueError('The `{}`th row of the reads ({}) does not ' \
-                    'correspond to the `{}`th ASV in ASVSet ({})'.format(
-                        i,reads_table.index[i],i,name))
-        self.add(name=name)
-        self._subjects[name].set_from_tables(reads_table=reads_table,
-            qpcr_table=qpcr_table)
-        return self
-
     def pop_subject(self, sid):
         '''Remove the indicated subject id
 
@@ -1733,7 +1677,7 @@ class SubjectSet(Saveable):
         ----------
         sid : list(str), str, int
             This is the subject name/s or the index/es to pop out.
-            Return a new SubjectSet with the specified subjects removed.
+            Return a new Study with the specified subjects removed.
         '''
         if not isarray(sid):
             sids = [sid]
@@ -1745,7 +1689,7 @@ class SubjectSet(Saveable):
                 sids[i] = list(self._subjects.keys())[sids[i]]
             elif not isstr(sids[i]):
                 raise ValueError('`sid` ({}) must be a str'.format(type(sids[i])))
-        ret = SubjectSet(asvs=self.asvs)
+        ret = Study(asvs=self.asvs)
         ret.perturbations = self.perturbations
         ret.qpcr_normalization_factor = self.qpcr_normalization_factor
 
@@ -1765,33 +1709,54 @@ class SubjectSet(Saveable):
         oids : str, int, list(str/int)
             These are the identifiers for each of the ASV/s to delete
         '''
-        if isint(oids):
-            oids = [oids]
-        if not isarray(oids):
-            raise ValueError('`oids` ({}) must be an array'.format(type(oids)))
-
         # get indices
         oidxs = []
         for oid in oids:
             oidxs.append(self.asvs[oid].idx)
-
-        # Get the IDs
-        ids = []
-        for oid in oids:
-            ids.append(self.asvs[oid].id)
-
+        
         # Delete the ASVs from asvset
-        for oid in ids:
-            if oid not in self.asvs:
-                logging.warning('asv `{}` not contained in asvset. skipping'.format(oid))
-            asv = self.asvs[oid]
-            self.asvs.del_asv(asv.id)
+        for oid in oids:
+            self.asvs.del_asv(oid)
 
         # Delete the reads
         for subj in self:
             for t in subj.reads:
                 subj.reads[t] = np.delete(subj.reads[t], oidxs)
         return self
+
+    def agglomerate_asvs(self, asv1, asv2):
+        '''Agglomerate the abundances of `asv1` and `asv2`. Updates the reads table and
+        internal ASVSet
+
+        Parameters
+        ----------
+        asv1, asv2 : str, int, mdsine2.ASV, mdsine2.AgglomerateASV
+            These are the ASVs you are agglomerating together
+        '''
+        # Find the anchor - use the total number of counts
+        aidx1 = self.asvs[asv1].idx
+        aidx2 = self.asvs[asv2].idx
+
+        abund1 = 0
+        abund2 = 0
+        for subj in self:
+            for t in subj.times:
+                abund1 += subj.reads[t][aidx1]
+                abund2 += subj.reads[t][aidx2]
+
+        if abund1 > abund2:
+            anchor = self.asvs[asv1]
+            other = self.asvs[asv2]
+        else:
+            anchor = self.asvs[asv2]
+            other = self.asvs[asv1]
+
+        for subj in self:
+            for t in subj.times:
+                subj.reads[t][anchor.idx] += subj.reads[t][other.idx]
+                subj.reads[t] = np.delete(subj.reads[t], other.idx)
+
+        return self.asvs.agglomerate_asvs(anchor=anchor, other=other)
 
     def pop_times(self, times, sids='all'):
         '''Discard the times in `times` for the subjects listed in `sids`.
@@ -1927,7 +1892,7 @@ class SubjectSet(Saveable):
             subj._split_on_perturbations()
         return self
 
-    def _matrix(self, dtype, agg, times, min_rel_abund=None):
+    def _matrix(self, dtype, agg, times):
         if dtype not in ['raw', 'rel', 'abs']:
             raise ValueError('`dtype` ({}) not recognized'.format(dtype))
         
@@ -1997,7 +1962,7 @@ class SubjectSet(Saveable):
 
         return M, times
 
-    def matrix(self, dtype, agg, times, min_rel_abund=None):
+    def matrix(self, dtype, agg, times):
         '''Make a matrix of the aggregation of all the subjects in the subjectset
 
         Aggregation of subjects
@@ -2035,11 +2000,15 @@ class SubjectSet(Saveable):
         -------
         np.ndarray(n_asvs, n_times)
         '''
-        M, _ =  self._matrix(dtype=dtype, agg=agg, times=times, min_rel_abund=min_rel_abund)
+        M, _ =  self._matrix(dtype=dtype, agg=agg, times=times)
         return M
 
     def df(self, *args, **kwargs):
-        '''Returns a dataframe of the data in matrix. Rows are ASVs, columns are times
+        '''Returns a dataframe of the data in matrix. Rows are ASVs, columns are times.
+
+        See Also
+        --------
+        mdsine2.matrix
         '''
         M, times = self._matrix(*args, **kwargs)
         index = self.asvs.names.order

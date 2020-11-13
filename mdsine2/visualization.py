@@ -40,13 +40,7 @@ import seaborn as sns
 from matplotlib.pyplot import arrow
 import matplotlib.ticker as plticker
 
-from .base import isasvset, issubjectset, issubject
-from .cluster import isclustering
-from .variables import Variable as pylabVariable
-from .variables import isVariable
-from . import util
-from .metropolis import isMetropKernel, acceptance_rate
-from .graph import hasprior
+from . import pylab as pl
 
 warnings.filterwarnings('ignore')
 _plt_labels = ['title', 'xlabel', 'ylabel']
@@ -59,11 +53,6 @@ DEFAULT_SNS_CMAP = 'deep'
 
 DEFAULT_MAX_BAYES_FACTOR = 15
 DEFAULT_LINEWIDTHS = 0.8
-DEFAULT_LINECOLOR = 'black'
-DEFAULT_N_COLORS = 100
-DEFAULT_XTICKLABELS = util.INDEX_FORMATTER
-DEFAULT_YTICKLABELS = '{} {}'.format(
-        util.NAME_FORMATTER, util.INDEX_FORMATTER)
 DEFAULT_INCLUDE_COLORBAR = True
 DEFAULT_INCLUDE_TICK_MARKS = False
 DEFAULT_ACCEPTANCE_RATE_PREV = 50
@@ -86,7 +75,7 @@ def set_default_tax_level(level):
             'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'ASV'
     '''
     global DEFAULT_TAX_LEVEL
-    if not util.isstr(level):
+    if not pl.isstr(level):
         raise ValueError('`level` ({}) must be a str'.format(type(level)))
     if level not in ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'asv']:
         raise ValueError('`level` ({}) not valid'.format(level))
@@ -116,7 +105,7 @@ def set_xtick_frequency(x):
         How often it should occur (in days)
     '''
     global XTICK_FREQUENCY
-    if not util.isnumeric(x):
+    if not pl.isnumeric(x):
         raise ValueError('x ({}) must be a numeric'.format(type(x)))
     if x <= 0:
         raise ValueError('x ({}) must be >= 0'.format(x))
@@ -145,7 +134,7 @@ def shade_in_perturbations(ax, perturbations, textcolor='black', textsize=None, 
     ----------
     ax : matplotlib.pyplot.Axes
         Axis we are plotting on
-    subjset : pylab.base.SubjectSet
+    subjset : pylab.base.Study
         Subject set to plot on
 
     Returns
@@ -173,15 +162,15 @@ def shade_in_perturbations(ax, perturbations, textcolor='black', textsize=None, 
         # Set the names on the top x-axis
         ax2 = ax.twiny()
 
-        # Set the visibility of the twin axis to see through
-        ax2.spines['top'].set_visible(False)
-        ax2.spines['bottom'].set_visible(False)
-        ax2.spines['left'].set_visible(False)
-        ax2.spines['right'].set_visible(False)
-        ax2.xaxis.set_major_locator(plt.NullLocator())
-        ax2.xaxis.set_minor_locator(plt.NullLocator())
-        ax2.yaxis.set_major_locator(plt.NullLocator())
-        ax2.yaxis.set_minor_locator(plt.NullLocator())
+        # # Set the visibility of the twin axis to see through
+        # ax2.spines['top'].set_visible(False)
+        # ax2.spines['bottom'].set_visible(False)
+        # ax2.spines['left'].set_visible(False)
+        # ax2.spines['right'].set_visible(False)
+        # ax2.xaxis.set_major_locator(plt.NullLocator())
+        # ax2.xaxis.set_minor_locator(plt.NullLocator())
+        # ax2.yaxis.set_major_locator(plt.NullLocator())
+        # ax2.yaxis.set_minor_locator(plt.NullLocator())
 
         left,right = ax.get_xlim()
         ax2.set_xlim(ax.get_xlim())
@@ -202,9 +191,9 @@ def shade_in_perturbations(ax, perturbations, textcolor='black', textsize=None, 
 # Heatmaps
 # --------
 def render_bayes_factors(bayes_factors, asvs, clustering=None, ax=None,
-    n_colors=None, max_value=None, xticklabels=None, yticklabels=None,
-    include_tick_marks=None, linewidths=None, linecolor=None,cmap=None,
-    include_colorbar=None, title='Microbe Interaction Bayes Factors', figure_size=None,
+    n_colors=100, max_value=None, xticklabels='%(index)s', yticklabels='%(name)s %(index)s',
+    include_tick_marks=False, linewidths=0.8, linecolor='black',cmap='Blues',
+    include_colorbar=True, title='Microbe Interaction Bayes Factors', figure_size=None,
     order=None):
     '''Renders the bayes factors for each of the interactions. Self interactions
     are automatically set to np.nan.
@@ -309,7 +298,7 @@ def render_bayes_factors(bayes_factors, asvs, clustering=None, ax=None,
     return ax
 
 def render_cocluster_proportions(coclusters, asvs, clustering=None, ax=None,
-    n_colors=None, xticklabels=None, yticklabels=None,
+    n_colors=100, xticklabels='%(index)s', yticklabels='%(name)s %(index)s',
     include_tick_marks=None, linewidths=None, linecolor=None, cmap=None,
     include_colorbar=None, title='Microbe Co-cluster Proportions', figure_size=None,
     order=None):
@@ -439,7 +428,7 @@ def render_interaction_strength(interaction_matrix, log_scale, asvs, clustering=
           infered from the data
     xticklabels, yticklabels : str, list, None, Optional
         - These are the labels for the x and y axis, respectively.
-        - For details on the format, look at `pylab.util.asvname_formatter`
+        - For details on the format, look at `pylab.asvname_formatter`
         - If it is a list then it must have `asvs.n_asvs` elements.
         - If it is a string, it is the formatter for each of the rows/columns.
         - If it is None, then do not make any ticklabels
@@ -680,7 +669,7 @@ def render_acceptance_rate_trace(var, idx=None, prev='default', ax=None, include
     matplotlib.pyplot.Axes
         - Axis object that contains the rendering of the acceptance rate
     '''
-    if util.isstr(prev):
+    if pl.isstr(prev):
         if prev == 'all':
             prev = float('inf')
         elif prev == 'default':
@@ -689,12 +678,12 @@ def render_acceptance_rate_trace(var, idx=None, prev='default', ax=None, include
             raise ValueError('str `default` ({}) not recognized'.format(prev))
     elif prev is None:
         prev = 50
-    elif not util.isint(prev):
+    elif not pl.isint(prev):
         raise TypeError('`prev` ({}) must either be None or an int'.format(type(prev)))
     if prev < 0:
         raise ValueError('`prev` ({}) must be postiive'.format(prev))
 
-    if not util.isbool(include_burnin):
+    if not pl.isbool(include_burnin):
         raise TypeError('`include_burnin` ({}) must be a bool'.format(type(include_burnin)))
 
     if idx is not None:
@@ -709,9 +698,9 @@ def render_acceptance_rate_trace(var, idx=None, prev='default', ax=None, include
     else:
         idxs = ()
 
-    if util.isarray(var):
+    if pl.isarray(var):
         trace = np.asarray(var)
-        if util.isint(n_burnin):
+        if pl.isint(n_burnin):
             if n_burnin < 0:
                 raise ValueError('`n_burnin` ({}) must be >= 0'.format(n_burnin))
             points = np.append(
@@ -722,7 +711,7 @@ def render_acceptance_rate_trace(var, idx=None, prev='default', ax=None, include
         trace = trace[idxs]
         include_burnin = False
 
-    elif isVariable(var):
+    elif pl.isVariable(var):
         if section == 'entire':
             section = 'posterior'
             include_burnin = True
@@ -848,9 +837,9 @@ def render_trace(var, idx=None, ax=None, plt_type=None, include_burnin=True,
         plt_type = DEFAULT_PLT_TYPE
     if 'color' not in kwargs:
         kwargs['color'] = DEFAULT_TRACE_COLOR
-    if not util.isbool(scatter):
+    if not pl.isbool(scatter):
         raise TypeError('`scatter` ({}) must be a bool'.format(type(scatter)))
-    if not util.isbool(log_scale):
+    if not pl.isbool(log_scale):
         raise TypeError('`log_scale` ({}) must be a bool'.format(type(log_scale)))
     
     # check the kwargs
@@ -886,9 +875,9 @@ def render_trace(var, idx=None, ax=None, plt_type=None, include_burnin=True,
     else:
         idxs = ()
 
-    if not isVariable(var):
+    if not pl.isVariable(var):
         trace = np.asarray(var)
-        if util.isint(n_burnin):
+        if pl.isint(n_burnin):
             if n_burnin < 0:
                 raise ValueError('`n_burnin` ({}) must be >= 0'.format(n_burnin))
             points = np.append(
@@ -1058,26 +1047,26 @@ def alpha_diversity_over_time(subjs, metric, taxlevel=None, lca=True,
     matplotlib.pyplot.Axes
     '''
     # Type checking
-    if not util.isbool(grid):
+    if not pl.isbool(grid):
         raise TypeError('`grid` ({}) must be a bool'.format(type(grid)))
-    if issubject(subjs):
+    if pl.issubject(subjs):
         subjs = [subjs]
-    if not util.isarray(subjs):
+    if not pl.isarray(subjs):
         raise ValueError('`subjs` ({}) must be a pylab.base.Subject or an array'.format(type(subjs)))
     if not callable(metric):
         raise ValueError('`metric` ({}) must be callable'.format(type(metric)))
-    if not util.isbool(lca):
+    if not pl.isbool(lca):
         raise ValueError('`lca` ({}) must be a bool'.format(
             type(lca)))
-    if not util.isbool(shade_perturbations):
+    if not pl.isbool(shade_perturbations):
         raise ValueError('`shade_perturbations` ({}) must be a bool'.format(
             type(shade_perturbations)))
-    if not util.isbool(legend):
+    if not pl.isbool(legend):
         raise ValueError('If `legend` ({}) is specified, it must be a bool'.format(
             type(legend)))
     if cmap is None:
         cmap = DEFAULT_SNS_CMAP
-    elif not util.isstr(cmap):
+    elif not pl.isstr(cmap):
         raise TypeError('`cmap` ({}) must either be None or a str'.format(type(cmap)))
 
     if 'title' not in kwargs:
@@ -1118,7 +1107,7 @@ def alpha_diversity_over_time(subjs, metric, taxlevel=None, lca=True,
                     subj = b
             if subj is None:
                 raise ValueError('`subjname` ({}) not a valid subject name'.format(subjname))
-            if not util.isnumeric(timepoint):
+            if not pl.isnumeric(timepoint):
                 raise ValueError('invalid timepoint ({}) in `highlight`. ' \
                     'It must be a numeric'.format(type(timepoint)))
             if timepoint not in subj.times:
@@ -1146,7 +1135,7 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
     plot_abundant=None, plot_specific=None, plot_clusters=None, highlight=None, marker='o',
     ylim=None, markersize=4, shade_perturbations=True, legend=True, set_0_to_nan=False, 
     color_code_clusters=False, clustering=None, cmap=None, alpha=1.0, linestyle='-', ax=None,
-    include_errorbars=False, grid=False, label_formatter=None, **kwargs):
+    include_errorbars=False, grid=False, label_formatter=None, label_func=None, **kwargs):
     '''Plots the abundance over time for the ASVs in `subj`.
 
     What you're plotting
@@ -1163,10 +1152,10 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
         pl.base.Subject object.
     'qpcr'
         This plots the qPCR measurements at each time point. `subj` can also be a 
-        list of pl.base.Subject objects, or a `pl.base.SubjectSet` object.
+        list of pl.base.Subject objects, or a `pl.base.Study` object.
     'read-depth'
         These are the the read depths at each timepoint. `subj` can also be a 
-        list of pl.base.Subject objects, or a `pl.base.SubjectSet` object.
+        list of pl.base.Subject objects, or a `pl.base.Study` object.
     
     Aggregating by taxanomic level
     ------------------------------
@@ -1179,7 +1168,7 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
     are only necessary if dtype is either 'raw', 're', or 'abs'.
 
     The `label_formatter` (str) tells the function how to set the index of the dataframe
-    it returns using `pylab.util.asvname_formatter`. If nothing is specified then it 
+    it returns using `pylab.asvname_formatter`. If nothing is specified then it 
     will return the entire taxonomy as a label for the taxa. NOTE, you cannot specifiy
     a taxonomy *below* that youre clustering at. For example, you cannot cluster at the 
     'class' level and then specify `'%(genus)s'` in `label_formatter`.
@@ -1226,11 +1215,11 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
 
     Parameters
     ----------
-    subj : pylab.base.Subject, pylab.base.SubjectSet, list(pylab.base.Subject)
+    subj : pylab.base.Subject, pylab.base.Study, list(pylab.base.Subject)
         Subject/s we are getting the data from. Must be a single object if 
         `dtype` is 'raw', 'rel', or 'abs'. Must be multiple or single object.
         If `dtype` is 'qpcr' or 'read-depth', then this can also be a list of 
-        Subject objects or a SubjectSet object,
+        Subject objects or a Study object,
     dtype : str
         Datatype to plot.
             'raw': Count data
@@ -1307,27 +1296,27 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
     '''
     # Type checking
     taxlevel = _set_taxlevel(taxlevel)
-    if not util.isstr(dtype):
+    if not pl.isstr(dtype):
         raise TypeError('`dtype` ({}) must be a str'.format(type(dtype)))
     if dtype not in ['raw', 'rel', 'abs', 'qpcr', 'read-depth']:
         raise TypeError('`dtype` ({}) not recognized'.format(dtype))
     if dtype == 'qpcr':
-        if not util.isbool(include_errorbars):
+        if not pl.isbool(include_errorbars):
             raise ValueError('`include_errorbars ({}) must be a bool'.format(type(include_errorbars)))
-    if not util.isbool(grid):
+    if not pl.isbool(grid):
         raise TypeError('`grid` ({}) must be a bool'.format(type(grid)))
-    if not issubject(subj):
+    if not pl.issubject(subj):
         if dtype not in ['qpcr', 'read-depth']:
             raise TypeError('`subj` ({}) must be a pylab.base.Subject'.format(type(subj)))
         else:
-            if util.isarray(subj):
+            if pl.isarray(subj):
                 for s in subj:
-                    if not issubject(s):
+                    if not pl.issubject(s):
                         raise TypeError('Every element in `subj` ({}) must be a ' \
                             'pl.base.Subject'.format(type(s)))
-            if not issubjectset(subj):
+            if not pl.isstudy(subj):
                 raise TypeError('`subj` ({}) type not recognized'.format(type(subj)))
-    if not util.isbool(lca):
+    if not pl.isbool(lca):
         raise TypeError('`lca` ({}) must be a bool'.format(
             type(lca)))
     if yscale_log is None:
@@ -1335,19 +1324,19 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
             yscale_log = False
         else:
             yscale_log = True
-    if not util.isbool(yscale_log):
+    if not pl.isbool(yscale_log):
         raise TypeError('`yscale_log` ({}) must be a bool'.format(
             type(yscale_log)))
-    if not util.isbool(shade_perturbations):
+    if not pl.isbool(shade_perturbations):
         raise TypeError('`shade_perturbations` ({}) must be a bool'.format(
             type(shade_perturbations)))
-    if not util.isbool(legend):
+    if not pl.isbool(legend):
         raise TypeError('If `legend` ({}) is specified, it must be a bool'.format(
             type(legend)))
-    if not util.isbool(set_0_to_nan):
+    if not pl.isbool(set_0_to_nan):
         raise TypeError('`set_0_to_nan` ({}) must be a bool'.format(type(set_0_to_nan)))
     if clustering is not None:
-        if not isclustering(clustering):
+        if not pl.isclustering(clustering):
             raise TypeError('`clustering` ({}) must be a pylab.cluster.Clustering' \
                 ' object if specified'.format(type(clustering)))
     if color_code_clusters and clustering is None:
@@ -1355,37 +1344,37 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
             ' be specified')
     if cmap is None:
         cmap = DEFAULT_SNS_CMAP
-    elif not util.isstr(cmap):
+    elif not pl.isstr(cmap):
         raise TypeError('`cmap` ({}) must either be None or a str'.format(type(cmap)))
     if dtype in ['raw', 'rel', 'abs']:
         if plot_abundant is not None:
-            if not util.isint(plot_abundant):
+            if not pl.isint(plot_abundant):
                 raise TypeError('`plot_abundant` ({}) must be an int'.format(
                     type(plot_abundant)))
             if plot_abundant == 0:
                 raise ValueError('`plot_abundant` cannot be zero')
         if plot_specific is not None:
-            if not util.isarray(plot_specific):
+            if not pl.isarray(plot_specific):
                 plot_specific = [plot_specific]
-        if util.isint(plot_clusters):
+        if pl.isint(plot_clusters):
             plot_clusters = [plot_clusters]
         if plot_clusters is not None:
-            if not util.isarray(plot_clusters):
+            if not pl.isarray(plot_clusters):
                 raise TypeError('If `plot_clusters` ({}) is specified, it must either be ' \
                     'an int or an array'.format(type(plot_clusters)))
             else:
                 for ele in plot_clusters:
-                    if not util.isint(ele):
+                    if not pl.isint(ele):
                         raise TypeError('Every element in `plot_clusters` ({}) ({}) must ' \
                             'be an int'.format(plot_clusters,
-                                util.itercheck(plot_clusters, util.isint)))
+                                pl.itercheck(plot_clusters, pl.isint)))
             if taxlevel != 'asv':
                 raise ValueError('Cannot plot clusters (`plot_clusters` ({})) and aggregate by a' \
                     ' taxonomic level (`taxlevel` ({}))'.format(plot_clusters, taxlevel))            
-            if not isclustering(clustering):
+            if not pl.isclustering(clustering):
                 raise ValueError('If `plot_clusters` is specified, then clustering ({}) must be ' \
                     'specified'.format(type(clustering)))
-        if not util.isbool(color_code_clusters):
+        if not pl.isbool(color_code_clusters):
             raise TypeError('`color_code_clusters` ({}) must be a bool'.format(
                 type(color_code_clusters)))
         if color_code_clusters:
@@ -1466,10 +1455,16 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
             # Only get the last name of the entire taxonomy
             label = re.findall(r"([^,)(' ]+)",label)[-1]
             datapoints = np.asarray(list(df.iloc[idx]))
+
+            if label_func is not None:
+                label = label_func(subj.asvs[label], asvs=subj.asvs)
+            # print(label) 
+
             if set_0_to_nan:
                 for i,val in enumerate(datapoints):
                     if val == 0:
                         datapoints[i] = np.nan
+            
             ax.plot(times, datapoints, label=label, marker=marker, color=colors[idx], 
                 markersize=markersize, alpha=alpha, linestyle=linestyle, **kwargs)
         
@@ -1494,7 +1489,7 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
         ax, kwargs = _set_plt_labels(d=kwargs, ax=ax)
         if ylim is not None:
             ax.set_ylim(*ylim)
-        if issubject(subj):
+        if pl.issubject(subj):
             subj = [subj]
         colors = sns.color_palette(cmap, n_colors=len(subj))
         
@@ -1534,7 +1529,7 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
                         ss = b
                 if ss is None:
                     raise ValueError('`subjname` ({}) not a valid subject name'.format(subjname))
-                if not util.isnumeric(timepoint):
+                if not pl.isnumeric(timepoint):
                     raise ValueError('invalid timepoint ({}) in `highlight`. ' \
                         'It must be a numeric'.format(type(timepoint)))
                 if timepoint not in ss.times:
@@ -1557,9 +1552,9 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
         ax.set_yscale('log')
     ax = _set_xticks(ax)
     if shade_perturbations:
-        if issubject(subj):
+        if pl.issubject(subj):
             perturbations = subj.parent.perturbations
-        elif issubjectset(subj):
+        elif pl.isstudy(subj):
             perturbations = subj.perturbations
         else:
             # Else it is an array of subjsets
@@ -1592,7 +1587,7 @@ def taxonomic_distribution_over_time(subj, taxlevel=None, lca=True,
     higher one if `lca` is True.
 
     The `label_formatter` (str) tells the function how to set the index of the dataframe
-    it returns using `pylab.util.asvname_formatter`. If nothing is specified then it 
+    it returns using `pylab.asvname_formatter`. If nothing is specified then it 
     will return the entire taxonomy as a label for the taxa. NOTE, you cannot specifiy
     a taxonomy *below* that youre clustering at. For example, you cannot cluster at the 
     'class' level and then specify `'%(genus)s'` in `label_formatter`.
@@ -1606,7 +1601,7 @@ def taxonomic_distribution_over_time(subj, taxlevel=None, lca=True,
 
     Parameters
     ----------
-    subj : pylab.base.Subject, pl.base.SubjectSet
+    subj : pylab.base.Subject, pl.base.Study
         Subject we are getting the data from. If it is a subjectset then we average over
         all of the subjects
     taxlevel : str, None
@@ -1637,17 +1632,17 @@ def taxonomic_distribution_over_time(subj, taxlevel=None, lca=True,
     matplotlib.pyplot.Axes
     ''' 
     # Type checking
-    if not (issubject(subj) or issubjectset(subj)):
-        raise ValueError('`subj` ({}) must be a pylab.base.Subject or pl.base.SubjectSet'.format(type(subj)))
-    if not util.isbool(lca):
+    if not (pl.issubject(subj) or pl.isstudy(subj)):
+        raise ValueError('`subj` ({}) must be a pylab.base.Subject or pl.base.Study'.format(type(subj)))
+    if not pl.isbool(lca):
         raise ValueError('`lca` ({}) must be a bool'.format(
             type(lca)))
-    if not util.isbool(legend):
+    if not pl.isbool(legend):
         raise ValueError('`legend` ({}) must be a bool'.format(type(legend)))
     taxlevel = _set_taxlevel(taxlevel)
 
     if plot_abundant is not None:
-        if not util.isint(plot_abundant):
+        if not pl.isint(plot_abundant):
             raise TypeError('`plot_abundant` ({}) must be an int'.format(
                 type(plot_abundant)))
         if plot_abundant == 0:
@@ -1664,7 +1659,7 @@ def taxonomic_distribution_over_time(subj, taxlevel=None, lca=True,
     if len(kwargs) != 0:
         raise ValueError('Arguemnts {} not recognized'.format(list(kwargs.keys())))
 
-    if issubjectset(subj):
+    if pl.isstudy(subj):
         raise NotImplementedError('Not implemented yet')
         # # average over all of the subjects
         # dfs = []
@@ -1706,7 +1701,7 @@ def taxonomic_distribution_over_time(subj, taxlevel=None, lca=True,
 
     ax = df.T.plot(ax=ax, kind='bar', stacked=True, **kwargs)
     if shade_perturbations:
-        if issubjectset(subj):
+        if pl.isstudy(subj):
             ax = shade_in_perturbations(ax, subj.perturbations)
         else:
             ax = shade_in_perturbations(ax, subj.parent.perturbations)
@@ -1745,14 +1740,14 @@ def _is_just_zero_or_nan(matrix):
 
 def _format_ticklabel(format, order, asvs):
     '''Format the xtick labels witha  slightly different format than that in 
-    `pylab.util.asvname_formatter`: Overrides the %(index)s to be where it appears 
+    `pylab.asvname_formatter`: Overrides the %(index)s to be where it appears 
     in the local order, not the global order
 
     Parameters
     ----------
     format : str
         - This is the format to make the ticklabel for each ASV. The format can be 
-          seen in `pylab.util.asvname_formatter`.
+          seen in `pylab.asvname_formatter`.
     order : array_like
         - This is the list of the ASV indices in the order that they should appear.
     asvs : pylab.base.ASVSet
@@ -1765,13 +1760,13 @@ def _format_ticklabel(format, order, asvs):
 
     See also
     --------
-    pylab.util.asvname_formatter
+    pylab.asvname_formatter
     '''
     ticklabels =[]
 
     for num, idx in enumerate(order):
         fmt = format.replace('%(index)s', str(num))
-        label = util.asvname_formatter(format=fmt, asv=idx, asvs=asvs)
+        label = pl.asvname_formatter(format=fmt, asv=idx, asvs=asvs)
         ticklabels.append(label)
     return ticklabels
 
@@ -1880,7 +1875,7 @@ def _init_parameters_heatmap(matrix, asvs, clustering, xticklabels, yticklabels,
         raise ValueError('`matrix` ({}) must be square'.format(
             matrix.shape))
     if asvs is not None:
-        if not isasvset(asvs):
+        if not pl.isasvset(asvs):
             raise ValueError('`asvs` ({}) must be a subclass of pylab.data.ASVSet'.format(
                 asvs.__class__))
         if matrix.shape[0] != asvs.n_asvs:
@@ -1888,10 +1883,10 @@ def _init_parameters_heatmap(matrix, asvs, clustering, xticklabels, yticklabels,
                 'equal the number of ASVs in `asvs` ({})'.format(
                     matrix.shape[0], asvs.n_asvs))
     if clustering is not None:
-        if not isclustering(clustering):
+        if not pl.isclustering(clustering):
             raise ValueError('`clustering` ({}) must be a subclass of ' \
                 'pylab.cluster.ClusteringBase'.format(clustering.__class__))
-    if not (xticklabels is None or type(xticklabels) == str or util.isarray(xticklabels)):
+    if not (xticklabels is None or type(xticklabels) == str or pl.isarray(xticklabels)):
         raise ValueError('xticklabels ({}) must either be None, str, or a list/np.ndarray' \
             ''.format(type(xticklabels)))
     if type(xticklabels) == list or type(xticklabels) == np.ndarray:
@@ -1907,7 +1902,7 @@ def _init_parameters_heatmap(matrix, asvs, clustering, xticklabels, yticklabels,
             raise ValueError('If yticklabels is a list, the length ({}) must ' \
                 'be the same as the matrix shape'.format(len(yticklabels), matrix.shape[0]))
     if order is not None:
-        if not util.isarray(order):
+        if not pl.isarray(order):
             raise TypeError('`order` ({}) if specified must be an array'.format(type(order)))
         if len(order) != len(asvs):
             raise TypeError('`order` ({}) must be {} elements'.format(len(order), len(asvs)))
@@ -2022,7 +2017,7 @@ def _set_taxlevel(taxlevel):
         taxlevel = DEFAULT_TAX_LEVEL
     if taxlevel is None:
         taxlevel = 'asv'
-    elif not util.isstr(taxlevel):
+    elif not pl.isstr(taxlevel):
         raise ValueError('`taxlevel` ({}) must be a str'.format(type(taxlevel)))
     elif taxlevel not in ['kingdom', 'phylum', 'class', 
         'order', 'family', 'genus', 'species', 'asv']:

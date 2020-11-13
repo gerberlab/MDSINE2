@@ -664,7 +664,6 @@ class Tracer(Saveable):
         dset.attrs['end_iter'] = i + l
         self.close()
 
-
     def overwrite_entire_trace_on_disk(self, name, data, dtype=None):
         '''Overwrite all the data we have on disk for the variable 
         with name `name` and data `data`. Blanks everything out and 
