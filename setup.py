@@ -1,18 +1,6 @@
-'''For python 3.7.3, installing line_profiler does not work outright
+'''MDSINE2
 
-Mac:
-----
-Need to do the steps found in "https://github.com/rkern/line_profiler/issues/132";
-`
-git clone https://github.com/rkern/line_profiler.git
-find line_profiler -name '*.pyx' -exec cython {} \;
-cd line_profiler && pip install .
-`
-
-Windows:
---------
-Follow instructions on:
-https://stackoverflow.com/questions/21154643/python-line-profiler-installation
+Built and tested for Python >= 3.7
 
 For installing on Windows OS
 ----------------------------
@@ -37,8 +25,8 @@ if os.name == 'nt':
 
     build_ext.build_ext.get_export_symbols = get_export_symbols
 
-VERSION = '3.0.1'
-SHORT_DESC = 'Base classes for dynamical inference'
+VERSION = '4.0.0'
+SHORT_DESC = 'Implements core features of the MDSINE2 model'
 LONG_DESC = \
     '''
     This package provides both high and low level classes for 
@@ -63,7 +51,7 @@ LONG_DESC = \
 REQUIREMENTS = [
     'numpy>=1.16.4',
     'pandas>=0.25',
-    'matplotlib==3.1.0',
+    'matplotlib',
     'sklearn==0.0',
     'xlrd',
     'seaborn',
@@ -71,16 +59,29 @@ REQUIREMENTS = [
     'psutil',
     'ete3',
     'networkx==2.3',
-    'numba==0.48.0',
-    'quadprog', 'qpsolvers']
+    'numba==0.48.0']
 
 # Custom C distributions
-ext1 = Extension('_distribution', ['pylab/c_code/distributionmodule.c'])
-ext2 = Extension('_sample', ['pylab/c_code/_samplemodule.c'])
+ext1 = Extension('_distribution', ['mdsine2/pylab/c_code/distributionmodule.c'])
+ext2 = Extension('_sample', ['mdsine2/pylab/c_code/_samplemodule.c'])
 EXTENSIONS = [ext1, ext2]
 
+# Subpackages
+PACKAGES = [
+    'mdsine2', 
+    # 'mdsine2.posterior', 
+    'mdsine2.pylab',
+    'mdsine2.raw_data']
+
+# Install gibson dataset
+PACKAGE_DIR = {
+    'gibson': 'mdsine2/raw_data/gibson_dataset'}
+PACKAGE_DATA = {
+    'gibson': ['mdsine2/raw_data/gibson_dataset/*']
+}
+
 setup(
-    name='pylab',
+    name='mdsine2',
     version=VERSION,
     description=SHORT_DESC,
     long_description=LONG_DESC,
@@ -88,7 +89,10 @@ setup(
     author_email='dkaplan65@gmail.com',
     python_requires='>=3.7',
     license='MIT',
-    packages=['pylab'],
+    packages=PACKAGES,
     zip_safe=False,
     install_requires=REQUIREMENTS,
-    ext_modules=EXTENSIONS)
+    ext_modules=EXTENSIONS,
+    package_dir=PACKAGE_DIR,
+    package_data=PACKAGE_DATA,
+    include_package_data=True)
