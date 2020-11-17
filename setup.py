@@ -9,8 +9,8 @@ Tracker (https://bugs.python.org/issue35893). This bug does not affect MacOS.
 '''
 import os
 
-from setuptools import setup
-from distutils.core import Extension, setup
+from setuptools import setup, find_packages
+from distutils.core import Extension #, setup
 
 # This is for it to run on windows
 if os.name == 'nt':
@@ -51,13 +51,12 @@ LONG_DESC = \
 REQUIREMENTS = [
     'numpy>=1.16.4',
     'pandas>=0.25',
-    'matplotlib',
+    'matplotlib==3.3.1',
     'sklearn==0.0',
-    'xlrd',
-    'seaborn',
+    'seaborn==0.11.0',
     'h5py==2.9.0',
-    'psutil',
-    'ete3',
+    'psutil==5.7.3',
+    'ete3==3.1.2',
     'networkx==2.3',
     'numba==0.48.0']
 
@@ -68,16 +67,15 @@ EXTENSIONS = [ext1, ext2]
 
 # Subpackages
 PACKAGES = [
-    'mdsine2', 
-    # 'mdsine2.posterior', 
-    'mdsine2.pylab',
-    'mdsine2.raw_data']
+    'mdsine2',
+    'mdsine2.datasets',
+    'mdsine2.pylab']
 
 # Install gibson dataset
 PACKAGE_DIR = {
-    'gibson': 'mdsine2/raw_data/gibson_dataset'}
+    'mdsine2.datasets': 'mdsine2/datasets'}
 PACKAGE_DATA = {
-    'gibson': ['mdsine2/raw_data/gibson_dataset/*']
+    'mdsine2.datasets': ['mdsine2/datasets/gibson_dataset/*']
 }
 
 setup(
@@ -93,6 +91,6 @@ setup(
     zip_safe=False,
     install_requires=REQUIREMENTS,
     ext_modules=EXTENSIONS,
-    package_dir=PACKAGE_DIR,
-    package_data=PACKAGE_DATA,
+    # package_dir=PACKAGE_DIR,
+    # package_data=PACKAGE_DATA,
     include_package_data=True)

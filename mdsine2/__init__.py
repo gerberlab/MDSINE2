@@ -3,7 +3,7 @@ from . import pylab
 # from . import posterior
 from . import visualization
 from . import diversity
-from . import raw_data 
+from . import dataset
 from . import config
 
 # Import key modules from pylab
@@ -36,7 +36,6 @@ from .pylab.random import seed
 from .pylab.contrib import Interactions
 from .pylab.inference import BaseMCMC
 
-
 # Import PyLab errors
 from .pylab.errors import UndefinedError, MathError, GraphIDError, InheritanceError, \
     InitializationError
@@ -45,6 +44,6 @@ from . import config
 from .run import build_graph, normalize_parameters, denormalize_parameters, \
     calculate_stability_over_gibbs
 from .util import asvname_for_paper, is_gram_negative, is_gram_negative_taxa, \
-    generate_interation_bayes_factors_posthoc, generate_perturbation_bayes_factors_posthoc
+    generate_interation_bayes_factors_posthoc, generate_perturbation_bayes_factors_posthoc, \
+    agglomerate_asvs
 from .util import consistency as consistency_filtering
-

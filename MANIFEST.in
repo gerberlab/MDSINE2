@@ -1,1 +1,2 @@
-recursive-include mdsine2/raw_data/gibson_dataset *.tsv *.nhx
+global-include *.tsv 
+global-include *.nhx

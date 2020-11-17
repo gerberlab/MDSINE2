@@ -691,6 +691,72 @@ def generate_cluster_assignments_posthoc(clustering, n_clusters='mode', linkage=
                 clustering.move_item(idx=oidx, cid=cid)
     return ret
 
+def agglomerate_asvs(subjset, hamming_dist):
+    '''Aggregate ASVs that have an average hamming distance of `hamming_dist`
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    mdsine2.Study
+    '''
+    cnt = 0
+    found = False
+    iii = 0
+    logging.info('Agglomerating asvs')
+    while not found:
+        for iii in range(iii, len(subjset.asvs)):
+            if iii % 200 == 0:
+                logging.info('{}/{}'.format(iii, len(subjset.asvs)))
+            asv1 = subjset.asvs[iii]
+            for asv2 in subjset.asvs.names.order[iii:]:
+                asv2 = subjset.asvs[asv2]
+                if asv1.name == asv2.name:
+                    continue
+                if len(asv1.sequence) != len(asv2.sequence):
+                    continue
+
+                dist = _avg_dist(asv1, asv2)
+                if dist <= hamming_dist:
+                    subjset.agglomerate_asvs(asv1, asv2)
+                    cnt += 1
+                    found = True
+                    break
+            if found:
+                break
+        if found:
+            found = False
+        else:
+            break
+    logging.info('agglomerated {} asvs'.format(cnt))
+    return subjset
+
+def _avg_dist(asv1, asv2):
+    dists = []
+    if pl.isagglomeratedasv(asv1):
+        seqs1 = asv1.agglomerated_seqs.values()
+    else:
+        seqs1 = [asv1.sequence]
+
+    if pl.isagglomeratedasv(asv2):
+        seqs2 = asv2.agglomerated_seqs.values()
+    else:
+        seqs2 = [asv2.sequence]
+
+    for v1 in seqs1:
+        for v2 in seqs2:
+            dists.append(_hamming(v1, v2))
+    return np.nanmean(dists)
+
+def _hamming(s1,s2):
+    result=0
+    for i,j in zip(s1,s2):
+        if i!=j:
+            # print(f'char not math{i,j}in {x}')
+            result+=1
+    return result
+
 def consistency(subjset, dtype, threshold, min_num_consecutive, colonization_time=None, 
     min_num_subjects=1, union_other_consortia=None):
     '''Filters the subjects by looking at the consistency of the 'dtype', which can
@@ -741,9 +807,9 @@ def consistency(subjset, dtype, threshold, min_num_consecutive, colonization_tim
         raise TypeError('`dtype` ({}) must be a str'.format(type(dtype)))
     if dtype not in ['raw', 'rel', 'abs']:
         raise ValueError('`dtype` ({}) not recognized'.format(dtype))
-    if not pl.isstudy(subjset):
-        raise TypeError('`subjset` ({}) must be a mdsine2.Study'.format(
-            type(subjset)))
+    # if not pl.isstudy(subjset):
+    #     raise TypeError('`subjset` ({}) must be a mdsine2.Study'.format(
+    #         type(subjset)))
     if not pl.isnumeric(threshold):
         raise TypeError('`threshold` ({}) must be a numeric'.format(type(threshold)))
     if threshold <= 0:

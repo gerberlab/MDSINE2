@@ -1,57 +1,60 @@
-# Pylab
+# MDSINE2
 
-A general codebase to use in the Gerber/Gibson Lab.
+This reposity contains codee used to run the MDSINE2 (Microbial Dynamical Systems INference Engine 2) used to infer microbiome time-series analyses.
 
----
-## TODO
-1. Make a HOWTO/Tutorial script on how to use the modules.
-2. Make more markdown files on descriptions of the modules.
-3. Make tutorials on how you could extend the classes.
-
+## Dependencies (Python 3.7.3)
 ---
 
-**Edit a file, create a new file, and clone from Bitbucket in under 2 minutes**
+ * biopython==1.78
+ * ete3==3.1.2
+ * numpy==1.19.4
+ * pandas==1.14
+ * matplotlib==3.3.1
+ * numba==0.48
+ * sklearn==0.0
+ * seaborn==0.11.0
+ * psutil==5.7.3
+ * h5py==2.9.0
+ * networkx==2.3
 
-When you're done, you can delete the content in this README and update the file with details for others getting started with your repository.
+ ## Installation
+ ---
+ Clone this directory, `cd` into mdsine and type
+ ```bash
+ pip install .
+ ```
+ This installs the package `mdsine2` and all of the dependencies listed above.
 
-*We recommend that you open this README in another tab as you perform the tasks below. You can [watch our video](https://youtu.be/0ocf7u76WSo) for a full demo of all the steps in this tutorial. Open the video in a new tab to avoid leaving Bitbucket.*
+ ## Tutorials
+ ---
+ Tutorials on how to use the package can be found in the `tutorials` directory.
 
+## Datasets
 ---
+```python
+import mdsine2 as md2
+```
+#### Gibson dataset
 
-## Edit a file
+The Gibson dataset that was used in ########## can be obtained using
+```python
+study = md2.dataset.gibson()
+```
+Which returns an `md2.Study` object that contains all of the data from both the Healthy and Ulcerative Colitis cohorts. To obtain a `md2.Study` object of a single cohort, simply:
+```python
+healthy_cohort = md2.dataset.gibson(healthy=True)
+ulcerative_colitis_cohort = md2.dataset.gibson(healthy=False)
+```
+To retrieve the raw data used to construct the `md2.Study` object:
+```python
+dfs = md2.dataset.gibson(as_df=True)
+taxonomy = dfs['taxonomy']
+qpcr = dfs['qpcr']
+reads = dfs['reads']
+metadata = dfs['metadata']
+```
+where `taxonomy`, `qpcr`, `reads`, and `metadata` are `pandas.DataFrame` objects that contain the raw data. If you additionally specify the `healthy` parameter in `md2.dataset.gibson`, it will only retrieve the raw data for that specific cohort.
 
-You’ll start by editing this README file to learn how to edit a file in Bitbucket.
-
-1. Click **Source** on the left side.
-2. Click the README.md link from the list of files.
-3. Click the **Edit** button.
-4. Delete the following text: *Delete this line to make a change to the README from Bitbucket.*
-5. After making your change, click **Commit** and then **Commit** again in the dialog. The commit page will open and you’ll see the change you just made.
-6. Go back to the **Source** page.
-
+#### Parsing your own dataset
 ---
-
-## Create a file
-
-Next, you’ll add a new file to this repository.
-
-1. Click the **New file** button at the top of the **Source** page.
-2. Give the file a filename of **contributors.txt**.
-3. Enter your name in the empty file space.
-4. Click **Commit** and then **Commit** again in the dialog.
-5. Go back to the **Source** page.
-
-Before you move on, go ahead and explore the repository. You've already seen the **Source** page, but check out the **Commits**, **Branches**, and **Settings** pages.
-
----
-
-## Clone a repository
-
-Use these steps to clone from SourceTree, our client for using the repository command-line free. Cloning allows you to work on your files locally. If you don't yet have SourceTree, [download and install first](https://www.sourcetreeapp.com/). If you prefer to clone from the command line, see [Clone a repository](https://confluence.atlassian.com/x/4whODQ).
-
-1. You’ll see the clone button under the **Source** heading. Click that button.
-2. Now click **Check out in SourceTree**. You may need to create a SourceTree account or log in.
-3. When you see the **Clone New** dialog in SourceTree, update the destination path and name if you’d like to and then click **Clone**.
-4. Open the directory you just created to see your repository’s files.
-
-Now that you're more familiar with your Bitbucket repository, go ahead and add a new file locally. You can [push your change back to Bitbucket with SourceTree](https://confluence.atlassian.com/x/iqyBMg), or you can [add, commit,](https://confluence.atlassian.com/x/8QhODQ) and [push from the command line](https://confluence.atlassian.com/x/NQ0zDQ).
+To parse your own data, refer to `tutorials/parsing_data.md`.

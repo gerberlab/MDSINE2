@@ -158,7 +158,7 @@ def isagglomeratedasv(x):
     bool
         True if `x` is of type ASV, else False
     '''
-    return x is not None and issubclass(x.__class__, AgglomerateASV)
+    return issubclass(x.__class__, AgglomerateASV)
 
 def isasvtype(x):
     '''Checks whether the input is a subclass of AgglomerateASV or ASV
@@ -767,8 +767,11 @@ class ASVSet(Clusterable):
         if taxonomy_table is not None:
             taxonomy_table = taxonomy_table.rename(str.lower, axis='columns')
             if 'name' not in taxonomy_table.columns:
-                raise ValueError('`"name"` ({}) not found as a column in `taxonomy_table`'.format(
-                    taxonomy_table.columns))
+                if taxonomy_table.index.name == 'name':
+                    taxonomy_table = taxonomy_table.reset_index()
+                else:
+                    raise ValueError('`"name"` ({}) not found as a column in `taxonomy_table`'.format(
+                        taxonomy_table.columns))
             if SEQUENCE_COLUMN_LABEL not in taxonomy_table.columns:
                 raise ValueError('`"{}"` ({}) not found as a column in `taxonomy_table`'.format(
                     SEQUENCE_COLUMN_LABEL, taxonomy_table.columns))
@@ -1524,13 +1527,13 @@ class Study(Saveable):
     def __contains__(self, key):
         return key in self._subjects
 
-    def parse_samples(self, sampleids, reads=None, qpcr=None):
+    def parse_samples(self, metadata, reads=None, qpcr=None):
         '''Parse tables of samples and cast in Subject sets. Automatically creates
         the subject classes with the respective names.
 
         Parameters
         ----------
-        sampleids : pandas.DataFrame
+        metadata : pandas.DataFrame
             Contains the meta data for each one of the samples
             Columns:
                 'sampleID' -> str : This is the name of the sample
@@ -1548,17 +1551,17 @@ class Study(Saveable):
                 index (str) : indexes the sample ID
                 columns (str) : Name is ignored. the values are set to the 
         '''
-        if not isdataframe(sampleids):
-            raise TypeError('`sampleids` ({}) must be a pandas.DataFrame'.format(type(sampleids)))
+        if not isdataframe(metadata):
+            raise TypeError('`metadata` ({}) must be a pandas.DataFrame'.format(type(metadata)))
         
         # Add the samples
         # ---------------
-        if 'sampleID' in sampleids.columns:
-            sampleids = sampleids.set_index('sampleID')
-        for sampleid in sampleids.index:
+        if 'sampleID' in metadata.columns:
+            metadata = metadata.set_index('sampleID')
+        for sampleid in metadata.index:
 
-            sid = str(sampleids['subject'][sampleid])
-            t = float(sampleids['time'][sampleid])
+            sid = str(metadata['subject'][sampleid])
+            t = float(metadata['time'][sampleid])
 
             if sid not in self:
                 self.add_subject(name=sid)
@@ -1569,14 +1572,14 @@ class Study(Saveable):
 
         # Add the perturbations if there are any
         # --------------------------------------
-        for col in sampleids.columns:
+        for col in metadata.columns:
             pert_name = col.replace('perturbation:', '')
             if 'perturbation:' in col:
                 min_time = None
                 max_time = None
-                for sampleid in sampleids.index:
-                    if sampleids[col][sampleid] == 1:
-                        t = float(sampleids['time'][sampleid])
+                for sampleid in metadata.index:
+                    if metadata[col][sampleid] == 1:
+                        t = float(metadata['time'][sampleid])
                         if min_time is None:
                             min_time = t
                         else:
