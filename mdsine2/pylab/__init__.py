@@ -39,6 +39,7 @@ from .random import seed
 from .math import metrics
 from .contrib import Interactions, ClusterPerturbation
 from .dynamics import BaseDynamics, BaseProcessVariance
+from .inference import BaseMCMC
 
 # Get errors
 from .errors import UndefinedError, MathError, GraphIDError, InheritanceError, \

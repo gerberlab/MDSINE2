@@ -55,7 +55,7 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     if not pl.isstudy(subjset):
         raise TypeError('`subjset` ({}) must be a mdsine2.Study'.format(type(subjset)))
     if not pl.isstr(graph_name):
-        raise TypeError('`graph_name` ({}) must be a str'.format(type(graph_NAME)))
+        raise TypeError('`graph_name` ({}) must be a str'.format(type(graph_name)))
     if continue_inference is not None:
         if not pl.isint(continue_inference):
             raise TypeError('`continue_inference` ({}) must be an int'.format(type(continue_inference)))
@@ -101,7 +101,7 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
 
     interaction_indicator = posteriorInteractions.ClusterInteractionIndicatorProbability(
         prior=pl.variables.Beta(a=pl.Constant(None, G=GRAPH), b=pl.Constant(None, G=GRAPH), G=GRAPH),
-        G=GRPAH)
+        G=GRAPH)
     interactions = posteriorInteractions.ClusterInteractionValue(
         prior=interaction_value, clustering=clustering, G=GRAPH)
     Z = posteriorInteractions.ClusterInteractionIndicators(prior=interaction_indicator, G=GRAPH)
@@ -136,7 +136,7 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     prior_si = pl.variables.Normal(
         mean=mean_si, var=var_si,
         name='prior_{}'.format(STRNAMES.SELF_INTERACTION_VALUE), G=GRAPH)
-    self_interactions = posteriorLogisticGrowth.Growth(prior=prior_si, G=GRAPH)
+    self_interactions = posteriorLogisticGrowth.SelfInteractions(prior=prior_si, G=GRAPH)
 
     # Process Variance
     prior_processvar = pl.variables.SICS( 
@@ -153,13 +153,12 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
         prior=prior_concentration, G=GRAPH)
     cluster_assignments = posteriorClustering.ClusterAssignments(
         clustering=clustering, concentration=concentration,
-        G=GRAPH, mp=params.MP_CLUSTERING, 
-        relative=params.RELATIVE_LOG_MARGINAL_CLUSTERING)
+        G=GRAPH, mp=params.MP_CLUSTERING)
 
     # Filtering and zero inflation
     filtering = posteriorFiltering.FilteringLogMP(G=GRAPH, mp=params.MP_FILTERING, 
         zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
-    zero_inflation = posteriorFiltering.ZeroInflation(G=GRAPH, mp=params.MP_ZERO_INFLATION)
+    zero_inflation = posteriorFiltering.ZeroInflation(G=GRAPH)
 
     # Perturbations
     if subjset.perturbations is not None:
@@ -198,16 +197,16 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
         magnitude_var_perts = posteriorPerturbations.PriorVarPerturbations(G=GRAPH)
         magnitude_mean_perts = posteriorPerturbations.PriorMeanPerturbations(G=GRAPH)
         magnitude_perts = posteriorPerturbations.PerturbationMagnitudes(G=GRAPH)
-        indicator_perts = posteriorPerturbations.PerturbationIndicators(G=GRAPH, need_to_trace=False,
-            relative=params.RELATIVE_LOG_MARGINAL_PERT_INDICATORS)
+        indicator_perts = posteriorPerturbations.PerturbationIndicators(G=GRAPH, need_to_trace=False, relative=True)
+        indicator_prob_perts = posteriorPerturbations.PerturbationProbabilities(G=GRAPH)
     else:
-        pert_values = None
+        magnitude_perts = None
         pert_ind = None
         pert_ind_prob = None
 
-    beta = posterior.RegressCoeff(
+    beta = posteriorLogisticGrowth.RegressCoeff(
         growth=growth, self_interactions=self_interactions,
-        interactions=interactions, pert_mag=pert_values, G=GRAPH)
+        interactions=interactions, pert_mag=magnitude_perts, G=GRAPH)
 
     # Set qPCR variance priors and hyper priors
     qpcr_variances = posteriorQPCR.qPCRVariances(G=GRAPH, L=params.N_QPCR_BUCKETS)
@@ -313,7 +312,7 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
             perturbationsDM = design_matrices.PerturbationDesignMatrix(G=GRAPH)
             perturbationsDM.base.build()
             perturbationsDM.M.build()
-        if name == STRNAMES.PERT_VALUE and subjset.perturbations is not None and not params.PERTURBATIONS_ADDITIVE:
+        if name == STRNAMES.PERT_VALUE and subjset.perturbations is not None:
             d.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
 
     logging.info('\n\n\n')

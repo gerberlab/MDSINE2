@@ -641,12 +641,6 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
 
             prec = X.T @ X
             cov = pinv(prec, self)
-
-            logging.critical('here')
-            print(cov.shape)
-            print(X.T.shape)
-            print(y.shape)
-
             mean = cov @ X.T @ y
 
             if self.child_name == STRNAMES.GROWTH_VALUE:

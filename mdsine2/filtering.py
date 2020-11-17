@@ -153,9 +153,8 @@ class FilteringLogMP(pl.graph.Node):
         return self.x.sample_iter
 
     def initialize(self, x_value_option, a0, a1, v1, v2, essential_timepoints, tune, 
-        proposal_init_scale, intermediate_step, h5py_filename,
-        intermediate_interpolation=None, delay=0, bandwidth=None, window=None,
-        target_acceptance_rate=0.44, plot_initial=False,
+        proposal_init_scale, intermediate_step, intermediate_interpolation=None, 
+        delay=0, bandwidth=None, window=None, target_acceptance_rate=0.44, 
         calculate_qpcr_loglik=True):
         '''Initialize the values of the error model (values for the
         latent and the auxiliary trajectory). Additionally this sets
@@ -472,7 +471,6 @@ class FilteringLogMP(pl.graph.Node):
                 pert_ends=np.asarray(pert_ends),
                 ridx=ridx,
                 calculate_qpcr_loglik=calculate_qpcr_loglik,
-                h5py_filename=h5py_filename,
                 h5py_xname=self.x[ridx].name,
                 target_acceptance_rate=self.target_acceptance_rate)
             if self.mp == 'debug':
@@ -487,25 +485,6 @@ class FilteringLogMP(pl.graph.Node):
         self.total_n_datapoints = 0
         for ridx in range(self.G.data.n_replicates):
             self.total_n_datapoints += self.x[ridx].value.shape[0] * self.x[ridx].value.shape[1]
-
-        if plot_initial:
-            oidxs = np.arange(self.G.data.n_asvs)
-            latent = self.x.value[0].value
-            for i in range(len(oidxs)):
-                fig = plt.figure()
-                ax = fig.add_subplot(111)
-                times = self.G.data.times
-                ax.plot(self.G.data.given_timepoints[0], self.G.data.abs_data[0][oidxs[i], :], label='Given', color='r', marker='o', alpha=0.5)
-                # ax.plot(self.G.data.given_timepoints[0],
-                #     syndata.data[0][oidxs[i], :] * self.G.data.subjects.qpcr_normalization_factor,
-                #     label='Truth', color='black', marker='o', alpha=0.5)
-                ax.plot(times[0], latent[i,:], label='before latent', color='b', linestyle=':', 
-                    marker='o')
-                ax.set_title('oidx {}'.format(oidxs[i]))
-                ax.legend()
-                ax.set_yscale('log')
-                plt.savefig('oidx{}.pdf'.format(oidxs[i]))
-                plt.close()
 
     def _init_coupling(self):
         '''Initialize `x` by sampling around the data using a small
@@ -645,7 +624,6 @@ class FilteringLogMP(pl.graph.Node):
         except:
             self._strr = 'NA'
 
-    
 
 class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
     '''This performs filtering on a multiprocessing level. We send the
@@ -710,7 +688,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
     def initialize(self, times, qpcr_log_measurements, reads, there_are_intermediate_timepoints,
         there_are_perturbations, pv_global, x_prior_mean,
         x_prior_std, tune, delay, end_iter, proposal_init_scale, a0, a1, x, calculate_qpcr_loglik,
-        pert_starts, pert_ends, ridx, h5py_filename, h5py_xname, target_acceptance_rate,
+        pert_starts, pert_ends, ridx, h5py_xname, target_acceptance_rate,
         zero_inflation_transition_policy):
         '''Initialize the object at the beginning of the inference
 
@@ -760,8 +738,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             The starts and ends for each one of the perturbations
         ridx : int
             This is the replicate index that this object corresponds to
-        h5py_filename : str
-            Name of the h5py object that stores the values
         h5py_xname : str
             This is the name for the x in the h5py object
         target_acceptance_rate : float
@@ -769,7 +745,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         calculate_qpcr_loglik : bool
             If True, calculate the loglikelihood of the qPCR measurements during the proposal
         '''
-        self.h5py_filename = h5py_filename
         self.h5py_xname = h5py_xname
         self.target_acceptance_rate = target_acceptance_rate
         self.zero_inflation_transition_policy = zero_inflation_transition_policy
@@ -1385,7 +1360,7 @@ class ZeroInflation(pl.graph.Node):
     TODO: Parallel version of the class
     '''
 
-    def __init__(self, mp, **kwargs):
+    def __init__(self, **kwargs):
         '''
         Parameters
         ----------
@@ -1395,7 +1370,6 @@ class ZeroInflation(pl.graph.Node):
         kwargs['name'] = STRNAMES.ZERO_INFLATION
         pl.graph.Node.__init__(self, **kwargs)
         self.value = []
-        self.mp = mp
         self._strr = 'NA'
 
         for ridx in range(self.G.data.n_replicates):

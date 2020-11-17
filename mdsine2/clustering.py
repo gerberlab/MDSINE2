@@ -197,8 +197,7 @@ class ClusterAssignments(pl.graph.Node):
     out the interactions going in and out of the cluster in question, along with all
     the perturbations associated with it.
     '''
-    def __init__(self, clustering, concentration, m=1,
-        mp=None, relative=False, **kwargs):
+    def __init__(self, clustering, concentration, m=1, mp=None, **kwargs):
         '''Parameters
 
         clustering (pylab.cluster.Clustering)
@@ -218,25 +217,18 @@ class ClusterAssignments(pl.graph.Node):
                 'debug'
                     Send out to the different classes but stay on a single core. This
                     is necessary for benchmarking and easier debugging.
-        relative : bool
-            If True, calculates only the difference between the marginalizations, not
-            everything
         '''
         self.clustering = clustering
         self.concentration = concentration
         self.m = m
         self.mp = mp
         self._strtime = -1
-        self.relative = relative
         # self.compute_device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
-        if relative:
-            raise NotImplementedError('update relative still has math errors')
+        if self.mp is not None:
+            self.update = self.update_mp
         else:
-            if self.mp is not None:
-                self.update = self.update_mp
-            else:
-                self.update = self.update_slow_fast
+            self.update = self.update_slow_fast
 
         kwargs['name'] = STRNAMES.CLUSTERING
         pl.graph.Node.__init__(self, **kwargs)
@@ -266,7 +258,7 @@ class ClusterAssignments(pl.graph.Node):
         return self.clustering.n_clusters.sample_iter
 
     def initialize(self, value_option, hyperparam_option=None, value=None, n_clusters=None,
-        delay=0, run_every_n_iterations=1, percent_mix=None):
+        delay=0, run_every_n_iterations=1):
         '''Initialize the cluster assingments - there are no hyperparamters to
         initialize because the concentration is initialized somewhere else
 
@@ -320,16 +312,7 @@ class ClusterAssignments(pl.graph.Node):
         if run_every_n_iterations <= 0:
             raise ValueError('`run_every_n_iterations` ({}) must be >= 0'.format(
                 run_every_n_iterations))
-        if percent_mix is not None:
-            if not pl.isfloat(percent_mix):
-                raise TypeError('`percent_mix` ({}) should be a float'.format(type(percent_mix)))
-            if percent_mix <= 0 or percent_mix > 1:
-                raise ValueError('`percent_mix` ({}) must be (0,1]'.format(percent_mix))
-        if not pl.isint(delay):
-            raise TypeError('`delay` ({}) must be an int'.format(type(delay)))
-        if delay < 0:
-            raise ValueError('`delay` ({}) must be >= 0'.format(delay))
-        self.percent_mix = percent_mix
+
         self.run_every_n_iterations = run_every_n_iterations
         self.delay = delay
 
@@ -565,7 +548,6 @@ class ClusterAssignments(pl.graph.Node):
         else:
             self.pool = None
 
-        # These are for the function `self._make_idx_for_clusters`, used in `update_relative`
         self.ndts_bias = []
         self.n_asvs = len(self.G.data.asvs)
         self.n_replicates = self.G.data.n_replicates
@@ -841,7 +823,7 @@ class ClusterAssignments(pl.graph.Node):
     # ==================================================
     # @profile
     def update_slow_fast(self):
-        '''This does no relative marginalization but is much faster than `update_slow`
+        '''Much faster than `update_slow`
         '''
 
         if self.clustering.n_clusters.sample_iter < self.delay:
@@ -1144,8 +1126,6 @@ class ClusterAssignments(pl.graph.Node):
             self.pool.initialize_gibbs(**kwargs)
 
         oidxs = npr.permutation(np.arange(len(self.G.data.asvs)))
-        if self.percent_mix is not None:
-            oidxs = oidxs[:int(self.percent_mix * len(oidxs))]
         for iii, oidx in enumerate(oidxs):
             logging.info('{}/{} - {}'.format(iii, len(self.G.data.asvs), oidx))
             self.oidx = oidx
