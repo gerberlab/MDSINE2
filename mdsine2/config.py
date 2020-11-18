@@ -45,24 +45,6 @@ INTERMEDIATE_RESULTS_FILENAME = 'intermediate_results.tsv'
 
 PHYLOGENETIC_TREE_FILENAME = 'raw_data/phylogenetic_tree_branch_len_preserved.nhx'
 
-def calculate_reads_a0a1(desired_percent_variation):
-    '''
-    At the full noise level, in terms of % noise of the signal at:
-        10000 reads, the signal is ~10% noise
-        100 reads, the signal is ~20% noise
-        10 reads, the signal is ~30% noise
-
-    When we scale the a0 and a1 terms, we are assuming that you want to
-    scale the high abundance bacteria for that signal and we scale the
-    a0 parameter such that they stay relative to each other.
-
-    If == -1 we set to the full noise
-    '''
-    if desired_percent_variation == -1:
-        desired_percent_variation = 0.05
-    p = desired_percent_variation / 0.05
-    return NEGBIN_A0*p, NEGBIN_A1*p
-
 def isModelConfig(x):
     '''Checks if the input array is a model config object
 

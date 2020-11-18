@@ -103,7 +103,7 @@ import logging
 import ete3
 import os
 
-from .util import isint, isnumeric, isarray, isstr, isbool, asvname_formatter, istree, isdataframe
+from . import util as plutil
 from .errors import NeedToImplementError
 
 # Constants
@@ -204,8 +204,8 @@ def isasv(x):
     &#39;&#39;&#39;
     return x is not None and issubclass(x.__class__, ASV)
 
-def isagglomeratedasv(x):
-    &#39;&#39;&#39;Checks whether the input is a subclass of AgglomerateASV
+def isaggregatedasv(x):
+    &#39;&#39;&#39;Checks whether the input is a subclass of AggregateASV
 
     Parameters
     ----------
@@ -217,22 +217,22 @@ def isagglomeratedasv(x):
     bool
         True if `x` is of type ASV, else False
     &#39;&#39;&#39;
-    return x is not None and issubclass(x.__class__, AgglomerateASV)
+    return issubclass(x.__class__, AggregateASV)
 
 def isasvtype(x):
-    &#39;&#39;&#39;Checks whether the input is a subclass of AgglomerateASV or ASV
+    &#39;&#39;&#39;Checks whether the input is a subclass of AggregateASV or ASV
 
     Parameters
     ----------
     x : any
-        Input instance to check the type of AgglomerateASV or ASV
+        Input instance to check the type of AggregateASV or ASV
     
     Returns
     -------
     bool
-        True if `x` is of type AgglomerateASV or ASV, else False
+        True if `x` is of type AggregateASV or ASV, else False
     &#39;&#39;&#39;
-    return isasv(x) or isagglomeratedasv(x)
+    return isasv(x) or isaggregatedasv(x)
 
 def issubject(x):
     &#39;&#39;&#39;Checks whether the input is a subclass of Subject
@@ -285,7 +285,7 @@ def condense_matrix_with_taxonomy(M, asvs, fmt):
     is a pandas.DataFrame then we assume the index are the ASV
     names. If `M` is a numpy.ndarray, then we assume that the 
     order of the matrix mirrors the order of the asvs. `fmt` is
-    passed through `pylab.util.asvname_formatter` to get the label.
+    passed through `pylab.util.plutil.asvname_formatter` to get the label.
 
     Parameters
     ----------
@@ -306,7 +306,7 @@ def condense_matrix_with_taxonomy(M, asvs, fmt):
     &#39;&#39;&#39;
     if not isasvset(asvs):
         raise TypeError(&#39;`asvs` ({}) must be a pylab.base.ASVSet&#39;.format(type(asvs)))
-    if not isstr(fmt):
+    if not plutil.isstr(fmt):
         raise TypeError(&#39;`fmt` ({}) must be a str&#39;.format(type(fmt)))
 
     if type(M) == pd.DataFrame:
@@ -314,7 +314,7 @@ def condense_matrix_with_taxonomy(M, asvs, fmt):
             if idx not in asvs:
                 raise ValueError(&#39;row `{}` not found in asvs&#39;.format(idx))
         names = M.index
-    elif isarray(M):
+    elif plutil.isarray(M):
         if M.shape[0] != len(asvs):
             raise ValueError(&#39;Number of rows in M ({}) not equal to number of asvs ({})&#39;.format(
                 M.shape[0], len(asvs)))
@@ -326,7 +326,7 @@ def condense_matrix_with_taxonomy(M, asvs, fmt):
     d = {}
     for row, name in enumerate(names):
         asv = asvs[name]
-        tax = asvname_formatter(format=fmt, asv=asv, asvs=asvs)
+        tax = plutil.asvname_formatter(format=fmt, asv=asv, asvs=asvs)
         if tax not in d:
             d[tax] = []
         d[tax].append(row)
@@ -335,11 +335,11 @@ def condense_matrix_with_taxonomy(M, asvs, fmt):
     Ms = ()
     index = []
     columns = None
-    if not isarray(M):
+    if not plutil.isarray(M):
         columns = M.columns
     for taxname, rows, in d.items():
         index.append(taxname)
-        if isarray(M):
+        if plutil.isarray(M):
             temp = np.sum(M[rows, ...], axis=0).reshape(1,-1)
         else:
             temp = np.sum(M.iloc[rows], axis=0).reshape(1,-1)
@@ -395,7 +395,7 @@ class Saveable:
     def set_save_location(self, filename):
         &#39;&#39;&#39;Set the save location for the object
         &#39;&#39;&#39;
-        if not isstr(filename):
+        if not plutil.isstr(filename):
             raise TypeError(&#39;`filename` ({}) must be a str&#39;.format(type(filename)))
         self._save_loc = filename
 
@@ -483,14 +483,14 @@ class BasePerturbation:
         This is the name of the perturabtion. If nothing is given then it will be None
     &#39;&#39;&#39;
     def __init__(self, start, end, name=None):
-        if not isnumeric(start):
+        if not plutil.isnumeric(start):
             raise TypeError(&#39;`start` ({}) must be a numeric&#39;.format(type(start)))
-        if not isnumeric(end):
+        if not plutil.isnumeric(end):
             raise TypeError(&#39;`end` ({}) must be a numeric&#39;.format(type(end)))
         if end &lt; start:
             raise ValueError(&#39;`end` ({}) must be &gt;= `start` ({})&#39;.format(end, start))
         if name is not None:
-            if not isstr(name):
+            if not plutil.isstr(name):
                 raise TypeError(&#39;`name` ({}) must be a str&#39;.format(type(name)))
         self.start = start
         self.end = end
@@ -609,19 +609,19 @@ class ASV(ClusterItem):
             &#39;kingdom&#39;, &#39;phylum&#39;, &#39;class&#39;, &#39;order&#39;, &#39;family&#39;, &#39;genus&#39;
             Name of the taxa for each respective level
         &#39;&#39;&#39;
-        if tax_kingdom is not None and tax_kingdom != &#39;&#39; and isstr(tax_kingdom):
+        if tax_kingdom is not None and tax_kingdom != &#39;&#39; and plutil.isstr(tax_kingdom):
             self.taxonomy[&#39;kingdom&#39;] = tax_kingdom
-        if tax_phylum is not None and tax_phylum != &#39;&#39; and isstr(tax_phylum):
+        if tax_phylum is not None and tax_phylum != &#39;&#39; and plutil.isstr(tax_phylum):
             self.taxonomy[&#39;phylum&#39;] = tax_phylum
-        if tax_class is not None and tax_class != &#39;&#39; and isstr(tax_class):
+        if tax_class is not None and tax_class != &#39;&#39; and plutil.isstr(tax_class):
             self.taxonomy[&#39;class&#39;] = tax_class
-        if tax_order is not None and tax_order != &#39;&#39; and isstr(tax_order):
+        if tax_order is not None and tax_order != &#39;&#39; and plutil.isstr(tax_order):
             self.taxonomy[&#39;order&#39;] = tax_order
-        if tax_family is not None and tax_family != &#39;&#39; and isstr(tax_family):
+        if tax_family is not None and tax_family != &#39;&#39; and plutil.isstr(tax_family):
             self.taxonomy[&#39;family&#39;] = tax_family
-        if tax_genus is not None and tax_genus != &#39;&#39; and isstr(tax_genus):
+        if tax_genus is not None and tax_genus != &#39;&#39; and plutil.isstr(tax_genus):
             self.taxonomy[&#39;genus&#39;] = tax_genus
-        if tax_species is not None and tax_species != &#39;&#39; and isstr(tax_species):
+        if tax_species is not None and tax_species != &#39;&#39; and plutil.isstr(tax_species):
             self.taxonomy[&#39;species&#39;] = tax_species
         return self
 
@@ -711,53 +711,64 @@ class ASV(ClusterItem):
         return (type(tax) != float) and (tax != DEFAULT_TAXA_NAME) and (tax != &#39;&#39;)
 
 
-class AgglomerateASV(ASV):
-    &#39;&#39;&#39;Agglomerates ASVs together
+class AggregateASV(ASV):
+    &#39;&#39;&#39;Aggregates of ASV objects
+
+    NOTE: For self consistency, let the class ASVSet initialize this object.
 
     Parameters
     ----------
-    anchor, other : mdsine2.ASV, mdsine2.AgglomerateASV
-        These are the ASVs/Agglomerates that you&#39;re joining together. The anchor is
+    anchor, other : mdsine2.ASV, mdsine2.AggregateASV
+        These are the ASVs/Aggregates that you&#39;re joining together. The anchor is
         the one you are setting the sequeunce and taxonomy to
     &#39;&#39;&#39;
     def __init__(self, anchor, other):
         name = anchor.name + &#39;_agg&#39;
         ASV.__init__(self, name=name, idx=anchor.idx, sequence=anchor.sequence)
 
-        if isagglomeratedasv(anchor):
-            if other.name in anchor.agglomerated_asvs:
-                raise ValueError(&#39;`other` ({}) already agglomerated with anchor &#39; \
-                    &#39;({}) ({})&#39;.format(other.name, anchor.name, anchor.agglomerated_asvs))
-            agg1 = anchor.agglomerated_asvs
-            agg1_seq = anchor.agglomerated_seqs
+        _agg_taxas = {}
+
+        if isaggregatedasv(anchor):
+            if other.name in anchor.aggregated_asvs:
+                raise ValueError(&#39;`other` ({}) already aggregated with anchor &#39; \
+                    &#39;({}) ({})&#39;.format(other.name, anchor.name, anchor.aggregated_asvs))
+            agg1 = anchor.aggregated_asvs
+            agg1_seq = anchor.aggregated_seqs
+            for k,v in anchor.aggregated_taxonomies.items():
+                _agg_taxas[k] = v
         else:
             agg1 = [anchor.name]
             agg1_seq = {anchor.name: anchor.sequence}
+            _agg_taxas[anchor.name] = anchor.taxonomy
 
-        if isagglomeratedasv(other):
-            if anchor.name in other.agglomerated_asvs:
-                raise ValueError(&#39;`anchor` ({}) already agglomerated with other &#39; \
-                    &#39;({}) ({})&#39;.format(anchor.name, other.name, other.agglomerated_asvs))
-            agg2 = other.agglomerated_asvs
-            agg2_seq = other.agglomerated_seqs
+        if isaggregatedasv(other):
+            if anchor.name in other.aggregated_asvs:
+                raise ValueError(&#39;`anchor` ({}) already aggregated with other &#39; \
+                    &#39;({}) ({})&#39;.format(anchor.name, other.name, other.aggregated_asvs))
+            agg2 = other.aggregated_asvs
+            agg2_seq = other.aggregated_seqs
+            for k,v in other.aggregated_taxonomies.items():
+                _agg_taxas[k] = v
         else:
             agg2 = [other.name]
             agg2_seq = {other.name: other.sequence}
+            _agg_taxas[other.name] = other.taxonomy
 
-        self.agglomerated_asvs = agg1 + agg2
-        self.agglomerated_seqs = agg1_seq
+        self.aggregated_asvs = agg1 + agg2
+        self.aggregated_seqs = agg1_seq
+        self.aggregated_taxonomies = _agg_taxas
         for k,v in agg2_seq.items():
-            self.agglomerated_seqs[k] = v
+            self.aggregated_seqs[k] = v
 
         self.taxonomy = anchor.taxonomy
 
     def __str__(self):
-        return &#39;AgglomerateASV\n\tid: {}\n\tidx: {}\n\tname: {}\n&#39; \
-            &#39;\tAgglomerates: {}\n&#39; \
+        return &#39;AggregateASV\n\tid: {}\n\tidx: {}\n\tname: {}\n&#39; \
+            &#39;\tAggregates: {}\n&#39; \
             &#39;\ttaxonomy:\n\t\tkingdom: {}\n\t\tphylum: {}\n&#39; \
             &#39;\t\tclass: {}\n\t\torder: {}\n\t\tfamily: {}\n&#39; \
             &#39;\t\tgenus: {}\n\t\tspecies: {}&#39;.format(
-            self.id, self.idx, self.name, self.agglomerated_asvs,
+            self.id, self.idx, self.name, self.aggregated_asvs,
             self.taxonomy[&#39;kingdom&#39;], self.taxonomy[&#39;phylum&#39;],
             self.taxonomy[&#39;class&#39;], self.taxonomy[&#39;order&#39;],
             self.taxonomy[&#39;family&#39;], self.taxonomy[&#39;genus&#39;],
@@ -792,7 +803,17 @@ class Clusterable(Saveable):
 class ASVSet(Clusterable):
     &#39;&#39;&#39;Wraps a set of `ASV` objects. You can get the ASV object via the
     ASV id, ASV name.
-    Provides functionality for aggregating and getting subsets for lineages.
+    Provides functionality for aggregating sequeunces and getting subsets for lineages.
+
+    Aggregating/Deaggregating
+    -------------------------
+    ASVs that are aggregated together to become OTUs are used because sequences are 
+    very close together. This class provides functionality for aggregating asvs together
+    (`mdsine2.ASVSet.aggregate_items`) and to deaggregate a specific name from an aggregation
+    (`mdsine2.ASVSet.deaggregate_item`). If this object is within a `mdsine2.Study` object,
+    MAKE SURE TO CALL THE AGGREGATION FUNCTIONS FROM THE `mdsine2.Study` OBJECT 
+    (`mdsine2.Study.aggregate_items`, `mdsine2.Study.deaggregate_item`) so that the reads
+    for the agglomerates and individual ASVs can be consistent with the ASVSet.
 
     `taxonomy_table`
     ----------------
@@ -826,8 +847,11 @@ class ASVSet(Clusterable):
         if taxonomy_table is not None:
             taxonomy_table = taxonomy_table.rename(str.lower, axis=&#39;columns&#39;)
             if &#39;name&#39; not in taxonomy_table.columns:
-                raise ValueError(&#39;`&#34;name&#34;` ({}) not found as a column in `taxonomy_table`&#39;.format(
-                    taxonomy_table.columns))
+                if taxonomy_table.index.name == &#39;name&#39;:
+                    taxonomy_table = taxonomy_table.reset_index()
+                else:
+                    raise ValueError(&#39;`&#34;name&#34;` ({}) not found as a column in `taxonomy_table`&#39;.format(
+                        taxonomy_table.columns))
             if SEQUENCE_COLUMN_LABEL not in taxonomy_table.columns:
                 raise ValueError(&#39;`&#34;{}&#34;` ({}) not found as a column in `taxonomy_table`&#39;.format(
                     SEQUENCE_COLUMN_LABEL, taxonomy_table.columns))
@@ -878,7 +902,7 @@ class ASVSet(Clusterable):
             return key
         if key in self.ids:
             return self.ids[key]
-        elif isint(key):
+        elif plutil.isint(key):
             return self.index[key]
         elif key in self.names:
             return self.names[key]
@@ -996,20 +1020,25 @@ class ASVSet(Clusterable):
                 break
         return i/8 # including ASV
 
-    def agglomerate_asvs(self, anchor, other):
-        &#39;&#39;&#39;Create an agglomerate asv with the anchor `anchor` and other asv  `other`.
-        The agglomerate takes the sequence and the taxonomy from the anchor.
+    def aggregate_items(self, anchor, other):
+        &#39;&#39;&#39;Create an aggreate asv with the anchor `anchor` and other asv  `other`.
+        The aggregate takes the sequence and the taxonomy from the anchor.
 
         Parameters
         ----------
-        anchor, other : str, int, mdsine2.ASV, mdsine2.AgglomerateASV
-            These are the ASVs/Agglomerates that you&#39;re joining together. The anchor is
+        anchor, other : str, int, mdsine2.ASV, mdsine2.AggregateASV
+            These are the ASVs/Aggregates that you&#39;re joining together. The anchor is
             the one you are setting the sequeunce and taxonomy to
+
+        Returns
+        -------
+        mdsine2.AggregateASV
+            This is the new aggregated ASV containing anchor and other
         &#39;&#39;&#39;
         anchor = self[anchor]
         other = self[other]
         
-        agg = AgglomerateASV(anchor=anchor, other=other)
+        agg = AggregateASV(anchor=anchor, other=other)
 
         self.index[agg.idx] = agg
         self.index.pop(other.idx)
@@ -1027,8 +1056,89 @@ class ASVSet(Clusterable):
         self.names.update_order()
 
         self._len = len(self.index)
-
         return agg
+
+    def deaggregate_item(self, agg, other):
+        &#39;&#39;&#39;Deaggregate the sequence `other` from AggregateASV `agg`.
+        `other` is then appended to the end 
+
+        Parameters
+        ----------
+        agg : AggregateASV, str
+            This is an AggregateASV with multiple sequences contained. Must 
+            have the name `other` in there
+        other : str
+            This is the name of the ASV that should be taken out of `agg`
+
+        Returns
+        -------
+        mdsine2.ASV
+            This is the deaggregated ASV
+        &#39;&#39;&#39;
+        agg = self[agg]
+        if not isaggregatedasv(agg):
+            raise TypeError(&#39;`agg` ({}) must be an AggregatedASV&#39;.format(type(agg)))
+        if not plutil.isstr(other):
+            raise TypeError(&#39;`other` ({}) must be a str&#39;.format(type(other)))
+        if other not in agg.aggregated_asvs:
+            raise ValueError(&#39;`other` ({}) is not contained in `agg` ({}) ({})&#39;.format(
+                other, agg.name, agg.aggregated_asvs))
+
+        other = ASV(name=other, sequence=agg.aggregated_seqs[other], idx=self._len)
+        other.taxonomy = agg.aggregated_taxonomies[other.name]
+        agg.aggregated_seqs.pop(other.name, None)
+        agg.aggregated_asvs.remove(other.name)
+        agg.aggregated_taxonomies.pop(other.name, None)
+
+        self.index.append(other)
+        self.ids[other.id] = other
+        self.names[other.name] = other
+
+        self.ids.update_order()
+        self.names.update_order()
+        self._len += 1
+        return other
+
+    def rename(self, prefix, zero_based_index=False):
+        &#39;&#39;&#39;Rename the contents based on their index:
+
+        Example
+        -------
+        Names before in order:
+        [ASV_22, ASV_9982, TUDD_8484]
+
+        Calling asvs.rename(prefix=&#39;OTU&#39;)
+        New names:
+        [OTU_1, OTU_2, OTU_3]
+
+        Calling asvs.rename(prefix=&#39;OTU&#39;, zero_based_index=True)
+        New names:
+        [OTU_0, OTU_1, OTU_2]
+
+        Parameters
+        ----------
+        prefix : str
+            This is the prefix of the new ASVs. The name of the ASVs will change
+            to `&#39;{}_{}&#39;.format(prefix, index)`
+        zero_based_index : bool
+            If this is False, then we start the enumeration of the ASVs from 1
+            instead of 0. If True, then the enumeration starts at 0
+        &#39;&#39;&#39;
+        if not plutil.isstr(prefix):
+            raise TypeError(&#39;`prefix` ({}) must be a str&#39;.format(type(prefix)))
+        if not plutil.isbool(zero_based_index):
+            raise TypeError(&#39;`zero_based_index` ({}) must be a bool&#39;.format(
+                type(zero_based_index)))
+
+        offset = 0
+        if not zero_based_index:
+            offset = 1
+
+        self.names = CustomOrderedDict()
+        for asv in self.index:
+            newname = prefix + &#39;_{}&#39;.format(int(asv.idx + offset))
+            asv.name = newname
+            self.names[asv.name] = asv
 
 
 class qPCRdata:
@@ -1188,10 +1298,10 @@ class Subject(Saveable):
         self.name = name
         self.id = id(self)
         self.parent = parent
-        self.asvs = self.parent.asvs
         self.qpcr = {}
         self.reads = {}
         self.times = np.asarray([])
+        self._reads_individ = {} # for taking out aggregated asvs
 
     def add_time(self, timepoint):
         &#39;&#39;&#39;Add the timepoint `timepoint`. Set the reads and qpcr at that timepoint
@@ -1218,12 +1328,12 @@ class Subject(Saveable):
             for multiple timepoints. In this case we assume that the rows index the 
             ASV and the columns index the timepoint.
         &#39;&#39;&#39;
-        if not isarray(timepoints):
+        if not plutil.isarray(timepoints):
             timepoints = [timepoints]
         for timepoint in timepoints:
-            if not isnumeric(timepoint):
+            if not plutil.isnumeric(timepoint):
                 raise TypeError(&#39;`timepoint` ({}) must be a numeric&#39;.format(type(timepoint)))
-        if not isarray(reads):
+        if not plutil.isarray(reads):
             raise TypeError(&#39;`reads` ({}) must be an array&#39;.format(type(reads)))
         
         if reads.ndim == 1:
@@ -1266,16 +1376,16 @@ class Subject(Saveable):
             not specified, then this assumes that each one of the numbers in `qpcr` are
             already normalized by the dilution factor
         &#39;&#39;&#39;
-        if not isarray(timepoints):
+        if not plutil.isarray(timepoints):
             timepoints = [timepoints]
         for timepoint in timepoints:
-            if not isnumeric(timepoint):
+            if not plutil.isnumeric(timepoint):
                 raise TypeError(&#39;`timepoint` ({}) must be a numeric&#39;.format(type(timepoint)))
         if masses is not None:
-            if isnumeric(masses):
+            if plutil.isnumeric(masses):
                 masses = [masses]
             for mass in masses:
-                if not isnumeric(mass):
+                if not plutil.isnumeric(mass):
                     raise TypeError(&#39;Each mass in `masses` ({}) must be a numeric&#39;.format(type(mass)))
                 if mass &lt;= 0:
                     raise ValueError(&#39;Each mass in `masses` ({}) must be &gt; 0&#39;.format(mass))
@@ -1283,10 +1393,10 @@ class Subject(Saveable):
                 raise ValueError(&#39;Number of timepoints ({}) and number of masses ({}) &#39; \
                     &#39;must be equal&#39;.format(len(timepoints), len(masses)))
         if dilution_factors is not None:
-            if isnumeric(dilution_factors):
+            if plutil.isnumeric(dilution_factors):
                 dilution_factors = [dilution_factors]
             for dilution_factor in dilution_factors:
-                if not isnumeric(dilution_factor):
+                if not plutil.isnumeric(dilution_factor):
                     raise TypeError(&#39;Each dilution_factor in `dilution_factors` ({}) &#39; \
                         &#39;must be a numeric&#39;.format(type(dilution_factor)))
                 if dilution_factor &lt;= 0:
@@ -1296,7 +1406,7 @@ class Subject(Saveable):
                 raise ValueError(&#39;Number of timepoints ({}) and number of dilution_factors ({}) &#39; \
                     &#39;must be equal&#39;.format(len(timepoints), len(dilution_factors)))
             
-        if not isarray(qpcr):
+        if not plutil.isarray(qpcr):
             raise TypeError(&#39;`qpcr` ({}) must be an array&#39;.format(type(qpcr)))
         if qpcr.ndim == 1:
             qpcr = qpcr.reshape(1,-1)
@@ -1328,9 +1438,20 @@ class Subject(Saveable):
 
     @property
     def perturbations(self):
-        &#39;&#39;&#39;Returns the number of perturbation
-        &#39;&#39;&#39;
         return self.parent.perturbations
+
+    @property
+    def asvs(self):
+        return self.parent.asvs
+
+    @property
+    def index(self):
+        &#39;&#39;&#39;Return the index of this subject in the Study file
+        &#39;&#39;&#39;
+        for iii, subj in enumerate(self.parent):
+            if subj.name == self.name:
+                return iii
+        raise ValueError(&#39;Should not get here&#39;)
 
     def matrix(self):
         &#39;&#39;&#39;Make a numpy matrix out of our data - returns the raw reads,
@@ -1413,7 +1534,7 @@ class Subject(Saveable):
                 &#39;rel&#39;: This is the relative abundances
                 &#39;abs&#39;: This is the absolute abundance (qPCR * rel)
         index_formatter : str
-            How to make the index using `pylab.util.asvname_formatter`. Note that you cannot
+            How to make the index using `pylab.util.plutil.asvname_formatter`. Note that you cannot
             specify anything at a lower taxonomic level than what youre clustering at. For 
             example, you cannot cluster at the &#39;class&#39; level and then specify &#39;%(genus)s&#39; 
             in the index formatter.
@@ -1427,11 +1548,11 @@ class Subject(Saveable):
             Maps ASV name to the row it got allocated to
         &#39;&#39;&#39;
         # Type checking
-        if not isstr(dtype):
+        if not plutil.isstr(dtype):
             raise TypeError(&#39;`dtype` ({}) must be a str&#39;.format(type(dtype)))
         if dtype not in [&#39;raw&#39;, &#39;rel&#39;, &#39;abs&#39;]:
             raise ValueError(&#39;`dtype` ({}) not recognized&#39;.format(dtype))
-        if not isstr(taxlevel):
+        if not plutil.isstr(taxlevel):
             raise TypeError(&#39;`taxlevel` ({}) must be a str&#39;.format(type(taxlevel)))
         if taxlevel not in [&#39;kingdom&#39;, &#39;phylum&#39;, &#39;class&#39;,  &#39;order&#39;, &#39;family&#39;, 
             &#39;genus&#39;, &#39;species&#39;, &#39;asv&#39;]:
@@ -1439,7 +1560,7 @@ class Subject(Saveable):
         if index_formatter is None:
             index_formatter = taxlevel
         if index_formatter is not None:
-            if not isstr(index_formatter):
+            if not plutil.isstr(index_formatter):
                 raise TypeError(&#39;`index_formatter` ({}) must be a str&#39;.format(type(index_formatter)))
             
             for tx in TAX_IDXS:
@@ -1482,7 +1603,7 @@ class Subject(Saveable):
                     taxas[tax] = &#39;{} {}, {} NA&#39;.format(ttt.capitalize(), 
                         asv.taxonomy[ttt], taxlevel.capitalize())
                 else:
-                    taxas[tax] = asvname_formatter(format=index_formatter, asv=asv, asvs=self.asvs, lca=lca)
+                    taxas[tax] = plutil.asvname_formatter(format=index_formatter, asv=asv, asvs=self.asvs, lca=lca)
                 toadd = pd.DataFrame(np.array(list(df.loc[row])).reshape(1,-1),
                     index=[taxas[tax]], columns=dfnew.columns)
                 dfnew = dfnew.append(toadd)
@@ -1549,6 +1670,65 @@ class Subject(Saveable):
                 self.parent[mid].reads[t] = self.reads[t]
             self.parent[mid].times = self.times[start:end]
 
+    def _deaggregate_item(self, agg, other):
+        &#39;&#39;&#39;Deaggregate the sequence `other` from AggregateASV `agg`.
+        `other` is then appended to the end. This is called from 
+        `mdsine2.Study.deaggregate_item`.
+
+        Parameters
+        ----------
+        agg : AggregateASV
+            This is an AggregateASV with multiple sequences contained. Must 
+            have the name `other` in there
+        other : str
+            This is the name of the ASV that should be taken out of `agg`
+        &#39;&#39;&#39;
+        # Append the reads of the deaggregated at the bottom and subtract them
+        # from the aggregated index
+        if other not in self._reads_individ:
+            raise ValueError(&#39;`other` ({}) reads not found in archive. This probably &#39; \
+                &#39;happened because you called `aggregate_items` from the ASVSet object&#39; \
+                &#39; instead from this object. Study object not consistent. Failing.&#39;.format(other))
+        
+        aggidx = agg.idx
+        for t in self.times:
+            try:
+                new_reads = self._reads_individ[other][t]
+            except:
+                raise ValueError(&#39;Timepoint `{}` added into subject `{}` after &#39; \
+                    &#39;ASV `{}` was removed. Study object is not consistent. You &#39; \
+                    &#39;cannot add in other timepoints after you aggregate asvs. Failing.&#39;.format(
+                        t, self.name, other))
+            self.reads[t][aggidx] = self.reads[t][aggidx] - new_reads
+            self.reads[t] = np.append(self.reads[t], new_reads)
+        self._reads_individ.pop(other)
+        return
+
+    def _aggregate_items(self, anchor, other):
+        &#39;&#39;&#39;Aggregate the asv `other` into `anchor`. This is called from 
+        `mdsine2.Study.aggregate_items`.
+
+        Parameters
+        ----------
+        anchor, other : AggregateASV, ASV
+            These are the ASVs to combine
+        &#39;&#39;&#39;
+        # If one of them are ASVs, then record their individual reads
+        # if we want to dissociate them later
+        for asv in [anchor, other]:
+            if isasv(asv):
+                if asv.name in self._reads_individ:
+                    raise ValueError(&#39;ASV is already in this dict. This should not happen.&#39;)
+                aidx = asv.idx
+                self._reads_individ[asv.name] = {}
+                for t in self.times:
+                    self._reads_individ[asv.name][t] = self.reads[t][aidx]
+        
+        for t in self.times:
+            self.reads[t][anchor.idx] += self.reads[t][other.idx]
+            self.reads[t] = np.delete(self.reads[t], other.idx)
+        return
+
 
 class Study(Saveable):
     &#39;&#39;&#39;Holds data for all the subjects
@@ -1569,6 +1749,7 @@ class Study(Saveable):
         self.asvs = asvs
 
         self._samples = {}
+        
 
     def __getitem__(self, key):
         return self._subjects[key]
@@ -1583,13 +1764,13 @@ class Study(Saveable):
     def __contains__(self, key):
         return key in self._subjects
 
-    def parse_samples(self, sampleids, reads=None, qpcr=None):
+    def parse_samples(self, metadata, reads=None, qpcr=None):
         &#39;&#39;&#39;Parse tables of samples and cast in Subject sets. Automatically creates
         the subject classes with the respective names.
 
         Parameters
         ----------
-        sampleids : pandas.DataFrame
+        metadata : pandas.DataFrame
             Contains the meta data for each one of the samples
             Columns:
                 &#39;sampleID&#39; -&gt; str : This is the name of the sample
@@ -1607,17 +1788,17 @@ class Study(Saveable):
                 index (str) : indexes the sample ID
                 columns (str) : Name is ignored. the values are set to the 
         &#39;&#39;&#39;
-        if not isdataframe(sampleids):
-            raise TypeError(&#39;`sampleids` ({}) must be a pandas.DataFrame&#39;.format(type(sampleids)))
+        if not plutil.isdataframe(metadata):
+            raise TypeError(&#39;`metadata` ({}) must be a pandas.DataFrame&#39;.format(type(metadata)))
         
         # Add the samples
         # ---------------
-        if &#39;sampleID&#39; in sampleids.columns:
-            sampleids = sampleids.set_index(&#39;sampleID&#39;)
-        for sampleid in sampleids.index:
+        if &#39;sampleID&#39; in metadata.columns:
+            metadata = metadata.set_index(&#39;sampleID&#39;)
+        for sampleid in metadata.index:
 
-            sid = str(sampleids[&#39;subject&#39;][sampleid])
-            t = float(sampleids[&#39;time&#39;][sampleid])
+            sid = str(metadata[&#39;subject&#39;][sampleid])
+            t = float(metadata[&#39;time&#39;][sampleid])
 
             if sid not in self:
                 self.add_subject(name=sid)
@@ -1628,14 +1809,14 @@ class Study(Saveable):
 
         # Add the perturbations if there are any
         # --------------------------------------
-        for col in sampleids.columns:
+        for col in metadata.columns:
             pert_name = col.replace(&#39;perturbation:&#39;, &#39;&#39;)
             if &#39;perturbation:&#39; in col:
                 min_time = None
                 max_time = None
-                for sampleid in sampleids.index:
-                    if sampleids[col][sampleid] == 1:
-                        t = float(sampleids[&#39;time&#39;][sampleid])
+                for sampleid in metadata.index:
+                    if metadata[col][sampleid] == 1:
+                        t = float(metadata[&#39;time&#39;][sampleid])
                         if min_time is None:
                             min_time = t
                         else:
@@ -1655,7 +1836,7 @@ class Study(Saveable):
         # Add the reads if necessary
         # --------------------------
         if reads is not None:
-            if not isdataframe(reads):
+            if not plutil.isdataframe(reads):
                 raise TypeError(&#39;`reads` ({}) must be a pandas.DataFrame&#39;.format(type(reads)))
             
             if &#39;name&#39; in reads.columns:
@@ -1675,7 +1856,7 @@ class Study(Saveable):
         # Add the qPCR measurements if necessary
         # --------------------------------------
         if qpcr is not None:
-            if not isdataframe(qpcr):
+            if not plutil.isdataframe(qpcr):
                 raise TypeError(&#39;`qpcr` ({}) must be a pandas.DataFrame&#39;.format(type(qpcr)))
 
             if &#39;sampleID&#39; in qpcr.columns:
@@ -1699,6 +1880,11 @@ class Study(Saveable):
 
     def write_qpcr_to_table(self, path, sep=&#39;\t&#39;):
         raise NotImplementedError(&#39;Need to implement it&#39;)
+
+    def names(self):
+        &#39;&#39;&#39;List the names of the contained subjects
+        &#39;&#39;&#39;
+        return [subj.name for subj in self]
 
     def iloc(self, idx):
         &#39;&#39;&#39;Get the subject as an index
@@ -1738,15 +1924,15 @@ class Study(Saveable):
             This is the subject name/s or the index/es to pop out.
             Return a new Study with the specified subjects removed.
         &#39;&#39;&#39;
-        if not isarray(sid):
+        if not plutil.isarray(sid):
             sids = [sid]
         else:
             sids = sid
 
         for i in range(len(sids)):
-            if isint(sids[i]):
+            if plutil.isint(sids[i]):
                 sids[i] = list(self._subjects.keys())[sids[i]]
-            elif not isstr(sids[i]):
+            elif not plutil.isstr(sids[i]):
                 raise ValueError(&#39;`sid` ({}) must be a str&#39;.format(type(sids[i])))
         ret = Study(asvs=self.asvs)
         ret.perturbations = self.perturbations
@@ -1783,27 +1969,57 @@ class Study(Saveable):
                 subj.reads[t] = np.delete(subj.reads[t], oidxs)
         return self
 
-    def agglomerate_asvs(self, asv1, asv2):
-        &#39;&#39;&#39;Agglomerate the abundances of `asv1` and `asv2`. Updates the reads table and
+    def deaggregate_item(self, agg, other):
+        &#39;&#39;&#39;Deaggregate the sequence `other` from AggregateASV `agg`.
+        `other` is then appended to the end 
+
+        Parameters
+        ----------
+        agg : AggregateASV, str
+            This is an AggregateASV with multiple sequences contained. Must 
+            have the name `other` in there
+        other : str
+            This is the name of the ASV that should be taken out of `agg`
+
+        Returns
+        -------
+        mdsine2.ASV
+            This is the deaggregated ASV
+        &#39;&#39;&#39;
+        agg = self.asvs[agg]
+        if not isaggregatedasv(agg):
+            raise TypeError(&#39;`agg` ({}) must be an AggregatedASV&#39;.format(type(agg)))
+        if not plutil.isstr(other):
+            raise TypeError(&#39;`other` ({}) must be a str&#39;.format(type(other)))
+        if other not in agg.aggregated_asvs:
+            raise ValueError(&#39;`other` ({}) is not contained in `agg` ({}) ({})&#39;.format(
+                other, agg.name, agg.aggregated_asvs))
+
+        for subj in self:
+            subj._deaggregate_item(agg=agg, other=other)
+        return self.asvs.deaggregate_item(agg, other)
+
+    def aggregate_items(self, asv1, asv2):
+        &#39;&#39;&#39;Aggregates the abundances of `asv1` and `asv2`. Updates the reads table and
         internal ASVSet
 
         Parameters
         ----------
-        asv1, asv2 : str, int, mdsine2.ASV, mdsine2.AgglomerateASV
+        asv1, asv2 : str, int, mdsine2.ASV, mdsine2.AggregateASV
             These are the ASVs you are agglomerating together
+
+        Returns
+        -------
+        mdsine2.AggregateASV
+            This is the new aggregated ASV containing anchor and other
         &#39;&#39;&#39;
-        # Find the anchor - use the total number of counts
+        # Find the anchor - use the highest index
         aidx1 = self.asvs[asv1].idx
         aidx2 = self.asvs[asv2].idx
 
-        abund1 = 0
-        abund2 = 0
-        for subj in self:
-            for t in subj.times:
-                abund1 += subj.reads[t][aidx1]
-                abund2 += subj.reads[t][aidx2]
-
-        if abund1 &gt; abund2:
+        if aidx1 == aidx2:
+            raise ValueError(&#39;Cannot aggregate the same asv: {}&#39;.format(self.asvs[asv1]))
+        elif aidx1 &lt; aidx2:
             anchor = self.asvs[asv1]
             other = self.asvs[asv2]
         else:
@@ -1811,11 +2027,8 @@ class Study(Saveable):
             other = self.asvs[asv1]
 
         for subj in self:
-            for t in subj.times:
-                subj.reads[t][anchor.idx] += subj.reads[t][other.idx]
-                subj.reads[t] = np.delete(subj.reads[t], other.idx)
-
-        return self.asvs.agglomerate_asvs(anchor=anchor, other=other)
+            subj._aggregate_items(anchor=anchor, other=other)
+        return self.asvs.aggregate_items(anchor=anchor, other=other)
 
     def pop_times(self, times, sids=&#39;all&#39;):
         &#39;&#39;&#39;Discard the times in `times` for the subjects listed in `sids`.
@@ -1830,30 +2043,30 @@ class Study(Saveable):
             from. If it is a str:
                 &#39;all&#39; - delete from all subjects
         &#39;&#39;&#39;
-        if isstr(sids):
+        if plutil.isstr(sids):
             if sids == &#39;all&#39;:
                 sids = list(self._subjects.keys())
             else:
                 raise ValueError(&#39;`sids` ({}) not recognized&#39;.format(sids))
-        elif isint(sids):
+        elif plutil.isint(sids):
             if sids not in self._subjects:
                 raise IndexError(&#39;`sid` ({}) not found in subjects&#39;.format(
                     list(self._subjects.keys())))
             sids = [sids]
-        elif isarray(sids):
+        elif plutil.isarray(sids):
             for sid in sids:
-                if not isint(sid):
+                if not plutil.isint(sid):
                     raise TypeError(&#39;Each sid ({}) must be an int&#39;.format(type(sid)))
                 if sid not in self._subjects:
                     raise IndexError(&#39;Subject {} not found in subjects ({})&#39;.format(
                         sid, list(self._subjects.keys())))
         else:
             raise TypeError(&#39;`sids` ({}) type not recognized&#39;.format(type(sids)))
-        if isnumeric(times):
+        if plutil.isnumeric(times):
             times = [times]
-        elif isarray(times):
+        elif plutil.isarray(times):
             for t in times:
-                if not isnumeric(t):
+                if not plutil.isnumeric(t):
                     raise TypeError(&#39;Each time ({}) must be a numeric&#39;.format(type(t)))
         else:
             raise TypeError(&#39;`times` ({}) type not recognized&#39;.format(type(times)))
@@ -1874,6 +2087,10 @@ class Study(Saveable):
         ----------
         max_value : float, int
             This is the maximum qPCR value to
+
+        Returns
+        -------
+        self
         &#39;&#39;&#39;
         if type(max_value) not in [int, float]:
             raise ValueError(&#39;max_value ({}) must either be an int or a float&#39;.format(
@@ -1900,6 +2117,10 @@ class Study(Saveable):
 
     def denormalize_qpcr(self):
         &#39;&#39;&#39;Denormalizes the qpcr values if necessary
+
+        Returns
+        -------
+        self
         &#39;&#39;&#39;
         if self.qpcr_normalization_factor is None:
             logging.warning(&#39;qPCR is not normalized. Doing nothing&#39;)
@@ -1928,11 +2149,15 @@ class Study(Saveable):
             Only necessary if `a` is a numeric
         name : str, None
             Only necessary if `a` is a numeric. Name of the perturbation
+        
+        Returns
+        -------
+        self
         &#39;&#39;&#39;
         if self.perturbations is None:
             self.perturbations = []
-        if isnumeric(a):
-            if not isnumeric(end):
+        if plutil.isnumeric(a):
+            if not plutil.isnumeric(end):
                 raise ValueError(&#39;If `a` is a numeric, then `end` ({}) &#39; \
                     &#39;needs to be a numeric&#39;.format(type(end)))
             self.perturbations.append(BasePerturbation(start=a, end=end, name=name))
@@ -1946,6 +2171,10 @@ class Study(Saveable):
     def split_on_perturbations(self):
         &#39;&#39;&#39;Make new subjects for the time points that are divided by perturbations. 
         Throw out all of the data  where the perturbations are active.
+
+        Returns
+        -------
+        self
         &#39;&#39;&#39;
         for subj in self:
             subj._split_on_perturbations()
@@ -1968,7 +2197,7 @@ class Study(Saveable):
         else:
             raise ValueError(&#39;`agg` ({}) not recognized&#39;.format(agg))
 
-        if isstr(times):
+        if plutil.isstr(times):
             all_times = []
             for subj in self:
                 all_times = np.append(all_times, subj.times)
@@ -1989,7 +2218,7 @@ class Study(Saveable):
 
             else:
                 raise ValueError(&#39;`times` ({}) not recognized&#39;.format(times))
-        elif isarray(times):
+        elif plutil.isarray(times):
             times = np.array(times)
         else:
             raise TypeError(&#39;`times` type ({}) not recognized&#39;.format(type(times)))
@@ -2065,6 +2294,10 @@ class Study(Saveable):
     def df(self, *args, **kwargs):
         &#39;&#39;&#39;Returns a dataframe of the data in matrix. Rows are ASVs, columns are times.
 
+        Returns
+        -------
+        pandas.DataFrame
+
         See Also
         --------
         mdsine2.matrix
@@ -2090,7 +2323,7 @@ to a taxonomic label specified with <code>fmt</code>. If <code>M</code>
 is a pandas.DataFrame then we assume the index are the ASV
 names. If <code>M</code> is a numpy.ndarray, then we assume that the
 order of the matrix mirrors the order of the asvs. <code>fmt</code> is
-passed through <code>pylab.util.asvname_formatter</code> to get the label.</p>
+passed through <code>pylab.util.plutil.asvname_formatter</code> to get the label.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>M</code></strong> :&ensp;<code>numpy.ndarray, pandas.DataFrame</code></dt>
@@ -2118,7 +2351,7 @@ are sent.</dd>
     is a pandas.DataFrame then we assume the index are the ASV
     names. If `M` is a numpy.ndarray, then we assume that the 
     order of the matrix mirrors the order of the asvs. `fmt` is
-    passed through `pylab.util.asvname_formatter` to get the label.
+    passed through `pylab.util.plutil.asvname_formatter` to get the label.
 
     Parameters
     ----------
@@ -2139,7 +2372,7 @@ are sent.</dd>
     &#39;&#39;&#39;
     if not isasvset(asvs):
         raise TypeError(&#39;`asvs` ({}) must be a pylab.base.ASVSet&#39;.format(type(asvs)))
-    if not isstr(fmt):
+    if not plutil.isstr(fmt):
         raise TypeError(&#39;`fmt` ({}) must be a str&#39;.format(type(fmt)))
 
     if type(M) == pd.DataFrame:
@@ -2147,7 +2380,7 @@ are sent.</dd>
             if idx not in asvs:
                 raise ValueError(&#39;row `{}` not found in asvs&#39;.format(idx))
         names = M.index
-    elif isarray(M):
+    elif plutil.isarray(M):
         if M.shape[0] != len(asvs):
             raise ValueError(&#39;Number of rows in M ({}) not equal to number of asvs ({})&#39;.format(
                 M.shape[0], len(asvs)))
@@ -2159,7 +2392,7 @@ are sent.</dd>
     d = {}
     for row, name in enumerate(names):
         asv = asvs[name]
-        tax = asvname_formatter(format=fmt, asv=asv, asvs=asvs)
+        tax = plutil.asvname_formatter(format=fmt, asv=asv, asvs=asvs)
         if tax not in d:
             d[tax] = []
         d[tax].append(row)
@@ -2168,11 +2401,11 @@ are sent.</dd>
     Ms = ()
     index = []
     columns = None
-    if not isarray(M):
+    if not plutil.isarray(M):
         columns = M.columns
     for taxname, rows, in d.items():
         index.append(taxname)
-        if isarray(M):
+        if plutil.isarray(M):
             temp = np.sum(M[rows, ...], axis=0).reshape(1,-1)
         else:
             temp = np.sum(M.iloc[rows], axis=0).reshape(1,-1)
@@ -2183,11 +2416,11 @@ are sent.</dd>
     return df</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.base.isagglomeratedasv"><code class="name flex">
-<span>def <span class="ident">isagglomeratedasv</span></span>(<span>x)</span>
+<dt id="mdsine2.pylab.base.isaggregatedasv"><code class="name flex">
+<span>def <span class="ident">isaggregatedasv</span></span>(<span>x)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Checks whether the input is a subclass of AgglomerateASV</p>
+<div class="desc"><p>Checks whether the input is a subclass of AggregateASV</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>x</code></strong> :&ensp;<code>any</code></dt>
@@ -2202,8 +2435,8 @@ are sent.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isagglomeratedasv(x):
-    &#39;&#39;&#39;Checks whether the input is a subclass of AgglomerateASV
+<pre><code class="python">def isaggregatedasv(x):
+    &#39;&#39;&#39;Checks whether the input is a subclass of AggregateASV
 
     Parameters
     ----------
@@ -2215,7 +2448,7 @@ are sent.</dd>
     bool
         True if `x` is of type ASV, else False
     &#39;&#39;&#39;
-    return x is not None and issubclass(x.__class__, AgglomerateASV)</code></pre>
+    return issubclass(x.__class__, AggregateASV)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.base.isasv"><code class="name flex">
@@ -2292,35 +2525,35 @@ are sent.</dd>
 <span>def <span class="ident">isasvtype</span></span>(<span>x)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Checks whether the input is a subclass of AgglomerateASV or ASV</p>
+<div class="desc"><p>Checks whether the input is a subclass of AggregateASV or ASV</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>x</code></strong> :&ensp;<code>any</code></dt>
-<dd>Input instance to check the type of AgglomerateASV or ASV</dd>
+<dd>Input instance to check the type of AggregateASV or ASV</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>bool</code></dt>
-<dd>True if <code>x</code> is of type AgglomerateASV or ASV, else False</dd>
+<dd>True if <code>x</code> is of type AggregateASV or ASV, else False</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def isasvtype(x):
-    &#39;&#39;&#39;Checks whether the input is a subclass of AgglomerateASV or ASV
+    &#39;&#39;&#39;Checks whether the input is a subclass of AggregateASV or ASV
 
     Parameters
     ----------
     x : any
-        Input instance to check the type of AgglomerateASV or ASV
+        Input instance to check the type of AggregateASV or ASV
     
     Returns
     -------
     bool
-        True if `x` is of type AgglomerateASV or ASV, else False
+        True if `x` is of type AggregateASV or ASV, else False
     &#39;&#39;&#39;
-    return isasv(x) or isagglomeratedasv(x)</code></pre>
+    return isasv(x) or isaggregatedasv(x)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.base.isclusterable"><code class="name flex">
@@ -2663,19 +2896,19 @@ are sent.</dd>
             &#39;kingdom&#39;, &#39;phylum&#39;, &#39;class&#39;, &#39;order&#39;, &#39;family&#39;, &#39;genus&#39;
             Name of the taxa for each respective level
         &#39;&#39;&#39;
-        if tax_kingdom is not None and tax_kingdom != &#39;&#39; and isstr(tax_kingdom):
+        if tax_kingdom is not None and tax_kingdom != &#39;&#39; and plutil.isstr(tax_kingdom):
             self.taxonomy[&#39;kingdom&#39;] = tax_kingdom
-        if tax_phylum is not None and tax_phylum != &#39;&#39; and isstr(tax_phylum):
+        if tax_phylum is not None and tax_phylum != &#39;&#39; and plutil.isstr(tax_phylum):
             self.taxonomy[&#39;phylum&#39;] = tax_phylum
-        if tax_class is not None and tax_class != &#39;&#39; and isstr(tax_class):
+        if tax_class is not None and tax_class != &#39;&#39; and plutil.isstr(tax_class):
             self.taxonomy[&#39;class&#39;] = tax_class
-        if tax_order is not None and tax_order != &#39;&#39; and isstr(tax_order):
+        if tax_order is not None and tax_order != &#39;&#39; and plutil.isstr(tax_order):
             self.taxonomy[&#39;order&#39;] = tax_order
-        if tax_family is not None and tax_family != &#39;&#39; and isstr(tax_family):
+        if tax_family is not None and tax_family != &#39;&#39; and plutil.isstr(tax_family):
             self.taxonomy[&#39;family&#39;] = tax_family
-        if tax_genus is not None and tax_genus != &#39;&#39; and isstr(tax_genus):
+        if tax_genus is not None and tax_genus != &#39;&#39; and plutil.isstr(tax_genus):
             self.taxonomy[&#39;genus&#39;] = tax_genus
-        if tax_species is not None and tax_species != &#39;&#39; and isstr(tax_species):
+        if tax_species is not None and tax_species != &#39;&#39; and plutil.isstr(tax_species):
             self.taxonomy[&#39;species&#39;] = tax_species
         return self
 
@@ -2770,7 +3003,7 @@ are sent.</dd>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="mdsine2.pylab.base.AgglomerateASV" href="#mdsine2.pylab.base.AgglomerateASV">AgglomerateASV</a></li>
+<li><a title="mdsine2.pylab.base.AggregateASV" href="#mdsine2.pylab.base.AggregateASV">AggregateASV</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -2911,19 +3144,19 @@ Name of the taxa for each respective level</dd>
         &#39;kingdom&#39;, &#39;phylum&#39;, &#39;class&#39;, &#39;order&#39;, &#39;family&#39;, &#39;genus&#39;
         Name of the taxa for each respective level
     &#39;&#39;&#39;
-    if tax_kingdom is not None and tax_kingdom != &#39;&#39; and isstr(tax_kingdom):
+    if tax_kingdom is not None and tax_kingdom != &#39;&#39; and plutil.isstr(tax_kingdom):
         self.taxonomy[&#39;kingdom&#39;] = tax_kingdom
-    if tax_phylum is not None and tax_phylum != &#39;&#39; and isstr(tax_phylum):
+    if tax_phylum is not None and tax_phylum != &#39;&#39; and plutil.isstr(tax_phylum):
         self.taxonomy[&#39;phylum&#39;] = tax_phylum
-    if tax_class is not None and tax_class != &#39;&#39; and isstr(tax_class):
+    if tax_class is not None and tax_class != &#39;&#39; and plutil.isstr(tax_class):
         self.taxonomy[&#39;class&#39;] = tax_class
-    if tax_order is not None and tax_order != &#39;&#39; and isstr(tax_order):
+    if tax_order is not None and tax_order != &#39;&#39; and plutil.isstr(tax_order):
         self.taxonomy[&#39;order&#39;] = tax_order
-    if tax_family is not None and tax_family != &#39;&#39; and isstr(tax_family):
+    if tax_family is not None and tax_family != &#39;&#39; and plutil.isstr(tax_family):
         self.taxonomy[&#39;family&#39;] = tax_family
-    if tax_genus is not None and tax_genus != &#39;&#39; and isstr(tax_genus):
+    if tax_genus is not None and tax_genus != &#39;&#39; and plutil.isstr(tax_genus):
         self.taxonomy[&#39;genus&#39;] = tax_genus
-    if tax_species is not None and tax_species != &#39;&#39; and isstr(tax_species):
+    if tax_species is not None and tax_species != &#39;&#39; and plutil.isstr(tax_species):
         self.taxonomy[&#39;species&#39;] = tax_species
     return self</code></pre>
 </details>
@@ -2978,7 +3211,15 @@ Valid responses: 'kingdom', 'phylum', 'class', 'order', 'family', 'genus'</dd>
 <dd>
 <div class="desc"><p>Wraps a set of <code><a title="mdsine2.pylab.base.ASV" href="#mdsine2.pylab.base.ASV">ASV</a></code> objects. You can get the ASV object via the
 ASV id, ASV name.
-Provides functionality for aggregating and getting subsets for lineages.</p>
+Provides functionality for aggregating sequeunces and getting subsets for lineages.</p>
+<h2 id="aggregatingdeaggregating">Aggregating/Deaggregating</h2>
+<p>ASVs that are aggregated together to become OTUs are used because sequences are
+very close together. This class provides functionality for aggregating asvs together
+(<code>mdsine2.ASVSet.aggregate_items</code>) and to deaggregate a specific name from an aggregation
+(<code>mdsine2.ASVSet.deaggregate_item</code>). If this object is within a <code>mdsine2.Study</code> object,
+MAKE SURE TO CALL THE AGGREGATION FUNCTIONS FROM THE <code>mdsine2.Study</code> OBJECT
+(<code>mdsine2.Study.aggregate_items</code>, <code>mdsine2.Study.deaggregate_item</code>) so that the reads
+for the agglomerates and individual ASVs can be consistent with the ASVSet.</p>
 <h2 id="taxonomy_table"><code>taxonomy_table</code></h2>
 <p>This is a dataframe that contains the taxonomic information for each ASV.
 The columns that must be included are:
@@ -3004,7 +3245,17 @@ If nothing is passed in, it will be an empty ASVSet</dd>
 <pre><code class="python">class ASVSet(Clusterable):
     &#39;&#39;&#39;Wraps a set of `ASV` objects. You can get the ASV object via the
     ASV id, ASV name.
-    Provides functionality for aggregating and getting subsets for lineages.
+    Provides functionality for aggregating sequeunces and getting subsets for lineages.
+
+    Aggregating/Deaggregating
+    -------------------------
+    ASVs that are aggregated together to become OTUs are used because sequences are 
+    very close together. This class provides functionality for aggregating asvs together
+    (`mdsine2.ASVSet.aggregate_items`) and to deaggregate a specific name from an aggregation
+    (`mdsine2.ASVSet.deaggregate_item`). If this object is within a `mdsine2.Study` object,
+    MAKE SURE TO CALL THE AGGREGATION FUNCTIONS FROM THE `mdsine2.Study` OBJECT 
+    (`mdsine2.Study.aggregate_items`, `mdsine2.Study.deaggregate_item`) so that the reads
+    for the agglomerates and individual ASVs can be consistent with the ASVSet.
 
     `taxonomy_table`
     ----------------
@@ -3038,8 +3289,11 @@ If nothing is passed in, it will be an empty ASVSet</dd>
         if taxonomy_table is not None:
             taxonomy_table = taxonomy_table.rename(str.lower, axis=&#39;columns&#39;)
             if &#39;name&#39; not in taxonomy_table.columns:
-                raise ValueError(&#39;`&#34;name&#34;` ({}) not found as a column in `taxonomy_table`&#39;.format(
-                    taxonomy_table.columns))
+                if taxonomy_table.index.name == &#39;name&#39;:
+                    taxonomy_table = taxonomy_table.reset_index()
+                else:
+                    raise ValueError(&#39;`&#34;name&#34;` ({}) not found as a column in `taxonomy_table`&#39;.format(
+                        taxonomy_table.columns))
             if SEQUENCE_COLUMN_LABEL not in taxonomy_table.columns:
                 raise ValueError(&#39;`&#34;{}&#34;` ({}) not found as a column in `taxonomy_table`&#39;.format(
                     SEQUENCE_COLUMN_LABEL, taxonomy_table.columns))
@@ -3090,7 +3344,7 @@ If nothing is passed in, it will be an empty ASVSet</dd>
             return key
         if key in self.ids:
             return self.ids[key]
-        elif isint(key):
+        elif plutil.isint(key):
             return self.index[key]
         elif key in self.names:
             return self.names[key]
@@ -3208,20 +3462,25 @@ If nothing is passed in, it will be an empty ASVSet</dd>
                 break
         return i/8 # including ASV
 
-    def agglomerate_asvs(self, anchor, other):
-        &#39;&#39;&#39;Create an agglomerate asv with the anchor `anchor` and other asv  `other`.
-        The agglomerate takes the sequence and the taxonomy from the anchor.
+    def aggregate_items(self, anchor, other):
+        &#39;&#39;&#39;Create an aggreate asv with the anchor `anchor` and other asv  `other`.
+        The aggregate takes the sequence and the taxonomy from the anchor.
 
         Parameters
         ----------
-        anchor, other : str, int, mdsine2.ASV, mdsine2.AgglomerateASV
-            These are the ASVs/Agglomerates that you&#39;re joining together. The anchor is
+        anchor, other : str, int, mdsine2.ASV, mdsine2.AggregateASV
+            These are the ASVs/Aggregates that you&#39;re joining together. The anchor is
             the one you are setting the sequeunce and taxonomy to
+
+        Returns
+        -------
+        mdsine2.AggregateASV
+            This is the new aggregated ASV containing anchor and other
         &#39;&#39;&#39;
         anchor = self[anchor]
         other = self[other]
         
-        agg = AgglomerateASV(anchor=anchor, other=other)
+        agg = AggregateASV(anchor=anchor, other=other)
 
         self.index[agg.idx] = agg
         self.index.pop(other.idx)
@@ -3239,8 +3498,89 @@ If nothing is passed in, it will be an empty ASVSet</dd>
         self.names.update_order()
 
         self._len = len(self.index)
+        return agg
 
-        return agg</code></pre>
+    def deaggregate_item(self, agg, other):
+        &#39;&#39;&#39;Deaggregate the sequence `other` from AggregateASV `agg`.
+        `other` is then appended to the end 
+
+        Parameters
+        ----------
+        agg : AggregateASV, str
+            This is an AggregateASV with multiple sequences contained. Must 
+            have the name `other` in there
+        other : str
+            This is the name of the ASV that should be taken out of `agg`
+
+        Returns
+        -------
+        mdsine2.ASV
+            This is the deaggregated ASV
+        &#39;&#39;&#39;
+        agg = self[agg]
+        if not isaggregatedasv(agg):
+            raise TypeError(&#39;`agg` ({}) must be an AggregatedASV&#39;.format(type(agg)))
+        if not plutil.isstr(other):
+            raise TypeError(&#39;`other` ({}) must be a str&#39;.format(type(other)))
+        if other not in agg.aggregated_asvs:
+            raise ValueError(&#39;`other` ({}) is not contained in `agg` ({}) ({})&#39;.format(
+                other, agg.name, agg.aggregated_asvs))
+
+        other = ASV(name=other, sequence=agg.aggregated_seqs[other], idx=self._len)
+        other.taxonomy = agg.aggregated_taxonomies[other.name]
+        agg.aggregated_seqs.pop(other.name, None)
+        agg.aggregated_asvs.remove(other.name)
+        agg.aggregated_taxonomies.pop(other.name, None)
+
+        self.index.append(other)
+        self.ids[other.id] = other
+        self.names[other.name] = other
+
+        self.ids.update_order()
+        self.names.update_order()
+        self._len += 1
+        return other
+
+    def rename(self, prefix, zero_based_index=False):
+        &#39;&#39;&#39;Rename the contents based on their index:
+
+        Example
+        -------
+        Names before in order:
+        [ASV_22, ASV_9982, TUDD_8484]
+
+        Calling asvs.rename(prefix=&#39;OTU&#39;)
+        New names:
+        [OTU_1, OTU_2, OTU_3]
+
+        Calling asvs.rename(prefix=&#39;OTU&#39;, zero_based_index=True)
+        New names:
+        [OTU_0, OTU_1, OTU_2]
+
+        Parameters
+        ----------
+        prefix : str
+            This is the prefix of the new ASVs. The name of the ASVs will change
+            to `&#39;{}_{}&#39;.format(prefix, index)`
+        zero_based_index : bool
+            If this is False, then we start the enumeration of the ASVs from 1
+            instead of 0. If True, then the enumeration starts at 0
+        &#39;&#39;&#39;
+        if not plutil.isstr(prefix):
+            raise TypeError(&#39;`prefix` ({}) must be a str&#39;.format(type(prefix)))
+        if not plutil.isbool(zero_based_index):
+            raise TypeError(&#39;`zero_based_index` ({}) must be a bool&#39;.format(
+                type(zero_based_index)))
+
+        offset = 0
+        if not zero_based_index:
+            offset = 1
+
+        self.names = CustomOrderedDict()
+        for asv in self.index:
+            newname = prefix + &#39;_{}&#39;.format(int(asv.idx + offset))
+            asv.name = newname
+            self.names[asv.name] = asv</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -3305,37 +3645,47 @@ def n_asvs(self):
     return self</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.base.ASVSet.agglomerate_asvs"><code class="name flex">
-<span>def <span class="ident">agglomerate_asvs</span></span>(<span>self, anchor, other)</span>
+<dt id="mdsine2.pylab.base.ASVSet.aggregate_items"><code class="name flex">
+<span>def <span class="ident">aggregate_items</span></span>(<span>self, anchor, other)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Create an agglomerate asv with the anchor <code>anchor</code> and other asv
+<div class="desc"><p>Create an aggreate asv with the anchor <code>anchor</code> and other asv
 <code>other</code>.
-The agglomerate takes the sequence and the taxonomy from the anchor.</p>
+The aggregate takes the sequence and the taxonomy from the anchor.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>anchor</code></strong>, <strong><code>other</code></strong> :&ensp;<code>str, int, mdsine2.ASV, mdsine2.AgglomerateASV</code></dt>
-<dd>These are the ASVs/Agglomerates that you're joining together. The anchor is
+<dt><strong><code>anchor</code></strong>, <strong><code>other</code></strong> :&ensp;<code>str, int, mdsine2.ASV, mdsine2.AggregateASV</code></dt>
+<dd>These are the ASVs/Aggregates that you're joining together. The anchor is
 the one you are setting the sequeunce and taxonomy to</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>mdsine2.AggregateASV</code></dt>
+<dd>This is the new aggregated ASV containing anchor and other</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def agglomerate_asvs(self, anchor, other):
-    &#39;&#39;&#39;Create an agglomerate asv with the anchor `anchor` and other asv  `other`.
-    The agglomerate takes the sequence and the taxonomy from the anchor.
+<pre><code class="python">def aggregate_items(self, anchor, other):
+    &#39;&#39;&#39;Create an aggreate asv with the anchor `anchor` and other asv  `other`.
+    The aggregate takes the sequence and the taxonomy from the anchor.
 
     Parameters
     ----------
-    anchor, other : str, int, mdsine2.ASV, mdsine2.AgglomerateASV
-        These are the ASVs/Agglomerates that you&#39;re joining together. The anchor is
+    anchor, other : str, int, mdsine2.ASV, mdsine2.AggregateASV
+        These are the ASVs/Aggregates that you&#39;re joining together. The anchor is
         the one you are setting the sequeunce and taxonomy to
+
+    Returns
+    -------
+    mdsine2.AggregateASV
+        This is the new aggregated ASV containing anchor and other
     &#39;&#39;&#39;
     anchor = self[anchor]
     other = self[other]
     
-    agg = AgglomerateASV(anchor=anchor, other=other)
+    agg = AggregateASV(anchor=anchor, other=other)
 
     self.index[agg.idx] = agg
     self.index.pop(other.idx)
@@ -3353,8 +3703,72 @@ the one you are setting the sequeunce and taxonomy to</dd>
     self.names.update_order()
 
     self._len = len(self.index)
-
     return agg</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.base.ASVSet.deaggregate_item"><code class="name flex">
+<span>def <span class="ident">deaggregate_item</span></span>(<span>self, agg, other)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Deaggregate the sequence <code>other</code> from AggregateASV <code>agg</code>.
+<code>other</code> is then appended to the end </p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>agg</code></strong> :&ensp;<code><a title="mdsine2.pylab.base.AggregateASV" href="#mdsine2.pylab.base.AggregateASV">AggregateASV</a>, str</code></dt>
+<dd>This is an AggregateASV with multiple sequences contained. Must
+have the name <code>other</code> in there</dd>
+<dt><strong><code>other</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the name of the ASV that should be taken out of <code>agg</code></dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>mdsine2.ASV</code></dt>
+<dd>This is the deaggregated ASV</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def deaggregate_item(self, agg, other):
+    &#39;&#39;&#39;Deaggregate the sequence `other` from AggregateASV `agg`.
+    `other` is then appended to the end 
+
+    Parameters
+    ----------
+    agg : AggregateASV, str
+        This is an AggregateASV with multiple sequences contained. Must 
+        have the name `other` in there
+    other : str
+        This is the name of the ASV that should be taken out of `agg`
+
+    Returns
+    -------
+    mdsine2.ASV
+        This is the deaggregated ASV
+    &#39;&#39;&#39;
+    agg = self[agg]
+    if not isaggregatedasv(agg):
+        raise TypeError(&#39;`agg` ({}) must be an AggregatedASV&#39;.format(type(agg)))
+    if not plutil.isstr(other):
+        raise TypeError(&#39;`other` ({}) must be a str&#39;.format(type(other)))
+    if other not in agg.aggregated_asvs:
+        raise ValueError(&#39;`other` ({}) is not contained in `agg` ({}) ({})&#39;.format(
+            other, agg.name, agg.aggregated_asvs))
+
+    other = ASV(name=other, sequence=agg.aggregated_seqs[other], idx=self._len)
+    other.taxonomy = agg.aggregated_taxonomies[other.name]
+    agg.aggregated_seqs.pop(other.name, None)
+    agg.aggregated_asvs.remove(other.name)
+    agg.aggregated_taxonomies.pop(other.name, None)
+
+    self.index.append(other)
+    self.ids[other.id] = other
+    self.names[other.name] = other
+
+    self.ids.update_order()
+    self.names.update_order()
+    self._len += 1
+    return other</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.base.ASVSet.del_asv"><code class="name flex">
@@ -3400,6 +3814,75 @@ the one you are setting the sequeunce and taxonomy to</dd>
 
     self._len -= 1
     return self</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.base.ASVSet.rename"><code class="name flex">
+<span>def <span class="ident">rename</span></span>(<span>self, prefix, zero_based_index=False)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Rename the contents based on their index:</p>
+<h2 id="example">Example</h2>
+<p>Names before in order:
+[ASV_22, ASV_9982, TUDD_8484]</p>
+<p>Calling asvs.rename(prefix='OTU')
+New names:
+[OTU_1, OTU_2, OTU_3]</p>
+<p>Calling asvs.rename(prefix='OTU', zero_based_index=True)
+New names:
+[OTU_0, OTU_1, OTU_2]</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>prefix</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the prefix of the new ASVs. The name of the ASVs will change
+to <code>'{}_{}'.format(prefix, index)</code></dd>
+<dt><strong><code>zero_based_index</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If this is False, then we start the enumeration of the ASVs from 1
+instead of 0. If True, then the enumeration starts at 0</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def rename(self, prefix, zero_based_index=False):
+    &#39;&#39;&#39;Rename the contents based on their index:
+
+    Example
+    -------
+    Names before in order:
+    [ASV_22, ASV_9982, TUDD_8484]
+
+    Calling asvs.rename(prefix=&#39;OTU&#39;)
+    New names:
+    [OTU_1, OTU_2, OTU_3]
+
+    Calling asvs.rename(prefix=&#39;OTU&#39;, zero_based_index=True)
+    New names:
+    [OTU_0, OTU_1, OTU_2]
+
+    Parameters
+    ----------
+    prefix : str
+        This is the prefix of the new ASVs. The name of the ASVs will change
+        to `&#39;{}_{}&#39;.format(prefix, index)`
+    zero_based_index : bool
+        If this is False, then we start the enumeration of the ASVs from 1
+        instead of 0. If True, then the enumeration starts at 0
+    &#39;&#39;&#39;
+    if not plutil.isstr(prefix):
+        raise TypeError(&#39;`prefix` ({}) must be a str&#39;.format(type(prefix)))
+    if not plutil.isbool(zero_based_index):
+        raise TypeError(&#39;`zero_based_index` ({}) must be a bool&#39;.format(
+            type(zero_based_index)))
+
+    offset = 0
+    if not zero_based_index:
+        offset = 1
+
+    self.names = CustomOrderedDict()
+    for asv in self.index:
+        newname = prefix + &#39;_{}&#39;.format(int(asv.idx + offset))
+        asv.name = newname
+        self.names[asv.name] = asv</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.base.ASVSet.taxonomic_similarity"><code class="name flex">
@@ -3483,69 +3966,81 @@ similarity = 0.0</p>
 </li>
 </ul>
 </dd>
-<dt id="mdsine2.pylab.base.AgglomerateASV"><code class="flex name class">
-<span>class <span class="ident">AgglomerateASV</span></span>
+<dt id="mdsine2.pylab.base.AggregateASV"><code class="flex name class">
+<span>class <span class="ident">AggregateASV</span></span>
 <span>(</span><span>anchor, other)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Agglomerates ASVs together</p>
+<div class="desc"><p>Aggregates of ASV objects</p>
+<p>NOTE: For self consistency, let the class ASVSet initialize this object.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>anchor</code></strong>, <strong><code>other</code></strong> :&ensp;<code>mdsine2.ASV, mdsine2.AgglomerateASV</code></dt>
-<dd>These are the ASVs/Agglomerates that you're joining together. The anchor is
+<dt><strong><code>anchor</code></strong>, <strong><code>other</code></strong> :&ensp;<code>mdsine2.ASV, mdsine2.AggregateASV</code></dt>
+<dd>These are the ASVs/Aggregates that you're joining together. The anchor is
 the one you are setting the sequeunce and taxonomy to</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class AgglomerateASV(ASV):
-    &#39;&#39;&#39;Agglomerates ASVs together
+<pre><code class="python">class AggregateASV(ASV):
+    &#39;&#39;&#39;Aggregates of ASV objects
+
+    NOTE: For self consistency, let the class ASVSet initialize this object.
 
     Parameters
     ----------
-    anchor, other : mdsine2.ASV, mdsine2.AgglomerateASV
-        These are the ASVs/Agglomerates that you&#39;re joining together. The anchor is
+    anchor, other : mdsine2.ASV, mdsine2.AggregateASV
+        These are the ASVs/Aggregates that you&#39;re joining together. The anchor is
         the one you are setting the sequeunce and taxonomy to
     &#39;&#39;&#39;
     def __init__(self, anchor, other):
         name = anchor.name + &#39;_agg&#39;
         ASV.__init__(self, name=name, idx=anchor.idx, sequence=anchor.sequence)
 
-        if isagglomeratedasv(anchor):
-            if other.name in anchor.agglomerated_asvs:
-                raise ValueError(&#39;`other` ({}) already agglomerated with anchor &#39; \
-                    &#39;({}) ({})&#39;.format(other.name, anchor.name, anchor.agglomerated_asvs))
-            agg1 = anchor.agglomerated_asvs
-            agg1_seq = anchor.agglomerated_seqs
+        _agg_taxas = {}
+
+        if isaggregatedasv(anchor):
+            if other.name in anchor.aggregated_asvs:
+                raise ValueError(&#39;`other` ({}) already aggregated with anchor &#39; \
+                    &#39;({}) ({})&#39;.format(other.name, anchor.name, anchor.aggregated_asvs))
+            agg1 = anchor.aggregated_asvs
+            agg1_seq = anchor.aggregated_seqs
+            for k,v in anchor.aggregated_taxonomies.items():
+                _agg_taxas[k] = v
         else:
             agg1 = [anchor.name]
             agg1_seq = {anchor.name: anchor.sequence}
+            _agg_taxas[anchor.name] = anchor.taxonomy
 
-        if isagglomeratedasv(other):
-            if anchor.name in other.agglomerated_asvs:
-                raise ValueError(&#39;`anchor` ({}) already agglomerated with other &#39; \
-                    &#39;({}) ({})&#39;.format(anchor.name, other.name, other.agglomerated_asvs))
-            agg2 = other.agglomerated_asvs
-            agg2_seq = other.agglomerated_seqs
+        if isaggregatedasv(other):
+            if anchor.name in other.aggregated_asvs:
+                raise ValueError(&#39;`anchor` ({}) already aggregated with other &#39; \
+                    &#39;({}) ({})&#39;.format(anchor.name, other.name, other.aggregated_asvs))
+            agg2 = other.aggregated_asvs
+            agg2_seq = other.aggregated_seqs
+            for k,v in other.aggregated_taxonomies.items():
+                _agg_taxas[k] = v
         else:
             agg2 = [other.name]
             agg2_seq = {other.name: other.sequence}
+            _agg_taxas[other.name] = other.taxonomy
 
-        self.agglomerated_asvs = agg1 + agg2
-        self.agglomerated_seqs = agg1_seq
+        self.aggregated_asvs = agg1 + agg2
+        self.aggregated_seqs = agg1_seq
+        self.aggregated_taxonomies = _agg_taxas
         for k,v in agg2_seq.items():
-            self.agglomerated_seqs[k] = v
+            self.aggregated_seqs[k] = v
 
         self.taxonomy = anchor.taxonomy
 
     def __str__(self):
-        return &#39;AgglomerateASV\n\tid: {}\n\tidx: {}\n\tname: {}\n&#39; \
-            &#39;\tAgglomerates: {}\n&#39; \
+        return &#39;AggregateASV\n\tid: {}\n\tidx: {}\n\tname: {}\n&#39; \
+            &#39;\tAggregates: {}\n&#39; \
             &#39;\ttaxonomy:\n\t\tkingdom: {}\n\t\tphylum: {}\n&#39; \
             &#39;\t\tclass: {}\n\t\torder: {}\n\t\tfamily: {}\n&#39; \
             &#39;\t\tgenus: {}\n\t\tspecies: {}&#39;.format(
-            self.id, self.idx, self.name, self.agglomerated_asvs,
+            self.id, self.idx, self.name, self.aggregated_asvs,
             self.taxonomy[&#39;kingdom&#39;], self.taxonomy[&#39;phylum&#39;],
             self.taxonomy[&#39;class&#39;], self.taxonomy[&#39;order&#39;],
             self.taxonomy[&#39;family&#39;], self.taxonomy[&#39;genus&#39;],
@@ -3605,14 +4100,14 @@ This is the name of the perturabtion. If nothing is given then it will be None</
         This is the name of the perturabtion. If nothing is given then it will be None
     &#39;&#39;&#39;
     def __init__(self, start, end, name=None):
-        if not isnumeric(start):
+        if not plutil.isnumeric(start):
             raise TypeError(&#39;`start` ({}) must be a numeric&#39;.format(type(start)))
-        if not isnumeric(end):
+        if not plutil.isnumeric(end):
             raise TypeError(&#39;`end` ({}) must be a numeric&#39;.format(type(end)))
         if end &lt; start:
             raise ValueError(&#39;`end` ({}) must be &gt;= `start` ({})&#39;.format(end, start))
         if name is not None:
-            if not isstr(name):
+            if not plutil.isstr(name):
                 raise TypeError(&#39;`name` ({}) must be a str&#39;.format(type(name)))
         self.start = start
         self.end = end
@@ -3960,7 +4455,7 @@ also redo the indexes if an ASV was deleted</p></div>
     def set_save_location(self, filename):
         &#39;&#39;&#39;Set the save location for the object
         &#39;&#39;&#39;
-        if not isstr(filename):
+        if not plutil.isstr(filename):
             raise TypeError(&#39;`filename` ({}) must be a str&#39;.format(type(filename)))
         self._save_loc = filename
 
@@ -4084,7 +4579,7 @@ set_location.</p></div>
 <pre><code class="python">def set_save_location(self, filename):
     &#39;&#39;&#39;Set the save location for the object
     &#39;&#39;&#39;
-    if not isstr(filename):
+    if not plutil.isstr(filename):
         raise TypeError(&#39;`filename` ({}) must be a str&#39;.format(type(filename)))
     self._save_loc = filename</code></pre>
 </details>
@@ -4123,6 +4618,7 @@ Contains all of the ASVs</p></div>
         self.asvs = asvs
 
         self._samples = {}
+        
 
     def __getitem__(self, key):
         return self._subjects[key]
@@ -4137,13 +4633,13 @@ Contains all of the ASVs</p></div>
     def __contains__(self, key):
         return key in self._subjects
 
-    def parse_samples(self, sampleids, reads=None, qpcr=None):
+    def parse_samples(self, metadata, reads=None, qpcr=None):
         &#39;&#39;&#39;Parse tables of samples and cast in Subject sets. Automatically creates
         the subject classes with the respective names.
 
         Parameters
         ----------
-        sampleids : pandas.DataFrame
+        metadata : pandas.DataFrame
             Contains the meta data for each one of the samples
             Columns:
                 &#39;sampleID&#39; -&gt; str : This is the name of the sample
@@ -4161,17 +4657,17 @@ Contains all of the ASVs</p></div>
                 index (str) : indexes the sample ID
                 columns (str) : Name is ignored. the values are set to the 
         &#39;&#39;&#39;
-        if not isdataframe(sampleids):
-            raise TypeError(&#39;`sampleids` ({}) must be a pandas.DataFrame&#39;.format(type(sampleids)))
+        if not plutil.isdataframe(metadata):
+            raise TypeError(&#39;`metadata` ({}) must be a pandas.DataFrame&#39;.format(type(metadata)))
         
         # Add the samples
         # ---------------
-        if &#39;sampleID&#39; in sampleids.columns:
-            sampleids = sampleids.set_index(&#39;sampleID&#39;)
-        for sampleid in sampleids.index:
+        if &#39;sampleID&#39; in metadata.columns:
+            metadata = metadata.set_index(&#39;sampleID&#39;)
+        for sampleid in metadata.index:
 
-            sid = str(sampleids[&#39;subject&#39;][sampleid])
-            t = float(sampleids[&#39;time&#39;][sampleid])
+            sid = str(metadata[&#39;subject&#39;][sampleid])
+            t = float(metadata[&#39;time&#39;][sampleid])
 
             if sid not in self:
                 self.add_subject(name=sid)
@@ -4182,14 +4678,14 @@ Contains all of the ASVs</p></div>
 
         # Add the perturbations if there are any
         # --------------------------------------
-        for col in sampleids.columns:
+        for col in metadata.columns:
             pert_name = col.replace(&#39;perturbation:&#39;, &#39;&#39;)
             if &#39;perturbation:&#39; in col:
                 min_time = None
                 max_time = None
-                for sampleid in sampleids.index:
-                    if sampleids[col][sampleid] == 1:
-                        t = float(sampleids[&#39;time&#39;][sampleid])
+                for sampleid in metadata.index:
+                    if metadata[col][sampleid] == 1:
+                        t = float(metadata[&#39;time&#39;][sampleid])
                         if min_time is None:
                             min_time = t
                         else:
@@ -4209,7 +4705,7 @@ Contains all of the ASVs</p></div>
         # Add the reads if necessary
         # --------------------------
         if reads is not None:
-            if not isdataframe(reads):
+            if not plutil.isdataframe(reads):
                 raise TypeError(&#39;`reads` ({}) must be a pandas.DataFrame&#39;.format(type(reads)))
             
             if &#39;name&#39; in reads.columns:
@@ -4229,7 +4725,7 @@ Contains all of the ASVs</p></div>
         # Add the qPCR measurements if necessary
         # --------------------------------------
         if qpcr is not None:
-            if not isdataframe(qpcr):
+            if not plutil.isdataframe(qpcr):
                 raise TypeError(&#39;`qpcr` ({}) must be a pandas.DataFrame&#39;.format(type(qpcr)))
 
             if &#39;sampleID&#39; in qpcr.columns:
@@ -4253,6 +4749,11 @@ Contains all of the ASVs</p></div>
 
     def write_qpcr_to_table(self, path, sep=&#39;\t&#39;):
         raise NotImplementedError(&#39;Need to implement it&#39;)
+
+    def names(self):
+        &#39;&#39;&#39;List the names of the contained subjects
+        &#39;&#39;&#39;
+        return [subj.name for subj in self]
 
     def iloc(self, idx):
         &#39;&#39;&#39;Get the subject as an index
@@ -4292,15 +4793,15 @@ Contains all of the ASVs</p></div>
             This is the subject name/s or the index/es to pop out.
             Return a new Study with the specified subjects removed.
         &#39;&#39;&#39;
-        if not isarray(sid):
+        if not plutil.isarray(sid):
             sids = [sid]
         else:
             sids = sid
 
         for i in range(len(sids)):
-            if isint(sids[i]):
+            if plutil.isint(sids[i]):
                 sids[i] = list(self._subjects.keys())[sids[i]]
-            elif not isstr(sids[i]):
+            elif not plutil.isstr(sids[i]):
                 raise ValueError(&#39;`sid` ({}) must be a str&#39;.format(type(sids[i])))
         ret = Study(asvs=self.asvs)
         ret.perturbations = self.perturbations
@@ -4337,27 +4838,57 @@ Contains all of the ASVs</p></div>
                 subj.reads[t] = np.delete(subj.reads[t], oidxs)
         return self
 
-    def agglomerate_asvs(self, asv1, asv2):
-        &#39;&#39;&#39;Agglomerate the abundances of `asv1` and `asv2`. Updates the reads table and
+    def deaggregate_item(self, agg, other):
+        &#39;&#39;&#39;Deaggregate the sequence `other` from AggregateASV `agg`.
+        `other` is then appended to the end 
+
+        Parameters
+        ----------
+        agg : AggregateASV, str
+            This is an AggregateASV with multiple sequences contained. Must 
+            have the name `other` in there
+        other : str
+            This is the name of the ASV that should be taken out of `agg`
+
+        Returns
+        -------
+        mdsine2.ASV
+            This is the deaggregated ASV
+        &#39;&#39;&#39;
+        agg = self.asvs[agg]
+        if not isaggregatedasv(agg):
+            raise TypeError(&#39;`agg` ({}) must be an AggregatedASV&#39;.format(type(agg)))
+        if not plutil.isstr(other):
+            raise TypeError(&#39;`other` ({}) must be a str&#39;.format(type(other)))
+        if other not in agg.aggregated_asvs:
+            raise ValueError(&#39;`other` ({}) is not contained in `agg` ({}) ({})&#39;.format(
+                other, agg.name, agg.aggregated_asvs))
+
+        for subj in self:
+            subj._deaggregate_item(agg=agg, other=other)
+        return self.asvs.deaggregate_item(agg, other)
+
+    def aggregate_items(self, asv1, asv2):
+        &#39;&#39;&#39;Aggregates the abundances of `asv1` and `asv2`. Updates the reads table and
         internal ASVSet
 
         Parameters
         ----------
-        asv1, asv2 : str, int, mdsine2.ASV, mdsine2.AgglomerateASV
+        asv1, asv2 : str, int, mdsine2.ASV, mdsine2.AggregateASV
             These are the ASVs you are agglomerating together
+
+        Returns
+        -------
+        mdsine2.AggregateASV
+            This is the new aggregated ASV containing anchor and other
         &#39;&#39;&#39;
-        # Find the anchor - use the total number of counts
+        # Find the anchor - use the highest index
         aidx1 = self.asvs[asv1].idx
         aidx2 = self.asvs[asv2].idx
 
-        abund1 = 0
-        abund2 = 0
-        for subj in self:
-            for t in subj.times:
-                abund1 += subj.reads[t][aidx1]
-                abund2 += subj.reads[t][aidx2]
-
-        if abund1 &gt; abund2:
+        if aidx1 == aidx2:
+            raise ValueError(&#39;Cannot aggregate the same asv: {}&#39;.format(self.asvs[asv1]))
+        elif aidx1 &lt; aidx2:
             anchor = self.asvs[asv1]
             other = self.asvs[asv2]
         else:
@@ -4365,11 +4896,8 @@ Contains all of the ASVs</p></div>
             other = self.asvs[asv1]
 
         for subj in self:
-            for t in subj.times:
-                subj.reads[t][anchor.idx] += subj.reads[t][other.idx]
-                subj.reads[t] = np.delete(subj.reads[t], other.idx)
-
-        return self.asvs.agglomerate_asvs(anchor=anchor, other=other)
+            subj._aggregate_items(anchor=anchor, other=other)
+        return self.asvs.aggregate_items(anchor=anchor, other=other)
 
     def pop_times(self, times, sids=&#39;all&#39;):
         &#39;&#39;&#39;Discard the times in `times` for the subjects listed in `sids`.
@@ -4384,30 +4912,30 @@ Contains all of the ASVs</p></div>
             from. If it is a str:
                 &#39;all&#39; - delete from all subjects
         &#39;&#39;&#39;
-        if isstr(sids):
+        if plutil.isstr(sids):
             if sids == &#39;all&#39;:
                 sids = list(self._subjects.keys())
             else:
                 raise ValueError(&#39;`sids` ({}) not recognized&#39;.format(sids))
-        elif isint(sids):
+        elif plutil.isint(sids):
             if sids not in self._subjects:
                 raise IndexError(&#39;`sid` ({}) not found in subjects&#39;.format(
                     list(self._subjects.keys())))
             sids = [sids]
-        elif isarray(sids):
+        elif plutil.isarray(sids):
             for sid in sids:
-                if not isint(sid):
+                if not plutil.isint(sid):
                     raise TypeError(&#39;Each sid ({}) must be an int&#39;.format(type(sid)))
                 if sid not in self._subjects:
                     raise IndexError(&#39;Subject {} not found in subjects ({})&#39;.format(
                         sid, list(self._subjects.keys())))
         else:
             raise TypeError(&#39;`sids` ({}) type not recognized&#39;.format(type(sids)))
-        if isnumeric(times):
+        if plutil.isnumeric(times):
             times = [times]
-        elif isarray(times):
+        elif plutil.isarray(times):
             for t in times:
-                if not isnumeric(t):
+                if not plutil.isnumeric(t):
                     raise TypeError(&#39;Each time ({}) must be a numeric&#39;.format(type(t)))
         else:
             raise TypeError(&#39;`times` ({}) type not recognized&#39;.format(type(times)))
@@ -4428,6 +4956,10 @@ Contains all of the ASVs</p></div>
         ----------
         max_value : float, int
             This is the maximum qPCR value to
+
+        Returns
+        -------
+        self
         &#39;&#39;&#39;
         if type(max_value) not in [int, float]:
             raise ValueError(&#39;max_value ({}) must either be an int or a float&#39;.format(
@@ -4454,6 +4986,10 @@ Contains all of the ASVs</p></div>
 
     def denormalize_qpcr(self):
         &#39;&#39;&#39;Denormalizes the qpcr values if necessary
+
+        Returns
+        -------
+        self
         &#39;&#39;&#39;
         if self.qpcr_normalization_factor is None:
             logging.warning(&#39;qPCR is not normalized. Doing nothing&#39;)
@@ -4482,11 +5018,15 @@ Contains all of the ASVs</p></div>
             Only necessary if `a` is a numeric
         name : str, None
             Only necessary if `a` is a numeric. Name of the perturbation
+        
+        Returns
+        -------
+        self
         &#39;&#39;&#39;
         if self.perturbations is None:
             self.perturbations = []
-        if isnumeric(a):
-            if not isnumeric(end):
+        if plutil.isnumeric(a):
+            if not plutil.isnumeric(end):
                 raise ValueError(&#39;If `a` is a numeric, then `end` ({}) &#39; \
                     &#39;needs to be a numeric&#39;.format(type(end)))
             self.perturbations.append(BasePerturbation(start=a, end=end, name=name))
@@ -4500,6 +5040,10 @@ Contains all of the ASVs</p></div>
     def split_on_perturbations(self):
         &#39;&#39;&#39;Make new subjects for the time points that are divided by perturbations. 
         Throw out all of the data  where the perturbations are active.
+
+        Returns
+        -------
+        self
         &#39;&#39;&#39;
         for subj in self:
             subj._split_on_perturbations()
@@ -4522,7 +5066,7 @@ Contains all of the ASVs</p></div>
         else:
             raise ValueError(&#39;`agg` ({}) not recognized&#39;.format(agg))
 
-        if isstr(times):
+        if plutil.isstr(times):
             all_times = []
             for subj in self:
                 all_times = np.append(all_times, subj.times)
@@ -4543,7 +5087,7 @@ Contains all of the ASVs</p></div>
 
             else:
                 raise ValueError(&#39;`times` ({}) not recognized&#39;.format(times))
-        elif isarray(times):
+        elif plutil.isarray(times):
             times = np.array(times)
         else:
             raise TypeError(&#39;`times` type ({}) not recognized&#39;.format(type(times)))
@@ -4619,6 +5163,10 @@ Contains all of the ASVs</p></div>
     def df(self, *args, **kwargs):
         &#39;&#39;&#39;Returns a dataframe of the data in matrix. Rows are ASVs, columns are times.
 
+        Returns
+        -------
+        pandas.DataFrame
+
         See Also
         --------
         mdsine2.matrix
@@ -4652,6 +5200,11 @@ then we just add this.</dd>
 <dd>Only necessary if <code>a</code> is a numeric</dd>
 <dt><strong><code>name</code></strong> :&ensp;<code>str, None</code></dt>
 <dd>Only necessary if <code>a</code> is a numeric. Name of the perturbation</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>self</code></dt>
+<dd>&nbsp;</dd>
 </dl></div>
 <details class="source">
 <summary>
@@ -4675,11 +5228,15 @@ then we just add this.</dd>
         Only necessary if `a` is a numeric
     name : str, None
         Only necessary if `a` is a numeric. Name of the perturbation
+    
+    Returns
+    -------
+    self
     &#39;&#39;&#39;
     if self.perturbations is None:
         self.perturbations = []
-    if isnumeric(a):
-        if not isnumeric(end):
+    if plutil.isnumeric(a):
+        if not plutil.isnumeric(end):
             raise ValueError(&#39;If `a` is a numeric, then `end` ({}) &#39; \
                 &#39;needs to be a numeric&#39;.format(type(end)))
         self.perturbations.append(BasePerturbation(start=a, end=end, name=name))
@@ -4718,42 +5275,47 @@ then we just add this.</dd>
     return self</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.base.Study.agglomerate_asvs"><code class="name flex">
-<span>def <span class="ident">agglomerate_asvs</span></span>(<span>self, asv1, asv2)</span>
+<dt id="mdsine2.pylab.base.Study.aggregate_items"><code class="name flex">
+<span>def <span class="ident">aggregate_items</span></span>(<span>self, asv1, asv2)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Agglomerate the abundances of <code>asv1</code> and <code>asv2</code>. Updates the reads table and
+<div class="desc"><p>Aggregates the abundances of <code>asv1</code> and <code>asv2</code>. Updates the reads table and
 internal ASVSet</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>asv1</code></strong>, <strong><code>asv2</code></strong> :&ensp;<code>str, int, mdsine2.ASV, mdsine2.AgglomerateASV</code></dt>
+<dt><strong><code>asv1</code></strong>, <strong><code>asv2</code></strong> :&ensp;<code>str, int, mdsine2.ASV, mdsine2.AggregateASV</code></dt>
 <dd>These are the ASVs you are agglomerating together</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>mdsine2.AggregateASV</code></dt>
+<dd>This is the new aggregated ASV containing anchor and other</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def agglomerate_asvs(self, asv1, asv2):
-    &#39;&#39;&#39;Agglomerate the abundances of `asv1` and `asv2`. Updates the reads table and
+<pre><code class="python">def aggregate_items(self, asv1, asv2):
+    &#39;&#39;&#39;Aggregates the abundances of `asv1` and `asv2`. Updates the reads table and
     internal ASVSet
 
     Parameters
     ----------
-    asv1, asv2 : str, int, mdsine2.ASV, mdsine2.AgglomerateASV
+    asv1, asv2 : str, int, mdsine2.ASV, mdsine2.AggregateASV
         These are the ASVs you are agglomerating together
+
+    Returns
+    -------
+    mdsine2.AggregateASV
+        This is the new aggregated ASV containing anchor and other
     &#39;&#39;&#39;
-    # Find the anchor - use the total number of counts
+    # Find the anchor - use the highest index
     aidx1 = self.asvs[asv1].idx
     aidx2 = self.asvs[asv2].idx
 
-    abund1 = 0
-    abund2 = 0
-    for subj in self:
-        for t in subj.times:
-            abund1 += subj.reads[t][aidx1]
-            abund2 += subj.reads[t][aidx2]
-
-    if abund1 &gt; abund2:
+    if aidx1 == aidx2:
+        raise ValueError(&#39;Cannot aggregate the same asv: {}&#39;.format(self.asvs[asv1]))
+    elif aidx1 &lt; aidx2:
         anchor = self.asvs[asv1]
         other = self.asvs[asv2]
     else:
@@ -4761,24 +5323,84 @@ internal ASVSet</p>
         other = self.asvs[asv1]
 
     for subj in self:
-        for t in subj.times:
-            subj.reads[t][anchor.idx] += subj.reads[t][other.idx]
-            subj.reads[t] = np.delete(subj.reads[t], other.idx)
+        subj._aggregate_items(anchor=anchor, other=other)
+    return self.asvs.aggregate_items(anchor=anchor, other=other)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.base.Study.deaggregate_item"><code class="name flex">
+<span>def <span class="ident">deaggregate_item</span></span>(<span>self, agg, other)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Deaggregate the sequence <code>other</code> from AggregateASV <code>agg</code>.
+<code>other</code> is then appended to the end </p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>agg</code></strong> :&ensp;<code><a title="mdsine2.pylab.base.AggregateASV" href="#mdsine2.pylab.base.AggregateASV">AggregateASV</a>, str</code></dt>
+<dd>This is an AggregateASV with multiple sequences contained. Must
+have the name <code>other</code> in there</dd>
+<dt><strong><code>other</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the name of the ASV that should be taken out of <code>agg</code></dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>mdsine2.ASV</code></dt>
+<dd>This is the deaggregated ASV</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def deaggregate_item(self, agg, other):
+    &#39;&#39;&#39;Deaggregate the sequence `other` from AggregateASV `agg`.
+    `other` is then appended to the end 
 
-    return self.asvs.agglomerate_asvs(anchor=anchor, other=other)</code></pre>
+    Parameters
+    ----------
+    agg : AggregateASV, str
+        This is an AggregateASV with multiple sequences contained. Must 
+        have the name `other` in there
+    other : str
+        This is the name of the ASV that should be taken out of `agg`
+
+    Returns
+    -------
+    mdsine2.ASV
+        This is the deaggregated ASV
+    &#39;&#39;&#39;
+    agg = self.asvs[agg]
+    if not isaggregatedasv(agg):
+        raise TypeError(&#39;`agg` ({}) must be an AggregatedASV&#39;.format(type(agg)))
+    if not plutil.isstr(other):
+        raise TypeError(&#39;`other` ({}) must be a str&#39;.format(type(other)))
+    if other not in agg.aggregated_asvs:
+        raise ValueError(&#39;`other` ({}) is not contained in `agg` ({}) ({})&#39;.format(
+            other, agg.name, agg.aggregated_asvs))
+
+    for subj in self:
+        subj._deaggregate_item(agg=agg, other=other)
+    return self.asvs.deaggregate_item(agg, other)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.base.Study.denormalize_qpcr"><code class="name flex">
 <span>def <span class="ident">denormalize_qpcr</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Denormalizes the qpcr values if necessary</p></div>
+<div class="desc"><p>Denormalizes the qpcr values if necessary</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>self</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def denormalize_qpcr(self):
     &#39;&#39;&#39;Denormalizes the qpcr values if necessary
+
+    Returns
+    -------
+    self
     &#39;&#39;&#39;
     if self.qpcr_normalization_factor is None:
         logging.warning(&#39;qPCR is not normalized. Doing nothing&#39;)
@@ -4795,6 +5417,11 @@ internal ASVSet</p>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns a dataframe of the data in matrix. Rows are ASVs, columns are times.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>pandas.DataFrame</code></dt>
+<dd>&nbsp;</dd>
+</dl>
 <h2 id="see-also">See Also</h2>
 <p><code>mdsine2.matrix</code></p></div>
 <details class="source">
@@ -4803,6 +5430,10 @@ internal ASVSet</p>
 </summary>
 <pre><code class="python">def df(self, *args, **kwargs):
     &#39;&#39;&#39;Returns a dataframe of the data in matrix. Rows are ASVs, columns are times.
+
+    Returns
+    -------
+    pandas.DataFrame
 
     See Also
     --------
@@ -4934,6 +5565,21 @@ included in any of the subjects then we set them to NAN.</p>
     return M</code></pre>
 </details>
 </dd>
+<dt id="mdsine2.pylab.base.Study.names"><code class="name flex">
+<span>def <span class="ident">names</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>List the names of the contained subjects</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def names(self):
+    &#39;&#39;&#39;List the names of the contained subjects
+    &#39;&#39;&#39;
+    return [subj.name for subj in self]</code></pre>
+</details>
+</dd>
 <dt id="mdsine2.pylab.base.Study.normalize_qpcr"><code class="name flex">
 <span>def <span class="ident">normalize_qpcr</span></span>(<span>self, max_value)</span>
 </code></dt>
@@ -4944,6 +5590,11 @@ over all the subjects</p>
 <dl>
 <dt><strong><code>max_value</code></strong> :&ensp;<code>float, int</code></dt>
 <dd>This is the maximum qPCR value to</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>self</code></dt>
+<dd>&nbsp;</dd>
 </dl></div>
 <details class="source">
 <summary>
@@ -4957,6 +5608,10 @@ over all the subjects</p>
     ----------
     max_value : float, int
         This is the maximum qPCR value to
+
+    Returns
+    -------
+    self
     &#39;&#39;&#39;
     if type(max_value) not in [int, float]:
         raise ValueError(&#39;max_value ({}) must either be an int or a float&#39;.format(
@@ -4983,14 +5638,14 @@ over all the subjects</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.base.Study.parse_samples"><code class="name flex">
-<span>def <span class="ident">parse_samples</span></span>(<span>self, sampleids, reads=None, qpcr=None)</span>
+<span>def <span class="ident">parse_samples</span></span>(<span>self, metadata, reads=None, qpcr=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Parse tables of samples and cast in Subject sets. Automatically creates
 the subject classes with the respective names.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>sampleids</code></strong> :&ensp;<code>pandas.DataFrame</code></dt>
+<dt><strong><code>metadata</code></strong> :&ensp;<code>pandas.DataFrame</code></dt>
 <dd>Contains the meta data for each one of the samples
 Columns:
 'sampleID' -&gt; str : This is the name of the sample
@@ -5012,13 +5667,13 @@ columns (str) : Name is ignored. the values are set to the</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def parse_samples(self, sampleids, reads=None, qpcr=None):
+<pre><code class="python">def parse_samples(self, metadata, reads=None, qpcr=None):
     &#39;&#39;&#39;Parse tables of samples and cast in Subject sets. Automatically creates
     the subject classes with the respective names.
 
     Parameters
     ----------
-    sampleids : pandas.DataFrame
+    metadata : pandas.DataFrame
         Contains the meta data for each one of the samples
         Columns:
             &#39;sampleID&#39; -&gt; str : This is the name of the sample
@@ -5036,17 +5691,17 @@ columns (str) : Name is ignored. the values are set to the</dd>
             index (str) : indexes the sample ID
             columns (str) : Name is ignored. the values are set to the 
     &#39;&#39;&#39;
-    if not isdataframe(sampleids):
-        raise TypeError(&#39;`sampleids` ({}) must be a pandas.DataFrame&#39;.format(type(sampleids)))
+    if not plutil.isdataframe(metadata):
+        raise TypeError(&#39;`metadata` ({}) must be a pandas.DataFrame&#39;.format(type(metadata)))
     
     # Add the samples
     # ---------------
-    if &#39;sampleID&#39; in sampleids.columns:
-        sampleids = sampleids.set_index(&#39;sampleID&#39;)
-    for sampleid in sampleids.index:
+    if &#39;sampleID&#39; in metadata.columns:
+        metadata = metadata.set_index(&#39;sampleID&#39;)
+    for sampleid in metadata.index:
 
-        sid = str(sampleids[&#39;subject&#39;][sampleid])
-        t = float(sampleids[&#39;time&#39;][sampleid])
+        sid = str(metadata[&#39;subject&#39;][sampleid])
+        t = float(metadata[&#39;time&#39;][sampleid])
 
         if sid not in self:
             self.add_subject(name=sid)
@@ -5057,14 +5712,14 @@ columns (str) : Name is ignored. the values are set to the</dd>
 
     # Add the perturbations if there are any
     # --------------------------------------
-    for col in sampleids.columns:
+    for col in metadata.columns:
         pert_name = col.replace(&#39;perturbation:&#39;, &#39;&#39;)
         if &#39;perturbation:&#39; in col:
             min_time = None
             max_time = None
-            for sampleid in sampleids.index:
-                if sampleids[col][sampleid] == 1:
-                    t = float(sampleids[&#39;time&#39;][sampleid])
+            for sampleid in metadata.index:
+                if metadata[col][sampleid] == 1:
+                    t = float(metadata[&#39;time&#39;][sampleid])
                     if min_time is None:
                         min_time = t
                     else:
@@ -5084,7 +5739,7 @@ columns (str) : Name is ignored. the values are set to the</dd>
     # Add the reads if necessary
     # --------------------------
     if reads is not None:
-        if not isdataframe(reads):
+        if not plutil.isdataframe(reads):
             raise TypeError(&#39;`reads` ({}) must be a pandas.DataFrame&#39;.format(type(reads)))
         
         if &#39;name&#39; in reads.columns:
@@ -5104,7 +5759,7 @@ columns (str) : Name is ignored. the values are set to the</dd>
     # Add the qPCR measurements if necessary
     # --------------------------------------
     if qpcr is not None:
-        if not isdataframe(qpcr):
+        if not plutil.isdataframe(qpcr):
             raise TypeError(&#39;`qpcr` ({}) must be a pandas.DataFrame&#39;.format(type(qpcr)))
 
         if &#39;sampleID&#39; in qpcr.columns:
@@ -5185,15 +5840,15 @@ Return a new Study with the specified subjects removed.</dd>
         This is the subject name/s or the index/es to pop out.
         Return a new Study with the specified subjects removed.
     &#39;&#39;&#39;
-    if not isarray(sid):
+    if not plutil.isarray(sid):
         sids = [sid]
     else:
         sids = sid
 
     for i in range(len(sids)):
-        if isint(sids[i]):
+        if plutil.isint(sids[i]):
             sids[i] = list(self._subjects.keys())[sids[i]]
-        elif not isstr(sids[i]):
+        elif not plutil.isstr(sids[i]):
             raise ValueError(&#39;`sid` ({}) must be a str&#39;.format(type(sids[i])))
     ret = Study(asvs=self.asvs)
     ret.perturbations = self.perturbations
@@ -5239,30 +5894,30 @@ from. If it is a str:
         from. If it is a str:
             &#39;all&#39; - delete from all subjects
     &#39;&#39;&#39;
-    if isstr(sids):
+    if plutil.isstr(sids):
         if sids == &#39;all&#39;:
             sids = list(self._subjects.keys())
         else:
             raise ValueError(&#39;`sids` ({}) not recognized&#39;.format(sids))
-    elif isint(sids):
+    elif plutil.isint(sids):
         if sids not in self._subjects:
             raise IndexError(&#39;`sid` ({}) not found in subjects&#39;.format(
                 list(self._subjects.keys())))
         sids = [sids]
-    elif isarray(sids):
+    elif plutil.isarray(sids):
         for sid in sids:
-            if not isint(sid):
+            if not plutil.isint(sid):
                 raise TypeError(&#39;Each sid ({}) must be an int&#39;.format(type(sid)))
             if sid not in self._subjects:
                 raise IndexError(&#39;Subject {} not found in subjects ({})&#39;.format(
                     sid, list(self._subjects.keys())))
     else:
         raise TypeError(&#39;`sids` ({}) type not recognized&#39;.format(type(sids)))
-    if isnumeric(times):
+    if plutil.isnumeric(times):
         times = [times]
-    elif isarray(times):
+    elif plutil.isarray(times):
         for t in times:
-            if not isnumeric(t):
+            if not plutil.isnumeric(t):
                 raise TypeError(&#39;Each time ({}) must be a numeric&#39;.format(type(t)))
     else:
         raise TypeError(&#39;`times` ({}) type not recognized&#39;.format(type(times)))
@@ -5282,7 +5937,12 @@ from. If it is a str:
 <dd>
 <div class="desc"><p>Make new subjects for the time points that are divided by perturbations.
 Throw out all of the data
-where the perturbations are active.</p></div>
+where the perturbations are active.</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>self</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -5290,6 +5950,10 @@ where the perturbations are active.</p></div>
 <pre><code class="python">def split_on_perturbations(self):
     &#39;&#39;&#39;Make new subjects for the time points that are divided by perturbations. 
     Throw out all of the data  where the perturbations are active.
+
+    Returns
+    -------
+    self
     &#39;&#39;&#39;
     for subj in self:
         subj._split_on_perturbations()
@@ -5380,10 +6044,10 @@ Parameters</p>
         self.name = name
         self.id = id(self)
         self.parent = parent
-        self.asvs = self.parent.asvs
         self.qpcr = {}
         self.reads = {}
         self.times = np.asarray([])
+        self._reads_individ = {} # for taking out aggregated asvs
 
     def add_time(self, timepoint):
         &#39;&#39;&#39;Add the timepoint `timepoint`. Set the reads and qpcr at that timepoint
@@ -5410,12 +6074,12 @@ Parameters</p>
             for multiple timepoints. In this case we assume that the rows index the 
             ASV and the columns index the timepoint.
         &#39;&#39;&#39;
-        if not isarray(timepoints):
+        if not plutil.isarray(timepoints):
             timepoints = [timepoints]
         for timepoint in timepoints:
-            if not isnumeric(timepoint):
+            if not plutil.isnumeric(timepoint):
                 raise TypeError(&#39;`timepoint` ({}) must be a numeric&#39;.format(type(timepoint)))
-        if not isarray(reads):
+        if not plutil.isarray(reads):
             raise TypeError(&#39;`reads` ({}) must be an array&#39;.format(type(reads)))
         
         if reads.ndim == 1:
@@ -5458,16 +6122,16 @@ Parameters</p>
             not specified, then this assumes that each one of the numbers in `qpcr` are
             already normalized by the dilution factor
         &#39;&#39;&#39;
-        if not isarray(timepoints):
+        if not plutil.isarray(timepoints):
             timepoints = [timepoints]
         for timepoint in timepoints:
-            if not isnumeric(timepoint):
+            if not plutil.isnumeric(timepoint):
                 raise TypeError(&#39;`timepoint` ({}) must be a numeric&#39;.format(type(timepoint)))
         if masses is not None:
-            if isnumeric(masses):
+            if plutil.isnumeric(masses):
                 masses = [masses]
             for mass in masses:
-                if not isnumeric(mass):
+                if not plutil.isnumeric(mass):
                     raise TypeError(&#39;Each mass in `masses` ({}) must be a numeric&#39;.format(type(mass)))
                 if mass &lt;= 0:
                     raise ValueError(&#39;Each mass in `masses` ({}) must be &gt; 0&#39;.format(mass))
@@ -5475,10 +6139,10 @@ Parameters</p>
                 raise ValueError(&#39;Number of timepoints ({}) and number of masses ({}) &#39; \
                     &#39;must be equal&#39;.format(len(timepoints), len(masses)))
         if dilution_factors is not None:
-            if isnumeric(dilution_factors):
+            if plutil.isnumeric(dilution_factors):
                 dilution_factors = [dilution_factors]
             for dilution_factor in dilution_factors:
-                if not isnumeric(dilution_factor):
+                if not plutil.isnumeric(dilution_factor):
                     raise TypeError(&#39;Each dilution_factor in `dilution_factors` ({}) &#39; \
                         &#39;must be a numeric&#39;.format(type(dilution_factor)))
                 if dilution_factor &lt;= 0:
@@ -5488,7 +6152,7 @@ Parameters</p>
                 raise ValueError(&#39;Number of timepoints ({}) and number of dilution_factors ({}) &#39; \
                     &#39;must be equal&#39;.format(len(timepoints), len(dilution_factors)))
             
-        if not isarray(qpcr):
+        if not plutil.isarray(qpcr):
             raise TypeError(&#39;`qpcr` ({}) must be an array&#39;.format(type(qpcr)))
         if qpcr.ndim == 1:
             qpcr = qpcr.reshape(1,-1)
@@ -5520,9 +6184,20 @@ Parameters</p>
 
     @property
     def perturbations(self):
-        &#39;&#39;&#39;Returns the number of perturbation
-        &#39;&#39;&#39;
         return self.parent.perturbations
+
+    @property
+    def asvs(self):
+        return self.parent.asvs
+
+    @property
+    def index(self):
+        &#39;&#39;&#39;Return the index of this subject in the Study file
+        &#39;&#39;&#39;
+        for iii, subj in enumerate(self.parent):
+            if subj.name == self.name:
+                return iii
+        raise ValueError(&#39;Should not get here&#39;)
 
     def matrix(self):
         &#39;&#39;&#39;Make a numpy matrix out of our data - returns the raw reads,
@@ -5605,7 +6280,7 @@ Parameters</p>
                 &#39;rel&#39;: This is the relative abundances
                 &#39;abs&#39;: This is the absolute abundance (qPCR * rel)
         index_formatter : str
-            How to make the index using `pylab.util.asvname_formatter`. Note that you cannot
+            How to make the index using `pylab.util.plutil.asvname_formatter`. Note that you cannot
             specify anything at a lower taxonomic level than what youre clustering at. For 
             example, you cannot cluster at the &#39;class&#39; level and then specify &#39;%(genus)s&#39; 
             in the index formatter.
@@ -5619,11 +6294,11 @@ Parameters</p>
             Maps ASV name to the row it got allocated to
         &#39;&#39;&#39;
         # Type checking
-        if not isstr(dtype):
+        if not plutil.isstr(dtype):
             raise TypeError(&#39;`dtype` ({}) must be a str&#39;.format(type(dtype)))
         if dtype not in [&#39;raw&#39;, &#39;rel&#39;, &#39;abs&#39;]:
             raise ValueError(&#39;`dtype` ({}) not recognized&#39;.format(dtype))
-        if not isstr(taxlevel):
+        if not plutil.isstr(taxlevel):
             raise TypeError(&#39;`taxlevel` ({}) must be a str&#39;.format(type(taxlevel)))
         if taxlevel not in [&#39;kingdom&#39;, &#39;phylum&#39;, &#39;class&#39;,  &#39;order&#39;, &#39;family&#39;, 
             &#39;genus&#39;, &#39;species&#39;, &#39;asv&#39;]:
@@ -5631,7 +6306,7 @@ Parameters</p>
         if index_formatter is None:
             index_formatter = taxlevel
         if index_formatter is not None:
-            if not isstr(index_formatter):
+            if not plutil.isstr(index_formatter):
                 raise TypeError(&#39;`index_formatter` ({}) must be a str&#39;.format(type(index_formatter)))
             
             for tx in TAX_IDXS:
@@ -5674,7 +6349,7 @@ Parameters</p>
                     taxas[tax] = &#39;{} {}, {} NA&#39;.format(ttt.capitalize(), 
                         asv.taxonomy[ttt], taxlevel.capitalize())
                 else:
-                    taxas[tax] = asvname_formatter(format=index_formatter, asv=asv, asvs=self.asvs, lca=lca)
+                    taxas[tax] = plutil.asvname_formatter(format=index_formatter, asv=asv, asvs=self.asvs, lca=lca)
                 toadd = pd.DataFrame(np.array(list(df.loc[row])).reshape(1,-1),
                     index=[taxas[tax]], columns=dfnew.columns)
                 dfnew = dfnew.append(toadd)
@@ -5739,7 +6414,66 @@ Parameters</p>
                 t = self.times[i]
                 self.parent[mid].qpcr[t] = self.qpcr[t]
                 self.parent[mid].reads[t] = self.reads[t]
-            self.parent[mid].times = self.times[start:end]</code></pre>
+            self.parent[mid].times = self.times[start:end]
+
+    def _deaggregate_item(self, agg, other):
+        &#39;&#39;&#39;Deaggregate the sequence `other` from AggregateASV `agg`.
+        `other` is then appended to the end. This is called from 
+        `mdsine2.Study.deaggregate_item`.
+
+        Parameters
+        ----------
+        agg : AggregateASV
+            This is an AggregateASV with multiple sequences contained. Must 
+            have the name `other` in there
+        other : str
+            This is the name of the ASV that should be taken out of `agg`
+        &#39;&#39;&#39;
+        # Append the reads of the deaggregated at the bottom and subtract them
+        # from the aggregated index
+        if other not in self._reads_individ:
+            raise ValueError(&#39;`other` ({}) reads not found in archive. This probably &#39; \
+                &#39;happened because you called `aggregate_items` from the ASVSet object&#39; \
+                &#39; instead from this object. Study object not consistent. Failing.&#39;.format(other))
+        
+        aggidx = agg.idx
+        for t in self.times:
+            try:
+                new_reads = self._reads_individ[other][t]
+            except:
+                raise ValueError(&#39;Timepoint `{}` added into subject `{}` after &#39; \
+                    &#39;ASV `{}` was removed. Study object is not consistent. You &#39; \
+                    &#39;cannot add in other timepoints after you aggregate asvs. Failing.&#39;.format(
+                        t, self.name, other))
+            self.reads[t][aggidx] = self.reads[t][aggidx] - new_reads
+            self.reads[t] = np.append(self.reads[t], new_reads)
+        self._reads_individ.pop(other)
+        return
+
+    def _aggregate_items(self, anchor, other):
+        &#39;&#39;&#39;Aggregate the asv `other` into `anchor`. This is called from 
+        `mdsine2.Study.aggregate_items`.
+
+        Parameters
+        ----------
+        anchor, other : AggregateASV, ASV
+            These are the ASVs to combine
+        &#39;&#39;&#39;
+        # If one of them are ASVs, then record their individual reads
+        # if we want to dissociate them later
+        for asv in [anchor, other]:
+            if isasv(asv):
+                if asv.name in self._reads_individ:
+                    raise ValueError(&#39;ASV is already in this dict. This should not happen.&#39;)
+                aidx = asv.idx
+                self._reads_individ[asv.name] = {}
+                for t in self.times:
+                    self._reads_individ[asv.name][t] = self.reads[t][aidx]
+        
+        for t in self.times:
+            self.reads[t][anchor.idx] += self.reads[t][other.idx]
+            self.reads[t] = np.delete(self.reads[t], other.idx)
+        return</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -5747,17 +6481,44 @@ Parameters</p>
 </ul>
 <h3>Instance variables</h3>
 <dl>
+<dt id="mdsine2.pylab.base.Subject.asvs"><code class="name">var <span class="ident">asvs</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def asvs(self):
+    return self.parent.asvs</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.base.Subject.index"><code class="name">var <span class="ident">index</span></code></dt>
+<dd>
+<div class="desc"><p>Return the index of this subject in the Study file</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def index(self):
+    &#39;&#39;&#39;Return the index of this subject in the Study file
+    &#39;&#39;&#39;
+    for iii, subj in enumerate(self.parent):
+        if subj.name == self.name:
+            return iii
+    raise ValueError(&#39;Should not get here&#39;)</code></pre>
+</details>
+</dd>
 <dt id="mdsine2.pylab.base.Subject.perturbations"><code class="name">var <span class="ident">perturbations</span></code></dt>
 <dd>
-<div class="desc"><p>Returns the number of perturbation</p></div>
+<div class="desc"></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def perturbations(self):
-    &#39;&#39;&#39;Returns the number of perturbation
-    &#39;&#39;&#39;
     return self.parent.perturbations</code></pre>
 </details>
 </dd>
@@ -5814,16 +6575,16 @@ already normalized by the dilution factor</dd>
         not specified, then this assumes that each one of the numbers in `qpcr` are
         already normalized by the dilution factor
     &#39;&#39;&#39;
-    if not isarray(timepoints):
+    if not plutil.isarray(timepoints):
         timepoints = [timepoints]
     for timepoint in timepoints:
-        if not isnumeric(timepoint):
+        if not plutil.isnumeric(timepoint):
             raise TypeError(&#39;`timepoint` ({}) must be a numeric&#39;.format(type(timepoint)))
     if masses is not None:
-        if isnumeric(masses):
+        if plutil.isnumeric(masses):
             masses = [masses]
         for mass in masses:
-            if not isnumeric(mass):
+            if not plutil.isnumeric(mass):
                 raise TypeError(&#39;Each mass in `masses` ({}) must be a numeric&#39;.format(type(mass)))
             if mass &lt;= 0:
                 raise ValueError(&#39;Each mass in `masses` ({}) must be &gt; 0&#39;.format(mass))
@@ -5831,10 +6592,10 @@ already normalized by the dilution factor</dd>
             raise ValueError(&#39;Number of timepoints ({}) and number of masses ({}) &#39; \
                 &#39;must be equal&#39;.format(len(timepoints), len(masses)))
     if dilution_factors is not None:
-        if isnumeric(dilution_factors):
+        if plutil.isnumeric(dilution_factors):
             dilution_factors = [dilution_factors]
         for dilution_factor in dilution_factors:
-            if not isnumeric(dilution_factor):
+            if not plutil.isnumeric(dilution_factor):
                 raise TypeError(&#39;Each dilution_factor in `dilution_factors` ({}) &#39; \
                     &#39;must be a numeric&#39;.format(type(dilution_factor)))
             if dilution_factor &lt;= 0:
@@ -5844,7 +6605,7 @@ already normalized by the dilution factor</dd>
             raise ValueError(&#39;Number of timepoints ({}) and number of dilution_factors ({}) &#39; \
                 &#39;must be equal&#39;.format(len(timepoints), len(dilution_factors)))
         
-    if not isarray(qpcr):
+    if not plutil.isarray(qpcr):
         raise TypeError(&#39;`qpcr` ({}) must be an array&#39;.format(type(qpcr)))
     if qpcr.ndim == 1:
         qpcr = qpcr.reshape(1,-1)
@@ -5911,12 +6672,12 @@ ASV and the columns index the timepoint.</dd>
         for multiple timepoints. In this case we assume that the rows index the 
         ASV and the columns index the timepoint.
     &#39;&#39;&#39;
-    if not isarray(timepoints):
+    if not plutil.isarray(timepoints):
         timepoints = [timepoints]
     for timepoint in timepoints:
-        if not isnumeric(timepoint):
+        if not plutil.isnumeric(timepoint):
             raise TypeError(&#39;`timepoint` ({}) must be a numeric&#39;.format(type(timepoint)))
-    if not isarray(reads):
+    if not plutil.isarray(reads):
         raise TypeError(&#39;`reads` ({}) must be an array&#39;.format(type(reads)))
     
     if reads.ndim == 1:
@@ -5983,7 +6744,7 @@ None then we do not do any collapsing (this is the same as 'asv')</dd>
 'rel': This is the relative abundances
 'abs': This is the absolute abundance (qPCR * rel)</dd>
 <dt><strong><code>index_formatter</code></strong> :&ensp;<code>str</code></dt>
-<dd>How to make the index using <code>pylab.util.asvname_formatter</code>. Note that you cannot
+<dd>How to make the index using <code>pylab.util.plutil.asvname_formatter</code>. Note that you cannot
 specify anything at a lower taxonomic level than what youre clustering at. For
 example, you cannot cluster at the 'class' level and then specify '%(genus)s'
 in the index formatter.
@@ -6024,7 +6785,7 @@ If nothing is specified then only return the specified taxonomic level</dd>
             &#39;rel&#39;: This is the relative abundances
             &#39;abs&#39;: This is the absolute abundance (qPCR * rel)
     index_formatter : str
-        How to make the index using `pylab.util.asvname_formatter`. Note that you cannot
+        How to make the index using `pylab.util.plutil.asvname_formatter`. Note that you cannot
         specify anything at a lower taxonomic level than what youre clustering at. For 
         example, you cannot cluster at the &#39;class&#39; level and then specify &#39;%(genus)s&#39; 
         in the index formatter.
@@ -6038,11 +6799,11 @@ If nothing is specified then only return the specified taxonomic level</dd>
         Maps ASV name to the row it got allocated to
     &#39;&#39;&#39;
     # Type checking
-    if not isstr(dtype):
+    if not plutil.isstr(dtype):
         raise TypeError(&#39;`dtype` ({}) must be a str&#39;.format(type(dtype)))
     if dtype not in [&#39;raw&#39;, &#39;rel&#39;, &#39;abs&#39;]:
         raise ValueError(&#39;`dtype` ({}) not recognized&#39;.format(dtype))
-    if not isstr(taxlevel):
+    if not plutil.isstr(taxlevel):
         raise TypeError(&#39;`taxlevel` ({}) must be a str&#39;.format(type(taxlevel)))
     if taxlevel not in [&#39;kingdom&#39;, &#39;phylum&#39;, &#39;class&#39;,  &#39;order&#39;, &#39;family&#39;, 
         &#39;genus&#39;, &#39;species&#39;, &#39;asv&#39;]:
@@ -6050,7 +6811,7 @@ If nothing is specified then only return the specified taxonomic level</dd>
     if index_formatter is None:
         index_formatter = taxlevel
     if index_formatter is not None:
-        if not isstr(index_formatter):
+        if not plutil.isstr(index_formatter):
             raise TypeError(&#39;`index_formatter` ({}) must be a str&#39;.format(type(index_formatter)))
         
         for tx in TAX_IDXS:
@@ -6093,7 +6854,7 @@ If nothing is specified then only return the specified taxonomic level</dd>
                 taxas[tax] = &#39;{} {}, {} NA&#39;.format(ttt.capitalize(), 
                     asv.taxonomy[ttt], taxlevel.capitalize())
             else:
-                taxas[tax] = asvname_formatter(format=index_formatter, asv=asv, asvs=self.asvs, lca=lca)
+                taxas[tax] = plutil.asvname_formatter(format=index_formatter, asv=asv, asvs=self.asvs, lca=lca)
             toadd = pd.DataFrame(np.array(list(df.loc[row])).reshape(1,-1),
                 index=[taxas[tax]], columns=dfnew.columns)
             dfnew = dfnew.append(toadd)
@@ -6762,7 +7523,7 @@ the dilution factor is 100, NOT 1/100.</dd>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="mdsine2.pylab.base.condense_matrix_with_taxonomy" href="#mdsine2.pylab.base.condense_matrix_with_taxonomy">condense_matrix_with_taxonomy</a></code></li>
-<li><code><a title="mdsine2.pylab.base.isagglomeratedasv" href="#mdsine2.pylab.base.isagglomeratedasv">isagglomeratedasv</a></code></li>
+<li><code><a title="mdsine2.pylab.base.isaggregatedasv" href="#mdsine2.pylab.base.isaggregatedasv">isaggregatedasv</a></code></li>
 <li><code><a title="mdsine2.pylab.base.isasv" href="#mdsine2.pylab.base.isasv">isasv</a></code></li>
 <li><code><a title="mdsine2.pylab.base.isasvset" href="#mdsine2.pylab.base.isasvset">isasvset</a></code></li>
 <li><code><a title="mdsine2.pylab.base.isasvtype" href="#mdsine2.pylab.base.isasvtype">isasvtype</a></code></li>
@@ -6790,14 +7551,16 @@ the dilution factor is 100, NOT 1/100.</dd>
 <h4><code><a title="mdsine2.pylab.base.ASVSet" href="#mdsine2.pylab.base.ASVSet">ASVSet</a></code></h4>
 <ul class="">
 <li><code><a title="mdsine2.pylab.base.ASVSet.add_asv" href="#mdsine2.pylab.base.ASVSet.add_asv">add_asv</a></code></li>
-<li><code><a title="mdsine2.pylab.base.ASVSet.agglomerate_asvs" href="#mdsine2.pylab.base.ASVSet.agglomerate_asvs">agglomerate_asvs</a></code></li>
+<li><code><a title="mdsine2.pylab.base.ASVSet.aggregate_items" href="#mdsine2.pylab.base.ASVSet.aggregate_items">aggregate_items</a></code></li>
+<li><code><a title="mdsine2.pylab.base.ASVSet.deaggregate_item" href="#mdsine2.pylab.base.ASVSet.deaggregate_item">deaggregate_item</a></code></li>
 <li><code><a title="mdsine2.pylab.base.ASVSet.del_asv" href="#mdsine2.pylab.base.ASVSet.del_asv">del_asv</a></code></li>
 <li><code><a title="mdsine2.pylab.base.ASVSet.n_asvs" href="#mdsine2.pylab.base.ASVSet.n_asvs">n_asvs</a></code></li>
+<li><code><a title="mdsine2.pylab.base.ASVSet.rename" href="#mdsine2.pylab.base.ASVSet.rename">rename</a></code></li>
 <li><code><a title="mdsine2.pylab.base.ASVSet.taxonomic_similarity" href="#mdsine2.pylab.base.ASVSet.taxonomic_similarity">taxonomic_similarity</a></code></li>
 </ul>
 </li>
 <li>
-<h4><code><a title="mdsine2.pylab.base.AgglomerateASV" href="#mdsine2.pylab.base.AgglomerateASV">AgglomerateASV</a></code></h4>
+<h4><code><a title="mdsine2.pylab.base.AggregateASV" href="#mdsine2.pylab.base.AggregateASV">AggregateASV</a></code></h4>
 </li>
 <li>
 <h4><code><a title="mdsine2.pylab.base.BasePerturbation" href="#mdsine2.pylab.base.BasePerturbation">BasePerturbation</a></code></h4>
@@ -6838,11 +7601,13 @@ the dilution factor is 100, NOT 1/100.</dd>
 <ul class="">
 <li><code><a title="mdsine2.pylab.base.Study.add_perturbation" href="#mdsine2.pylab.base.Study.add_perturbation">add_perturbation</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Study.add_subject" href="#mdsine2.pylab.base.Study.add_subject">add_subject</a></code></li>
-<li><code><a title="mdsine2.pylab.base.Study.agglomerate_asvs" href="#mdsine2.pylab.base.Study.agglomerate_asvs">agglomerate_asvs</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Study.aggregate_items" href="#mdsine2.pylab.base.Study.aggregate_items">aggregate_items</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Study.deaggregate_item" href="#mdsine2.pylab.base.Study.deaggregate_item">deaggregate_item</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Study.denormalize_qpcr" href="#mdsine2.pylab.base.Study.denormalize_qpcr">denormalize_qpcr</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Study.df" href="#mdsine2.pylab.base.Study.df">df</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Study.iloc" href="#mdsine2.pylab.base.Study.iloc">iloc</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Study.matrix" href="#mdsine2.pylab.base.Study.matrix">matrix</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Study.names" href="#mdsine2.pylab.base.Study.names">names</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Study.normalize_qpcr" href="#mdsine2.pylab.base.Study.normalize_qpcr">normalize_qpcr</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Study.parse_samples" href="#mdsine2.pylab.base.Study.parse_samples">parse_samples</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Study.pop_asvs" href="#mdsine2.pylab.base.Study.pop_asvs">pop_asvs</a></code></li>
@@ -6860,8 +7625,10 @@ the dilution factor is 100, NOT 1/100.</dd>
 <li><code><a title="mdsine2.pylab.base.Subject.add_qpcr" href="#mdsine2.pylab.base.Subject.add_qpcr">add_qpcr</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Subject.add_reads" href="#mdsine2.pylab.base.Subject.add_reads">add_reads</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Subject.add_time" href="#mdsine2.pylab.base.Subject.add_time">add_time</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Subject.asvs" href="#mdsine2.pylab.base.Subject.asvs">asvs</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Subject.cluster_by_taxlevel" href="#mdsine2.pylab.base.Subject.cluster_by_taxlevel">cluster_by_taxlevel</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Subject.df" href="#mdsine2.pylab.base.Subject.df">df</a></code></li>
+<li><code><a title="mdsine2.pylab.base.Subject.index" href="#mdsine2.pylab.base.Subject.index">index</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Subject.matrix" href="#mdsine2.pylab.base.Subject.matrix">matrix</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Subject.perturbations" href="#mdsine2.pylab.base.Subject.perturbations">perturbations</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Subject.read_depth" href="#mdsine2.pylab.base.Subject.read_depth">read_depth</a></code></li>

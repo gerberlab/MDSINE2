@@ -31,7 +31,7 @@ from . import pylab
 # from . import posterior
 from . import visualization
 from . import diversity
-from . import raw_data 
+from . import dataset
 from . import config
 
 # Import key modules from pylab
@@ -43,7 +43,7 @@ from .pylab.util import isnumeric, isbool, isfloat, isint, isarray, issquare, is
     itercheck, istype, istuple, isdict, istree
 from .pylab.variables import isVariable, isRandomVariable
 from .pylab.base import isqpcrdata, isasvset, isasv, issavable, istraceable, \
-    issubject, isstudy, isperturbation, isclusterable, isagglomeratedasv, isasvtype
+    issubject, isstudy, isperturbation, isclusterable, isaggregatedasv, isasvtype
 from .pylab.random import israndom
 from .pylab.cluster import isclustering, isclusterproperty, isclustervalue
 from .pylab.inference import isMCMC, isML, ismodel
@@ -64,7 +64,6 @@ from .pylab.random import seed
 from .pylab.contrib import Interactions
 from .pylab.inference import BaseMCMC
 
-
 # Import PyLab errors
 from .pylab.errors import UndefinedError, MathError, GraphIDError, InheritanceError, \
     InitializationError
@@ -73,8 +72,9 @@ from . import config
 from .run import build_graph, normalize_parameters, denormalize_parameters, \
     calculate_stability_over_gibbs
 from .util import asvname_for_paper, is_gram_negative, is_gram_negative_taxa, \
-    generate_interation_bayes_factors_posthoc, generate_perturbation_bayes_factors_posthoc
-from .util import consistency as consistency_filtering</code></pre>
+    generate_interation_bayes_factors_posthoc, generate_perturbation_bayes_factors_posthoc, \
+    aggregate_items
+from .util import consistency_filtering, conditional_consistency_filtering</code></pre>
 </details>
 </section>
 <section>
@@ -89,6 +89,10 @@ from .util import consistency as consistency_filtering</code></pre>
 <div class="desc"><p>This module holds classes for the logging and model configuration
 parameters that are set manually in here. There are also the filtering
 functions …</p></div>
+</dd>
+<dt><code class="name"><a title="mdsine2.dataset" href="dataset.html">mdsine2.dataset</a></code></dt>
+<dd>
+<div class="desc"></div>
 </dd>
 <dt><code class="name"><a title="mdsine2.design_matrices" href="design_matrices.html">mdsine2.design_matrices</a></code></dt>
 <dd>
@@ -136,10 +140,6 @@ parameters that we are learning.</p></div>
 <dd>
 <div class="desc"><p>qPCR variance parameters for the posterior</p></div>
 </dd>
-<dt><code class="name"><a title="mdsine2.raw_data" href="raw_data/index.html">mdsine2.raw_data</a></code></dt>
-<dd>
-<div class="desc"></div>
-</dd>
 <dt><code class="name"><a title="mdsine2.run" href="run.html">mdsine2.run</a></code></dt>
 <dd>
 <div class="desc"></div>
@@ -180,6 +180,7 @@ is used to learn the negative binomial dispersion parameters offline.</p></div>
 <ul>
 <li><code><a title="mdsine2.clustering" href="clustering.html">mdsine2.clustering</a></code></li>
 <li><code><a title="mdsine2.config" href="config.html">mdsine2.config</a></code></li>
+<li><code><a title="mdsine2.dataset" href="dataset.html">mdsine2.dataset</a></code></li>
 <li><code><a title="mdsine2.design_matrices" href="design_matrices.html">mdsine2.design_matrices</a></code></li>
 <li><code><a title="mdsine2.diversity" href="diversity.html">mdsine2.diversity</a></code></li>
 <li><code><a title="mdsine2.filtering" href="filtering.html">mdsine2.filtering</a></code></li>
@@ -191,7 +192,6 @@ is used to learn the negative binomial dispersion parameters offline.</p></div>
 <li><code><a title="mdsine2.processvariance" href="processvariance.html">mdsine2.processvariance</a></code></li>
 <li><code><a title="mdsine2.pylab" href="pylab/index.html">mdsine2.pylab</a></code></li>
 <li><code><a title="mdsine2.qpcr" href="qpcr.html">mdsine2.qpcr</a></code></li>
-<li><code><a title="mdsine2.raw_data" href="raw_data/index.html">mdsine2.raw_data</a></code></li>
 <li><code><a title="mdsine2.run" href="run.html">mdsine2.run</a></code></li>
 <li><code><a title="mdsine2.synthetic" href="synthetic.html">mdsine2.synthetic</a></code></li>
 <li><code><a title="mdsine2.util" href="util.html">mdsine2.util</a></code></li>

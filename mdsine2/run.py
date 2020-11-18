@@ -390,6 +390,12 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
 
     return mcmc
 
+def build_graph_negbin(params, graph_name, subjset):
+    '''Builds the graph used for posterior inference of the negative binomial
+    dispersion parameters
+    '''
+    
+
 def normalize_parameters(mcmc, subjset):
     '''Normalize the abundance of the parameters by the normalization factor
     in the subject set

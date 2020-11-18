@@ -226,8 +226,7 @@ class ClusterAssignments(pl.graph.Node):
     out the interactions going in and out of the cluster in question, along with all
     the perturbations associated with it.
     &#39;&#39;&#39;
-    def __init__(self, clustering, concentration, m=1,
-        mp=None, relative=False, **kwargs):
+    def __init__(self, clustering, concentration, m=1, mp=None, **kwargs):
         &#39;&#39;&#39;Parameters
 
         clustering (pylab.cluster.Clustering)
@@ -247,25 +246,18 @@ class ClusterAssignments(pl.graph.Node):
                 &#39;debug&#39;
                     Send out to the different classes but stay on a single core. This
                     is necessary for benchmarking and easier debugging.
-        relative : bool
-            If True, calculates only the difference between the marginalizations, not
-            everything
         &#39;&#39;&#39;
         self.clustering = clustering
         self.concentration = concentration
         self.m = m
         self.mp = mp
         self._strtime = -1
-        self.relative = relative
         # self.compute_device = &#39;cuda&#39; if torch.cuda.is_available() else &#39;cpu&#39;
 
-        if relative:
-            raise NotImplementedError(&#39;update relative still has math errors&#39;)
+        if self.mp is not None:
+            self.update = self.update_mp
         else:
-            if self.mp is not None:
-                self.update = self.update_mp
-            else:
-                self.update = self.update_slow_fast
+            self.update = self.update_slow_fast
 
         kwargs[&#39;name&#39;] = STRNAMES.CLUSTERING
         pl.graph.Node.__init__(self, **kwargs)
@@ -295,7 +287,7 @@ class ClusterAssignments(pl.graph.Node):
         return self.clustering.n_clusters.sample_iter
 
     def initialize(self, value_option, hyperparam_option=None, value=None, n_clusters=None,
-        delay=0, run_every_n_iterations=1, percent_mix=None):
+        delay=0, run_every_n_iterations=1):
         &#39;&#39;&#39;Initialize the cluster assingments - there are no hyperparamters to
         initialize because the concentration is initialized somewhere else
 
@@ -349,16 +341,7 @@ class ClusterAssignments(pl.graph.Node):
         if run_every_n_iterations &lt;= 0:
             raise ValueError(&#39;`run_every_n_iterations` ({}) must be &gt;= 0&#39;.format(
                 run_every_n_iterations))
-        if percent_mix is not None:
-            if not pl.isfloat(percent_mix):
-                raise TypeError(&#39;`percent_mix` ({}) should be a float&#39;.format(type(percent_mix)))
-            if percent_mix &lt;= 0 or percent_mix &gt; 1:
-                raise ValueError(&#39;`percent_mix` ({}) must be (0,1]&#39;.format(percent_mix))
-        if not pl.isint(delay):
-            raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
-        if delay &lt; 0:
-            raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
-        self.percent_mix = percent_mix
+
         self.run_every_n_iterations = run_every_n_iterations
         self.delay = delay
 
@@ -594,7 +577,6 @@ class ClusterAssignments(pl.graph.Node):
         else:
             self.pool = None
 
-        # These are for the function `self._make_idx_for_clusters`, used in `update_relative`
         self.ndts_bias = []
         self.n_asvs = len(self.G.data.asvs)
         self.n_replicates = self.G.data.n_replicates
@@ -870,7 +852,7 @@ class ClusterAssignments(pl.graph.Node):
     # ==================================================
     # @profile
     def update_slow_fast(self):
-        &#39;&#39;&#39;This does no relative marginalization but is much faster than `update_slow`
+        &#39;&#39;&#39;Much faster than `update_slow`
         &#39;&#39;&#39;
 
         if self.clustering.n_clusters.sample_iter &lt; self.delay:
@@ -1173,8 +1155,6 @@ class ClusterAssignments(pl.graph.Node):
             self.pool.initialize_gibbs(**kwargs)
 
         oidxs = npr.permutation(np.arange(len(self.G.data.asvs)))
-        if self.percent_mix is not None:
-            oidxs = oidxs[:int(self.percent_mix * len(oidxs))]
         for iii, oidx in enumerate(oidxs):
             logging.info(&#39;{}/{} - {}&#39;.format(iii, len(self.G.data.asvs), oidx))
             self.oidx = oidx
@@ -1699,7 +1679,7 @@ class CondensedClustering:
 <dl>
 <dt id="mdsine2.clustering.ClusterAssignments"><code class="flex name class">
 <span>class <span class="ident">ClusterAssignments</span></span>
-<span>(</span><span>clustering, concentration, m=1, mp=None, relative=False, **kwargs)</span>
+<span>(</span><span>clustering, concentration, m=1, mp=None, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This is the posterior of the cluster assignments for each ASV.</p>
@@ -1724,10 +1704,7 @@ Send out to the different processors, where '#' is the number of
 processors to make
 'debug'
 Send out to the different classes but stay on a single core. This
-is necessary for benchmarking and easier debugging.
-relative : bool
-If True, calculates only the difference between the marginalizations, not
-everything</p></div>
+is necessary for benchmarking and easier debugging.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -1740,8 +1717,7 @@ everything</p></div>
     out the interactions going in and out of the cluster in question, along with all
     the perturbations associated with it.
     &#39;&#39;&#39;
-    def __init__(self, clustering, concentration, m=1,
-        mp=None, relative=False, **kwargs):
+    def __init__(self, clustering, concentration, m=1, mp=None, **kwargs):
         &#39;&#39;&#39;Parameters
 
         clustering (pylab.cluster.Clustering)
@@ -1761,25 +1737,18 @@ everything</p></div>
                 &#39;debug&#39;
                     Send out to the different classes but stay on a single core. This
                     is necessary for benchmarking and easier debugging.
-        relative : bool
-            If True, calculates only the difference between the marginalizations, not
-            everything
         &#39;&#39;&#39;
         self.clustering = clustering
         self.concentration = concentration
         self.m = m
         self.mp = mp
         self._strtime = -1
-        self.relative = relative
         # self.compute_device = &#39;cuda&#39; if torch.cuda.is_available() else &#39;cpu&#39;
 
-        if relative:
-            raise NotImplementedError(&#39;update relative still has math errors&#39;)
+        if self.mp is not None:
+            self.update = self.update_mp
         else:
-            if self.mp is not None:
-                self.update = self.update_mp
-            else:
-                self.update = self.update_slow_fast
+            self.update = self.update_slow_fast
 
         kwargs[&#39;name&#39;] = STRNAMES.CLUSTERING
         pl.graph.Node.__init__(self, **kwargs)
@@ -1809,7 +1778,7 @@ everything</p></div>
         return self.clustering.n_clusters.sample_iter
 
     def initialize(self, value_option, hyperparam_option=None, value=None, n_clusters=None,
-        delay=0, run_every_n_iterations=1, percent_mix=None):
+        delay=0, run_every_n_iterations=1):
         &#39;&#39;&#39;Initialize the cluster assingments - there are no hyperparamters to
         initialize because the concentration is initialized somewhere else
 
@@ -1863,16 +1832,7 @@ everything</p></div>
         if run_every_n_iterations &lt;= 0:
             raise ValueError(&#39;`run_every_n_iterations` ({}) must be &gt;= 0&#39;.format(
                 run_every_n_iterations))
-        if percent_mix is not None:
-            if not pl.isfloat(percent_mix):
-                raise TypeError(&#39;`percent_mix` ({}) should be a float&#39;.format(type(percent_mix)))
-            if percent_mix &lt;= 0 or percent_mix &gt; 1:
-                raise ValueError(&#39;`percent_mix` ({}) must be (0,1]&#39;.format(percent_mix))
-        if not pl.isint(delay):
-            raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
-        if delay &lt; 0:
-            raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
-        self.percent_mix = percent_mix
+
         self.run_every_n_iterations = run_every_n_iterations
         self.delay = delay
 
@@ -2108,7 +2068,6 @@ everything</p></div>
         else:
             self.pool = None
 
-        # These are for the function `self._make_idx_for_clusters`, used in `update_relative`
         self.ndts_bias = []
         self.n_asvs = len(self.G.data.asvs)
         self.n_replicates = self.G.data.n_replicates
@@ -2384,7 +2343,7 @@ everything</p></div>
     # ==================================================
     # @profile
     def update_slow_fast(self):
-        &#39;&#39;&#39;This does no relative marginalization but is much faster than `update_slow`
+        &#39;&#39;&#39;Much faster than `update_slow`
         &#39;&#39;&#39;
 
         if self.clustering.n_clusters.sample_iter &lt; self.delay:
@@ -2687,8 +2646,6 @@ everything</p></div>
             self.pool.initialize_gibbs(**kwargs)
 
         oidxs = npr.permutation(np.arange(len(self.G.data.asvs)))
-        if self.percent_mix is not None:
-            oidxs = oidxs[:int(self.percent_mix * len(oidxs))]
         for iii, oidx in enumerate(oidxs):
             logging.info(&#39;{}/{} - {}&#39;.format(iii, len(self.G.data.asvs), oidx))
             self.oidx = oidx
@@ -3443,7 +3400,7 @@ to get the cluster assignment.</p>
 </details>
 </dd>
 <dt id="mdsine2.clustering.ClusterAssignments.initialize"><code class="name flex">
-<span>def <span class="ident">initialize</span></span>(<span>self, value_option, hyperparam_option=None, value=None, n_clusters=None, delay=0, run_every_n_iterations=1, percent_mix=None)</span>
+<span>def <span class="ident">initialize</span></span>(<span>self, value_option, hyperparam_option=None, value=None, n_clusters=None, delay=0, run_every_n_iterations=1)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Initialize the cluster assingments - there are no hyperparamters to
@@ -3493,7 +3450,7 @@ If str, options:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def initialize(self, value_option, hyperparam_option=None, value=None, n_clusters=None,
-    delay=0, run_every_n_iterations=1, percent_mix=None):
+    delay=0, run_every_n_iterations=1):
     &#39;&#39;&#39;Initialize the cluster assingments - there are no hyperparamters to
     initialize because the concentration is initialized somewhere else
 
@@ -3547,16 +3504,7 @@ If str, options:
     if run_every_n_iterations &lt;= 0:
         raise ValueError(&#39;`run_every_n_iterations` ({}) must be &gt;= 0&#39;.format(
             run_every_n_iterations))
-    if percent_mix is not None:
-        if not pl.isfloat(percent_mix):
-            raise TypeError(&#39;`percent_mix` ({}) should be a float&#39;.format(type(percent_mix)))
-        if percent_mix &lt;= 0 or percent_mix &gt; 1:
-            raise ValueError(&#39;`percent_mix` ({}) must be (0,1]&#39;.format(percent_mix))
-    if not pl.isint(delay):
-        raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
-    if delay &lt; 0:
-        raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
-    self.percent_mix = percent_mix
+
     self.run_every_n_iterations = run_every_n_iterations
     self.delay = delay
 
@@ -3792,7 +3740,6 @@ If str, options:
     else:
         self.pool = None
 
-    # These are for the function `self._make_idx_for_clusters`, used in `update_relative`
     self.ndts_bias = []
     self.n_asvs = len(self.G.data.asvs)
     self.n_replicates = self.G.data.n_replicates
@@ -3937,8 +3884,6 @@ implementation has the same performance as <code><a title="mdsine2.clustering.Cl
         self.pool.initialize_gibbs(**kwargs)
 
     oidxs = npr.permutation(np.arange(len(self.G.data.asvs)))
-    if self.percent_mix is not None:
-        oidxs = oidxs[:int(self.percent_mix * len(oidxs))]
     for iii, oidx in enumerate(oidxs):
         logging.info(&#39;{}/{} - {}&#39;.format(iii, len(self.G.data.asvs), oidx))
         self.oidx = oidx
@@ -3982,13 +3927,13 @@ get highest mixing we alternate between each.</p></div>
 <span>def <span class="ident">update_slow_fast</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>This does no relative marginalization but is much faster than <code>update_slow</code></p></div>
+<div class="desc"><p>Much faster than <code>update_slow</code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def update_slow_fast(self):
-    &#39;&#39;&#39;This does no relative marginalization but is much faster than `update_slow`
+    &#39;&#39;&#39;Much faster than `update_slow`
     &#39;&#39;&#39;
 
     if self.clustering.n_clusters.sample_iter &lt; self.delay:

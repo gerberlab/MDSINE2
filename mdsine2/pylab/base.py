@@ -1822,6 +1822,11 @@ class Study(Saveable):
     def write_qpcr_to_table(self, path, sep='\t'):
         raise NotImplementedError('Need to implement it')
 
+    def names(self):
+        '''List the names of the contained subjects
+        '''
+        return [subj.name for subj in self]
+
     def iloc(self, idx):
         '''Get the subject as an index
 
