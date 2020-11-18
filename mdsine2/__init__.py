@@ -15,7 +15,7 @@ from .pylab.util import isnumeric, isbool, isfloat, isint, isarray, issquare, is
     itercheck, istype, istuple, isdict, istree
 from .pylab.variables import isVariable, isRandomVariable
 from .pylab.base import isqpcrdata, isasvset, isasv, issavable, istraceable, \
-    issubject, isstudy, isperturbation, isclusterable, isagglomeratedasv, isasvtype
+    issubject, isstudy, isperturbation, isclusterable, isaggregatedasv, isasvtype
 from .pylab.random import israndom
 from .pylab.cluster import isclustering, isclusterproperty, isclustervalue
 from .pylab.inference import isMCMC, isML, ismodel
@@ -45,5 +45,5 @@ from .run import build_graph, normalize_parameters, denormalize_parameters, \
     calculate_stability_over_gibbs
 from .util import asvname_for_paper, is_gram_negative, is_gram_negative_taxa, \
     generate_interation_bayes_factors_posthoc, generate_perturbation_bayes_factors_posthoc, \
-    agglomerate_asvs
-from .util import consistency as consistency_filtering
+    aggregate_items
+from .util import consistency_filtering, conditional_consistency_filtering

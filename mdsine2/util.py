@@ -8,6 +8,7 @@ import scipy.sparse
 import scipy
 import math
 import random
+import copy
 
 from .names import STRNAMES, REPRNAMES
 from . import pylab as pl
@@ -691,16 +692,22 @@ def generate_cluster_assignments_posthoc(clustering, n_clusters='mode', linkage=
                 clustering.move_item(idx=oidx, cid=cid)
     return ret
 
-def agglomerate_asvs(subjset, hamming_dist):
+def aggregate_items(subjset, hamming_dist):
     '''Aggregate ASVs that have an average hamming distance of `hamming_dist`
 
     Parameters
     ----------
+    subjset : mdsine2.Study
+        This is the `mdsine2.Study` object that we are aggregating
+    hamming_dist : int
+        This is the hamming radius from one ASV to the next where we
+        are aggregating
 
     Returns
     -------
     mdsine2.Study
     '''
+
     cnt = 0
     found = False
     iii = 0
@@ -719,7 +726,7 @@ def agglomerate_asvs(subjset, hamming_dist):
 
                 dist = _avg_dist(asv1, asv2)
                 if dist <= hamming_dist:
-                    subjset.agglomerate_asvs(asv1, asv2)
+                    subjset.aggregate_items(asv1, asv2)
                     cnt += 1
                     found = True
                     break
@@ -729,18 +736,18 @@ def agglomerate_asvs(subjset, hamming_dist):
             found = False
         else:
             break
-    logging.info('agglomerated {} asvs'.format(cnt))
+    logging.info('Aggregated {} asvs'.format(cnt))
     return subjset
 
 def _avg_dist(asv1, asv2):
     dists = []
-    if pl.isagglomeratedasv(asv1):
-        seqs1 = asv1.agglomerated_seqs.values()
+    if pl.isaggregatedasv(asv1):
+        seqs1 = asv1.aggregated_seqs.values()
     else:
         seqs1 = [asv1.sequence]
 
-    if pl.isagglomeratedasv(asv2):
-        seqs2 = asv2.agglomerated_seqs.values()
+    if pl.isaggregatedasv(asv2):
+        seqs2 = asv2.aggregated_seqs.values()
     else:
         seqs2 = [asv2.sequence]
 
@@ -757,8 +764,8 @@ def _hamming(s1,s2):
             result+=1
     return result
 
-def consistency(subjset, dtype, threshold, min_num_consecutive, colonization_time=None, 
-    min_num_subjects=1, union_other_consortia=None):
+def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_num_subjects, 
+    colonization_time=None, union_other_consortia=None):
     '''Filters the subjects by looking at the consistency of the 'dtype', which can
     be either 'raw' where we look for the minimum number of counts, 'rel', where we
     look for a minimum relative abundance, or 'abs' where we look for a minium 
@@ -782,7 +789,7 @@ def consistency(subjset, dtype, threshold, min_num_consecutive, colonization_tim
         This is the threshold for either counts, relative abundance, or
         absolute abundance
     min_num_consecutive : int
-        Number of consecutive timepoints to look for
+        Number of consecutive timepoints to look for in a row
     colonization_time : numeric
         This is the time we are looking after for colonization. If None we assume 
         there is no colonization time.
@@ -807,9 +814,9 @@ def consistency(subjset, dtype, threshold, min_num_consecutive, colonization_tim
         raise TypeError('`dtype` ({}) must be a str'.format(type(dtype)))
     if dtype not in ['raw', 'rel', 'abs']:
         raise ValueError('`dtype` ({}) not recognized'.format(dtype))
-    # if not pl.isstudy(subjset):
-    #     raise TypeError('`subjset` ({}) must be a mdsine2.Study'.format(
-    #         type(subjset)))
+    if not pl.isstudy(subjset):
+        raise TypeError('`subjset` ({}) must be a mdsine2.Study'.format(
+            type(subjset)))
     if not pl.isnumeric(threshold):
         raise TypeError('`threshold` ({}) must be a numeric'.format(type(threshold)))
     if threshold <= 0:
@@ -838,7 +845,9 @@ def consistency(subjset, dtype, threshold, min_num_consecutive, colonization_tim
     if union_other_consortia is not None:
         if not pl.isstudy(union_other_consortia):
             raise TypeError('`union_other_consortia` ({}) must be a mdsine2.Study'.format(
-                type(union_other_consortia)))        
+                type(union_other_consortia)))
+
+    subjset = copy.deepcopy(subjset)      
     
     if union_other_consortia is not None:
         asvs_to_keep = set()
@@ -882,3 +891,82 @@ def consistency(subjset, dtype, threshold, min_num_consecutive, colonization_tim
         to_delete = subjset.asvs.ids.order[invalid_oidxs]
     subjset.pop_asvs(to_delete)
     return subjset
+
+def conditional_consistency_filtering(subjset, other, dtype, threshold, min_num_consecutive_upper,  
+    min_num_consecutive_lower, min_num_subjects, colonization_time):
+    '''Filters the cohorts in `subjset` with the `mdsine2.consistency_filtering`
+    filtering method but conditional on another cohort. If an ASV passes the filter
+    in the cohort `other`, the ASV can only have `min_num_consecutive_lower` 
+    consecutive timepoints instead of `min_num_consecutive_upper`. This potentially
+    increases the overlap of the ASVs between cohorts, which is the reason why
+    we would do this filtering over just `mdsine2.consistency_filtering`
+
+    Algorithm
+    ---------
+    First, we apply the function `mdsine2.consistency_filtering` to the subjects
+    `subjset` and `other` with minimum number of consectutive timepoints 
+    `min_num_consecutive_upper` and `min_num_consecutive_lower`.
+
+    For each ASV in cohort `subjset`
+        If it passes filtering with `min_num_consecutive_upper` in `subjset`, it is included
+        If it passes filtering with `min_num_consecutive_upper` in `other` AND it
+            passes filtering  `min_num_consecutive_lower` in `subjset`, it is included.
+        Otherwise it is excluded
+
+    Parameters
+    ----------
+    subjset : str, mdsine2.Study
+        This is the Study object that we are doing the filtering on
+        If it is a str, then it is the location of the saved object.
+    other : str, mdsine2.Study
+        This is the other Study obejct that we are conditional on.
+    dtype : str
+        This is the string to say what type of data we are thresholding. Options
+        are 'raw', 'rel', or 'abs'.
+    threshold : numeric
+        This is the threshold for either counts, relative abundance, or
+        absolute abundance
+    min_num_consecutive_upper, min_num_consecutive_lower : int
+        Number of consecutive timepoints to look for in a row
+    colonization_time : numeric
+        This is the time we are looking after for colonization. If None we assume 
+        there is no colonization time.
+    min_num_subjects : int, str
+        This is the minimum number of subjects this needs to be valid for.
+        If str, we accept 'all', which we set that automatically.
+    
+    Returns
+    -------
+    mdsine2.Study
+        This is the filtered subject set.
+
+    See Also
+    --------
+    mdsine2.consistency_filtering
+    '''
+    # All of the checks are done within `consistency_filtering` so dont check here
+    subjset_upper = consistency_filtering(subjset=copy.deepcopy(subjset), 
+        dtype=dtype, threshold=threshold,
+        min_num_consecutive=min_num_consecutive_upper, min_num_subjects=min_num_subjects, 
+        colonization_time=colonization_time)
+    subjset_lower = consistency_filtering(subjset=copy.deepcopy(subjset), 
+        dtype=dtype, threshold=threshold,
+        min_num_consecutive=min_num_consecutive_lower, min_num_subjects=min_num_subjects, 
+        colonization_time=colonization_time)
+
+    other_upper = consistency_filtering(subjset=copy.deepcopy(other), 
+        dtype=dtype, threshold=threshold,
+        min_num_consecutive=min_num_consecutive_upper, min_num_subjects=min_num_subjects, 
+        colonization_time=colonization_time)
+
+    # Conditional consistency filtering
+    to_delete = []
+    for asv in subjset_lower.asvs:
+        if asv.name in subjset_upper.asvs:
+            continue
+        if asv.name in other_upper.asvs:
+            continue
+        to_delete.append(asv.name)
+
+    subjset_lower.pop_asvs(to_delete)
+    return subjset_lower

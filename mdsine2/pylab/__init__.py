@@ -16,7 +16,7 @@ from .util import isnumeric, isbool, isfloat, isint, isarray, issquare, isstr, \
     itercheck, istype, istuple, isdict, istree
 from .variables import isVariable, isRandomVariable
 from .base import isqpcrdata, isasvset, isasv, issavable, istraceable, \
-    issubject, isstudy, isperturbation, isclusterable
+    issubject, isstudy, isperturbation, isclusterable, isaggregatedasv, isasvtype
 from .random import israndom
 from .cluster import isclustering, isclusterproperty, isclustervalue
 from .inference import isMCMC, isML, ismodel

@@ -1715,6 +1715,153 @@ def taxonomic_distribution_over_time(subj, taxlevel=None, lca=True,
     # ax = _set_xticks(ax)
     return ax
 
+def aggregate_asv_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None, 
+    title='Subject %(subjectname)s', xlabel='auto', ylabel='auto', vmin=None, vmax=None,
+    alpha_agg=0.5, alpha_asv=1., legend=True, fontstyle=None, shade_perturbations=True):
+    '''Plot the abundances of the aggregated ASVs within the OTU `agg` for the subject `subj`
+
+    Each subject within the study has its own axis within the figure. If you want to
+    plot only specific subjects, pass them in with the parameter `subjs`
+
+    Parameters
+    ----------
+    subj : mdsine2.Subject
+        This is the subject oobject that contains all of the data for the subjsets as well as the ASVs
+    agg : str, mdsine2.AggregateASV, int
+        This is the identifier for the aggregate ASV you want to plot
+    dtype : str
+        This is the type of plot you want. Options:
+            'raw' : Counts
+            'rel' : Relative abundance
+            'abs' : Total abundance data
+    yscale_log : bool
+        If True, plot the yscale in log scale.
+    ax : matplotlib.pyplot.Axes
+        If passed in, this is the Axes to plot on. Else we create a new figure where
+        it only has one axis
+    title : str, None
+        This is the format to set the titles for each one of the subplots. Options:
+            '%(subjectname)s' : Replaces this with the name of the subject
+            '%(subjectid)s' : Replaces this with the id of the subject
+            '%(subjectindex)s' : Replaces this with the index of the subject
+        If None then do not set
+    ylabel : str, None
+        This is the y-axis label of the figure. If None, do not plot. If `ylabel='auto'`:
+            `ylabel = 'Counts'` if `dtype='raw'`
+            `ylabel = 'Relative Abundance'` if `dtype='rel'`
+            `ylabel = 'CFU/g'` if `dtype='abs'`
+    xlabel : str, None
+        This is the x-axis label. If None, do not set. If `xlabel='auto'`, set to 'Time (days)'.
+    vmin, vmax : float
+        These are the minimum and maximum values in the yaxis, respectively.
+    alpha_agg : float
+        This is the alpha of the aggregate ASV plot
+    alpha_asv : float
+        This is the alpha of the individual ASV plots
+    legend : bool
+        If True, render the legend on the right hand side
+    fontstyle : str
+        If None, set to default fontsize of matplotlib. Options:
+            'paper' : set to paper style fontsize
+            'poster' : set to poster style fontsize
+    shade_perturbations : bool
+        If True, shade in and lable the perturbations
+
+    Returns
+    -------
+    matplotlib.pyplot.Axes
+    '''
+    if not pl.issubject(subj):
+        raise TypeError('`subj` ({}) must be a mdsine2.Subject object'.format(type(subj)))
+    if agg not in subj.asvs:
+        raise ValueError('`agg` ({}) not found in study'.format(agg))
+    if dtype not in ['rel', 'abs', 'raw']:
+        raise ValueError('`dtype` ({}) not recognized'.format(dtype))
+    if fontstyle is None:
+        titlefontsize = None
+        labelfontsize = None
+        tickfontsize = None
+        legendfontsize = None
+    elif fontstyle == 'paper':
+        titlefontsize = None
+        labelfontsize = None
+        tickfontsize = None
+        legendfontsize = None
+    elif fontstyle == 'poster':
+        titlefontsize = None
+        labelfontsize = None
+        tickfontsize = None
+        legendfontsize = None
+    else:
+        raise ValueError('`fontstyle` ({}) not recognized'.format(fontstyle))
+
+    if ax is None:
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+    
+    agg = subj.asvs[agg]
+    M = subj.matrix()[dtype]
+
+    # Plot the aggregate
+    ax.plot(subj.times, M[agg.idx, :], label=agg.name, alpha=alpha_agg, linewidth=7, 
+        marker='x')
+
+    individ_trajs = {}
+    for asvname in agg.aggregated_asvs:
+        if asvname not in subj._reads_individ:
+            raise ValueError('This should not happend. Failing.')
+        temp = []
+        for t in subj.times:
+            abund = subj._reads_individ[asvname][t]
+
+            if dtype == 'rel':
+                abund = abund / np.sum(subj.reads[t])
+            if dtype == 'abs':
+                abund = abund * subj.qpcr[t].mean()
+            temp.append(abund)
+        individ_trajs[asvname] = temp
+    
+    for label in individ_trajs:
+        ax.plot(subj.times, individ_trajs[label], label=label, alpha=alpha_asv, 
+            linewidth=2, marker='x')
+
+    if vmin is not None:
+        ax.set_ylim(bottom=vmin)
+    if vmax is not None:
+        ax.set_ylim(top=vmax)
+
+    if yscale_log:
+        ax.set_yscale('log')
+    if title is not None:
+        title = title.replace('%(subjectname)s', subj.name)
+        title = title.replace('%(subjectid)s', str(subj.id))
+        title = title.replace('%(subjectindex)s', str(subj.index))
+        ax.set_title(title, fontsize=titlefontsize)
+
+    if xlabel is not None:
+        if xlabel == 'auto':
+            xlabel = 'Time (days)'
+        ax.set_xlabel(xlabel, fontsize=labelfontsize)
+    if ylabel is not None:
+        if ylabel == 'auto':
+            if dtype == 'raw':
+                ylabel = 'Counts'
+            elif dtype == 'rel':
+                ylabel = 'Relative Abundance'
+            else:
+                ylabel = 'CFU/g'
+        ax.set_ylabel(ylabel, fontsize=labelfontsize)
+
+    if legend:
+        ax.legend(fontsize=legendfontsize, bbox_to_anchor=(1.05, 1))
+    
+    ax = _set_xticks(ax)
+    ax = _set_tick_fontsize(ax, fontsize=tickfontsize)
+    if shade_perturbations:
+        ax = shade_in_perturbations(ax, perturbations=subj.perturbations, textsize=legendfontsize)
+
+    return ax
+
 # ---------------
 # INNER FUNCTIONS
 # ---------------
@@ -2010,6 +2157,14 @@ def _set_xticks(ax):
 
     loc = plticker.MultipleLocator(base=XTICK_FREQUENCY)
     ax.xaxis.set_major_locator(loc)
+    return ax
+
+def _set_tick_fontsize(ax, fontsize):
+
+    for tick in ax.xaxis.get_major_ticks():
+        tick.label.set_fontsize(fontsize)
+    for tick in ax.yaxis.get_major_ticks():
+        tick.label.set_fontsize(fontsize)
     return ax
 
 def _set_taxlevel(taxlevel):
