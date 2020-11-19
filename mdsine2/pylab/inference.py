@@ -1,27 +1,19 @@
-import sys
 import os
 import copy
 import h5py
-import collections
 import logging
 import time
 import shutil
 import inspect
+import pickle
 
 import numpy as np
-import numpy.random as npr
-import scipy.stats
-import scipy.sparse
-import qpsolvers
-
-# import matplotlib.pyplot as plt
 
 from .graph import get_default_graph, isgraph, isnode
-from .base import Saveable, istraceable
+from .base import Saveable
 from .variables import isVariable
-from .errors import MathError, UndefinedError, InheritanceError
+from .errors import UndefinedError, InheritanceError
 from . import util
-from . import multiprocessing as plmp
 
 # Constants
 DEFAULT_LOG_EVERY = 5
@@ -48,21 +40,6 @@ def isMCMC(x):
         True if `x` is a an MCMC inference object
     '''
     return x is not None and issubclass(x.__class__, BaseMCMC)
-
-def isML(x):
-    '''Checks if the input array is an maximum likelihood inference object
-
-    Parameters
-    ----------
-    x : any
-        Instance we are checking
-    
-    Returns
-    -------
-    bool
-        True if `x` is a an maximum likelihood inference object
-    '''
-    return x is not None and issubclass(x.__class__, MLRR)
 
 def ismodel(x):
     '''Checks if the input array is a model object
@@ -166,6 +143,41 @@ class BaseMCMC(BaseModel):
         self._intermediate_func = None
         self._intermediate_t = None
         self._intermediate_kwargs = None
+
+    @classmethod
+    def load(cls, filename):
+        '''Override base Saveable to redo the filename of the
+        tracer object if it has one
+        
+        Paramters
+        ---------
+        filename : str
+            This is the location of the file to unpickle
+        '''
+        with open(str(filename), 'rb') as handle:
+            b = pickle.load(handle)
+        
+        # redo the filename to the new path if it has a save location
+        if not hasattr(b, '_save_loc'):
+            filename = os.path.abspath(filename)
+            b._save_loc = filename
+
+        # Redo the filename of the tracer object if necessart
+        if b.tracer is not None:
+            if b.tracer.filename is not None:
+                _, tracer_fname = os.path.split(b.tracer.filename)
+                currpath, _ = os.path.split(b._save_loc)
+
+                new_loc = os.path.join(currpath, tracer_fname)
+
+                if os.path.isfile(new_loc):
+                    b.tracer.filename = new_loc
+                else:
+                    raise ValueError('Looking for tracer hdf5 object in {}, could not find it ' \
+                        'in the local path even though inference says it contains the object.'.format(
+                            new_loc))
+
+        return b
 
     def names(self):
         '''Get the names of the nodes in the inference object
@@ -442,6 +454,16 @@ class BaseMCMC(BaseModel):
                         if self.diagnostic_variables[name].sample_iter == self.sample_iter:
                             self.diagnostic_variables[name].add_trace()
 
+                # If we just saved the traces to disk, save the MCMC object
+                if self.sample_iter % self.ckpt == 0 and self.sample_iter > 0:
+                    try:
+                        self.save()
+                    except:
+                        logging.critical('If you want to checkpoint, you must set the save location ' \
+                            'of tracer, graph, and mcmc using the function self.set_save_location()')
+                        print(self._save_loc)
+                        raise
+
             # Finish the tracing
             self.graph.tracer.finish_tracing()
             self.ran = True
@@ -497,7 +519,7 @@ class Tracer(Saveable):
         if self.filename is not None:
             if not util.isstr(filename):
                 raise TypeError('filename ({}) must be a str'.format(type(filename)))
-            self.filename = filename
+            self.filename = os.path.abspath(filename)
             self.f = h5py.File(self.filename, 'w', libver='latest')
             self.being_traced = set()
 
@@ -832,255 +854,6 @@ class Tracer(Saveable):
             dset = self.f[name]
             dset.attrs['end_iter'] = gibb_step_start
         self.close()
-        
-
-class MLRR(BaseModel):
-    '''This performs Maximum Likelihood Ridge Regression (MLRR) (L2 
-    regression) or Maximum Likelihood Constrained Ridge Regression (MLCRR) 
-    via Quadratic programming.
-
-            \theta = inv( X.T @ X + D) @ X.T @ y
-
-    Constraints
-    -----------
-    These are the constraints on the infered values of the regression. If nothing is 
-    set then we assume that it is an unconstrained syste.
-
-    We perform the constrained regression using a quadratic programming approach
-
-            minimize:
-                (1/2) * x.T * P * x + q.T * x
-            where:
-                P = 2 * ( X.T @ X + D)
-                q = -2 * X.T @ y
-            subject to:
-                G * x <= h
-                A * x == b
-
-    Parameters
-    ----------
-    constrain : bool
-        If `True`, it will do a constrained regression on the defined parameters.
-        You set the constraints with the fucntion `set_constraints`. If nothing 
-        is specified then we assume an unconstrained system (-\infy, \infy) (this
-        is effectively the same as doing an unconstrained regression). If `False`
-        we assume there are no constraints on the system.
-    graph : pylab.graph.Graph, Optional
-        This is the graph that has all the parameters. If nothing is provided it
-        will automatically detect the default graph.
-    '''
-    def __init__(self, constrain, *args, **kwargs):
-        BaseModel.__init__(self, *args, **kwargs)
-        if not util.isbool(constrain):
-            raise TypeError('`constrain` ({}) must be a bool'.format(type(constrain)))
-        self.constrain = constrain
-
-        self._penalties = {}
-        self._constraints = {}
-        self.order = None
-
-    def set_penalty(self, parameter, penalty):
-        '''Sets the penalty `penalty` for the parameter `parameter`. If you
-        want a global parameter set `parameter=pylab.inference.GLOBAL_PARAMETER`.
-
-        Parameters
-        ----------
-        parameter : int, str, pl.Variable, pylab.inference.GLOBAL_PARAMETER
-            This the the parameter you want. If it is set to 
-            `pylab.inference.GLOBAL_PARAMETER` then we set all the parameters with
-            the penalty
-        penalty : float
-            This is the \lambda term used as the penalty for the parameter `parameter`
-        '''
-        if not util.isnumeric(penalty):
-            raise TypeError('`penalty` ({}) must be a numeric'.format(type(penalty)))
-        if penalty < 0:
-            raise ValueError('`penalty` ({}) must be >= 0'.format(penalty))
-        if parameter != GLOBAL_PARAMETER:
-            try:
-                parameter = self.graph[parameter]
-            except:
-                raise IndexError('`parameter` ({}) not found in graph'.format(
-                    parameter))
-            if parameter.name in self._penalties:
-                raise ValueError('parameter `{}` already set in penalties with the ' \
-                    'penalty `{}`'.format(parameter.name, self._penalties[parameter.name]))
-            self._penalties[parameter.name] = penalty
-        else:
-            for node in self.graph:
-                if node.name in self._penalties:
-                    raise ValueError('parameter `{}` already has the penalty `{}`'.format(
-                        node.name, self._penalties[node.name]))
-                self._penalties[node.name] = penalty
-
-    def set_constraints(self, G=None, h=None, A=None, b=None):
-        '''Set the constraints of the system. The constraints are set that:
-
-            minimize:
-                (1/2) * x.T * P * x + q.T * x
-            where:
-                P = 2 * ( X.T @ X + D)
-                q = -2 * X.T @ y
-            subject to:
-                G * x <= h
-                A * x == b
-
-        Parameters
-        ----------
-        G : numpy.ndarray
-            Linear inequality constraint matrix
-        h : numpy.ndarray
-            Linear inequality constraint vector
-        A : numpy.ndarray
-            Linear equality constraint matrix
-        b : numpy.ndarray
-            Linear equality constraint vector
-        '''
-        if not self.constrain:
-            raise ValueError('`There are no constraints in MLRR - must specify a constrained' \
-                ' MLRR by setting constrain=True during initialization')
-        self.G = G
-        self.h = h
-        self.A = A
-        self.b = b
-
-    def set_parameter_order(self, order):
-        '''Set the order of the parameters
-        '''
-        self.order = []
-        if not util.isarray(order):
-            order = [order]
-        for i in order:
-            if i not in self.graph:
-                raise ValueError('`{}` not in graph'.format(i))
-            node = self.graph[i]
-            self.order.append(node.name)
-
-    def run_single(self, X, y, D=None):
-        '''Run the regression
-
-        Parameters
-        ----------
-        X : array_like
-            This is the Covariate matrix.
-            Must have the shape (nrows, ncols)
-        y : np.ndarray
-            This is the observation matrix.
-            Must have the shape (nrows, 1)
-        D : np.ndarray
-            This is the penalty matrix. If this is not passed in it
-            will use the inner parameters.
-        '''
-        if not util.isarray(X):
-            raise TypeError('`X` ({}) must be array_like'.format(type(X)))
-        if not util.isarray(y):
-            raise TypeError('`y` ({}) must be array_like'.format(type(y)))
-        
-        sizes = [len(self.graph[name]) for name in self.order]
-        if D is None:
-            D = MLRR.build_D(penalties=self._penalties, order=self.order, 
-                sizes=sizes, sparse=False)
-
-        if D.shape[1] != X.shape[1]:
-            raise ValueError('`D` ({}) and `X` ({}) have mismatched shapes'.format(
-                D.shape, X.shape))
-
-        if self.constrain:
-            theta = MLRR.run_MLCRR(X=X, y=y, D=D, G=self.G, 
-                h=self.h, A=self.A, b=self.b)
-        else:
-            theta = MLRR.run_MLRR(X, y, D)
-
-        # Assign the values to each of the variables
-        i = 0
-        for idx, pname in enumerate(self.order):
-            v = theta[i:i+sizes[idx]]
-            self.graph[pname].value = v
-            i += sizes[idx]
-
-        return self
-
-    @staticmethod
-    def build_D(penalties, order, sizes, sparse):
-        '''Creates the diagonal penalty matrix for the regression.
-
-        Parameters
-        ----------
-        penalties : dict (str -> float)
-            Maps the name of the variable to the value of the penalty
-        order : array(str)
-            This is the order of the parameters in X
-        sizes : array(int)
-            These are the sizes of each of the parameters in order
-        sparse : bool
-            If True, return a sparse array. If not return a numpy.ndarray
-
-        Returns
-        -------
-        array_like
-        '''
-        diag = []
-        for i, name in enumerate(order):
-            diag = np.append(diag, 
-                np.full(sizes[i], penalties[name]))
-        
-        if sparse:
-            rows = np.arange(len(diag))
-            D = scipy.sparse.coo_matrix((diag, (rows, rows)), shape=(len(diag), len(diag)))
-        else:
-            D = np.diag(diag)
-        return D
-    
-    @staticmethod
-    def run_MLCRR(X, y, D, G, h, A, b):
-        '''Run L2 regression with a constraint on the parameters using a quadratic
-        programming approach:
-                minimize:
-                    (1/2) * x.T * P * x + q.T * x
-                where:
-                    P = 2 * ( X.T @ X + D)
-                    q = -2 * X.T @ y
-                subject to:
-                    G * x <= h
-                    A * x == b
-        '''
-        # Try on run MLRR without constraints and see if that works
-        theta = MLRR.run_MLRR(X=X, y=y, D=D)
-
-        if G is not None and h is None:
-            aaa = np.asarray(G @ theta).ravel()
-            bbb = h.ravel()
-            if np.all(aaa <= bbb):
-                # Check the other constraint, this one passes
-                if A is not None and b is not None:
-                    ccc = np.asarray(A @ theta).ravel()
-                    ddd = b.ravel()
-                    if np.all(ccc == ddd):
-                        # This passes without needing quadratic programming
-                        return theta
-
-        # Perform quadratic programming
-        P = 2 * (X.T @ X + D)
-        if scipy.sparse.issparse(P):
-            P = util.toarray(P)
-        q = -2 * ( X.T @ y )
-        if scipy.sparse.issparse(q):
-            q = util.toarray(q).ravel()
-
-        h = h.ravel()
-        q = q.ravel()
-
-        return qpsolvers.solve_qp(P=P, q=q, G=G, h=h, A=A, b=b, solver='quadprog')
-
-    @staticmethod
-    def run_MLRR(X, y, D):
-        '''Run Maximum Likelihood Ridge Regression without constraints
-        '''
-        a = X.T @ X + D
-        if scipy.sparse.issparse:
-            a = util.toarray(a)
-        ainv = np.linalg.pinv(a)
-        return np.asarray(ainv @ X.T @ y)
 
 
 def r_hat(chains, vname, start, end, idx=None, returnBW=False):

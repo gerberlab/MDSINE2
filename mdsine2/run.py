@@ -1,20 +1,12 @@
 import logging
 import numpy as np
 import h5py
+import os
 
 # Custom modules
 from . import config
 from .names import STRNAMES, REPRNAMES
 from . import design_matrices
-
-# Import the posterior classes
-from . import interactions as posteriorInteractions
-from . import clustering as posteriorClustering
-from . import filtering as posteriorFiltering
-from . import logistic_growth as posteriorLogisticGrowth
-from . import perturbations as posteriorPerturbations
-from . import processvariance as posteriorProcessVar
-from . import qpcr as posteriorQPCR
 
 from . import pylab as pl
 
@@ -48,6 +40,7 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     pl.inference.BaseMCMC
         Inference chain
     '''
+    from . import posterior_mdsine2 as posterior
     # Type Check
     # ----------
     if not config.isModelConfig(params):
@@ -77,6 +70,27 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
 
         return mcmc
 
+    # Make the basepath
+    # -----------------
+    runname = GRAPH.name + params.suffix()
+    basepath = os.path.join(params.OUTPUT_BASEPATH, runname)
+    os.makedirs(basepath, exist_ok=True)
+
+    # Normalize the qpcr measurements for numerical stability
+    # -------------------------------------------------------
+    if params.QPCR_NORMALIZATION_MAX_VALUE is not None:
+        subjset.normalize_qpcr(max_value=params.QPCR_NORMALIZATION_MAX_VALUE)
+        logging.info('Normalizing abundances for a max value of {}. Normalization ' \
+            'constant: {:.4E}'.format(params.QPCR_NORMALIZATION_MAX_VALUE, 
+            subjset.qpcr_normalization_factor))
+        
+        params.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['v2'] *= subjset.qpcr_normalization_factor
+        params.INITIALIZATION_KWARGS[STRNAMES.SELF_INTERACTION_VALUE]['rescale_value'] = \
+            subjset.qpcr_normalization_factor
+    
+    subjset_filename = os.path.join(basepath, config.SUBJSET_FILENAME)
+    subjset.save(subjset_filename)
+
     # Instantiate the posterior classes
     # ---------------------------------
     asvs = subjset.asvs
@@ -86,12 +100,12 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
         name=STRNAMES.CLUSTERING_OBJ)
 
     # Interactions
-    var_interactions = posteriorInteractions.PriorVarInteractions(
+    var_interactions = posterior.PriorVarInteractions(
         prior=pl.variables.SICS(
             dof=pl.Constant(None, G=GRAPH),
             scale=pl.Constant(None, G=GRAPH), 
         G=GRAPH), G=GRAPH)
-    mean_interactions = posteriorInteractions.PriorMeanInteractions(
+    mean_interactions = posterior.PriorMeanInteractions(
         prior=pl.variables.Normal(
             mean=pl.Constant(None, G=GRAPH),
             var=pl.Constant(None, G=GRAPH), 
@@ -99,20 +113,20 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     interaction_value = pl.variables.Normal(
         mean=mean_interactions, var=var_interactions, G=GRAPH)
 
-    interaction_indicator = posteriorInteractions.ClusterInteractionIndicatorProbability(
+    interaction_indicator = posterior.ClusterInteractionIndicatorProbability(
         prior=pl.variables.Beta(a=pl.Constant(None, G=GRAPH), b=pl.Constant(None, G=GRAPH), G=GRAPH),
         G=GRAPH)
-    interactions = posteriorInteractions.ClusterInteractionValue(
+    interactions = posterior.ClusterInteractionValue(
         prior=interaction_value, clustering=clustering, G=GRAPH)
-    Z = posteriorInteractions.ClusterInteractionIndicators(prior=interaction_indicator, G=GRAPH)
+    Z = posterior.ClusterInteractionIndicators(prior=interaction_indicator, G=GRAPH)
 
     # Growth
-    var_growth = posteriorLogisticGrowth.PriorVarMH(
+    var_growth = posterior.PriorVarMH(
         prior=pl.variables.SICS(
             dof=pl.Constant(None, G=GRAPH),
             scale=pl.Constant(None, G=GRAPH), G=GRAPH),
         child_name=STRNAMES.GROWTH_VALUE, G=GRAPH)
-    mean_growth = posteriorLogisticGrowth.PriorMeanMH(
+    mean_growth = posterior.PriorMeanMH(
         prior=pl.variables.TruncatedNormal(
             mean=pl.Constant(None, G=GRAPH),
             var=pl.Constant(None, G=GRAPH), G=GRAPH), 
@@ -120,15 +134,15 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     prior_growth = pl.variables.Normal(
         mean=mean_growth, var=var_growth,
         name='prior_{}'.format(STRNAMES.GROWTH_VALUE), G=GRAPH)
-    growth = posteriorLogisticGrowth.Growth(prior=prior_growth, G=GRAPH)
+    growth = posterior.Growth(prior=prior_growth, G=GRAPH)
 
     # Self-Interactions
-    var_si = posteriorLogisticGrowth.PriorVarMH(
+    var_si = posterior.PriorVarMH(
         prior=pl.variables.SICS(
             dof=pl.Constant(None, G=GRAPH),
             scale=pl.Constant(None, G=GRAPH), G=GRAPH),
         child_name=STRNAMES.SELF_INTERACTION_VALUE, G=GRAPH)
-    mean_si = posteriorLogisticGrowth.PriorMeanMH(
+    mean_si = posterior.PriorMeanMH(
         prior=pl.variables.TruncatedNormal(
             mean=pl.Constant(None, G=GRAPH),
             var=pl.Constant(None, G=GRAPH), G=GRAPH), 
@@ -136,29 +150,29 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     prior_si = pl.variables.Normal(
         mean=mean_si, var=var_si,
         name='prior_{}'.format(STRNAMES.SELF_INTERACTION_VALUE), G=GRAPH)
-    self_interactions = posteriorLogisticGrowth.SelfInteractions(prior=prior_si, G=GRAPH)
+    self_interactions = posterior.SelfInteractions(prior=prior_si, G=GRAPH)
 
     # Process Variance
     prior_processvar = pl.variables.SICS( 
         dof=pl.Constant(None, G=GRAPH),
         scale=pl.Constant(None, G=GRAPH), G=GRAPH)
-    processvar = posteriorProcessVar.ProcessVarGlobal(G=GRAPH, prior=prior_processvar)
+    processvar = posterior.ProcessVarGlobal(G=GRAPH, prior=prior_processvar)
 
     # Clustering
     prior_concentration = pl.variables.Gamma(
         shape=pl.Constant(None, G=GRAPH),
         scale=pl.Constant(None, G=GRAPH),
         G=GRAPH)
-    concentration = posteriorClustering.Concentration(
+    concentration = posterior.Concentration(
         prior=prior_concentration, G=GRAPH)
-    cluster_assignments = posteriorClustering.ClusterAssignments(
+    cluster_assignments = posterior.ClusterAssignments(
         clustering=clustering, concentration=concentration,
         G=GRAPH, mp=params.MP_CLUSTERING)
 
     # Filtering and zero inflation
-    filtering = posteriorFiltering.FilteringLogMP(G=GRAPH, mp=params.MP_FILTERING, 
+    filtering = posterior.FilteringLogMP(G=GRAPH, mp=params.MP_FILTERING, 
         zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
-    zero_inflation = posteriorFiltering.ZeroInflation(G=GRAPH)
+    zero_inflation = posterior.ZeroInflation(G=GRAPH)
 
     # Perturbations
     if subjset.perturbations is not None:
@@ -174,12 +188,12 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
                 clustering=clustering, G=GRAPH, name=name,
                 signal_when_clusters_change=False, signal_when_item_assignment_changes=False)
 
-            magnitude_var = posteriorPerturbations.PriorVarPerturbationSingle(
+            magnitude_var = posterior.PriorVarPerturbationSingle(
                 prior=pl.variables.SICS(
                     dof=pl.Constant(None, G=GRAPH),
                     scale=pl.Constant(None, G=GRAPH), G=GRAPH), 
                 perturbation=perturbation, G=GRAPH)
-            magnitude_mean = posteriorPerturbations.PriorMeanPerturbationSingle(
+            magnitude_mean = posterior.PriorMeanPerturbationSingle(
                 prior=pl.variables.Normal(
                     mean=pl.Constant(None, G=GRAPH),
                     var=pl.Constant(None, G=GRAPH),
@@ -194,24 +208,24 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
                 G=GRAPH)
             perturbation.probability.add_prior(prior_prob)
         
-        magnitude_var_perts = posteriorPerturbations.PriorVarPerturbations(G=GRAPH)
-        magnitude_mean_perts = posteriorPerturbations.PriorMeanPerturbations(G=GRAPH)
-        magnitude_perts = posteriorPerturbations.PerturbationMagnitudes(G=GRAPH)
-        indicator_perts = posteriorPerturbations.PerturbationIndicators(G=GRAPH, need_to_trace=False, relative=True)
-        indicator_prob_perts = posteriorPerturbations.PerturbationProbabilities(G=GRAPH)
+        magnitude_var_perts = posterior.PriorVarPerturbations(G=GRAPH)
+        magnitude_mean_perts = posterior.PriorMeanPerturbations(G=GRAPH)
+        magnitude_perts = posterior.PerturbationMagnitudes(G=GRAPH)
+        indicator_perts = posterior.PerturbationIndicators(G=GRAPH, need_to_trace=False, relative=True)
+        indicator_prob_perts = posterior.PerturbationProbabilities(G=GRAPH)
     else:
         magnitude_perts = None
         pert_ind = None
         pert_ind_prob = None
 
-    beta = posteriorLogisticGrowth.RegressCoeff(
+    beta = posterior.RegressCoeff(
         growth=growth, self_interactions=self_interactions,
         interactions=interactions, pert_mag=magnitude_perts, G=GRAPH)
 
     # Set qPCR variance priors and hyper priors
-    qpcr_variances = posteriorQPCR.qPCRVariances(G=GRAPH, L=params.N_QPCR_BUCKETS)
-    qpcr_dofs = posteriorQPCR.qPCRDegsOfFreedoms(G=GRAPH, L=params.N_QPCR_BUCKETS)
-    qpcr_scales = posteriorQPCR.qPCRScales(G=GRAPH, L=params.N_QPCR_BUCKETS)
+    qpcr_variances = posterior.qPCRVariances(G=GRAPH, L=params.N_QPCR_BUCKETS)
+    qpcr_dofs = posterior.qPCRDegsOfFreedoms(G=GRAPH, L=params.N_QPCR_BUCKETS)
+    qpcr_scales = posterior.qPCRScales(G=GRAPH, L=params.N_QPCR_BUCKETS)
 
     for l in range(params.N_QPCR_BUCKETS):
         qpcr_scale_prior = pl.variables.SICS( 
@@ -383,10 +397,10 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
 
     # Setup filenames
     # ---------------
-    mcmc.set_tracer(filename=params.HDF5_FILENAME, ckpt=params.CHECKPOINT)
-    mcmc.tracer.set_save_location(params.TRACER_FILENAME)
-    mcmc.set_save_location(params.MCMC_FILENAME)
-    GRAPH.set_save_location(params.GRAPH_FILENAME)
+    hdf5_filename = os.path.join(basepath, config.HDF5_FILENAME)
+    mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
+    mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CHECKPOINT)
+    mcmc.set_save_location(mcmc_filename)
 
     return mcmc
 
@@ -394,8 +408,15 @@ def build_graph_negbin(params, graph_name, subjset):
     '''Builds the graph used for posterior inference of the negative binomial
     dispersion parameters
     '''
-    
+    if not config.isModelConfig(params):
+        raise TypeError('`params` ({}) needs to be a config.ModelConfig object'.format(type(params)))
+    if not pl.isstudy(subjset):
+        raise TypeError('`subjset` ({}) must be a mdsine2.Study'.format(type(subjset)))
+    if not pl.isstr(graph_name):
+        raise TypeError('`graph_name` ({}) must be a str'.format(type(graph_name)))
 
+    asvs = subjset.asvs
+    
 def normalize_parameters(mcmc, subjset):
     '''Normalize the abundance of the parameters by the normalization factor
     in the subject set

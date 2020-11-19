@@ -24,18 +24,17 @@ NAME_FORMATTER = '%(name)s'
 ID_FORMATTER = '%(id)s'
 INDEX_FORMATTER = '%(index)s'
 SPECIES_FORMATTER = '%(species)s'
-SPECIESX_FORMATTER = '%(speciesX)s'
 GENUS_FORMATTER = '%(genus)s'
 FAMILY_FORMATTER = '%(family)s'
 CLASS_FORMATTER = '%(class)s'
 ORDER_FORMATTER = '%(order)s'
 PHYLUM_FORMATTER = '%(phylum)s'
 KINGDOM_FORMATTER = '%(kingdom)s'
-LCA_FORMATTER = '%(lca)s'
+PAPER_FORMATTER = '%(paperformat)s'
 
 _TAXLEVELS = ['species', 'genus', 'family', 'class', 'order', 'phylum', 'kingdom']
 _TAXFORMATTERS = ['%(species)s', '%(genus)s', '%(family)s', '%(class)s', '%(order)s', '%(phylum)s', '%(kingdom)s']
-_SPECIESX_SEARCH = re.compile('\%\(species[0-9]+\)s')
+ASVNAME_PAPER_FORMAT = float('inf')
 
 def isdataframe(a):
     '''Checks if `a` is a pandas.DataFrame
@@ -282,9 +281,64 @@ def itercheck(xs, f):
     '''
     return [f(x) for x in xs]
 
-def asvname_formatter(format, asv, asvs, lca=True):
-    '''Format the label of an ASV. Specify the ASV by
-    it's index in the ASVSet `asvs`
+def asvname_for_paper(asv, asvs):
+    '''Makes the name in the format needed for the paper
+
+    Parameters
+    ----------
+    asv : pylab.base.ASV
+        This is the ASV we are making the name for
+    asvs : pylab.base.ASVSet
+        This is the ASVSet object that contains the ASV
+
+    Returns
+    -------
+    '''
+    asv = asvs[asv]
+    if asv.tax_is_defined('species'):
+        species = asv.taxonomy['species']
+        species = species.split('/')
+        if len(species) >= 3:
+            species = species[:2]
+        species = '/'.join(species)
+        label = pl.asvname_formatter(
+            format='%(genus)s {spec} %(name)s'.format(
+                spec=species), 
+            asv=asv, asvs=asvs)
+    elif asv.tax_is_defined('genus'):
+        label = pl.asvname_formatter(
+            format='* %(genus)s %(name)s',
+            asv=asv, asvs=asvs)
+    elif asv.tax_is_defined('family'):
+        label = pl.asvname_formatter(
+            format='** %(family)s %(name)s',
+            asv=asv, asvs=asvs)
+    elif asv.tax_is_defined('order'):
+        label = pl.asvname_formatter(
+            format='*** %(order)s %(name)s',
+            asv=asv, asvs=asvs)
+    elif asv.tax_is_defined('class'):
+        label = pl.asvname_formatter(
+            format='**** %(class)s %(name)s',
+            asv=asv, asvs=asvs)
+    elif asv.tax_is_defined('phylum'):
+        label = pl.asvname_formatter(
+            format='***** %(phylum)s %(name)s',
+            asv=asv, asvs=asvs)
+    elif asv.tax_is_defined('kingdom'):
+        label = pl.asvname_formatter(
+            format='****** %(kingdom)s %(name)s',
+            asv=asv, asvs=asvs)
+    else:
+        raise ValueError('Something went wrong - no taxnonomy: {}'.format(str(asv)))
+
+    return label
+
+def asvname_formatter(format, asv, asvs):
+    '''Format the label of an ASV. Specify the ASV by its index in the ASVSet `asvs`.
+
+    If `format == mdsine.ASVNAME_PAPER_FORMAT`, then we call the function
+    `asvname_for_paper`.
 
     Example:
         asv is an ASV object at index 0 where
@@ -320,6 +374,8 @@ def asvname_formatter(format, asv, asvs, lca=True):
     format : str
         This is the format for us to do the labels
         Formatting options:
+            '%(paperformat)s'
+                Return the `asvname_for_paper`
             '%(name)s'
                 Name of the ASV (pylab.base.ASV.name)
             '%(id)s'
@@ -343,68 +399,33 @@ def asvname_formatter(format, asv, asvs, lca=True):
                 `'phylum'` taxonomic classification of the ASV
             '%(kingdom)s'
                 `'kingdom'` taxonomic classification of the ASV
-            '%(lca)s'
-                Least common ancestor. If species is 'NA', then it will go to family.
-                It will keep travelling up the tree until it finds something not nan.
-                Example:
-                asv is an ASV object at index 0 where
-                asv.genus = 'nan'
-                asvs.family = 'B'
-                asv.id = 1234532
 
     asv : str, int, ASV
         Either the ASV or an id for the ASV
     asvs : pylab.base.ASVSet
         Dataset containing all of the information for the ASVs
-    lca : bool
-        If True and the specified taxonomic level is not specified (nan), then
-        we substitute it with the least common ancestor up from the current level
 
     '''
+    if format == ASVNAME_PAPER_FORMAT:
+        return asvname_for_paper(asv=asv, asvs=asvs)
     asv = asvs[asv]
     index = asv.idx
 
     label = format.replace(NAME_FORMATTER, str(asv.name))
     label = label.replace(ID_FORMATTER, str(asv.id))
     label = label.replace(INDEX_FORMATTER,  str(index))
-
-    
-    # Replcate speciesX formatter
-    X = _SPECIESX_SEARCH.search(format)
-    if X is not None:
-        while True:
-            X = X[0]
-            n = int(X.replace('%(species', '').replace(')s',''))
-            try:
-                a = '/'.join(asv.get_taxonomy('species').split('/')[:n])
-            except:
-                a = 'nan'
-            format = format.replace(X,a)
-            X = _SPECIESX_SEARCH.search(format)
-            if X is None:
-                break
+    label = label.replace(PAPER_FORMATTER, asvname_for_paper(asv=asv, asvs=asvs))
     
     for i in range(len(_TAXLEVELS)):
         taxlevel = _TAXLEVELS[i]
         fmt = _TAXFORMATTERS[i]
         try:
-            label = label.replace(fmt, str(asv.get_taxonomy(taxlevel, lca=False)))
+            label = label.replace(fmt, str(asv.get_taxonomy(taxlevel)))
         except:
             logging.critical('asv: {}'.format(asv))
             logging.critical('fmt: {}'.format(fmt))
             logging.critical('label: {}'.format(label))
             raise
-
-    if LCA_FORMATTER in label:
-        lineage = list(asv.get_lineage(level='species'))
-        while len(lineage) > 0:
-            if str(lineage[-1]) != 'nan':
-                label = label.replace(LCA_FORMATTER, str(lineage[-1]))
-                break
-            else:
-                lineage = lineage[:-1]
-        if len(lineage) == 0:
-            logging.warning('All taxonomic levels are nans: {}'.format(asv.get_lineage(level='species')))
 
     return label
 
@@ -496,11 +517,6 @@ def subsample_timeseries(T, sizes, approx=True):
             0 , 1 , 3, 4, 6, 7, 9, 10
 
             T_8 = []
-    
-
-        
-        
-        
 
     Parameters
     ----------

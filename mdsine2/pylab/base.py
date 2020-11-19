@@ -43,6 +43,7 @@ import pandas as pd
 import logging
 import ete3
 import os
+import os.path
 
 from . import util as plutil
 from .errors import NeedToImplementError
@@ -319,7 +320,6 @@ class Saveable:
             with open(str(filename), 'wb') as output:  # Overwrites any existing file.
                 pickle.dump(self, output, protocol=pickle.HIGHEST_PROTOCOL)
 
-
     @classmethod
     def load(cls, filename):
         '''Unpickle the object
@@ -331,13 +331,27 @@ class Saveable:
         '''
         with open(str(filename), 'rb') as handle:
             b = pickle.load(handle)
+        
+        # redo the filename to the new path if it has a save location
+        if not hasattr(b, '_save_loc'):
+            filename = os.path.abspath(filename)
+            b._save_loc = filename
+
         return b
 
     def set_save_location(self, filename):
-        '''Set the save location for the object
+        '''Set the save location for the object.
+
+        Internally converts this to the absolute path
+
+        Parameters
+        ----------
+        filename : str
+            This is the path to set it to
         '''
         if not plutil.isstr(filename):
             raise TypeError('`filename` ({}) must be a str'.format(type(filename)))
+        filename = os.path.abspath(filename)
         self._save_loc = filename
 
     def get_save_location(self):
@@ -566,11 +580,9 @@ class ASV(ClusterItem):
             self.taxonomy['species'] = tax_species
         return self
 
-    def get_lineage(self, level=None, lca=False):
+    def get_lineage(self, level=None):
         '''Returns a tuple of the lineage in order from Kingdom to the level
-        indicated. Default value for level is `asv`. If `lca` is True, then
-        we return the lineage up to `level` where it is specified (no nans)
-
+        indicated. Default value for level is `asv`.
         Parameters
         ----------
         level : str, Optional
@@ -579,8 +591,6 @@ class ASV(ClusterItem):
             Example:
                 level = 'class'
                 returns a tuple of (kingdom, phylum, class)
-        lca : bool
-            Least common ancestor
         Returns
         -------
         str
@@ -610,14 +620,9 @@ class ASV(ClusterItem):
         else:
             raise ValueError('level `{}` was not recognized'.format(level))
 
-        if lca:
-            i = len(a)-1
-            while (type(a[i]) == float) or (a[i] == DEFAULT_TAXA_NAME):
-                i -= 1
-            a = a[:i+1]
         return a
     
-    def get_taxonomy(self, level, lca=False):
+    def get_taxonomy(self, level):
         '''Get the taxonomy at the level specified
 
         Parameters
@@ -625,11 +630,12 @@ class ASV(ClusterItem):
         level : str
             This is the level to get
             Valid responses: 'kingdom', 'phylum', 'class', 'order', 'family', 'genus'
-        lca : bool
-            If True and the specified tax level is not specified, then supstitute it with
-            the next highest taxonomy that's 
+
+        Returns
+        -------
+        str
         '''
-        return self.get_lineage(level=level, lca=lca)[-1]
+        return self.get_lineage(level=level)[-1]
 
     def tax_is_defined(self, level):
         '''Whether or not the ASV is defined at the specified taxonomic level
@@ -1451,7 +1457,7 @@ class Subject(Saveable):
                 t, self.times))
         return np.sum(self.reads[t])
 
-    def cluster_by_taxlevel(self, dtype, lca, taxlevel, index_formatter=None, smart_unspec=True):
+    def cluster_by_taxlevel(self, dtype, taxlevel, index_formatter=None, smart_unspec=True):
         '''Clusters the ASVs into the taxonomic level indicated in `taxlevel`.
 
         Smart Unspecified
@@ -1463,9 +1469,6 @@ class Subject(Saveable):
         ----------
         subj : pylab.base.Subject
             This is the subject that we are getting the data from
-        lca : bool
-            If an ASV is unspecified at the taxonomic level and `lca` is True, then it will
-            cluster at the higher taxonomic level
         taxlevel : str, None
             This is the taxa level to aggregate the data at. If it is 
             None then we do not do any collapsing (this is the same as 'asv')
@@ -1524,7 +1527,7 @@ class Subject(Saveable):
         taxas = {} # lineage -> label
         for i, asv in enumerate(self.asvs):
             row = df.index[i]
-            tax = asv.get_lineage(level=taxlevel, lca=lca)
+            tax = asv.get_lineage(level=taxlevel)
             tax = tuple(tax)
             tax = str(tax).replace("'", '')
             if tax in taxas:
@@ -1544,7 +1547,7 @@ class Subject(Saveable):
                     taxas[tax] = '{} {}, {} NA'.format(ttt.capitalize(), 
                         asv.taxonomy[ttt], taxlevel.capitalize())
                 else:
-                    taxas[tax] = plutil.asvname_formatter(format=index_formatter, asv=asv, asvs=self.asvs, lca=lca)
+                    taxas[tax] = plutil.asvname_formatter(format=index_formatter, asv=asv, asvs=self.asvs)
                 toadd = pd.DataFrame(np.array(list(df.loc[row])).reshape(1,-1),
                     index=[taxas[tax]], columns=dfnew.columns)
                 dfnew = dfnew.append(toadd)

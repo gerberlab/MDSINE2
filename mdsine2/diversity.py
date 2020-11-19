@@ -101,7 +101,14 @@ class beta:
 
     @staticmethod
     def hamming(u,v):
-        return distance.hamming(u,v)
+        if len(u) != len(v):
+            raise ValueError('Cannot compare different distances')
+        result=0
+        for i,j in zip(u,v):
+            if i!=j:
+                # print(f'char not math{i,j}in {x}')
+                result+=1
+        return result
 
     @staticmethod
     def unifrac(*args,**kwargs):

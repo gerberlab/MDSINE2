@@ -990,7 +990,7 @@ def render_trace(var, idx=None, ax=None, plt_type=None, include_burnin=True,
 # ----------
 # Abundances
 # ----------
-def alpha_diversity_over_time(subjs, metric, taxlevel=None, lca=True, 
+def alpha_diversity_over_time(subjs, metric, taxlevel=None,
     highlight=None, marker='o', markersize=4, shade_perturbations=True, 
     legend=True, cmap=None, alpha=1.0, linestyle='-', ax=None, grid=False,
     colors=None, **kwargs):
@@ -1007,9 +1007,6 @@ def alpha_diversity_over_time(subjs, metric, taxlevel=None, lca=True,
     taxlevel : str, None
         This is the taxa level to aggregate the data at. If 'default' is specified
         then it defaults the DEFAULT_TAX_LEVEL. If None then there will be no aggregation.
-    lca : bool
-        If True, it will aggregate the taxas that are unspecified at the specified level
-        at a higher taxonomic class
     highlight : list(float), None
         These are a list of tuples (subjectname, timepoint) we want to highlight (circle). 
         Each element must be a time in `subj.times`. If nothing is specified then we do not
@@ -1055,9 +1052,6 @@ def alpha_diversity_over_time(subjs, metric, taxlevel=None, lca=True,
         raise ValueError('`subjs` ({}) must be a pylab.base.Subject or an array'.format(type(subjs)))
     if not callable(metric):
         raise ValueError('`metric` ({}) must be callable'.format(type(metric)))
-    if not pl.isbool(lca):
-        raise ValueError('`lca` ({}) must be a bool'.format(
-            type(lca)))
     if not pl.isbool(shade_perturbations):
         raise ValueError('`shade_perturbations` ({}) must be a bool'.format(
             type(shade_perturbations)))
@@ -1080,7 +1074,7 @@ def alpha_diversity_over_time(subjs, metric, taxlevel=None, lca=True,
     if colors is None and 'color' not in kwargs:
         colors = sns.color_palette(cmap, n_colors=len(subjs))
     for sidx, subj in enumerate(subjs):
-        df = subj.cluster_by_taxlevel(dtype='raw', lca=lca, taxlevel=taxlevel)[0]
+        df = subj.cluster_by_taxlevel(dtype='raw', taxlevel=taxlevel)[0]
 
         # Calculate the alpha diversity over time and plot
         vals = np.zeros(len(df.columns))
@@ -1131,7 +1125,7 @@ def alpha_diversity_over_time(subjs, metric, taxlevel=None, lca=True,
         ax.grid()
     return ax
 
-def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
+def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
     plot_abundant=None, plot_specific=None, plot_clusters=None, highlight=None, marker='o',
     ylim=None, markersize=4, shade_perturbations=True, legend=True, set_0_to_nan=False, 
     color_code_clusters=False, clustering=None, cmap=None, alpha=1.0, linestyle='-', ax=None,
@@ -1230,9 +1224,6 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
     taxlevel : str, None
         This is the taxa level to aggregate the data at. If 'default' is specified
         then it defaults the DEFAULT_TAX_LEVEL. If None then there will be no aggregation.
-    lca : bool
-        If True, it will aggregate the taxas that are unspecified at the specified level
-        at a higher taxonomic class
     yscale : bool, None
         If True, it will plot the y-axis in log scale. If nothing is specified then it 
         will pick it automatically.
@@ -1316,9 +1307,6 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
                             'pl.base.Subject'.format(type(s)))
             if not pl.isstudy(subj):
                 raise TypeError('`subj` ({}) type not recognized'.format(type(subj)))
-    if not pl.isbool(lca):
-        raise TypeError('`lca` ({}) must be a bool'.format(
-            type(lca)))
     if yscale_log is None:
         if dtype == 'rel':
             yscale_log = False
@@ -1396,10 +1384,10 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
         if _cumm > 1:
             raise ValueError('Only one `plot_` parameter can be specified. You specified {}'.format(_cumm))
         
-        if taxlevel == 'asv' and not lca:
+        if taxlevel == 'asv':
             df = subj.df()[dtype]
         else:
-            df = subj.cluster_by_taxlevel(dtype=dtype, lca=lca, taxlevel=taxlevel,
+            df = subj.cluster_by_taxlevel(dtype=dtype, taxlevel=taxlevel,
                 index_formatter=label_formatter)[0]
         times = subj.times
 
@@ -1569,7 +1557,7 @@ def abundance_over_time(subj, dtype, taxlevel=None, lca=False, yscale_log=None,
         ax.grid()
     return ax
 
-def taxonomic_distribution_over_time(subj, taxlevel=None, lca=True, 
+def taxonomic_distribution_over_time(subj, taxlevel=None,
     legend=True, ax=None, plot_abundant=None, label_formatter=None, 
     dtype='rel', shade_perturbations=True, **kwargs):
     '''Produces a taxonomic bar graph for each datapoint
@@ -1582,9 +1570,6 @@ def taxonomic_distribution_over_time(subj, taxlevel=None, lca=True,
     that are in the same Phylum. If `taxlevel=None` then we do no aggregation. If you 
     set `taxlevel='default'` then it aggregates at the default taxonomic level, which 
     can be set using the function `plotting.set_default_tax_level(level)`.
-
-    If an ASV is unspecified at a the specified taxonomic level, it will cluster at a
-    higher one if `lca` is True.
 
     The `label_formatter` (str) tells the function how to set the index of the dataframe
     it returns using `pylab.asvname_formatter`. If nothing is specified then it 
@@ -1607,9 +1592,6 @@ def taxonomic_distribution_over_time(subj, taxlevel=None, lca=True,
     taxlevel : str, None
         This is the taxa level to aggregate the data at. If 'default' is specified
         then it defaults the DEFAULT_TAX_LEVEL. If None then there will be no aggregation.
-    lca : bool
-        If True, it will aggregate the taxas that are unspecified at the specified level
-        at a higher taxonomic clas
     plot_abundant: int, None
         If specified, only plots the top or bottom `plot_abundant` elements.
         If None then nothing happens
@@ -1634,9 +1616,6 @@ def taxonomic_distribution_over_time(subj, taxlevel=None, lca=True,
     # Type checking
     if not (pl.issubject(subj) or pl.isstudy(subj)):
         raise ValueError('`subj` ({}) must be a pylab.base.Subject or pl.base.Study'.format(type(subj)))
-    if not pl.isbool(lca):
-        raise ValueError('`lca` ({}) must be a bool'.format(
-            type(lca)))
     if not pl.isbool(legend):
         raise ValueError('`legend` ({}) must be a bool'.format(type(legend)))
     taxlevel = _set_taxlevel(taxlevel)
@@ -1667,7 +1646,7 @@ def taxonomic_distribution_over_time(subj, taxlevel=None, lca=True,
         # # Only have the times that are consistent across all subjects        
         # for s in subj:
 
-        #     dfs.append(s.cluster_by_taxlevel(dtype=dtype, lca=lca, taxlevel=taxlevel, 
+        #     dfs.append(s.cluster_by_taxlevel(dtype=dtype, taxlevel=taxlevel, 
         #         index_formatter=label_formatter))
         # df = dfs[0]
         # for i in range(1, len(dfs)):
@@ -1675,7 +1654,7 @@ def taxonomic_distribution_over_time(subj, taxlevel=None, lca=True,
         # df = df/len(dfs)
 
     else:
-        df = subj.cluster_by_taxlevel(dtype=dtype, lca=lca, taxlevel=taxlevel, 
+        df = subj.cluster_by_taxlevel(dtype=dtype, taxlevel=taxlevel, 
             index_formatter=label_formatter)[0]
 
     if plot_abundant is not None:

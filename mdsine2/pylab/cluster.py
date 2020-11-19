@@ -94,16 +94,16 @@ class Clustering(Node, Traceable):
     got deleted and/or added. THE PRIORITY OF A CLUSTER BEING DELETED SUPERCEDES
     THE PRIORITY OF AN ITEM BEING MOVED.
     Example:
-        clusters = [[1,2,3], [0], [4,5]]
+        clusters = [1,0,0,0,2,2,2]
         If we moved oidx `0` to a different cluster using `move_item`:
-        clusters = [[0,1,2,3], [4,5]]
+        clusters = [0,0,0,0,1,1,1]
         Our signaling will call the function `clusters_changed`, even though
         item `0` "effectively" moved and there was a deletion of a cluster.
 
     Example:
-        clusters = [[1,2,3], [0], [4,5]]
-        If we moved oidx `1` to cluster [0] `move_item`:
-        clusters = [[2,3], [0,1], [4,5]]
+        clusters = [1,0,0,0,2,2,2]
+        If we moved oidx `1` to cluster [0] `move_item`: 
+        clusters = [1,1,0,0,2,2,2]
         Our signaling will call the function `assignments_changed` because 
         there was no deletion and/or additions of clusters
 
@@ -115,17 +115,10 @@ class Clustering(Node, Traceable):
     
     Parameters
     ----------
-    clusters : list(list(int)), None
-        These are the cluster assignments of each item. Structure is as follows:
-        The index of the top list indicates the index of the cluster. The elements
-        in the second level lists are the indices of the items in that cluster.
-        Example:
-            >>> clusters = [[0,1,2], [5,3], [4]]
-            Items 0,1,2 are in cluster 0
-            Items 3,5 are in cluster 1
-            Item 4 is in cluster 4
-        If it is None, then assume that all of the items are in their own cluster.
-        ALL MUST BE SPECIFIED ONLY ONCE.
+    clusters : np.ndarray(n_asvs), None
+        If None, do not set cluster assignments.
+        The index of the array corresponds to the item index. The value of the
+        index indicates the cluster for it to be assigned to
     items : pylab.base.Clusterable
         This is the object that stores all of the information of the items. The 
         ordering of the items in this object are assumed to be the global ordering
@@ -139,31 +132,29 @@ class Clustering(Node, Traceable):
             raise TypeError('`items` ({}) must be a pylab.base.Clusterable object'.format( 
                 type(items)))
         if clusters is None:
-            clusters = [[i] for i in range(len(items))]
+            clusters = np.arange(len(items))
         elif not util.isarray(clusters):
             raise TypeError('`clusters` ({}) must either be None or an array'.format( 
                 type(clusters)))
         else:
-            there = np.zeros(len(items), dtype=int)
-            clusters = list(clusters)
-            for ele in clusters:
-                if not type(ele) == list:
-                    raise TypeError('Each element in `clusters` ({}) must be a list'.format(
-                        type(ele)))
-                if not np.all(util.itercheck(ele, util.isint)):
-                    raise TypeError('Each element in each cluster must be an int')
-                for idx in ele:
-                    if there[idx] > 0:
-                        raise ValueError('Item index `{}` was specified more than once: {}'.format(
-                            idx, clusters))
-                    there[idx] = 1
+            clusters = np.asarray(clusters)
+            if np.any(clusters < 0):
+                raise ValueError('All cluster indices must be > 0')
+            for i in range(np.max(clusters)):
+                if i not in clusters:
+                    raise ValueError('Cluster {} not specified in `clusters`'.format(i))
+            if len(clusters) != len(items):
+                raise ValueError('`clusters` ({}) must be the same length as `items` ({})'.format(
+                    len(clusters), len(items)))
         
         # Everything is good, make the cluster objects
         self.items = items
         self.clusters = {}
-        for cluster in clusters:
-            temp = _Cluster(members=cluster, parent=self)
+        for cidx in np.arange(np.max(clusters)+1):
+            idxs = np.where(clusters == cidx)[0]
+            temp = _Cluster(members=idxs, parent=self)
             self.clusters[temp.id] = temp
+
         self.order = list(self.clusters.keys())
         self.properties = _ClusterProperties()
         
@@ -214,10 +205,15 @@ class Clustering(Node, Traceable):
         return len(self.order)
 
     def __contains__(self, cid):
-        return cid in self.clusters
+        return (cid in self.clusters) or (cid < len(self.clusters))
 
     def __getitem__(self, cid):
-        return self.clusters[cid]
+        if cid in self.clusters:
+            return self.clusters[cid]
+        elif cid < len(self.clusters):
+            return self.clusters[self.order[cid]]
+        else:
+            raise KeyError('`{}` not recognized as an ID or index'.format(cid))
 
     def keys(self):
         '''Alias for `self.order`
@@ -296,8 +292,12 @@ class Clustering(Node, Traceable):
         int
             This is the cluster ID it was moved to
         '''
-        if cid not in self.clusters:
+        if cid not in self:
             return self.make_new_cluster_with(idx)
+
+        # get the id of the cluster (could be an index)
+        cid = self[cid].id
+
         curr_cid = self.idx2cid[idx]
         if cid == curr_cid:
             # Do nothing
@@ -342,7 +342,7 @@ class Clustering(Node, Traceable):
     def generate_coclusters(self):
         return _generate_coclusters_fast(idx2cid=self.idx2cid)
     
-    def toarray(self):
+    def tolistoflists(self):
         '''Converts clusters into array format:
         clusters = [clus1, ..., clusN],
             clusters{i} = [idx1, ..., idxM]
@@ -360,58 +360,46 @@ class Clustering(Node, Traceable):
             ret.append(list(cluster.members))
         return ret
 
-    def toarray_vec(self):
-        '''Converts clusters into array format
-
-        array = [cidx(idx1), cidx(idx2), ..., cidx(idxM)]
-        This is the format for sklearn and scikit
-
+    def toarray(self):
+        '''Converts clusters into array format:
+        Each index is the index of an element that is being clustered. The value
+        is the cluster index. This is the same format was the input parameter for 
+        `__init__`.
+        
         Returns
         -------
         np.ndarray
         '''
-        ret = np.zeros(len(self.items), dtype=int)
-        for idx in range(len(ret)):
-            ret[idx] = self.cid2cidx[self.idx2cid[idx]]
+        ret = np.zeros(len(self.items),dtype=int)
+        for cidx, cluster in enumerate(self):
+            for idx in cluster.members:
+                ret[idx] = cidx
         return ret
 
     def from_array(self, a):
-        '''Set the clustering from a list of lists - note that this resets
+        '''Set the clustering from a numpy array - note that this resets
         all of the properties of these clusterings
 
         Parameters
         ----------
-        a : list(list(int))
+        a : np.ndarray
             The cluster configuration
         '''
         # Check
-        here = np.zeros(len(self.items))
         if not util.isarray(a):
             raise TypeError('`a` ({}) must be an array'.format(type(a)))
-        for ele in a:
-            if not util.isarray(ele):
-                raise TypeError('Each element in `a` ({}) must be an array'.format(
-                    type(ele)))
-            for idx in ele:
-                if not util.isint(idx):
-                    raise TypeError('Each element to be set in clustering ' \
-                        'must be an int ({}-{})'.format(type(ele),ele))
-                if idx < 0:
-                    raise ValueError('Each index ({}) must be >= 0'.format(idx))
-                if here[idx] == 1:
-                    raise ValueError('item index `{}` assigned twice ({})'.format(idx, a))
-                here[idx] = 1
-        if np.any(here == 0):
-            raise ValueError('Not all elements specified ({})'.format(
-                np.where(here == 0)[0]))
-
-        # Set the clusters
-        for arr in a:
-            first = arr[0]
-            rest = arr[1:]
-            cid = self.make_new_cluster_with(first)
-            for b in rest:
-                self.move_item(b, cid=cid)
+        a = np.asarray(a)
+        if np.any(a , 0):
+            raise ValueError('All values in `a` must be > 0')
+        for i in range(np.max(a)):
+            if i not in a:
+                raise ValueError('Index `{}` skipped in a'.format(i))
+        
+        for cidx in range(np.max(a)):
+            idxs = np.where(a == cidx)[0]
+            cid = self.make_new_cluster_with(idxs[0])
+            for idx in idxs[1:]:
+                self.move_item(idx, cid=cid)
 
     def set_trace(self, *args, **kwargs):
         self.coclusters.set_trace(*args, **kwargs)
@@ -792,43 +780,7 @@ def toarray_from_cocluster(coclusters):
              [1,0,0,1]]
         >>> toarray_from_coclusters(coclusters)
 
-        [[0,3], [1], [2]]
-
-    Parameters
-    ----------
-    coclusters : 2-dim square np.ndarray
-        Cocluster matrix
-    
-    Returns
-    -------
-    list(list(int))
-        Returns a list of list of ints that correspond to the clusters
-    '''
-    a = np.full(coclusters.shape[0], -1)
-    i = 0
-    for j in range(coclusters.shape[0]):
-        if a[j] == -1:
-            for k in range(j,coclusters.shape[0]):
-                if coclusters[j,k] == 1:
-                    a[k] = i
-            i += 1
-    ret = [list(np.where(a == m)[0]) for m in range(np.max(a)+1)]
-    return ret
-
-def toarray_vec_from_coclusters(coclusters):
-    '''Generate the output that would be given from 
-    `clustering.toarray` from the cocluster matrix.
-
-    Numba is about 10X faster.
-
-    Example:
-        coclusters = 
-            [[1,0,0,1],
-             [0,1,0,0],
-             [0,0,1,0],
-             [1,0,0,1]]
-        >>> toarray_from_coclusters(coclusters)
-        [0,1,2,0]
+        [0, 1, 2, 0]
 
     Parameters
     ----------
@@ -838,22 +790,13 @@ def toarray_vec_from_coclusters(coclusters):
     Returns
     -------
     np.ndarray
-        The index of the array is the item index, the value of the array is the cluster index
     '''
-
-    '''Converts clusters into array format
-
-    array = [cidx(idx1), cidx(idx2), ..., cidx(idxM)]
-    This is the format for sklearn and scikit
-
-        Returns
-        -------
-        np.ndarray
-    '''
-    ret = np.zeros(coclusters.shape[0], dtype=int)
-    toarray = toarray_from_cocluster(coclusters)
-
-    for cidx, cluster in enumerate(toarray):
-        for idx in cluster:
-            ret[idx] = cidx
-    return ret
+    a = np.full(coclusters.shape[0], -1)
+    i = 0
+    for j in range(coclusters.shape[0]):
+        if a[j] == -1:
+            for k in range(j,coclusters.shape[0]):
+                if coclusters[j,k] == 1:
+                    a[k] = i
+            i += 1
+    return a

@@ -22,6 +22,7 @@ import logging
 import numpy as np
 import pandas as pd
 import sys
+import os.path
 
 from .names import STRNAMES
 from . import pylab as pl
@@ -86,8 +87,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
     def __init__(self, basepath, data_seed, init_seed, burnin, n_samples,
         negbin_a0, negbin_a1, qpcr_scale, leave_out=None, max_n_asvs=None, 
         checkpoint=100):
-
-        self.OUTPUT_BASEPATH = basepath
+        self.OUTPUT_BASEPATH = os.path.abspath(basepath)
         self.DATA_SEED = data_seed
         self.INIT_SEED = init_seed
         self.BURNIN = burnin

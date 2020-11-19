@@ -1,4 +1,25 @@
 --------------------------------------
+Version 4.0.1 (11/17/20)
+--------------------------------------
+Major changes:
+  - Finished Aggregate ASVs
+  - Plotting aggregate ASvs
+  - Conditional consistency filtering in `util`
+  - No longer saving graph and tracer object during inference
+  - Implemented building the negative binomial graph for inference
+  - `mdsine2.Clustering.toarray` now an array (previously `toarray_vec)
+  - Compressed all posterior modules into a single module
+  - Automatically generate absolute path and redo absolute path if it
+    is loaded in a different location. Additionally, tracer HDF5 object
+    is found in the local path if a tracer object is defined.
+  - Retrieve a cluster from `mdsine2.pylab.cluster.Clustering` with an index
+    as well as an id
+  - Removed LCA
+Minor changes:
+  - Saving ASv taxonomy within `AggregateASV` for more robust deaggregation.
+  - Changed `diversity.beta.hamming` to be what is used in aggergation.
+
+--------------------------------------
 Version 4.0.0 (11/11/20)
 --------------------------------------
 Refactored core mdsine code into once was PyLab

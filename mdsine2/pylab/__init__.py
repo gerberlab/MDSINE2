@@ -19,27 +19,25 @@ from .base import isqpcrdata, isasvset, isasv, issavable, istraceable, \
     issubject, isstudy, isperturbation, isclusterable, isaggregatedasv, isasvtype
 from .random import israndom
 from .cluster import isclustering, isclusterproperty, isclustervalue
-from .inference import isMCMC, isML, ismodel
+from .inference import isMCMC, ismodel
 from .graph import isgraph, isnode
 from .metropolis import isMetropKernel
 from .dynamics import isdynamics, isprocessvariance, isintegratable
 from .contrib import isclusterperturbationindicator, isclusterperturbation, isinteractions
 from .multiprocessing import ispersistentworker, ispersistentpool, isDASW, isSADW
 
-# Get commonly used functions and classes
-from .util import asvname_formatter, toarray, fast_index, coarsen_phylogenetic_tree, itercheck
+# Import commonly used Pylab functions and classes
+from .util import asvname_formatter, toarray, fast_index, coarsen_phylogenetic_tree, \
+    asvname_for_paper, ASVNAME_PAPER_FORMAT
 from .base import ASV, ASVSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
     Subject, Study, condense_matrix_with_taxonomy
-from .variables import Variable, Constant, summary
-from .graph import Graph, Node, DataNode, get_default_graph, hasprior, Data
-from .cluster import Clustering, ClusterProperty, ClusterValue
-from .metropolis import acceptance_rate
-from .multiprocessing import PersistentPool
+from .variables import Variable, Constant
+from .graph import Graph, Node
+from .cluster import Clustering
 from .random import seed
-from .math import metrics
-from .contrib import Interactions, ClusterPerturbation
-from .dynamics import BaseDynamics, BaseProcessVariance
+from .contrib import Interactions
 from .inference import BaseMCMC
+from .dynamics import integrate
 
 # Get errors
 from .errors import UndefinedError, MathError, GraphIDError, InheritanceError, \
