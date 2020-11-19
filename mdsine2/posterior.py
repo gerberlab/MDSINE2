@@ -1281,9 +1281,6 @@ class ClusterAssignments(pl.graph.Node):
     def add_trace(self):
         self.clustering.add_trace()
 
-    def add_init_value(self):
-        self.clustering.add_init_value()
-
     def kill(self):
         if pl.ispersistentpool(self.pool):
             # For pylab multiprocessing, explicitly kill them
@@ -2293,12 +2290,12 @@ class TrajectorySet(pl.graph.Node):
         self.value = []
         n_asvs = self.G.data.n_asvs
 
-        for ridx in range(self.G.data.n_replicates):
+        for ridx, subj in enumerate(self.G.data.subjects):
             n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
 
             # initialize values to zeros for initialization
             self.value.append(pl.variables.Variable(
-                name=name+'_ridx{}'.format(ridx), G=G, shape=(n_asvs, n_timepoints),
+                name=name+'_{}'.format(subj.name), G=G, shape=(n_asvs, n_timepoints),
                 value=np.zeros((n_asvs, n_timepoints), dtype=float), **kwargs))
         prior = pl.variables.Normal(
             mean=pl.variables.Constant(name=self.name+'_prior_mean', value=0, G=self.G),
@@ -2353,10 +2350,6 @@ class TrajectorySet(pl.graph.Node):
             # Set the zero inflation values to nans
             self.value[ridx].value[~self.G[REPRNAMES.ZERO_INFLATION].value[ridx]] = np.nan
             self.value[ridx].add_trace()
-
-    def add_init_value(self):
-        for ridx in range(len(self.value)):
-            self.value[ridx].add_init_value()
 
 
 class FilteringLogMP(pl.graph.Node):
@@ -2814,9 +2807,6 @@ class FilteringLogMP(pl.graph.Node):
 
     def add_trace(self):
         self.x.add_trace()
-
-    def add_init_value(self):
-        self.x.add_init_value()
 
     def set_trace(self, *args, **kwargs):
         self.x.set_trace(*args, **kwargs)
@@ -6677,13 +6667,6 @@ class RegressCoeff(pl.variables.MVN):
         if self._there_are_perturbations:
             self.pert_mag.set_trace()
 
-    def add_init_value(self):
-        self.growth.add_init_value()
-        self.self_interactions.add_init_value()
-        self.interactions.add_init_value()
-        if self._there_are_perturbations:
-            self.pert_mag.add_init_value()
-
 
 # Perturbations
 # -------------
@@ -6861,13 +6844,6 @@ class PerturbationMagnitudes(pl.variables.Normal):
     def add_trace(self, *args, **kwargs):
         for perturbation in self.perturbations:
             perturbation.add_trace(*args, **kwargs)
-
-    def add_init_value(self):
-        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        '''
-        for perturbation in self.perturbations:
-            perturbation.add_init_value()
 
     def asarray(self):
         '''Get an array of the perturbation magnitudes
@@ -7047,13 +7023,6 @@ class PerturbationProbabilities(pl.Node):
         for perturbation in self.perturbations:
             perturbation.probability.add_trace(*args, **kwargs)
 
-    def add_init_value(self):
-        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        '''
-        for perturbation in self.perturbations:
-            perturbation.add_init_value()
-
 
 class PerturbationIndicators(pl.Node):
     '''This is the indicator for a perturbation
@@ -7103,14 +7072,6 @@ class PerturbationIndicators(pl.Node):
         if self.need_to_trace:
             for perturbation in self.perturbations:
                 perturbation.set_trace(*args, **kwargs)
-
-    def add_init_value(self):
-        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        '''
-        if self.need_to_trace:
-            for perturbation in self.perturbations:
-                perturbation.add_init_value()
 
     def initialize(self, value_option, p=None, delay=0):
         '''Initialize the based on the passed in option.
@@ -7694,13 +7655,6 @@ class PriorVarPerturbations(pl.Variable):
         for perturbation in self.perturbations:
             perturbation.magnitude.prior.var.add_trace(*args, **kwargs)
 
-    def add_init_value(self):
-        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        '''
-        for perturbation in self.perturbations:
-            perturbation.add_init_value()
-
     def get_single_value_of_perts(self):
         '''Get the variance for each perturbation
         '''
@@ -7900,13 +7854,6 @@ class PriorMeanPerturbations(pl.Variable):
         for perturbation in self.perturbations:
             perturbation.magnitude.prior.mean.add_trace(*args, **kwargs)
 
-    def add_init_value(self):
-        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        '''
-        for perturbation in self.perturbations:
-            perturbation.add_init_value()
-
     def get_single_value_of_perts(self):
         '''Get the variance for each perturbation
         '''
@@ -8090,10 +8037,6 @@ class _qPCRBase(pl.Variable):
     def set_trace(self, *args, **kwargs):
         for a in self.value:
             a.set_trace(*args, **kwargs)
-
-    def add_init_value(self):
-        for a in self.value:
-            a.add_init_value()
 
 
 class _qPCRPriorAggVar(_qPCRBase):

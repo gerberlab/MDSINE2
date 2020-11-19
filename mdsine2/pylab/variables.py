@@ -529,16 +529,6 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
             raise ValueError('Iteration {} too long for RAM trace {}'.format(self.ckpt_iter, 
                 len(self.trace)))
 
-    def add_init_value(self):
-        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        '''
-        if isarray(self.value):
-            value = np.array(self.value)
-        else:
-            value = self.value
-        self._init_value = value
-
     def set_value_shape(self, shape):
         '''Set the shape
         

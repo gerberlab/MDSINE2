@@ -385,11 +385,6 @@ class Traceable:
         '''
         raise NotImplementedError('User needs to define this function')
 
-    def add_init_value(self):
-        '''Saves the initialization value
-        '''
-        raise NotImplementedError('User needs to define this function')
-
     def get_trace_from_disk(self, *args, **kwargs):
         '''Returns the entire trace (after burnin) writen on the disk. NOTE: This may/may not 
         include the samples in the local buffer trace and could be very large
@@ -1708,7 +1703,7 @@ class Study(Saveable):
     def __contains__(self, key):
         return key in self._subjects
 
-    def parse_samples(self, metadata, reads=None, qpcr=None):
+    def parse(self, metadata, reads=None, qpcr=None):
         '''Parse tables of samples and cast in Subject sets. Automatically creates
         the subject classes with the respective names.
 

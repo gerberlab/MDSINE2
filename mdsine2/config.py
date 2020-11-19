@@ -468,11 +468,12 @@ class NegBinConfig(_BaseModelConfig):
             basepath += '/'
 
         self.SEED = seed
-        self.OUTPUT_BASEPATH = basepath
+        self.OUTPUT_BASEPATH = os.path.abspath(basepath)
         self.BURNIN = burnin
         self.N_SAMPLES = n_samples
         self.CKPT = ckpt
         self.MP_FILTERING = 'full'
+        self.QPCR_NORMALIZATION_MAX_VALUE = 100
 
         self.INFERENCE_ORDER = [
             STRNAMES.NEGBIN_A0,

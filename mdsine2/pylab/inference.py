@@ -439,8 +439,6 @@ class BaseMCMC(BaseModel):
                 # Sample posterior in the order indicated and add the trace
                 for _id in self.inf_order:
                     try:
-                        if i == 0:
-                            self.graph.nodes[_id].add_init_value()
                         self.graph.nodes[_id].update()
                         self.graph.nodes[_id].add_trace()
                     except:

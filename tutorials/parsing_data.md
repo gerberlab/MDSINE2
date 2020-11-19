@@ -33,6 +33,7 @@ The qPCR table, which we will refer to as `qpcr`, is a `pd.DataFrame` object  wh
 | sample2 | 44444   | 55555   | 66666 |
 | sample3 | 77777   | 88888   | 99999 |
 | sample4 | 12345   | 6789   | 1010101 |
+
 This table assumes that there are 3 qPCR samples for each sample. There can b e any number of columns
 
 #### 4) Meta-data table
@@ -56,3 +57,10 @@ To parse your own data, first create a `md2.ASVSet` object:
 asvs = md2.ASVSet(taxonomy_table=taxonomy)
 ```
 Then, create the `md2.Study` object
+```python
+study = md2.Study(asvs=asvs)
+study.parse(
+    metadata=metadata,
+    reads=reads,
+    qpcr=qpcr)
+```

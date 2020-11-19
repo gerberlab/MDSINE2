@@ -1,7 +1,7 @@
 '''Posterior Objects used for learning the negative binomial dispersion parameters.
 
 This contains all of the data structures used for inference: design matrices, posterior
-classes, auxiliary functions
+classes, auxiliary functions, building the graph
 '''
 import numpy as np
 import logging
@@ -20,6 +20,8 @@ from . import visualization
 
 from . import pylab as pl
 from .names import REPRNAMES, STRNAMES
+from . import config
+from .run import denormalize_parameters
 
 @numba.jit(nopython=True, fastmath=True, cache=True)
 def negbin_loglikelihood(k,m,dispersion):
@@ -607,10 +609,6 @@ class FilteringMP(pl.graph.Node):
     def set_trace(self, *args, **kwargs):
         for x in self.value:
             x.set_trace(*args, **kwargs)
-
-    def add_init_value(self):
-        for x in self.value:
-            x.add_init_value()
     
     def kill(self):
         if pl.ispersistentpool(self.pool):
@@ -845,7 +843,7 @@ def _single_calc_mean_var(means, variances, a0, a1, rels, read_depths):
 
             i += 1
     return means, variances
-   
+
 def visualize_learned_negative_binomial_model(mcmc, section='posterior'):
     '''Visualize the negative binomial dispersion model.
 
@@ -962,4 +960,110 @@ def visualize_learned_negative_binomial_model(mcmc, section='posterior'):
 
     return fig
 
-    
+def build_graph(params, graph_name, subjset):
+    '''Builds the graph used for posterior inference of the negative binomial
+    dispersion parameters
+
+    Parameters
+    ----------
+    params : mdsine2.config.NegBinConfig
+        This specfies the parameters to run the model
+    graph_name : str
+        This is what we label the graph with
+    subjset : mdsine2.Study
+        This is the MDSINE2 object that contains all of the data and the ASVs
+    '''
+    if not config.isModelConfig(params):
+        raise TypeError('`params` ({}) needs to be a config.ModelConfig object'.format(type(params)))
+    if not pl.isstudy(subjset):
+        raise TypeError('`subjset` ({}) must be a mdsine2.Study'.format(type(subjset)))
+    if not pl.isstr(graph_name):
+        raise TypeError('`graph_name` ({}) must be a str'.format(type(graph_name)))
+
+    # Initialize the graph and make the save location
+    # -----------------------------------------------
+    GRAPH = pl.Graph(name=graph_name, seed=params.SEED)
+    GRAPH.as_default()
+
+    basepath = params.OUTPUT_BASEPATH
+    os.makedirs(basepath, exist_ok=True)
+    runname = GRAPH.name + params.suffix()
+    basepath = os.path.join(basepath, runname)
+    os.makedirs(basepath, exist_ok=True)
+
+    # Normalize the qpcr measurements for numerical stability
+    # -------------------------------------------------------
+    if params.QPCR_NORMALIZATION_MAX_VALUE is not None:
+        subjset.normalize_qpcr(max_value=params.QPCR_NORMALIZATION_MAX_VALUE)
+        logging.info('Normalizing abundances for a max value of {}. Normalization ' \
+            'constant: {:.4E}'.format(params.QPCR_NORMALIZATION_MAX_VALUE, 
+            subjset.qpcr_normalization_factor))
+
+    # Initialize the inference objects
+    # --------------------------------
+    d = Data(subjset, G=GRAPH)
+
+    x = FilteringMP(mp=params.MP_FILTERING, G=GRAPH, name=STRNAMES.FILTERING)
+    a0 = NegBinDispersionParam(name=STRNAMES.NEGBIN_A0, G=GRAPH, low=0, high=1e5)
+    a1 = NegBinDispersionParam(name=STRNAMES.NEGBIN_A1, G=GRAPH, low=0, high=1e5)
+
+    mcmc = pl.BaseMCMC(burnin=params.BURNIN, n_samples=params.N_SAMPLES, graph=GRAPH)
+
+    # Set the inference order
+    # -----------------------
+    inference_order = []
+    for name in params.INFERENCE_ORDER:
+        if params.LEARN[name]:
+            inference_order.append(name)
+    mcmc.set_inference_order(inference_order)
+    REPRNAMES.set(G=GRAPH)
+
+    # Initialize the parameters
+    # -------------------------
+    for name in params.INITIALIZATION_ORDER:
+        try:
+            GRAPH[name].initialize(**params.INITIALIZATION_KWARGS[name])
+        except:
+            logging.critical('Failed in {}'.format(name))
+            raise
+
+    # Set tracing object
+    # ------------------
+    hdf5_filename = os.path.join(basepath, config.HDF5_FILENAME)
+    mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
+    param_filename = os.path.join(basepath, config.PARAMS_FILENAME)
+    mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CKPT)
+    mcmc.set_save_location(mcmc_filename)
+    params.save(param_filename)
+
+    return mcmc
+
+def run_graph(mcmc, crash_if_error=True):
+    '''Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        Inference object that is already built and initialized
+    crash_if_error : bool
+        If True, throws an error if there is an exception during inference. Otherwise
+        it continues out of inference.
+
+    Returns
+    -------
+    mdsine2.BaseMCMC
+    '''
+    try:
+        mcmc.run(log_every=1)
+    except Exception as e:
+        logging.critical('CHAIN `{}` CRASHED'.format(mcmc.graph.name))
+        logging.critical('Error: {}'.format(e))
+        if crash_if_error:
+            raise
+    mcmc.graph[STRNAMES.FILTERING].kill()
+
+    if mcmc.graph.data.subjects.qpcr_normalization_factor is not None:
+        mcmc, mcmc.graph.data.subjects = denormalize_parameters(mcmc, 
+            mcmc.graph.data.subjects)
+    return mcmc
+

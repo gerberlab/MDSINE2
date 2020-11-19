@@ -14,7 +14,7 @@ Major changes:
     is found in the local path if a tracer object is defined.
   - Retrieve a cluster from `mdsine2.pylab.cluster.Clustering` with an index
     as well as an id
-  - Removed LCA
+  - Removed LCA, init_value()
 Minor changes:
   - Saving ASv taxonomy within `AggregateASV` for more robust deaggregation.
   - Changed `diversity.beta.hamming` to be what is used in aggergation.

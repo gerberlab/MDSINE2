@@ -4,8 +4,8 @@ from . import visualization
 from . import diversity
 from . import dataset
 from . import config
-from . import posterior_mdsine2
-from . import posterior_negbin
+from . import posterior
+from . import negbin
 
 # Import key modules from pylab
 from .pylab import random
@@ -44,8 +44,8 @@ from .pylab.errors import UndefinedError, MathError, GraphIDError, InheritanceEr
     InitializationError
 
 from . import config
-from .run import build_graph, normalize_parameters, denormalize_parameters, \
-    calculate_stability_over_gibbs
+from .run import initialize_graph, normalize_parameters, denormalize_parameters, \
+    calculate_stability_over_gibbs, run_graph
 from .util import is_gram_negative, is_gram_negative_taxa, \
     generate_interation_bayes_factors_posthoc, generate_perturbation_bayes_factors_posthoc, \
     aggregate_items

@@ -7,17 +7,18 @@ import os
 from . import config
 from .names import STRNAMES, REPRNAMES
 from . import design_matrices
+from . import posterior
 
 from . import pylab as pl
 
-def build_graph(params, graph_name, subjset, continue_inference=None, 
+def initialize_graph(params, graph_name, subjset, continue_inference=None, 
     intermediate_validation=None):
     '''Builds the graph with the posterior classes and creates an
     mdsine2.BaseMCMC inference chain object that you ran run inference with
 
     Parameters
     ----------
-    params : config.ModelConfig
+    params : mdsine2.config.ModelConfig
         This class specifies all of the parameters of the model.
     graph_name : str
         Name of the graph you want to build
@@ -40,7 +41,6 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     pl.inference.BaseMCMC
         Inference chain
     '''
-    from . import posterior_mdsine2 as posterior
     # Type Check
     # ----------
     if not config.isModelConfig(params):
@@ -401,22 +401,40 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
     mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CHECKPOINT)
     mcmc.set_save_location(mcmc_filename)
+    params.save(os.path.join(basepath + config.PARAMS_FILENAME))
 
     return mcmc
 
-def build_graph_negbin(params, graph_name, subjset):
-    '''Builds the graph used for posterior inference of the negative binomial
-    dispersion parameters
-    '''
-    if not config.isModelConfig(params):
-        raise TypeError('`params` ({}) needs to be a config.ModelConfig object'.format(type(params)))
-    if not pl.isstudy(subjset):
-        raise TypeError('`subjset` ({}) must be a mdsine2.Study'.format(type(subjset)))
-    if not pl.isstr(graph_name):
-        raise TypeError('`graph_name` ({}) must be a str'.format(type(graph_name)))
+def run_graph(mcmc, crash_if_error=True):
+    '''Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
 
-    asvs = subjset.asvs
-    
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        Inference object that is already built and initialized
+    crash_if_error : bool
+        If True, throws an error if there is an exception during inference. Otherwise
+        it continues out of inference.
+
+    Returns
+    -------
+    mdsine2.BaseMCMC
+    '''
+    try:
+        mcmc.run(log_every=1)
+    except Exception as e:
+        logging.critical('CHAIN `{}` CRASHED'.format(mcmc.graph.name))
+        logging.critical('Error: {}'.format(e))
+        if crash_if_error:
+            raise
+    mcmc.graph[STRNAMES.FILTERING].kill()
+    mcmc.graph[STRNAMES.CLUSTERING].kill()
+
+    if mcmc.graph.data.subjects.qpcr_normalization_factor is not None:
+        mcmc, mcmc.graph.data.subjects = denormalize_parameters(mcmc, 
+            mcmc.graph.data.subjects)
+    return mcmc
+
 def normalize_parameters(mcmc, subjset):
     '''Normalize the abundance of the parameters by the normalization factor
     in the subject set
@@ -735,11 +753,3 @@ def calculate_stability_over_gibbs(mcmc, section='auto', log_every=1000):
         
         ret[i] = np.diag(growth[i]) @ interactions[i]
     return ret
-
-
-
-
-    
-
-    
-

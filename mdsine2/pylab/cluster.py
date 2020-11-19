@@ -224,12 +224,6 @@ class Clustering(Node, Traceable):
         '''
         return self.order
 
-    def add_init_value(self):
-        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        '''
-        self._init_value = self.toarray()
-
     def make_new_cluster_with(self, idx):
         '''Create a new cluster with the item index `idx`.
         Removes `idx` from the previous cluster.
@@ -683,12 +677,6 @@ class ClusterValue(ClusterProperty, Node, Traceable):
             Array of the values expanded for each cluster in the overall cluster order
         '''
         return np.asarray([self.value[cid] for cid in self.clustering.order], dtype=self.dtype)
-
-    def add_init_value(self):
-        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        '''
-        self._init_value = self.item_array()
 
     def set_values_from_array(self, values):
         '''Set the values from an array of the same order as the clusters

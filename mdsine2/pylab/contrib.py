@@ -185,15 +185,6 @@ class Perturbation(BasePerturbation, variables.Variable):
         self.value[ind] = self.magnitude.value[ind]
         variables.Variable.add_trace(self)
 
-    def add_init_value(self):
-        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        '''
-        self.value = np.full(len(self.asvs), np.nan)
-        ind = self.indicator.value
-        self.value[ind] = self.magnitude.value[ind]
-        variables.Variable.add_init_value(self)
-
     def array(self, only_pos_ind=False):
         '''Return the magnitudes with the indicatrs indexed out
 
@@ -624,15 +615,6 @@ class ClusterPerturbation(BasePerturbation, variables.Variable):
         ind = self.indicator.item_arg_array()
         self.value[ind] = self.magnitude.item_array()[ind]
         variables.Variable.add_trace(self)
-
-    def add_init_value(self):
-        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        '''
-        self.value = np.full(len(self.clustering.items), np.nan)
-        ind = self.indicator.item_arg_array()
-        self.value[ind] = self.magnitude.item_array()[ind]
-        variables.Variable.add_init_value(self)
 
     def set_values_from_array(self, values, use_indicators=True):
         '''Sets the values from an array of the same order as the clusters.
@@ -1393,12 +1375,6 @@ class Interactions(ClusterProperty, Node, Traceable):
             shape = (self.G.tracer.ckpt, ) + self._shape
             self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
             self.ckpt_iter = 0
-
-    def add_init_value(self):
-        '''Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        '''
-        self._init_value = self.get_datalevel_value_matrix(set_neg_indicators_to_nan=True)
 
     def get_adjacent(self, cid, incoming, outgoing, use_indicators=True):
         '''Get all of the cluster IDs that have a positive interaction going into

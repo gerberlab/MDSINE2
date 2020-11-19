@@ -136,7 +136,7 @@ def gibson(dset=None, as_df=False, species_assignment='both'):
 
         asvs = ASVSet(taxonomy_table=taxonomy)
         study = Study(asvs=asvs)
-        study.parse_samples(
+        study.parse(
             metadata=metadata,
             reads=reads,
             qpcr=qpcr)
