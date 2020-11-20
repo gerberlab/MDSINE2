@@ -1,10 +1,30 @@
-'''These are classes for constructing the design matrices
+'''These are classes for constructing the design matrices.
 
-The ordering for time points goes:
-    for replicate in n_replicates:
-        for timepoint in n_timepoints:
-            for asv in n_asvs:
-                do stuff...
+Main classes
+------------
+`Data`
+    This class is what `mdsine2.Graph.data` points to. It keeps all the design matrices for
+    each class consistent as well as provides functionality and core functions that are used
+    in inference. The main job of this class is to act as a pointer to the individual design
+    matrices that are used in inference. You can access these classes with the pointer
+    `Data.design_matrices[name_of_class]`.
+`LHSVector`
+    This is the Left Hand Side (LHS) of the MDSINE2 model:
+        (log(x[k+1]) - log(x[k+1]))/(t[k+1] - t[k])
+    where
+        x is the latent abundance at point k
+        t is the time at point k
+`DesignMatrix` subclasses
+    These build the right hand side of the MDSINE2 model and is broken up into individual
+    classes:
+        Growth : The RHS for the growth parameter is in `GrowthDesignMatrix`
+        Self-interactions : The RHS for the self-interaction parameter is in `SelfInteractionDesignMatrix`
+        Perturbations : The RHS for the perturbation parameter is in `PerturbationDesignMatrix` which is
+                        composed of `PerturbationBaseDesignMatrix` and `PerturbationMixingDesignMatrix`. For
+                        more details, see `PerturbationDesignMatrix`.
+        Interactions : The RHS for the perturbation parameter is in `InteractionsDesignMatrix` which is
+                       composed of `InteractionsBaseDesignMatrix` and `InteractionsMixingDesignMatrix`. For
+                       more details, see `InteractionsDesignMatrix`.
 '''
 
 import numpy as np
@@ -20,28 +40,34 @@ from .names import STRNAMES, REPRNAMES
 from . import pylab as pl
 
 class Data(DataNode):
-    '''Acts as a collection for the Observation object and a
-    collection of Covariate objects
+    '''Acts as a collection for the Observation object and a collection of Covariate objects.
 
-    `self.data` are the values that we are putting into the design matrices
-
-    `self.dt[ridx][k]` is the change in time from time index k to time index k+1
-    `self.dt_vec` is a vector of all the delta t's in the right order in full vector form
-
-    Difference between self.times and self.given_timepoints
-        self.times are all the timepoints that we have data for the latent trajectory
-        self.given_timepoints are all the timepoints where we actually have data for as specified
-            in self.subjects
+    Description of internal objects
+    -------------------------------
+    self.data : list(np.ndarray(n_asvs, n_times)) 
+        These are the data matrices that are used to build the design matrices. Index
+        the replicate by the index of the list. 
+    
+    self.dt[ridx][k] : list(np.ndarray((n_times, ))) 
+        This is the change in time from time index k to time index k+1 for replicate index `ridx`.
+    self.dt_vec : np.ndarray 
+        These have the same values as `self.dt` excpet that the arrays are flattened so that the 
+        index of dt corresponds to the row in the design matrix. IE (x[k+1] - x[k])/self.dt[k] can be thought
+        of as: 
+            (x[ridx][aidx, k+1] - x2[ridx][aidx, k])/(times[ridx][k+1] - times[ridx][k])
+        for each replicate index `ridx` and ASV index `aidx`
+    Difference between `self.times` and `self.given_timepoints`
+        `self.times` are all the timepoints that we have data for the latent trajectory whereas
+        `self.given_timepoints` are all the timepoints where we actually have data for as specified in 
+        `self.subjects`. These are going to be different if we have intermediate datapoints
 
     We assume that once this object gets initialized there is not more deletions of
-    ASVs or replicates for the inference.
+    ASVs or replicates for the inference, i.e. `subjects` needs to stay fixed during inference
+    for this object to stay consistent.
 
-    We assume that all of the subjects have the same perturbations
 
     Parameters
     ----------
-    asvs : pl.base.ASVSet
-        This is the ASVSet that we use
     subjects : pl.base.Study
         These are a list of the subjects that we are going to get data from
     zero_inflation_transition_policy : str
@@ -58,21 +84,15 @@ class Data(DataNode):
     **kwargs
         - These are the extra arguments for DataNode
     '''
-    def __init__(self, asvs, subjects,
-        zero_inflation_transition_policy=None, **kwargs):
+    def __init__(self, subjects, zero_inflation_transition_policy=None, **kwargs):
         if 'name' not in kwargs:
-            kwargs['name'] = 'data'
+            kwargs['name'] = STRNAMES.DATA
         DataNode.__init__(self, **kwargs)
-
-        # Type checking
-        if not pl.isasvset(asvs):
-            raise ValueError('`asvs` ({}) must be a pylab ASVSet object'.format(
-                type(asvs)))
         if not pl.isstudy(subjects):
             raise ValueError('`subjects` ({}) must be a pylab Study'.format(
                 type(subjects)))
 
-        self.asvs = asvs
+        self.asvs = subjects.asvs
         self.subjects = subjects
         self.zero_inflation_transition_policy = zero_inflation_transition_policy
 
@@ -155,11 +175,11 @@ class Data(DataNode):
         self.tidxs_in_perturbation = None
         if self.subjects.perturbations is not None:
             self.tidxs_in_perturbation = []
-            for ridx in range(self.n_replicates):
+            for ridx, subj in enumerate(self.subjects):
                 self.tidxs_in_perturbation.append([])
                 for perturbation in self.subjects.perturbations:
-                    start = perturbation.start
-                    end = perturbation.end
+                    start = perturbation.starts[subj.name]
+                    end = perturbation.ends[subj.name]
 
                     if start in self.timepoint2index[ridx]:
                         # There is a measurement at the start of the perturbation
@@ -252,13 +272,17 @@ class Data(DataNode):
 
     def set_timepoints(self, times=None, timestep=None, ridx=None, eps=None,
         reset_timepoints=False):
-        '''These are the time points that you want to generate the latent state at.
+        '''Set times if you want intermediate timepoints.
+        
+        These are the time points that you want to generate the latent state at.
         If there is a time in `times` that is not in the given data, then we set
         it as an intermediate time point. You can specify the times that you 
         want either as a vector with `times` or with a constant time-step
         with the interval `timestep`. Only one of them is necessary. It will crash
         if both are supplied.
 
+        `eps` is a radius around each of the given timepoints already supplied by
+        the data in `subjects` where no intermediate timepoints can be set.
         If a timepoint that is set is within `eps` days of a timepoint already there,
         then we skip adding that timepoint. If `eps` is None then we assume
         that there is no constraint. 
@@ -295,14 +319,11 @@ class Data(DataNode):
             If False then we add the set of timepoints added at this call with the
             intermediate timepoints from a previous call.
         '''
-        if times is None and timestep is None:
-            raise ValueError('Either `times` or `timestep` must be provided')
-        if times is not None and timestep is not None:
+        if (times is None and timestep is None) or (times is not None and timestep is not None):
             raise ValueError('Either `times` or `timestep` must be provided')
         if not pl.isbool(reset_timepoints):
             raise TypeError('`reset_timepoints` ({}) must be a bool'.format(
                 type(reset_timepoints)))
-        
         if ridx is not None:
             if not pl.isint(ridx):
                 raise ValueError('`ridx` ({}) must be an int'.format(type(ridx)))
@@ -322,7 +343,6 @@ class Data(DataNode):
                 if end < ts[-1]:
                     end = ts[-1]
             times = np.arange(start,end,timestep)
-
         if not pl.isarray(times):
             raise ValueError('`times` ({}) must be an array'.format(type(times)))
         
@@ -337,8 +357,6 @@ class Data(DataNode):
                 new_times = np.array(self.given_timepoints[ridx])
             else:
                 new_times = np.array(self.times[ridx])
-            
-
 
             n_added = 0
             for t in times:
@@ -440,11 +458,11 @@ class Data(DataNode):
         # redo tidx arrays for perturbations if necessary
         if self.tidxs_in_perturbation is not None:
             self.tidxs_in_perturbation = []
-            for ridx in range(self.n_replicates):
+            for ridx, subj in enumerate(self.subjects):
                 self.tidxs_in_perturbation.append([])
                 for perturbation in self.subjects.perturbations:
-                    start = perturbation.start
-                    end = perturbation.end
+                    start = perturbation.starts[subj.name]
+                    end = perturbation.ends[subj.name]
 
                     if start in self.timepoint2index[ridx]:
                         # There is a measurement at the start of the perturbation
@@ -668,7 +686,9 @@ class Data(DataNode):
     # @profile
     def construct_rhs(self, keys, kwargs_dict={}, index_out_perturbations=False, 
         toarray=False):
-        '''Does the stacking and subtracting necessary to make the covariate matrix
+        '''Does the stacking and subtracting necessary to make the covariate matrix.
+        Default setting for this matrix is a `scipy.sparse` matrix unless you
+        explicitly convert it with `toarray`.
 
         Parameters
         ----------
@@ -1108,14 +1128,15 @@ class GrowthDesignMatrix(DesignMatrix):
 
 
 class PerturbationBaseDesignMatrix(DesignMatrix):
-    '''This is the base data for the perturbations
+    '''This is the base data for the perturbations.
 
-    This creates the baseline perturbation effects for each ASV.
+    This creates the baseline perturbation effects for each ASV, for every indicator.
+    This class used in conjungtion with `PerturbationMixingDesignMatrix` and should
+    be accessed through `PerturbationDesignMatrix`.
 
     Parameterization
     ----------------
-    There are two different effect parameterizations you can do:
-    Multiplicative:
+    We parameterize the MDSINE2 model with multiplicative perturbations
     .. math::
         \frac {log(x_{i,k+1}) - log(x_{i,k})} {t_{k+1} - t_{k}} =
             a_{1,i} (1 + \sum_{p=1}^P u_p(k) \gamma_{i,p} ) + \sum_{j} b_{ij} x{j,k} 
@@ -1128,13 +1149,7 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
         :math:`u_p(k)` : step function for perturbation :math:`p` at time :math:`t_k`
         :math:`\gamma_{i,p}` : perturbation value for perturbation :math:`p` for asv :math:`i`
         Here the perturbation has an "effect" on the growth rates
-    Additive:
-        .. math::
-            \frac {log(x_{i,k+1}) - log(x_{i,k})} {t_{k+1} - t_{k}} =
-                a_1 + \sum_{j} b_{ij} x{j,k} + 
-                \sum_{p=1}^P u_p(k) \gamma_{i,p}
-        Here the perturbation has an additive effect and is not dependent on the growth
-        rates.
+
     '''
     def __init__(self, **kwargs):
         name = STRNAMES.PERT_VALUE+'_base_data'
@@ -1145,7 +1160,7 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
         self.perturbations = self.G.perturbations
         self.n_perturbations = len(self.perturbations)
         self.n_replicates = self.G.data.n_replicates
-        self.n_asvs = self.G.data.n_asvs
+        self.n_asvs = len(self.G.data.asvs)
         self.growths = self.G[STRNAMES.GROWTH_VALUE]
 
         self.starts = []
@@ -1157,30 +1172,24 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
 
         # Get the total number of timepoints in perturbations
         total_tidxs = 0
-        for ridx in range(self.n_replicates):
+        for ridx, subj in enumerate(self.G.data.subjects):
             self.starts.append([])
             self.ends.append([])
-
             i = 0
             for pidx in range(self.n_perturbations):
                 start, end = self.G.data.tidxs_in_perturbation[ridx][pidx]
                 if start is None:
                     continue
-                
                 self.tidxs_in_perturbation[ridx,pidx,0] = start
                 self.tidxs_in_perturbation[ridx,pidx,1] = end
-                
                 self.starts[-1].append(start)
                 self.ends[-1].append(end)
                 i += end-start
                 total_tidxs += i
 
             self.tidxs_in_pert_per_replicate.append(i)
-                
-            
             self.starts[-1] = np.asarray(self.starts[-1], dtype=int)
             self.ends[-1] = np.asarray(self.ends[-1], dtype=int)
-
 
         # Set rows and cols
         self.total_len = int(total_tidxs * self.n_asvs)
@@ -1212,17 +1221,14 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
         base_row_idx = 0
         for ridx in range(n_replicates):
             for pidx in range(n_perturbations):
-
                 start = tidxs_in_perturbation[ridx,pidx,0]
                 end = tidxs_in_perturbation[ridx,pidx,1]
                 if start == -1:
                     continue
                 base_col_idx = pidx * n_asvs
                 for oidx in range(n_asvs):
-
                     col = oidx + base_col_idx
                     for tidx in range(start, end):
-
                         rows[i] = oidx + tidx * n_asvs + base_row_idx
                         cols[i] = col
                         i += 1
@@ -1248,11 +1254,10 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
         '''If cuda is True, we build on the available device
         '''
         growths = self.growths.value
-        func = PerturbationBaseDesignMatrix.fast_build
         i = 0
         for ridx in range(self.n_replicates):
             l = self.tidxs_in_pert_per_replicate[ridx] * self.n_asvs
-            func(
+            PerturbationBaseDesignMatrix.fast_build(
                 ret=self.data[i:i+l], 
                 n_perturbations=self.n_perturbations, 
                 n_asvs=self.n_asvs, 
@@ -1262,20 +1267,8 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
                 data=self.G.data.data[ridx])
             i += l
 
-        # if cuda:
-        #     self.data = torch.DoubleTensor(self.data).to(_COMPUTE_DEVICE)
-        #     self.matrix = torch.sparse.DoubleTensor(self.device_ind, self.data, 
-        #         self.device_shape).to_dense()
-        # else:
         self.matrix = scipy.sparse.coo_matrix(
             (self.data,(self.rows,self.cols)),shape=self.shape).tocsc()
-
-        # print('\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n')
-        # print('tidxs_in_perturbation', self.tidxs_in_perturbation)
-        # print(self.G.data.times)
-        # for i in range(len(self.G.data.times[0])):
-        #     print('{}: {}'.format(i, self.G.data.times[0][i]))
-        # sys.exit()
 
     def update_value(self):
         self.build()
@@ -1297,26 +1290,15 @@ class PerturbationMixingDesignMatrix(DesignMatrix):
         self.perturbations = self.G.perturbations
         self.n_perturbations = len(self.perturbations)
         self.n_asvs = len(self.G.data.asvs)
-
         self.n_rows = self.n_perturbations * self.n_asvs
 
+        # Maps an ASV and a perturbation to the column it corresponds to in `base`
         self.keypair2col = np.zeros(shape=(self.n_asvs, self.n_perturbations), dtype=int)
         i = 0
         for pidx in range(self.n_perturbations):
             for oidx in range(self.n_asvs):
                 self.keypair2col[oidx, pidx] = i
                 i += 1
-        # self.keypair2col_device = torch.LongTensor(self.keypair2col).to(_COMPUTE_DEVICE)
-        # max_cols = len(self.G.data.asvs) * self.n_perturbations
-        # self.device_rows = torch.LongTensor(max_cols).to(_COMPUTE_DEVICE)
-        # self.device_cols = torch.LongTensor(max_cols).to(_COMPUTE_DEVICE)
-        # self.device_data = torch.ones(max_cols, 
-        #     dtype=torch.double).to(_COMPUTE_DEVICE)
-        # self.one = torch.DoubleTensor(1).to(_COMPUTE_DEVICE)
-
-        # size = torch.Size([self.n_rows, max_cols])
-        # self.device_matrix = torch.zeros(size, dtype=torch.float64).to(_COMPUTE_DEVICE)
-
         self.build(build=False)
 
     # @profile
@@ -1368,17 +1350,6 @@ class PerturbationMixingDesignMatrix(DesignMatrix):
         # if not cuda:
         self.matrix = scipy.sparse.coo_matrix((data,(rows,cols)),
             shape=(self.n_rows, n_cols)).tocsc()
-        # else:
-        #     rows = torch.LongTensor(rows).reshape(1,-1).to(_COMPUTE_DEVICE)
-        #     cols = torch.LongTensor(cols).reshape(1,-1).to(_COMPUTE_DEVICE)
-        #     ind = torch.cat([rows, cols], 0)
-        #     data = torch.ones(rows.shape[1], dtype=torch.float64).to(_COMPUTE_DEVICE)
-
-        #     shape = torch.Size([self.n_rows, n_cols])
-        #     self.matrix = torch.sparse.FloatTensor(ind, data, shape).to_dense()
-        #     # m = np.zeros(shape=self.matrix.shape, dtype=np.float64)
-        #     # pl.toarray(self.matrix, dest=m)
-        #     # self.matrix = torch.from_numpy(m).to(_COMPUTE_DEVICE)
         self.shape = self.matrix.shape
         self.n_rows = self.shape[0]
         self.n_cols = self.shape[1]
@@ -1387,7 +1358,29 @@ class PerturbationMixingDesignMatrix(DesignMatrix):
   
 
 class PerturbationDesignMatrix(DesignMatrix):
-    '''Builds the design matrix for the perturbations
+    '''Builds the design matrix for the perturbations.
+
+    This matrix is composed of two, individual design matrices, `Base` and `M`.
+    To make the matrix that we use during inference, we matrix multiply `Base`@`M`,
+    which is what this class is for. It wraps these two base classes so that it
+    is more streamlined in the inference code.
+
+    `Base` : mdsine2.design_matrices.PerturbationBaseDesignMatrix
+        This is an object that builds the perturbation matrix as if there was no
+        clustering or indicators. It builds the data for all the ASVs/OTUs and
+        as if every perturbation indicator was on. This is actually faster than
+        just building it for individual indicators for a few different reasons:
+            1) We only need to update `Base` when we do filtering or update the 
+               values of the growth matrix because these are the only two things
+               that `Base` is dependent on.
+            2) Because we don't have to check indicators or have different shapes
+               when building the matrix, it is much easier to build this matrix
+               with Numba, which is nearly as fast as C.
+    `Mixing` : mdsine2.design_matrices.PerturbationMixingDesignMatrix
+        This is the object that selects for indicators and groups asvs together
+        into clusters. When we change the indicators of the perturbations or 
+        the cluster assignments of the ASVs, we only need to change this matrix,
+        which is a lot faster than changing everything.
     '''
     def __init__(self, **kwargs):
         DesignMatrix.__init__(self, varname=STRNAMES.PERT_VALUE, **kwargs)
@@ -1419,11 +1412,13 @@ class PerturbationDesignMatrix(DesignMatrix):
 
 
 class InteractionsBaseDesignMatrix(DesignMatrix):
-    '''This is the base data for the design matrix of the interactions
+    '''This is the base data for the design matrix of the interactions.
+
+    This builds the interaction matrix for each ASV-ASV interaction as if there
+    were no indicators.
     '''
-    def __init__(self, name=None, **kwargs):
-        if name is None:
-            name = STRNAMES.CLUSTER_INTERACTION_VALUE+'_base_data'
+    def __init__(self, **kwargs):
+        name = STRNAMES.CLUSTER_INTERACTION_VALUE+'_base_data'
         DesignMatrix.__init__(self,varname=name, **kwargs)
 
         # Initialize and set up rows and cols for base matrix
@@ -1440,11 +1435,6 @@ class InteractionsBaseDesignMatrix(DesignMatrix):
         self.master_cols = np.kron(
             np.ones(total_n_dts, dtype=int),
             np.arange(self.n_cols, dtype=int))
-
-        # # send a copy to the compute device
-        # self.device_ind = torch.LongTensor(
-        #     np.vstack((self.rows.reshape(1,-1), self.cols.reshape(1,-1)))).to(_COMPUTE_DEVICE)
-        # self.device_shape = torch.Size([self.n_rows, self.n_cols])
 
         self.master_data = np.zeros(len(self.master_cols))
         logging.info('Initializing interactions base design matrix')
@@ -1534,7 +1524,11 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
     class
 
     The `keypair2col` dictionary maps a tuple of (target_asv_idx,source_asv_idx)
-    to the column they belong to in the full, non-clustered matrix
+    to the column they belong to in the full, non-clustered matrix.
+
+    This class has a few different options on how to build M, dependiing on where
+    it is being called in inference, some are faster than others, or build very
+    specific parts, or build the matrix given some specific data. 
     '''
     def __init__(self, parent, **kwargs):
         DesignMatrix.__init__(self,
@@ -1559,8 +1553,6 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
                 i += 1
 
         self.build(build=False)
-        # self.build_clus2clus()
-        # self.build_from_clus2clus(build=False)
         logging.info('Initialized interactions mixing design matrix')
 
         # get _get_rows in cache
@@ -1857,13 +1849,35 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
 
 
 class InteractionsDesignMatrix(DesignMatrix):
-    '''Builds the design matrix for the interactions
-    This is a bit more complicated because there is the mixing matrix (self.M)
-    as well, where A_{i,j} @ M = A_{c_i,c_j}
-        - A_{i,j} is the ASV-ASV interaction matrix (self.base)
-        - M is the mixing matrix (self.M)
-        - A_{c_i,c_j} is the cluster-cluster interaction matrix
+    '''Builds the design matrix for the interactions: 
+        A_{i,j} @ M = A_{c_i,c_j}, where
+            A_{i,j} is the ASV-ASV interaction matrix (self.base)
+            M is the mixing matrix (self.M)
+            A_{c_i,c_j} is the cluster-cluster interaction matrix
 
+    This matrix is composed of two, individual design matrices, `Base` and `M`.
+    To make the matrix that we use during inference, we matrix multiply `Base`@`M`,
+    which is what this class is for. It wraps these two base classes so that it
+    is more streamlined in the inference code.
+
+    `Base` : mdsine2.design_matrices.InteractionsBaseDesignMatrix
+        This is an object that builds the interaction matrix as if there was no
+        clustering or indicators. It builds the data for all the ASVs/OTUs and
+        as if every interaction indicator was on. This is actually faster than
+        just building it for individual indicators for a few different reasons:
+            1) We only need to update `Base` when we do filtering or update the 
+               values of the growth matrix because these are the only two things
+               that `Base` is dependent on.
+            2) Because we don't have to check indicators or have different shapes
+               when building the matrix, it is much easier to build this matrix
+               with Numba, which is nearly as fast as C. This speeds up building
+               time by ~97%.
+    `Mixing` : mdsine2.design_matrices.InteractionsMixingDesignMatrix
+        This is the object that selects for indicators and groups asvs together
+        into clusters. When we change the indicators of the perturbations or 
+        the cluster assignments of the ASVs, we only need to change this matrix,
+        which is a lot faster than changing everything. Because both matrices are
+        sparse matrices and this matrix is 98% zeros, this is a very fast operation.
     '''
     def __init__(self, **kwargs):
         DesignMatrix.__init__(self,
@@ -1885,10 +1899,6 @@ class InteractionsDesignMatrix(DesignMatrix):
         logging.info('Initializing interactions matrix')
 
     def build(self):
-
-        # print('base', self.base.matrix.dtype, self.base.matrix.shape, type(self.base.matrix))
-        # print('M', self.M.matrix.dtype, self.M.matrix.shape, type(self.M.matrix))
-
         self.matrix = self.base.matrix @ self.M.matrix
         self.n_cols = self.shape[1]
 

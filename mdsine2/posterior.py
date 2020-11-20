@@ -2672,8 +2672,8 @@ class FilteringLogMP(pl.graph.Node):
             pert_starts = []
             pert_ends = []
             for perturbation in self.G.perturbations:
-                pert_starts.append(perturbation.start)
-                pert_ends.append(perturbation.end)
+                pert_starts.append(perturbation.starts)
+                pert_ends.append(perturbation.ends)
         else:
             pert_starts = None
             pert_ends = None
@@ -2690,7 +2690,7 @@ class FilteringLogMP(pl.graph.Node):
         else:
             raise ValueError('`mp` ({}) not recognized'.format(self.mp))
 
-        for ridx in range(self.G.data.n_replicates):
+        for ridx, subj in enumerate(self.G.data.subjects):
             # Set up qPCR measurements and reads to send
             qpcr_log_measurements = {}
             for t in self.G.data.given_timepoints[ridx]:
@@ -2718,6 +2718,7 @@ class FilteringLogMP(pl.graph.Node):
                 pert_starts=np.asarray(pert_starts),
                 pert_ends=np.asarray(pert_ends),
                 ridx=ridx,
+                subjname=subjname,
                 calculate_qpcr_loglik=calculate_qpcr_loglik,
                 h5py_xname=self.x[ridx].name,
                 target_acceptance_rate=self.target_acceptance_rate)
@@ -2933,7 +2934,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
     def initialize(self, times, qpcr_log_measurements, reads, there_are_intermediate_timepoints,
         there_are_perturbations, pv_global, x_prior_mean,
         x_prior_std, tune, delay, end_iter, proposal_init_scale, a0, a1, x, calculate_qpcr_loglik,
-        pert_starts, pert_ends, ridx, h5py_xname, target_acceptance_rate,
+        pert_starts, pert_ends, ridx, subjname, h5py_xname, target_acceptance_rate,
         zero_inflation_transition_policy):
         '''Initialize the object at the beginning of the inference
 
@@ -2983,6 +2984,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             The starts and ends for each one of the perturbations
         ridx : int
             This is the replicate index that this object corresponds to
+        subjname : str
+            This is the name of the replicate
         h5py_xname : str
             This is the name for the x in the h5py object
         target_acceptance_rate : float
@@ -2990,6 +2993,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         calculate_qpcr_loglik : bool
             If True, calculate the loglikelihood of the qPCR measurements during the proposal
         '''
+        self.subjname = subjname
         self.h5py_xname = h5py_xname
         self.target_acceptance_rate = target_acceptance_rate
         self.zero_inflation_transition_policy = zero_inflation_transition_policy
@@ -3015,8 +3019,14 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.n_timepoints_minus_1 = len(times)-1
         self.logx = np.log(x)
         self.x = x
-        self.pert_starts = pert_starts
-        self.pert_ends = pert_ends
+
+        # Get the perturbations for this subject
+        self.pert_starts = []
+        self.pert_ends = []
+        for pidx in range(len(pert_starts)):
+            self.pert_starts.append(pert_starts[pidx][subjname])
+            self.pert_ends.append(pert_ends[pidx][subjname])
+
         self.total_n_points = self.x.shape[0] * self.x.shape[1]
         self.ridx = ridx
         self.calculate_qpcr_loglik = calculate_qpcr_loglik

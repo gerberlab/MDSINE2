@@ -31,7 +31,7 @@ from .pylab.util import asvname_formatter, toarray, fast_index, coarsen_phylogen
     asvname_for_paper, ASVNAME_PAPER_FORMAT
 from .pylab.base import ASV, ASVSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
     Subject, Study, condense_matrix_with_taxonomy
-from .pylab.variables import Variable, Constant
+from .pylab.variables import Variable, Constant, summary
 from .pylab.graph import Graph, Node
 from .pylab.cluster import Clustering
 from .pylab.random import seed

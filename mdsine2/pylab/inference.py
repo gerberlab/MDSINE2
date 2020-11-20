@@ -245,7 +245,8 @@ class BaseMCMC(BaseModel):
         '''
         if not isVariable(var):
             if var not in self.graph:
-                raise IndexError('`var` ({}) ({}) not recognized in graph'.format(type(var), var))
+                # raise IndexError('`var` ({}) ({}) not recognized in graph'.format(type(var), var))
+                return False
             var = self.graph[var].id
         else:
             var = var.id
@@ -617,7 +618,8 @@ class Tracer(Saveable):
             if var in self.graph:
                 var = self.graph[var].name
             else:
-                raise IndexError('`var` ({}) ({}) not recognized in graph'.format(type(var), var))
+                # raise IndexError('`var` ({}) ({}) not recognized in graph'.format(type(var), var))
+                return False
         return var in self.being_traced
 
     def set_trace(self, name, shape, dtype):

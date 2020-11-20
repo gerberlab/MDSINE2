@@ -10,6 +10,7 @@ import time
 import pandas as pd
 import os
 import os.path
+import math
 
 import numpy.random as npr
 import numba
@@ -21,7 +22,6 @@ from . import visualization
 from . import pylab as pl
 from .names import REPRNAMES, STRNAMES
 from . import config
-from .run import denormalize_parameters
 
 @numba.jit(nopython=True, fastmath=True, cache=True)
 def negbin_loglikelihood(k,m,dispersion):
@@ -238,7 +238,7 @@ class NegBinDispersionParam(pl.variables.Uniform):
             if proposal_var <= 0:
                 raise ValueError('`proposal_var` ({}) not proper'.format(proposal_var))
         elif proposal_option in ['auto']:
-            proposal_var = (self.value ** 2)/10
+            proposal_var = (self.value ** 2)/100
         else:
             raise ValueError('`proposal_option` ({}) not recognized'.format(
                 proposal_option))
@@ -364,7 +364,7 @@ class NegBinDispersionParam(pl.variables.Uniform):
         '''
         f.write('\n\n###################################\n{}'.format(self.name))
         f.write('\n###################################\n')
-        if not self.G.inference.is_being_traced(self):
+        if not self.G.inference.tracer.is_being_traced(self):
             f.write('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
             return f
         
@@ -372,12 +372,12 @@ class NegBinDispersionParam(pl.variables.Uniform):
         for k,v in summ.items():
             f.write('\t{}: {}\n'.format(k,v))
 
-        axleft, axright = visualization.render_trace(a, plt_type='both', 
+        axleft, axright = visualization.render_trace(self, plt_type='both', 
             include_burnin=True, rasterized=True, log_scale=self.name==STRNAMES.NEGBIN_A0)
 
         # Plot the acceptance rate on the right hand side
         ax2 = axright.twinx()
-        ax2 = visualization.render_acceptance_rate_trace(a, ax=ax2, 
+        ax2 = visualization.render_acceptance_rate_trace(self, ax=ax2, 
             label='Acceptance Rate', color='red', scatter=False, rasterized=True)
 
         ax2.legend()
@@ -448,10 +448,10 @@ class FilteringMP(pl.graph.Node):
         pl.graph.Node.__init__(self, **kwargs)
         self.value = []
         for ridx, subj in enumerate(self.G.data.subjects):
-            self.value.append(TrajectorySet(G=self.G, ridx=ridx, subjname=subjname))
+            self.value.append(TrajectorySet(G=self.G, ridx=ridx, subjname=subj.name))
         
         self.print_vals = False
-        self._strr = 'parallel'
+        self._strr = 'NA'
         self.mp = mp
 
     def __str__(self):
@@ -543,9 +543,7 @@ class FilteringMP(pl.graph.Node):
         self.end_tune = end_tune
 
         # Initialize the trajectory sets
-        self.value = []
         for ridx in range(self.G.data.n_replicates):
-            self.value.append(TrajectorySet(ridx=ridx, G=self.G))
             self.value[ridx].initialize()
 
         if self.mp == 'full':
@@ -866,11 +864,11 @@ def visualize_learned_negative_binomial_model(mcmc, section='posterior'):
     '''
     # Get the data
     # ------------
-    subjset = mcmc.graph.subjects
+    subjset = mcmc.graph.data.subjects
     reads = []
     for subj in subjset:
         reads.append(subj.matrix()['raw'])
-    reads = np.htack(reads)
+    reads = np.hstack(reads)
     read_depths = np.sum(reads, axis=0)
     rels = reads / read_depths + 1e-20
 
@@ -936,19 +934,6 @@ def visualize_learned_negative_binomial_model(mcmc, section='posterior'):
     ax.plot(med_m, med_v, color='black', label='Fitted NegBin Model', rasterized=False)
     ax.fill_between(x=med_m, y1=low_v, y2=high_v, color='black', alpha=0.3, label='95th percentile')
 
-    if true_subjset is not None:
-        means_true = np.zeros(rels.size, dtype=float)
-        vars_true = np.zeros(rels.size, dtype=float)
-        _single_calc_mean_var(
-            means=means_true,
-            variances=vars_true,
-            a0=true_a0, a1=true_a1, rels=rels, 
-            read_depths=read_depths)
-        idxs = np.argsort(means_true)
-        means_true = means_true[idxs]
-        vars_true = vars_true[idxs]
-        ax.plot(means_true, vars_true, color='red', label='True NegBin Model', rasterized=False)
-
     ax.set_yscale('log')
     ax.set_xscale('log')
     ax.set_xlabel('Mean (counts)')
@@ -990,14 +975,6 @@ def build_graph(params, graph_name, subjset):
     runname = GRAPH.name + params.suffix()
     basepath = os.path.join(basepath, runname)
     os.makedirs(basepath, exist_ok=True)
-
-    # Normalize the qpcr measurements for numerical stability
-    # -------------------------------------------------------
-    if params.QPCR_NORMALIZATION_MAX_VALUE is not None:
-        subjset.normalize_qpcr(max_value=params.QPCR_NORMALIZATION_MAX_VALUE)
-        logging.info('Normalizing abundances for a max value of {}. Normalization ' \
-            'constant: {:.4E}'.format(params.QPCR_NORMALIZATION_MAX_VALUE, 
-            subjset.qpcr_normalization_factor))
 
     # Initialize the inference objects
     # --------------------------------
@@ -1061,9 +1038,4 @@ def run_graph(mcmc, crash_if_error=True):
         if crash_if_error:
             raise
     mcmc.graph[STRNAMES.FILTERING].kill()
-
-    if mcmc.graph.data.subjects.qpcr_normalization_factor is not None:
-        mcmc, mcmc.graph.data.subjects = denormalize_parameters(mcmc, 
-            mcmc.graph.data.subjects)
     return mcmc
-

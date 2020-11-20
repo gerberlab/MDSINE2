@@ -31,7 +31,7 @@ from .util import asvname_formatter, toarray, fast_index, coarsen_phylogenetic_t
     asvname_for_paper, ASVNAME_PAPER_FORMAT
 from .base import ASV, ASVSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
     Subject, Study, condense_matrix_with_taxonomy
-from .variables import Variable, Constant
+from .variables import Variable, Constant, summary
 from .graph import Graph, Node
 from .cluster import Clustering
 from .random import seed

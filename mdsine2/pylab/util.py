@@ -301,32 +301,32 @@ def asvname_for_paper(asv, asvs):
         if len(species) >= 3:
             species = species[:2]
         species = '/'.join(species)
-        label = pl.asvname_formatter(
+        label = asvname_formatter(
             format='%(genus)s {spec} %(name)s'.format(
                 spec=species), 
             asv=asv, asvs=asvs)
     elif asv.tax_is_defined('genus'):
-        label = pl.asvname_formatter(
+        label = asvname_formatter(
             format='* %(genus)s %(name)s',
             asv=asv, asvs=asvs)
     elif asv.tax_is_defined('family'):
-        label = pl.asvname_formatter(
+        label = asvname_formatter(
             format='** %(family)s %(name)s',
             asv=asv, asvs=asvs)
     elif asv.tax_is_defined('order'):
-        label = pl.asvname_formatter(
+        label = asvname_formatter(
             format='*** %(order)s %(name)s',
             asv=asv, asvs=asvs)
     elif asv.tax_is_defined('class'):
-        label = pl.asvname_formatter(
+        label = asvname_formatter(
             format='**** %(class)s %(name)s',
             asv=asv, asvs=asvs)
     elif asv.tax_is_defined('phylum'):
-        label = pl.asvname_formatter(
+        label = asvname_formatter(
             format='***** %(phylum)s %(name)s',
             asv=asv, asvs=asvs)
     elif asv.tax_is_defined('kingdom'):
-        label = pl.asvname_formatter(
+        label = asvname_formatter(
             format='****** %(kingdom)s %(name)s',
             asv=asv, asvs=asvs)
     else:
@@ -414,7 +414,10 @@ def asvname_formatter(format, asv, asvs):
     label = format.replace(NAME_FORMATTER, str(asv.name))
     label = label.replace(ID_FORMATTER, str(asv.id))
     label = label.replace(INDEX_FORMATTER,  str(index))
-    label = label.replace(PAPER_FORMATTER, asvname_for_paper(asv=asv, asvs=asvs))
+
+    if PAPER_FORMATTER in label:
+        label = label.replace(PAPER_FORMATTER, '%(temp)s')
+        label = label.replace('%(temp)s', asvname_for_paper(asv=asv, asvs=asvs))
     
     for i in range(len(_TAXLEVELS)):
         taxlevel = _TAXLEVELS[i]

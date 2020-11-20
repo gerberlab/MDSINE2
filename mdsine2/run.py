@@ -182,7 +182,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
             else:
                 name = subj_pert.name
             perturbation = pl.ClusterPerturbation(
-                start=subj_pert.start, 
+                starts=subj_pert.starts, 
                 end=subj_pert.end, probability=pl.variables.Beta(
                     name=name + '_probability', G=GRAPH, value=None, a=None, b=None),
                 clustering=clustering, G=GRAPH, name=name,
@@ -455,8 +455,10 @@ def normalize_parameters(mcmc, subjset):
         f = h5py.File(GRAPH.tracer.filename, 'r+', libver='latest')
         ckpt = GRAPH.tracer.ckpt
 
-        GRAPH[STRNAMES.PROCESSVAR].c_m *= subjset.qpcr_normalization_factor
-        GRAPH[STRNAMES.FILTERING].v2 *= subjset.qpcr_normalization_factor
+        try:
+            GRAPH[STRNAMES.FILTERING].v2 *= subjset.qpcr_normalization_factor
+        except:
+            logging.info('v2 not applicable')
 
         # Adjust the self interactions if necessary
         if STRNAMES.SELF_INTERACTION_VALUE in mcmc.tracer.being_traced:
@@ -551,7 +553,10 @@ def denormalize_parameters(mcmc, subjset):
         f = h5py.File(GRAPH.tracer.filename, 'r+', libver='latest')
         ckpt = GRAPH.tracer.ckpt
 
-        GRAPH[STRNAMES.FILTERING].v2 /= subjset.qpcr_normalization_factor
+        try:
+            GRAPH[STRNAMES.FILTERING].v2 /= subjset.qpcr_normalization_factor
+        except:
+            logging.info('v2 not applicable')
 
         # Adjust the self interactions if necessary
         if STRNAMES.SELF_INTERACTION_VALUE in mcmc.tracer.being_traced:

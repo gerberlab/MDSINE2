@@ -61,7 +61,6 @@ def isModelConfig(x):
     '''
     return x is not None and issubclass(x.__class__, _BaseModelConfig)
 
-
 class _BaseModelConfig(pl.Saveable):
 
     def __str__(self):
@@ -472,8 +471,7 @@ class NegBinConfig(_BaseModelConfig):
         self.BURNIN = burnin
         self.N_SAMPLES = n_samples
         self.CKPT = ckpt
-        self.MP_FILTERING = 'full'
-        self.QPCR_NORMALIZATION_MAX_VALUE = 100
+        self.MP_FILTERING = 'debug'
 
         self.INFERENCE_ORDER = [
             STRNAMES.NEGBIN_A0,
@@ -492,7 +490,7 @@ class NegBinConfig(_BaseModelConfig):
 
         self.INITIALIZATION_KWARGS = {
             STRNAMES.NEGBIN_A0: {
-                'value': 1e-4,
+                'value': 1e-10,
                 'truncation_settings': (0, 1e5),
                 'tune': 50,
                 'end_tune': int(self.BURNIN/2),
@@ -500,7 +498,7 @@ class NegBinConfig(_BaseModelConfig):
                 'proposal_option': 'auto',
                 'delay': 0},
             STRNAMES.NEGBIN_A1: {
-                'value': 0.5,
+                'value': 0.1,
                 'tune': 50,
                 'truncation_settings': (0, 1e5),
                 'end_tune': int(self.BURNIN/2),

@@ -417,62 +417,143 @@ class Traceable:
 
 
 class BasePerturbation:
-    '''Base perturbation class.
+    '''Base perturbation class. 
 
-    We assume that the `start` is when the first perturbation happend (affects the next time point) and 
-    `end` is the last time that it gets affected
+    Does not have to be applied to all subjects, and each subject can have a different start and
+    end time to each other.
 
     Paramters
     ---------
-    start : float, int
-        This is the start of the perturbation (it will afect the next time point)
-    end : float, int
-        This is the end of the perturbation (this is the last time point the 
-        perturbation will affect)
     name : str, None
-        This is the name of the perturabtion. If nothing is given then it will be None
+        This is the name of the perturabtion. If nothing is given then the name will be
+        set to the perturbation index
+    starts, ends : dict, None
+        This is a map to the start and end times for the subject that have this perturbation
     '''
-    def __init__(self, start, end, name=None):
-        if not plutil.isnumeric(start):
-            raise TypeError('`start` ({}) must be a numeric'.format(type(start)))
-        if not plutil.isnumeric(end):
-            raise TypeError('`end` ({}) must be a numeric'.format(type(end)))
-        if end < start:
-            raise ValueError('`end` ({}) must be >= `start` ({})'.format(end, start))
-        if name is not None:
-            if not plutil.isstr(name):
-                raise TypeError('`name` ({}) must be a str'.format(type(name)))
-        self.start = start
-        self.end = end
+    def __init__(self, name, starts=None, ends=None):
+        if not plutil.isstr(name):
+            raise TypeError('`name` ({}) must be a str'.format(type(name)))
+        if (starts is not None and ends is None) or (starts is None and ends is not None):
+            raise ValueError('If `starts` or `ends` is specified, the other must be specified.')
+        if starts is not None:
+            if not plutil.isdict(starts):
+                raise TypeError('`starts` ({}) must be a dict'.format(starts))
+            if not plutil.isdict(ends):
+                raise TypeError('`ends` ({}) must be a dict'.format(ends))
+
+        self.starts = starts
+        self.ends = ends
         self.name = name
 
-    def isactive(self, time):
+    def __str__(self):
+        s = 'Perturbation {}:'.format(self.name)
+        if self.starts is not None:
+            for subj in self.starts:
+                s += '\tSubject {}: ({}, {})\n'.format(subj, self.starts[subj], 
+                    self.ends[subj])
+        return s
+
+    def __contains__(self, a):
+        '''Checks if subject name `a` is in this perturbation
+        '''
+        if issubject(a):
+            a = a.name
+        return a in self.starts
+
+    def isactive(self, time, subj):
         '''Returns a `bool` if the perturbation is on at time `time`.
 
         Parameters
         ----------
         time : float, int
             Time to check
-        '''
-        return time > self.start and time <= self.end
-
-    def timetuple(self):
-        '''Returns the time tuple of the start and end
-
-        Paramters
-        ---------
-        None
+        subj : str
+            Subject to check
 
         Returns
         -------
-        2-tuple
-            (start,end) as floats
-        '''
-        return (self.start, self.end)
+        bool
 
-    def __str__(self):
-        return 'Perturbation\n\tstart: {}\n\tend:{}'.format(
-            self.start, self.end)
+        Raises
+        ------
+        ValueError
+            If there are no start and end times set
+        '''
+        if self.start is None:
+            raise ValueError('`start` is not set in {}'.format(self.name))
+        try:
+            start = self.starts[subj]
+            end = self.ends[subj]
+        except:
+            raise KeyError('`subj` {} not specified for {}'.format(subj, self.name))
+
+        return time > start and time <= end
+
+
+
+class Perturbations:
+    '''Aggregator for individual perturbation obejcts
+    '''
+    def __init__(self):
+        self._d = {}
+        self._rev_idx = []
+
+    def __len__(self):
+        return len(self._d)
+
+    def __getitem__(self, a):
+        if isperturbation(a):
+            if a.name in self:
+                return a
+            else:
+                raise KeyError('`a` ({}) not contained in this Set'.format(a))
+        if plutil.isstr(a):
+            return self._d[a]
+        elif plutil.isint(a):
+            return self._a[self._rev_idx[a]]
+        else:
+            raise KeyError('`a` {} ({}) not recognized'.format(a, type(a)))
+
+    def __contains__(self, a):
+        try:
+            _ = self[a]
+            return True
+        except:
+            False
+
+    def __iter__(self):
+        for a in self._d:
+            yield self._d[a]
+
+    def append(self, a):
+        '''Add a perturbation
+
+        a : mdsine2.BasePertubration
+            Perturbation to add
+        '''
+        if not isperturbation(a):
+            raise TypeError('`a` ({}) must be a perturbation'.format(type(a)))
+        self._d[a.name] = a
+        self._rev_idx.append(a.name)
+
+    def remove(self, a):
+        '''Remove the perturbation `a`
+
+        Parameters
+        ----------
+        a : str, int, mdsine2.BasePerturbation
+            Perturbation to remove
+        
+        Returns
+        -------
+        mdsine2.BasePerturbation
+        '''
+        a = self[a]
+        self._d.pop(a.name, None)
+        self._rev_idx = []
+        for mer in self._d:
+            self._rev_idx.append(mer.name)
+        return a
 
 
 class ClusterItem:
@@ -1571,8 +1652,10 @@ class Subject(Saveable):
             # check if the time is in a perturbation
             a = False
             for pert in self.parent.perturbations:
-                start = pert.start
-                end = pert.end
+                if self.name not in pert:
+                    continue
+                start = pert.starts[self.name]
+                end = pert.ends[self.name]
                 # check if in the perturbation
                 if self.times[i] > start and self.times[i] <= end:
                     a = True
@@ -1689,7 +1772,6 @@ class Study(Saveable):
 
         self._samples = {}
         
-
     def __getitem__(self, key):
         return self._subjects[key]
 
@@ -1703,7 +1785,7 @@ class Study(Saveable):
     def __contains__(self, key):
         return key in self._subjects
 
-    def parse(self, metadata, reads=None, qpcr=None):
+    def parse(self, metadata, reads=None, qpcr=None, perturbations=None):
         '''Parse tables of samples and cast in Subject sets. Automatically creates
         the subject classes with the respective names.
 
@@ -1725,7 +1807,14 @@ class Study(Saveable):
         qpcr : pandas.DataFrame, None
             Contains the qpcr measurements for each sample
                 index (str) : indexes the sample ID
-                columns (str) : Name is ignored. the values are set to the 
+                columns (str) : Name is ignored. the values are set to the measurements
+        perturbations : pandas.DataFrame, None
+            Contains the times and subjects for each perturbation
+            columns:
+                'name' -> str : Name of the perturbation
+                'start' -> float : This is the start time for the perturbation
+                'end' -> float : This is the end time for the perturbation
+                'subject' -> str : This is the subject name the perturbation is applied to
         '''
         if not plutil.isdataframe(metadata):
             raise TypeError('`metadata` ({}) must be a pandas.DataFrame'.format(type(metadata)))
@@ -1748,29 +1837,28 @@ class Study(Saveable):
 
         # Add the perturbations if there are any
         # --------------------------------------
-        for col in metadata.columns:
-            pert_name = col.replace('perturbation:', '')
-            if 'perturbation:' in col:
-                min_time = None
-                max_time = None
-                for sampleid in metadata.index:
-                    if metadata[col][sampleid] == 1:
-                        t = float(metadata['time'][sampleid])
-                        if min_time is None:
-                            min_time = t
-                        else:
-                            if t < min_time:
-                                min_time = t
-                        if max_time is None:
-                            max_time = t
-                        else:
-                            if t > max_time:
-                                max_time = t
-                if max_time is None or min_time is None:
-                    raise ValueError('Perturbation `{}` for column `{}` did not find any ' \
-                        'times'.format(pert_name, col))
+        if perturbations is not None:
+            if not plutil.isdataframe(perturbations):
+                raise TypeError('`metadata` ({}) must be a pandas.DataFrame'.format(type(metadata)))
+            try:
+                for pidx in perturbations.index:
+                    pname = perturbations['subject'][pidx]
 
-                self.add_perturbation(min_time, end=max_time, name=pert_name)
+                    if pname not in self.perturbations:
+                        # Create a new one
+                        pert = BasePerturbation(
+                            name=pname, 
+                            starts={perturbations['start'][pidx]},
+                            ends={perturbations['end'][pidx]})
+                        self.perturbations.append(pert)
+                    else:
+                        # Add this subject name to the pertubration
+                        self.perturbations[pname].starts[pname] = perturbations['start'][pidx]
+                        self.perturbations[pname].ends[pname] = perturbations['end'][pidx]
+
+            except KeyError as e:
+                logging.critical(e)
+                raise KeyError('Make sure that `subject`, `start`, and `end` are columns')
 
         # Add the reads if necessary
         # --------------------------
@@ -1818,6 +1906,9 @@ class Study(Saveable):
         raise NotImplementedError('Need to implement it')
 
     def write_qpcr_to_table(self, path, sep='\t'):
+        raise NotImplementedError('Need to implement it')
+
+    def write_perturbations_to_table(self, path, sep='\t'):
         raise NotImplementedError('Need to implement it')
 
     def names(self):
@@ -1884,6 +1975,20 @@ class Study(Saveable):
                 raise ValueError('`sid` ({}) not found'.format(sid))
         return ret
 
+    def pop_asvs_like(self, study):
+        '''Remove ASVs in the ASVSet so that it matches the ASVSet in `study`
+
+        Parameters
+        ----------
+        study : mdsine2.study
+            This is the study object we are mirroring in terms of ASVs
+        '''
+        to_delete = []
+        for asv in self.asvs:
+            if asv.name not in study.asvs:
+                to_delete.append(asv.name)
+        self.pop_asvs(to_delete)
+
     def pop_asvs(self, oids):
         '''Delete the ASVs indicated in oidxs. Updates the reads table and
         the internal ASVSet
@@ -1937,6 +2042,24 @@ class Study(Saveable):
         for subj in self:
             subj._deaggregate_item(agg=agg, other=other)
         return self.asvs.deaggregate_item(agg, other)
+
+    def aggregate_items_like(self, study, prefix=None):
+        '''Aggregate ASVs like they are in study `study`
+
+        Parameters
+        ----------
+        study : mdsine2.Study
+            Data object we are mirroring
+        prefix : str
+            If provided, this is how you rename the ASVs after aggregation
+        '''
+        for asv in study.asvs:
+            if isaggregatedasv(asv):
+                aname = asv.aggregated_asvs[0]
+                for bname in asv.aggregated_asvs[1:]:
+                    self.aggregate_items(aname, bname)
+        if prefix is not None:
+            self.asvs.rename(prefix=prefix)
 
     def aggregate_items(self, asv1, asv2):
         '''Aggregates the abundances of `asv1` and `asv2`. Updates the reads table and
@@ -2070,7 +2193,7 @@ class Study(Saveable):
         self.qpcr_normalization_factor = None
         return self
 
-    def add_perturbation(self, a, end=None, name=None):
+    def add_perturbation(self, a, ends=None, name=None, subjs=None):
         '''Add a perturbation. 
         
         We can either do this by passing a perturbation object 
@@ -2080,31 +2203,33 @@ class Study(Saveable):
 
         Parameters
         ----------
-        a : numeric, BasePerturbation
-            If this is a numeric, then this corresponds to the start
-            time of the perturbation. If this is a Pertubration object
+        a : dict, BasePerturbation
+            If this is a dict, then this corresponds to the start
+            times of the perturbation for each subject. If this is a Pertubration object
             then we just add this.
-        end : numeric
-            Only necessary if `a` is a numeric
+        ends : dict
+            Only necessary if `a` is a dict
         name : str, None
-            Only necessary if `a` is a numeric. Name of the perturbation
+            Only necessary if `a` is a dict. Name of the perturbation
         
         Returns
         -------
         self
         '''
         if self.perturbations is None:
-            self.perturbations = []
-        if plutil.isnumeric(a):
-            if not plutil.isnumeric(end):
-                raise ValueError('If `a` is a numeric, then `end` ({}) ' \
-                    'needs to be a numeric'.format(type(end)))
-            self.perturbations.append(BasePerturbation(start=a, end=end, name=name))
+            self.perturbations = Perturbations()
+        if plutil.isdict(a):
+            if not plutil.isdict(end):
+                raise ValueError('If `a` is a dict, then `end` ({}) ' \
+                    'needs to be a dict'.format(type(end)))
+            if not plutil.isstr(name):
+                raise ValueError('`name` ({}) must be defined as a str'.format(type(name)))
+            self.perturbations.append(BasePerturbation(starts=a, ends=end, name=name))
         elif isperturbation(a):
             self.perturbations.append(a)
         else:
             raise ValueError('`a` ({}) must be a subclass of ' \
-                'pl.base.BasePerturbation or a numeric'.format(type(a)))
+                'pl.base.BasePerturbation or a dict'.format(type(a)))
         return self
         
     def split_on_perturbations(self):
@@ -2242,6 +2367,6 @@ class Study(Saveable):
         mdsine2.matrix
         '''
         M, times = self._matrix(*args, **kwargs)
-        index = self.asvs.names.order
+        index = [asv.name for asv in self.asvs]
         return pd.DataFrame(data=M, index=index, columns=times)
 

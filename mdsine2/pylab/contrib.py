@@ -78,8 +78,8 @@ class Perturbation(BasePerturbation, variables.Variable):
 
     Parameters
     ----------
-    start, end : int, float
-        Start and end of the perturbation
+    starts, ends : dict
+        Start and end of the perturbation for each subject
     asvs : pylab.base.ASVSet
         ASVSet of asvs
     magnitude : pylab.variables.Variable, int/float, array, Optional
@@ -95,12 +95,12 @@ class Perturbation(BasePerturbation, variables.Variable):
     kwargs : dict
         - Extra arguments for the Node class
     '''
-    def __init__(self, start, end, asvs, magnitude=None, indicator=None, 
+    def __init__(self, asvs, starts, ends, magnitude=None, indicator=None, 
         probability=None, **kwargs):
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
             self.G.perturbations = []
-        BasePerturbation.__init__(self, start=start, end=end, name=self.name)
+        BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         
         if not base.isasvset(asvs):
             raise TypeError('`asvs` ({}) must be pylab.base.ASVSet'.format(type(asvs)))
@@ -436,7 +436,7 @@ class ClusterPerturbation(BasePerturbation, variables.Variable):
     
     Parameters
     ----------
-    start, end : int, float
+    starts, ends : int, float
         - Start and end of the perturbation
     clustering : pylab.cluster.Clustering
         - This is the clustering object it is being set with
@@ -453,7 +453,7 @@ class ClusterPerturbation(BasePerturbation, variables.Variable):
     kwargs : dict
         - Extra arguments for the Node class
     '''
-    def __init__(self, start, end, clustering,
+    def __init__(self, clustering, starts, ends,
         magnitude=None, indicator=None, probability=None,
         signal_when_clusters_change=False,
         signal_when_item_assignment_changes=False, **kwargs):
@@ -470,7 +470,7 @@ class ClusterPerturbation(BasePerturbation, variables.Variable):
         if self.G.perturbations is None:
             self.G.perturbations = []
 
-        BasePerturbation.__init__(self, start=start, end=end, name=self.name)
+        BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         self.G.perturbations.append(self)
         self.clustering = clustering
         self.set_value_shape(shape=(len(self.clustering.items), ))

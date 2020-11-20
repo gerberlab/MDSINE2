@@ -24,6 +24,7 @@ class ReprNamesClass(_BaseNameClass):
     `set` with the given graph in order for them to be valid.
     '''
     def __init__(self):
+        self.DATA = None
         self.REGRESSCOEFF = None
         self.GROWTH_VALUE = None
         self.SELF_INTERACTION_VALUE = None
@@ -84,6 +85,7 @@ class StrNamesClass(_BaseNameClass):
     '''String representation of each of the variables
     '''
     def __init__(self):
+        self.DATA = 'data'
         self.REGRESSCOEFF = 'beta'
         self.GROWTH_VALUE = 'growth'
         self.SELF_INTERACTION_VALUE = 'self_interactions'
@@ -136,6 +138,7 @@ class LatexNamesClass(_BaseNameClass):
 
     # Use the pylab.asvname_formatter method to replace each index
     def __init__(self):
+        self.DATA = 'data'
         self.GROWTH_VALUE = '$a_{%(index)s,1}$'
         self.SELF_INTERACTION_VALUE = '$a_{%(index)s,2}$'
         self.CLUSTER_INTERACTION_VALUE = '$b_{(c_i, c_j)}$'

@@ -41,6 +41,7 @@ from matplotlib.pyplot import arrow
 import matplotlib.ticker as plticker
 
 from . import pylab as pl
+from .pylab.base import DEFAULT_TAXA_NAME
 
 warnings.filterwarnings('ignore')
 _plt_labels = ['title', 'xlabel', 'ylabel']
@@ -126,7 +127,7 @@ def set_default_trace_color(color):
     global DEFAULT_TRACE_COLOR
     DEFAULT_TRACE_COLOR = color
 
-def shade_in_perturbations(ax, perturbations, textcolor='black', textsize=None, alpha=0.25, label=True):
+def shade_in_perturbations(ax, perturbations, subj, textcolor='black', textsize=None, alpha=0.25, label=True):
     '''Shade in the axis where there are perturbations and adds the label of
     the perturbation above it.
 
@@ -134,25 +135,34 @@ def shade_in_perturbations(ax, perturbations, textcolor='black', textsize=None, 
     ----------
     ax : matplotlib.pyplot.Axes
         Axis we are plotting on
-    subjset : pylab.base.Study
-        Subject set to plot on
+    perturbations : list(mdsine2.BasePerturbations)
+        List of perturbations we are coloring in
+    subj : mdsine2.Subject, str
 
     Returns
     -------
     matplotlib.pyplot.Axes
     '''
-    if perturbations is None:
+    if pl.issubject(subj):
+        subj = subj.name
+    if not pl.isstr(subj):
+        raise ValueError('`Cannot recognize {}'.format(subj))
+    if perturbations is None or len(perturbations) == 0:
         return ax
 
     pert_locs = []
     pert_names = []
     for pidx, perturbation in enumerate(perturbations):
+
+        if subj not in perturbation.starts or subj not in perturbation.ends:
+            continue
+
         ax.axvspan(
-            xmin=perturbation.start,
-            xmax=perturbation.end, 
+            xmin=perturbation.starts[subj],
+            xmax=perturbation.ends[subj], 
             facecolor=PERTURBATION_COLOR, 
             alpha=alpha, zorder=-10000)
-        pert_locs.append((perturbation.end + perturbation.start) / 2)
+        pert_locs.append((perturbation.ends[subj] + perturbation.starts[subj]) / 2)
         name = perturbation.name
         if name is None:
             name = 'pert{}'.format(pidx)
@@ -1118,7 +1128,7 @@ def alpha_diversity_over_time(subjs, metric, taxlevel=None,
 
     ax = _set_xticks(ax)
     if shade_perturbations:
-        ax = shade_in_perturbations(ax, subjs[0].parent.perturbations)
+        ax = shade_in_perturbations(ax, subjs[0].parent.perturbations, subj=subjs[0])
     if legend:
         ax.legend(bbox_to_anchor=(1,1))
     if grid:
@@ -1547,7 +1557,7 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
         else:
             # Else it is an array of subjsets
             perturbations = subj[0].parent.perturbations
-        ax = shade_in_perturbations(ax, perturbations)
+        ax = shade_in_perturbations(ax, perturbations, subj=subj)
 
     if legend:
         ax.legend(bbox_to_anchor=(1,1))
@@ -1681,9 +1691,10 @@ def taxonomic_distribution_over_time(subj, taxlevel=None,
     ax = df.T.plot(ax=ax, kind='bar', stacked=True, **kwargs)
     if shade_perturbations:
         if pl.isstudy(subj):
-            ax = shade_in_perturbations(ax, subj.perturbations)
+            for sss in study:
+                ax = shade_in_perturbations(ax, subj.perturbations, subj=sss)
         else:
-            ax = shade_in_perturbations(ax, subj.parent.perturbations)
+            ax = shade_in_perturbations(ax, subj.parent.perturbations, subj=subj)
 
     if legend:
         # handles, labels = ax.get_legend_handles_labels()
@@ -1693,6 +1704,49 @@ def taxonomic_distribution_over_time(subj, taxlevel=None,
 
     # ax = _set_xticks(ax)
     return ax
+
+def _tax_is_defined(tax, level):
+    return (type(tax) != float) and (tax != DEFAULT_TAXA_NAME) and (tax != '')
+
+def _agg_asvname_for_paper(agg, asvname):
+    '''Makes the name in the format needed for the paper for an aggregate asv
+    '''
+    if _tax_is_defined(agg.aggregated_taxonomies[asvname], 'species'):
+        species = agg.aggregated_taxonomies[asvname]['species']
+        species = species.split('/')
+        if len(species) >= 3:
+            species = species[:2]
+        species = '/'.join(species)
+        label = '{genus} {spec} {name}'.format(
+                genus=agg.aggregated_taxonomies[asvname]['genus'],
+                spec=species,
+                name=asvname)
+    elif _tax_is_defined(agg.aggregated_taxonomies[asvname], 'genus'):
+        label = '* {genus} {name}'.format(
+                genus=agg.aggregated_taxonomies[asvname]['genus'],
+                name=asvname)
+    elif _tax_is_defined(agg.aggregated_taxonomies[asvname], 'family'):
+         label = '** {family} {name}'.format(
+                family=agg.aggregated_taxonomies[asvname]['family'],
+                name=asvname)
+    elif _tax_is_defined(agg.aggregated_taxonomies[asvname], 'order'):
+        label = '*** {order} {name}'.format(
+                order=agg.aggregated_taxonomies[asvname]['order'],
+                name=asvname)
+    elif _tax_is_defined(agg.aggregated_taxonomies[asvname], 'class'):
+        label = '**** {clas} {name}'.format(
+                clas=agg.aggregated_taxonomies[asvname]['class'],
+                name=asvname)
+    elif _tax_is_defined(agg.aggregated_taxonomies[asvname], 'phylum'):
+        label = '***** {phylum} {name}'.format(
+                phylum=agg.aggregated_taxonomies[asvname]['phylum'],
+                name=asvname)
+    elif _tax_is_defined(agg.aggregated_taxonomies[asvname], 'kingdom'):
+        label = '****** {kingdom} {name}'.format(
+                kingdom=agg.aggregated_taxonomies[asvname]['kingdom'],
+                name=asvname)
+
+    return label
 
 def aggregate_asv_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None, 
     title='Subject %(subjectname)s', xlabel='auto', ylabel='auto', vmin=None, vmax=None,
@@ -1798,7 +1852,9 @@ def aggregate_asv_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
             if dtype == 'abs':
                 abund = abund * subj.qpcr[t].mean()
             temp.append(abund)
-        individ_trajs[asvname] = temp
+
+        label = _agg_asvname_for_paper(agg=agg, asvname=asvname)
+        individ_trajs[label] = temp
     
     for label in individ_trajs:
         ax.plot(subj.times, individ_trajs[label], label=label, alpha=alpha_asv, 
@@ -1837,7 +1893,8 @@ def aggregate_asv_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
     ax = _set_xticks(ax)
     ax = _set_tick_fontsize(ax, fontsize=tickfontsize)
     if shade_perturbations:
-        ax = shade_in_perturbations(ax, perturbations=subj.perturbations, textsize=legendfontsize)
+        ax = shade_in_perturbations(ax, perturbations=subj.perturbations, subj=subj,
+            textsize=legendfontsize)
 
     return ax
 
