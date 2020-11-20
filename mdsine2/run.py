@@ -75,6 +75,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     runname = GRAPH.name + params.suffix()
     basepath = os.path.join(params.OUTPUT_BASEPATH, runname)
     os.makedirs(basepath, exist_ok=True)
+    params.MODEL_PATH = basepath
 
     # Normalize the qpcr measurements for numerical stability
     # -------------------------------------------------------
@@ -94,8 +95,8 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     # Instantiate the posterior classes
     # ---------------------------------
     asvs = subjset.asvs
-    d = design_matrices.Data(asvs=subjset.asvs, subjects=subjset,
-        G=GRAPH, zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
+    d = design_matrices.Data(subjects=subjset, G=GRAPH, 
+        zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
     clustering = pl.Clustering(clusters=None, items=asvs, G=GRAPH,
         name=STRNAMES.CLUSTERING_OBJ)
 
@@ -182,8 +183,8 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
             else:
                 name = subj_pert.name
             perturbation = pl.ClusterPerturbation(
-                starts=subj_pert.starts, 
-                end=subj_pert.end, probability=pl.variables.Beta(
+                starts=subj_pert.starts, ends=subj_pert.ends, 
+                probability=pl.variables.Beta(
                     name=name + '_probability', G=GRAPH, value=None, a=None, b=None),
                 clustering=clustering, G=GRAPH, name=name,
                 signal_when_clusters_change=False, signal_when_item_assignment_changes=False)

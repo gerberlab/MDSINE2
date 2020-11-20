@@ -2718,7 +2718,7 @@ class FilteringLogMP(pl.graph.Node):
                 pert_starts=np.asarray(pert_starts),
                 pert_ends=np.asarray(pert_ends),
                 ridx=ridx,
-                subjname=subjname,
+                subjname=subj.name,
                 calculate_qpcr_loglik=calculate_qpcr_loglik,
                 h5py_xname=self.x[ridx].name,
                 target_acceptance_rate=self.target_acceptance_rate)

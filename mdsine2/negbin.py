@@ -975,6 +975,7 @@ def build_graph(params, graph_name, subjset):
     runname = GRAPH.name + params.suffix()
     basepath = os.path.join(basepath, runname)
     os.makedirs(basepath, exist_ok=True)
+    params.MODEL_PATH = basepath
 
     # Initialize the inference objects
     # --------------------------------

@@ -158,24 +158,25 @@ class BaseMCMC(BaseModel):
             b = pickle.load(handle)
         
         # redo the filename to the new path if it has a save location
-        if not hasattr(b, '_save_loc'):
+        if hasattr(b, '_save_loc'):
             filename = os.path.abspath(filename)
             b._save_loc = filename
 
-        # Redo the filename of the tracer object if necessart
-        if b.tracer is not None:
-            if b.tracer.filename is not None:
-                _, tracer_fname = os.path.split(b.tracer.filename)
-                currpath, _ = os.path.split(b._save_loc)
+            # Redo the filename of the tracer object if necessart
+            if b.tracer is not None:
+                if b.tracer.filename is not None:
+                    _, tracer_fname = os.path.split(b.tracer.filename)
+                    currpath, _ = os.path.split(b._save_loc)
 
-                new_loc = os.path.join(currpath, tracer_fname)
+                    new_loc = os.path.join(currpath, tracer_fname)
 
-                if os.path.isfile(new_loc):
-                    b.tracer.filename = new_loc
-                else:
-                    raise ValueError('Looking for tracer hdf5 object in {}, could not find it ' \
-                        'in the local path even though inference says it contains the object.'.format(
-                            new_loc))
+                    if os.path.isfile(new_loc):
+                        b.tracer.filename = new_loc
+                    else:
+                        raise ValueError('Looking for tracer hdf5 object in {}, could not find it ' \
+                            'in the local path even though inference says it contains the object. On ' \
+                            'file it shows the location {}'.format(
+                                new_loc, b.tracer.filename))
 
         return b
 

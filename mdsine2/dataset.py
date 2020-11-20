@@ -298,7 +298,7 @@ def gibson(dset=None, as_df=False, with_perturbations=True, species_assignment='
             'reads': reads, 'qpcr':qpcr, 'perturbations': perturbations}
     else:
         asvs = ASVSet(taxonomy_table=taxonomy)
-        study = Study(asvs=asvs)
+        study = Study(asvs=asvs, name=dset)
         study.parse(
             metadata=metadata,
             reads=reads,

@@ -446,7 +446,7 @@ class BasePerturbation:
         self.name = name
 
     def __str__(self):
-        s = 'Perturbation {}:'.format(self.name)
+        s = 'Perturbation {}:\n'.format(self.name)
         if self.starts is not None:
             for subj in self.starts:
                 s += '\tSubject {}: ({}, {})\n'.format(subj, self.starts[subj], 
@@ -488,7 +488,6 @@ class BasePerturbation:
             raise KeyError('`subj` {} not specified for {}'.format(subj, self.name))
 
         return time > start and time <= end
-
 
 
 class Perturbations:
@@ -1760,7 +1759,8 @@ class Study(Saveable):
     asvs : ASVSet, Optional
         Contains all of the ASVs
     '''
-    def __init__(self, asvs):
+    def __init__(self, asvs, name='unnamed-study'):
+        self.name = name
         self.id = id(self)
         self._subjects = {}
         self.perturbations = None
@@ -1838,24 +1838,26 @@ class Study(Saveable):
         # Add the perturbations if there are any
         # --------------------------------------
         if perturbations is not None:
+            logging.warning('Reseting perturbations')
+            self.perturbations = Perturbations()
             if not plutil.isdataframe(perturbations):
                 raise TypeError('`metadata` ({}) must be a pandas.DataFrame'.format(type(metadata)))
             try:
                 for pidx in perturbations.index:
-                    pname = perturbations['subject'][pidx]
+                    pname = perturbations['name'][pidx]
+                    subj = str(perturbations['subject'][pidx])
 
                     if pname not in self.perturbations:
                         # Create a new one
                         pert = BasePerturbation(
                             name=pname, 
-                            starts={perturbations['start'][pidx]},
-                            ends={perturbations['end'][pidx]})
+                            starts={subj: perturbations['start'][pidx]},
+                            ends={subj: perturbations['end'][pidx]})
                         self.perturbations.append(pert)
                     else:
                         # Add this subject name to the pertubration
-                        self.perturbations[pname].starts[pname] = perturbations['start'][pidx]
-                        self.perturbations[pname].ends[pname] = perturbations['end'][pidx]
-
+                        self.perturbations[pname].starts[subj] = perturbations['start'][pidx]
+                        self.perturbations[pname].ends[subj] = perturbations['end'][pidx]
             except KeyError as e:
                 logging.critical(e)
                 raise KeyError('Make sure that `subject`, `start`, and `end` are columns')

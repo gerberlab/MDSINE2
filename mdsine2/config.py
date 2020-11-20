@@ -84,9 +84,10 @@ class MDSINE2ModelConfig(_BaseModelConfig):
     ----------
     '''
     def __init__(self, basepath, data_seed, init_seed, burnin, n_samples,
-        negbin_a0, negbin_a1, qpcr_scale, leave_out=None, max_n_asvs=None, 
+        negbin_a0, negbin_a1, leave_out=None, max_n_asvs=None, 
         checkpoint=100):
         self.OUTPUT_BASEPATH = os.path.abspath(basepath)
+        self.MODEL_PATH = None
         self.DATA_SEED = data_seed
         self.INIT_SEED = init_seed
         self.BURNIN = burnin
@@ -108,7 +109,6 @@ class MDSINE2ModelConfig(_BaseModelConfig):
 
         self.NEGBIN_A0 = negbin_a0
         self.NEGBIN_A1 = negbin_a1
-        self.QPCR_NOISE_SCALE = qpcr_scale
         self.N_QPCR_BUCKETS = 3
 
         self.INTERMEDIATE_VALIDATION_T = 1 * 3600 # Every hour
@@ -292,7 +292,6 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'delay': 0, 'n_iter': 20},
             STRNAMES.CLUSTERING: {
                 'value_option': 'spearman', #'fixed-topology',
-                # 'value': 'output_real/pylab24/real_runs/strong_priors/healthy1_5_0.0001_rel_2_5/ds0_is0_b5000_ns15000_mo-1_logTrue_pertsmult/graph_leave_out-1/mcmc.pkl',
                 'delay': 2,
                 'n_clusters': 30,
                 'run_every_n_iterations': 4},
@@ -468,6 +467,7 @@ class NegBinConfig(_BaseModelConfig):
 
         self.SEED = seed
         self.OUTPUT_BASEPATH = os.path.abspath(basepath)
+        self.MODEL_PATH = None
         self.BURNIN = burnin
         self.N_SAMPLES = n_samples
         self.CKPT = ckpt
