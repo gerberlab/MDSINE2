@@ -185,6 +185,11 @@ class Perturbation(BasePerturbation, variables.Variable):
         self.value[ind] = self.magnitude.value[ind]
         variables.Variable.add_trace(self)
 
+    def remove_local_trace(self):
+        '''Delete the local trace
+        '''
+        self.trace = None
+
     def array(self, only_pos_ind=False):
         '''Return the magnitudes with the indicatrs indexed out
 
@@ -233,6 +238,11 @@ class ClusterPerturbationValue(ClusterValue):
         for cid in cids_added:
             self.value[cid] = self.prior.sample()
 
+    def remove_local_trace(self):
+        '''Delete the local trace
+        '''
+        self.trace = None
+
 
 class ClusterPerturbationIndicator(ClusterValue):
     '''Extends the `pylab.cluster.ClusterValue` object so that it works for being a 
@@ -256,6 +266,11 @@ class ClusterPerturbationIndicator(ClusterValue):
         self.value = {}
         for cid in self.clustering.order:
             self.value[cid] = False
+
+    def remove_local_trace(self):
+        '''Delete the local trace
+        '''
+        self.trace = None
 
     def clusters_changed(self, cids_added, cids_removed):
         '''Delete old clusters, sample from `probability` for the
@@ -615,6 +630,11 @@ class ClusterPerturbation(BasePerturbation, variables.Variable):
         ind = self.indicator.item_arg_array()
         self.value[ind] = self.magnitude.item_array()[ind]
         variables.Variable.add_trace(self)
+
+    def remove_local_trace(self):
+        '''Delete the local trace
+        '''
+        self.trace = None
 
     def set_values_from_array(self, values, use_indicators=True):
         '''Sets the values from an array of the same order as the clusters.
@@ -1361,6 +1381,11 @@ class Interactions(ClusterProperty, Node, Traceable):
         self.sample_iter = 0
         shape = (tracer.ckpt, ) + self._shape
         self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
+
+    def remove_local_trace(self):
+        '''Delete the local trace
+        '''
+        self.trace = None
 
     def add_trace(self):
         '''Adds the current value to the trace. If the buffer is full

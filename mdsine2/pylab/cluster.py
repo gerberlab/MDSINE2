@@ -706,6 +706,11 @@ class ClusterValue(ClusterProperty, Node, Traceable):
         self.sample_iter = 0
         self.trace = np.full(shape=(tracer.ckpt, len(self.clustering.items)),
             dtype=self.dtype, fill_value=np.nan)
+    
+    def remove_local_trace(self):
+        '''Delete the local trace
+        '''
+        self.trace = None
 
     def add_trace(self):
         '''Adds the current value to the trace on an item-basis. Writes to disk if

@@ -972,8 +972,7 @@ def build_graph(params, graph_name, subjset):
 
     basepath = params.OUTPUT_BASEPATH
     os.makedirs(basepath, exist_ok=True)
-    runname = GRAPH.name + params.suffix()
-    basepath = os.path.join(basepath, runname)
+    basepath = os.path.join(basepath, GRAPH.name)
     os.makedirs(basepath, exist_ok=True)
     params.MODEL_PATH = basepath
 

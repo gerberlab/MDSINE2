@@ -39,7 +39,6 @@ class ReprNamesClass(_BaseNameClass):
         self.CLUSTERING = None
         self.CONCENTRATION = None
 
-        self.AUX_TRAJECTORY = None
         self.LATENT_TRAJECTORY = None
         self.FILTERING = None
         self.ZERO_INFLATION = None
@@ -85,22 +84,21 @@ class StrNamesClass(_BaseNameClass):
     '''String representation of each of the variables
     '''
     def __init__(self):
-        self.DATA = 'data'
-        self.REGRESSCOEFF = 'beta'
-        self.GROWTH_VALUE = 'growth'
-        self.SELF_INTERACTION_VALUE = 'self_interactions'
-        self.CLUSTER_INTERACTION_VALUE = 'cluster_interaction_values'
+        self.DATA = 'Data matrix'
+        self.REGRESSCOEFF = 'Logistic growth parameters (growth, self-interactions, interactions/perturbations)'
+        self.GROWTH_VALUE = 'Growth values'
+        self.SELF_INTERACTION_VALUE = 'Self-interactions'
+        self.CLUSTER_INTERACTION_VALUE = 'Cluster interaction values'
 
-        self.CLUSTERING_OBJ = 'clustering_object'
-        self.INTERACTIONS_OBJ = 'interactions_object'
+        self.CLUSTERING_OBJ = 'Clustering object'
+        self.INTERACTIONS_OBJ = 'Interactions object'
 
-        self.CLUSTER_INTERACTION_INDICATOR = 'cluster_interaction_indicators'
-        self.INDICATOR_PROB = 'pi_z'
+        self.CLUSTER_INTERACTION_INDICATOR = 'Cluster interaction indicators'
+        self.INDICATOR_PROB = 'Cluster interaction probability'
 
-        self.CLUSTERING = 'ClusterAssignments'
-        self.CONCENTRATION = 'clustering concentration'
+        self.CLUSTERING = 'Cluster assignments'
+        self.CONCENTRATION = 'Clustering concentration'
 
-        self.AUX_TRAJECTORY = 'q'
         self.LATENT_TRAJECTORY = 'x'
         self.FILTERING = 'filtering'
         self.ZERO_INFLATION = 'zero_inflation'
@@ -146,7 +144,6 @@ class LatexNamesClass(_BaseNameClass):
         self.CLUSTER_INTERACTION_INDICATOR = '$z^{(b)}_{(c_i, c_j)}$'
         self.INDICATOR_PROB = '$\\pi_z$'
         self.CLUSTERING = '$c_i$'
-        self.AUX_TRAJECTORY = '$q$'
         self.LATENT_TRAJECTORY = '$x$'
         self.CONCENTRATION = '$\\alpha$'
         #necessary for homoscedastic

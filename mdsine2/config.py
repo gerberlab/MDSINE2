@@ -358,6 +358,77 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         '''
         return 'leave_out{}'.format(self.LEAVE_OUT)
 
+    def make_metadata_file(self, fname):
+        '''Make a metadata file that does an overview of the parameters in this class
+        '''
+
+        mystr = 'Global parameters\n' \
+            '-----------------\n' \
+            'Random seed: {seed}\n' \
+            'Total number of Gibb steps: {n_samples}\n' \
+            'Number of Gibb steps for burn-in: {burnin}\n' \
+            'Saved location: {model_path}\n\n' \
+            'Negative binomial dispersion parameters\n' \
+            '---------------------------------------\n' \
+            'a0: {a0:.4E}\n' \
+            'a1: {a1:.4E}\n\n' \
+            'Parameters learned and their order\n' \
+            '----------------------------------\n' \
+            '{params_learned}\n\n' \
+            'Selected Initialization choices\n' \
+            '-------------------------------\n' \
+            'Cluster interaction probability prior: {clus_ind_prior}\n' \
+            'Perturbation probability prior: {pert_ind_prior}\n' \
+            'Filtering initialization: {filt}\n' \
+            'Cluster initialization: {clus_init}\n'
+        # params learned
+        # --------------
+        i = 0
+        params_learned = ''
+        for pname in self.INFERENCE_ORDER:
+            if self.LEARN[pname]:
+                params_learned += '{}: {}\n'.format(i, pname)
+                i += 1
+        
+        # init choices
+        # ------------
+        if self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] == 'spearman':
+            clus_init = 'Spearman Correlation, {} clusters'.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['n_clusters'])
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] == 'no-clusters':
+            clus_init = 'No clusters, everything in its own cluster'
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] == 'fixed-topology':
+            clus_init = 'Same topology as {}'.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value'])
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] == 'manual':
+            clus_init = 'Manually with assignments {}'.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value'])
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] == 'random':
+            clus_init = 'Randomly, with {} clusters'.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['n_clusters'])
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] == 'taxonomy':
+            clus_init = 'By taxonomic similarity, with {} clusters'.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['n_clusters'])
+        else:
+            clus_init = 'Something slse'
+
+
+        f = open(fname, 'w')
+        f.write(mystr.format(
+            seed=self.DATA_SEED, n_samples=self.N_SAMPLES,
+            burnin=self.BURNIN, model_path=self.MODEL_PATH,
+            a0=self.NEGBIN_A0, a1=self.NEGBIN_A1,
+            params_learned=params_learned,
+            clus_ind_prior=self.INITIALIZATION_KWARGS[STRNAMES.INDICATOR_PROB]['hyperparam_option'],
+            pert_ind_prior=self.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['hyperparam_option'],
+            filt=self.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['x_value_option'],
+            clus_init=clus_init))
+        f.close()
+
+        
+        
+
+
 
 class FilteringConfig(pl.Saveable):
     '''These are the parameters for Filtering

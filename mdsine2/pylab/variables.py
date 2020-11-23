@@ -501,6 +501,11 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
             shape += self._shape
         self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
 
+    def remove_local_trace(self):
+        '''Destroy the local trace of the object
+        '''
+        self.trace = None
+
     def add_trace(self):
         '''Adds the current value to the trace. If the buffer is full
         it will end it to disk

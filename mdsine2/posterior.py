@@ -352,6 +352,59 @@ def pinv(M, var):
         np.save(filename, M)
         raise
 
+def _scalar_visualize(obj, path, f, section='posterior'):
+    '''Render the traces in the folder `basepath` and write the 
+    learned values to the file `f`. This works for scalar variables
+
+    Parameters
+    ----------
+    obj : mdsine2.Variable
+    path : str
+        This is the path to write the files to
+    f : _io.TextIOWrapper
+        File that we are writing the values to
+    section : str
+        Section of the trace to compute on. Options:
+            'posterior' : posterior samples
+            'burnin' : burn-in samples
+            'entire' : both burn-in and posterior samples
+
+    Returns
+    -------
+    _io.TextIOWrapper
+    '''
+    f.write('\n\n###################################\n{}'.format(obj.name))
+    f.write('\n###################################\n')
+    if not obj.G.inference.is_being_traced(obj):
+        f.write('`{}` not learned\n\tValue: {}\n'.format(obj.name, obj.value))
+        return f
+
+    summ = pl.summary(obj, section=section)
+    for k,v in summ.items():
+        f.write('\t{}: {}\n'.format(k,v))
+
+    ax1, _ = visualization.render_trace(var=obj, plt_type='both', 
+        section=section, include_burnin=True, log_scale=True, rasterized=True)
+
+    if pl.hasprior(obj):
+        
+        l,h = ax1.get_xlim()
+        try:
+            xs = np.arange(l,h,step=(h-l)/1000) 
+            ys = []
+            for x in xs:
+                ys.append(obj.prior.pdf(value=x))
+            ax1.plot(xs, ys, label='prior', alpha=0.5, color='red')
+            ax1.legend()
+        except OverflowError:
+            logging.critical('OverflowError while plotting prior')
+
+    fig = plt.gcf()
+    fig.suptitle(obj.name)
+    plt.savefig(path)
+    plt.close()
+    return f
+
 # @numba.jit(nopython=True, fastmath=True, cache=True)
 def prod_gaussians(means, variances):
     '''Product of Gaussians
@@ -695,6 +748,8 @@ class ProcessVarGlobal(pl.variables.SICS):
         self._strr = '{}, empirical_variance: {:.5f}'.format(self.value, 
             residual/len(z))
 
+    def visualize(self, path, f, section='posterior'):
+        return _scalar_visualize(self, path=path, f=f, section=section)
 
 # Clustering
 # ----------
@@ -813,32 +868,7 @@ class Concentration(pl.variables.Gamma):
         -------
         _io.TextIOWrapper
         '''
-        f.write('\n\n###################################\n{}'.format(self.name))
-        f.write('\n###################################\n')
-        if not self.G.inference.is_being_traced(self):
-            f.write('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
-            return f
-
-        summ = pl.summary(self, section=section)
-        for k,v in summ.items():
-            f.write('\t{}: {}\n'.format(k,v))
-
-        ax1, _ = visualization.render_trace(var=self, plt_type='both', 
-            section=section, include_burnin=True, log_scale=True, rasterized=True)
-
-        l,h = ax1.get_xlim()
-        xs = np.arange(l,h,step=(h-l)/1000) 
-        ys = []
-        for x in xs:
-            ys.append(self.prior.pdf(value=x))
-        ax1.plot(xs, ys, label='prior', alpha=0.5, color='red')
-        ax1.legend()
-
-        fig = plt.gcf()
-        fig.suptitle('Concentration')
-        plt.savefig(path)
-        plt.close()
-        f.close()
+        return _scalar_visualize(self, path=path, f=f, section=section)
 
 
 class ClusterAssignments(pl.graph.Node):
@@ -1219,6 +1249,7 @@ class ClusterAssignments(pl.graph.Node):
         -------
         _io.TextIOWrapper
         '''
+        from .util import generate_cluster_assignments_posthoc
         asvs = self.G.data.asvs
         f.write('\n\n###################################\n')
         f.write(self.name)
@@ -1277,6 +1308,11 @@ class ClusterAssignments(pl.graph.Node):
 
     def set_trace(self):
         self.clustering.set_trace()
+
+    def remove_local_trace(self):
+        '''Delete the local trace
+        '''
+        self.clustering.trace = None
 
     def add_trace(self):
         self.clustering.add_trace()
@@ -3816,6 +3852,9 @@ class PriorVarInteractions(pl.variables.SICS):
            se)/self.dof.value
         self.sample()
 
+    def visualize(self, path, f, section='posterior'):
+        return _scalar_visualize(self, path=path, f=f, section=section)
+
 
 class PriorMeanInteractions(pl.variables.Normal):
     '''This is the posterior mean for the interactions
@@ -3934,6 +3973,9 @@ class PriorMeanInteractions(pl.variables.Normal):
         self.var.value = 1/(prior_prec + (len(x)*prec))
         self.mean.value = self.var.value * ((prior_mean * prior_prec) + (np.sum(x)*prec))
         self.sample()
+
+    def visualize(self, path, f, section='posterior'):
+        return _scalar_visualize(self, path=path, f=f, section=section)
 
 
 class ClusterInteractionValue(pl.variables.MVN):

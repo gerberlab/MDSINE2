@@ -470,6 +470,13 @@ class BaseMCMC(BaseModel):
             logging.info('Inference total time: {}/Gibb step'.format(
                 (time.time() - total_time)/self.n_samples))
             
+            # Remove the local traces
+            logging.info('remove local traces')
+            for node in self.graph:
+                if isVariable(node):
+                    node.remove_local_trace()
+            self.save()
+
             return self
         except:
             for a in self.graph._persistent_pntr:

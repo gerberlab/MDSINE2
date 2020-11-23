@@ -32,7 +32,7 @@ from .util import asvname_formatter, toarray, fast_index, coarsen_phylogenetic_t
 from .base import ASV, ASVSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
     Subject, Study, condense_matrix_with_taxonomy
 from .variables import Variable, Constant, summary
-from .graph import Graph, Node
+from .graph import Graph, Node, hasprior
 from .cluster import Clustering
 from .random import seed
 from .contrib import Interactions, ClusterPerturbation

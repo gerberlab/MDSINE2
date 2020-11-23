@@ -796,6 +796,11 @@ class AggregateASV(ASV):
             self.taxonomy['family'], self.taxonomy['genus'],
             self.taxonomy['species'])
 
+    def calculate_consensus_sequence(self):
+        '''
+        '''
+        pass
+
 
 class Clusterable(Saveable):
     '''This is the base class for something to be clusterable (be used to cluster in

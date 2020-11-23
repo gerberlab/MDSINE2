@@ -58,7 +58,8 @@ REQUIREMENTS = [
     'psutil==5.7.3',
     'ete3==3.1.2',
     'networkx==2.3',
-    'numba==0.48.0']
+    'numba==0.48.0',
+    'biopython==1.78']
 
 # Custom C distributions
 ext1 = Extension('_distribution', ['mdsine2/pylab/c_code/distributionmodule.c'])

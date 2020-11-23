@@ -72,8 +72,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
 
     # Make the basepath
     # -----------------
-    runname = GRAPH.name + params.suffix()
-    basepath = os.path.join(params.OUTPUT_BASEPATH, runname)
+    basepath = os.path.join(params.OUTPUT_BASEPATH, GRAPH.name)
     os.makedirs(basepath, exist_ok=True)
     params.MODEL_PATH = basepath
 
@@ -402,7 +401,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
     mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CHECKPOINT)
     mcmc.set_save_location(mcmc_filename)
-    params.save(os.path.join(basepath + config.PARAMS_FILENAME))
+    params.save(os.path.join(basepath, config.PARAMS_FILENAME))
 
     return mcmc
 
@@ -510,7 +509,7 @@ def normalize_parameters(mcmc, subjset):
 
         if mcmc.is_in_inference_order(STRNAMES.FILTERING):
             for ridx in range(len(subjset)):
-                for dset_name in [STRNAMES.LATENT_TRAJECTORY, STRNAMES.AUX_TRAJECTORY]:
+                for dset_name in [STRNAMES.LATENT_TRAJECTORY]:
                     name = dset_name + '_ridx{}'.format(ridx)
                     if name not in f:
                         continue
