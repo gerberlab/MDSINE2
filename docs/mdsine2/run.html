@@ -32,7 +32,7 @@ import h5py
 
 # Custom modules
 from . import config
-from .names import STRNAMES, REPRNAMES
+from .names import STRNAMES, STRNAMES
 from . import design_matrices
 
 # Import the posterior classes
@@ -98,7 +98,7 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     # Continue inference if necessary
     # -------------------------------
     if continue_inference is not None:
-        REPRNAMES.set(G=GRAPH)
+        STRNAMES.set(G=GRAPH)
         logging.info(&#39;Continuing inference at Gibb step {}&#39;.format(continue_inference))
         mcmc = pl.inference.BaseMCMC.load(params.MCMC_FILENAME)
         mcmc.continue_inference(gibb_step_start=continue_inference)
@@ -284,7 +284,7 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     qpcr_scales.set_shape()
 
     # Set the IDs of the variables in the graph
-    REPRNAMES.set(G=GRAPH)
+    STRNAMES.set(G=GRAPH)
 
     # Set up inference and the inference order.
     # -----------------------------------------
@@ -341,7 +341,7 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
             perturbationsDM.base.build()
             perturbationsDM.M.build()
         if name == STRNAMES.PERT_VALUE and subjset.perturbations is not None:
-            d.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+            d.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
 
     logging.info(&#39;\n\n\n&#39;)
     logging.info(&#39;Initialization Values:&#39;)
@@ -839,7 +839,7 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
     # Continue inference if necessary
     # -------------------------------
     if continue_inference is not None:
-        REPRNAMES.set(G=GRAPH)
+        STRNAMES.set(G=GRAPH)
         logging.info(&#39;Continuing inference at Gibb step {}&#39;.format(continue_inference))
         mcmc = pl.inference.BaseMCMC.load(params.MCMC_FILENAME)
         mcmc.continue_inference(gibb_step_start=continue_inference)
@@ -1025,7 +1025,7 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
     qpcr_scales.set_shape()
 
     # Set the IDs of the variables in the graph
-    REPRNAMES.set(G=GRAPH)
+    STRNAMES.set(G=GRAPH)
 
     # Set up inference and the inference order.
     # -----------------------------------------
@@ -1082,7 +1082,7 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
             perturbationsDM.base.build()
             perturbationsDM.M.build()
         if name == STRNAMES.PERT_VALUE and subjset.perturbations is not None:
-            d.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+            d.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
 
     logging.info(&#39;\n\n\n&#39;)
     logging.info(&#39;Initialization Values:&#39;)

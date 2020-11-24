@@ -842,25 +842,15 @@ class ASVSet(Clusterable):
     (`mdsine2.Study.aggregate_items`, `mdsine2.Study.deaggregate_item`) so that the reads
     for the agglomerates and individual ASVs can be consistent with the ASVSet.
 
-    `taxonomy_table`
-    ----------------
-    This is a dataframe that contains the taxonomic information for each ASV.
-    The columns that must be included are:
-        'name' : name of the asv
-        'sequence' : sequence of the asv
-    All of the taxonomy specifications are optional:
-        'kingdom' : kingdom taxonomy
-        'phylum' : phylum taxonomy
-        'class' : class taxonomy
-        'family' : family taxonomy
-        'genus' : genus taxonomy
-        'species' : species taxonomy
-
     Parameters
     ----------
-    taxonomy_table : pandas.DataFrame, Optional
-        DataFrame conttaxaining the required information (Taxonomy, sequence).
-        If nothing is passed in, it will be an empty ASVSet
+    taxonomy_table : pandas.DataFrame
+        This is the table defining the set. If this is specified, then it is passed into
+        ASVSet.parse
+
+    See also
+    --------
+    mdsine2.ASVSet.parse
     '''
 
     def __init__(self, taxonomy_table=None):
@@ -872,43 +862,7 @@ class ASVSet(Clusterable):
 
         # Add all of the ASVs from the dataframe if necessary
         if taxonomy_table is not None:
-            taxonomy_table = taxonomy_table.rename(str.lower, axis='columns')
-            if 'name' not in taxonomy_table.columns:
-                if taxonomy_table.index.name == 'name':
-                    taxonomy_table = taxonomy_table.reset_index()
-                else:
-                    raise ValueError('`"name"` ({}) not found as a column in `taxonomy_table`'.format(
-                        taxonomy_table.columns))
-            if SEQUENCE_COLUMN_LABEL not in taxonomy_table.columns:
-                raise ValueError('`"{}"` ({}) not found as a column in `taxonomy_table`'.format(
-                    SEQUENCE_COLUMN_LABEL, taxonomy_table.columns))
-
-            for tax in _TAX_REV_IDXS[:-1]:
-                if tax not in taxonomy_table.columns:
-                    logging.info('Adding in `{}` column'.format(tax))
-                    taxonomy_table = taxonomy_table.insert(-1, tax, 
-                        [DEFAULT_TAXA_NAME for _ in range(len(taxonomy_table.index))])
-
-            for i in taxonomy_table.index:
-                seq = taxonomy_table[SEQUENCE_COLUMN_LABEL][i]
-                name = taxonomy_table['name'][i]
-                asv = ASV(name=name, sequence=seq, idx=self._len)
-                asv.set_taxonomy(
-                    tax_kingdom=taxonomy_table.loc[i]['kingdom'],
-                    tax_phylum=taxonomy_table.loc[i]['phylum'],
-                    tax_class=taxonomy_table.loc[i]['class'],
-                    tax_order=taxonomy_table.loc[i]['order'],
-                    tax_family=taxonomy_table.loc[i]['family'],
-                    tax_genus=taxonomy_table.loc[i]['genus'],
-                    tax_species=taxonomy_table.loc[i]['species'])
-
-                self.ids[asv.id] = asv
-                self.names[asv.name] = asv
-                self.index.append(asv)  
-                self._len += 1
-
-            self.ids.update_order()
-            self.names.update_order()
+            self.parse(taxonomy_table=taxonomy_table)
 
     def __contains__(self,key):
         try:
@@ -955,6 +909,75 @@ class ASVSet(Clusterable):
         '''Alias for __len__
         '''
         return self._len
+
+    def parse(self, taxonomy_table):
+        '''Parse a taxonomy table
+
+        `taxonomy_table`
+        ----------------
+        This is a dataframe that contains the taxonomic information for each ASV.
+        The columns that must be included are:
+            'name' : name of the asv
+            'sequence' : sequence of the asv
+        All of the taxonomy specifications are optional:
+            'kingdom' : kingdom taxonomy
+            'phylum' : phylum taxonomy
+            'class' : class taxonomy
+            'family' : family taxonomy
+            'genus' : genus taxonomy
+            'species' : species taxonomy
+
+        Parameters
+        ----------
+        taxonomy_table : pandas.DataFrame, Optional
+            DataFrame conttaxaining the required information (Taxonomy, sequence).
+            If nothing is passed in, it will be an empty ASVSet
+        '''
+        logging.info('ASVSet parsng new taxonomy table. Resetting')
+        self.taxonomy_table = taxonomy_table
+        self.ids = CustomOrderedDict()
+        self.names = CustomOrderedDict()
+        self.index = []
+        self._len = 0
+
+        self.taxonomy_table = taxonomy_table
+        taxonomy_table = taxonomy_table.rename(str.lower, axis='columns')
+        if 'name' not in taxonomy_table.columns:
+            if taxonomy_table.index.name == 'name':
+                taxonomy_table = taxonomy_table.reset_index()
+            else:
+                raise ValueError('`"name"` ({}) not found as a column in `taxonomy_table`'.format(
+                    taxonomy_table.columns))
+        if SEQUENCE_COLUMN_LABEL not in taxonomy_table.columns:
+            raise ValueError('`"{}"` ({}) not found as a column in `taxonomy_table`'.format(
+                SEQUENCE_COLUMN_LABEL, taxonomy_table.columns))
+
+        for tax in _TAX_REV_IDXS[:-1]:
+            if tax not in taxonomy_table.columns:
+                logging.info('Adding in `{}` column'.format(tax))
+                taxonomy_table = taxonomy_table.insert(-1, tax, 
+                    [DEFAULT_TAXA_NAME for _ in range(len(taxonomy_table.index))])
+
+        for i in taxonomy_table.index:
+            seq = taxonomy_table[SEQUENCE_COLUMN_LABEL][i]
+            name = taxonomy_table['name'][i]
+            asv = ASV(name=name, sequence=seq, idx=self._len)
+            asv.set_taxonomy(
+                tax_kingdom=taxonomy_table.loc[i]['kingdom'],
+                tax_phylum=taxonomy_table.loc[i]['phylum'],
+                tax_class=taxonomy_table.loc[i]['class'],
+                tax_order=taxonomy_table.loc[i]['order'],
+                tax_family=taxonomy_table.loc[i]['family'],
+                tax_genus=taxonomy_table.loc[i]['genus'],
+                tax_species=taxonomy_table.loc[i]['species'])
+
+            self.ids[asv.id] = asv
+            self.names[asv.name] = asv
+            self.index.append(asv)  
+            self._len += 1
+
+        self.ids.update_order()
+        self.names.update_order()
 
     def add_asv(self, name, sequence=None):
         '''Adds an ASV to the set
@@ -1905,18 +1928,53 @@ class Study(Saveable):
                             sampleid, list(self._samples.keys())))
                 cfuspergram = qpcr.loc[sampleid].to_numpy()
                 self[sid].add_qpcr(timepoints=t, qpcr=cfuspergram)
+        return self
             
-    def write_metadata_to_table(self, path, sep='\t'):
+    def metadata_to_csv(self, path, sep='\t'):
+        '''Write the internal metadata to a table
+
+        Parameters
+        ----------
+        path : str
+            This is the location to save the metadata file
+        sep : str
+            This is the separator of the table
+        '''
+        columns = ['sampleID', 'subject', 'time']
+        data = []
+        for sampleid in self._samples:
+            sid, t = self._samples[sampleid]
+            data.append([sampleid, sid, t])
+
+        df = pd.DataFrame(data, columns=columns)
+        df.to_csv(path, sep=sep, index=False, header=True)
+
+    def reads_to_csv(self, path, sep='\t'):
         raise NotImplementedError('Need to implement it')
 
-    def write_reads_to_table(self, path, sep='\t'):
+    def qpcr_to_csv(self, path, sep='\t'):
         raise NotImplementedError('Need to implement it')
 
-    def write_qpcr_to_table(self, path, sep='\t'):
-        raise NotImplementedError('Need to implement it')
+    def perturbations_to_csv(self, path, sep='\t'):
+        '''Write the perturbations to a table
 
-    def write_perturbations_to_table(self, path, sep='\t'):
-        raise NotImplementedError('Need to implement it')
+        Parameters
+        ----------
+        path : str
+            This is the location to save the perturbations file
+        sep : str
+            This is the separator of the table
+        '''
+        columns = ['name', 'start', 'end', 'subject']
+        data = []
+        for perturbation in self.perturbations:
+            
+        for sampleid in self._samples:
+            sid, t = self._samples[sampleid]
+            data.append([sampleid, sid, t])
+
+        df = pd.DataFrame(data, columns=columns)
+        df.to_csv(path, sep=sep, index=False, header=True)
 
     def names(self):
         '''List the names of the contained subjects

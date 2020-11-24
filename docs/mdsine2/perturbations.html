@@ -37,7 +37,7 @@ import numpy.random as npr
 
 from .util import expected_n_clusters, build_prior_covariance, build_prior_mean, \
     sample_categorical_log, log_det, pinv
-from .names import STRNAMES, REPRNAMES
+from .names import STRNAMES, STRNAMES
 
 from . import pylab as pl
 
@@ -164,17 +164,17 @@ class PerturbationMagnitudes(pl.variables.Normal):
         if n_on == 0:
             return
 
-        rhs = [REPRNAMES.PERT_VALUE]
+        rhs = [STRNAMES.PERT_VALUE]
         lhs = [
-            REPRNAMES.GROWTH_VALUE,
-            REPRNAMES.SELF_INTERACTION_VALUE,
-            REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            STRNAMES.GROWTH_VALUE,
+            STRNAMES.SELF_INTERACTION_VALUE,
+            STRNAMES.CLUSTER_INTERACTION_VALUE]
         X = self.G.data.construct_rhs(keys=rhs, toarray=True)
         y = self.G.data.construct_lhs(keys=lhs,
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{
                 &#39;with_perturbations&#39;:False}})
 
-        process_prec = self.G[REPRNAMES.PROCESSVAR].prec
+        process_prec = self.G[STRNAMES.PROCESSVAR].prec
         prior_prec = build_prior_covariance(G=self.G, cov=False, order=rhs, sparse=False)
 
         prior_mean = build_prior_mean(G=self.G, order=rhs).reshape(-1,1)
@@ -185,9 +185,9 @@ class PerturbationMagnitudes(pl.variables.Normal):
         mean = np.asarray(cov @ (a @ y + prior_prec @ prior_mean)).ravel()
 
         # print(&#39;\n\ny\n&#39;,np.hstack((y, self.G.data.lhs.vector.reshape(-1,1))))
-        # print(self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE].value)
-        # print(self.G[REPRNAMES.GROWTH_VALUE].value)
-        # print(self.G[REPRNAMES.SELF_INTERACTION_VALUE].value)
+        # print(self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].value)
+        # print(self.G[STRNAMES.GROWTH_VALUE].value)
+        # print(self.G[STRNAMES.SELF_INTERACTION_VALUE].value)
 
         self.mean.value = mean
         self.var.value = np.diag(cov)
@@ -206,7 +206,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
             i += n_on[pidx]
 
         # Rebuild the design matrix
-        self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+        self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
 
     def set_trace(self, *args, **kwargs):
         for perturbation in self.perturbations:
@@ -649,21 +649,21 @@ class PerturbationIndicators(pl.Node):
         # Create ys
         self.ys = {}
         y = self.G.data.construct_lhs(keys=[
-            REPRNAMES.SELF_INTERACTION_VALUE, REPRNAMES.GROWTH_VALUE],
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+            STRNAMES.SELF_INTERACTION_VALUE, STRNAMES.GROWTH_VALUE],
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
         for tcid in self.clustering.order:
             self.ys[tcid] = y[row_idxs[tcid], :]
 
         # Create process_precs
         self.process_precs = {}
-        process_prec_diag = self.G[REPRNAMES.PROCESSVAR].prec
+        process_prec_diag = self.G[STRNAMES.PROCESSVAR].prec
         for tcid in self.clustering.order:
             self.process_precs[tcid] = process_prec_diag[row_idxs[tcid]]
 
         # Make interactionXs
         self.interactionXs = {}
-        interactions = self.G[REPRNAMES.INTERACTIONS_OBJ]
-        XM_master = self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].toarray()
+        interactions = self.G[STRNAMES.INTERACTIONS_OBJ]
+        XM_master = self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].toarray()
         for tcid in self.clustering.order:
             cols = []
             for i, interaction in enumerate(interactions.iter_valid()):
@@ -675,8 +675,8 @@ class PerturbationIndicators(pl.Node):
                 rows=row_idxs[tcid], cols=cols)
 
         # Make prior parameters for interactions
-        self.prior_prec_interaction = 1/self.G[REPRNAMES.PRIOR_VAR_INTERACTIONS].value
-        self.prior_mean_interaction = self.G[REPRNAMES.PRIOR_MEAN_INTERACTIONS].value
+        self.prior_prec_interaction = 1/self.G[STRNAMES.PRIOR_VAR_INTERACTIONS].value
+        self.prior_mean_interaction = self.G[STRNAMES.PRIOR_MEAN_INTERACTIONS].value
 
         # Make the perturbation parameters
         self.prior_ll_ons = []
@@ -701,9 +701,9 @@ class PerturbationIndicators(pl.Node):
 
         # Make perturbation matrices
         self.perturbationsXs = {}
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build(build=True, 
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build(build=True, 
             build_for_neg_ind=True)
-        Xpert_master = self.G.data.design_matrices[REPRNAMES.PERT_VALUE].toarray()
+        Xpert_master = self.G.data.design_matrices[STRNAMES.PERT_VALUE].toarray()
         for tcid in self.clustering.order:
             self.perturbationsXs[tcid] = Xpert_master[row_idxs[tcid], :]
 
@@ -757,8 +757,8 @@ class PerturbationIndicators(pl.Node):
                 i += 1
 
         # rebuild the growth design matrix
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
-        self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
+        self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
         self._time_taken = time.time() - start_time
 
     # @profile
@@ -896,8 +896,8 @@ class PerturbationIndicators(pl.Node):
             self.update_single_idx_slow(idx=idx)
 
         # rebuild the growth design matrix
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
-        self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
+        self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
         self._time_taken = time.time() - start_time
 
     # @profile
@@ -939,7 +939,7 @@ class PerturbationIndicators(pl.Node):
         res = bool(sample_categorical_log(dd))
         if perturbation.indicator.value[cid] != res:
             perturbation.indicator.value[cid] = res
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].build()
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].build()
 
     # @profile
     def calculate_marginal_loglikelihood(self, cid, val, perturbation):
@@ -948,14 +948,14 @@ class PerturbationIndicators(pl.Node):
         &#39;&#39;&#39;
         # Set parameters
         perturbation.indicator.value[cid] = val
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
         # Make matrices
-        rhs = [REPRNAMES.PERT_VALUE, REPRNAMES.CLUSTER_INTERACTION_VALUE]
-        lhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+        rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
+        lhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
         X = self.G.data.construct_rhs(keys=rhs)
         y = self.G.data.construct_lhs(keys=lhs, 
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
         
         if X.shape[1] == 0:
             return {
@@ -965,7 +965,7 @@ class PerturbationIndicators(pl.Node):
             &#39;bEb&#39;: 0,
             &#39;bEbprior&#39;: 0}
 
-        process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(cov=False, sparse=False)
+        process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(cov=False, sparse=False)
         prior_prec = build_prior_covariance(G=self.G, cov=False, order=rhs, sparse=False)
         prior_var = build_prior_covariance(G=self.G, cov=True, order=rhs, sparse=False)
         prior_mean = build_prior_mean(G=self.G, order=rhs, shape=(-1,1))
@@ -1661,21 +1661,21 @@ we are learning here and not learning the magnitudes.</p>
         # Create ys
         self.ys = {}
         y = self.G.data.construct_lhs(keys=[
-            REPRNAMES.SELF_INTERACTION_VALUE, REPRNAMES.GROWTH_VALUE],
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+            STRNAMES.SELF_INTERACTION_VALUE, STRNAMES.GROWTH_VALUE],
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
         for tcid in self.clustering.order:
             self.ys[tcid] = y[row_idxs[tcid], :]
 
         # Create process_precs
         self.process_precs = {}
-        process_prec_diag = self.G[REPRNAMES.PROCESSVAR].prec
+        process_prec_diag = self.G[STRNAMES.PROCESSVAR].prec
         for tcid in self.clustering.order:
             self.process_precs[tcid] = process_prec_diag[row_idxs[tcid]]
 
         # Make interactionXs
         self.interactionXs = {}
-        interactions = self.G[REPRNAMES.INTERACTIONS_OBJ]
-        XM_master = self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].toarray()
+        interactions = self.G[STRNAMES.INTERACTIONS_OBJ]
+        XM_master = self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].toarray()
         for tcid in self.clustering.order:
             cols = []
             for i, interaction in enumerate(interactions.iter_valid()):
@@ -1687,8 +1687,8 @@ we are learning here and not learning the magnitudes.</p>
                 rows=row_idxs[tcid], cols=cols)
 
         # Make prior parameters for interactions
-        self.prior_prec_interaction = 1/self.G[REPRNAMES.PRIOR_VAR_INTERACTIONS].value
-        self.prior_mean_interaction = self.G[REPRNAMES.PRIOR_MEAN_INTERACTIONS].value
+        self.prior_prec_interaction = 1/self.G[STRNAMES.PRIOR_VAR_INTERACTIONS].value
+        self.prior_mean_interaction = self.G[STRNAMES.PRIOR_MEAN_INTERACTIONS].value
 
         # Make the perturbation parameters
         self.prior_ll_ons = []
@@ -1713,9 +1713,9 @@ we are learning here and not learning the magnitudes.</p>
 
         # Make perturbation matrices
         self.perturbationsXs = {}
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build(build=True, 
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build(build=True, 
             build_for_neg_ind=True)
-        Xpert_master = self.G.data.design_matrices[REPRNAMES.PERT_VALUE].toarray()
+        Xpert_master = self.G.data.design_matrices[STRNAMES.PERT_VALUE].toarray()
         for tcid in self.clustering.order:
             self.perturbationsXs[tcid] = Xpert_master[row_idxs[tcid], :]
 
@@ -1769,8 +1769,8 @@ we are learning here and not learning the magnitudes.</p>
                 i += 1
 
         # rebuild the growth design matrix
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
-        self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
+        self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
         self._time_taken = time.time() - start_time
 
     # @profile
@@ -1908,8 +1908,8 @@ we are learning here and not learning the magnitudes.</p>
             self.update_single_idx_slow(idx=idx)
 
         # rebuild the growth design matrix
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
-        self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
+        self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
         self._time_taken = time.time() - start_time
 
     # @profile
@@ -1951,7 +1951,7 @@ we are learning here and not learning the magnitudes.</p>
         res = bool(sample_categorical_log(dd))
         if perturbation.indicator.value[cid] != res:
             perturbation.indicator.value[cid] = res
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].build()
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].build()
 
     # @profile
     def calculate_marginal_loglikelihood(self, cid, val, perturbation):
@@ -1960,14 +1960,14 @@ we are learning here and not learning the magnitudes.</p>
         &#39;&#39;&#39;
         # Set parameters
         perturbation.indicator.value[cid] = val
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
         # Make matrices
-        rhs = [REPRNAMES.PERT_VALUE, REPRNAMES.CLUSTER_INTERACTION_VALUE]
-        lhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+        rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
+        lhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
         X = self.G.data.construct_rhs(keys=rhs)
         y = self.G.data.construct_lhs(keys=lhs, 
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
         
         if X.shape[1] == 0:
             return {
@@ -1977,7 +1977,7 @@ we are learning here and not learning the magnitudes.</p>
             &#39;bEb&#39;: 0,
             &#39;bEbprior&#39;: 0}
 
-        process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(cov=False, sparse=False)
+        process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(cov=False, sparse=False)
         prior_prec = build_prior_covariance(G=self.G, cov=False, order=rhs, sparse=False)
         prior_var = build_prior_covariance(G=self.G, cov=True, order=rhs, sparse=False)
         prior_mean = build_prior_mean(G=self.G, order=rhs, shape=(-1,1))
@@ -2093,14 +2093,14 @@ out</p></div>
     &#39;&#39;&#39;
     # Set parameters
     perturbation.indicator.value[cid] = val
-    self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+    self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
     # Make matrices
-    rhs = [REPRNAMES.PERT_VALUE, REPRNAMES.CLUSTER_INTERACTION_VALUE]
-    lhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+    rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
+    lhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
     X = self.G.data.construct_rhs(keys=rhs)
     y = self.G.data.construct_lhs(keys=lhs, 
-        kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+        kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
     
     if X.shape[1] == 0:
         return {
@@ -2110,7 +2110,7 @@ out</p></div>
         &#39;bEb&#39;: 0,
         &#39;bEbprior&#39;: 0}
 
-    process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(cov=False, sparse=False)
+    process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(cov=False, sparse=False)
     prior_prec = build_prior_covariance(G=self.G, cov=False, order=rhs, sparse=False)
     prior_var = build_prior_covariance(G=self.G, cov=True, order=rhs, sparse=False)
     prior_mean = build_prior_mean(G=self.G, order=rhs, shape=(-1,1))
@@ -2462,21 +2462,21 @@ the perturbation index to get the value</p></div>
     # Create ys
     self.ys = {}
     y = self.G.data.construct_lhs(keys=[
-        REPRNAMES.SELF_INTERACTION_VALUE, REPRNAMES.GROWTH_VALUE],
-        kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+        STRNAMES.SELF_INTERACTION_VALUE, STRNAMES.GROWTH_VALUE],
+        kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
     for tcid in self.clustering.order:
         self.ys[tcid] = y[row_idxs[tcid], :]
 
     # Create process_precs
     self.process_precs = {}
-    process_prec_diag = self.G[REPRNAMES.PROCESSVAR].prec
+    process_prec_diag = self.G[STRNAMES.PROCESSVAR].prec
     for tcid in self.clustering.order:
         self.process_precs[tcid] = process_prec_diag[row_idxs[tcid]]
 
     # Make interactionXs
     self.interactionXs = {}
-    interactions = self.G[REPRNAMES.INTERACTIONS_OBJ]
-    XM_master = self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].toarray()
+    interactions = self.G[STRNAMES.INTERACTIONS_OBJ]
+    XM_master = self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].toarray()
     for tcid in self.clustering.order:
         cols = []
         for i, interaction in enumerate(interactions.iter_valid()):
@@ -2488,8 +2488,8 @@ the perturbation index to get the value</p></div>
             rows=row_idxs[tcid], cols=cols)
 
     # Make prior parameters for interactions
-    self.prior_prec_interaction = 1/self.G[REPRNAMES.PRIOR_VAR_INTERACTIONS].value
-    self.prior_mean_interaction = self.G[REPRNAMES.PRIOR_MEAN_INTERACTIONS].value
+    self.prior_prec_interaction = 1/self.G[STRNAMES.PRIOR_VAR_INTERACTIONS].value
+    self.prior_mean_interaction = self.G[STRNAMES.PRIOR_MEAN_INTERACTIONS].value
 
     # Make the perturbation parameters
     self.prior_ll_ons = []
@@ -2514,9 +2514,9 @@ the perturbation index to get the value</p></div>
 
     # Make perturbation matrices
     self.perturbationsXs = {}
-    self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build(build=True, 
+    self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build(build=True, 
         build_for_neg_ind=True)
-    Xpert_master = self.G.data.design_matrices[REPRNAMES.PERT_VALUE].toarray()
+    Xpert_master = self.G.data.design_matrices[STRNAMES.PERT_VALUE].toarray()
     for tcid in self.clustering.order:
         self.perturbationsXs[tcid] = Xpert_master[row_idxs[tcid], :]
 
@@ -2624,8 +2624,8 @@ do the operations in numpy instead of scipy sparse.</p>
             i += 1
 
     # rebuild the growth design matrix
-    self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
-    self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+    self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
+    self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
     self._time_taken = time.time() - start_time</code></pre>
 </details>
 </dd>
@@ -2717,7 +2717,7 @@ do the operations in numpy instead of scipy sparse.</p>
     res = bool(sample_categorical_log(dd))
     if perturbation.indicator.value[cid] != res:
         perturbation.indicator.value[cid] = res
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].build()</code></pre>
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].build()</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.perturbations.PerturbationIndicators.update_slow"><code class="name flex">
@@ -2744,8 +2744,8 @@ do the operations in numpy instead of scipy sparse.</p>
         self.update_single_idx_slow(idx=idx)
 
     # rebuild the growth design matrix
-    self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
-    self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+    self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
+    self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
     self._time_taken = time.time() - start_time</code></pre>
 </details>
 </dd>
@@ -2903,17 +2903,17 @@ do the operations in numpy instead of scipy sparse.</p>
         if n_on == 0:
             return
 
-        rhs = [REPRNAMES.PERT_VALUE]
+        rhs = [STRNAMES.PERT_VALUE]
         lhs = [
-            REPRNAMES.GROWTH_VALUE,
-            REPRNAMES.SELF_INTERACTION_VALUE,
-            REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            STRNAMES.GROWTH_VALUE,
+            STRNAMES.SELF_INTERACTION_VALUE,
+            STRNAMES.CLUSTER_INTERACTION_VALUE]
         X = self.G.data.construct_rhs(keys=rhs, toarray=True)
         y = self.G.data.construct_lhs(keys=lhs,
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{
                 &#39;with_perturbations&#39;:False}})
 
-        process_prec = self.G[REPRNAMES.PROCESSVAR].prec
+        process_prec = self.G[STRNAMES.PROCESSVAR].prec
         prior_prec = build_prior_covariance(G=self.G, cov=False, order=rhs, sparse=False)
 
         prior_mean = build_prior_mean(G=self.G, order=rhs).reshape(-1,1)
@@ -2924,9 +2924,9 @@ do the operations in numpy instead of scipy sparse.</p>
         mean = np.asarray(cov @ (a @ y + prior_prec @ prior_mean)).ravel()
 
         # print(&#39;\n\ny\n&#39;,np.hstack((y, self.G.data.lhs.vector.reshape(-1,1))))
-        # print(self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE].value)
-        # print(self.G[REPRNAMES.GROWTH_VALUE].value)
-        # print(self.G[REPRNAMES.SELF_INTERACTION_VALUE].value)
+        # print(self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].value)
+        # print(self.G[STRNAMES.GROWTH_VALUE].value)
+        # print(self.G[STRNAMES.SELF_INTERACTION_VALUE].value)
 
         self.mean.value = mean
         self.var.value = np.diag(cov)
@@ -2945,7 +2945,7 @@ do the operations in numpy instead of scipy sparse.</p>
             i += n_on[pidx]
 
         # Rebuild the design matrix
-        self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+        self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
 
     def set_trace(self, *args, **kwargs):
         for perturbation in self.perturbations:
@@ -3178,17 +3178,17 @@ Initialize to the same value as the prior mean</dd>
     if n_on == 0:
         return
 
-    rhs = [REPRNAMES.PERT_VALUE]
+    rhs = [STRNAMES.PERT_VALUE]
     lhs = [
-        REPRNAMES.GROWTH_VALUE,
-        REPRNAMES.SELF_INTERACTION_VALUE,
-        REPRNAMES.CLUSTER_INTERACTION_VALUE]
+        STRNAMES.GROWTH_VALUE,
+        STRNAMES.SELF_INTERACTION_VALUE,
+        STRNAMES.CLUSTER_INTERACTION_VALUE]
     X = self.G.data.construct_rhs(keys=rhs, toarray=True)
     y = self.G.data.construct_lhs(keys=lhs,
-        kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+        kwargs_dict={STRNAMES.GROWTH_VALUE:{
             &#39;with_perturbations&#39;:False}})
 
-    process_prec = self.G[REPRNAMES.PROCESSVAR].prec
+    process_prec = self.G[STRNAMES.PROCESSVAR].prec
     prior_prec = build_prior_covariance(G=self.G, cov=False, order=rhs, sparse=False)
 
     prior_mean = build_prior_mean(G=self.G, order=rhs).reshape(-1,1)
@@ -3199,9 +3199,9 @@ Initialize to the same value as the prior mean</dd>
     mean = np.asarray(cov @ (a @ y + prior_prec @ prior_mean)).ravel()
 
     # print(&#39;\n\ny\n&#39;,np.hstack((y, self.G.data.lhs.vector.reshape(-1,1))))
-    # print(self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE].value)
-    # print(self.G[REPRNAMES.GROWTH_VALUE].value)
-    # print(self.G[REPRNAMES.SELF_INTERACTION_VALUE].value)
+    # print(self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].value)
+    # print(self.G[STRNAMES.GROWTH_VALUE].value)
+    # print(self.G[STRNAMES.SELF_INTERACTION_VALUE].value)
 
     self.mean.value = mean
     self.var.value = np.diag(cov)
@@ -3220,7 +3220,7 @@ Initialize to the same value as the prior mean</dd>
         i += n_on[pidx]
 
     # Rebuild the design matrix
-    self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()</code></pre>
+    self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.perturbations.PerturbationMagnitudes.update_str"><code class="name flex">

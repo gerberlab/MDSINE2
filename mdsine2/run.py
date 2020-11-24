@@ -5,7 +5,7 @@ import os
 
 # Custom modules
 from . import config
-from .names import STRNAMES, REPRNAMES
+from .names import STRNAMES
 from . import design_matrices
 from . import posterior
 
@@ -64,7 +64,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     # Continue inference if necessary
     # -------------------------------
     if continue_inference is not None:
-        REPRNAMES.set(G=GRAPH)
+        STRNAMES.set(G=GRAPH)
         logging.info('Continuing inference at Gibb step {}'.format(continue_inference))
         mcmc = pl.inference.BaseMCMC.load(params.MCMC_FILENAME)
         mcmc.continue_inference(gibb_step_start=continue_inference)
@@ -178,10 +178,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     # Perturbations
     if subjset.perturbations is not None:
         for pidx, subj_pert in enumerate(subjset.perturbations):
-            if subj_pert.name is None:
-                name = STRNAMES.PERTURBATIONS + str(pidx)
-            else:
-                name = subj_pert.name
+            name = subj_pert.name
             perturbation = pl.ClusterPerturbation(
                 starts=subj_pert.starts, ends=subj_pert.ends, 
                 probability=pl.variables.Beta(
@@ -271,7 +268,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     qpcr_scales.set_shape()
 
     # Set the IDs of the variables in the graph
-    REPRNAMES.set(G=GRAPH)
+    STRNAMES.set(G=GRAPH)
 
     # Set up inference and the inference order.
     # -----------------------------------------
@@ -328,7 +325,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
             perturbationsDM.base.build()
             perturbationsDM.M.build()
         if name == STRNAMES.PERT_VALUE and subjset.perturbations is not None:
-            d.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+            d.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
 
     logging.info('\n\n\n')
     logging.info('Initialization Values:')

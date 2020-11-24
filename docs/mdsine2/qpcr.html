@@ -33,7 +33,7 @@ import time
 import numpy as np
 
 from .util import build_prior_covariance, build_prior_mean
-from .names import STRNAMES, REPRNAMES
+from .names import STRNAMES, STRNAMES
 
 from . import pylab as pl
 
@@ -251,8 +251,8 @@ class qPCRVarianceReplicate(pl.variables.SICS):
         prior_dofs = []
         prior_scales = []
         for l in range(self.L):
-            prior_dofs.append(self.G[REPRNAMES.QPCR_DOFS].value[l].value)
-            prior_scales.append(self.G[REPRNAMES.QPCR_SCALES].value[l].value)
+            prior_dofs.append(self.G[STRNAMES.QPCR_DOFS].value[l].value)
+            prior_scales.append(self.G[STRNAMES.QPCR_SCALES].value[l].value)
 
         for tidx in range(len(self.priors_idx)):
             t = self.G.data.given_timepoints[self.ridx][tidx]
@@ -544,10 +544,10 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
         # Get the data
         xs = []
         for ridx, tidx in self.data_locs:
-            xs.append(self.G[REPRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
+            xs.append(self.G[STRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
 
         # Get the scale
-        scale = self.G[REPRNAMES.QPCR_SCALES].value[self.l].value
+        scale = self.G[STRNAMES.QPCR_SCALES].value[self.l].value
 
         # Propose a new value for the dof
         prev_dof = self.value
@@ -826,10 +826,10 @@ class qPCRScaleL(pl.variables.SICS):
         # Get the data
         xs = []
         for ridx, tidx in self.data_locs:
-            xs.append(self.G[REPRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
+            xs.append(self.G[STRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
 
         # Get the dof
-        dof = self.G[REPRNAMES.QPCR_DOFS].value[self.l].value
+        dof = self.G[STRNAMES.QPCR_DOFS].value[self.l].value
 
         # Propose a new value for the scale
         prev_scale = self.value
@@ -1141,10 +1141,10 @@ class qPCRScaleL(pl.variables.SICS):
         # Get the data
         xs = []
         for ridx, tidx in self.data_locs:
-            xs.append(self.G[REPRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
+            xs.append(self.G[STRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
 
         # Get the scale
-        scale = self.G[REPRNAMES.QPCR_SCALES].value[self.l].value
+        scale = self.G[STRNAMES.QPCR_SCALES].value[self.l].value
 
         # Propose a new value for the dof
         prev_dof = self.value
@@ -1470,10 +1470,10 @@ mean**2 / 100
     # Get the data
     xs = []
     for ridx, tidx in self.data_locs:
-        xs.append(self.G[REPRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
+        xs.append(self.G[STRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
 
     # Get the scale
-    scale = self.G[REPRNAMES.QPCR_SCALES].value[self.l].value
+    scale = self.G[STRNAMES.QPCR_SCALES].value[self.l].value
 
     # Propose a new value for the dof
     prev_dof = self.value
@@ -1877,10 +1877,10 @@ mean**2 / 100
         # Get the data
         xs = []
         for ridx, tidx in self.data_locs:
-            xs.append(self.G[REPRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
+            xs.append(self.G[STRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
 
         # Get the dof
-        dof = self.G[REPRNAMES.QPCR_DOFS].value[self.l].value
+        dof = self.G[STRNAMES.QPCR_DOFS].value[self.l].value
 
         # Propose a new value for the scale
         prev_scale = self.value
@@ -2178,10 +2178,10 @@ mean**2 / 100
     # Get the data
     xs = []
     for ridx, tidx in self.data_locs:
-        xs.append(self.G[REPRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
+        xs.append(self.G[STRNAMES.QPCR_VARIANCES].value[ridx].value[tidx])
 
     # Get the dof
-    dof = self.G[REPRNAMES.QPCR_DOFS].value[self.l].value
+    dof = self.G[STRNAMES.QPCR_DOFS].value[self.l].value
 
     # Propose a new value for the scale
     prev_scale = self.value
@@ -2446,8 +2446,8 @@ to.</dd>
         prior_dofs = []
         prior_scales = []
         for l in range(self.L):
-            prior_dofs.append(self.G[REPRNAMES.QPCR_DOFS].value[l].value)
-            prior_scales.append(self.G[REPRNAMES.QPCR_SCALES].value[l].value)
+            prior_dofs.append(self.G[STRNAMES.QPCR_DOFS].value[l].value)
+            prior_scales.append(self.G[STRNAMES.QPCR_SCALES].value[l].value)
 
         for tidx in range(len(self.priors_idx)):
             t = self.G.data.given_timepoints[self.ridx][tidx]
@@ -2626,8 +2626,8 @@ values to each of the parameters</dd>
     prior_dofs = []
     prior_scales = []
     for l in range(self.L):
-        prior_dofs.append(self.G[REPRNAMES.QPCR_DOFS].value[l].value)
-        prior_scales.append(self.G[REPRNAMES.QPCR_SCALES].value[l].value)
+        prior_dofs.append(self.G[STRNAMES.QPCR_DOFS].value[l].value)
+        prior_scales.append(self.G[STRNAMES.QPCR_SCALES].value[l].value)
 
     for tidx in range(len(self.priors_idx)):
         t = self.G.data.given_timepoints[self.ridx][tidx]

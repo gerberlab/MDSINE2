@@ -35,7 +35,7 @@ import itertools
 import scipy.sparse
 
 from .pylab.graph import DataNode, Node
-from .names import STRNAMES, REPRNAMES
+from .names import STRNAMES
 
 from . import pylab as pl
 
@@ -86,7 +86,7 @@ class Data(DataNode):
     '''
     def __init__(self, subjects, zero_inflation_transition_policy=None, **kwargs):
         if 'name' not in kwargs:
-            kwargs['name'] = STRNAMES.DATA
+            kwargs['name'] = 'data matrix'
         DataNode.__init__(self, **kwargs)
         if not pl.isstudy(subjects):
             raise ValueError('`subjects` ({}) must be a pylab Study'.format(
@@ -1537,8 +1537,8 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
 
         self.parent = parent
         n_asvs = self.G.data.n_asvs
-        self.clustering = self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE].clustering
-        self.interactions = self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE].obj
+        self.clustering = self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].clustering
+        self.interactions = self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].obj
         self.n_rows = int(n_asvs * (n_asvs - 1))
 
         # Build the keypair2col dictionary

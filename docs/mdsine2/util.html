@@ -39,7 +39,7 @@ import math
 import random
 import copy
 
-from .names import STRNAMES, REPRNAMES
+from .names import STRNAMES, STRNAMES
 from . import pylab as pl
 
 # @numba.jit(nopython=True, fastmath=True, cache=True)
@@ -172,17 +172,17 @@ def build_prior_covariance(G, cov, order, sparse=True, diag=False, cuda=False):
     n_asvs = G.data.n_asvs
     a = []
     for reprname in order:
-        if reprname == REPRNAMES.GROWTH_VALUE:
-            a.append(np.full(n_asvs, G[REPRNAMES.PRIOR_VAR_GROWTH].value))
+        if reprname == STRNAMES.GROWTH_VALUE:
+            a.append(np.full(n_asvs, G[STRNAMES.PRIOR_VAR_GROWTH].value))
 
-        elif reprname == REPRNAMES.SELF_INTERACTION_VALUE:
-            a.append(np.full(n_asvs, G[REPRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value))
+        elif reprname == STRNAMES.SELF_INTERACTION_VALUE:
+            a.append(np.full(n_asvs, G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value))
 
-        elif reprname == REPRNAMES.CLUSTER_INTERACTION_VALUE:
-            n_interactions = G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators
-            a.append(np.full(n_interactions, G[REPRNAMES.PRIOR_VAR_INTERACTIONS].value))
+        elif reprname == STRNAMES.CLUSTER_INTERACTION_VALUE:
+            n_interactions = G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators
+            a.append(np.full(n_interactions, G[STRNAMES.PRIOR_VAR_INTERACTIONS].value))
 
-        elif reprname == REPRNAMES.PERT_VALUE:
+        elif reprname == STRNAMES.PERT_VALUE:
             for perturbation in G.perturbations:
                 num_on = perturbation.indicator.num_on_clusters()
                 a.append(np.full(
@@ -232,16 +232,16 @@ def build_prior_mean(G, order, shape=None, cuda=False):
     a = []
     for name in order:
         v = G[name]
-        if v.id == REPRNAMES.GROWTH_VALUE:
+        if v.id == STRNAMES.GROWTH_VALUE:
             a.append(v.prior.mean.value * np.ones(G.data.n_asvs))
-        elif v.id == REPRNAMES.SELF_INTERACTION_VALUE:
+        elif v.id == STRNAMES.SELF_INTERACTION_VALUE:
             a.append(v.prior.mean.value * np.ones(G.data.n_asvs))
-        elif v.id == REPRNAMES.CLUSTER_INTERACTION_VALUE:
+        elif v.id == STRNAMES.CLUSTER_INTERACTION_VALUE:
             a.append(
                 np.full(
-                    G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators,
+                    G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators,
                     v.prior.mean.value))
-        elif v.id == REPRNAMES.PERT_VALUE:
+        elif v.id == STRNAMES.PERT_VALUE:
             for perturbation in G.perturbations:
                 a.append(np.full(
                     perturbation.indicator.num_on_clusters(),
@@ -1211,17 +1211,17 @@ sparse (scipy.sparse.dia_matrix) form</dd>
     n_asvs = G.data.n_asvs
     a = []
     for reprname in order:
-        if reprname == REPRNAMES.GROWTH_VALUE:
-            a.append(np.full(n_asvs, G[REPRNAMES.PRIOR_VAR_GROWTH].value))
+        if reprname == STRNAMES.GROWTH_VALUE:
+            a.append(np.full(n_asvs, G[STRNAMES.PRIOR_VAR_GROWTH].value))
 
-        elif reprname == REPRNAMES.SELF_INTERACTION_VALUE:
-            a.append(np.full(n_asvs, G[REPRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value))
+        elif reprname == STRNAMES.SELF_INTERACTION_VALUE:
+            a.append(np.full(n_asvs, G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value))
 
-        elif reprname == REPRNAMES.CLUSTER_INTERACTION_VALUE:
-            n_interactions = G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators
-            a.append(np.full(n_interactions, G[REPRNAMES.PRIOR_VAR_INTERACTIONS].value))
+        elif reprname == STRNAMES.CLUSTER_INTERACTION_VALUE:
+            n_interactions = G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators
+            a.append(np.full(n_interactions, G[STRNAMES.PRIOR_VAR_INTERACTIONS].value))
 
-        elif reprname == REPRNAMES.PERT_VALUE:
+        elif reprname == STRNAMES.PERT_VALUE:
             for perturbation in G.perturbations:
                 num_on = perturbation.indicator.num_on_clusters()
                 a.append(np.full(
@@ -1299,16 +1299,16 @@ prior mean is a scalar and we set that value for every single value.</dd>
     a = []
     for name in order:
         v = G[name]
-        if v.id == REPRNAMES.GROWTH_VALUE:
+        if v.id == STRNAMES.GROWTH_VALUE:
             a.append(v.prior.mean.value * np.ones(G.data.n_asvs))
-        elif v.id == REPRNAMES.SELF_INTERACTION_VALUE:
+        elif v.id == STRNAMES.SELF_INTERACTION_VALUE:
             a.append(v.prior.mean.value * np.ones(G.data.n_asvs))
-        elif v.id == REPRNAMES.CLUSTER_INTERACTION_VALUE:
+        elif v.id == STRNAMES.CLUSTER_INTERACTION_VALUE:
             a.append(
                 np.full(
-                    G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators,
+                    G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators,
                     v.prior.mean.value))
-        elif v.id == REPRNAMES.PERT_VALUE:
+        elif v.id == STRNAMES.PERT_VALUE:
             for perturbation in G.perturbations:
                 a.append(np.full(
                     perturbation.indicator.num_on_clusters(),

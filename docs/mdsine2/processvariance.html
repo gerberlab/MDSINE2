@@ -36,7 +36,7 @@ import scipy.sparse
 import scipy
 
 from .util import build_prior_covariance, build_prior_mean
-from .names import STRNAMES, REPRNAMES
+from .names import STRNAMES, STRNAMES
 from . import pylab as pl
 
 class ProcessVarGlobal(pl.variables.SICS):
@@ -214,18 +214,18 @@ class ProcessVarGlobal(pl.variables.SICS):
         &#39;&#39;&#39;
         if self._there_are_perturbations:
             lhs = [
-                REPRNAMES.GROWTH_VALUE, 
-                REPRNAMES.SELF_INTERACTION_VALUE,
-                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+                STRNAMES.GROWTH_VALUE, 
+                STRNAMES.SELF_INTERACTION_VALUE,
+                STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
             lhs = [
-                REPRNAMES.GROWTH_VALUE, 
-                REPRNAMES.SELF_INTERACTION_VALUE,
-                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+                STRNAMES.GROWTH_VALUE, 
+                STRNAMES.SELF_INTERACTION_VALUE,
+                STRNAMES.CLUSTER_INTERACTION_VALUE]
         
         # This is the residual z = y - Xb
         z = self.G.data.construct_lhs(lhs, 
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{
                 &#39;with_perturbations&#39;: self._there_are_perturbations}})
         z = np.asarray(z).ravel()
         if self.G.data.zero_inflation_transition_policy is not None:
@@ -451,18 +451,18 @@ of the data.</p>
         &#39;&#39;&#39;
         if self._there_are_perturbations:
             lhs = [
-                REPRNAMES.GROWTH_VALUE, 
-                REPRNAMES.SELF_INTERACTION_VALUE,
-                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+                STRNAMES.GROWTH_VALUE, 
+                STRNAMES.SELF_INTERACTION_VALUE,
+                STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
             lhs = [
-                REPRNAMES.GROWTH_VALUE, 
-                REPRNAMES.SELF_INTERACTION_VALUE,
-                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+                STRNAMES.GROWTH_VALUE, 
+                STRNAMES.SELF_INTERACTION_VALUE,
+                STRNAMES.CLUSTER_INTERACTION_VALUE]
         
         # This is the residual z = y - Xb
         z = self.G.data.construct_lhs(lhs, 
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{
                 &#39;with_perturbations&#39;: self._there_are_perturbations}})
         z = np.asarray(z).ravel()
         if self.G.data.zero_inflation_transition_policy is not None:
@@ -744,18 +744,18 @@ z * \sqrt{dt} ~ Normal (0, \sigma^2_w)</p>
     &#39;&#39;&#39;
     if self._there_are_perturbations:
         lhs = [
-            REPRNAMES.GROWTH_VALUE, 
-            REPRNAMES.SELF_INTERACTION_VALUE,
-            REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            STRNAMES.GROWTH_VALUE, 
+            STRNAMES.SELF_INTERACTION_VALUE,
+            STRNAMES.CLUSTER_INTERACTION_VALUE]
     else:
         lhs = [
-            REPRNAMES.GROWTH_VALUE, 
-            REPRNAMES.SELF_INTERACTION_VALUE,
-            REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            STRNAMES.GROWTH_VALUE, 
+            STRNAMES.SELF_INTERACTION_VALUE,
+            STRNAMES.CLUSTER_INTERACTION_VALUE]
     
     # This is the residual z = y - Xb
     z = self.G.data.construct_lhs(lhs, 
-        kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+        kwargs_dict={STRNAMES.GROWTH_VALUE:{
             &#39;with_perturbations&#39;: self._there_are_perturbations}})
     z = np.asarray(z).ravel()
     if self.G.data.zero_inflation_transition_policy is not None:

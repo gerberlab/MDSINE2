@@ -45,7 +45,7 @@ import math
 
 from .util import build_prior_covariance, build_prior_mean, sample_categorical_log, \
     log_det, pinv, generate_cluster_assignments_posthoc
-from .names import STRNAMES, REPRNAMES
+from .names import STRNAMES, STRNAMES
 from . import pylab as pl
 
 from . import visualization
@@ -150,7 +150,7 @@ class Concentration(pl.variables.Gamma):
         if self.sample_iter &lt; self.delay:
             return
 
-        clustering = self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE].clustering
+        clustering = self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].clustering
         k = len(clustering)
         n = self.G.data.n_asvs
         # If there are 1 or 0 clusters, do not update
@@ -742,10 +742,10 @@ class ClusterAssignments(pl.graph.Node):
 
             # Move ASV and recompute the matrices
             self.clustering.move_item(idx=oidx,cid=cid)
-            self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-            self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+            self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
             if self._there_are_perturbations:
-                self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+                self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
             LOG_P.append(np.log(self.clustering.clusters[cid].size - 1) + \
                 self.calculate_marginal_loglikelihood_slow()[&#39;ret&#39;])
@@ -755,10 +755,10 @@ class ClusterAssignments(pl.graph.Node):
         # Calculate new cluster
         # =====================
         cid=self.clustering.make_new_cluster_with(idx=oidx)
-        self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-        self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+        self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
         if self._there_are_perturbations:
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
         
         LOG_KEYS.append(cid)
         LOG_P.append(np.log(concentration/self.m) + \
@@ -772,33 +772,33 @@ class ClusterAssignments(pl.graph.Node):
 
         if assigned_cid != curr_clus:
             self.clustering.move_item(idx=oidx,cid=assigned_cid)
-            self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
 
             # Change the mixing matrix for the interactions and (potentially) perturbations
-            self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+            self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
             if self._there_are_perturbations:
-                self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+                self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
     def calculate_marginal_loglikelihood_slow(self):
         &#39;&#39;&#39;Marginalizes out the interactions and the perturbations
         &#39;&#39;&#39;
         # Build the parameters
         # ====================
-        self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-        lhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+        lhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
         if self._there_are_perturbations:
-            rhs = [REPRNAMES.PERT_VALUE, REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
-            rhs = [REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
 
         # reconstruct the X matrices
         for v in rhs:
             self.G.data.design_matrices[v].M.build()
         
         y = self.G.data.construct_lhs(lhs, 
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
         X = self.G.data.construct_rhs(keys=rhs, toarray=True)
-        process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(cov=False, sparse=False)
+        process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(cov=False, sparse=False)
         prior_prec = build_prior_covariance(G=self.G, cov=False, order=rhs, sparse=False)
         prior_var = build_prior_covariance(G=self.G, cov=True, order=rhs, sparse=False)
         prior_mean = build_prior_mean(G=self.G, order=rhs, shape=(-1,1))
@@ -863,11 +863,11 @@ class ClusterAssignments(pl.graph.Node):
 
         start_time = time.time()
 
-        self.process_prec = self.G[REPRNAMES.PROCESSVAR].prec.ravel() #.build_matrix(cov=False, sparse=False)
-        self.process_prec_matrix = self.G[REPRNAMES.PROCESSVAR].build_matrix(sparse=True, cov=False)
-        lhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+        self.process_prec = self.G[STRNAMES.PROCESSVAR].prec.ravel() #.build_matrix(cov=False, sparse=False)
+        self.process_prec_matrix = self.G[STRNAMES.PROCESSVAR].build_matrix(sparse=True, cov=False)
+        lhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
         self.y = self.G.data.construct_lhs(lhs, 
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
 
         oidxs = npr.permutation(np.arange(len(self.G.data.asvs)))
         iii = 0
@@ -917,10 +917,10 @@ class ClusterAssignments(pl.graph.Node):
 
             # Move ASV and recompute the matrices
             self.clustering.move_item(idx=oidx,cid=cid)
-            self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-            self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+            self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
             if self._there_are_perturbations:
-                self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+                self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
             LOG_P.append(np.log(self.clustering.clusters[cid].size - 1) + \
                 self.calculate_marginal_loglikelihood_slow_fast_sparse())
@@ -930,10 +930,10 @@ class ClusterAssignments(pl.graph.Node):
         # Calculate new cluster
         # =====================
         cid=self.clustering.make_new_cluster_with(idx=oidx)
-        self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-        self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+        self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
         if self._there_are_perturbations:
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
         
         LOG_KEYS.append(cid)
         LOG_P.append(np.log(concentration/self.m) + \
@@ -947,12 +947,12 @@ class ClusterAssignments(pl.graph.Node):
 
         if assigned_cid != curr_clus:
             self.clustering.move_item(idx=oidx,cid=assigned_cid)
-            self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
 
             # Change the mixing matrix for the interactions and (potentially) perturbations
-            self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+            self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
             if self._there_are_perturbations:
-                self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+                self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
     # @profile
     def calculate_marginal_loglikelihood_slow_fast(self):
@@ -961,9 +961,9 @@ class ClusterAssignments(pl.graph.Node):
         # Build the parameters
         # ====================
         if self._there_are_perturbations:
-            rhs = [REPRNAMES.PERT_VALUE, REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
-            rhs = [REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
         
         
         y = self.y
@@ -1008,9 +1008,9 @@ class ClusterAssignments(pl.graph.Node):
         # Build the parameters
         # ====================
         if self._there_are_perturbations:
-            rhs = [REPRNAMES.PERT_VALUE, REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
-            rhs = [REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
         
         
         y = self.y
@@ -1085,8 +1085,8 @@ class ClusterAssignments(pl.graph.Node):
         if self.G.data.zero_inflation_transition_policy is not None:
             raise NotImplementedError(&#39;Multiprocessing for zero inflation data is not implemented yet.&#39; \
                 &#39; Use `mp=None`&#39;)
-        DMI = self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE]
-        DMP = self.G.data.design_matrices[REPRNAMES.PERT_VALUE]
+        DMI = self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE]
+        DMP = self.G.data.design_matrices[STRNAMES.PERT_VALUE]
         if self.clustering.n_clusters.sample_iter == 0 or self.pool == []:
             kwargs = {
                 &#39;n_asvs&#39;: len(self.G.data.asvs),
@@ -1121,16 +1121,16 @@ class ClusterAssignments(pl.graph.Node):
         # Send in arguments for the start of the gibbs step
         start_time = time.time()
         base_Xdata = DMI.base.data
-        self.concentration = self.G[REPRNAMES.CONCENTRATION].value
-        y = self.G.data.construct_lhs(keys=[REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE],
-            kwargs_dict={REPRNAMES.GROWTH_VALUE: {&#39;with_perturbations&#39;:False}})
-        prior_var_interactions = self.G[REPRNAMES.PRIOR_VAR_INTERACTIONS].value
-        prior_mean_interactions = self.G[REPRNAMES.PRIOR_MEAN_INTERACTIONS].value
-        process_prec_diag = self.G[REPRNAMES.PROCESSVAR].prec
+        self.concentration = self.G[STRNAMES.CONCENTRATION].value
+        y = self.G.data.construct_lhs(keys=[STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE],
+            kwargs_dict={STRNAMES.GROWTH_VALUE: {&#39;with_perturbations&#39;:False}})
+        prior_var_interactions = self.G[STRNAMES.PRIOR_VAR_INTERACTIONS].value
+        prior_mean_interactions = self.G[STRNAMES.PRIOR_MEAN_INTERACTIONS].value
+        process_prec_diag = self.G[STRNAMES.PROCESSVAR].prec
 
         if self._there_are_perturbations:
-            prior_var_pert = self.G[REPRNAMES.PRIOR_VAR_PERT].get_single_value_of_perts()
-            prior_mean_pert = self.G[REPRNAMES.PRIOR_MEAN_PERT].get_single_value_of_perts()
+            prior_var_pert = self.G[STRNAMES.PRIOR_VAR_PERT].get_single_value_of_perts()
+            prior_mean_pert = self.G[STRNAMES.PRIOR_MEAN_PERT].get_single_value_of_perts()
             base_Xpertdata = DMP.base.data
         else:
             prior_var_pert = None
@@ -1168,7 +1168,7 @@ class ClusterAssignments(pl.graph.Node):
         self.original_cluster = self.clustering.idx2cid[self.oidx]
         self.curr_cluster = self.original_cluster
 
-        interactions = self.G[REPRNAMES.INTERACTIONS_OBJ]
+        interactions = self.G[STRNAMES.INTERACTIONS_OBJ]
         interaction_on_idxs = interactions.get_indicators(return_idxs=True)
         if self._there_are_perturbations:
             perturbation_on_idxs = [p.indicator.cluster_arg_array() for p in self.G.perturbations]
@@ -1292,10 +1292,10 @@ class ClusterAssignments(pl.graph.Node):
 
         self.clustering.move_item(idx=self.oidx, cid=assigned_cid)
 
-        self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-        self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+        self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
         if self._there_are_perturbations:
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
         
 class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
@@ -2233,10 +2233,10 @@ is necessary for benchmarking and easier debugging.</p></div>
 
             # Move ASV and recompute the matrices
             self.clustering.move_item(idx=oidx,cid=cid)
-            self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-            self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+            self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
             if self._there_are_perturbations:
-                self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+                self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
             LOG_P.append(np.log(self.clustering.clusters[cid].size - 1) + \
                 self.calculate_marginal_loglikelihood_slow()[&#39;ret&#39;])
@@ -2246,10 +2246,10 @@ is necessary for benchmarking and easier debugging.</p></div>
         # Calculate new cluster
         # =====================
         cid=self.clustering.make_new_cluster_with(idx=oidx)
-        self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-        self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+        self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
         if self._there_are_perturbations:
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
         
         LOG_KEYS.append(cid)
         LOG_P.append(np.log(concentration/self.m) + \
@@ -2263,33 +2263,33 @@ is necessary for benchmarking and easier debugging.</p></div>
 
         if assigned_cid != curr_clus:
             self.clustering.move_item(idx=oidx,cid=assigned_cid)
-            self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
 
             # Change the mixing matrix for the interactions and (potentially) perturbations
-            self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+            self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
             if self._there_are_perturbations:
-                self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+                self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
     def calculate_marginal_loglikelihood_slow(self):
         &#39;&#39;&#39;Marginalizes out the interactions and the perturbations
         &#39;&#39;&#39;
         # Build the parameters
         # ====================
-        self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-        lhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+        lhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
         if self._there_are_perturbations:
-            rhs = [REPRNAMES.PERT_VALUE, REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
-            rhs = [REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
 
         # reconstruct the X matrices
         for v in rhs:
             self.G.data.design_matrices[v].M.build()
         
         y = self.G.data.construct_lhs(lhs, 
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
         X = self.G.data.construct_rhs(keys=rhs, toarray=True)
-        process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(cov=False, sparse=False)
+        process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(cov=False, sparse=False)
         prior_prec = build_prior_covariance(G=self.G, cov=False, order=rhs, sparse=False)
         prior_var = build_prior_covariance(G=self.G, cov=True, order=rhs, sparse=False)
         prior_mean = build_prior_mean(G=self.G, order=rhs, shape=(-1,1))
@@ -2354,11 +2354,11 @@ is necessary for benchmarking and easier debugging.</p></div>
 
         start_time = time.time()
 
-        self.process_prec = self.G[REPRNAMES.PROCESSVAR].prec.ravel() #.build_matrix(cov=False, sparse=False)
-        self.process_prec_matrix = self.G[REPRNAMES.PROCESSVAR].build_matrix(sparse=True, cov=False)
-        lhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+        self.process_prec = self.G[STRNAMES.PROCESSVAR].prec.ravel() #.build_matrix(cov=False, sparse=False)
+        self.process_prec_matrix = self.G[STRNAMES.PROCESSVAR].build_matrix(sparse=True, cov=False)
+        lhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
         self.y = self.G.data.construct_lhs(lhs, 
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
 
         oidxs = npr.permutation(np.arange(len(self.G.data.asvs)))
         iii = 0
@@ -2408,10 +2408,10 @@ is necessary for benchmarking and easier debugging.</p></div>
 
             # Move ASV and recompute the matrices
             self.clustering.move_item(idx=oidx,cid=cid)
-            self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-            self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+            self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
             if self._there_are_perturbations:
-                self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+                self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
             LOG_P.append(np.log(self.clustering.clusters[cid].size - 1) + \
                 self.calculate_marginal_loglikelihood_slow_fast_sparse())
@@ -2421,10 +2421,10 @@ is necessary for benchmarking and easier debugging.</p></div>
         # Calculate new cluster
         # =====================
         cid=self.clustering.make_new_cluster_with(idx=oidx)
-        self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-        self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+        self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
         if self._there_are_perturbations:
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
         
         LOG_KEYS.append(cid)
         LOG_P.append(np.log(concentration/self.m) + \
@@ -2438,12 +2438,12 @@ is necessary for benchmarking and easier debugging.</p></div>
 
         if assigned_cid != curr_clus:
             self.clustering.move_item(idx=oidx,cid=assigned_cid)
-            self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
 
             # Change the mixing matrix for the interactions and (potentially) perturbations
-            self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+            self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
             if self._there_are_perturbations:
-                self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+                self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
     # @profile
     def calculate_marginal_loglikelihood_slow_fast(self):
@@ -2452,9 +2452,9 @@ is necessary for benchmarking and easier debugging.</p></div>
         # Build the parameters
         # ====================
         if self._there_are_perturbations:
-            rhs = [REPRNAMES.PERT_VALUE, REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
-            rhs = [REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
         
         
         y = self.y
@@ -2499,9 +2499,9 @@ is necessary for benchmarking and easier debugging.</p></div>
         # Build the parameters
         # ====================
         if self._there_are_perturbations:
-            rhs = [REPRNAMES.PERT_VALUE, REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
-            rhs = [REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
         
         
         y = self.y
@@ -2576,8 +2576,8 @@ is necessary for benchmarking and easier debugging.</p></div>
         if self.G.data.zero_inflation_transition_policy is not None:
             raise NotImplementedError(&#39;Multiprocessing for zero inflation data is not implemented yet.&#39; \
                 &#39; Use `mp=None`&#39;)
-        DMI = self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE]
-        DMP = self.G.data.design_matrices[REPRNAMES.PERT_VALUE]
+        DMI = self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE]
+        DMP = self.G.data.design_matrices[STRNAMES.PERT_VALUE]
         if self.clustering.n_clusters.sample_iter == 0 or self.pool == []:
             kwargs = {
                 &#39;n_asvs&#39;: len(self.G.data.asvs),
@@ -2612,16 +2612,16 @@ is necessary for benchmarking and easier debugging.</p></div>
         # Send in arguments for the start of the gibbs step
         start_time = time.time()
         base_Xdata = DMI.base.data
-        self.concentration = self.G[REPRNAMES.CONCENTRATION].value
-        y = self.G.data.construct_lhs(keys=[REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE],
-            kwargs_dict={REPRNAMES.GROWTH_VALUE: {&#39;with_perturbations&#39;:False}})
-        prior_var_interactions = self.G[REPRNAMES.PRIOR_VAR_INTERACTIONS].value
-        prior_mean_interactions = self.G[REPRNAMES.PRIOR_MEAN_INTERACTIONS].value
-        process_prec_diag = self.G[REPRNAMES.PROCESSVAR].prec
+        self.concentration = self.G[STRNAMES.CONCENTRATION].value
+        y = self.G.data.construct_lhs(keys=[STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE],
+            kwargs_dict={STRNAMES.GROWTH_VALUE: {&#39;with_perturbations&#39;:False}})
+        prior_var_interactions = self.G[STRNAMES.PRIOR_VAR_INTERACTIONS].value
+        prior_mean_interactions = self.G[STRNAMES.PRIOR_MEAN_INTERACTIONS].value
+        process_prec_diag = self.G[STRNAMES.PROCESSVAR].prec
 
         if self._there_are_perturbations:
-            prior_var_pert = self.G[REPRNAMES.PRIOR_VAR_PERT].get_single_value_of_perts()
-            prior_mean_pert = self.G[REPRNAMES.PRIOR_MEAN_PERT].get_single_value_of_perts()
+            prior_var_pert = self.G[STRNAMES.PRIOR_VAR_PERT].get_single_value_of_perts()
+            prior_mean_pert = self.G[STRNAMES.PRIOR_MEAN_PERT].get_single_value_of_perts()
             base_Xpertdata = DMP.base.data
         else:
             prior_var_pert = None
@@ -2659,7 +2659,7 @@ is necessary for benchmarking and easier debugging.</p></div>
         self.original_cluster = self.clustering.idx2cid[self.oidx]
         self.curr_cluster = self.original_cluster
 
-        interactions = self.G[REPRNAMES.INTERACTIONS_OBJ]
+        interactions = self.G[STRNAMES.INTERACTIONS_OBJ]
         interaction_on_idxs = interactions.get_indicators(return_idxs=True)
         if self._there_are_perturbations:
             perturbation_on_idxs = [p.indicator.cluster_arg_array() for p in self.G.perturbations]
@@ -2783,10 +2783,10 @@ is necessary for benchmarking and easier debugging.</p></div>
 
         self.clustering.move_item(idx=self.oidx, cid=assigned_cid)
 
-        self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-        self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+        self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
         if self._there_are_perturbations:
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()</code></pre>
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2865,21 +2865,21 @@ def value(self):
     &#39;&#39;&#39;
     # Build the parameters
     # ====================
-    self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-    lhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+    self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+    lhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
     if self._there_are_perturbations:
-        rhs = [REPRNAMES.PERT_VALUE, REPRNAMES.CLUSTER_INTERACTION_VALUE]
+        rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
     else:
-        rhs = [REPRNAMES.CLUSTER_INTERACTION_VALUE]
+        rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
 
     # reconstruct the X matrices
     for v in rhs:
         self.G.data.design_matrices[v].M.build()
     
     y = self.G.data.construct_lhs(lhs, 
-        kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+        kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
     X = self.G.data.construct_rhs(keys=rhs, toarray=True)
-    process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(cov=False, sparse=False)
+    process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(cov=False, sparse=False)
     prior_prec = build_prior_covariance(G=self.G, cov=False, order=rhs, sparse=False)
     prior_var = build_prior_covariance(G=self.G, cov=True, order=rhs, sparse=False)
     prior_mean = build_prior_mean(G=self.G, order=rhs, shape=(-1,1))
@@ -2945,9 +2945,9 @@ def value(self):
     # Build the parameters
     # ====================
     if self._there_are_perturbations:
-        rhs = [REPRNAMES.PERT_VALUE, REPRNAMES.CLUSTER_INTERACTION_VALUE]
+        rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
     else:
-        rhs = [REPRNAMES.CLUSTER_INTERACTION_VALUE]
+        rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
     
     
     y = self.y
@@ -3001,9 +3001,9 @@ def value(self):
     # Build the parameters
     # ====================
     if self._there_are_perturbations:
-        rhs = [REPRNAMES.PERT_VALUE, REPRNAMES.CLUSTER_INTERACTION_VALUE]
+        rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
     else:
-        rhs = [REPRNAMES.CLUSTER_INTERACTION_VALUE]
+        rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
     
     
     y = self.y
@@ -3077,7 +3077,7 @@ def value(self):
     self.original_cluster = self.clustering.idx2cid[self.oidx]
     self.curr_cluster = self.original_cluster
 
-    interactions = self.G[REPRNAMES.INTERACTIONS_OBJ]
+    interactions = self.G[STRNAMES.INTERACTIONS_OBJ]
     interaction_on_idxs = interactions.get_indicators(return_idxs=True)
     if self._there_are_perturbations:
         perturbation_on_idxs = [p.indicator.cluster_arg_array() for p in self.G.perturbations]
@@ -3201,10 +3201,10 @@ def value(self):
 
     self.clustering.move_item(idx=self.oidx, cid=assigned_cid)
 
-    self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-    self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+    self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+    self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
     if self._there_are_perturbations:
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()</code></pre>
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.clustering.ClusterAssignments.gibbs_update_single_asv_slow"><code class="name flex">
@@ -3265,10 +3265,10 @@ to get the cluster assignment.</p>
 
         # Move ASV and recompute the matrices
         self.clustering.move_item(idx=oidx,cid=cid)
-        self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-        self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+        self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
         if self._there_are_perturbations:
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
         LOG_P.append(np.log(self.clustering.clusters[cid].size - 1) + \
             self.calculate_marginal_loglikelihood_slow()[&#39;ret&#39;])
@@ -3278,10 +3278,10 @@ to get the cluster assignment.</p>
     # Calculate new cluster
     # =====================
     cid=self.clustering.make_new_cluster_with(idx=oidx)
-    self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-    self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+    self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+    self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
     if self._there_are_perturbations:
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
     
     LOG_KEYS.append(cid)
     LOG_P.append(np.log(concentration/self.m) + \
@@ -3295,12 +3295,12 @@ to get the cluster assignment.</p>
 
     if assigned_cid != curr_clus:
         self.clustering.move_item(idx=oidx,cid=assigned_cid)
-        self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
 
         # Change the mixing matrix for the interactions and (potentially) perturbations
-        self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+        self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
         if self._there_are_perturbations:
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()</code></pre>
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.clustering.ClusterAssignments.gibbs_update_single_asv_slow_fast"><code class="name flex">
@@ -3361,10 +3361,10 @@ to get the cluster assignment.</p>
 
         # Move ASV and recompute the matrices
         self.clustering.move_item(idx=oidx,cid=cid)
-        self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-        self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+        self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
         if self._there_are_perturbations:
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
         LOG_P.append(np.log(self.clustering.clusters[cid].size - 1) + \
             self.calculate_marginal_loglikelihood_slow_fast_sparse())
@@ -3374,10 +3374,10 @@ to get the cluster assignment.</p>
     # Calculate new cluster
     # =====================
     cid=self.clustering.make_new_cluster_with(idx=oidx)
-    self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-    self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+    self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+    self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
     if self._there_are_perturbations:
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
     
     LOG_KEYS.append(cid)
     LOG_P.append(np.log(concentration/self.m) + \
@@ -3391,12 +3391,12 @@ to get the cluster assignment.</p>
 
     if assigned_cid != curr_clus:
         self.clustering.move_item(idx=oidx,cid=assigned_cid)
-        self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
 
         # Change the mixing matrix for the interactions and (potentially) perturbations
-        self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+        self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
         if self._there_are_perturbations:
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].M.build()</code></pre>
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.clustering.ClusterAssignments.initialize"><code class="name flex">
@@ -3814,8 +3814,8 @@ implementation has the same performance as <code><a title="mdsine2.clustering.Cl
     if self.G.data.zero_inflation_transition_policy is not None:
         raise NotImplementedError(&#39;Multiprocessing for zero inflation data is not implemented yet.&#39; \
             &#39; Use `mp=None`&#39;)
-    DMI = self.G.data.design_matrices[REPRNAMES.CLUSTER_INTERACTION_VALUE]
-    DMP = self.G.data.design_matrices[REPRNAMES.PERT_VALUE]
+    DMI = self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE]
+    DMP = self.G.data.design_matrices[STRNAMES.PERT_VALUE]
     if self.clustering.n_clusters.sample_iter == 0 or self.pool == []:
         kwargs = {
             &#39;n_asvs&#39;: len(self.G.data.asvs),
@@ -3850,16 +3850,16 @@ implementation has the same performance as <code><a title="mdsine2.clustering.Cl
     # Send in arguments for the start of the gibbs step
     start_time = time.time()
     base_Xdata = DMI.base.data
-    self.concentration = self.G[REPRNAMES.CONCENTRATION].value
-    y = self.G.data.construct_lhs(keys=[REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE],
-        kwargs_dict={REPRNAMES.GROWTH_VALUE: {&#39;with_perturbations&#39;:False}})
-    prior_var_interactions = self.G[REPRNAMES.PRIOR_VAR_INTERACTIONS].value
-    prior_mean_interactions = self.G[REPRNAMES.PRIOR_MEAN_INTERACTIONS].value
-    process_prec_diag = self.G[REPRNAMES.PROCESSVAR].prec
+    self.concentration = self.G[STRNAMES.CONCENTRATION].value
+    y = self.G.data.construct_lhs(keys=[STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE],
+        kwargs_dict={STRNAMES.GROWTH_VALUE: {&#39;with_perturbations&#39;:False}})
+    prior_var_interactions = self.G[STRNAMES.PRIOR_VAR_INTERACTIONS].value
+    prior_mean_interactions = self.G[STRNAMES.PRIOR_MEAN_INTERACTIONS].value
+    process_prec_diag = self.G[STRNAMES.PROCESSVAR].prec
 
     if self._there_are_perturbations:
-        prior_var_pert = self.G[REPRNAMES.PRIOR_VAR_PERT].get_single_value_of_perts()
-        prior_mean_pert = self.G[REPRNAMES.PRIOR_MEAN_PERT].get_single_value_of_perts()
+        prior_var_pert = self.G[STRNAMES.PRIOR_VAR_PERT].get_single_value_of_perts()
+        prior_mean_pert = self.G[STRNAMES.PRIOR_MEAN_PERT].get_single_value_of_perts()
         base_Xpertdata = DMP.base.data
     else:
         prior_var_pert = None
@@ -3944,11 +3944,11 @@ get highest mixing we alternate between each.</p></div>
 
     start_time = time.time()
 
-    self.process_prec = self.G[REPRNAMES.PROCESSVAR].prec.ravel() #.build_matrix(cov=False, sparse=False)
-    self.process_prec_matrix = self.G[REPRNAMES.PROCESSVAR].build_matrix(sparse=True, cov=False)
-    lhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+    self.process_prec = self.G[STRNAMES.PROCESSVAR].prec.ravel() #.build_matrix(cov=False, sparse=False)
+    self.process_prec_matrix = self.G[STRNAMES.PROCESSVAR].build_matrix(sparse=True, cov=False)
+    lhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
     self.y = self.G.data.construct_lhs(lhs, 
-        kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+        kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
 
     oidxs = npr.permutation(np.arange(len(self.G.data.asvs)))
     iii = 0
@@ -4199,7 +4199,7 @@ for Density Estimation' by M. D. Escobar and M. West, 1995.</p>
         if self.sample_iter &lt; self.delay:
             return
 
-        clustering = self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE].clustering
+        clustering = self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].clustering
         k = len(clustering)
         n = self.G.data.n_asvs
         # If there are 1 or 0 clusters, do not update
@@ -4393,7 +4393,7 @@ shape, scale (int, float)
     if self.sample_iter &lt; self.delay:
         return
 
-    clustering = self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE].clustering
+    clustering = self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].clustering
     k = len(clustering)
     n = self.G.data.n_asvs
     # If there are 1 or 0 clusters, do not update

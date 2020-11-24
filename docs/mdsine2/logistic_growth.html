@@ -38,7 +38,7 @@ from .util import expected_n_clusters, build_prior_covariance, build_prior_mean,
     log_det, pinv
 from .perturbations import PerturbationMagnitudes
 from .interactions import ClusterInteractionValue
-from .names import STRNAMES, REPRNAMES
+from .names import STRNAMES, STRNAMES
 
 from . import pylab as pl
 
@@ -246,9 +246,9 @@ class PriorVarMH(pl.variables.SICS):
                 raise ValueError(&#39;`scale` ({}) must be positive&#39;.format(scale))
         elif scale_option in [&#39;auto&#39;, &#39;inflated-median&#39;]:
             # Perform linear regression
-            rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+            rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(index_out_perturbations=True)
 
@@ -276,10 +276,10 @@ class PriorVarMH(pl.variables.SICS):
         elif value_option in [&#39;inflated-median&#39;]:
             # No interactions
             rhs = [
-                REPRNAMES.GROWTH_VALUE,
-                REPRNAMES.SELF_INTERACTION_VALUE]
+                STRNAMES.GROWTH_VALUE,
+                STRNAMES.SELF_INTERACTION_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(index_out_perturbations=True)
 
@@ -623,16 +623,16 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         elif mean_option in [&#39;auto&#39;, &#39;median-linear-regression&#39;]:
             # Perform linear regression
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+                rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
                 lhs = []
             else:
-                rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-                lhs = [REPRNAMES.GROWTH_VALUE]
+                rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+                lhs = [STRNAMES.GROWTH_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(keys=lhs, 
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
 
             prec = X.T @ X
@@ -656,16 +656,16 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         elif var_option in [&#39;auto&#39;, &#39;diffuse-linear-regression&#39;]:
             # Perform linear regression
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+                rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
                 lhs = []
             else:
-                rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-                lhs = [REPRNAMES.GROWTH_VALUE]
+                rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+                lhs = [STRNAMES.GROWTH_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(keys=lhs, 
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
 
             prec = X.T @ X
@@ -690,16 +690,16 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         elif value_option in [&#39;linear-regression&#39;]:
             # Perform linear regression
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+                rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
                 lhs = []
             else:
-                rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-                lhs = [REPRNAMES.GROWTH_VALUE]
+                rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+                lhs = [STRNAMES.GROWTH_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(keys=lhs, 
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
 
             prec = X.T @ X
@@ -992,12 +992,12 @@ class Growth(pl.variables.TruncatedNormal):
             self.value = value
         elif value_option == &#39;linear-regression&#39;:
             rhs = [
-                REPRNAMES.GROWTH_VALUE,
-                REPRNAMES.SELF_INTERACTION_VALUE
+                STRNAMES.GROWTH_VALUE,
+                STRNAMES.SELF_INTERACTION_VALUE
             ]
             lhs = []
             X = self.G.data.construct_rhs(
-                keys=rhs, kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                keys=rhs, kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(keys=lhs, index_out_perturbations=True)
 
@@ -1038,25 +1038,25 @@ class Growth(pl.variables.TruncatedNormal):
         if self._there_are_perturbations:
             # If there are perturbations then we need to update their
             # matrix because the growths changed
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].update_values()
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].update_values()
 
     def calculate_posterior(self):
-        rhs = [REPRNAMES.GROWTH_VALUE]
+        rhs = [STRNAMES.GROWTH_VALUE]
         if self._there_are_perturbations:
             lhs = [
-                REPRNAMES.SELF_INTERACTION_VALUE,
-                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+                STRNAMES.SELF_INTERACTION_VALUE,
+                STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
             lhs = [
-                REPRNAMES.SELF_INTERACTION_VALUE,
-                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+                STRNAMES.SELF_INTERACTION_VALUE,
+                STRNAMES.CLUSTER_INTERACTION_VALUE]
         X = self.G.data.construct_rhs(keys=rhs,
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{
                 &#39;with_perturbations&#39;:self._there_are_perturbations}})
         y = self.G.data.construct_lhs(keys=lhs)
         # X = X.toarray()
 
-        process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(
+        process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(
             cov=False, sparse=True)
 
         prior_prec = build_prior_covariance(G=self.G, cov=False,
@@ -1323,25 +1323,25 @@ class SelfInteractions(pl.variables.TruncatedNormal):
                     len(value), len(self.G.data.asvs)))
             self.value = value
         elif value_option == &#39;fixed-growth&#39;:
-            X = self.G.data.construct_rhs(keys=[REPRNAMES.SELF_INTERACTION_VALUE],
+            X = self.G.data.construct_rhs(keys=[STRNAMES.SELF_INTERACTION_VALUE],
                 index_out_perturbations=True)
-            y = self.G.data.construct_lhs(keys=[REPRNAMES.GROWTH_VALUE], kwargs_dict={
-                REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+            y = self.G.data.construct_lhs(keys=[STRNAMES.GROWTH_VALUE], kwargs_dict={
+                STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             prec = X.T @ X
             cov = pinv(prec, self)
             self.value = np.absolute((cov @ X.transpose().dot(y)).ravel())
         elif &#39;strict-enforcement&#39; in value_option:
             if &#39;full&#39; in value_option:
-                rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-                lhs = [REPRNAMES.GROWTH_VALUE]
+                rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+                lhs = [STRNAMES.GROWTH_VALUE]
             elif &#39;partial&#39; in value_option:
                 lhs = []
-                rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+                rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             else:
                 raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
             X = self.G.data.construct_rhs(
-                keys=rhs, kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                keys=rhs, kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(keys=lhs, index_out_perturbations=True)
 
@@ -1385,12 +1385,12 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             self.value = 1/ss
         elif value_option == &#39;linear-regression&#39;:
             
-            rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-            lhs = [REPRNAMES.GROWTH_VALUE]
+            rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+            lhs = [STRNAMES.GROWTH_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(keys=lhs, index_out_perturbations=True,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}})
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}})
 
             prec = X.T @ X
             cov = pinv(prec, self)
@@ -1421,19 +1421,19 @@ class SelfInteractions(pl.variables.TruncatedNormal):
 
     def calculate_posterior(self):
 
-        rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
+        rhs = [STRNAMES.SELF_INTERACTION_VALUE]
         if self._there_are_perturbations:
             lhs = [
-                REPRNAMES.GROWTH_VALUE,
-                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+                STRNAMES.GROWTH_VALUE,
+                STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
             lhs = [
-                REPRNAMES.GROWTH_VALUE,
-                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+                STRNAMES.GROWTH_VALUE,
+                STRNAMES.CLUSTER_INTERACTION_VALUE]
         X = self.G.data.construct_rhs(keys=rhs)
-        y = self.G.data.construct_lhs(keys=lhs, kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+        y = self.G.data.construct_lhs(keys=lhs, kwargs_dict={STRNAMES.GROWTH_VALUE:{
                 &#39;with_perturbations&#39;:self._there_are_perturbations}})
-        process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(
+        process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(
             cov=False, sparse=True)
         prior_prec = build_prior_covariance(G=self.G, cov=False,
             order=rhs, sparse=True)
@@ -1619,13 +1619,13 @@ class RegressCoeff(pl.variables.MVN):
             a = &#39;Growth:\n{}\nSelf Interactions:\n{}\nInteractions:\n{}\nPerturbations:\n{}\n&#39; \
                 &#39;Acceptances:\n{}&#39;.format(
                 self.growth.value, self.self_interactions.value,
-                str(self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE]),
+                str(self.G[STRNAMES.CLUSTER_INTERACTION_VALUE]),
                 str(self.pert_mag), np.mean(
                     self.acceptances[ np.max([self.sample_iter-50, 0]):self.sample_iter], axis=0))
         except:
             a = &#39;Growth:\n{}\nSelf Interactions:\n{}\nInteractions:\n{}\nPerturbations:\n{}&#39;.format(
                 self.growth.value, self.self_interactions.value,
-                str(self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE]),
+                str(self.G[STRNAMES.CLUSTER_INTERACTION_VALUE]),
                 str(self.pert_mag))
         return a
 
@@ -1697,7 +1697,7 @@ class RegressCoeff(pl.variables.MVN):
         &#39;&#39;&#39;
         self._update_perts_and_inter()
         if self._there_are_perturbations:
-            self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+            self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
         
         self._update_growth_and_self_interactions()
         self.sample_iter += 1
@@ -1705,7 +1705,7 @@ class RegressCoeff(pl.variables.MVN):
         if self._there_are_perturbations:
             # If there are perturbations then we need to update their
             # matrix because the growths changed
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].update_values()
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].update_values()
 
     # @profile
     def _update_perts_and_inter(self):
@@ -1720,40 +1720,40 @@ class RegressCoeff(pl.variables.MVN):
         if not self.update_jointly_pert_inter:
             # Update separately
             if pl.random.misc.fast_sample_standard_uniform() &lt; 0.5:
-                self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE].update()
+                self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].update()
                 if self._there_are_perturbations:
-                    self.G[REPRNAMES.PERT_VALUE].update()
+                    self.G[STRNAMES.PERT_VALUE].update()
             else:
                 if self._there_are_perturbations:
-                    self.G[REPRNAMES.PERT_VALUE].update()
-                self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE].update()
+                    self.G[STRNAMES.PERT_VALUE].update()
+                self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].update()
         else:
             # Update jointly
             rhs = []
             lhs = []
             if self.interactions.obj.sample_iter &gt;= \
                 self.interactions.delay:
-                rhs.append(REPRNAMES.CLUSTER_INTERACTION_VALUE)
+                rhs.append(STRNAMES.CLUSTER_INTERACTION_VALUE)
             else:
-                lhs.append(REPRNAMES.CLUSTER_INTERACTION_VALUE)
+                lhs.append(STRNAMES.CLUSTER_INTERACTION_VALUE)
             if self._there_are_perturbations:
                 if self.pert_mag.sample_iter &gt;= self.pert_mag.delay:
-                    rhs.append(REPRNAMES.PERT_VALUE)
+                    rhs.append(STRNAMES.PERT_VALUE)
                 else:
-                    lhs.append(REPRNAMES.PERT_VALUE)
+                    lhs.append(STRNAMES.PERT_VALUE)
 
             if len(rhs) == 0:
                 return
 
-            lhs += [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+            lhs += [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             X = self.G.data.construct_rhs(keys=rhs)
             if X.shape[1] == 0:
                 logging.info(&#39;No columns, skipping&#39;)
                 return
             y = self.G.data.construct_lhs(keys=lhs,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
 
-            process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(
+            process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(
                 cov=False, sparse=True)
             prior_prec = build_prior_covariance(G=self.G, cov=False,
                 order=rhs, sparse=True)
@@ -1776,19 +1776,19 @@ class RegressCoeff(pl.variables.MVN):
                 return
 
             i = 0
-            if REPRNAMES.CLUSTER_INTERACTION_VALUE in rhs:
+            if STRNAMES.CLUSTER_INTERACTION_VALUE in rhs:
                 l = self.interactions.obj.num_pos_indicators()
                 self.interactions.value = value[:l]
                 self.interactions.set_values(arr=value[:l], use_indicators=True)
                 self.interactions.update_str()
                 i += l
             if self._there_are_perturbations:
-                if REPRNAMES.PERT_VALUE in rhs:
+                if STRNAMES.PERT_VALUE in rhs:
                     self.pert_mag.value = value[i:]
                     self.pert_mag.set_values(arr=value[i:], use_indicators=True)
                     self.pert_mag.update_str()
-                    self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].update_value()
-                    # self.G.data.design_matrices[REPRNAMES.PERT_VALUE].build()
+                    self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].update_value()
+                    # self.G.data.design_matrices[STRNAMES.PERT_VALUE].build()
 
     def _update_acceptances(self):
         if self.growth.sample_iter == 0:
@@ -1963,12 +1963,12 @@ class RegressCoeff(pl.variables.MVN):
             self.value = value
         elif value_option == &#39;linear-regression&#39;:
             rhs = [
-                REPRNAMES.GROWTH_VALUE,
-                REPRNAMES.SELF_INTERACTION_VALUE
+                STRNAMES.GROWTH_VALUE,
+                STRNAMES.SELF_INTERACTION_VALUE
             ]
             lhs = []
             X = self.G.data.construct_rhs(
-                keys=rhs, kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                keys=rhs, kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(keys=lhs, index_out_perturbations=True)
 
@@ -2009,25 +2009,25 @@ class RegressCoeff(pl.variables.MVN):
         if self._there_are_perturbations:
             # If there are perturbations then we need to update their
             # matrix because the growths changed
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].update_values()
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].update_values()
 
     def calculate_posterior(self):
-        rhs = [REPRNAMES.GROWTH_VALUE]
+        rhs = [STRNAMES.GROWTH_VALUE]
         if self._there_are_perturbations:
             lhs = [
-                REPRNAMES.SELF_INTERACTION_VALUE,
-                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+                STRNAMES.SELF_INTERACTION_VALUE,
+                STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
             lhs = [
-                REPRNAMES.SELF_INTERACTION_VALUE,
-                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+                STRNAMES.SELF_INTERACTION_VALUE,
+                STRNAMES.CLUSTER_INTERACTION_VALUE]
         X = self.G.data.construct_rhs(keys=rhs,
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{
                 &#39;with_perturbations&#39;:self._there_are_perturbations}})
         y = self.G.data.construct_lhs(keys=lhs)
         # X = X.toarray()
 
-        process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(
+        process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(
             cov=False, sparse=True)
 
         prior_prec = build_prior_covariance(G=self.G, cov=False,
@@ -2175,22 +2175,22 @@ class RegressCoeff(pl.variables.MVN):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def calculate_posterior(self):
-    rhs = [REPRNAMES.GROWTH_VALUE]
+    rhs = [STRNAMES.GROWTH_VALUE]
     if self._there_are_perturbations:
         lhs = [
-            REPRNAMES.SELF_INTERACTION_VALUE,
-            REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            STRNAMES.SELF_INTERACTION_VALUE,
+            STRNAMES.CLUSTER_INTERACTION_VALUE]
     else:
         lhs = [
-            REPRNAMES.SELF_INTERACTION_VALUE,
-            REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            STRNAMES.SELF_INTERACTION_VALUE,
+            STRNAMES.CLUSTER_INTERACTION_VALUE]
     X = self.G.data.construct_rhs(keys=rhs,
-        kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+        kwargs_dict={STRNAMES.GROWTH_VALUE:{
             &#39;with_perturbations&#39;:self._there_are_perturbations}})
     y = self.G.data.construct_lhs(keys=lhs)
     # X = X.toarray()
 
-    process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(
+    process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(
         cov=False, sparse=True)
 
     prior_prec = build_prior_covariance(G=self.G, cov=False,
@@ -2339,12 +2339,12 @@ These are manually specified values for the low and high</dd>
         self.value = value
     elif value_option == &#39;linear-regression&#39;:
         rhs = [
-            REPRNAMES.GROWTH_VALUE,
-            REPRNAMES.SELF_INTERACTION_VALUE
+            STRNAMES.GROWTH_VALUE,
+            STRNAMES.SELF_INTERACTION_VALUE
         ]
         lhs = []
         X = self.G.data.construct_rhs(
-            keys=rhs, kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+            keys=rhs, kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
             index_out_perturbations=True)
         y = self.G.data.construct_lhs(keys=lhs, index_out_perturbations=True)
 
@@ -2395,7 +2395,7 @@ These are manually specified values for the low and high</dd>
     if self._there_are_perturbations:
         # If there are perturbations then we need to update their
         # matrix because the growths changed
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].update_values()</code></pre>
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].update_values()</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.logistic_growth.Growth.update_str"><code class="name flex">
@@ -2782,16 +2782,16 @@ the growths or the self-interactions</p>
         elif mean_option in [&#39;auto&#39;, &#39;median-linear-regression&#39;]:
             # Perform linear regression
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+                rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
                 lhs = []
             else:
-                rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-                lhs = [REPRNAMES.GROWTH_VALUE]
+                rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+                lhs = [STRNAMES.GROWTH_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(keys=lhs, 
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
 
             prec = X.T @ X
@@ -2815,16 +2815,16 @@ the growths or the self-interactions</p>
         elif var_option in [&#39;auto&#39;, &#39;diffuse-linear-regression&#39;]:
             # Perform linear regression
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+                rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
                 lhs = []
             else:
-                rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-                lhs = [REPRNAMES.GROWTH_VALUE]
+                rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+                lhs = [STRNAMES.GROWTH_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(keys=lhs, 
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
 
             prec = X.T @ X
@@ -2849,16 +2849,16 @@ the growths or the self-interactions</p>
         elif value_option in [&#39;linear-regression&#39;]:
             # Perform linear regression
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+                rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
                 lhs = []
             else:
-                rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-                lhs = [REPRNAMES.GROWTH_VALUE]
+                rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+                lhs = [STRNAMES.GROWTH_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(keys=lhs, 
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
 
             prec = X.T @ X
@@ -3274,16 +3274,16 @@ If str:
     elif mean_option in [&#39;auto&#39;, &#39;median-linear-regression&#39;]:
         # Perform linear regression
         if self.child_name == STRNAMES.GROWTH_VALUE:
-            rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+            rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             lhs = []
         else:
-            rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-            lhs = [REPRNAMES.GROWTH_VALUE]
+            rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+            lhs = [STRNAMES.GROWTH_VALUE]
         X = self.G.data.construct_rhs(keys=rhs,
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
             index_out_perturbations=True)
         y = self.G.data.construct_lhs(keys=lhs, 
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
             index_out_perturbations=True)
 
         prec = X.T @ X
@@ -3307,16 +3307,16 @@ If str:
     elif var_option in [&#39;auto&#39;, &#39;diffuse-linear-regression&#39;]:
         # Perform linear regression
         if self.child_name == STRNAMES.GROWTH_VALUE:
-            rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+            rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             lhs = []
         else:
-            rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-            lhs = [REPRNAMES.GROWTH_VALUE]
+            rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+            lhs = [STRNAMES.GROWTH_VALUE]
         X = self.G.data.construct_rhs(keys=rhs,
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
             index_out_perturbations=True)
         y = self.G.data.construct_lhs(keys=lhs, 
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
             index_out_perturbations=True)
 
         prec = X.T @ X
@@ -3341,16 +3341,16 @@ If str:
     elif value_option in [&#39;linear-regression&#39;]:
         # Perform linear regression
         if self.child_name == STRNAMES.GROWTH_VALUE:
-            rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+            rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             lhs = []
         else:
-            rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-            lhs = [REPRNAMES.GROWTH_VALUE]
+            rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+            lhs = [STRNAMES.GROWTH_VALUE]
         X = self.G.data.construct_rhs(keys=rhs,
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
             index_out_perturbations=True)
         y = self.G.data.construct_lhs(keys=lhs, 
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
             index_out_perturbations=True)
 
         prec = X.T @ X
@@ -3843,9 +3843,9 @@ self-interactions parameter</dd>
                 raise ValueError(&#39;`scale` ({}) must be positive&#39;.format(scale))
         elif scale_option in [&#39;auto&#39;, &#39;inflated-median&#39;]:
             # Perform linear regression
-            rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+            rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(index_out_perturbations=True)
 
@@ -3873,10 +3873,10 @@ self-interactions parameter</dd>
         elif value_option in [&#39;inflated-median&#39;]:
             # No interactions
             rhs = [
-                REPRNAMES.GROWTH_VALUE,
-                REPRNAMES.SELF_INTERACTION_VALUE]
+                STRNAMES.GROWTH_VALUE,
+                STRNAMES.SELF_INTERACTION_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(index_out_perturbations=True)
 
@@ -4273,9 +4273,9 @@ int</dd>
             raise ValueError(&#39;`scale` ({}) must be positive&#39;.format(scale))
     elif scale_option in [&#39;auto&#39;, &#39;inflated-median&#39;]:
         # Perform linear regression
-        rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+        rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
         X = self.G.data.construct_rhs(keys=rhs,
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
             index_out_perturbations=True)
         y = self.G.data.construct_lhs(index_out_perturbations=True)
 
@@ -4303,10 +4303,10 @@ int</dd>
     elif value_option in [&#39;inflated-median&#39;]:
         # No interactions
         rhs = [
-            REPRNAMES.GROWTH_VALUE,
-            REPRNAMES.SELF_INTERACTION_VALUE]
+            STRNAMES.GROWTH_VALUE,
+            STRNAMES.SELF_INTERACTION_VALUE]
         X = self.G.data.construct_rhs(keys=rhs,
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
             index_out_perturbations=True)
         y = self.G.data.construct_lhs(index_out_perturbations=True)
 
@@ -4632,13 +4632,13 @@ Set to None if there are no perturbations</dd>
             a = &#39;Growth:\n{}\nSelf Interactions:\n{}\nInteractions:\n{}\nPerturbations:\n{}\n&#39; \
                 &#39;Acceptances:\n{}&#39;.format(
                 self.growth.value, self.self_interactions.value,
-                str(self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE]),
+                str(self.G[STRNAMES.CLUSTER_INTERACTION_VALUE]),
                 str(self.pert_mag), np.mean(
                     self.acceptances[ np.max([self.sample_iter-50, 0]):self.sample_iter], axis=0))
         except:
             a = &#39;Growth:\n{}\nSelf Interactions:\n{}\nInteractions:\n{}\nPerturbations:\n{}&#39;.format(
                 self.growth.value, self.self_interactions.value,
-                str(self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE]),
+                str(self.G[STRNAMES.CLUSTER_INTERACTION_VALUE]),
                 str(self.pert_mag))
         return a
 
@@ -4710,7 +4710,7 @@ Set to None if there are no perturbations</dd>
         &#39;&#39;&#39;
         self._update_perts_and_inter()
         if self._there_are_perturbations:
-            self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+            self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
         
         self._update_growth_and_self_interactions()
         self.sample_iter += 1
@@ -4718,7 +4718,7 @@ Set to None if there are no perturbations</dd>
         if self._there_are_perturbations:
             # If there are perturbations then we need to update their
             # matrix because the growths changed
-            self.G.data.design_matrices[REPRNAMES.PERT_VALUE].update_values()
+            self.G.data.design_matrices[STRNAMES.PERT_VALUE].update_values()
 
     # @profile
     def _update_perts_and_inter(self):
@@ -4733,40 +4733,40 @@ Set to None if there are no perturbations</dd>
         if not self.update_jointly_pert_inter:
             # Update separately
             if pl.random.misc.fast_sample_standard_uniform() &lt; 0.5:
-                self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE].update()
+                self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].update()
                 if self._there_are_perturbations:
-                    self.G[REPRNAMES.PERT_VALUE].update()
+                    self.G[STRNAMES.PERT_VALUE].update()
             else:
                 if self._there_are_perturbations:
-                    self.G[REPRNAMES.PERT_VALUE].update()
-                self.G[REPRNAMES.CLUSTER_INTERACTION_VALUE].update()
+                    self.G[STRNAMES.PERT_VALUE].update()
+                self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].update()
         else:
             # Update jointly
             rhs = []
             lhs = []
             if self.interactions.obj.sample_iter &gt;= \
                 self.interactions.delay:
-                rhs.append(REPRNAMES.CLUSTER_INTERACTION_VALUE)
+                rhs.append(STRNAMES.CLUSTER_INTERACTION_VALUE)
             else:
-                lhs.append(REPRNAMES.CLUSTER_INTERACTION_VALUE)
+                lhs.append(STRNAMES.CLUSTER_INTERACTION_VALUE)
             if self._there_are_perturbations:
                 if self.pert_mag.sample_iter &gt;= self.pert_mag.delay:
-                    rhs.append(REPRNAMES.PERT_VALUE)
+                    rhs.append(STRNAMES.PERT_VALUE)
                 else:
-                    lhs.append(REPRNAMES.PERT_VALUE)
+                    lhs.append(STRNAMES.PERT_VALUE)
 
             if len(rhs) == 0:
                 return
 
-            lhs += [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+            lhs += [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             X = self.G.data.construct_rhs(keys=rhs)
             if X.shape[1] == 0:
                 logging.info(&#39;No columns, skipping&#39;)
                 return
             y = self.G.data.construct_lhs(keys=lhs,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;: False}})
 
-            process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(
+            process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(
                 cov=False, sparse=True)
             prior_prec = build_prior_covariance(G=self.G, cov=False,
                 order=rhs, sparse=True)
@@ -4789,19 +4789,19 @@ Set to None if there are no perturbations</dd>
                 return
 
             i = 0
-            if REPRNAMES.CLUSTER_INTERACTION_VALUE in rhs:
+            if STRNAMES.CLUSTER_INTERACTION_VALUE in rhs:
                 l = self.interactions.obj.num_pos_indicators()
                 self.interactions.value = value[:l]
                 self.interactions.set_values(arr=value[:l], use_indicators=True)
                 self.interactions.update_str()
                 i += l
             if self._there_are_perturbations:
-                if REPRNAMES.PERT_VALUE in rhs:
+                if STRNAMES.PERT_VALUE in rhs:
                     self.pert_mag.value = value[i:]
                     self.pert_mag.set_values(arr=value[i:], use_indicators=True)
                     self.pert_mag.update_str()
-                    self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].update_value()
-                    # self.G.data.design_matrices[REPRNAMES.PERT_VALUE].build()
+                    self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].update_value()
+                    # self.G.data.design_matrices[STRNAMES.PERT_VALUE].build()
 
     def _update_acceptances(self):
         if self.growth.sample_iter == 0:
@@ -5002,7 +5002,7 @@ using truncated normal distributions for growth and self-interactions.</p>
     &#39;&#39;&#39;
     self._update_perts_and_inter()
     if self._there_are_perturbations:
-        self.G.data.design_matrices[REPRNAMES.GROWTH_VALUE].build_with_perturbations()
+        self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
     
     self._update_growth_and_self_interactions()
     self.sample_iter += 1
@@ -5010,7 +5010,7 @@ using truncated normal distributions for growth and self-interactions.</p>
     if self._there_are_perturbations:
         # If there are perturbations then we need to update their
         # matrix because the growths changed
-        self.G.data.design_matrices[REPRNAMES.PERT_VALUE].update_values()</code></pre>
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].update_values()</code></pre>
 </details>
 </dd>
 </dl>
@@ -5193,25 +5193,25 @@ using truncated normal distributions for growth and self-interactions.</p>
                     len(value), len(self.G.data.asvs)))
             self.value = value
         elif value_option == &#39;fixed-growth&#39;:
-            X = self.G.data.construct_rhs(keys=[REPRNAMES.SELF_INTERACTION_VALUE],
+            X = self.G.data.construct_rhs(keys=[STRNAMES.SELF_INTERACTION_VALUE],
                 index_out_perturbations=True)
-            y = self.G.data.construct_lhs(keys=[REPRNAMES.GROWTH_VALUE], kwargs_dict={
-                REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+            y = self.G.data.construct_lhs(keys=[STRNAMES.GROWTH_VALUE], kwargs_dict={
+                STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             prec = X.T @ X
             cov = pinv(prec, self)
             self.value = np.absolute((cov @ X.transpose().dot(y)).ravel())
         elif &#39;strict-enforcement&#39; in value_option:
             if &#39;full&#39; in value_option:
-                rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-                lhs = [REPRNAMES.GROWTH_VALUE]
+                rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+                lhs = [STRNAMES.GROWTH_VALUE]
             elif &#39;partial&#39; in value_option:
                 lhs = []
-                rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+                rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             else:
                 raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
             X = self.G.data.construct_rhs(
-                keys=rhs, kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+                keys=rhs, kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(keys=lhs, index_out_perturbations=True)
 
@@ -5255,12 +5255,12 @@ using truncated normal distributions for growth and self-interactions.</p>
             self.value = 1/ss
         elif value_option == &#39;linear-regression&#39;:
             
-            rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-            lhs = [REPRNAMES.GROWTH_VALUE]
+            rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+            lhs = [STRNAMES.GROWTH_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
                 index_out_perturbations=True)
             y = self.G.data.construct_lhs(keys=lhs, index_out_perturbations=True,
-                kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}})
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}})
 
             prec = X.T @ X
             cov = pinv(prec, self)
@@ -5291,19 +5291,19 @@ using truncated normal distributions for growth and self-interactions.</p>
 
     def calculate_posterior(self):
 
-        rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
+        rhs = [STRNAMES.SELF_INTERACTION_VALUE]
         if self._there_are_perturbations:
             lhs = [
-                REPRNAMES.GROWTH_VALUE,
-                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+                STRNAMES.GROWTH_VALUE,
+                STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
             lhs = [
-                REPRNAMES.GROWTH_VALUE,
-                REPRNAMES.CLUSTER_INTERACTION_VALUE]
+                STRNAMES.GROWTH_VALUE,
+                STRNAMES.CLUSTER_INTERACTION_VALUE]
         X = self.G.data.construct_rhs(keys=rhs)
-        y = self.G.data.construct_lhs(keys=lhs, kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+        y = self.G.data.construct_lhs(keys=lhs, kwargs_dict={STRNAMES.GROWTH_VALUE:{
                 &#39;with_perturbations&#39;:self._there_are_perturbations}})
-        process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(
+        process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(
             cov=False, sparse=True)
         prior_prec = build_prior_covariance(G=self.G, cov=False,
             order=rhs, sparse=True)
@@ -5451,19 +5451,19 @@ using truncated normal distributions for growth and self-interactions.</p>
 </summary>
 <pre><code class="python">def calculate_posterior(self):
 
-    rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
+    rhs = [STRNAMES.SELF_INTERACTION_VALUE]
     if self._there_are_perturbations:
         lhs = [
-            REPRNAMES.GROWTH_VALUE,
-            REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            STRNAMES.GROWTH_VALUE,
+            STRNAMES.CLUSTER_INTERACTION_VALUE]
     else:
         lhs = [
-            REPRNAMES.GROWTH_VALUE,
-            REPRNAMES.CLUSTER_INTERACTION_VALUE]
+            STRNAMES.GROWTH_VALUE,
+            STRNAMES.CLUSTER_INTERACTION_VALUE]
     X = self.G.data.construct_rhs(keys=rhs)
-    y = self.G.data.construct_lhs(keys=lhs, kwargs_dict={REPRNAMES.GROWTH_VALUE:{
+    y = self.G.data.construct_lhs(keys=lhs, kwargs_dict={STRNAMES.GROWTH_VALUE:{
             &#39;with_perturbations&#39;:self._there_are_perturbations}})
-    process_prec = self.G[REPRNAMES.PROCESSVAR].build_matrix(
+    process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(
         cov=False, sparse=True)
     prior_prec = build_prior_covariance(G=self.G, cov=False,
         order=rhs, sparse=True)
@@ -5661,25 +5661,25 @@ This is only used for either the 'mouse' or 'human' settings</dd>
                 len(value), len(self.G.data.asvs)))
         self.value = value
     elif value_option == &#39;fixed-growth&#39;:
-        X = self.G.data.construct_rhs(keys=[REPRNAMES.SELF_INTERACTION_VALUE],
+        X = self.G.data.construct_rhs(keys=[STRNAMES.SELF_INTERACTION_VALUE],
             index_out_perturbations=True)
-        y = self.G.data.construct_lhs(keys=[REPRNAMES.GROWTH_VALUE], kwargs_dict={
-            REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+        y = self.G.data.construct_lhs(keys=[STRNAMES.GROWTH_VALUE], kwargs_dict={
+            STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
             index_out_perturbations=True)
         prec = X.T @ X
         cov = pinv(prec, self)
         self.value = np.absolute((cov @ X.transpose().dot(y)).ravel())
     elif &#39;strict-enforcement&#39; in value_option:
         if &#39;full&#39; in value_option:
-            rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-            lhs = [REPRNAMES.GROWTH_VALUE]
+            rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+            lhs = [STRNAMES.GROWTH_VALUE]
         elif &#39;partial&#39; in value_option:
             lhs = []
-            rhs = [REPRNAMES.GROWTH_VALUE, REPRNAMES.SELF_INTERACTION_VALUE]
+            rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
         else:
             raise ValueError(&#39;`value_option` ({}) not recognized&#39;.format(value_option))
         X = self.G.data.construct_rhs(
-            keys=rhs, kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
+            keys=rhs, kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}},
             index_out_perturbations=True)
         y = self.G.data.construct_lhs(keys=lhs, index_out_perturbations=True)
 
@@ -5723,12 +5723,12 @@ This is only used for either the 'mouse' or 'human' settings</dd>
         self.value = 1/ss
     elif value_option == &#39;linear-regression&#39;:
         
-        rhs = [REPRNAMES.SELF_INTERACTION_VALUE]
-        lhs = [REPRNAMES.GROWTH_VALUE]
+        rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+        lhs = [STRNAMES.GROWTH_VALUE]
         X = self.G.data.construct_rhs(keys=rhs,
             index_out_perturbations=True)
         y = self.G.data.construct_lhs(keys=lhs, index_out_perturbations=True,
-            kwargs_dict={REPRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}})
+            kwargs_dict={STRNAMES.GROWTH_VALUE:{&#39;with_perturbations&#39;:False}})
 
         prec = X.T @ X
         cov = pinv(prec, self)

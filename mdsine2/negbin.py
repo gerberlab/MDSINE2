@@ -20,7 +20,7 @@ import seaborn as sns
 from . import visualization
 
 from . import pylab as pl
-from .names import REPRNAMES, STRNAMES
+from .names import STRNAMES
 from . import config
 
 @numba.jit(nopython=True, fastmath=True, cache=True)
@@ -303,11 +303,11 @@ class NegBinDispersionParam(pl.variables.Uniform):
     def data_likelihood(self):
         '''Calculate the current log likelihood
         '''
-        a0 = self.G[REPRNAMES.NEGBIN_A0].value
-        a1 = self.G[REPRNAMES.NEGBIN_A1].value
-        latents = [v.value for v in self.G[REPRNAMES.FILTERING].value]
-        datas = [v.data for v in self.G[REPRNAMES.FILTERING].value]
-        read_depths = [v.read_depths for v in self.G[REPRNAMES.FILTERING].value]
+        a0 = self.G[STRNAMES.NEGBIN_A0].value
+        a1 = self.G[STRNAMES.NEGBIN_A1].value
+        latents = [v.value for v in self.G[STRNAMES.FILTERING].value]
+        datas = [v.data for v in self.G[STRNAMES.FILTERING].value]
+        read_depths = [v.read_depths for v in self.G[STRNAMES.FILTERING].value]
         
         cumm = 0
         for ridx in range(len(latents)):
@@ -577,8 +577,8 @@ class FilteringMP(pl.graph.Node):
 
     def update(self):
         start_time = time.time()
-        a0 = self.G[REPRNAMES.NEGBIN_A0].value
-        a1 = self.G[REPRNAMES.NEGBIN_A1].value
+        a0 = self.G[STRNAMES.NEGBIN_A0].value
+        a1 = self.G[STRNAMES.NEGBIN_A1].value
 
         kwargs={'a0': a0, 'a1':a1}
         str_acc = [None]*self.G.data.n_replicates
@@ -993,7 +993,7 @@ def build_graph(params, graph_name, subjset):
         if params.LEARN[name]:
             inference_order.append(name)
     mcmc.set_inference_order(inference_order)
-    REPRNAMES.set(G=GRAPH)
+    STRNAMES.set(G=GRAPH)
 
     # Initialize the parameters
     # -------------------------

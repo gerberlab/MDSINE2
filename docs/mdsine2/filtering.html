@@ -41,7 +41,7 @@ import matplotlib.pyplot as plt
 from .util import negbin_loglikelihood_MH_condensed, \
     negbin_loglikelihood, build_prior_covariance, build_prior_mean, \
     prod_gaussians, negbin_loglikelihood_MH_condensed_not_fast, Loess
-from .names import STRNAMES, REPRNAMES
+from .names import STRNAMES, STRNAMES
 
 from . import pylab as pl
 
@@ -125,7 +125,7 @@ class TrajectorySet(pl.graph.Node):
     def add_trace(self):
         for ridx in range(len(self.value)):
             # Set the zero inflation values to nans
-            self.value[ridx].value[~self.G[REPRNAMES.ZERO_INFLATION].value[ridx]] = np.nan
+            self.value[ridx].value[~self.G[STRNAMES.ZERO_INFLATION].value[ridx]] = np.nan
             self.value[ridx].add_trace()
 
     def add_init_value(self):
@@ -486,7 +486,7 @@ class FilteringLogMP(pl.graph.Node):
                 reads=reads,
                 there_are_intermediate_timepoints=True,
                 there_are_perturbations=self._there_are_perturbations,
-                pv_global=self.G[REPRNAMES.PROCESSVAR].global_variance,
+                pv_global=self.G[STRNAMES.PROCESSVAR].global_variance,
                 x_prior_mean=np.log(1e7),
                 x_prior_std=1e10,
                 tune=tune[1],
@@ -606,10 +606,10 @@ class FilteringLogMP(pl.graph.Node):
             return
         start_time = time.time()
 
-        growth = self.G[REPRNAMES.GROWTH_VALUE].value.ravel()
-        self_interactions = self.G[REPRNAMES.SELF_INTERACTION_VALUE].value.ravel()
-        pv = self.G[REPRNAMES.PROCESSVAR].value
-        interactions = self.G[REPRNAMES.INTERACTIONS_OBJ].get_datalevel_value_matrix(
+        growth = self.G[STRNAMES.GROWTH_VALUE].value.ravel()
+        self_interactions = self.G[STRNAMES.SELF_INTERACTION_VALUE].value.ravel()
+        pv = self.G[STRNAMES.PROCESSVAR].value
+        interactions = self.G[STRNAMES.INTERACTIONS_OBJ].get_datalevel_value_matrix(
             set_neg_indicators_to_nan=False)
         perts = None
         if self._there_are_perturbations:
@@ -618,9 +618,9 @@ class FilteringLogMP(pl.graph.Node):
                 perts.append(perturbation.item_array().reshape(-1,1))
             perts = np.hstack(perts)
 
-        # zero_inflation = [self.G[REPRNAMES.ZERO_INFLATION].value[ridx] for ridx in range(self.G.data.n_replicates)]
+        # zero_inflation = [self.G[STRNAMES.ZERO_INFLATION].value[ridx] for ridx in range(self.G.data.n_replicates)]
         qpcr_vars = []
-        for aaa in self.G[REPRNAMES.QPCR_VARIANCES].value:
+        for aaa in self.G[STRNAMES.QPCR_VARIANCES].value:
             qpcr_vars.append(aaa.value)
         
         
@@ -1864,7 +1864,7 @@ Send each replicate to a processor each</dd>
                 reads=reads,
                 there_are_intermediate_timepoints=True,
                 there_are_perturbations=self._there_are_perturbations,
-                pv_global=self.G[REPRNAMES.PROCESSVAR].global_variance,
+                pv_global=self.G[STRNAMES.PROCESSVAR].global_variance,
                 x_prior_mean=np.log(1e7),
                 x_prior_std=1e10,
                 tune=tune[1],
@@ -1984,10 +1984,10 @@ Send each replicate to a processor each</dd>
             return
         start_time = time.time()
 
-        growth = self.G[REPRNAMES.GROWTH_VALUE].value.ravel()
-        self_interactions = self.G[REPRNAMES.SELF_INTERACTION_VALUE].value.ravel()
-        pv = self.G[REPRNAMES.PROCESSVAR].value
-        interactions = self.G[REPRNAMES.INTERACTIONS_OBJ].get_datalevel_value_matrix(
+        growth = self.G[STRNAMES.GROWTH_VALUE].value.ravel()
+        self_interactions = self.G[STRNAMES.SELF_INTERACTION_VALUE].value.ravel()
+        pv = self.G[STRNAMES.PROCESSVAR].value
+        interactions = self.G[STRNAMES.INTERACTIONS_OBJ].get_datalevel_value_matrix(
             set_neg_indicators_to_nan=False)
         perts = None
         if self._there_are_perturbations:
@@ -1996,9 +1996,9 @@ Send each replicate to a processor each</dd>
                 perts.append(perturbation.item_array().reshape(-1,1))
             perts = np.hstack(perts)
 
-        # zero_inflation = [self.G[REPRNAMES.ZERO_INFLATION].value[ridx] for ridx in range(self.G.data.n_replicates)]
+        # zero_inflation = [self.G[STRNAMES.ZERO_INFLATION].value[ridx] for ridx in range(self.G.data.n_replicates)]
         qpcr_vars = []
-        for aaa in self.G[REPRNAMES.QPCR_VARIANCES].value:
+        for aaa in self.G[STRNAMES.QPCR_VARIANCES].value:
             qpcr_vars.append(aaa.value)
         
         
@@ -2469,7 +2469,7 @@ proposal</dd>
             reads=reads,
             there_are_intermediate_timepoints=True,
             there_are_perturbations=self._there_are_perturbations,
-            pv_global=self.G[REPRNAMES.PROCESSVAR].global_variance,
+            pv_global=self.G[STRNAMES.PROCESSVAR].global_variance,
             x_prior_mean=np.log(1e7),
             x_prior_std=1e10,
             tune=tune[1],
@@ -2562,10 +2562,10 @@ proposal</dd>
         return
     start_time = time.time()
 
-    growth = self.G[REPRNAMES.GROWTH_VALUE].value.ravel()
-    self_interactions = self.G[REPRNAMES.SELF_INTERACTION_VALUE].value.ravel()
-    pv = self.G[REPRNAMES.PROCESSVAR].value
-    interactions = self.G[REPRNAMES.INTERACTIONS_OBJ].get_datalevel_value_matrix(
+    growth = self.G[STRNAMES.GROWTH_VALUE].value.ravel()
+    self_interactions = self.G[STRNAMES.SELF_INTERACTION_VALUE].value.ravel()
+    pv = self.G[STRNAMES.PROCESSVAR].value
+    interactions = self.G[STRNAMES.INTERACTIONS_OBJ].get_datalevel_value_matrix(
         set_neg_indicators_to_nan=False)
     perts = None
     if self._there_are_perturbations:
@@ -2574,9 +2574,9 @@ proposal</dd>
             perts.append(perturbation.item_array().reshape(-1,1))
         perts = np.hstack(perts)
 
-    # zero_inflation = [self.G[REPRNAMES.ZERO_INFLATION].value[ridx] for ridx in range(self.G.data.n_replicates)]
+    # zero_inflation = [self.G[STRNAMES.ZERO_INFLATION].value[ridx] for ridx in range(self.G.data.n_replicates)]
     qpcr_vars = []
-    for aaa in self.G[REPRNAMES.QPCR_VARIANCES].value:
+    for aaa in self.G[STRNAMES.QPCR_VARIANCES].value:
         qpcr_vars.append(aaa.value)
     
     
@@ -4373,7 +4373,7 @@ time order</dd>
     def add_trace(self):
         for ridx in range(len(self.value)):
             # Set the zero inflation values to nans
-            self.value[ridx].value[~self.G[REPRNAMES.ZERO_INFLATION].value[ridx]] = np.nan
+            self.value[ridx].value[~self.G[STRNAMES.ZERO_INFLATION].value[ridx]] = np.nan
             self.value[ridx].add_trace()
 
     def add_init_value(self):
@@ -4429,7 +4429,7 @@ def sample_iter(self):
 <pre><code class="python">def add_trace(self):
     for ridx in range(len(self.value)):
         # Set the zero inflation values to nans
-        self.value[ridx].value[~self.G[REPRNAMES.ZERO_INFLATION].value[ridx]] = np.nan
+        self.value[ridx].value[~self.G[STRNAMES.ZERO_INFLATION].value[ridx]] = np.nan
         self.value[ridx].add_trace()</code></pre>
 </details>
 </dd>
