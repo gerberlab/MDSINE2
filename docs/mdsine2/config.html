@@ -180,7 +180,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         self.INTERMEDIATE_VALIDATION_KWARGS = None
 
         self.LEARN = {
-            STRNAMES.REGRESSCOEFF: True,
+            STRNAMES.GLV_PARAMETERS: True,
             STRNAMES.PROCESSVAR: True,
             STRNAMES.PRIOR_VAR_GROWTH: False,
             STRNAMES.PRIOR_VAR_SELF_INTERACTIONS: False,
@@ -195,7 +195,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.CLUSTERING: True,
             STRNAMES.CONCENTRATION: True, 
             STRNAMES.CLUSTER_INTERACTION_INDICATOR: True,
-            STRNAMES.INDICATOR_PROB: True,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB: True,
             STRNAMES.PERT_INDICATOR: True,
             STRNAMES.PERT_INDICATOR_PROB: True,
             STRNAMES.QPCR_SCALES: False,
@@ -204,10 +204,10 @@ class MDSINE2ModelConfig(_BaseModelConfig):
 
         self.INFERENCE_ORDER = [
             STRNAMES.CLUSTER_INTERACTION_INDICATOR,
-            STRNAMES.INDICATOR_PROB,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB,
             STRNAMES.PERT_INDICATOR,
             STRNAMES.PERT_INDICATOR_PROB,
-            STRNAMES.REGRESSCOEFF,
+            STRNAMES.GLV_PARAMETERS,
             STRNAMES.PRIOR_MEAN_INTERACTIONS,
             STRNAMES.PRIOR_MEAN_PERT,
             STRNAMES.PRIOR_MEAN_GROWTH,
@@ -329,7 +329,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.CLUSTER_INTERACTION_INDICATOR: {
                 &#39;delay&#39;:0,
                 &#39;run_every_n_iterations&#39;: 1},
-            STRNAMES.INDICATOR_PROB: {
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB: {
                 &#39;value_option&#39;: &#39;auto&#39;,
                 &#39;hyperparam_option&#39;: &#39;strong-sparse&#39;,
                 &#39;N&#39;: 25,
@@ -361,7 +361,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 &#39;delay&#39;: 2,
                 &#39;n_clusters&#39;: 30,
                 &#39;run_every_n_iterations&#39;: 4},
-            STRNAMES.REGRESSCOEFF: {
+            STRNAMES.GLV_PARAMETERS: {
                 &#39;update_jointly_pert_inter&#39;: True,
                 &#39;update_jointly_growth_si&#39;: False,
                 &#39;tune&#39;: 50,
@@ -392,13 +392,13 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.PRIOR_VAR_INTERACTIONS,
             STRNAMES.CLUSTER_INTERACTION_VALUE,
             STRNAMES.CLUSTER_INTERACTION_INDICATOR,
-            STRNAMES.INDICATOR_PROB,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB,
             STRNAMES.PRIOR_MEAN_PERT,
             STRNAMES.PRIOR_VAR_PERT,
             STRNAMES.PERT_INDICATOR,
                         STRNAMES.PERT_VALUE,
             STRNAMES.PERT_INDICATOR_PROB,
-            STRNAMES.REGRESSCOEFF,
+            STRNAMES.GLV_PARAMETERS,
             STRNAMES.QPCR_SCALES,
             STRNAMES.QPCR_DOFS,
             STRNAMES.QPCR_VARIANCES]
@@ -901,7 +901,7 @@ steam and a file</dd>
         self.INTERMEDIATE_VALIDATION_KWARGS = None
 
         self.LEARN = {
-            STRNAMES.REGRESSCOEFF: True,
+            STRNAMES.GLV_PARAMETERS: True,
             STRNAMES.PROCESSVAR: True,
             STRNAMES.PRIOR_VAR_GROWTH: False,
             STRNAMES.PRIOR_VAR_SELF_INTERACTIONS: False,
@@ -916,7 +916,7 @@ steam and a file</dd>
             STRNAMES.CLUSTERING: True,
             STRNAMES.CONCENTRATION: True, 
             STRNAMES.CLUSTER_INTERACTION_INDICATOR: True,
-            STRNAMES.INDICATOR_PROB: True,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB: True,
             STRNAMES.PERT_INDICATOR: True,
             STRNAMES.PERT_INDICATOR_PROB: True,
             STRNAMES.QPCR_SCALES: False,
@@ -925,10 +925,10 @@ steam and a file</dd>
 
         self.INFERENCE_ORDER = [
             STRNAMES.CLUSTER_INTERACTION_INDICATOR,
-            STRNAMES.INDICATOR_PROB,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB,
             STRNAMES.PERT_INDICATOR,
             STRNAMES.PERT_INDICATOR_PROB,
-            STRNAMES.REGRESSCOEFF,
+            STRNAMES.GLV_PARAMETERS,
             STRNAMES.PRIOR_MEAN_INTERACTIONS,
             STRNAMES.PRIOR_MEAN_PERT,
             STRNAMES.PRIOR_MEAN_GROWTH,
@@ -1050,7 +1050,7 @@ steam and a file</dd>
             STRNAMES.CLUSTER_INTERACTION_INDICATOR: {
                 &#39;delay&#39;:0,
                 &#39;run_every_n_iterations&#39;: 1},
-            STRNAMES.INDICATOR_PROB: {
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB: {
                 &#39;value_option&#39;: &#39;auto&#39;,
                 &#39;hyperparam_option&#39;: &#39;strong-sparse&#39;,
                 &#39;N&#39;: 25,
@@ -1082,7 +1082,7 @@ steam and a file</dd>
                 &#39;delay&#39;: 2,
                 &#39;n_clusters&#39;: 30,
                 &#39;run_every_n_iterations&#39;: 4},
-            STRNAMES.REGRESSCOEFF: {
+            STRNAMES.GLV_PARAMETERS: {
                 &#39;update_jointly_pert_inter&#39;: True,
                 &#39;update_jointly_growth_si&#39;: False,
                 &#39;tune&#39;: 50,
@@ -1113,13 +1113,13 @@ steam and a file</dd>
             STRNAMES.PRIOR_VAR_INTERACTIONS,
             STRNAMES.CLUSTER_INTERACTION_VALUE,
             STRNAMES.CLUSTER_INTERACTION_INDICATOR,
-            STRNAMES.INDICATOR_PROB,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB,
             STRNAMES.PRIOR_MEAN_PERT,
             STRNAMES.PRIOR_VAR_PERT,
             STRNAMES.PERT_INDICATOR,
                         STRNAMES.PERT_VALUE,
             STRNAMES.PERT_INDICATOR_PROB,
-            STRNAMES.REGRESSCOEFF,
+            STRNAMES.GLV_PARAMETERS,
             STRNAMES.QPCR_SCALES,
             STRNAMES.QPCR_DOFS,
             STRNAMES.QPCR_VARIANCES]

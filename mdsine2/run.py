@@ -64,7 +64,6 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     # Continue inference if necessary
     # -------------------------------
     if continue_inference is not None:
-        STRNAMES.set(G=GRAPH)
         logging.info('Continuing inference at Gibb step {}'.format(continue_inference))
         mcmc = pl.inference.BaseMCMC.load(params.MCMC_FILENAME)
         mcmc.continue_inference(gibb_step_start=continue_inference)
@@ -267,9 +266,6 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     qpcr_dofs.set_shape()
     qpcr_scales.set_shape()
 
-    # Set the IDs of the variables in the graph
-    STRNAMES.set(G=GRAPH)
-
     # Set up inference and the inference order.
     # -----------------------------------------
     mcmc = pl.BaseMCMC(burnin=params.BURNIN, n_samples=params.N_SAMPLES, graph=GRAPH)
@@ -365,9 +361,9 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.CONCENTRATION].value))
 
     logging.info('Indicator probability')
-    logging.info('\tprior.a: {}'.format(GRAPH[STRNAMES.INDICATOR_PROB].prior.a.value))
-    logging.info('\tprior.b: {}'.format(GRAPH[STRNAMES.INDICATOR_PROB].prior.b.value))
-    logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.INDICATOR_PROB].value))
+    logging.info('\tprior.a: {}'.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value))
+    logging.info('\tprior.b: {}'.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.b.value))
+    logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value))
 
     if subjset.perturbations is not None:
         logging.info('Perturbation values:')

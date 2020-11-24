@@ -35,7 +35,7 @@ class StrNamesClass(_BaseNameClass):
         self.NEGBIN_A0 = 'Negative binomial dispersion a0'
         self.NEGBIN_A1 = 'Negative binomial dispersion a1'
 
-        self.REGRESSCOEFF = 'Logistic growth parameters (growth, self-interactions, interactions/perturbations)'
+        self.GLV_PARAMETERS = 'Logistic growth parameters (growth, self-interactions, interactions/perturbations)'
 
         self.GROWTH_VALUE = 'Growth parameter'
         self.PRIOR_VAR_GROWTH = 'Variance parameter for the truncated normal prior of the growth parameter'
@@ -48,7 +48,7 @@ class StrNamesClass(_BaseNameClass):
         self.INTERACTIONS_OBJ = 'Interactions object'
         self.CLUSTER_INTERACTION_VALUE = 'Cluster interaction value parameter'
         self.CLUSTER_INTERACTION_INDICATOR = 'Cluster interaction indicator parameter'
-        self.INDICATOR_PROB = 'Cluster interaction probability'
+        self.CLUSTER_INTERACTION_INDICATOR_PROB = 'Cluster interaction probability'
         self.PRIOR_VAR_INTERACTIONS = 'Variance parameter for the normal prior of the interaction parameter'
         self.PRIOR_MEAN_INTERACTIONS = 'Mean parameter for the normal prior of the interaction parameter'
 
@@ -77,7 +77,7 @@ class LatexNamesClass(_BaseNameClass):
         self.CLUSTER_INTERACTION_VALUE = '$b_{(c_i, c_j)}$'
 
         self.CLUSTER_INTERACTION_INDICATOR = '$z^{(b)}_{(c_i, c_j)}$'
-        self.INDICATOR_PROB = '$\\pi_z$'
+        self.CLUSTER_INTERACTION_INDICATOR_PROB = '$\\pi_z$'
         self.CLUSTERING = '$c_i$'
         self.LATENT_TRAJECTORY = '$x$'
         self.CONCENTRATION = '$\\alpha$'

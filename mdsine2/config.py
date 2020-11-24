@@ -115,7 +115,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         self.INTERMEDIATE_VALIDATION_KWARGS = None
 
         self.LEARN = {
-            STRNAMES.REGRESSCOEFF: True,
+            STRNAMES.GLV_PARAMETERS: True,
             STRNAMES.PROCESSVAR: True,
             STRNAMES.PRIOR_VAR_GROWTH: False,
             STRNAMES.PRIOR_VAR_SELF_INTERACTIONS: False,
@@ -130,7 +130,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.CLUSTERING: True,
             STRNAMES.CONCENTRATION: True, 
             STRNAMES.CLUSTER_INTERACTION_INDICATOR: True,
-            STRNAMES.INDICATOR_PROB: True,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB: True,
             STRNAMES.PERT_INDICATOR: True,
             STRNAMES.PERT_INDICATOR_PROB: True,
             STRNAMES.QPCR_SCALES: False,
@@ -139,10 +139,10 @@ class MDSINE2ModelConfig(_BaseModelConfig):
 
         self.INFERENCE_ORDER = [
             STRNAMES.CLUSTER_INTERACTION_INDICATOR,
-            STRNAMES.INDICATOR_PROB,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB,
             STRNAMES.PERT_INDICATOR,
             STRNAMES.PERT_INDICATOR_PROB,
-            STRNAMES.REGRESSCOEFF,
+            STRNAMES.GLV_PARAMETERS,
             STRNAMES.PRIOR_MEAN_INTERACTIONS,
             STRNAMES.PRIOR_MEAN_PERT,
             STRNAMES.PRIOR_MEAN_GROWTH,
@@ -264,7 +264,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.CLUSTER_INTERACTION_INDICATOR: {
                 'delay':0,
                 'run_every_n_iterations': 1},
-            STRNAMES.INDICATOR_PROB: {
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB: {
                 'value_option': 'auto',
                 'hyperparam_option': 'strong-sparse',
                 'delay': 0},
@@ -294,7 +294,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'delay': 2,
                 'n_clusters': 30,
                 'run_every_n_iterations': 4},
-            STRNAMES.REGRESSCOEFF: {
+            STRNAMES.GLV_PARAMETERS: {
                 'update_jointly_pert_inter': True,
                 'update_jointly_growth_si': False,
                 'tune': 50,
@@ -325,13 +325,13 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.PRIOR_VAR_INTERACTIONS,
             STRNAMES.CLUSTER_INTERACTION_VALUE,
             STRNAMES.CLUSTER_INTERACTION_INDICATOR,
-            STRNAMES.INDICATOR_PROB,
+            STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB,
             STRNAMES.PRIOR_MEAN_PERT,
             STRNAMES.PRIOR_VAR_PERT,
             STRNAMES.PERT_INDICATOR,
 			STRNAMES.PERT_VALUE,
             STRNAMES.PERT_INDICATOR_PROB,
-            STRNAMES.REGRESSCOEFF,
+            STRNAMES.GLV_PARAMETERS,
             STRNAMES.QPCR_SCALES,
             STRNAMES.QPCR_DOFS,
             STRNAMES.QPCR_VARIANCES]
@@ -418,7 +418,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             burnin=self.BURNIN, model_path=self.MODEL_PATH,
             a0=self.NEGBIN_A0, a1=self.NEGBIN_A1,
             params_learned=params_learned,
-            clus_ind_prior=self.INITIALIZATION_KWARGS[STRNAMES.INDICATOR_PROB]['hyperparam_option'],
+            clus_ind_prior=self.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB]['hyperparam_option'],
             pert_ind_prior=self.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['hyperparam_option'],
             filt=self.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['x_value_option'],
             clus_init=clus_init))

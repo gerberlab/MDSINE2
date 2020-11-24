@@ -1595,7 +1595,7 @@ class RegressCoeff(pl.variables.MVN):
                     &#39;class&#39;.format(type(pert_mag)))
 
 
-        kwargs[&#39;name&#39;] = STRNAMES.REGRESSCOEFF
+        kwargs[&#39;name&#39;] = STRNAMES.GLV_PARAMETERS
         pl.variables.MVN.__init__(self, mean=None, cov=None, dtype=float, **kwargs)
 
         self.n_asvs = self.G.data.n_asvs
@@ -4608,7 +4608,7 @@ Set to None if there are no perturbations</dd>
                     &#39;class&#39;.format(type(pert_mag)))
 
 
-        kwargs[&#39;name&#39;] = STRNAMES.REGRESSCOEFF
+        kwargs[&#39;name&#39;] = STRNAMES.GLV_PARAMETERS
         pl.variables.MVN.__init__(self, mean=None, cov=None, dtype=float, **kwargs)
 
         self.n_asvs = self.G.data.n_asvs

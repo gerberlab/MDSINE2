@@ -2355,7 +2355,8 @@ class TrajectorySet(pl.graph.Node):
     G : pylab.graph.Graph
         Graph object to attach it to
     '''
-    def __init__(self, name, G, **kwargs):
+    def __init__(self, G, **kwargs):
+        name = STRNAMES.LATENT_TRAJECTORY
         pl.graph.Node.__init__(self, name=name, G=G)
         self.value = []
         n_asvs = self.G.data.n_asvs
@@ -4163,7 +4164,7 @@ class ClusterInteractionValue(pl.variables.MVN):
         '''
         self.obj.set_signal_when_clusters_change(True)
         self.G[STRNAMES.INTERACTIONS_OBJ].value_initializer = self.prior.sample
-        self.G[STRNAMES.INTERACTIONS_OBJ].indicator_initializer = self.G[STRNAMES.INDICATOR_PROB].prior.sample
+        self.G[STRNAMES.INTERACTIONS_OBJ].indicator_initializer = self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.sample
 
         self._there_are_perturbations = self.G.perturbations is not None
 
@@ -4321,7 +4322,7 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
         **kwargs
             - Other options like graph, value
         '''
-        kwargs['name'] = STRNAMES.INDICATOR_PROB
+        kwargs['name'] = STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB
         pl.variables.Beta.__init__(self, a=prior.a.value, b=prior.b.value,
             dtype=float, **kwargs)
         self.add_prior(prior)
@@ -4602,8 +4603,8 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         idx : int
             This is the index of the interaction we are updating
         '''
-        prior_ll_on = np.log(self.G[STRNAMES.INDICATOR_PROB].value)
-        prior_ll_off = np.log(1 - self.G[STRNAMES.INDICATOR_PROB].value)
+        prior_ll_on = np.log(self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value)
+        prior_ll_off = np.log(1 - self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value)
 
         d_on = self.calculate_marginal_loglikelihood(idx=idx, val=True)
         d_off = self.calculate_marginal_loglikelihood(idx=idx, val=False)
@@ -6694,7 +6695,7 @@ class RegressCoeff(pl.variables.MVN):
                     'class'.format(type(pert_mag)))
 
 
-        kwargs['name'] = STRNAMES.REGRESSCOEFF
+        kwargs['name'] = STRNAMES.GLV_PARAMETERS
         pl.variables.MVN.__init__(self, mean=None, cov=None, dtype=float, **kwargs)
 
         self.n_asvs = self.G.data.n_asvs

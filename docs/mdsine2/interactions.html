@@ -346,7 +346,7 @@ class ClusterInteractionValue(pl.variables.MVN):
         &#39;&#39;&#39;
         self.obj.set_signal_when_clusters_change(True)
         self.G[STRNAMES.INTERACTIONS_OBJ].value_initializer = self.prior.sample
-        self.G[STRNAMES.INTERACTIONS_OBJ].indicator_initializer = self.G[STRNAMES.INDICATOR_PROB].prior.sample
+        self.G[STRNAMES.INTERACTIONS_OBJ].indicator_initializer = self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.sample
 
         self._there_are_perturbations = self.G.perturbations is not None
 
@@ -459,7 +459,7 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
         **kwargs
             - Other options like graph, value
         &#39;&#39;&#39;
-        kwargs[&#39;name&#39;] = STRNAMES.INDICATOR_PROB
+        kwargs[&#39;name&#39;] = STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB
         pl.variables.Beta.__init__(self, a=prior.a.value, b=prior.b.value,
             dtype=float, **kwargs)
         self.add_prior(prior)
@@ -737,8 +737,8 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         idx : int
             This is the index of the interaction we are updating
         &#39;&#39;&#39;
-        prior_ll_on = np.log(self.G[STRNAMES.INDICATOR_PROB].value)
-        prior_ll_off = np.log(1 - self.G[STRNAMES.INDICATOR_PROB].value)
+        prior_ll_on = np.log(self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value)
+        prior_ll_off = np.log(1 - self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value)
 
         d_on = self.calculate_marginal_loglikelihood(idx=idx, val=True)
         d_off = self.calculate_marginal_loglikelihood(idx=idx, val=False)
@@ -1274,7 +1274,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         **kwargs
             - Other options like graph, value
         &#39;&#39;&#39;
-        kwargs[&#39;name&#39;] = STRNAMES.INDICATOR_PROB
+        kwargs[&#39;name&#39;] = STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB
         pl.variables.Beta.__init__(self, a=prior.a.value, b=prior.b.value,
             dtype=float, **kwargs)
         self.add_prior(prior)
@@ -1819,8 +1819,8 @@ Whether you update using the relative marginal likelihood or not.</p></div>
         idx : int
             This is the index of the interaction we are updating
         &#39;&#39;&#39;
-        prior_ll_on = np.log(self.G[STRNAMES.INDICATOR_PROB].value)
-        prior_ll_off = np.log(1 - self.G[STRNAMES.INDICATOR_PROB].value)
+        prior_ll_on = np.log(self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value)
+        prior_ll_off = np.log(1 - self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value)
 
         d_on = self.calculate_marginal_loglikelihood(idx=idx, val=True)
         d_off = self.calculate_marginal_loglikelihood(idx=idx, val=False)
@@ -3033,8 +3033,8 @@ interaction at index <code>idx</code>.</p>
     idx : int
         This is the index of the interaction we are updating
     &#39;&#39;&#39;
-    prior_ll_on = np.log(self.G[STRNAMES.INDICATOR_PROB].value)
-    prior_ll_off = np.log(1 - self.G[STRNAMES.INDICATOR_PROB].value)
+    prior_ll_on = np.log(self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value)
+    prior_ll_off = np.log(1 - self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value)
 
     d_on = self.calculate_marginal_loglikelihood(idx=idx, val=True)
     d_off = self.calculate_marginal_loglikelihood(idx=idx, val=False)
@@ -3164,7 +3164,7 @@ this class</p></div>
         &#39;&#39;&#39;
         self.obj.set_signal_when_clusters_change(True)
         self.G[STRNAMES.INTERACTIONS_OBJ].value_initializer = self.prior.sample
-        self.G[STRNAMES.INTERACTIONS_OBJ].indicator_initializer = self.G[STRNAMES.INDICATOR_PROB].prior.sample
+        self.G[STRNAMES.INTERACTIONS_OBJ].indicator_initializer = self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.sample
 
         self._there_are_perturbations = self.G.perturbations is not None
 
@@ -3340,7 +3340,7 @@ Set all of the indicators to on and all the values to 0</dd>
     &#39;&#39;&#39;
     self.obj.set_signal_when_clusters_change(True)
     self.G[STRNAMES.INTERACTIONS_OBJ].value_initializer = self.prior.sample
-    self.G[STRNAMES.INTERACTIONS_OBJ].indicator_initializer = self.G[STRNAMES.INDICATOR_PROB].prior.sample
+    self.G[STRNAMES.INTERACTIONS_OBJ].indicator_initializer = self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.sample
 
     self._there_are_perturbations = self.G.perturbations is not None
 

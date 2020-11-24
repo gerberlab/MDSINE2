@@ -71,8 +71,8 @@ def generate_interation_bayes_factors_posthoc(mcmc, section='posterior'):
     # print()
     # print(cnts_0)
 
-    a = mcmc.graph[STRNAMES.INDICATOR_PROB].prior.a.value
-    b = mcmc.graph[STRNAMES.INDICATOR_PROB].prior.b.value
+    a = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value
+    b = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.b.value
 
     return (cnts_1 * b) / (cnts_0 * a)
 

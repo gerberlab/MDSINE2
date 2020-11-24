@@ -55,7 +55,7 @@ class STRNAMESClass(_BaseNameClass):
     `set` with the given graph in order for them to be valid.
     &#39;&#39;&#39;
     def __init__(self):
-        self.REGRESSCOEFF = None
+        self.GLV_PARAMETERS = None
         self.GROWTH_VALUE = None
         self.SELF_INTERACTION_VALUE = None
         self.CLUSTER_INTERACTION_VALUE = None
@@ -64,7 +64,7 @@ class STRNAMESClass(_BaseNameClass):
         self.INTERACTIONS_OBJ = None
 
         self.CLUSTER_INTERACTION_INDICATOR = None
-        self.INDICATOR_PROB = None
+        self.CLUSTER_INTERACTION_INDICATOR_PROB = None
 
         self.CLUSTERING = None
         self.CONCENTRATION = None
@@ -115,7 +115,7 @@ class StrNamesClass(_BaseNameClass):
     &#39;&#39;&#39;String representation of each of the variables
     &#39;&#39;&#39;
     def __init__(self):
-        self.REGRESSCOEFF = &#39;beta&#39;
+        self.GLV_PARAMETERS = &#39;beta&#39;
         self.GROWTH_VALUE = &#39;growth&#39;
         self.SELF_INTERACTION_VALUE = &#39;self_interactions&#39;
         self.CLUSTER_INTERACTION_VALUE = &#39;cluster_interaction_values&#39;
@@ -124,7 +124,7 @@ class StrNamesClass(_BaseNameClass):
         self.INTERACTIONS_OBJ = &#39;interactions_object&#39;
 
         self.CLUSTER_INTERACTION_INDICATOR = &#39;cluster_interaction_indicators&#39;
-        self.INDICATOR_PROB = &#39;pi_z&#39;
+        self.CLUSTER_INTERACTION_INDICATOR_PROB = &#39;pi_z&#39;
 
         self.CLUSTERING = &#39;ClusterAssignments&#39;
         self.CONCENTRATION = &#39;clustering concentration&#39;
@@ -172,7 +172,7 @@ class LatexNamesClass(_BaseNameClass):
         self.CLUSTER_INTERACTION_VALUE = &#39;$b_{(c_i, c_j)}$&#39;
 
         self.CLUSTER_INTERACTION_INDICATOR = &#39;$z^{(b)}_{(c_i, c_j)}$&#39;
-        self.INDICATOR_PROB = &#39;$\\pi_z$&#39;
+        self.CLUSTER_INTERACTION_INDICATOR_PROB = &#39;$\\pi_z$&#39;
         self.CLUSTERING = &#39;$c_i$&#39;
         self.AUX_TRAJECTORY = &#39;$q$&#39;
         self.LATENT_TRAJECTORY = &#39;$x$&#39;
@@ -242,7 +242,7 @@ string parser will throw an error</p></div>
         self.CLUSTER_INTERACTION_VALUE = &#39;$b_{(c_i, c_j)}$&#39;
 
         self.CLUSTER_INTERACTION_INDICATOR = &#39;$z^{(b)}_{(c_i, c_j)}$&#39;
-        self.INDICATOR_PROB = &#39;$\\pi_z$&#39;
+        self.CLUSTER_INTERACTION_INDICATOR_PROB = &#39;$\\pi_z$&#39;
         self.CLUSTERING = &#39;$c_i$&#39;
         self.AUX_TRAJECTORY = &#39;$q$&#39;
         self.LATENT_TRAJECTORY = &#39;$x$&#39;
@@ -293,7 +293,7 @@ string parser will throw an error</p></div>
     `set` with the given graph in order for them to be valid.
     &#39;&#39;&#39;
     def __init__(self):
-        self.REGRESSCOEFF = None
+        self.GLV_PARAMETERS = None
         self.GROWTH_VALUE = None
         self.SELF_INTERACTION_VALUE = None
         self.CLUSTER_INTERACTION_VALUE = None
@@ -302,7 +302,7 @@ string parser will throw an error</p></div>
         self.INTERACTIONS_OBJ = None
 
         self.CLUSTER_INTERACTION_INDICATOR = None
-        self.INDICATOR_PROB = None
+        self.CLUSTER_INTERACTION_INDICATOR_PROB = None
 
         self.CLUSTERING = None
         self.CONCENTRATION = None
@@ -393,7 +393,7 @@ If these names are not initialized in the namespace then we do not add them</p><
     &#39;&#39;&#39;String representation of each of the variables
     &#39;&#39;&#39;
     def __init__(self):
-        self.REGRESSCOEFF = &#39;beta&#39;
+        self.GLV_PARAMETERS = &#39;beta&#39;
         self.GROWTH_VALUE = &#39;growth&#39;
         self.SELF_INTERACTION_VALUE = &#39;self_interactions&#39;
         self.CLUSTER_INTERACTION_VALUE = &#39;cluster_interaction_values&#39;
@@ -402,7 +402,7 @@ If these names are not initialized in the namespace then we do not add them</p><
         self.INTERACTIONS_OBJ = &#39;interactions_object&#39;
 
         self.CLUSTER_INTERACTION_INDICATOR = &#39;cluster_interaction_indicators&#39;
-        self.INDICATOR_PROB = &#39;pi_z&#39;
+        self.CLUSTER_INTERACTION_INDICATOR_PROB = &#39;pi_z&#39;
 
         self.CLUSTERING = &#39;ClusterAssignments&#39;
         self.CONCENTRATION = &#39;clustering concentration&#39;

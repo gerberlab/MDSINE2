@@ -605,8 +605,8 @@ def generate_interation_bayes_factors_posthoc(mcmc, section=&#39;posterior&#39;)
     cnts_1 = np.sum(trace, axis=0)
     cnts_0 = np.sum(1-trace, axis=0)
 
-    a = mcmc.graph[STRNAMES.INDICATOR_PROB].prior.a.value
-    b = mcmc.graph[STRNAMES.INDICATOR_PROB].prior.a.value
+    a = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value
+    b = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value
 
     return (cnts_1 * b) / (cnts_0 * a)
 
@@ -1848,8 +1848,8 @@ bf[i,j] = (count_on[i,j] * b) / (count_off[i,j] * a)</p>
     cnts_1 = np.sum(trace, axis=0)
     cnts_0 = np.sum(1-trace, axis=0)
 
-    a = mcmc.graph[STRNAMES.INDICATOR_PROB].prior.a.value
-    b = mcmc.graph[STRNAMES.INDICATOR_PROB].prior.a.value
+    a = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value
+    b = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value
 
     return (cnts_1 * b) / (cnts_0 * a)</code></pre>
 </details>

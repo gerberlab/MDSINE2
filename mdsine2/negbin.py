@@ -993,7 +993,6 @@ def build_graph(params, graph_name, subjset):
         if params.LEARN[name]:
             inference_order.append(name)
     mcmc.set_inference_order(inference_order)
-    STRNAMES.set(G=GRAPH)
 
     # Initialize the parameters
     # -------------------------

@@ -381,9 +381,9 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     logging.info(&#39;\tvalue: {}&#39;.format(GRAPH[STRNAMES.CONCENTRATION].value))
 
     logging.info(&#39;Indicator probability&#39;)
-    logging.info(&#39;\tprior.a: {}&#39;.format(GRAPH[STRNAMES.INDICATOR_PROB].prior.a.value))
-    logging.info(&#39;\tprior.b: {}&#39;.format(GRAPH[STRNAMES.INDICATOR_PROB].prior.b.value))
-    logging.info(&#39;\tvalue: {}&#39;.format(GRAPH[STRNAMES.INDICATOR_PROB].value))
+    logging.info(&#39;\tprior.a: {}&#39;.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value))
+    logging.info(&#39;\tprior.b: {}&#39;.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.b.value))
+    logging.info(&#39;\tvalue: {}&#39;.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value))
 
     if subjset.perturbations is not None:
         logging.info(&#39;Perturbation values:&#39;)
@@ -1122,9 +1122,9 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
     logging.info(&#39;\tvalue: {}&#39;.format(GRAPH[STRNAMES.CONCENTRATION].value))
 
     logging.info(&#39;Indicator probability&#39;)
-    logging.info(&#39;\tprior.a: {}&#39;.format(GRAPH[STRNAMES.INDICATOR_PROB].prior.a.value))
-    logging.info(&#39;\tprior.b: {}&#39;.format(GRAPH[STRNAMES.INDICATOR_PROB].prior.b.value))
-    logging.info(&#39;\tvalue: {}&#39;.format(GRAPH[STRNAMES.INDICATOR_PROB].value))
+    logging.info(&#39;\tprior.a: {}&#39;.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value))
+    logging.info(&#39;\tprior.b: {}&#39;.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.b.value))
+    logging.info(&#39;\tvalue: {}&#39;.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value))
 
     if subjset.perturbations is not None:
         logging.info(&#39;Perturbation values:&#39;)
