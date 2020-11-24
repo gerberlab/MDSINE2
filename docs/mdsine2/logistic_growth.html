@@ -402,7 +402,7 @@ class PriorVarMH(pl.variables.SICS):
         f.write(&#39;\n\n###################################\n&#39;)
         f.write(self.name)
         f.write(&#39;\n###################################\n&#39;)
-        if not self.G.inference.is_being_traced(self):
+        if not self.G.inference.tracer.is_being_traced(self):
             f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
             return f
         summ = pl.summary(self, section=section)
@@ -848,7 +848,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         f.write(&#39;\n\n###################################\n&#39;)
         f.write(self.name)
         f.write(&#39;\n###################################\n&#39;)
-        if not self.G.inference.is_being_traced(self):
+        if not self.G.inference.tracer.is_being_traced(self):
             f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
             return f
         summ = pl.summary(self, section=section)
@@ -1096,7 +1096,7 @@ class Growth(pl.variables.TruncatedNormal):
         f.write(&#39;\n\n###################################\n&#39;)
         f.write(self.name)
         f.write(&#39;\n###################################\n&#39;)
-        if not self.G.inference.is_being_traced(self):
+        if not self.G.inference.tracer.is_being_traced(self):
             f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
             return f
 
@@ -1471,7 +1471,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         f.write(&#39;\n\n###################################\n&#39;)
         f.write(self.name)
         f.write(&#39;\n###################################\n&#39;)
-        if not self.G.inference.is_being_traced(self):
+        if not self.G.inference.tracer.is_being_traced(self):
             f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
             return f
 
@@ -2067,7 +2067,7 @@ class RegressCoeff(pl.variables.MVN):
         f.write(&#39;\n\n###################################\n&#39;)
         f.write(self.name)
         f.write(&#39;\n###################################\n&#39;)
-        if not self.G.inference.is_being_traced(self):
+        if not self.G.inference.tracer.is_being_traced(self):
             f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
             return f
 
@@ -2466,7 +2466,7 @@ learned values to the file <code>f</code>.</p>
     f.write(&#39;\n\n###################################\n&#39;)
     f.write(self.name)
     f.write(&#39;\n###################################\n&#39;)
-    if not self.G.inference.is_being_traced(self):
+    if not self.G.inference.tracer.is_being_traced(self):
         f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
         return f
 
@@ -3007,7 +3007,7 @@ the growths or the self-interactions</p>
         f.write(&#39;\n\n###################################\n&#39;)
         f.write(self.name)
         f.write(&#39;\n###################################\n&#39;)
-        if not self.G.inference.is_being_traced(self):
+        if not self.G.inference.tracer.is_being_traced(self):
             f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
             return f
         summ = pl.summary(self, section=section)
@@ -3549,7 +3549,7 @@ learned values to the file <code>f</code>.</p>
     f.write(&#39;\n\n###################################\n&#39;)
     f.write(self.name)
     f.write(&#39;\n###################################\n&#39;)
-    if not self.G.inference.is_being_traced(self):
+    if not self.G.inference.tracer.is_being_traced(self):
         f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
         return f
     summ = pl.summary(self, section=section)
@@ -3999,7 +3999,7 @@ self-interactions parameter</dd>
         f.write(&#39;\n\n###################################\n&#39;)
         f.write(self.name)
         f.write(&#39;\n###################################\n&#39;)
-        if not self.G.inference.is_being_traced(self):
+        if not self.G.inference.tracer.is_being_traced(self):
             f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
             return f
         summ = pl.summary(self, section=section)
@@ -4479,7 +4479,7 @@ learned values to the file <code>f</code>.</p>
     f.write(&#39;\n\n###################################\n&#39;)
     f.write(self.name)
     f.write(&#39;\n###################################\n&#39;)
-    if not self.G.inference.is_being_traced(self):
+    if not self.G.inference.tracer.is_being_traced(self):
         f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
         return f
     summ = pl.summary(self, section=section)
@@ -5341,7 +5341,7 @@ using truncated normal distributions for growth and self-interactions.</p>
         f.write(&#39;\n\n###################################\n&#39;)
         f.write(self.name)
         f.write(&#39;\n###################################\n&#39;)
-        if not self.G.inference.is_being_traced(self):
+        if not self.G.inference.tracer.is_being_traced(self):
             f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
             return f
 
@@ -5836,7 +5836,7 @@ learned values to the file <code>f</code>.</p>
     f.write(&#39;\n\n###################################\n&#39;)
     f.write(self.name)
     f.write(&#39;\n###################################\n&#39;)
-    if not self.G.inference.is_being_traced(self):
+    if not self.G.inference.tracer.is_being_traced(self):
         f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
         return f
 

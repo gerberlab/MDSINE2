@@ -5,6 +5,7 @@ import time
 import itertools
 import psutil
 import os
+import pandas as pd
 
 import numpy as np
 import numba
@@ -18,6 +19,7 @@ import random
 
 from .names import STRNAMES, REPRNAMES
 from . import pylab as pl
+from .util import generate_cluster_assignments_posthoc
 
 from . import visualization
 import matplotlib.pyplot as plt
@@ -352,7 +354,7 @@ def pinv(M, var):
         np.save(filename, M)
         raise
 
-def _scalar_visualize(obj, path, f, section='posterior'):
+def _scalar_visualize(obj, path, f, section='posterior', log_scale=True):
     '''Render the traces in the folder `basepath` and write the 
     learned values to the file `f`. This works for scalar variables
 
@@ -373,21 +375,21 @@ def _scalar_visualize(obj, path, f, section='posterior'):
     -------
     _io.TextIOWrapper
     '''
-    f.write('\n\n###################################\n{}'.format(obj.name))
-    f.write('\n###################################\n')
-    if not obj.G.inference.is_being_traced(obj):
-        f.write('`{}` not learned\n\tValue: {}\n'.format(obj.name, obj.value))
-        return f
+    if f is not None:
+        f.write('\n\n###################################\n{}'.format(obj.name))
+        f.write('\n###################################\n')
+        if not obj.G.inference.tracer.is_being_traced(obj):
+            f.write('`{}` not learned\n\tValue: {}\n'.format(obj.name, obj.value))
+            return f
 
     summ = pl.summary(obj, section=section)
-    for k,v in summ.items():
-        f.write('\t{}: {}\n'.format(k,v))
-
+    if f is not None:
+        for k,v in summ.items():
+            f.write('\t{}: {}\n'.format(k,v))
     ax1, _ = visualization.render_trace(var=obj, plt_type='both', 
-        section=section, include_burnin=True, log_scale=True, rasterized=True)
+        section=section, include_burnin=True, log_scale=log_scale, rasterized=True)
 
     if pl.hasprior(obj):
-        
         l,h = ax1.get_xlim()
         try:
             xs = np.arange(l,h,step=(h-l)/1000) 
@@ -398,12 +400,53 @@ def _scalar_visualize(obj, path, f, section='posterior'):
             ax1.legend()
         except OverflowError:
             logging.critical('OverflowError while plotting prior')
+        except Exception as e:
+            logging.critical('Failed plotting prior of {}: {}'.format(
+                obj.name, e))
 
     fig = plt.gcf()
     fig.suptitle(obj.name)
     plt.savefig(path)
     plt.close()
     return f
+
+def _make_cluster_order(graph, section):
+    '''Make a cluster ordering that is consistent
+
+    If clustering was being learned, then we return the agglomerative
+    clustering set with the mode number of clusters learned.
+
+    If clustering was not learned, then we add the clusters in cluster
+    order, and set the ASV/OTU indexes sorted within each cluster.
+
+    Parameters
+    ----------
+    graph : md2.Graph
+        Graph object where all of the variables are stored
+    section : str
+        Section of the trace to calculate
+
+    Returns
+    -------
+    np.ndarray
+    '''
+    order = []
+    if graph.inference.is_in_inference_order(STRNAMES.CLUSTERING):
+        ret = generate_cluster_assignments_posthoc(clustering=graph[STRNAMES.CLUSTERING_OBJ], 
+            n_clusters='mode', section=section, set_as_value=False)
+        
+        for cidx in range(np.max(ret)+1):
+            idxs = np.where(ret == cidx)[0]
+            for idx in idxs:
+                order.append(idx)
+    else:
+        for cluster in graph[STRNAMES.CLUSTERING_OBJ]:
+            idxs = np.asarray(list(cluster.members))
+            idxs = np.sort(idxs)
+            for idx in idxs:
+                order.append(idx)
+
+    return order
 
 # @numba.jit(nopython=True, fastmath=True, cache=True)
 def prod_gaussians(means, variances):
@@ -748,8 +791,8 @@ class ProcessVarGlobal(pl.variables.SICS):
         self._strr = '{}, empirical_variance: {:.5f}'.format(self.value, 
             residual/len(z))
 
-    def visualize(self, path, f, section='posterior'):
-        return _scalar_visualize(self, path=path, f=f, section=section)
+    def visualize(self, path, section='posterior'):
+        return _scalar_visualize(self, path=path, f=None, section=section)
 
 # Clustering
 # ----------
@@ -1244,12 +1287,17 @@ class ClusterAssignments(pl.graph.Node):
                 'posterior' : posterior samples
                 'burnin' : burn-in samples
                 'entire' : both burn-in and posterior samples
+        asv_formatter : str, None
+            This is the format of the label to return for each ASV. If None, it will return
+            the asvs name
+        yticklabels, xticklabels : str
+            These are the formats to plot the y-axis and x0axis, respectively.
 
         Returns
         -------
         _io.TextIOWrapper
         '''
-        from .util import generate_cluster_assignments_posthoc
+        
         asvs = self.G.data.asvs
         f.write('\n\n###################################\n')
         f.write(self.name)
@@ -1270,15 +1318,6 @@ class ClusterAssignments(pl.graph.Node):
         for i in range(coclusters.shape[0]):
             coclusters[i,i] = np.nan
 
-        visualization.render_cocluster_proportions(
-            coclusters=coclusters, asvs=self.G.data.asvs, clustering=self.clustering,
-            yticklabels=yticklabels, include_tick_marks=False, xticklabels=xticklabels,
-            title='Cluster Assignments')
-        fig = plt.gcf()
-        fig.tight_layout()
-        plt.savefig(os.path.join(basepath, 'coclusters.pdf'))
-        plt.close()
-
         # N clusters
         visualization.render_trace(var=self.clustering.n_clusters, plt_type='both', 
             section=section, include_burnin=True, rasterized=True)
@@ -1287,23 +1326,39 @@ class ClusterAssignments(pl.graph.Node):
         plt.savefig(os.path.join(basepath, 'n_clusters.pdf'))
         plt.close()
 
-        ca = generate_cluster_assignments_posthoc(clustering=self.clustering, n_clusters='mode', 
-            section=section)
-        cluster_assignments = {}
-        for idx, assignment in enumerate(ca):
-            if assignment in cluster_assignments:
-                cluster_assignments[assignment].append(idx)
-            else:
-                cluster_assignments[assignment] = [idx]
+        ret = generate_cluster_assignments_posthoc(clustering=self.clustering, n_clusters='mode', 
+            section=section, set_as_value=True)
+        data = []
+        for asv in asvs:
+            data.append([asv.name, ret[asv.idx]])
+        df = pd.DataFrame(data, columns=['name', 'Cluster Assignment'])
+        df.to_csv(os.path.join(basepath, 'clusterassignments.tsv'), sep='\t', index=False, header=True)
+        order = _make_cluster_order(graph=self.G, section=section)
+
+        visualization.render_cocluster_proportions(
+            coclusters=coclusters, asvs=self.G.data.asvs, order=order,
+            yticklabels=yticklabels, include_tick_marks=False, xticklabels=xticklabels,
+            title='Cluster Assignments')
+
+        # Write out cocluster values
+        coclusters = coclusters[order, :]
+        coclusters = coclusters[:, order]
+        labels = [asvs[aidx].name for aidx in order]
+        df = pd.DataFrame(coclusters, index=labels, columns=labels)
+        df.to_csv(os.path.join(basepath, 'coclusters.tsv'), index=True, header=True)
+
+        fig = plt.gcf()
+        fig.tight_layout()
+        plt.savefig(os.path.join(basepath, 'coclusters.pdf'))
+        plt.close()
 
         f.write('Mode number of clusters: {}\n'.format(len(self.clustering)))
-        for idx,lst in enumerate(cluster_assignments.values()):
-            f.write('Cluster {} - Size {}\n'.format(idx+1, len(lst)))
-            for oidx in lst:
-                # Get rid of index because that does not really make sense here
+        for cidx, cluster in enumerate(self.clustering):
+            f.write('Cluster {} - Size {}\n'.format(cidx, len(cluster)))
+            for oidx in cluster.members:
                 label = pl.asvname_formatter(format=asv_formatter, asv=asvs[oidx], asvs=asvs)
                 f.write('\t- {}\n'.format(label))
-        
+
         return f
 
     def set_trace(self):
@@ -2387,6 +2442,68 @@ class TrajectorySet(pl.graph.Node):
             self.value[ridx].value[~self.G[REPRNAMES.ZERO_INFLATION].value[ridx]] = np.nan
             self.value[ridx].add_trace()
 
+    def visualize(self, ridx, section, basepath, asv_formatter, vmin=None, vmax=None):
+        '''Visualize the replicate at index `ridx`
+        '''
+        subjset = self.G.data.subjects
+        asvs = subjset.asvs
+        subj = subjset.iloc(ridx)
+        obj = self.value[ridx]
+        logging.info('Retrieving trace for subject {}'.format(subj.name))
+
+        given_data = subj.matrix()['abs']
+        given_times = subj.times
+        
+        trace = obj.get_trace_from_disk(section=section)
+        summ = pl.summary(trace)
+        data_times = self.G.data.times[ridx]
+        index = [asv.name for asv in asvs]
+
+        # Make the tables
+        for k,arr in summ.items():
+            df = pd.DataFrame(arr, index=index, columns=data_times)
+            df.to_csv(os.path.join(basepath, '{}.tsv'.format(k)), 
+                sep='\t', index=True, header=True)
+
+        acceptance_rates = []
+        for oidx in range(len(subjset.asvs)):
+            print(oidx)
+            fig = plt.figure()
+            title = pl.asvname_formatter(format=asv_formatter, asv=oidx, asvs=asvs)
+            title += '\nSubject {}, {}'.format(subj.name, asvs[oidx].name)
+            fig.suptitle(title)
+            ax = fig.add_subplot(111)
+
+            med_traj = summ['median'][oidx, :]
+            low_traj = summ['25th percentile'][oidx, :]
+            high_traj = summ['75th percentile'][oidx, :]
+
+            ax.plot(data_times, med_traj, color='blue', marker='.', label='median')
+            ax.fill_between(data_times, y1=low_traj, y2=high_traj, color='blue', 
+                alpha=0.15)
+            ax.plot(given_times, given_data[oidx, :], marker='x', color='black', 
+                linestyle=':', label='data')
+
+            ax.set_yscale('log')
+            ax.set_xlabel('Time (days)')
+            ax.set_ylabel('CFU/g')
+
+            ax = visualization.shade_in_perturbations(ax, perturbations=subjset.perturbations, subj=subj)
+            ax.legend(bbox_to_anchor=(1.05, 1))
+            fig.tight_layout()
+            plt.savefig(os.path.join(basepath, '{}.pdf'.format(asvs[oidx].name)))
+            plt.close()
+
+            # Calculate the acceptance rate at every asv and timepoint
+            temp = []
+            for tidx in range(trace.shape[-1]):
+                temp.append(pl.metropolis.acceptance_rate(x=trace[:, oidx, tidx], 
+                    start=0, end=trace.shape[0]))
+            acceptance_rates.append(temp)
+
+        df = pd.DataFrame(acceptance_rates, index=index, columns=data_times)
+        df.to_csv(os.path.join(basepath, 'acceptance_rates.tsv'), sep='\t', index=True, header=True)
+
 
 class FilteringLogMP(pl.graph.Node):
     '''This is the posterior for the latent trajectory that are
@@ -2905,6 +3022,32 @@ class FilteringLogMP(pl.graph.Node):
                 str(str_acc).replace("'",''), self.total_n_datapoints/t)
         except:
             self._strr = 'NA'
+
+    def visualize(self, basepath, section='posterior', asv_formatter='%(name)s', 
+        vmin=None, vmax=None):
+        '''Plot the posterior for each filtering object
+
+        Parameters
+        ----------
+        basepath : str
+            This is the loction to write the files to
+        section : str
+            Section of the trace to compute on. Options:
+                'posterior' : posterior samples
+                'burnin' : burn-in samples
+                'entire' : both burn-in and posterior samples
+        asv_formatter : str, None
+            This is the format of the label to return for each ASV. If None, it will return
+            the asvs name
+        vmin, vmax : float
+            These are the maximum and minimum values to plot the abundance of
+        '''
+        for ridx, replicate in enumerate(self.x.value):
+            subj = self.G.data.subjects.iloc(ridx)
+            path = os.path.join(basepath, 'Subject_{}'.format(subj.name))
+            os.makedirs(path, exist_ok=True)
+            self.x.visualize(ridx=ridx, section=section, basepath=path, 
+                asv_formatter=asv_formatter)
 
 
 class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
@@ -4142,6 +4285,51 @@ class ClusterInteractionValue(pl.variables.MVN):
     def add_trace(self):
         self.obj.add_trace()
 
+    def visualize(self, basepath, section='posterior', asv_formatter='%(paperformat)s', 
+        yticklabels='%(paperformat)s %(index)s', xticklabels='%(index)s'):
+        '''Render the interaction matrices in the folder `basepath`
+
+        Parameters
+        ----------
+        basepath : str
+            This is the loction to write the files to
+        section : str
+            Section of the trace to compute on. Options:
+                'posterior' : posterior samples
+                'burnin' : burn-in samples
+                'entire' : both burn-in and posterior samples
+        asv_formatter : str, None
+            This is the format of the label to return for each ASV. If None, it will return
+            the asvs name
+        yticklabels, xticklabels : str
+            These are the formats to plot the y-axis and x0axis, respectively.
+        '''
+        if not self.G.inference.tracer.is_being_traced(self.obj.name):
+            logging.info('Interactions are not being learned')
+        
+        # Get cluster ordering
+        asvs = self.G.data.asvs
+        order = _make_cluster_order(graph=self.G, section=section)
+        labels = [asvs[aidx].name for aidx in order]
+        summ = pl.summary(self.obj, set_nan_to_0=True, section=section)
+
+        for k,M in summ.items():
+
+            visualization.render_interaction_strength(interaction_matrix=M,
+                log_scale=True, asvs=self.G.data.asvs, yticklabels=yticklabels,
+                xticklabels=xticklabels, order=order, 
+                title='{} Interactions'.format(k.capitalize()))
+            fig = plt.gcf()
+            fig.tight_layout()
+            plt.savefig(os.path.join(basepath, '{}_matrix.pdf'.format(k)))
+            plt.close()
+
+            M = M[order, :]
+            M = M[:, order]
+            df = pd.DataFrame(M, index=labels, columns=labels)
+            df.to_csv(os.path.join(basepath, '{}_matrix.pdf'.format(k)),
+                sep='\t', index=True, header=True)
+
 
 class ClusterInteractionIndicatorProbability(pl.variables.Beta):
     '''This is the posterior for the probability of a cluster being on
@@ -4209,7 +4397,7 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
             else:
                 raise ValueError('a ({}) and b ({}) must be numerics (float, int)'.format(
                     a.__class__, b.__class__))
-        elif hyperparam_option in ['weak-agnostic', 'auto']:
+        elif hyperparam_option in ['weak-agnostic']:
             self.prior.a.override_value(0.5)
             self.prior.b.override_value(0.5)
         elif hyperparam_option == 'strong-dense':
@@ -4276,6 +4464,9 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
             self.G[REPRNAMES.CLUSTER_INTERACTION_INDICATOR].num_neg_indicators
         self.sample()
         return self.value
+
+    def visualize(self, path, f, section='posterior'):
+        return _scalar_visualize(self, path=path, f=f, section=section)
 
 
 class ClusterInteractionIndicators(pl.variables.Variable):
@@ -4933,6 +5124,49 @@ class ClusterInteractionIndicators(pl.variables.Variable):
     def kill(self):
         pass
 
+    def visualize(self, basepath, section='posterior', asv_formatter='%(paperformat)s', 
+        yticklabels='%(paperformat)s %(index)s', xticklabels='%(index)s', vmax=10):
+        '''Render the interaction matrices in the folder `basepath`
+
+        Parameters
+        ----------
+        basepath : str
+            This is the loction to write the files to
+        section : str
+            Section of the trace to compute on. Options:
+                'posterior' : posterior samples
+                'burnin' : burn-in samples
+                'entire' : both burn-in and posterior samples
+        asv_formatter : str, None
+            This is the format of the label to return for each ASV. If None, it will return
+            the asvs name
+        yticklabels, xticklabels : str
+            These are the formats to plot the y-axis and x0axis, respectively.
+        '''
+        from . util import generate_interation_bayes_factors_posthoc
+
+        if not self.G.inference.tracer.is_being_traced(self.G[STRNAMES.INTERACTIONS_OBJ]):
+            logging.info('Interactions are not being learned')
+        
+        # Get cluster ordering
+        asvs = self.G.data.asvs
+        order = _make_cluster_order(graph=self.G, section=section)
+
+        # Plot the bayes factors
+        bfs = generate_interation_bayes_factors_posthoc(mcmc=self.G.inference, section=section)
+        visualization.render_bayes_factors(bfs, asvs=self.G.data.asvs, 
+            order=order, max_value=vmax, xticklabels=xticklabels, yticklabels=yticklabels)
+        fig = plt.gcf()
+        fig.tight_layout()
+        plt.savefig(os.path.join(basepath, 'bayes_factors.pdf'))
+        plt.close()
+
+        bfs = bfs[order, :]
+        bfs = bfs[:, order]
+        labels = [asvs[aidx].name for aidx in order]
+        df = pd.DataFrame(bfs, index=labels, columns=labels)
+        df.to_csv(os.path.join(basepath, 'bayes_factors.tsv'), sep='\t', index=True, header=True)
+
 
 # Logistic Growth
 # ---------------
@@ -5270,9 +5504,9 @@ class PriorVarMH(pl.variables.SICS):
         else:
             self.value = prev_value
 
-    def visualize(self, path, f, section='posterior'):
-        '''Render the traces in the folder `basepath` and write the 
-        learned values to the file `f`.
+    def visualize(self, path, section='posterior'):
+        '''Render the traces in the folder `basepath` and returns a
+        `pandas.DataFrame` with summary statistics
 
         Parameters
         ----------
@@ -5288,17 +5522,16 @@ class PriorVarMH(pl.variables.SICS):
 
         Returns
         -------
-        _io.TextIOWrapper
+        pandas.DataFrame
         '''
-        f.write('\n\n###################################\n')
-        f.write(self.name)
-        f.write('\n###################################\n')
-        if not self.G.inference.is_being_traced(self):
-            f.write('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
-            return f
+        if not self.G.inference.tracer.is_being_traced(self):
+            logging.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
+            return pd.DataFrame()
         summ = pl.summary(self, section=section)
-        for k,v in summ.items():
-            f.write('\t{}: {}\n'.format(k,v))
+        data = [[self.name] + [v for _,v in summ.items()]]
+        columns = ['name'] + [k for k in summ]
+        index = ['variance']
+        df = pd.DataFrame(data, columns=columns, index=index)
 
         # Plot the traces
         ax1, ax2 = visualization.render_trace(var=self, plt_type='both', section=section,
@@ -5326,7 +5559,7 @@ class PriorVarMH(pl.variables.SICS):
         plt.savefig(path)
         plt.close()
 
-        return f
+        return df
 
 
 class PriorMeanMH(pl.variables.TruncatedNormal):
@@ -5716,9 +5949,9 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         else:
             self.value = prev_mean
 
-    def visualize(self, path, f, section='posterior'):
-        '''Render the traces in the folder `basepath` and write the 
-        learned values to the file `f`.
+    def visualize(self, path, section='posterior'):
+        '''Render the traces in the folder `basepath` and returns a
+        `pandas.DataFrame` with summary statistics
 
         Parameters
         ----------
@@ -5734,17 +5967,16 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
 
         Returns
         -------
-        _io.TextIOWrapper
+        pandas.DataFrame
         '''
-        f.write('\n\n###################################\n')
-        f.write(self.name)
-        f.write('\n###################################\n')
-        if not self.G.inference.is_being_traced(self):
-            f.write('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
-            return f
+        if not self.G.inference.tracer.is_being_traced(self):
+            logging.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
+            return pd.DataFrame()
         summ = pl.summary(self, section=section)
-        for k,v in summ.items():
-            f.write('\t{}: {}\n'.format(k,v))
+        data = [[self.name] + [v for _,v in summ.items()]]
+        columns = ['name'] + [k for k in summ]
+        index = ['mean']
+        df = pd.DataFrame(data, columns=columns, index=index)
 
         # Plot the traces
         ax1, ax2 = visualization.render_trace(var=self, plt_type='both', section=section,
@@ -5755,9 +5987,9 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         xs = np.arange(l,h,step=(h-l)/100) 
         ys = []
         for x in xs:
-            ys.append(pl.random.sics.pdf(value=x, 
-                dof=self.prior.dof.value,
-                scale=self.prior.scale.value))
+            ys.append(pl.random.normal.pdf(value=x, 
+                mean=self.prior.mean.value,
+                std=np.sqrt(self.prior.var.value)))
         ax1.plot(xs, ys, label='prior', alpha=0.5, color='red', rasterized=True)
         ax1.legend()
 
@@ -5772,7 +6004,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         plt.savefig(path)
         plt.close()
 
-        return f
+        return df
 
 
 class Growth(pl.variables.TruncatedNormal):
@@ -5961,45 +6193,53 @@ class Growth(pl.variables.TruncatedNormal):
         self.mean.value = np.asarray(cov @ (X.T @ process_prec.dot(y) + pm)).ravel()
         self.var.value = np.diag(cov)
 
-    def visualize(self, basepath, f, section='posterior', asv_formatter='%(name)s', 
+    def visualize(self, basepath, section='posterior', asv_formatter='%(name)s', 
         true_value=None):
-        '''Render the traces in the folder `basepath` and write the 
-        learned values to the file `f`.
+        '''Render the traces in the folder `basepath`. Makes a `pandas.DataFrame` table
+        where the index is the ASV name in `asv_formatter` and the columns are
+        `mean`, `median`, `25th percentile`, `75th` percentile`.
 
         Parameters
         ----------
         basepath : str
             This is the loction to write the files to
-        f : _io.TextIOWrapper
-            File that we are writing the values to
         section : str
             Section of the trace to compute on. Options:
                 'posterior' : posterior samples
                 'burnin' : burn-in samples
                 'entire' : both burn-in and posterior samples
+        asv_formatter : str, None
+            This is the format of the label to return for each ASV. If None, it will return
+            the asvs name
         true_value : np.ndarray
             Ground truth values of the variable
 
         Returns
         -------
-        _io.TextIOWrapper
+        pandas.DataFrame
         '''
-        f.write('\n\n###################################\n')
-        f.write(self.name)
-        f.write('\n###################################\n')
-        if not self.G.inference.is_being_traced(self):
-            f.write('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
-            return f
+        if not self.G.inference.tracer.is_being_traced(self):
+            logging.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
+            return pd.DataFrame()
 
         asvs = self.G.data.subjects.asvs
         summ = pl.summary(self, section=section)
-        for key,arr in summ.items():
-            f.write('{}\n'.format(key))
-            for idx,ele in enumerate(arr):
-                prefix = ''
-                if asv_formatter is not None:
-                    prefix = pl.asvname_formatter(format=asv_formatter, asv=asvs[idx], asvs=asvs)
-                f.write('\t' + prefix + '{}\n'.format(ele)) 
+        data = []
+        index = []
+        columns = ['name'] + [k for k in summ]
+
+        for idx in range(len(asvs)):
+            if asv_formatter is not None:
+                prefix = pl.asvname_formatter(format=asv_formatter, asv=asvs[idx], asvs=asvs)
+            else:
+                prefix = asvs[idx].name
+            index.append(asvs[idx].name)
+            temp = [prefix]
+            for _,v in summ.items():
+                temp.append(v[idx])
+            data.append(temp)
+        
+        df = pd.DataFrame(data, columns=columns, index=index)
 
         if section == 'posterior':
             len_posterior = self.G.inference.sample_iter + 1 - self.G.inference.burnin
@@ -6055,22 +6295,13 @@ class Growth(pl.variables.TruncatedNormal):
                     label='True Value')
                 ax_trace.legend()
 
-            if asv_formatter is not None:
-                asvname = pl.asvname_formatter(
-                    format=asv_formatter,
-                    asv=asvs[idx],
-                    asvs=asvs)
-            else:
-                asvname = asvs[idx].name
-            asvname = asvname.replace('/', '_').replace(' ', '_')
-
-            fig.suptitle('Growth {}'.format(asvname))
+            fig.suptitle('{}'.format(index[idx]))
             fig.tight_layout()
             fig.subplots_adjust(top=0.85)
             plt.savefig(os.path.join(basepath, '{}.pdf'.format(asvs[idx].name)))
             plt.close()
 
-        return f
+        return df
 
 
 class SelfInteractions(pl.variables.TruncatedNormal):
@@ -6336,45 +6567,53 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         self.mean.value = np.asarray(cov @ (X.T @ process_prec.dot(y) + pm)).ravel()
         self.var.value = np.diag(cov)
 
-    def visualize(self, basepath, f, section='posterior', 
-        asv_formatter=pl.ASVNAME_PAPER_FORMAT, true_value=None):
-        '''Render the traces in the folder `basepath` and write the 
-        learned values to the file `f`.
+    def visualize(self, basepath, section='posterior', asv_formatter='%(name)s', 
+        true_value=None):
+        '''Render the traces in the folder `basepath`. Makes a `pandas.DataFrame` table
+        where the index is the ASV name in `asv_formatter` and the columns are
+        `mean`, `median`, `25th percentile`, `75th` percentile`.
 
         Parameters
         ----------
         basepath : str
             This is the loction to write the files to
-        f : _io.TextIOWrapper
-            File that we are writing the values to
         section : str
             Section of the trace to compute on. Options:
                 'posterior' : posterior samples
                 'burnin' : burn-in samples
                 'entire' : both burn-in and posterior samples
+        asv_formatter : str, None
+            This is the format of the label to return for each ASV. If None, it will return
+            the asvs name
         true_value : np.ndarray
             Ground truth values of the variable
 
         Returns
         -------
-        _io.TextIOWrapper
+        pandas.DataFrame
         '''
-        f.write('\n\n###################################\n')
-        f.write(self.name)
-        f.write('\n###################################\n')
-        if not self.G.inference.is_being_traced(self):
-            f.write('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
-            return f
+        if not self.G.inference.tracer.is_being_traced(self):
+            logging.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
+            return pd.DataFrame()
 
         asvs = self.G.data.subjects.asvs
         summ = pl.summary(self, section=section)
-        for key,arr in summ.items():
-            f.write('{}\n'.format(key))
-            for idx,ele in enumerate(arr):
-                prefix = ''
-                if asv_formatter is not None:
-                    prefix = pl.asvname_formatter(format=asv_formatter, asv=asvs[idx], asvs=asvs)
-                f.write('\t' + prefix + '{}\n'.format(ele)) 
+        data = []
+        index = []
+        columns = ['name'] + [k for k in summ]
+
+        for idx in range(len(asvs)):
+            if asv_formatter is not None:
+                prefix = pl.asvname_formatter(format=asv_formatter, asv=asvs[idx], asvs=asvs)
+            else:
+                prefix = asvs[idx].name
+            index.append(asvs[idx].name)
+            temp = [prefix]
+            for _,v in summ.items():
+                temp.append(v[idx])
+            data.append(temp)
+        
+        df = pd.DataFrame(data, columns=columns, index=index)
 
         if section == 'posterior':
             len_posterior = self.G.inference.sample_iter + 1 - self.G.inference.burnin
@@ -6384,14 +6623,14 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             len_posterior = self.G.inference.sample_iter + 1
 
         # Plot the prior on top of the posterior
-        if self.G.tracer.is_being_traced(STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS):
-            prior_mean_trace = self.G[STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS].get_trace_from_disk(
+        if self.G.tracer.is_being_traced(STRNAMES.PRIOR_MEAN_GROWTH):
+            prior_mean_trace = self.G[STRNAMES.PRIOR_MEAN_GROWTH].get_trace_from_disk(
                     section=section)
         else:
             prior_mean_trace = self.prior.mean.value * np.ones(len_posterior, dtype=float)
-        if self.G.tracer.is_being_traced(STRNAMES.PRIOR_VAR_SELF_INTERACTIONS):
+        if self.G.tracer.is_being_traced(STRNAMES.PRIOR_VAR_GROWTH):
             prior_std_trace = np.sqrt(
-                self.G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].get_trace_from_disk(section=section))
+                self.G[STRNAMES.PRIOR_VAR_GROWTH].get_trace_from_disk(section=section))
         else:
             prior_std_trace = np.sqrt(self.prior.var.value) * np.ones(len_posterior, dtype=float)
 
@@ -6400,7 +6639,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             ax_posterior = fig.add_subplot(1,2,1)
             visualization.render_trace(var=self, idx=idx, plt_type='hist',
                 label=section, color='blue', ax=ax_posterior, section=section,
-                include_burnin=True, rasterized=True, log_scale=True)
+                include_burnin=True, rasterized=True)
 
             # Get the limits and only look at the posterior within 20% range +- of
             # this number
@@ -6410,7 +6649,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             for i in range(len(prior_std_trace)):
                 arr[i] = pl.random.truncnormal.sample(mean=prior_mean_trace[i], std=prior_std_trace[i], 
                     low=self.low, high=self.high)
-            visualization.render_trace(var=arr, plt_type='hist', log_scale=True,
+            visualization.render_trace(var=arr, plt_type='hist', 
                 label='prior', color='red', ax=ax_posterior, rasterized=True)
 
             if true_value is not None:
@@ -6423,31 +6662,21 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             # plot the trace
             ax_trace = fig.add_subplot(1,2,2)
             visualization.render_trace(var=self, idx=idx, plt_type='trace', 
-                ax=ax_trace, section=section, include_burnin=True, rasterized=True,
-                log_scale=True)
+                ax=ax_trace, section=section, include_burnin=True, rasterized=True)
 
             if true_value is not None:
                 ax_trace.axhline(y=true_value[idx], color='red', alpha=0.65, 
                     label='True Value')
                 ax_trace.legend()
 
-            if asv_formatter is not None:
-                asvname = pl.asvname_formatter(
-                    format=asv_formatter,
-                    asv=asvs[idx],
-                    asvs=asvs)
-            else:
-                asvname = asvs[idx].name
-            asvname = asvname.replace('/', '_').replace(' ', '_')
-
-            fig.suptitle('Self-Interactions {}'.format(asvname))
+            fig.suptitle('{}'.format(index[idx]))
             fig.tight_layout()
             fig.subplots_adjust(top=0.85)
             plt.savefig(os.path.join(basepath, '{}.pdf'.format(asvs[idx].name)))
             plt.close()
 
-        return f
-    
+        return df
+
 
 class RegressCoeff(pl.variables.MVN):
     '''This is the posterior of the regression coefficients.
@@ -6908,6 +7137,79 @@ class PerturbationMagnitudes(pl.variables.Normal):
     def toarray(self):
         return self.asarray()
 
+    def visualize(self, basepath, pidx, section='posterior', asv_formatter='%(name)s'):
+        '''Render the traces in the folder `basepath`. Makes a `pandas.DataFrame` table
+        where the index is the ASV name in `asv_formatter` and the columns are
+        `mean`, `median`, `25th percentile`, `75th` percentile`.
+
+        Parameters
+        ----------
+        basepath : str
+            This is the loction to write the files to
+        section : str
+            Section of the trace to compute on. Options:
+                'posterior' : posterior samples
+                'burnin' : burn-in samples
+                'entire' : both burn-in and posterior samples
+        asv_formatter : str, None
+            This is the format of the label to return for each ASV. If None, it will return
+            the asvs name
+        '''
+        perturbation = self.perturbations[pidx]
+        asvs = self.G.data.asvs
+
+        summ = pl.summary(perturbation, set_nan_to_0=True, section=section)
+        data = np.asarray([arr for _,arr in summ.items()]).T
+        df = pd.DataFrame(data, columns=[k for k in summ], 
+            index=[asv.name for asv in self.G.data.asvs])
+        df.to_csv(os.path.join(basepath, 'values.tsv'), sep='\t', index=True, header=True)
+
+        if section == 'posterior':
+            len_posterior = self.G.inference.sample_iter + 1 - self.G.inference.burnin
+        elif section == 'burnin':
+            len_posterior = self.G.inference.burnin
+        else:
+            len_posterior = self.G.inference.sample_iter + 1
+
+        # Make the prior
+        if self.G.inference.tracer.is_being_traced(STRNAMES.PRIOR_MEAN_PERT):
+            prior_mean_trace = perturbation.magnitude.prior.mean.get_trace_from_disk(section=section)
+        else:
+            prior_mean_trace = np.ones(len_posterior) + perturbation.magnitude.prior.mean.value
+        if self.G.inference.tracer.is_being_traced(STRNAMES.PRIOR_VAR_PERT):
+            prior_std_trace = np.sqrt(perturbation.magnitude.prior.var.get_trace_from_disk(section=section))
+        else:
+            prior_std_trace = np.ones(len_posterior) + np.sqrt(perturbation.magnitude.prior.var.value)
+        
+        for oidx in range(len(self.G.data.asvs)):
+            fig = plt.figure()
+            ax_posterior = fig.add_subplot(1,2,1)
+            visualization.render_trace(var=perturbation, idx=oidx, plt_type='hist',
+                label=section, color='blue', ax=ax_posterior, section=section,
+                include_burnin=True, rasterized=True)
+
+            low_x, high_x = ax_posterior.get_xlim()
+            arr = np.zeros(len(prior_std_trace), dtype=float)
+            for i in range(len(prior_std_trace)):
+                arr[i] = pl.random.normal.sample(mean=prior_mean_trace[i], std=prior_std_trace[i])
+            visualization.render_trace(var=arr, plt_type='hist', 
+                label='prior', color='red', ax=ax_posterior, rasterized=True)
+
+            ax_posterior.legend()
+            ax_posterior.set_xlim(left=low_x*.8, right=high_x*1.2)
+
+            # plot the trace
+            ax_trace = fig.add_subplot(1,2,2)
+            visualization.render_trace(var=perturbation, idx=oidx, plt_type='trace', 
+                ax=ax_trace, section=section, include_burnin=True, rasterized=True)
+
+            fig.suptitle('{}'.format(pl.asvname_formatter(
+                format=asv_formatter, asv=oidx, asvs=self.G.data.asvs)))
+            fig.tight_layout()
+            fig.subplots_adjust(top=0.85)
+            plt.savefig(os.path.join(basepath, '{}.pdf'.format(asvs[oidx].name)))
+            plt.close()
+
 
 class PerturbationProbabilities(pl.Node):
     '''This is the probability for a positive interaction for a perturbation
@@ -7074,6 +7376,31 @@ class PerturbationProbabilities(pl.Node):
     def add_trace(self, *args, **kwargs):
         for perturbation in self.perturbations:
             perturbation.probability.add_trace(*args, **kwargs)
+
+    def visualize(self, path, f, pidx, section='posterior'):
+        '''Visualize the `pidx`th perturbation prior magnitude
+
+        Parameters
+        ----------
+        obj : mdsine2.Variable
+        path : str
+            This is the path to write the files to
+        f : _io.TextIOWrapper
+            File that we are writing the values to
+        section : str
+            Section of the trace to compute on. Options:
+                'posterior' : posterior samples
+                'burnin' : burn-in samples
+                'entire' : both burn-in and posterior samples
+
+        Returns
+        -------
+        _io.TextIOWrapper
+        '''
+        if not self.G.inference.is_in_inference_order(self.name):
+            return f
+        return _scalar_visualize(path=path, f=f, section=section,
+            obj=self.perturbations[pidx].probability, log_scale=False)
 
 
 class PerturbationIndicators(pl.Node):
@@ -7663,6 +7990,30 @@ class PerturbationIndicators(pl.Node):
             n += perturbation.indicator.num_on_clusters()
         return n
 
+    def visualize(self, path, pidx, section='posterior'):
+        '''Make a table of the `pidx`th perturbation bayes factors
+
+        Parameters
+        ----------
+        path : str
+            This is the path to write the bayes factors
+        f : _io.TextIOWrapper
+            File that we are writing the values to
+        section : str
+            Section of the trace to compute on. Options:
+                'posterior' : posterior samples
+                'burnin' : burn-in samples
+                'entire' : both burn-in and posterior samples
+        '''
+        from .util import generate_perturbation_bayes_factors_posthoc
+
+        perturbation = self.perturbations[pidx]
+        bayes_factors = generate_perturbation_bayes_factors_posthoc(
+            mcmc=self.G.inference, perturbation=perturbation, section=section)
+        df = pd.DataFrame([bayes_factors], index=[perturbation.name], 
+            columns=[asv.name for asv in self.G.data.asvs])
+        df.to_csv(path, sep='\t', index=True, header=True)
+
 
 class PriorVarPerturbations(pl.Variable):
     '''Agglomerates the prior variances of the magnitudes for the perturbations.
@@ -7735,6 +8086,32 @@ class PriorVarPerturbations(pl.Variable):
                 ret,
                 np.ones(n, dtype=float)*perturbation.magnitude.prior.var.value)
         return ret
+
+    def visualize(self, path, f, pidx, section='posterior'):
+        '''Visualize the `pidx`th perturbation prior magnitude
+
+        Parameters
+        ----------
+        obj : mdsine2.Variable
+        path : str
+            This is the path to write the files to
+        f : _io.TextIOWrapper
+            File that we are writing the values to
+        section : str
+            Section of the trace to compute on. Options:
+                'posterior' : posterior samples
+                'burnin' : burn-in samples
+                'entire' : both burn-in and posterior samples
+
+        Returns
+        -------
+        _io.TextIOWrapper
+        '''
+        if not self.G.inference.is_in_inference_order(self.name):
+            return f
+        return _scalar_visualize(path=path, f=f, section=section,
+            obj=self.perturbations[pidx].magnitude.prior.var,
+            log_scale=True)
 
 
 class PriorVarPerturbationSingle(pl.variables.SICS):
@@ -7934,6 +8311,32 @@ class PriorMeanPerturbations(pl.Variable):
                 ret,
                 np.ones(n, dtype=float)*perturbation.magnitude.prior.var.value)
         return ret
+
+    def visualize(self, path, f, pidx, section='posterior'):
+        '''Visualize the `pidx`th perturbation prior magnitude
+
+        Parameters
+        ----------
+        obj : mdsine2.Variable
+        path : str
+            This is the path to write the files to
+        f : _io.TextIOWrapper
+            File that we are writing the values to
+        section : str
+            Section of the trace to compute on. Options:
+                'posterior' : posterior samples
+                'burnin' : burn-in samples
+                'entire' : both burn-in and posterior samples
+
+        Returns
+        -------
+        _io.TextIOWrapper
+        '''
+        if not self.G.inference.is_in_inference_order(self.name):
+            return f
+        return _scalar_visualize(path=path, f=f, section=section,
+            obj=self.perturbations[pidx].magnitude.prior.mean,
+            log_scale=False)
 
 
 class PriorMeanPerturbationSingle(pl.variables.Normal):

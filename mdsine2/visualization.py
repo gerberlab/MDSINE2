@@ -143,6 +143,8 @@ def shade_in_perturbations(ax, perturbations, subj, textcolor='black', textsize=
     -------
     matplotlib.pyplot.Axes
     '''
+    from . import pylab as pl
+
     if pl.issubject(subj):
         subj = subj.name
     if not pl.isstr(subj):
@@ -307,10 +309,10 @@ def render_bayes_factors(bayes_factors, asvs, clustering=None, ax=None,
         ax.set_title(title)
     return ax
 
-def render_cocluster_proportions(coclusters, asvs, clustering=None, ax=None,
+def render_cocluster_proportions(coclusters, asvs, ax=None,
     n_colors=100, xticklabels='%(index)s', yticklabels='%(name)s %(index)s',
-    include_tick_marks=None, linewidths=None, linecolor=None, cmap=None,
-    include_colorbar=None, title='Microbe Co-cluster Proportions', figure_size=None,
+    include_tick_marks=False, linewidths=0.8, linecolor='black', cmap='Blues',
+    include_colorbar=True, title='Microbe Co-cluster Proportions', figure_size=None,
     order=None):
     '''Render the cocluster proportions. Values in coclusters should be [0,1].
 
@@ -320,9 +322,6 @@ def render_cocluster_proportions(coclusters, asvs, clustering=None, ax=None,
         - Square matrix indicating the cocluster proportions
     asvs : pylab.base.ASVSet
         - This is the object that contains all of the ASV metadata
-    clustering : pylab.cluster.ClusteringBase, Optional
-        - Clustering object if you want the ASVs in the same cluster to be grouped
-          together
     ax : matplotlib.pyplot.Axes, Optional
         - The axes to plot on. If nothing is provided a new figure will be created
     n_colors : int, Optional
@@ -369,7 +368,7 @@ def render_cocluster_proportions(coclusters, asvs, clustering=None, ax=None,
 
     # Type checking and initialization
     d = _init_parameters_heatmap(matrix=coclusters,
-        asvs=asvs, clustering=clustering, xticklabels=xticklabels,
+        asvs=asvs, xticklabels=xticklabels, clustering=None,
         yticklabels=yticklabels, ax=ax, figure_size=figure_size,
         linewidths=linewidths, order=order)
     ax = d['ax']
@@ -403,9 +402,10 @@ def render_cocluster_proportions(coclusters, asvs, clustering=None, ax=None,
     return ax
 
 def render_interaction_strength(interaction_matrix, log_scale, asvs, clustering=None,
-    ax=None, center_colors=False, n_colors=None, xticklabels=None, vmax=None, vmin=None,
-    yticklabels=None, include_tick_marks=None, linewidths=None, linecolor=None,
-    cmap=None, include_colorbar=None, title='Microbe Interaction Strength',
+    ax=None, center_colors=False, n_colors=100, xticklabels='%(index)s', 
+    vmax=None, vmin=None, yticklabels='%(name)s %(index)s', 
+    include_tick_marks=False, linewidths=0.8, linecolor='black',
+    cmap=None, include_colorbar=True, title='Microbe Interaction Strength',
     figure_size=None, order=None):
     '''Render the interaction strength matrix. If you want the values in log scale,
     it will annotate the box with the sign of the interaction and plot the absolute

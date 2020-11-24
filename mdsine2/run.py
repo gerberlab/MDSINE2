@@ -431,8 +431,7 @@ def run_graph(mcmc, crash_if_error=True):
     mcmc.graph[STRNAMES.CLUSTERING].kill()
 
     if mcmc.graph.data.subjects.qpcr_normalization_factor is not None:
-        mcmc, mcmc.graph.data.subjects = denormalize_parameters(mcmc, 
-            mcmc.graph.data.subjects)
+        mcmc, mcmc.graph.data.subjects = denormalize_parameters(mcmc)
     return mcmc
 
 def normalize_parameters(mcmc, subjset):
@@ -508,22 +507,21 @@ def normalize_parameters(mcmc, subjset):
             dset[:] = dset[:] / (subjset.qpcr_normalization_factor**2)
 
         if mcmc.is_in_inference_order(STRNAMES.FILTERING):
-            for ridx in range(len(subjset)):
-                for dset_name in [STRNAMES.LATENT_TRAJECTORY]:
-                    name = dset_name + '_ridx{}'.format(ridx)
-                    if name not in f:
-                        continue
-                    dset = f[name]
-                    total_samples = dset.attrs['end_iter']
-                    i = 0
-                    while (i * ckpt) < total_samples:
-                        start_idx = int(i * ckpt)
-                        end_idx = int((i+1) * ckpt)
+            for subj in subjset:
+                name = STRNAMES.LATENT_TRAJECTORY + '_{}'.format(subj.name)
+                if name not in f:
+                    continue
+                dset = f[name]
+                total_samples = dset.attrs['end_iter']
+                i = 0
+                while (i * ckpt) < total_samples:
+                    start_idx = int(i * ckpt)
+                    end_idx = int((i+1) * ckpt)
 
-                        if end_idx > total_samples:
-                            end_idx = total_samples
-                        dset[start_idx: end_idx] = dset[start_idx: end_idx]*subjset.qpcr_normalization_factor
-                        i += 1
+                    if end_idx > total_samples:
+                        end_idx = total_samples
+                    dset[start_idx: end_idx] = dset[start_idx: end_idx]*subjset.qpcr_normalization_factor
+                    i += 1
 
         f.close()
     else:
@@ -531,7 +529,7 @@ def normalize_parameters(mcmc, subjset):
     
     return mcmc, subjset
 
-def denormalize_parameters(mcmc, subjset):
+def denormalize_parameters(mcmc):
     '''Denormalize the abundance of the parameters by the normalization factor
     in the subject set
 
@@ -547,6 +545,7 @@ def denormalize_parameters(mcmc, subjset):
     mdsine2.BaseMCMC, mdsine2.Study
     '''
     GRAPH = mcmc.graph
+    subjset = mcmc.graph.data.subjects
     if subjset.qpcr_normalization_factor is not None:
         logging.info('Denormalizing the parameters')
 
@@ -606,8 +605,8 @@ def denormalize_parameters(mcmc, subjset):
             dset[:] = dset[:] * (subjset.qpcr_normalization_factor**2)
 
         if mcmc.is_in_inference_order(STRNAMES.FILTERING):
-            for ridx in range(len(mcmc.graph.data.subjects)):
-                name = STRNAMES.LATENT_TRAJECTORY + '_ridx{}'.format(ridx)
+            for subj in subjset:
+                name = STRNAMES.LATENT_TRAJECTORY + '_{}'.format(subj.name)
                 if name not in f:
                     continue
                 dset = f[name]
@@ -624,6 +623,7 @@ def denormalize_parameters(mcmc, subjset):
 
         f.close()
         subjset.denormalize_qpcr()
+        mcmc.save()
     else:
         logging.info('Data already denormalized')
     return mcmc, subjset

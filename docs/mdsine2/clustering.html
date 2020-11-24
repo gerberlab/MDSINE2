@@ -192,7 +192,7 @@ class Concentration(pl.variables.Gamma):
         f.write(&#39;\n\n###################################\n&#39;)
         f.write(self.name)
         f.write(&#39;\n###################################\n&#39;)
-        if not self.G.inference.is_being_traced(self):
+        if not self.G.inference.tracer.is_being_traced(self):
             f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
             return f
 
@@ -4241,7 +4241,7 @@ for Density Estimation' by M. D. Escobar and M. West, 1995.</p>
         f.write(&#39;\n\n###################################\n&#39;)
         f.write(self.name)
         f.write(&#39;\n###################################\n&#39;)
-        if not self.G.inference.is_being_traced(self):
+        if not self.G.inference.tracer.is_being_traced(self):
             f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
             return f
 
@@ -4462,7 +4462,7 @@ learned values to the file <code>f</code>.</p>
     f.write(&#39;\n\n###################################\n&#39;)
     f.write(self.name)
     f.write(&#39;\n###################################\n&#39;)
-    if not self.G.inference.is_being_traced(self):
+    if not self.G.inference.tracer.is_being_traced(self):
         f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
         return f
 

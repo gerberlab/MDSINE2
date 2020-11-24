@@ -425,10 +425,6 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             clus_init=clus_init))
         f.close()
 
-        
-        
-
-
 
 class FilteringConfig(pl.Saveable):
     '''These are the parameters for Filtering

@@ -87,7 +87,7 @@ class StrNamesClass(_BaseNameClass):
         self.DATA = 'Data matrix'
         self.REGRESSCOEFF = 'Logistic growth parameters (growth, self-interactions, interactions/perturbations)'
         self.GROWTH_VALUE = 'Growth values'
-        self.SELF_INTERACTION_VALUE = 'Self-interactions'
+        self.SELF_INTERACTION_VALUE = 'Self interactions'
         self.CLUSTER_INTERACTION_VALUE = 'Cluster interaction values'
 
         self.CLUSTERING_OBJ = 'Clustering object'
@@ -99,33 +99,33 @@ class StrNamesClass(_BaseNameClass):
         self.CLUSTERING = 'Cluster assignments'
         self.CONCENTRATION = 'Clustering concentration'
 
-        self.LATENT_TRAJECTORY = 'x'
-        self.FILTERING = 'filtering'
-        self.ZERO_INFLATION = 'zero_inflation'
+        self.LATENT_TRAJECTORY = 'Latent trajectory'
+        self.FILTERING = 'Filtering'
+        self.ZERO_INFLATION = 'Zero inflation'
 
-        self.PROCESSVAR = 'process_var'
+        self.PROCESSVAR = 'Process Variance'
 
-        self.NEGBIN_A0 = 'a0'
-        self.NEGBIN_A1 = 'a1'
+        self.NEGBIN_A0 = 'Negative binomial dispersion a0'
+        self.NEGBIN_A1 = 'Negative binomial dispersion a1'
 
-        self.PRIOR_VAR_GROWTH = 'prior_var_growth'
-        self.PRIOR_VAR_SELF_INTERACTIONS = 'prior_var_self_interactions'
-        self.PRIOR_VAR_INTERACTIONS = 'prior_var_interactions'
+        self.PRIOR_VAR_GROWTH = 'Variance growth'
+        self.PRIOR_VAR_SELF_INTERACTIONS = 'Variance self-interactions'
+        self.PRIOR_VAR_INTERACTIONS = 'Variance interactions'
 
-        self.PRIOR_MEAN_GROWTH = 'prior_mean_growth'
-        self.PRIOR_MEAN_SELF_INTERACTIONS = 'prior_mean_self_interactions'
-        self.PRIOR_MEAN_INTERACTIONS = 'prior_mean_interactions'
+        self.PRIOR_MEAN_GROWTH = 'Mean growth'
+        self.PRIOR_MEAN_SELF_INTERACTIONS = 'Mean self-interactions'
+        self.PRIOR_MEAN_INTERACTIONS = 'Mean interactions'
 
-        self.PERTURBATIONS = 'pert'
-        self.PERT_VALUE = 'pert_value'
-        self.PERT_INDICATOR = 'Z_pert'
-        self.PERT_INDICATOR_PROB = 'pi_z_pert'
-        self.PRIOR_VAR_PERT = 'prior_var_pert'
-        self.PRIOR_MEAN_PERT = 'prior_mean_pert'
+        self.PERTURBATIONS = 'Perturbations'
+        self.PERT_VALUE = 'Perturbation values'
+        self.PERT_INDICATOR = 'Perturbation indicators'
+        self.PERT_INDICATOR_PROB = 'Perturbation probabilities'
+        self.PRIOR_VAR_PERT = 'Variance perturbations'
+        self.PRIOR_MEAN_PERT = 'Mean perturbations'
 
-        self.QPCR_VARIANCES = 'qpcr_variance'
-        self.QPCR_DOFS = 'qpcr_variance_dof'
-        self.QPCR_SCALES = 'qpcr_variance_scale'
+        self.QPCR_VARIANCES = 'qPCR variances'
+        self.QPCR_DOFS = 'qPCR hyperprior degrees of freedom'
+        self.QPCR_SCALES = 'qPCR hyperprior scales'
 
         
 class LatexNamesClass(_BaseNameClass):

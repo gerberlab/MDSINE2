@@ -62,12 +62,17 @@ def generate_interation_bayes_factors_posthoc(mcmc, section='posterior'):
     '''
     interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ]
     trace = interactions.get_trace_from_disk(section=section)
+
     trace = ~ np.isnan(trace)
     cnts_1 = np.sum(trace, axis=0)
     cnts_0 = np.sum(1-trace, axis=0)
 
+    # print(cnts_1)
+    # print()
+    # print(cnts_0)
+
     a = mcmc.graph[STRNAMES.INDICATOR_PROB].prior.a.value
-    b = mcmc.graph[STRNAMES.INDICATOR_PROB].prior.a.value
+    b = mcmc.graph[STRNAMES.INDICATOR_PROB].prior.b.value
 
     return (cnts_1 * b) / (cnts_0 * a)
 
@@ -168,15 +173,10 @@ def generate_cluster_assignments_posthoc(clustering, n_clusters='mode', linkage=
         affinity='precomputed',
         linkage=linkage)
     ret = c.fit_predict(A)
-    logging.info(ret)
+    logging.info('Clusters assigned: {}'.format(ret))
     if set_as_value:
-        ca = {}
-        for idx, cidx in enumerate(ca):
-            if cidx in ca:
-                ca[cidx].append(idx)
-            else:
-                ca[cidx] = [idx]
-        for cluster in ca:
+        for cidx in range(np.max(ret)):
+            cluster = np.where(ret == cidx)[0]
             cid = clustering.make_new_cluster_with(idx=cluster[0])
             for oidx in cluster[1:]:
                 clustering.move_item(idx=oidx, cid=cid)

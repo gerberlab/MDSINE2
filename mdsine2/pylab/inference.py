@@ -244,10 +244,7 @@ class BaseMCMC(BaseModel):
         -------
         bool
         '''
-        if not isVariable(var):
-            if var not in self.graph:
-                # raise IndexError('`var` ({}) ({}) not recognized in graph'.format(type(var), var))
-                return False
+        if not isnode(var):
             var = self.graph[var].id
         else:
             var = var.id
