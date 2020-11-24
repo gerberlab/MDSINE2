@@ -25,7 +25,7 @@ if os.name == 'nt':
 
     build_ext.build_ext.get_export_symbols = get_export_symbols
 
-VERSION = '4.0.2'
+VERSION = '4.0.3'
 SHORT_DESC = 'Implements core features of the MDSINE2 model'
 LONG_DESC = \
     '''
