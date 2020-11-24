@@ -267,7 +267,6 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.INDICATOR_PROB: {
                 'value_option': 'auto',
                 'hyperparam_option': 'strong-sparse',
-                'N': 25,
                 'delay': 0},
             STRNAMES.FILTERING: {
                 'x_value_option':  'loess',

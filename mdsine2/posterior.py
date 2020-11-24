@@ -949,10 +949,11 @@ class ClusterAssignments(pl.graph.Node):
         self.mp = mp
         self._strtime = -1
 
-        if self.mp is not None:
-            self.update = self.update_mp
-        else:
-            self.update = self.update_slow_fast
+        # if self.mp is not None:
+        #     self.update = self.update_mp
+        # else:
+        #     self.update = self.update_slow_fast
+        self.update = self.update_mp
 
         kwargs['name'] = STRNAMES.CLUSTERING
         pl.graph.Node.__init__(self, **kwargs)
@@ -1391,7 +1392,7 @@ class ClusterAssignments(pl.graph.Node):
         if self.clustering.n_clusters.sample_iter % self.run_every_n_iterations != 0:
            return
 
-        # print('in clustering')
+        print('in clustering')
         start_time = time.time()
         oidxs = npr.permutation(np.arange(len(self.G.data.asvs)))
 
@@ -1870,20 +1871,6 @@ class ClusterAssignments(pl.graph.Node):
             perturbation_on_idxs = [p.indicator.cluster_arg_array() for p in self.G.perturbations]
         else:
             perturbation_on_idxs = None
-
-        # # Send topology parameters if the topology wont change
-        # TODO: this works on windows but not on the cluster when dispatching?
-        # if self.clustering.clusters[self.original_cluster].size > 1:
-        #     use_saved_params = True
-        #     kwargs = {
-        #         'interaction_on_idxs': interaction_on_idxs,
-        #         'perturbation_on_idxs': perturbation_on_idxs}
-        #     if pl.ispersistentpool(self.pool):
-        #         self.pool.map('initialize_oidx', [kwargs]*self.pool.num_workers)
-        #     else:
-        #         use_saved_params = False
-        # else:
-        #     use_saved_params = False
         use_saved_params = False
 
         if pl.ispersistentpool(self.pool):
@@ -1901,8 +1888,7 @@ class ClusterAssignments(pl.graph.Node):
             interaction_on_idxs = None
             perturbation_on_idxs = None
 
-        cluster_config = np.asarray([self.clustering.cid2cidx[self.clustering.idx2cid[i]] \
-            for i in range(len(self.G.data.asvs))])
+        cluster_config = self.clustering.toarray()
 
         kwargs = {
             'interaction_on_idxs': interaction_on_idxs,
@@ -1931,8 +1917,7 @@ class ClusterAssignments(pl.graph.Node):
                 else:
                     perturbation_on_idxs = None
 
-            cluster_config = np.asarray([self.clustering.cid2cidx[self.clustering.idx2cid[i]] \
-                for i in range(len(self.G.data.asvs))])
+            cluster_config = self.clustering.toarray()
             log_mult_factor = np.log(self.clustering.clusters[self.curr_cluster].size - 1)
 
             kwargs = {
@@ -1950,8 +1935,7 @@ class ClusterAssignments(pl.graph.Node):
 
         # Make a new cluster
         self.curr_cluster = self.clustering.make_new_cluster_with(idx=self.oidx)
-        cluster_config = np.asarray([self.clustering.cid2cidx[self.clustering.idx2cid[i]] \
-            for i in range(len(self.G.data.asvs))])
+        cluster_config = self.clustering.toarray()
         interaction_on_idxs = interactions.get_indicators(return_idxs=True)
         if self._there_are_perturbations:
             perturbation_on_idxs = [p.indicator.cluster_arg_array() for p in self.G.perturbations]
@@ -2148,7 +2132,7 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         self.prior_cov, self.prior_prec, self.prior_prec_diag = self.build_prior_cov_and_prec_and_diag(
             on_interactions=interaction_on_idxs, on_perturbations=perturbation_on_idxs)
         
-        return cid, self.calculate_marginal_loglikelihood_slow_fast_sparse()
+        return cid, self.calculate_marginal_loglikelihood_slow_fast_sparse() + log_mult_factor
 
     def set_clustering(self, cluster_config):
         self.clustering = CondensedClustering(oidx2cidx=cluster_config)
@@ -2185,11 +2169,6 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         rows = np.asarray(list(itertools.chain.from_iterable(rows)))
         cols = np.asarray(list(itertools.chain.from_iterable(cols)))
         data = np.ones(len(rows), dtype=int)
-
-        # print('rows', rows)
-        # print(cols)
-        # print(data)
-        # print((self.n_rowsM, c2ciidx))
 
         M = scipy.sparse.coo_matrix((data,(rows,cols)),
             shape=(self.n_rowsM, c2ciidx)).tocsc()
