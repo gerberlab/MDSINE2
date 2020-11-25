@@ -81,9 +81,9 @@ from .util import isarray, isbool, isstr, istype, istuple
 # Constants
 DEFAULT_VARIABLE_TYPE = float
 
-DEFAULT_NORMAL_MEAN_SUFFIX = &#39;_mean&#39;
-DEFAULT_NORMAL_VAR_SUFFIX = &#39;_var&#39;
-DEFAULT_LOGNORMAL_STD_SUFFIX = &#39;_std&#39;
+DEFAULT_NORMAL_LOC_SUFFIX = &#39;_mean&#39;
+DEFAULT_NORMAL_SCALE2_SUFFIX = &#39;_var&#39;
+DEFAULT_LOGNORMAL_SCALE_SUFFIX = &#39;_std&#39;
 DEFAULT_UNIFORM_LOW_SUFFIX = &#39;_low&#39;
 DEFAULT_UNIFORM_HIGH_SUFFIX = &#39;_high&#39;
 DEFAULT_SICS_DOF_SUFFIX = &#39;_dof&#39;
@@ -615,14 +615,14 @@ class Normal(Variable, _RandomBase):
         if not isnode(mean):
             self._mean = Variable(
                 value=mean,
-                name=self.name + DEFAULT_NORMAL_MEAN_SUFFIX,
+                name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
             self._mean = mean
         if not isnode(var):
             self._var = Variable(
                 value=var,
-                name=self.name + DEFAULT_NORMAL_VAR_SUFFIX,
+                name=self.name + DEFAULT_NORMAL_SCALE2_SUFFIX,
                 G=self.G)
         else:
             self._var = var
@@ -755,14 +755,14 @@ class Lognormal(Variable, _RandomBase):
         if not isnode(mean):
             self._mean = Variable(
                 value=mean,
-                name=self.name + DEFAULT_NORMAL_MEAN_SUFFIX,
+                name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
             self._mean = mean
         if not isnode(std):
             self._std = Variable(
                 value=std,
-                name=self.name + DEFAULT_LOGNORMAL_STD_SUFFIX,
+                name=self.name + DEFAULT_LOGNORMAL_SCALE_SUFFIX,
                 G=self.G)
         else:
             self._std = std
@@ -1049,14 +1049,14 @@ class TruncatedNormal(Variable, _RandomBase):
         if not isnode(mean):
             self._mean = Variable(
                 value=mean,
-                name=self.name + DEFAULT_NORMAL_MEAN_SUFFIX,
+                name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
             self._mean = mean
         if not isnode(var):
             self._var = Variable(
                 value=var,
-                name=self.name + DEFAULT_NORMAL_VAR_SUFFIX,
+                name=self.name + DEFAULT_NORMAL_SCALE2_SUFFIX,
                 G=self.G)
         else:
             self._var = var
@@ -2860,14 +2860,14 @@ specified, then use the current value</p>
         if not isnode(mean):
             self._mean = Variable(
                 value=mean,
-                name=self.name + DEFAULT_NORMAL_MEAN_SUFFIX,
+                name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
             self._mean = mean
         if not isnode(std):
             self._std = Variable(
                 value=std,
-                name=self.name + DEFAULT_LOGNORMAL_STD_SUFFIX,
+                name=self.name + DEFAULT_LOGNORMAL_SCALE_SUFFIX,
                 G=self.G)
         else:
             self._std = std
@@ -3352,7 +3352,7 @@ These are the extra parameters for the Node class</p></div>
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="mdsine2.posterior.ClusterInteractionValue" href="../posterior.html#mdsine2.posterior.ClusterInteractionValue">ClusterInteractionValue</a></li>
-<li><a title="mdsine2.posterior.RegressCoeff" href="../posterior.html#mdsine2.posterior.RegressCoeff">RegressCoeff</a></li>
+<li><a title="mdsine2.posterior.GLVParameters" href="../posterior.html#mdsine2.posterior.GLVParameters">GLVParameters</a></li>
 </ul>
 <h3>Instance variables</h3>
 <dl>
@@ -3728,14 +3728,14 @@ def p(self):
         if not isnode(mean):
             self._mean = Variable(
                 value=mean,
-                name=self.name + DEFAULT_NORMAL_MEAN_SUFFIX,
+                name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
             self._mean = mean
         if not isnode(var):
             self._var = Variable(
                 value=var,
-                name=self.name + DEFAULT_NORMAL_VAR_SUFFIX,
+                name=self.name + DEFAULT_NORMAL_SCALE2_SUFFIX,
                 G=self.G)
         else:
             self._var = var
@@ -4549,14 +4549,14 @@ low, and high</p>
         if not isnode(mean):
             self._mean = Variable(
                 value=mean,
-                name=self.name + DEFAULT_NORMAL_MEAN_SUFFIX,
+                name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
             self._mean = mean
         if not isnode(var):
             self._var = Variable(
                 value=var,
-                name=self.name + DEFAULT_NORMAL_VAR_SUFFIX,
+                name=self.name + DEFAULT_NORMAL_SCALE2_SUFFIX,
                 G=self.G)
         else:
             self._var = var

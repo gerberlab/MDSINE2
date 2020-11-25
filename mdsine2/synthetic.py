@@ -418,8 +418,8 @@ class SyntheticData(pl.Saveable):
                 # sample the magnitude
                 sign = pl.random.bernoulli.sample(prob_pos) * 2 - 1
                 mean = np.random.choice(mean_strength, p=prob_strength)
-                magnitude[i] = pl.random.normal.sample(mean=mean*sign, 
-                    std=std_strength)
+                magnitude[i] = pl.random.normal.sample(loc=mean*sign, 
+                    scale=std_strength)
 
         a = pl.contrib.ClusterPerturbation(start=start, end=end, magnitude=magnitude,
             clustering=self.dynamics.clustering, indicator=indicator, G=self.G)
@@ -671,12 +671,12 @@ class SyntheticData(pl.Saveable):
         # Set perturbation 0
         if self.perturbations_additive:
             magnitude0 = np.asarray([
-                    # pl.random.normal.sample(mean=-1, std=0.1),
-                    0, pl.random.normal.sample(mean=0.5, std=0.1), 0])
+                    # pl.random.normal.sample(loc=-1, scale=0.1),
+                    0, pl.random.normal.sample(loc=0.5, scale=0.1), 0])
         else:
             magnitude0 = np.asarray([
-                    # pl.random.normal.sample(mean=-1, std=0.1),
-                    0, pl.random.normal.sample(mean=1, std=0.1), 0])
+                    # pl.random.normal.sample(loc=-1, scale=0.1),
+                    0, pl.random.normal.sample(loc=1, scale=0.1), 0])
         indicator0 = np.array([False, True, False], dtype=bool)
         p0 = pl.contrib.ClusterPerturbation(start=starts[0], end=ends[0], 
             magnitude=magnitude0, indicator=indicator0, G=self.G, 
@@ -685,12 +685,12 @@ class SyntheticData(pl.Saveable):
         # Set perturbation 1
         if self.perturbations_additive:
             magnitude1 = np.asarray([
-                    pl.random.normal.sample(mean=1, std=0.1), 0,
-                    pl.random.normal.sample(mean=-2, std=0.1)])
+                    pl.random.normal.sample(loc=1, scale=0.1), 0,
+                    pl.random.normal.sample(loc=-2, scale=0.1)])
         else:
             magnitude1 = np.asarray([
-                    pl.random.normal.sample(mean=1, std=0.1), 0,
-                    pl.random.normal.sample(mean=-2, std=0.1)])
+                    pl.random.normal.sample(loc=1, scale=0.1), 0,
+                    pl.random.normal.sample(loc=-2, scale=0.1)])
         indicator1 = np.array([True, False, True], dtype=bool)
         p1 = pl.contrib.ClusterPerturbation(start=starts[1], end=ends[1], 
             magnitude=magnitude1, indicator=indicator1, G=self.G, 
@@ -1412,7 +1412,7 @@ class SyntheticData(pl.Saveable):
 
                 # make "exact" qpcr by having very little qpcr noise
                 subjset[mid].qpcr[t] = pl.qPCRdata( 
-                    cfus=pl.random.normal.sample(mean=total_abund, std=1e-10, size=3), 
+                    cfus=pl.random.normal.sample(loc=total_abund, scale=1e-10, size=3), 
                     mass=1., dilution_factor=1.)
             subjset[mid].times = times[ridx]
 

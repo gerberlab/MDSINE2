@@ -243,7 +243,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
         pert_ind = None
         pert_ind_prob = None
 
-    beta = posterior.RegressCoeff(
+    beta = posterior.GLVParameters(
         growth=growth, self_interactions=self_interactions,
         interactions=interactions, pert_mag=magnitude_perts, G=GRAPH)
 
@@ -1322,7 +1322,7 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
         pert_ind = None
         pert_ind_prob = None
 
-    beta = posterior.RegressCoeff(
+    beta = posterior.GLVParameters(
         growth=growth, self_interactions=self_interactions,
         interactions=interactions, pert_mag=magnitude_perts, G=GRAPH)
 

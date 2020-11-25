@@ -378,30 +378,30 @@ class _TunableKernel(_BaseKernel):
             raise NotImplementedError('Check the conditions?')
             if acc_rate < 0.001:
                 # reduce by 90 percent
-                self.proposal.var.value *= 0.1
+                self.proposal.scale2.value *= 0.1
             elif acc_rate < 0.05:
                 # reduce by 50 percent
-                self.proposal.var.value *= 0.5
+                self.proposal.scale2.value *= 0.5
             elif acc_rate < 0.2:
                 # reduce by ten percent
-                self.proposal.var.value *= 0.9
+                self.proposal.scale2.value *= 0.9
             elif acc_rate > 0.95:
                 # increase by factor of ten
-                self.proposal.var.value *= 10.0
+                self.proposal.scale2.value *= 10.0
             elif acc_rate > 0.75:
                 # increase by double
-                self.proposal.var.value *= 2.0
+                self.proposal.scale2.value *= 2.0
             elif acc_rate > 0.5:
                 # increase by ten percent
-                self.proposal.var.value *= 1.1
+                self.proposal.scale2.value *= 1.1
         else:
             # print('acc_rate', acc_rate)
             if acc_rate > self.target_acceptance_rate:
                 # print('increase')
-                self.proposal.var.value *= 2
+                self.proposal.scale2.value *= 2
             else:
                 # print('decrease')
-                self.proposal.var.value /= 2
+                self.proposal.scale2.value /= 2
 
 
 class NormalKernel(_TunableKernel):
@@ -429,7 +429,7 @@ class NormalKernel(_TunableKernel):
 
         name = self.x.name + '_proposal'
         if low is None and high is None:
-            self.proposal = variables.Normal(mean=0, var=var, G=self.x.G, name=name)
+            self.proposal = variables.Normal(loc=0, scale2=var, G=self.x.G, name=name)
         else:
             if low is not None:
                 if not util.isnumeric(low):
@@ -443,7 +443,7 @@ class NormalKernel(_TunableKernel):
                         type(high)))
             else:
                 high = float('inf')
-            self.proposal = variables.TruncatedNormal(mean=0, var=var, low=low, high=high,
+            self.proposal = variables.TruncatedNormal(loc=0, scale2=var, low=low, high=high,
                 G=self.x.G, name=name)
 
     def _propose(self):

@@ -6572,7 +6572,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         return df
 
 
-class RegressCoeff(pl.variables.MVN):
+class GLVParameters(pl.variables.MVN):
     &#39;&#39;&#39;This is the posterior of the regression coefficients.
     The current posterior assumes a prior mean of 0.
 
@@ -23972,8 +23972,8 @@ z * \sqrt{dt} ~ Normal (0, \sigma^2_w)</p>
 </li>
 </ul>
 </dd>
-<dt id="mdsine2.posterior.RegressCoeff"><code class="flex name class">
-<span>class <span class="ident">RegressCoeff</span></span>
+<dt id="mdsine2.posterior.GLVParameters"><code class="flex name class">
+<span>class <span class="ident">GLVParameters</span></span>
 <span>(</span><span>growth, self_interactions, interactions, pert_mag, **kwargs)</span>
 </code></dt>
 <dd>
@@ -23997,7 +23997,7 @@ Set to None if there are no perturbations</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class RegressCoeff(pl.variables.MVN):
+<pre><code class="python">class GLVParameters(pl.variables.MVN):
     &#39;&#39;&#39;This is the posterior of the regression coefficients.
     The current posterior assumes a prior mean of 0.
 
@@ -24280,7 +24280,7 @@ Set to None if there are no perturbations</dd>
 </ul>
 <h3>Methods</h3>
 <dl>
-<dt id="mdsine2.posterior.RegressCoeff.add_trace"><code class="name flex">
+<dt id="mdsine2.posterior.GLVParameters.add_trace"><code class="name flex">
 <span>def <span class="ident">add_trace</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -24299,7 +24299,7 @@ Set to None if there are no perturbations</dd>
         self.pert_mag.add_trace()</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.posterior.RegressCoeff.asarray"><code class="name flex">
+<dt id="mdsine2.posterior.GLVParameters.asarray"><code class="name flex">
 <span>def <span class="ident">asarray</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -24326,7 +24326,7 @@ the Taxa or cluster specifically.</p>
     return a</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.posterior.RegressCoeff.initialize"><code class="name flex">
+<dt id="mdsine2.posterior.GLVParameters.initialize"><code class="name flex">
 <span>def <span class="ident">initialize</span></span>(<span>self, update_jointly_pert_inter, update_jointly_growth_si, tune=None, end_tune=None)</span>
 </code></dt>
 <dd>
@@ -24402,7 +24402,7 @@ randomly choose which one to update first.</dd>
         raise NotImplementedError(&#39;Not Implemented&#39;)</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.posterior.RegressCoeff.update"><code class="name flex">
+<dt id="mdsine2.posterior.GLVParameters.update"><code class="name flex">
 <span>def <span class="ident">update</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -30470,12 +30470,12 @@ The qPCR variances are </p>
 </ul>
 </li>
 <li>
-<h4><code><a title="mdsine2.posterior.RegressCoeff" href="#mdsine2.posterior.RegressCoeff">RegressCoeff</a></code></h4>
+<h4><code><a title="mdsine2.posterior.GLVParameters" href="#mdsine2.posterior.GLVParameters">GLVParameters</a></code></h4>
 <ul class="">
-<li><code><a title="mdsine2.posterior.RegressCoeff.add_trace" href="#mdsine2.posterior.RegressCoeff.add_trace">add_trace</a></code></li>
-<li><code><a title="mdsine2.posterior.RegressCoeff.asarray" href="#mdsine2.posterior.RegressCoeff.asarray">asarray</a></code></li>
-<li><code><a title="mdsine2.posterior.RegressCoeff.initialize" href="#mdsine2.posterior.RegressCoeff.initialize">initialize</a></code></li>
-<li><code><a title="mdsine2.posterior.RegressCoeff.update" href="#mdsine2.posterior.RegressCoeff.update">update</a></code></li>
+<li><code><a title="mdsine2.posterior.GLVParameters.add_trace" href="#mdsine2.posterior.GLVParameters.add_trace">add_trace</a></code></li>
+<li><code><a title="mdsine2.posterior.GLVParameters.asarray" href="#mdsine2.posterior.GLVParameters.asarray">asarray</a></code></li>
+<li><code><a title="mdsine2.posterior.GLVParameters.initialize" href="#mdsine2.posterior.GLVParameters.initialize">initialize</a></code></li>
+<li><code><a title="mdsine2.posterior.GLVParameters.update" href="#mdsine2.posterior.GLVParameters.update">update</a></code></li>
 </ul>
 </li>
 <li>

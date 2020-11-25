@@ -27,11 +27,11 @@ _LOG_INV_SQRT_2PI = np.log(1/np.sqrt(2*math.pi))
 
 # Helper functions
 #-----------------
-def _normal_logpdf(value, mean, std):
+def _normal_logpdf(value, loc, scale):
     '''We use this function if `pylab.random.normal.logpdf` fails to compile,
     which can happen when running jobs on the cluster.
     '''
-    return _LOG_INV_SQRT_2PI + (-0.5*((value-mean)/std)**2) - np.log(std)
+    return _LOG_INV_SQRT_2PI + (-0.5*((value-loc)/scale)**2) - np.log(scale)
 
 def negbin_loglikelihood(k,m,dispersion):
     '''Loglikelihood - with parameterization in [1]
@@ -174,7 +174,7 @@ def build_prior_covariance(G, cov, order, sparse=True, diag=False):
                 num_on = perturbation.indicator.num_on_clusters()
                 a.append(np.full(
                     num_on,
-                    perturbation.magnitude.prior.var.value))
+                    perturbation.magnitude.prior.scale2.value))
 
         else:
             raise ValueError('reprname ({}) not recognized'.format(reprname))
@@ -214,19 +214,19 @@ def build_prior_mean(G, order, shape=None):
     for name in order:
         v = G[name]
         if v.id == STRNAMES.GROWTH_VALUE:
-            a.append(v.prior.mean.value * np.ones(G.data.n_taxas))
+            a.append(v.prior.loc.value * np.ones(G.data.n_taxas))
         elif v.id == STRNAMES.SELF_INTERACTION_VALUE:
-            a.append(v.prior.mean.value * np.ones(G.data.n_taxas))
+            a.append(v.prior.loc.value * np.ones(G.data.n_taxas))
         elif v.id == STRNAMES.CLUSTER_INTERACTION_VALUE:
             a.append(
                 np.full(
                     G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators,
-                    v.prior.mean.value))
+                    v.prior.loc.value))
         elif v.id == STRNAMES.PERT_VALUE:
             for perturbation in G.perturbations:
                 a.append(np.full(
                     perturbation.indicator.num_on_clusters(),
-                    perturbation.magnitude.prior.mean.value))
+                    perturbation.magnitude.prior.loc.value))
         else:
             raise ValueError('`name` ({}) not recognized'.format(name))
     if len(a) == 1:
@@ -320,9 +320,6 @@ def pinv(M, var):
         M.toarray(out=M_)
         M = M_
     try:
-        # if type(M) == torch.Tensor:
-        #     return torch.inverse(M)
-        # else:
         try:
             return np.linalg.pinv(M)
         except:
@@ -1135,10 +1132,7 @@ class ClusterAssignments(pl.graph.Node):
                         continue
                     M[i,j] = taxas.taxonomic_similarity(oid1=oid1, oid2=oid2)
 
-            c = AgglomerativeClustering(
-                n_clusters=n_clusters,
-                affinity='precomputed',
-                linkage='complete')
+            c = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='complete')
             assignments = c.fit_predict(1-M)
 
             # Convert assignments into clusters
@@ -1166,10 +1160,7 @@ class ClusterAssignments(pl.graph.Node):
                     evenness[i,j] = dist
                     evenness[j,i] = dist
 
-            c = AgglomerativeClustering(
-                n_clusters=n_clusters,
-                affinity='precomputed',
-                linkage='average')
+            c = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='average')
             assignments = c.fit_predict(evenness)
             clusters = {}
             for oidx,cidx in enumerate(assignments):
@@ -1193,10 +1184,7 @@ class ClusterAssignments(pl.graph.Node):
                     dm[i,j] = distance
                     dm[j,i] = distance
 
-            c = AgglomerativeClustering(
-                n_clusters=n_clusters,
-                affinity='precomputed',
-                linkage='complete')
+            c = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='complete')
             assignments = c.fit_predict(dm)
 
             # convert into clusters
@@ -1299,7 +1287,6 @@ class ClusterAssignments(pl.graph.Node):
                 for aidx in cluster.members:
                     label = pl.taxaname_formatter(format=taxa_formatter, taxa=taxas[aidx], taxas=taxas)
                     f.write('\t- {}\n'.format(label))
-
             return f
 
         # Coclusters
@@ -1525,14 +1512,9 @@ class ClusterAssignments(pl.graph.Node):
         # print('prior_prec truth:\n', prior_prec)
 
         return {
-            'a': X.T @ process_prec,
-            'beta_prec': beta_prec,
-            'process_prec': prior_prec,
-            'ret': ll2+ll3,
-            'beta_logdet': beta_logdet,
-            'priorvar_logdet': priorvar_logdet,
-            'bEb': bEb,
-            'bEbprior': bEbprior}
+            'a': X.T @ process_prec, 'beta_prec': beta_prec, 'process_prec': prior_prec, 
+            'ret': ll2+ll3, 'beta_logdet': beta_logdet, 'priorvar_logdet': priorvar_logdet,
+            'bEb': bEb, 'bEbprior': bEbprior}
 
     # Update regular - meant to be used during inference
     # ==================================================
@@ -1797,13 +1779,10 @@ class ClusterAssignments(pl.graph.Node):
                     self.pool.add_worker(SingleClusterFullParallelization(**kwargs))
             else:
                 self.pool = SingleClusterFullParallelization(**kwargs)
-
         if self.clustering.n_clusters.sample_iter < self.delay:
             return
-
         if self.clustering.n_clusters.sample_iter % self.run_every_n_iterations != 0:
             return
-
         # Send in arguments for the start of the gibbs step
         start_time = time.time()
         base_Xdata = DMI.base.data
@@ -2274,7 +2253,6 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         return a
 
     @staticmethod
-    # @numba.jit(nopython=True, cache=True)
     def make_iidx2cidxpair(ret, n_clusters):
         '''Map the index of a cluster interaction to (dst,src) of clusters
 
@@ -2297,7 +2275,6 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
                 ret[i,0] = dst_cidx
                 ret[i,1] = src_cidx
                 i += 1
-        
         return ret
 
 
@@ -2313,7 +2290,6 @@ class CondensedClustering:
 
     '''
     def __init__(self, oidx2cidx):
-
         self.clusters = []
         self.oidx2cidx = oidx2cidx
         a = {}
@@ -2322,7 +2298,6 @@ class CondensedClustering:
                 a[cidx] = [oidx]
             else:
                 a[cidx].append(oidx)
-        
         cidx = 0
         while cidx in a:
             self.clusters.append(np.asarray(a[cidx], dtype=int))
@@ -2358,8 +2333,8 @@ class TrajectorySet(pl.graph.Node):
                 name=name+'_{}'.format(subj.name), G=G, shape=(n_taxas, n_timepoints),
                 value=np.zeros((n_taxas, n_timepoints), dtype=float), **kwargs))
         prior = pl.variables.Normal(
-            mean=pl.variables.Constant(name=self.name+'_prior_mean', value=0, G=self.G),
-            var=pl.variables.Constant(name=self.name+'_prior_var', value=1, G=self.G),
+            loc=pl.variables.Constant(name=self.name+'_prior_loc', value=0, G=self.G),
+            scale2=pl.variables.Constant(name=self.name+'_prior_scale2', value=1, G=self.G),
             name=self.name+'_prior', G=self.G)
         self.add_prior(prior)
 
@@ -2386,20 +2361,6 @@ class TrajectorySet(pl.graph.Node):
         for data in self.value:
             vals = np.append(vals, data.value)
         return vals
-
-    def mean(self):
-        return np.mean(self._vectorize())
-
-    def var(self):
-        return np.var(self._vectorize())
-
-    def iter_indices(self):
-        '''Iterate through the indices and the values
-        '''
-        for ridx in range(self.G.data.n_replicates):
-            for tidx in range(self.G.data.n_timepoints_for_replicate[ridx]):
-                for oidx in range(self.G.data.taxas.n_taxas):
-                    yield (ridx, tidx, oidx)
 
     def set_trace(self, *args, **kwargs):
         for ridx in range(len(self.value)):
@@ -2864,8 +2825,7 @@ class FilteringLogMP(pl.graph.Node):
         for ridx, tidx, oidx in self.x.iter_indices():
             val = self.G.data.data[ridx][oidx,tidx]
             self.x[ridx][oidx,tidx] = pl.random.truncnormal.sample(
-                mean=val,
-                std=math.sqrt(self.v1 * (val ** 2) + self.v2),
+                loc=val, scale=math.sqrt(self.v1 * (val ** 2) + self.v2),
                 low=0, high=float('inf'))
 
     def _init_moving_avg(self):
@@ -2888,8 +2848,7 @@ class FilteringLogMP(pl.graph.Node):
                 for oidx in range(len(self.G.data.taxas)):
                     val = np.mean(self.G.data.data[ridx][oidx, tidx_low: tidx_high])
                     self.x[ridx][oidx,tidx] = pl.random.truncnormal.sample(
-                        mean=val,
-                        std=math.sqrt(self.v1 * (val ** 2) + self.v2),
+                        loc=val, scale=math.sqrt(self.v1 * (val ** 2) + self.v2),
                         low=0, high=float('inf'))
 
     def _init_loess(self):
@@ -2906,8 +2865,7 @@ class FilteringLogMP(pl.graph.Node):
                 for tidx, t in enumerate(self.G.data.times[ridx]):
                     val = loess.estimate(t, window=self.window)
                     self.x[ridx][oidx,tidx] = pl.random.truncnormal.sample(
-                        mean=val,
-                        std=math.sqrt(self.v1 * (val ** 2) + self.v2),
+                        loc=val, scale=math.sqrt(self.v1 * (val ** 2) + self.v2),
                         low=0, high=float('inf'))
 
                     if np.isnan(self.x[ridx][oidx, tidx]):
@@ -3184,7 +3142,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         # latent state
         self.sum_q = np.sum(self.x, axis=0)
-        shape = (self.tune, ) + self.x.shape
         self.trace_iter = 0
 
         # proposal
@@ -3486,8 +3443,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         try:
             logx_new = pl.random.misc.fast_sample_normal(
-                self.curr_logx[tidx],
-                self.proposal_std)
+                loc=self.curr_logx[tidx],
+                scale=self.proposal_std)
         except:
             print('mu', self.curr_logx[tidx])
             print('std', self.proposal_std)
@@ -3578,20 +3535,20 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         try:
             return pl.random.normal.logpdf(
                 value=self.curr_logx[self.next_tidx], 
-                mean=logmu, std=self.curr_pv_std*self.sqrt_dts[self.tidx])
+                loc=logmu, scale=self.curr_pv_std*self.sqrt_dts[self.tidx])
         except:
             return _normal_logpdf(
                 value=self.curr_logx[self.next_tidx], 
-                mean=logmu, std=self.curr_pv_std*self.sqrt_dts[self.tidx])
+                loc=logmu, scale=self.curr_pv_std*self.sqrt_dts[self.tidx])
 
     def first_timepoint_reverse(self):
         # sample from the prior
         try:
             return pl.random.normal.logpdf(value=self.curr_logx[self.tidx],
-                mean=self.x_prior_mean, std=self.x_prior_std)
+                loc=self.x_prior_mean, scale=self.x_prior_std)
         except:
             return _normal_logpdf(value=self.curr_logx[self.tidx],
-                mean=self.x_prior_mean, std=self.x_prior_std)
+                loc=self.x_prior_mean, scale=self.x_prior_std)
 
     # @profile
     def default_reverse_loglik(self):
@@ -3604,10 +3561,10 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         try:
             return pl.random.normal.logpdf(value=self.curr_logx[self.tidx], 
-                mean=logmu, std=self.curr_pv_std*self.sqrt_dts[self.prev_tidx])
+                loc=logmu, scale=self.curr_pv_std*self.sqrt_dts[self.prev_tidx])
         except:
             return _normal_logpdf(value=self.curr_logx[self.tidx], 
-                mean=logmu, std=self.curr_pv_std*self.sqrt_dts[self.prev_tidx])
+                loc=logmu, scale=self.curr_pv_std*self.sqrt_dts[self.prev_tidx])
 
     def data_loglik_w_intermediates(self):
         '''data loglikelihood w/ intermediate timepoints
@@ -3639,26 +3596,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         qpcr = 0
         if self.calculate_qpcr_loglik:
             for qpcr_val in self.curr_qpcr_log_measurements:
-                a = pl.random.normal.logpdf(value=qpcr_val, mean=log_sum_q, std=self.curr_qpcr_std)
+                a = pl.random.normal.logpdf(value=qpcr_val, loc=log_sum_q, scale=self.curr_qpcr_std)
                 qpcr += a
-
-        # tidx = self.tidx
-        # if True: #tidx in [3,6,7]:
-        #     print('\n\nData, tidx', tidx)
-        #     print('sum_q:', sum_q)
-        #     print('rel:', rel)
-        #     print('qpcr: {}\n\tvalue: {}\n\tmean: {}\n\tstd: {}'.format(
-        #         qpcr, self.curr_qpcr_loc,
-        #         sum_q,
-        #         self.curr_qpcr_scale))
-        #     print('neg_bin: {}\n\tk: {}\n\tm: {}\n\tdispersion: {}'.format( 
-        #         negbin, self.curr_reads, self.curr_read_depth * rel,
-        #         self.a0/rel + self.a1))
-            
-        #     print('data\n\tcurr_x: {}, {}\n\tcurr_logx: {}'.format(
-        #         self.curr_x[self.tidx], 
-        #         np.exp(self.curr_logx[self.tidx]),
-        #         self.curr_logx[self.tidx]))
         return negbin + qpcr
 
     def compute_dynamics(self, tidx, Axj, a1):
@@ -3676,13 +3615,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         '''
         logxi = self.curr_logx[tidx]
         xi = self.curr_x[tidx]
-
-        # print('dynamics')
-        # print('xi*a1', xi*a1* self.dts[tidx])
-        # print('xi*xi*self.curr_self_interaction', xi*xi*self.curr_self_interaction* self.dts[tidx])
-        # print('xi*Axj', xi*Axj* self.dts[tidx])
-
-        # compute dynamics
         return logxi + (a1 - xi*self.curr_self_interaction + Axj) * self.dts[tidx]
 
 
@@ -3906,22 +3838,17 @@ class PriorMeanInteractions(pl.variables.Normal):
 
     def __init__(self, prior, **kwargs):
         kwargs['name'] = STRNAMES.PRIOR_MEAN_INTERACTIONS
-        pl.variables.Normal.__init__(self, mean=None, var=None, dtype=float, **kwargs)
+        pl.variables.Normal.__init__(self, loc=None, scale2=None, dtype=float, **kwargs)
         self.add_prior(prior)
 
     def __str__(self):
         # If this fails, it is because we are dividing by 0 sampler_iter
         # If which case we just return the value 
-        try:
-            s = 'Value: {}, Acceptance rate: {}'.format(
-                self.value, np.mean(self.acceptances[
-                    np.max([self.sample_iter-50, 0]):self.sample_iter]))
-        except:
-            s = str(self.value)
+        s = str(self.value)
         return s
 
-    def initialize(self, value_option, mean_option, var_option, value=None, 
-        mean=None, var=None, delay=0):
+    def initialize(self, value_option, loc_option, scale2_option, value=None, 
+        loc=None, scale2=None, delay=0):
         '''Initialize the hyperparameters
 
         Parameters
@@ -3934,18 +3861,18 @@ class PriorMeanInteractions(pl.variables.Normal):
                     Set to the mean of the prior
                 'manual'
                     Specify with the `value` parameter
-        mean_option : str
-            How to set the mean of the prior
+        loc_option : str
+            How to set the loc of the prior
                 'zero', 'auto'
                     Set to zero
                 'manual'
-                    Set with the `mean` parameter
-        var_option : str
+                    Set with the `loc` parameter
+        scale2_option : str
             'same-as-aii', 'auto'
                 Set as the same variance as the self-interactions
             'manual'
-                Set with the `var` parameter
-        value, mean, var : float
+                Set with the `scale2` parameter
+        value, loc, scale2 : float
             These are only necessary if we specify manual for any of the other 
             options
         delay : int
@@ -3957,31 +3884,31 @@ class PriorMeanInteractions(pl.variables.Normal):
             raise ValueError('`delay` ({}) must be >= 0'.format(delay))
         self.delay = delay
 
-        # Set the mean
-        if not pl.isstr(mean_option):
-            raise TypeError('`mean_option` ({}) must be a str'.format(type(mean_option)))
-        if mean_option == 'manual':
-            if not pl.isnumeric(mean):
-                raise TypeError('`mean` ({}) must be a numeric'.format(type(mean)))
-        elif mean_option in ['zero', 'auto']:
-            mean = 0
+        # Set the location parameter
+        if not pl.isstr(loc_option):
+            raise TypeError('`loc_option` ({}) must be a str'.format(type(loc_option)))
+        if loc_option == 'manual':
+            if not pl.isnumeric(loc):
+                raise TypeError('`loc` ({}) must be a numeric'.format(type(loc)))
+        elif loc_option in ['zero', 'auto']:
+            loc = 0
         else:
-            raise ValueError('`mean_option` ({}) not recognized'.format(mean_option))
-        self.prior.mean.override_value(mean)
+            raise ValueError('`loc_option` ({}) not recognized'.format(loc_option))
+        self.prior.loc.override_value(loc)
 
-        # Set the variance
-        if not pl.isstr(var_option):
-            raise TypeError('`var_option` ({}) must be a str'.format(type(var_option)))
-        if var_option == 'manual':
-            if not pl.isnumeric(var):
-                raise TypeError('`var` ({}) must be a numeric'.format(type(var)))
-            if var <= 0:
-                raise ValueError('`var` ({}) must be positive'.format(var))
-        elif var_option in ['same-as-aii', 'auto']:
-            var = self.G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value
+        # Set the scale2 parameter
+        if not pl.isstr(scale2_option):
+            raise TypeError('`scale2_option` ({}) must be a str'.format(type(scale2_option)))
+        if scale2_option == 'manual':
+            if not pl.isnumeric(scale2):
+                raise TypeError('`scale2` ({}) must be a numeric'.format(type(scale2)))
+            if scale2 <= 0:
+                raise ValueError('`scale2` ({}) must be positive'.format(scale2))
+        elif scale2_option in ['same-as-aii', 'auto']:
+            scale2 = self.G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value
         else:
-            raise ValueError('`var_option` ({}) not recognized'.format(var_option))
-        self.prior.var.override_value(var)
+            raise ValueError('`scale2_option` ({}) not recognized'.format(scale2_option))
+        self.prior.scale2.override_value(scale2)
 
         # Set the value
         if not pl.isstr(value_option):
@@ -3990,7 +3917,7 @@ class PriorMeanInteractions(pl.variables.Normal):
             if not pl.isnumeric(value):
                 raise TypeError('`value` ({}) must be a numeric'.format(type(value)))
         elif value_option in ['prior-mean', 'auto']:
-            value = self.prior.mean.value
+            value = self.prior.loc.value
         elif value_option == 'zero':
             value = 0
         else:
@@ -4011,11 +3938,11 @@ class PriorMeanInteractions(pl.variables.Normal):
         x = self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].value
         prec = 1/self.G[STRNAMES.PRIOR_VAR_INTERACTIONS].value
 
-        prior_prec = 1/self.prior.var.value
-        prior_mean = self.prior.mean.value
+        prior_prec = 1/self.prior.scale2.value
+        prior_mean = self.prior.loc.value
 
-        self.var.value = 1/(prior_prec + (len(x)*prec))
-        self.mean.value = self.var.value * ((prior_mean * prior_prec) + (np.sum(x)*prec))
+        self.scale2.value = 1/(prior_prec + (len(x)*prec))
+        self.loc.value = self.scale2.value * ((prior_mean * prior_prec) + (np.sum(x)*prec))
         self.sample()
 
     def visualize(self, path, f, section='posterior'):
@@ -4341,7 +4268,7 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
                 raise ValueError('`value` ({}) must be a numeric (float,int)'.format(
                     value.__class__))
         elif value_option == 'auto':
-            self.value = self.prior.mean()/100000
+            self.value = self.prior.mean()
         else:
             raise ValueError('value option "{}" not recognized for indicator prob'.format(
                 value_option))
@@ -4349,9 +4276,7 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
         self.a.value = self.prior.a.value
         self.b.value = self.prior.b.value
         logging.info('Indicator Probability initialization results:\n' \
-            '\tprior a: {}\n' \
-            '\tprior b: {}\n' \
-            '\tvalue: {}'.format(
+            '\tprior a: {}\n\tprior b: {}\n\tvalue: {}'.format(
                 self.prior.a.value, self.prior.b.value, self.value))
 
     def update(self):
@@ -4501,10 +4426,8 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         if self.sample_iter % self.run_every_n_iterations != 0:
             return
 
-        # keys = npr.permutation(self.interactions.key_pairs())
         idxs = npr.permutation(self.interactions.size)
         for idx in idxs:
-            # print('indicator {}/{}'.format(iii, len(keys)))
             self.update_single_idx_slow(idx=idx)
 
         self.update_cnt_indicators()
@@ -4532,17 +4455,6 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         ll_on = d_on['ret'] + prior_ll_on
         ll_off = d_off['ret'] + prior_ll_off
-
-        # print('slow\n\ttotal: {}\n\tbeta_logdet_diff: {}\n\t' \
-        #     'priorvar_logdet_diff: {}\n\tbEb_diff: {}\n\t' \
-        #     'bEbprior_diff: {}\n\tn_on_when_off: {}'.format(
-        #         ll_on - ll_off,
-        #         d_on['beta_logdet'] - d_off['beta_logdet'],
-        #         d_on['priorvar_logdet'] - d_off['priorvar_logdet'],
-        #         d_on['bEb'] - d_off['bEb'],
-        #         d_on['bEbprior'] - d_off['bEbprior'],
-        #         self.interactions.num_pos_indicators()))
-
         dd = [ll_off, ll_on]
 
         res = bool(sample_categorical_log(dd))
@@ -4731,8 +4643,8 @@ class ClusterInteractionIndicators(pl.variables.Variable):
                 for perturbation in self.G.perturbations:
                     if perturbation.indicator.value[tcid]:
                         # This is on, get the parameters
-                        mean.append(perturbation.magnitude.prior.mean.value)
-                        var.append(perturbation.magnitude.prior.var.value)
+                        mean.append(perturbation.magnitude.prior.loc.value)
+                        var.append(perturbation.magnitude.prior.scale2.value)
                 self.prior_mean_perturbations[tcid] = np.asarray(mean)
                 self.prior_var_perturbations[tcid] = np.asarray(var)
                 self.prior_prec_perturbations[tcid] = 1/self.prior_var_perturbations[tcid]
@@ -4742,7 +4654,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
             for perturbation in self.G.perturbations:
                 self.priorvar_det_perturbations += \
                     perturbation.indicator.num_on_clusters() * \
-                    perturbation.magnitude.prior.var.value
+                    perturbation.magnitude.prior.scale2.value
 
     # @profile
     def update_relative(self):
@@ -4818,7 +4730,6 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         beta_prec = X.T @ process_prec @ X + prior_prec
         beta_cov = pinv(beta_prec, self)
         beta_mean = beta_cov @ ( X.T @ process_prec @ y + prior_prec @ prior_mean )
-        
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
         # Perform the marginalization
@@ -4876,20 +4787,6 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         ll_off = d_off + self.prior_ll_off
 
         dd = [ll_off, ll_on]
-
-        # print('\nindicator', idx)
-        # print('fast\n\ttotal: {}\n\tbeta_logdet_diff: {}\n\t' \
-        #     'priorvar_logdet_diff: {}\n\tbEb_diff: {}\n\t' \
-        #     'bEbprior_diff: {}\n\tn_on_when_off: {}'.format(
-        #         ll_on - ll_off,
-        #         d_on['beta_logdet'] - d_off['beta_logdet'],
-        #         d_on['priorvar_logdet'] - d_off['priorvar_logdet'],
-        #         d_on['bEb'] - d_off['bEb'],
-        #         d_on['bEbprior'] - d_off['bEbprior'],
-        #         self.n_on_master))
-        # print('log(prior_var)', np.log(self.prior_var_interaction))
-        # self.update_single_idx_slow(idx)
-
         res = bool(sample_categorical_log(dd))
         if res:
             self.n_on_master += 1
@@ -4955,39 +4852,6 @@ class ClusterInteractionIndicators(pl.variables.Variable):
             logging.critical('Crashed in log_det')
             logging.critical('beta_cov:\n{}'.format(beta_cov))
             logging.critical('prior_prec\n{}'.format(prior_prec))
-
-            logging.critical('here')
-            print('y')
-            print(y.shape)
-            print(y)
-            print('process_prec')
-            print(process_prec.shape)
-            print('X')
-            print(X.shape)
-            print(X)
-            print('priors')
-            print(prior_mean)
-            print(prior_prec_diag)
-            print('self-interactions')
-            X = pl.toarray(self.G.data.design_matrices[STRNAMES.SELF_INTERACTION_VALUE].matrix)
-            print(X.shape)
-            print(np.any(np.isnan(X)))
-            print('growth')
-            X = pl.toarray(self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].matrix_without_perturbations)
-            print(X.shape)
-            print(np.any(np.isnan(X)))
-            print('orig y')
-            y = self.G.data.lhs.vector
-            print(y.shape)
-            print(np.any(np.isnan(y)))
-            print('cluster-interactions')
-            X = pl.toarray(self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].matrix)
-            print(X.shape)
-            print(np.any(np.isnan(X)))
-            n_on = 0
-            for row in range(X.shape[0]):
-                n_on += np.any(np.isnan(X[row]))
-            print('nans on {}/{} rows'.format(n_on, X.shape[0]))
             raise
         
         if val:
@@ -5333,7 +5197,7 @@ class PriorVarMH(pl.variables.SICS):
         # Get necessary data of the respective parameter
         var = self.G[self.child_name]
         x = var.value.ravel()
-        mu = var.prior.mean.value
+        mu = var.prior.loc.value
         low = var.low
         high = var.high
 
@@ -5348,12 +5212,12 @@ class PriorVarMH(pl.variables.SICS):
         prev_target_ll = 0
         for i in range(len(x)):
             prev_target_ll += pl.random.truncnormal.logpdf(
-                value=x[i], mean=mu, std=prev_value_std,
+                value=x[i], loc=mu, scale=prev_value_std,
                 low=low, high=high)
         new_target_ll = 0
         for i in range(len(x)):
             new_target_ll += pl.random.truncnormal.logpdf(
-                value=x[i], mean=mu, std=new_value_std,
+                value=x[i], loc=mu, scale=new_value_std,
                 low=low, high=high)
 
         # Normalize by the ll of the proposal
@@ -5444,10 +5308,10 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             kwargs['name'] = STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS
         else:
             raise ValueError('`child_name` ({}) not recognized'.format(child_name))
-        pl.variables.TruncatedNormal.__init__(self, mean=None, var=None, dtype=float, **kwargs)
+        pl.variables.TruncatedNormal.__init__(self, loc=None, scale2=None, dtype=float, **kwargs)
         self.child_name = child_name
         self.add_prior(prior)
-        self.proposal = pl.variables.TruncatedNormal(mean=None, var=None, value=None)
+        self.proposal = pl.variables.TruncatedNormal(loc=None, scale2=None, value=None)
 
     def __str__(self):
         # If this fails, it is because we are dividing by 0 sampler_iter
@@ -5460,9 +5324,9 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             s = str(self.value)
         return s
 
-    def initialize(self, value_option, mean_option, var_option,
+    def initialize(self, value_option, loc_option, scale2_option,
         truncation_settings, proposal_option, target_acceptance_rate,
-        tune, end_tune, value=None, mean=None, var=None, proposal_var=None,
+        tune, end_tune, value=None, loc=None, scale=None, proposal_var=None,
         delay=0):
         '''These are the parameters to initialize the parameters
         of the class. Depending whether it is a self-interaction
@@ -5491,23 +5355,23 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
                     (-\infty, 0)
                 'in-vivo'
                     Not implemented
-        mean_option : str
+        loc_option : str
             How to set the mean
                 'auto', 'median-linear-regression'
                     Set the mean to the median of the values from an
                     unregularized linear-regression
                 'manual'
-                    `mean` must also be specified
-        var_option : str
-            How to set the var
+                    `loc` must also be specified
+        scale2_option : str
+            How to set the standard deviation
                 'auto', 'diffuse-linear-regression'
-                    Set the var to 10^4 * median(a_l)
+                    Set the variance to 10^4 * median(a_l)
                 'manaul'
-                    `var` must also be specified.
+                    `scale2` must also be specified.
         proposal_option : str
             How to initialize the proposal variance:
                 'auto'
-                    mean**2 / 100
+                    loc**2 / 100
                 'manual'
                     `proposal_var` must also be supplied
         target_acceptance_rate : str, float
@@ -5603,13 +5467,46 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         self.proposal.high = self.high
         self.proposal.low = self.low
 
-        # Set the mean
-        if not pl.isstr(mean_option):
-            raise TypeError('`mean_option` ({}) must be a str'.format(type(mean_option)))
-        if mean_option == 'manual':
-            if not pl.isnumeric(mean):
-                raise TypeError('`mean` ({}) must be a numeric'.format(type(mean)))
-        elif mean_option in ['auto', 'median-linear-regression']:
+        # Set the loc
+        if not pl.isstr(loc_option):
+            raise TypeError('`loc_option` ({}) must be a str'.format(type(loc_option)))
+        if loc_option == 'manual':
+            if not pl.isnumeric(loc):
+                raise TypeError('`loc` ({}) must be a numeric'.format(type(loc)))
+        elif loc_option in ['auto', 'median-linear-regression']:
+            # Perform linear regression
+            if self.child_name == STRNAMES.GROWTH_VALUE:
+                rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
+                lhs = []
+            else:
+                rhs = [STRNAMES.SELF_INTERACTION_VALUE]
+                lhs = [STRNAMES.GROWTH_VALUE]
+            X = self.G.data.construct_rhs(keys=rhs,
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
+                index_out_perturbations=True)
+            y = self.G.data.construct_lhs(keys=lhs, 
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
+                index_out_perturbations=True)
+
+            prec = X.T @ X
+            cov = pinv(prec, self)
+            loc = cov @ X.T @ y
+
+            if self.child_name == STRNAMES.GROWTH_VALUE:
+                loc = np.median(loc[:self.G.data.n_taxas])
+            else:
+                loc = np.median(loc)
+        else:
+            raise ValueError('`loc_option` ({}) not recognized'.format(loc_option))
+        self.prior.loc.override_value(loc)
+
+        # Set the scale
+        if not pl.isstr(scale2_option):
+            raise TypeError('`scale2_option` ({}) must be a str'.format(type(scale2_option)))
+        if scale2_option == 'manual':
+            if not pl.isnumeric(scale):
+                raise TypeError('`scale` ({}) must be a numeric'.format(type(scale)))
+        elif scale2_option in ['auto', 'diffuse-linear-regression']:
             # Perform linear regression
             if self.child_name == STRNAMES.GROWTH_VALUE:
                 rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
@@ -5632,43 +5529,10 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
                 mean = np.median(mean[:self.G.data.n_taxas])
             else:
                 mean = np.median(mean)
+            scale2 = 1e4 * (mean**2)
         else:
-            raise ValueError('`mean_option` ({}) not recognized'.format(mean_option))
-        self.prior.mean.override_value(mean)
-
-        # Set the var
-        if not pl.isstr(var_option):
-            raise TypeError('`var_option` ({}) must be a str'.format(type(var_option)))
-        if var_option == 'manual':
-            if not pl.isnumeric(var):
-                raise TypeError('`var` ({}) must be a numeric'.format(type(var)))
-        elif var_option in ['auto', 'diffuse-linear-regression']:
-            # Perform linear regression
-            if self.child_name == STRNAMES.GROWTH_VALUE:
-                rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
-                lhs = []
-            else:
-                rhs = [STRNAMES.SELF_INTERACTION_VALUE]
-                lhs = [STRNAMES.GROWTH_VALUE]
-            X = self.G.data.construct_rhs(keys=rhs,
-                kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
-                index_out_perturbations=True)
-            y = self.G.data.construct_lhs(keys=lhs, 
-                kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
-                index_out_perturbations=True)
-
-            prec = X.T @ X
-            cov = pinv(prec, self)
-            mean = cov @ X.T @ y
-
-            if self.child_name == STRNAMES.GROWTH_VALUE:
-                mean = np.median(mean[:self.G.data.n_taxas])
-            else:
-                mean = np.median(mean)
-            var = 1e4 * (mean**2)
-        else:
-            raise ValueError('`var_option` ({}) not recognized'.format(var_option))
-        self.prior.var.override_value(var)
+            raise ValueError('`scale2_option` ({}) not recognized'.format(scale2_option))
+        self.prior.scale2.override_value(scale2)
 
         # Set the value
         if not pl.isstr(value_option):
@@ -5700,7 +5564,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             else:
                 value = mean
         elif value_option in ['auto', 'prior-mean']:
-            value = self.prior.mean.value
+            value = self.prior.loc.value
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
         self.value = value
@@ -5720,7 +5584,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         else:
             raise ValueError('`proposal_option` ({}) not recognized'.format(
                 proposal_option))
-        self.proposal.var.value = proposal_var
+        self.proposal.scale2.value = proposal_var
 
     def update_var(self):
         '''Update the `var` parameter so that we adjust the acceptance
@@ -5738,9 +5602,9 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             # Update var
             acceptance_rate = self.temp_acceptances / self.tune
             if acceptance_rate > self.target_acceptance_rate:
-                self.proposal.var.value *= 1.5
+                self.proposal.scale2.value *= 1.5
             else:
-                self.proposal.var.value /= 1.5
+                self.proposal.scale2.value /= 1.5
             self.temp_acceptances = 0
 
     def update(self):
@@ -5750,62 +5614,52 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         if self.sample_iter < self.delay:
             return
         self.update_var()
-        proposal_std = np.sqrt(self.proposal.var.value)
+        proposal_std = np.sqrt(self.proposal.scale2.value)
 
         # Get necessary data of the respective parameter
         variable = self.G[self.child_name]
         x = variable.value.ravel()
-        std = np.sqrt(variable.prior.var.value)
+        std = np.sqrt(variable.prior.scale2.value)
 
         low = variable.low
         high = variable.high
 
         # propose a new value for the mean
         prev_mean = self.value
-        self.proposal.mean.value = self.value
+        self.proposal.loc.value = self.value
         new_mean = self.proposal.sample() # Sample a new value
 
         # Calculate the target distribution ll
         prev_target_ll = pl.random.truncnormal.logpdf( 
-            value=prev_mean, mean=self.prior.mean.value, 
-            std=np.sqrt(self.prior.var.value), low=self.low,
+            value=prev_mean, loc=self.prior.loc.value, 
+            scale=np.sqrt(self.prior.scale2.value), low=self.low,
             high=self.high)
         for i in range(len(x)):
             prev_target_ll += pl.random.truncnormal.logpdf(
-                value=x[i], mean=prev_mean, std=std,
+                value=x[i], loc=prev_mean, scale=std,
                 low=low, high=high)
         new_target_ll = pl.random.truncnormal.logpdf( 
-            value=new_mean, mean=self.prior.mean.value, 
-            std=np.sqrt(self.prior.var.value), low=self.low,
+            value=new_mean, loc=self.prior.loc.value, 
+            scale=np.sqrt(self.prior.scale2.value), low=self.low,
             high=self.high)
         for i in range(len(x)):
             new_target_ll += pl.random.truncnormal.logpdf(
-                value=x[i], mean=new_mean, std=std,
+                value=x[i], loc=new_mean, scale=std,
                 low=low, high=high)
 
         # Normalize by the ll of the proposal
         prev_prop_ll = pl.random.truncnormal.logpdf(
-            value=prev_mean, mean=new_mean, std=proposal_std,
+            value=prev_mean, loc=new_mean, scale=proposal_std,
             low=low, high=high)
         
         new_prop_ll = pl.random.truncnormal.logpdf(
-            value=new_mean, mean=prev_mean, std=proposal_std,
+            value=new_mean, loc=prev_mean, scale=proposal_std,
             low=low, high=high)
 
         # Accept or reject
         r = (new_target_ll - prev_prop_ll) - \
             (prev_target_ll - new_prop_ll)
         u = np.log(pl.random.misc.fast_sample_standard_uniform())
-
-        # print('\n\n\n{} prior_mean\n----------'.format(self.child_name))
-        # print('x', x)
-        # print('prev_mean', prev_mean)
-        # print('prev_target_ll', prev_target_ll)
-        # print('prev_prop_ll', prev_prop_ll)
-        # print('new mean', new_mean)
-        # print('new_target_ll', new_target_ll)
-        # print('new_prop_ll', new_prop_ll)
-        # print('\nr', r, u)
 
         if r >= u:
             self.acceptances[self.sample_iter] = True
@@ -5853,8 +5707,8 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         ys = []
         for x in xs:
             ys.append(pl.random.normal.pdf(value=x, 
-                mean=self.prior.mean.value,
-                std=np.sqrt(self.prior.var.value)))
+                loc=self.prior.loc.value,
+                scale=np.sqrt(self.prior.scale2.value)))
         ax1.plot(xs, ys, label='prior', alpha=0.5, color='red', rasterized=True)
         ax1.legend()
 
@@ -5877,7 +5731,7 @@ class Growth(pl.variables.TruncatedNormal):
     '''
     def __init__(self, prior, **kwargs):
         kwargs['name'] = STRNAMES.GROWTH_VALUE
-        pl.variables.TruncatedNormal.__init__(self, mean=None, var=None, low=0.,
+        pl.variables.TruncatedNormal.__init__(self, loc=None, scale2=None, low=0.,
             high=float('inf'), dtype=float, **kwargs)
         self.set_value_shape(shape=(len(self.G.data.taxas),))
         self.add_prior(prior)
@@ -5891,7 +5745,7 @@ class Growth(pl.variables.TruncatedNormal):
         return
 
     def initialize(self, value_option, truncation_settings,
-        value=None, delay=0, mean=None):
+        value=None, delay=0, loc=None):
         '''Initialize the growth values and hyperparamters
 
         Parameters
@@ -5996,12 +5850,12 @@ class Growth(pl.variables.TruncatedNormal):
         elif value_option in ['auto', 'ones']:
             self.value = np.ones(len(self.G.data.taxas), dtype=float)
         elif value_option == 'prior-mean':
-            self.value = self.prior.mean.value * np.ones(self.G.data.n_taxas)
+            self.value = self.prior.mean() * np.ones(self.G.data.n_taxas)
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
 
         logging.info('Growth value initialization: {}'.format(self.value))
-        logging.info('Growth prior mean: {}'.format(self.prior.mean.value))
+        logging.info('Growth prior mean: {}'.format(self.prior.loc.value))
         logging.info('Growth truncation settings: {}'.format((self.low, self.high)))
 
     def update(self):
@@ -6018,8 +5872,8 @@ class Growth(pl.variables.TruncatedNormal):
             self.value = np.array([self.value])
 
         if np.any(np.isnan(self.value)):
-            logging.critical('mean: {}'.format(self.mean.value))
-            logging.critical('var: {}'.format(self.var.value))
+            logging.critical('mean: {}'.format(self.loc.value))
+            logging.critical('var: {}'.format(self.scale2.value))
             logging.critical('value: {}'.format(self.value))
             raise ValueError('`Values in {} are nan: {}'.format(self.name, self.value))
 
@@ -6055,8 +5909,8 @@ class Growth(pl.variables.TruncatedNormal):
         prec = X.T @ process_prec @ X + prior_prec
         cov = pinv(prec, self)
 
-        self.mean.value = np.asarray(cov @ (X.T @ process_prec.dot(y) + pm)).ravel()
-        self.var.value = np.diag(cov)
+        self.loc.value = np.asarray(cov @ (X.T @ process_prec.dot(y) + pm)).ravel()
+        self.scale2.value = np.diag(cov)
 
     def visualize(self, basepath, section='posterior', taxa_formatter='%(name)s', 
         true_value=None):
@@ -6118,12 +5972,12 @@ class Growth(pl.variables.TruncatedNormal):
             prior_mean_trace = self.G[STRNAMES.PRIOR_MEAN_GROWTH].get_trace_from_disk(
                     section=section)
         else:
-            prior_mean_trace = self.prior.mean.value * np.ones(len_posterior, dtype=float)
+            prior_mean_trace = self.prior.loc.value * np.ones(len_posterior, dtype=float)
         if self.G.tracer.is_being_traced(STRNAMES.PRIOR_VAR_GROWTH):
             prior_std_trace = np.sqrt(
                 self.G[STRNAMES.PRIOR_VAR_GROWTH].get_trace_from_disk(section=section))
         else:
-            prior_std_trace = np.sqrt(self.prior.var.value) * np.ones(len_posterior, dtype=float)
+            prior_std_trace = np.sqrt(self.prior.scale2.value) * np.ones(len_posterior, dtype=float)
 
         for idx in range(len(taxas)):
             fig = plt.figure()
@@ -6138,7 +5992,7 @@ class Growth(pl.variables.TruncatedNormal):
 
             arr = np.zeros(len(prior_std_trace), dtype=float)
             for i in range(len(prior_std_trace)):
-                arr[i] = pl.random.truncnormal.sample(mean=prior_mean_trace[i], std=prior_std_trace[i], 
+                arr[i] = pl.random.truncnormal.sample(loc=prior_mean_trace[i], scale=prior_std_trace[i], 
                     low=self.low, high=self.high)
             visualization.render_trace(var=arr, plt_type='hist', 
                 label='prior', color='red', ax=ax_posterior, rasterized=True)
@@ -6176,7 +6030,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
     '''
     def __init__(self, prior, **kwargs):
         kwargs['name'] = STRNAMES.SELF_INTERACTION_VALUE
-        pl.variables.TruncatedNormal.__init__(self, mean=None, var=None, low=0.,
+        pl.variables.TruncatedNormal.__init__(self, loc=None, scale2=None, low=0.,
             high=float('inf'), dtype=float, **kwargs)
         self.set_value_shape(shape=(len(self.G.data.taxas),))
         self.add_prior(prior)
@@ -6188,7 +6042,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         return
 
     def initialize(self, value_option, truncation_settings,
-        value=None, delay=0, mean=None, q=None, rescale_value=None):
+        value=None, delay=0, loc=None, q=None, rescale_value=None):
         '''Initialize the self-interactions values and hyperparamters
 
         Parameters
@@ -6337,7 +6191,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             mean = (cov @ X.transpose().dot(y)).ravel()
             self.value = np.absolute(mean[len(self.G.data.taxas):])
         elif value_option == 'prior-mean':
-            self.value = self.prior.mean.value * np.ones(self.G.data.n_taxas)
+            self.value = self.prior.loc.value * np.ones(self.G.data.n_taxas)
         elif value_option in ['steady-state', 'auto']:
             # check quantile
             if not pl.isnumeric(q):
@@ -6401,8 +6255,8 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             self.value = np.array([self.value])
 
         if np.any(np.isnan(self.value)):
-            logging.critical('mean: {}'.format(self.mean.value))
-            logging.critical('var: {}'.format(self.var.value))
+            logging.critical('mean: {}'.format(self.loc.value))
+            logging.critical('var: {}'.format(self.scale2.value))
             logging.critical('value: {}'.format(self.value))
             raise ValueError('`Values in {} are nan: {}'.format(self.name, self.value))
 
@@ -6425,12 +6279,12 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         prior_prec = build_prior_covariance(G=self.G, cov=False,
             order=rhs, sparse=True)
 
-        pm = prior_prec @ (self.prior.mean.value * np.ones(self.G.data.n_taxas).reshape(-1,1))
+        pm = prior_prec @ (self.prior.loc.value * np.ones(self.G.data.n_taxas).reshape(-1,1))
 
         prec = X.T @ process_prec @ X + prior_prec
         cov = pinv(prec, self)
-        self.mean.value = np.asarray(cov @ (X.T @ process_prec.dot(y) + pm)).ravel()
-        self.var.value = np.diag(cov)
+        self.loc.value = np.asarray(cov @ (X.T @ process_prec.dot(y) + pm)).ravel()
+        self.scale2.value = np.diag(cov)
 
     def visualize(self, basepath, section='posterior', taxa_formatter='%(name)s', 
         true_value=None):
@@ -6492,12 +6346,12 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             prior_mean_trace = self.G[STRNAMES.PRIOR_MEAN_GROWTH].get_trace_from_disk(
                     section=section)
         else:
-            prior_mean_trace = self.prior.mean.value * np.ones(len_posterior, dtype=float)
+            prior_mean_trace = self.prior.loc.value * np.ones(len_posterior, dtype=float)
         if self.G.tracer.is_being_traced(STRNAMES.PRIOR_VAR_GROWTH):
             prior_std_trace = np.sqrt(
                 self.G[STRNAMES.PRIOR_VAR_GROWTH].get_trace_from_disk(section=section))
         else:
-            prior_std_trace = np.sqrt(self.prior.var.value) * np.ones(len_posterior, dtype=float)
+            prior_std_trace = np.sqrt(self.prior.scale2.value) * np.ones(len_posterior, dtype=float)
 
         for idx in range(len(taxas)):
             fig = plt.figure()
@@ -6512,7 +6366,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
 
             arr = np.zeros(len(prior_std_trace), dtype=float)
             for i in range(len(prior_std_trace)):
-                arr[i] = pl.random.truncnormal.sample(mean=prior_mean_trace[i], std=prior_std_trace[i], 
+                arr[i] = pl.random.truncnormal.sample(loc=prior_mean_trace[i], scale=prior_std_trace[i], 
                     low=self.low, high=self.high)
             visualization.render_trace(var=arr, plt_type='hist', 
                 label='prior', color='red', ax=ax_posterior, rasterized=True)
@@ -6543,7 +6397,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         return df
 
 
-class RegressCoeff(pl.variables.MVN):
+class GLVParameters(pl.variables.MVN):
     '''This is the posterior of the regression coefficients.
     The current posterior assumes a prior mean of 0.
 
@@ -6824,7 +6678,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
         '''
 
         kwargs['name'] = STRNAMES.PERT_VALUE
-        pl.variables.Normal.__init__(self, mean=None, var=None, dtype=float, **kwargs)
+        pl.variables.Normal.__init__(self, loc=None, scale2=None, dtype=float, **kwargs)
         self.perturbations = self.G.perturbations
 
     def __str__(self):
@@ -6866,7 +6720,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
     def sample_iter(self):
         return self.perturbations[0].sample_iter
 
-    def initialize(self, value_option, value=None, mean=None, var=None, delay=0):
+    def initialize(self, value_option, value=None, loc=None, delay=0):
         '''Initialize the prior and the value of the perturbation. We assume that
         each perturbation has the same hyperparameters for the prior
 
@@ -6882,7 +6736,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
                     Initialize to the same value as the prior mean
         delay : int, None
             How many MCMC iterations to delay the update of the values.
-        mean, var, value : int, float, array
+        loc, value : int, float, array
             - Only necessary if any of the options are 'manual'
         '''
         if delay is None:
@@ -6912,9 +6766,9 @@ class PerturbationMagnitudes(pl.variables.Normal):
                     perturbation.magnitude.value[cid] = 0
         elif value_option in ['auto', 'prior-mean']:
             for perturbation in self.perturbations:
-                mean = perturbation.magnitude.prior.mean.value
+                loc = perturbation.magnitude.prior.loc.value
                 for cid in perturbation.clustering.order:
-                    perturbation.magnitude.value[cid] = mean
+                    perturbation.magnitude.value[cid] = loc
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
 
@@ -6964,13 +6818,13 @@ class PerturbationMagnitudes(pl.variables.Normal):
         # print(self.G[STRNAMES.GROWTH_VALUE].value)
         # print(self.G[STRNAMES.SELF_INTERACTION_VALUE].value)
 
-        self.mean.value = mean
-        self.var.value = np.diag(cov)
+        self.loc.value = mean
+        self.scale2.value = np.diag(cov)
         value = self.sample()
 
         if np.any(np.isnan(value)):
-            logging.critical('mean: {}'.format(self.mean.value))
-            logging.critical('var: {}'.format(self.var.value))
+            logging.critical('mean: {}'.format(self.loc.value))
+            logging.critical('var: {}'.format(self.scale2.value))
             logging.critical('value: {}'.format(self.value))
             logging.critical('prior mean: {}'.format(prior_mean.ravel()))
             raise ValueError('`Values in {} are nan: {}'.format(self.name, self.value))
@@ -7038,13 +6892,13 @@ class PerturbationMagnitudes(pl.variables.Normal):
 
         # Make the prior
         if self.G.inference.tracer.is_being_traced(STRNAMES.PRIOR_MEAN_PERT):
-            prior_mean_trace = perturbation.magnitude.prior.mean.get_trace_from_disk(section=section)
+            prior_mean_trace = perturbation.magnitude.prior.loc.get_trace_from_disk(section=section)
         else:
-            prior_mean_trace = np.ones(len_posterior) + perturbation.magnitude.prior.mean.value
+            prior_mean_trace = np.ones(len_posterior) + perturbation.magnitude.prior.loc.value
         if self.G.inference.tracer.is_being_traced(STRNAMES.PRIOR_VAR_PERT):
-            prior_std_trace = np.sqrt(perturbation.magnitude.prior.var.get_trace_from_disk(section=section))
+            prior_std_trace = np.sqrt(perturbation.magnitude.prior.scale2.get_trace_from_disk(section=section))
         else:
-            prior_std_trace = np.ones(len_posterior) + np.sqrt(perturbation.magnitude.prior.var.value)
+            prior_std_trace = np.ones(len_posterior) + np.sqrt(perturbation.magnitude.prior.scale2.value)
         
         for oidx in range(len(self.G.data.taxas)):
             fig = plt.figure()
@@ -7056,7 +6910,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
             low_x, high_x = ax_posterior.get_xlim()
             arr = np.zeros(len(prior_std_trace), dtype=float)
             for i in range(len(prior_std_trace)):
-                arr[i] = pl.random.normal.sample(mean=prior_mean_trace[i], std=prior_std_trace[i])
+                arr[i] = pl.random.normal.sample(loc=prior_mean_trace[i], scale=prior_std_trace[i])
             visualization.render_trace(var=arr, plt_type='hist', 
                 label='prior', color='red', ax=ax_posterior, rasterized=True)
 
@@ -7542,13 +7396,13 @@ class PerturbationIndicators(pl.Node):
             self.prior_ll_offs.append(np.log(1 - prob_on))
             
             self.priorvar_logdet_diffs.append(
-                np.log(perturbation.magnitude.prior.var.value))
+                np.log(perturbation.magnitude.prior.scale2.value))
 
             self.prior_prec_perturbations.append( 
-                1/perturbation.magnitude.prior.var.value)
+                1/perturbation.magnitude.prior.scale2.value)
 
             self.prior_mean_perturbations.append(
-                perturbation.magnitude.prior.mean.value)
+                perturbation.magnitude.prior.loc.value)
 
         # Make perturbation matrices
         self.perturbationsXs = {}
@@ -7889,35 +7743,35 @@ class PriorVarPerturbations(pl.Variable):
         for perturbation in self.perturbations:
             s += '\n\tperturbation {}: {}'.format(
                 perturbation.name,
-                perturbation.magnitude.prior.var.value)
+                perturbation.magnitude.prior.scale2.value)
         return s
 
     @property
     def sample_iter(self):
-        return self.perturbations[0].magnitude.prior.var.sample_iter
+        return self.perturbations[0].magnitude.prior.scale2.sample_iter
 
     def initialize(self, **kwargs):
         '''Every prior variance on the perturbations gets the same hyperparameters
         '''
         for perturbation in self.perturbations:
-            perturbation.magnitude.prior.var.initialize(**kwargs)
+            perturbation.magnitude.prior.scale2.initialize(**kwargs)
 
     def update(self):
         for perturbation in self.perturbations:
-            perturbation.magnitude.prior.var.update()
+            perturbation.magnitude.prior.scale2.update()
 
     def set_trace(self, *args, **kwargs):
         for perturbation in self.perturbations:
-            perturbation.magnitude.prior.var.set_trace(*args, **kwargs)
+            perturbation.magnitude.prior.scale2.set_trace(*args, **kwargs)
 
     def add_trace(self, *args, **kwargs):
         for perturbation in self.perturbations:
-            perturbation.magnitude.prior.var.add_trace(*args, **kwargs)
+            perturbation.magnitude.prior.scale2.add_trace(*args, **kwargs)
 
     def get_single_value_of_perts(self):
         '''Get the variance for each perturbation
         '''
-        return np.asarray([p.magnitude.prior.var.value for p in self.perturbations])
+        return np.asarray([p.magnitude.prior.scale2.value for p in self.perturbations])
 
     def diag(self, only_pos_ind=True):
         '''Return the diagonal of the prior variances stacked up in order
@@ -7940,7 +7794,7 @@ class PriorVarPerturbations(pl.Variable):
                 n = len(perturbation.clustering)
             ret = np.append(
                 ret,
-                np.ones(n, dtype=float)*perturbation.magnitude.prior.var.value)
+                np.ones(n, dtype=float)*perturbation.magnitude.prior.scale2.value)
         return ret
 
     def visualize(self, path, f, pidx, section='posterior'):
@@ -7967,7 +7821,7 @@ class PriorVarPerturbations(pl.Variable):
             return f
         perturbation = self.perturbations[pidx]
         return _scalar_visualize(path=path, f=f, section=section,
-            obj=perturbation.magnitude.prior.var, log_scale=True)
+            obj=perturbation.magnitude.prior.scale2, log_scale=True)
 
 
 class PriorVarPerturbationSingle(pl.variables.SICS):
@@ -8085,7 +7939,7 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
             return
 
         x = self.perturbation.cluster_array(only_pos_ind=True)
-        mu = self.perturbation.magnitude.prior.mean.value
+        mu = self.perturbation.magnitude.prior.loc.value
 
         se = np.sum(np.square(x - mu))
         n = len(x)
@@ -8115,35 +7969,35 @@ class PriorMeanPerturbations(pl.Variable):
         for perturbation in self.perturbations:
             s += '\n\tperturbation {}: {}'.format(
                 perturbation.name,
-                perturbation.magnitude.prior.mean.value)
+                perturbation.magnitude.prior.loc.value)
         return s
 
     @property
     def sample_iter(self):
-        return self.perturbations[0].magnitude.prior.mean.sample_iter
+        return self.perturbations[0].magnitude.prior.loc.sample_iter
 
     def initialize(self, **kwargs):
         '''Every prior variance on the perturbations gets the same hyperparameters
         '''
         for perturbation in self.perturbations:
-            perturbation.magnitude.prior.mean.initialize(**kwargs)
+            perturbation.magnitude.prior.loc.initialize(**kwargs)
 
     def update(self):
         for perturbation in self.perturbations:
-            perturbation.magnitude.prior.mean.update()
+            perturbation.magnitude.prior.loc.update()
 
     def set_trace(self, *args, **kwargs):
         for perturbation in self.perturbations:
-            perturbation.magnitude.prior.mean.set_trace(*args, **kwargs)
+            perturbation.magnitude.prior.loc.set_trace(*args, **kwargs)
 
     def add_trace(self, *args, **kwargs):
         for perturbation in self.perturbations:
-            perturbation.magnitude.prior.mean.add_trace(*args, **kwargs)
+            perturbation.magnitude.prior.loc.add_trace(*args, **kwargs)
 
     def get_single_value_of_perts(self):
         '''Get the variance for each perturbation
         '''
-        return np.asarray([p.magnitude.prior.mean.value for p in self.perturbations])
+        return np.asarray([p.magnitude.prior.loc.value for p in self.perturbations])
 
     def toarray(self, only_pos_ind=True):
         '''Return the diagonal of the prior variances stacked up in order
@@ -8165,8 +8019,7 @@ class PriorMeanPerturbations(pl.Variable):
             else:
                 n = len(perturbation.clustering)
             ret = np.append(
-                ret,
-                np.ones(n, dtype=float)*perturbation.magnitude.prior.var.value)
+                ret, np.zeros(n, dtype=float)+perturbation.magnitude.prior.loc.value)
         return ret
 
     def visualize(self, path, f, pidx, section='posterior'):
@@ -8193,7 +8046,7 @@ class PriorMeanPerturbations(pl.Variable):
         if not self.G.inference.is_in_inference_order(self.name):
             return f
         return _scalar_visualize(path=path, f=f, section=section,
-            obj=self.perturbations.magnitude.prior.mean,
+            obj=self.perturbations.magnitude.prior.loc,
             log_scale=False)
 
 
@@ -8202,12 +8055,12 @@ class PriorMeanPerturbationSingle(pl.variables.Normal):
     def __init__(self, prior, perturbation, **kwargs):
 
         kwargs['name'] = STRNAMES.PRIOR_MEAN_PERT + '_' + perturbation.name
-        pl.variables.Normal.__init__(self, mean=None, var=None, dtype=float, **kwargs)
+        pl.variables.Normal.__init__(self, loc=None, scale2=None, dtype=float, **kwargs)
         self.add_prior(prior)
         self.perturbation = perturbation
 
-    def initialize(self, value_option, mean_option, var_option, value=None,
-        mean=None, var=None, delay=0):
+    def initialize(self, value_option, loc_option, scale2_option, value=None,
+        loc=None, scale2=None, delay=0):
         '''Initialize the hyperparameters
 
         Parameters
@@ -8220,20 +8073,20 @@ class PriorMeanPerturbationSingle(pl.variables.Normal):
                     Set to the mean of the prior
                 'manual'
                     Specify with the `value` parameter
-        mean_option : str
+        loc_option : str
             How to set the mean of the prior
                 'zero', 'auto'
                     Set to zero
                 'manual'
-                    Set with the `mean` parameter
-        var_option : str
+                    Set with the `loc` parameter
+        scale2_option : str
             'diffuse', 'auto'
                 Variance is set to 10e4
             'tight'
                 Variance is set to 1e2
             'manual'
-                Set with the `var` parameter
-        value, mean, var : float
+                Set with the `scale2` parameter
+        value, loc, scale2 : float
             These are only necessary if we specify manual for any of the other 
             options
         delay : int
@@ -8245,33 +8098,33 @@ class PriorMeanPerturbationSingle(pl.variables.Normal):
             raise ValueError('`delay` ({}) must be >= 0'.format(delay))
         self.delay = delay
 
-        # Set the mean
-        if not pl.isstr(mean_option):
-            raise TypeError('`mean_option` ({}) must be a str'.format(type(mean_option)))
-        if mean_option == 'manual':
-            if not pl.isnumeric(mean):
-                raise TypeError('`mean` ({}) must be a numeric'.format(type(mean)))
-        elif mean_option in ['zero', 'auto']:
-            mean = 0
+        # Set the loc
+        if not pl.isstr(loc_option):
+            raise TypeError('`loc_option` ({}) must be a str'.format(type(loc_option)))
+        if loc_option == 'manual':
+            if not pl.isnumeric(loc):
+                raise TypeError('`loc` ({}) must be a numeric'.format(type(loc)))
+        elif loc_option in ['zero', 'auto']:
+            loc = 0
         else:
-            raise ValueError('`mean_option` ({}) not recognized'.format(mean_option))
-        self.prior.mean.override_value(mean)
+            raise ValueError('`loc_option` ({}) not recognized'.format(loc_option))
+        self.prior.loc.override_value(loc)
 
-        # Set the variance
-        if not pl.isstr(var_option):
-            raise TypeError('`var_option` ({}) must be a str'.format(type(var_option)))
-        if var_option == 'manual':
-            if not pl.isnumeric(var):
-                raise TypeError('`var` ({}) must be a numeric'.format(type(var)))
-            if var <= 0:
-                raise ValueError('`var` ({}) must be positive'.format(var))
-        elif var_option in ['diffuse', 'auto']:
-            var = 1e4
-        elif var_option == 'tight':
-            var = 1e2
+        # Set the scale2
+        if not pl.isstr(scale2_option):
+            raise TypeError('`scale2_option` ({}) must be a str'.format(type(scale2_option)))
+        if scale2_option == 'manual':
+            if not pl.isnumeric(scale2):
+                raise TypeError('`scale2` ({}) must be a numeric'.format(type(scale2)))
+            if scale2 <= 0:
+                raise ValueError('`scale2` ({}) must be positive'.format(scale2))
+        elif scale2_option in ['diffuse', 'auto']:
+            scale2 = 1e4
+        elif scale2_option == 'tight':
+            scale2 = 1e2
         else:
-            raise ValueError('`var_option` ({}) not recognized'.format(var_option))
-        self.prior.var.override_value(var)
+            raise ValueError('`scale2_option` ({}) not recognized'.format(scale2_option))
+        self.prior.scale2.override_value(scale2)
 
         # Set the value
         if not pl.isstr(value_option):
@@ -8280,7 +8133,7 @@ class PriorMeanPerturbationSingle(pl.variables.Normal):
             if not pl.isnumeric(value):
                 raise TypeError('`value` ({}) must be a numeric'.format(type(value)))
         elif value_option in ['prior-mean', 'auto']:
-            value = self.prior.mean.value
+            value = self.prior.loc.value
         elif value_option == 'zero':
             value = 0
         else:
@@ -8294,13 +8147,13 @@ class PriorMeanPerturbationSingle(pl.variables.Normal):
             return
 
         x = self.perturbation.cluster_array(only_pos_ind=True)
-        prec = 1/self.perturbation.magnitude.prior.var.value
+        prec = 1/self.perturbation.magnitude.prior.scale2.value
 
-        prior_prec = 1/self.prior.var.value
-        prior_mean = self.prior.mean.value
+        prior_prec = 1/self.prior.scale2.value
+        prior_mean = self.prior.loc.value
 
-        self.var.value = 1/(prior_prec + (len(x)*prec))
-        self.mean.value = self.var.value * ((prior_mean * prior_prec) + (np.sum(x)*prec))
+        self.scale2.value = 1/(prior_prec + (len(x)*prec))
+        self.loc.value = self.scale2.value * ((prior_mean * prior_prec) + (np.sum(x)*prec))
         self.sample()
 
 
@@ -8591,7 +8444,7 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
         pl.variables.Uniform.__init__(self, **kwargs)
 
         self.data_locs = []
-        self.proposal = pl.variables.TruncatedNormal(mean=None, var=None, value=None)
+        self.proposal = pl.variables.TruncatedNormal(loc=None, scale2=None, value=None)
 
     def __str__(self):
         # If this fails, it is because we are dividing by 0 sampler_iter
@@ -8776,7 +8629,7 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
         else:
             raise ValueError('`proposal_option` ({}) not recognized'.format(
                 proposal_option))
-        self.proposal.var.value = proposal_var
+        self.proposal.scale2.value = proposal_var
         self.proposal.low = self.prior.low.value
         self.proposal.high = self.prior.high.value
 
@@ -8795,16 +8648,16 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
             # Update var
             acceptance_rate = self.temp_acceptances / self.tune
             if acceptance_rate > self.target_acceptance_rate:
-                self.proposal.var.value *= 1.5
+                self.proposal.scale2.value *= 1.5
             else:
-                self.proposal.var.value /= 1.5
+                self.proposal.scale2.value /= 1.5
             self.temp_acceptances = 0
 
     def update(self):
         '''First we update the proposal (if necessary) and then we do a MH step
         '''
         self.update_var()
-        proposal_std = np.sqrt(self.proposal.var.value)
+        proposal_std = np.sqrt(self.proposal.scale2.value)
 
         # Get the data
         xs = []
@@ -8816,7 +8669,7 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
 
         # Propose a new value for the dof
         prev_dof = self.value
-        self.proposal.mean.value = self.value
+        self.proposal.loc.value = self.value
         new_dof = self.proposal.sample()
 
         if new_dof < self.prior.low.value or new_dof > self.prior.high.value:
@@ -8836,10 +8689,10 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
 
         # Normalize by the loglikelihood of the proposal
         prev_prop_ll = pl.random.truncnormal.logpdf(
-            value=prev_dof, mean=new_dof, std=proposal_std,
+            value=prev_dof, loc=new_dof, scale=proposal_std,
             low=self.proposal.low, high=self.proposal.high)
         new_prop_ll = pl.random.truncnormal.logpdf(
-            value=new_dof, mean=prev_dof, std=proposal_std,
+            value=new_dof, loc=prev_dof, scale=proposal_std,
             low=self.proposal.low, high=self.proposal.high)
 
         # Accept or reject
@@ -8878,7 +8731,7 @@ class qPCRScaleL(pl.variables.SICS):
         pl.variables.Uniform.__init__(self, **kwargs)
 
         self.data_locs = []
-        self.proposal = pl.variables.TruncatedNormal(mean=None, var=None, value=None)
+        self.proposal = pl.variables.TruncatedNormal(loc=None, scale2=None, value=None)
 
     def __str__(self):
         # If this fails, it is because we are dividing by 0 sampler_iter
@@ -9047,7 +8900,7 @@ class qPCRScaleL(pl.variables.SICS):
         else:
             raise ValueError('`proposal_option` ({}) not recognized'.format(
                 proposal_option))
-        self.proposal.var.value = proposal_var
+        self.proposal.scale2.value = proposal_var
         self.proposal.low = 0
         self.proposal.high = float('inf')
 
@@ -9066,16 +8919,16 @@ class qPCRScaleL(pl.variables.SICS):
             # Update var
             acceptance_rate = self.temp_acceptances / self.tune
             if acceptance_rate > self.target_acceptance_rate:
-                self.proposal.var.value *= 1.5
+                self.proposal.scale2.value *= 1.5
             else:
-                self.proposal.var.value /= 1.5
+                self.proposal.scale2.value /= 1.5
             self.temp_acceptances = 0
 
     def update(self):
         '''First we update the proposal (if necessary) and then we do a MH step
         '''
         self.update_var()
-        proposal_std = np.sqrt(self.proposal.var.value)
+        proposal_std = np.sqrt(self.proposal.scale2.value)
 
         # Get the data
         xs = []
@@ -9087,7 +8940,7 @@ class qPCRScaleL(pl.variables.SICS):
 
         # Propose a new value for the scale
         prev_scale = self.value
-        self.proposal.mean.value = self.value
+        self.proposal.loc.value = self.value
         new_scale = self.proposal.sample()
 
         # Calculate the target distribution log likelihood
@@ -9104,10 +8957,10 @@ class qPCRScaleL(pl.variables.SICS):
 
         # Normalize by the loglikelihood of the proposal
         prev_prop_ll = pl.random.truncnormal.logpdf(
-            value=prev_scale, mean=new_scale, std=proposal_std,
+            value=prev_scale, loc=new_scale, scale=proposal_std,
             low=self.proposal.low, high=self.proposal.high)
         new_prop_ll = pl.random.truncnormal.logpdf(
-            value=new_scale, mean=prev_scale, std=proposal_std,
+            value=new_scale, loc=prev_scale, scale=proposal_std,
             low=self.proposal.low, high=self.proposal.high)
 
         # Accept or reject

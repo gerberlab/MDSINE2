@@ -107,11 +107,11 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
         G=GRAPH), G=GRAPH)
     mean_interactions = posterior.PriorMeanInteractions(
         prior=pl.variables.Normal(
-            mean=pl.Constant(None, G=GRAPH),
-            var=pl.Constant(None, G=GRAPH), 
+            loc=pl.Constant(None, G=GRAPH),
+            scale2=pl.Constant(None, G=GRAPH), 
         G=GRAPH), G=GRAPH)
     interaction_value = pl.variables.Normal(
-        mean=mean_interactions, var=var_interactions, G=GRAPH)
+        loc=mean_interactions, scale2=var_interactions, G=GRAPH)
 
     interaction_indicator = posterior.ClusterInteractionIndicatorProbability(
         prior=pl.variables.Beta(a=pl.Constant(None, G=GRAPH), b=pl.Constant(None, G=GRAPH), G=GRAPH),
@@ -128,11 +128,11 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
         child_name=STRNAMES.GROWTH_VALUE, G=GRAPH)
     mean_growth = posterior.PriorMeanMH(
         prior=pl.variables.TruncatedNormal(
-            mean=pl.Constant(None, G=GRAPH),
-            var=pl.Constant(None, G=GRAPH), G=GRAPH), 
+            loc=pl.Constant(None, G=GRAPH),
+            scale2=pl.Constant(None, G=GRAPH), G=GRAPH), 
         child_name=STRNAMES.GROWTH_VALUE, G=GRAPH)
     prior_growth = pl.variables.Normal(
-        mean=mean_growth, var=var_growth,
+        loc=mean_growth, scale2=var_growth,
         name='prior_{}'.format(STRNAMES.GROWTH_VALUE), G=GRAPH)
     growth = posterior.Growth(prior=prior_growth, G=GRAPH)
 
@@ -144,11 +144,11 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
         child_name=STRNAMES.SELF_INTERACTION_VALUE, G=GRAPH)
     mean_si = posterior.PriorMeanMH(
         prior=pl.variables.TruncatedNormal(
-            mean=pl.Constant(None, G=GRAPH),
-            var=pl.Constant(None, G=GRAPH), G=GRAPH), 
+            loc=pl.Constant(None, G=GRAPH),
+            scale2=pl.Constant(None, G=GRAPH), G=GRAPH), 
         child_name=STRNAMES.SELF_INTERACTION_VALUE, G=GRAPH)
     prior_si = pl.variables.Normal(
-        mean=mean_si, var=var_si,
+        loc=mean_si, scale2=var_si,
         name='prior_{}'.format(STRNAMES.SELF_INTERACTION_VALUE), G=GRAPH)
     self_interactions = posterior.SelfInteractions(prior=prior_si, G=GRAPH)
 
@@ -192,11 +192,11 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
                 perturbation=perturbation, G=GRAPH)
             magnitude_mean = posterior.PriorMeanPerturbationSingle(
                 prior=pl.variables.Normal(
-                    mean=pl.Constant(None, G=GRAPH),
-                    var=pl.Constant(None, G=GRAPH),
+                    loc=pl.Constant(None, G=GRAPH),
+                    scale2=pl.Constant(None, G=GRAPH),
                     G=GRAPH), 
                 perturbation=perturbation, G=GRAPH)
-            prior_magnitude = pl.variables.Normal(G=GRAPH, mean=magnitude_mean, var=magnitude_var)
+            prior_magnitude = pl.variables.Normal(G=GRAPH, loc=magnitude_mean, scale2=magnitude_var)
             perturbation.magnitude.add_prior(prior_magnitude)
 
             prior_prob = pl.variables.Beta(
@@ -215,7 +215,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
         pert_ind = None
         pert_ind_prob = None
 
-    beta = posterior.RegressCoeff(
+    beta = posterior.GLVParameters(
         growth=growth, self_interactions=self_interactions,
         interactions=interactions, pert_mag=magnitude_perts, G=GRAPH)
 
@@ -327,12 +327,12 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     logging.info('Initialization Values:')
     logging.info('Growth')
     logging.info('\tprior.mean: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].prior.mean.value))
-    logging.info('\tprior.var: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].prior.var.value))
+    logging.info('\tprior.scale2: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].prior.scale2.value))
     logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].value.flatten()))
 
     logging.info('Self-Interactions')
     logging.info('\tprior.mean: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].prior.mean.value))
-    logging.info('\tprior.var: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].prior.var.value))
+    logging.info('\tprior.scale2: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].prior.scale2.value))
     logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].value.flatten()))
 
     logging.info('Prior Variance Growth')
@@ -373,9 +373,9 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
             logging.info('\t\tprior.mean: {}'.format(perturbation.magnitude.prior.mean.value))
         logging.info('Perturbation prior variances:')
         for perturbation in GRAPH.perturbations:
-            logging.info('\t\tdof: {}'.format(perturbation.magnitude.prior.var.prior.dof.value))
-            logging.info('\t\tscale: {}'.format(perturbation.magnitude.prior.var.prior.scale.value))
-            logging.info('\t\tvalue: {}'.format(perturbation.magnitude.prior.var.value))
+            logging.info('\t\tdof: {}'.format(perturbation.magnitude.prior.scale2.prior.dof.value))
+            logging.info('\t\tscale: {}'.format(perturbation.magnitude.prior.scale2.prior.scale.value))
+            logging.info('\t\tvalue: {}'.format(perturbation.magnitude.prior.scale2.value))
         logging.info('Perturbation indicators:')
         for perturbation in GRAPH.perturbations:
             logging.info('\tperturbation {}: {}'.format(perturbation.name,

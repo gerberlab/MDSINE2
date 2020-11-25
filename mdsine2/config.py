@@ -198,8 +198,8 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'delay': 0},
             STRNAMES.PRIOR_MEAN_PERT: {
                 'value_option': 'prior-mean',
-                'mean_option': 'zero',
-                'var_option': 'diffuse',
+                'loc_option': 'zero',
+                'scale2_option': 'diffuse',
                 'delay':0},
             STRNAMES.PRIOR_VAR_GROWTH: {
                 'value_option': 'prior-mean',
@@ -212,8 +212,8 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'delay':0},
             STRNAMES.PRIOR_MEAN_GROWTH: {
                 'value_option': 'prior-mean',
-                'mean_option': 'manual',
-                'var_option': 'diffuse-linear-regression',
+                'loc_option': 'manual',
+                'scale2_option': 'diffuse-linear-regression',
                 'proposal_option': 'auto',
                 'target_acceptance_rate': 0.44,
                 'tune': 50,
@@ -235,8 +235,8 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'delay':0},
             STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS: {
                 'value_option': 'prior-mean',
-                'mean_option': 'median-linear-regression',
-                'var_option': 'diffuse-linear-regression',
+                'loc_option': 'median-linear-regression',
+                'scale2_option': 'diffuse-linear-regression',
                 'proposal_option': 'auto',
                 'target_acceptance_rate': 0.44,
                 'tune': 50,
@@ -255,8 +255,8 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'delay': 0},
             STRNAMES.PRIOR_MEAN_INTERACTIONS: {
                 'value_option': 'prior-mean',
-                'mean_option': 'zero',
-                'var_option': 'same-as-aii',
+                'loc_option': 'zero',
+                'scale2_option': 'same-as-aii',
                 'delay':0},
             STRNAMES.CLUSTER_INTERACTION_VALUE: {
                 'value_option': 'all-off',
@@ -300,9 +300,6 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'tune': 50,
                 'end_tune': 'half-burnin'},
             STRNAMES.PROCESSVAR: {
-                # 'v1': 0.2**2,
-                # 'v2': 1,
-                # 'q_option': 'previous-t'}, #'previous-t'},
                 'dof_option': 'diffuse', # 'half', 
                 'scale_option': 'med',
                 'value_option': 'prior-mean',

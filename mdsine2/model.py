@@ -130,7 +130,7 @@ class MultiplicativeGlobal(pl.dynamics.BaseProcessVariance):
 
     def integrate_single_timestep(self, x, t, dt):
         std = np.sqrt(dt * self.value)
-        return np.exp(pl.random.normal.sample(mean=np.log(x), std=std))
+        return np.exp(pl.random.normal.sample(loc=np.log(x), scale=std))
 
     def finish_integration(self):
         pass

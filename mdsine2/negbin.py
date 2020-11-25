@@ -279,16 +279,16 @@ class NegBinDispersionParam(pl.variables.Uniform):
 
         # Propose a new value and get the likelihood
         self.value = pl.random.truncnormal.sample(
-            mean=self.value, std=proposal_std,
+            loc=self.value, scale=proposal_std,
             low=self.low, high=self.high)
         new_loglik = self.data_likelihood()
 
         # reverse jump probabilities
         jump_to_new = pl.random.truncnormal.logpdf(value=self.value, 
-            mean=prev_value, std=proposal_std, 
+            loc=prev_value, scale=proposal_std, 
             low=self.low, high=self.high)
         jump_to_old = pl.random.truncnormal.logpdf(value=prev_value, 
-            mean=self.value, std=proposal_std, 
+            loc=self.value, scale=proposal_std, 
             low=self.low, high=self.high)
         
 
@@ -404,8 +404,8 @@ class TrajectorySet(pl.variables.Variable):
         self.qpcr_measurement = self.G.data.qpcr[self.ridx]
     
         prior = pl.variables.Normal(
-            mean=pl.variables.Constant(name=self.name+'_prior_mean', value=None, G=self.G),
-            var=pl.variables.Constant(name=self.name+'_prior_var', value=None, G=self.G),
+            loc=pl.variables.Constant(name=self.name+'_prior_loc', value=None, G=self.G),
+            scale2=pl.variables.Constant(name=self.name+'_prior_scale2', value=None, G=self.G),
             name=self.name+'_prior', G=self.G)
         self.add_prior(prior)
 
@@ -422,11 +422,11 @@ class TrajectorySet(pl.variables.Variable):
 
         self.value = np.zeros(len(value))
         for i in range(len(value)):
-            self.value[i] = pl.random.truncnormal.sample(mean=value[i], std=1e-2, 
+            self.value[i] = pl.random.truncnormal.sample(loc=value[i], scale=1e-2, 
                 low=0, high=float('inf'))
 
-        self.prior.mean.override_value(self.value)
-        self.prior.var.override_value(100 * np.var(self.value))
+        self.prior.loc.override_value(self.value)
+        self.prior.scale2.override_value(100 * np.var(self.value))
 
 
 class FilteringMP(pl.graph.Node):
@@ -561,8 +561,8 @@ class FilteringMP(pl.graph.Node):
                 qpcr_loc=self.value[ridx].qpcr_measurement.loc,
                 qpcr_scale=np.sqrt(qpcr_variance_inflation) *self.value[ridx].qpcr_measurement.scale,
                 proposal_std=np.log(1.5),
-                prior_loc=self.value[ridx].prior.mean.value,
-                prior_scale=np.sqrt(self.value[ridx].prior.var.value),
+                prior_loc=self.value[ridx].prior.loc.value,
+                prior_scale=np.sqrt(self.value[ridx].prior.scale2.value),
                 tune=tune, end_tune=end_tune,
                 target_acceptance_rate=target_acceptance_rate,
                 value=self.value[ridx].value,
@@ -782,8 +782,7 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
         old_ll = aaa + bbb + ccc
 
         # propose new value
-        log_new = pl.random.normal.sample(mean=old_log_value, 
-            std=self.proposal_std)
+        log_new = pl.random.normal.sample(loc=old_log_value, scale=self.proposal_std)
         self.value[oidx] = np.exp(log_new)
 
         self.sumq = self.sumq - old_value + self.value[oidx]
@@ -812,11 +811,11 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
 
     def prior_ll(self):
         return pl.random.normal.logpdf(value=self.curr_log_val, 
-            mean=self.prior_loc[self.oidx], std=self.prior_scale)
+            loc=self.prior_loc[self.oidx], scale=self.prior_scale)
 
     def qpcr_ll(self):
         return pl.random.normal.logpdf(value=self.log_sumq, 
-            mean=self.qpcr_loc, std=self.qpcr_scale)
+            loc=self.qpcr_loc, scale=self.qpcr_scale)
 
     def negbin_ll(self):
         cumm = 0

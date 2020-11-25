@@ -37,9 +37,9 @@ from .util import isarray, isbool, isstr, istype, istuple
 # Constants
 DEFAULT_VARIABLE_TYPE = float
 
-DEFAULT_NORMAL_MEAN_SUFFIX = '_mean'
-DEFAULT_NORMAL_VAR_SUFFIX = '_var'
-DEFAULT_LOGNORMAL_STD_SUFFIX = '_std'
+DEFAULT_NORMAL_LOC_SUFFIX = '_loc'
+DEFAULT_NORMAL_SCALE2_SUFFIX = '_scale2'
+DEFAULT_LOGNORMAL_SCALE_SUFFIX = '_scale'
 DEFAULT_UNIFORM_LOW_SUFFIX = '_low'
 DEFAULT_UNIFORM_HIGH_SUFFIX = '_high'
 DEFAULT_SICS_DOF_SUFFIX = '_dof'
@@ -553,57 +553,63 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
 
 
 class Normal(Variable, _RandomBase):
-    '''Scalar normal variable parameterized by the mean and variance
+    '''Scalar normal variable parameterized by the loc (mean) and scale2
+    (variance)
 
     Parameters
     ----------
-    mean : float, int
+    loc : float, int
         This is the mean of the distribution
-    var : float, int
+    scale2 : float, int
         This is the variance of the distribution
     kwargs : dict
         These are extra parameters for the Node class
     '''
-    def __init__(self, mean=None, var=None, **kwargs):
+    def __init__(self, loc=None, scale2=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
-        if not isnode(mean):
-            self._mean = Variable(
-                value=mean,
-                name=self.name + DEFAULT_NORMAL_MEAN_SUFFIX,
+        if not isnode(loc):
+            self._loc = Variable(
+                value=loc,
+                name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
-            self._mean = mean
-        if not isnode(var):
-            self._var = Variable(
-                value=var,
-                name=self.name + DEFAULT_NORMAL_VAR_SUFFIX,
+            self._loc = loc
+        if not isnode(scale2):
+            self._scale2 = Variable(
+                value=scale2,
+                name=self.name + DEFAULT_NORMAL_SCALE2_SUFFIX,
                 G=self.G)
         else:
-            self._var = var
+            self._scale2 = scale2
 
         # Set graph with parents
-        self.add_parent(self._mean)
-        self.add_parent(self._var)
+        self.add_parent(self._loc)
+        self.add_parent(self._scale2)
 
     @property
-    def mean(self):
-        return self._mean
+    def loc(self):
+        return self._loc
 
     @property
-    def var(self):
-        return self._var
+    def scale2(self):
+        return self._scale2
 
-    @property
     def std(self):
-        return np.sqrt(self._var.value)
+        return np.sqrt(self._scale2.value)
 
     def mode(self):
-        return self._mean.value
+        return self._loc.value
+
+    def mean(self):
+        return self._loc.value
+
+    def variance(self):
+        return self._scale2.value
 
     def sample(self, size=None):
-        '''Sample the distirbution given `self.mean` and `self.var`
+        '''Sample the distirbution given `self.loc` and `self.sca;e2`
 
         Parameters
         ----------
@@ -615,13 +621,13 @@ class Normal(Variable, _RandomBase):
         float
         '''
         self.value = random.normal.sample(
-            mean=self._mean.value, 
-            std=np.sqrt(self._var.value),
+            loc=self._loc.value, 
+            scale=np.sqrt(self._scale2.value),
             size=size)
         return self.value
 
     def pdf(self, value=None):
-        '''Calculate the pdf given `self.value`, `self.mean`, and `self.var`.
+        '''Calculate the pdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
         Parameters
@@ -635,11 +641,11 @@ class Normal(Variable, _RandomBase):
         '''
         if value is None:
             value = self.value
-        return random.normal.pdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value))
+        return random.normal.pdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value))
 
     def logpdf(self, value=None):
-        '''Calculate the logpdf given `self.value`, `self.mean`, and `self.var`.
+        '''Calculate the logpdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
         Parameters
@@ -653,11 +659,11 @@ class Normal(Variable, _RandomBase):
         '''
         if value is None:
             value = self.value
-        return random.normal.logpdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value))
+        return random.normal.logpdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value))
 
     def cdf(self, value=None):
-        '''Calculate the cdf given `self.value`, `self.mean`, and `self.var`.
+        '''Calculate the cdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
         Parameters
@@ -671,11 +677,11 @@ class Normal(Variable, _RandomBase):
         '''
         if value is None:
             value = self.value
-        return random.normal.cdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value))
+        return random.normal.cdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value))
 
     def logcdf(self, value=None):
-        '''Calculate the logcdf given `self.value`, `self.mean`, and `self.var`.
+        '''Calculate the logcdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
         Parameters
@@ -689,8 +695,8 @@ class Normal(Variable, _RandomBase):
         '''
         if value is None:
             value = self.value
-        return random.normal.logcdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value))
+        return random.normal.logcdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value))
 
 
 class Lognormal(Variable, _RandomBase):
@@ -698,48 +704,48 @@ class Lognormal(Variable, _RandomBase):
 
     Parameters
     ----------
-    mean : numeric, array
-        This is the mean of the distribution
+    loc : numeric, array
+        This is the loc of the distribution
     std : numeric array
         This is the standard deviation of the array
     kwargs
     '''
-    def __init__(self, mean, std, **kwargs):
+    def __init__(self, loc, std, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
-        if not isnode(mean):
-            self._mean = Variable(
-                value=mean,
-                name=self.name + DEFAULT_NORMAL_MEAN_SUFFIX,
+        if not isnode(loc):
+            self._loc = Variable(
+                value=loc,
+                name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
-            self._mean = mean
+            self._loc = loc
         if not isnode(std):
-            self._std = Variable(
+            self._scale = Variable(
                 value=std,
-                name=self.name + DEFAULT_LOGNORMAL_STD_SUFFIX,
+                name=self.name + DEFAULT_LOGNORMAL_SCALE_SUFFIX,
                 G=self.G)
         else:
-            self._std = std
+            self._scale = std
 
         # Set graph with parents
-        self.add_parent(self._mean)
-        self.add_parent(self._std)
+        self.add_parent(self._loc)
+        self.add_parent(self._scale)
 
     @property
-    def mean(self):
-        return self._mean
+    def loc(self):
+        return self._loc
 
     @property
-    def std(self):
-        return self._std
+    def scale(self):
+        return self._scale
 
     def mode(self):
-        return self._mean.value
+        return self._loc.value
 
     def sample(self, size=None):
-        '''Sample the distirbution given `self.mean` and `self.var`
+        '''Sample the distirbution
 
         Parameters
         ----------
@@ -751,14 +757,13 @@ class Lognormal(Variable, _RandomBase):
         float
         '''
         self.value = random.lognormal.sample(
-            mean=self._mean.value, 
-            std=self._std.value,
+            loc=self._loc.value, 
+            scale=self._scale.value,
             size=size)
         return self.value
 
     def pdf(self, value=None):
-        '''Calculate the pdf given `self.value`, `self.mean`, and `self.var`.
-        If `value` is provided we use `value` instead of `self.value`.
+        '''Calculate the pdf
 
         Parameters
         ----------
@@ -771,12 +776,11 @@ class Lognormal(Variable, _RandomBase):
         '''
         if value is None:
             value = self.value
-        return random.lognormal.pdf(value=value, mean=self._mean.value,
-            std=self._std.value)
+        return random.lognormal.pdf(value=value, loc=self._loc.value,
+            scale=self._scale.value)
 
     def logpdf(self, value=None):
-        '''Calculate the logpdf given `self.value`, `self.mean`, and `self.var`.
-        If `value` is provided we use `value` instead of `self.value`.
+        '''Calculate the logpdf
 
         Parameters
         ----------
@@ -789,12 +793,11 @@ class Lognormal(Variable, _RandomBase):
         '''
         if value is None:
             value = self.value
-        return random.lognormal.logpdf(value=value, mean=self._mean.value,
-            std=self._std.value)
+        return random.lognormal.logpdf(value=value, loc=self._loc.value,
+            scale=self._scale.value)
 
     def cdf(self, value=None):
-        '''Calculate the cdf given `self.value`, `self.mean`, and `self.var`.
-        If `value` is provided we use `value` instead of `self.value`.
+        '''Calculate the cdf
 
         Parameters
         ----------
@@ -807,12 +810,11 @@ class Lognormal(Variable, _RandomBase):
         '''
         if value is None:
             value = self.value
-        return random.lognormal.cdf(value=value, mean=self._mean.value,
-            std=self._std.value)
+        return random.lognormal.cdf(value=value, mean=self._loc.value,
+            std=self._scale.value)
 
     def logcdf(self, value=None):
-        '''Calculate the logcdf given `self.value`, `self.mean`, and `self.var`.
-        If `value` is provided we use `value` instead of `self.value`.
+        '''Calculate the logcdf
 
         Parameters
         ----------
@@ -825,8 +827,8 @@ class Lognormal(Variable, _RandomBase):
         '''
         if value is None:
             value = self.value
-        return random.lognormal.logcdf(value=value, mean=self._mean.value,
-            std=self._std.value)
+        return random.lognormal.logcdf(value=value, mean=self._loc.value,
+            std=self._scale.value)
 
 
 class Uniform(Variable, _RandomBase):
@@ -974,14 +976,15 @@ class Uniform(Variable, _RandomBase):
 
 
 class TruncatedNormal(Variable, _RandomBase):
-    '''Scalar truncated normal variable parameterized by the mean, variance,
+    '''Scalar truncated normal variable parameterized by the mean `loc`, 
+    variance `scale2`,
     low, and high
 
     Parameters
     ----------
-    mean : float, int
+    loc : float, int
         This is the mean of the distribution
-    var : float, int
+    scale2 : float, int
         This is the variance of the distribution
     low : float, int
         This is the lowest value that can be sampled
@@ -990,7 +993,7 @@ class TruncatedNormal(Variable, _RandomBase):
     kwargs : dict
         These are extra parameters for the Node class
     '''
-    def __init__(self, mean, var, low=None, high=None, **kwargs):
+    def __init__(self, loc, scale2, low=None, high=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         if low is None:
@@ -1002,51 +1005,50 @@ class TruncatedNormal(Variable, _RandomBase):
                 low,high))
 
         # Wrap parameters in nodes
-        if not isnode(mean):
-            self._mean = Variable(
-                value=mean,
-                name=self.name + DEFAULT_NORMAL_MEAN_SUFFIX,
+        if not isnode(loc):
+            self._loc = Variable(
+                value=loc,
+                name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
-            self._mean = mean
-        if not isnode(var):
-            self._var = Variable(
-                value=var,
-                name=self.name + DEFAULT_NORMAL_VAR_SUFFIX,
+            self._loc = loc
+        if not isnode(scale2):
+            self._scale2 = Variable(
+                value=scale2,
+                name=self.name + DEFAULT_NORMAL_SCALE2_SUFFIX,
                 G=self.G)
         else:
-            self._var = var
+            self._scale2 = scale2
 
         self.low=low
         self.high=high
 
         # Set graph with parents
-        self.add_parent(self._mean)
-        self.add_parent(self._var)
+        self.add_parent(self._loc)
+        self.add_parent(self._scale2)
 
     @property
-    def mean(self):
-        return self._mean
+    def loc(self):
+        return self._loc
 
     @property
-    def var(self):
-        return self._var
+    def scale2(self):
+        return self._scale2
 
     @property
-    def std(self):
-        return np.sqrt(self._var.value)
+    def scale(self):
+        return np.sqrt(self._scale2.value)
 
     def mode(self):
-        if self.low <= self.mean and self.mean <= self.high:
-            return self.mean
-        elif self.mean < self.low:
+        if self.low <= self.loc and self.loc <= self.high:
+            return self.loc
+        elif self.loc < self.low:
             return self.low
         else:
             return self.high
 
     def sample(self, size=None):
-        '''Sample the distirbution given `self.mean`, `self.var`, 
-        `self.low`, and `self.high`
+        '''Sample the distirbution given the current parameters
 
         Parameters
         ----------
@@ -1060,16 +1062,14 @@ class TruncatedNormal(Variable, _RandomBase):
         self.value = random.truncnormal.sample(
             low=self.low,
             high=self.high,
-            mean=self._mean.value,
-            std=np.sqrt(self._var.value),
+            loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value),
             size=size)
 
         return self.value
 
     def pdf(self, value=None):
-        '''Calculate the pdf given `self.value`, `self.mean`, `self.var`, 
-        `self.low` and `self.high`. If `value` is provided we use `value` 
-        instead of `self.value`.
+        '''Calculate the pdf given the current parameters.
 
         Parameters
         ----------
@@ -1082,13 +1082,11 @@ class TruncatedNormal(Variable, _RandomBase):
         '''
         if value is None:
             value = self.value
-        return random.truncnormal.pdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value), low=self.low, high=self.high)
+        return random.truncnormal.pdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
     def logpdf(self, value=None):
-        '''Calculate the logpdf given `self.value`, `self.mean`, `self.var`, 
-        `self.low` and `self.high`. If `value` is provided we use `value` 
-        instead of `self.value`.
+        '''Calculate the logpdf given the current parameters.
 
         Parameters
         ----------
@@ -1101,13 +1099,11 @@ class TruncatedNormal(Variable, _RandomBase):
         '''
         if value is None:
             value = self.value
-        return random.truncnormal.logpdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value), low=self.low, high=self.high)
+        return random.truncnormal.logpdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
     def cdf(self, value=None):
-        '''Calculate the cdf given `self.value`, `self.mean`, `self.var`, 
-        `self.low` and `self.high`. If `value` is provided we use `value` 
-        instead of `self.value`.
+        '''Calculate the cdf given the current parameters.
 
         Parameters
         ----------
@@ -1120,13 +1116,11 @@ class TruncatedNormal(Variable, _RandomBase):
         '''
         if value is None:
             value = self.value
-        return random.truncnormal.cdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value), low=self.low, high=self.high)
+        return random.truncnormal.cdf(value=value, mean=self._loc.value,
+            std=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
     def logcdf(self, value=None):
-        '''Calculate the logcdf given `self.value`, `self.mean`, `self.var`, 
-        `self.low` and `self.high`. If `value` is provided we use `value` 
-        instead of `self.value`.
+        '''Calculate the logcdf given the current parameters.
 
         Parameters
         ----------
@@ -1139,8 +1133,8 @@ class TruncatedNormal(Variable, _RandomBase):
         '''
         if value is None:
             value = self.value
-        return random.truncnormal.logcdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value), low=self.low, high=self.high)
+        return random.truncnormal.logcdf(value=value, mean=self._loc.value,
+            std=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
 
 class SICS(Variable, _RandomBase):
