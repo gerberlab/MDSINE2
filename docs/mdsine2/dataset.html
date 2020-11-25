@@ -32,40 +32,255 @@ import os
 import sys
 from ete3 import Tree
 
-from .pylab import ASVSet, Study
+from .pylab import TaxaSet, Study
 
-_HEALTHY_SUBJECTS = set([&#39;2&#39;, &#39;3&#39;, &#39;4&#39;, &#39;5&#39;])
-_UC_SUBJECTS = set([&#39;6&#39;, &#39;7&#39;, &#39;8&#39;, &#39;9&#39;, &#39;10&#39;])
+__all__ = [&#39;gibson&#39;, &#39;parse&#39;]
 
-def gibson_phylogenetic_tree(with_reference_sequences):
-    &#39;&#39;&#39;Load phylogenetic tree into an `ete3.Tree` object.
-
-    Parameters
-    ----------
-    with_reference_sequences : bool
-        If True, load the phylogenetic tree with the reference sequeunces from
-        placement. If False, only include the ASVs and not the reference 
-        sequences
-
-    Returns
-    -------
-    ete3.Tree
+class _Gibson:
+    &#39;&#39;&#39;Wrapper for the functionality of loading the gibson dataset. Called through
+    `mdsine2.dataset.gibson`. See 
     &#39;&#39;&#39;
-    module_path = dirname(__file__)
-    if with_reference_sequences:
-        path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;phylogenetic_tree_with_reference.nhx&#39;)
-    else:
-        path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;phylogenetic_tree_w_branch_len_preserved.nhx&#39;)
+    _HEALTHY_SUBJECTS = set([&#39;2&#39;, &#39;3&#39;, &#39;4&#39;, &#39;5&#39;])
+    _UC_SUBJECTS = set([&#39;6&#39;, &#39;7&#39;, &#39;8&#39;, &#39;9&#39;, &#39;10&#39;])
 
-    return Tree(path)
+    @staticmethod
+    def load_taxonomy(species_assignment):
+        &#39;&#39;&#39;Load the taxonomy assignment
 
-def gibson(dset=None, as_df=False, species_assignment=&#39;both&#39;):
+        Parameters
+        ----------
+        species_assignment : str, None
+            How to assign the species
+            If &#39;silva&#39;, only use the Silva species assignment
+            If &#39;rdp&#39;, only use RDP 138 assignment
+            If &#39;both&#39;, combine both the RDP and Silva species assignment
+            If None, have no species assignment and just return the taxonomy provided by DADA2
+        &#39;&#39;&#39;
+        if species_assignment == &#39;silva&#39;:
+            path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;silva_species.tsv&#39;)
+            taxonomy = pd.read_csv(path, sep=&#39;\t&#39;, index_col=0)
+        elif species_assignment == &#39;rdp&#39;:
+            path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;rdp_species.tsv&#39;)
+            taxonomy = pd.read_csv(path, sep=&#39;\t&#39;, index_col=0)
+        elif species_assignment == &#39;both&#39;:
+            rdp = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;rdp_species.tsv&#39;)
+            rdp = pd.read_csv(rdp, sep=&#39;\t&#39;, index_col=0)
+            silva = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;silva_species.tsv&#39;)
+            silva = pd.read_csv(silva, sep=&#39;\t&#39;, index_col=0)
+
+            rdp.columns = rdp.columns.str.lower()
+            silva.columns = silva.columns.str.lower()
+
+            data = []
+
+            for iii, aname in enumerate(rdp.index):
+
+                rdp_spec = rdp[&#39;species&#39;][aname]
+                silva_spec = silva[&#39;species&#39;][aname]
+                tmp = rdp.iloc[iii, :-1].to_list()
+
+                if type(rdp_spec) == float:
+                    rdp_spec = &#39;NA&#39;
+                if type(silva_spec) == float:
+                    silva_spec = &#39;NA&#39;
+                rdp_spec = rdp_spec.split(&#39;/&#39;)
+                silva_spec = silva_spec.split(&#39;/&#39;)
+
+                both = list(set(rdp_spec + silva_spec))
+                if &#39;NA&#39; in both and len(both) &gt; 1:
+                    both.remove(&#39;NA&#39;)
+
+                if len(both) &gt; 2:
+                    both = &#39;NA&#39;
+                else:
+                    both = &#39;/&#39;.join(both)
+                tmp.append(both)
+                data.append(tmp)
+
+            taxonomy = pd.DataFrame(data, columns=rdp.columns, index=rdp.index)
+
+        elif species_assignment is None:
+            taxonomy = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;rdp_species.tsv&#39;)
+            taxonomy = pd.read_csv(taxonomy, sep=&#39;\t&#39;)
+            taxonomy[&#39;species&#39;][:] = &#39;NA&#39;
+        else:
+            raise ValueError(&#39;`species_assignment` ({}) is not recognized.&#39;.format(species_assignment))
+        return taxonomy
+    
+    @staticmethod
+    def load_perturbations():
+        &#39;&#39;&#39;Load the perturbations for Gibson dataset as a `pandas.DataFrame`.
+
+        Returns
+        -------
+        pandas.DataFrame
+        &#39;&#39;&#39;
+        path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;perturbations.tsv&#39;)
+        df = pd.read_csv(path, sep=&#39;\t&#39;)
+        return df
+
+    @staticmethod
+    def load_qpcr_masses(dset=None):
+        &#39;&#39;&#39;Load qpcr masses table into a `pandas.DataFrame`.
+
+        Returns
+        -------
+        pandas.DataFrame
+        &#39;&#39;&#39;
+        path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;qpcr.tsv&#39;)
+        df = pd.read_csv(path, sep=&#39;\t&#39;)
+        df = df.set_index(&#39;sampleID&#39;)
+
+        if dset is not None:
+            keep = _Gibson._get_sampleids(eles=df.index, dset=dset)
+            df = df.loc[keep]
+        return df
+
+    @staticmethod
+    def load_reads(dset=None):
+        &#39;&#39;&#39;Load reads table into a `pandas.DataFrame`.
+
+        Returns
+        -------
+        pandas.DataFrame
+        &#39;&#39;&#39;
+        path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;counts.tsv&#39;)
+        df = pd.read_csv(path, sep=&#39;\t&#39;, index_col=0)
+
+        if dset is not None:
+            keep = _Gibson._get_sampleids(eles=df.columns, dset=dset)
+            df = df[keep]
+        return df
+
+    @staticmethod
+    def load_sampleid(dset=None):
+        &#39;&#39;&#39;Load sample ID table into a `pandas.DataFrame`.
+
+        Returns
+        -------
+        pandas.DataFrame
+        &#39;&#39;&#39;
+        path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;metadata.tsv&#39;)
+        df = pd.read_csv(path, sep=&#39;\t&#39;)
+        df = df.set_index(&#39;sampleID&#39;)
+
+        if dset is not None:
+            keep = _Gibson._get_sampleids(eles=df.index, dset=dset)
+            df = df.loc[keep]
+        return df
+
+    @staticmethod
+    def _get_sampleids(eles, dset):
+        keep = []
+
+        for sampleid in eles:
+
+            mid = sampleid.split(&#39;-&#39;)[0]
+            if mid == &#39;1&#39;:
+                continue
+
+            if dset == &#39;inoculum&#39; and _Gibson._is_inoc_sampleid(sampleid):
+                keep.append(sampleid)
+            elif dset == &#39;replicates&#39; and _Gibson._is_negbin_sampleid(sampleid):
+                keep.append(sampleid)
+            elif dset == &#39;healthy&#39; and _Gibson._is_healthy_sampleid(sampleid):
+                keep.append(sampleid)
+            elif dset == &#39;uc&#39; and _Gibson._is_uc_sampleid(sampleid):
+                keep.append(sampleid)
+
+        return keep
+
+    @staticmethod
+    def _is_healthy_sampleid(sampleid):
+        &#39;&#39;&#39;Checks whether the sample id is for healty or UC
+
+        Parameters
+        ----------
+        sampleid : str
+            Sample ID
+
+        Returns
+        -------
+        bool
+        &#39;&#39;&#39;
+        sid = sampleid.split(&#39;-&#39;)[0]
+        return sid in _Gibson._HEALTHY_SUBJECTS
+
+    @staticmethod
+    def _is_uc_sampleid(sampleid):
+        &#39;&#39;&#39;Checks whether the sample id is for healty or UC
+
+        Parameters
+        ----------
+        sampleid : str
+            Sample ID
+
+        Returns
+        -------
+        bool
+        &#39;&#39;&#39;
+        sid = sampleid.split(&#39;-&#39;)[0]
+        return sid in _Gibson._UC_SUBJECTS
+
+    @staticmethod
+    def _is_negbin_sampleid(sampleid):
+        &#39;&#39;&#39;Checks whether the sample id is for learning the negative
+        binomial dispersion parameters
+
+        Parameters
+        ----------
+        sampleid : str
+            Sample ID
+
+        Returns
+        -------
+        bool
+        &#39;&#39;&#39;
+        return &#39;M2-D&#39; in sampleid
+
+    @staticmethod
+    def _is_inoc_sampleid(sampleid):
+        &#39;&#39;&#39;Checks whether the sample id is from the inoculum
+
+        Parameters
+        ----------
+        sampleid : str
+            Sample ID
+
+        Returns
+        -------
+        bool
+        &#39;&#39;&#39;
+        return &#39;inoculum&#39; in sampleid
+
+    @staticmethod
+    def gibson_phylogenetic_tree(with_reference_sequences):
+        &#39;&#39;&#39;Load phylogenetic tree into an `ete3.Tree` object.
+
+        Parameters
+        ----------
+        with_reference_sequences : bool
+            If True, load the phylogenetic tree with the reference sequeunces from
+            placement. If False, only include the s and not the reference 
+            sequences
+
+        Returns
+        -------
+        ete3.Tree
+        &#39;&#39;&#39;
+        if with_reference_sequences:
+            path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;phylogenetic_tree_with_reference.nhx&#39;)
+        else:
+            path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;phylogenetic_tree_w_branch_len_preserved.nhx&#39;)
+
+        return Tree(path)
+
+
+def gibson(dset=None, as_df=False, with_perturbations=True, species_assignment=&#39;both&#39;):
     &#39;&#39;&#39;Load the Gibson dataset.
 
     Returns either a `mdsine2.Study` object or the `pandas.DataFrame` objects that
     that comprise the Gibson dataset.
-
-    TODO: inline documentation about options, need to explain healthy, dfs, and taxonomy
 
     Parameters
     ----------
@@ -83,6 +298,8 @@ def gibson(dset=None, as_df=False, species_assignment=&#39;both&#39;):
             &#39;reads&#39; -&gt; Reads table
             &#39;qpcr&#39; -&gt; qPCR table
             &#39;metadata&#39; -&gt; metadata table
+    with_perturbations : bool
+        If True, load in the perturbations. Otherwise do not load them
     species_assignment : str, None
         How to assign the species
         If &#39;silva&#39;, only use the Silva species assignment
@@ -95,206 +312,66 @@ def gibson(dset=None, as_df=False, species_assignment=&#39;both&#39;):
     mdsine2.Study OR dict
     &#39;&#39;&#39;
     # Load the taxonomy assignment
-    if species_assignment == &#39;silva&#39;:
-        path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;silva_species.tsv&#39;)
-        taxonomy = pd.read_csv(path, sep=&#39;\t&#39;, index_col=0)
-    elif species_assignment == &#39;rdp&#39;:
-        path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;rdp_species.tsv&#39;)
-        taxonomy = pd.read_csv(path, sep=&#39;\t&#39;, index_col=0)
-    elif species_assignment == &#39;both&#39;:
-        rdp = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;rdp_species.tsv&#39;)
-        rdp = pd.read_csv(rdp, sep=&#39;\t&#39;, index_col=0)
-        silva = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;silva_species.tsv&#39;)
-        silva = pd.read_csv(silva, sep=&#39;\t&#39;, index_col=0)
-
-        rdp.columns = rdp.columns.str.lower()
-        silva.columns = silva.columns.str.lower()
-
-        data = []
-
-        for iii, aname in enumerate(rdp.index):
-
-            rdp_spec = rdp[&#39;species&#39;][aname]
-            silva_spec = silva[&#39;species&#39;][aname]
-            tmp = rdp.iloc[iii, :-1].to_list()
-
-            if type(rdp_spec) == float:
-                rdp_spec = &#39;NA&#39;
-            if type(silva_spec) == float:
-                silva_spec = &#39;NA&#39;
-            rdp_spec = rdp_spec.split(&#39;/&#39;)
-            silva_spec = silva_spec.split(&#39;/&#39;)
-
-            both = list(set(rdp_spec + silva_spec))
-            if &#39;NA&#39; in both and len(both) &gt; 1:
-                both.remove(&#39;NA&#39;)
-
-            if len(both) &gt; 2:
-                both = &#39;NA&#39;
-            else:
-                both = &#39;/&#39;.join(both)
-            tmp.append(both)
-            data.append(tmp)
-
-        taxonomy = pd.DataFrame(data, columns=rdp.columns, index=rdp.index)
-
-    elif species_assignment is None:
-        taxonomy = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;rdp_species.tsv&#39;)
-        taxonomy = pd.read_csv(taxonomy, sep=&#39;\t&#39;)
-        taxonomy[&#39;species&#39;][:] = &#39;NA&#39;
+    taxonomy = _Gibson.load_taxonomy(species_assignment=species_assignment)
+    metadata = _Gibson.load_sampleid(dset=dset)
+    reads = _Gibson.load_reads(dset=dset)
+    qpcr = _Gibson.load_qpcr_masses(dset=dset)
+    if with_perturbations:
+        perturbations = _Gibson.load_perturbations()
     else:
-        raise ValueError(&#39;`species_assignment` ({}) is not recognized.&#39;.format(species_assignment))
-
-    metadata = _load_sampleid(dset=dset)
-    if dset in [&#39;inoculum&#39;, &#39;replicates&#39;]:
-        # Remove the perturbations
-        metadata = metadata[[col for col in metadata.columns if &#39;perturbation:&#39; not in col]]
-    reads = _load_reads(dset=dset)
-    qpcr = _load_qpcr_masses(dset=dset)
+        perturbations = None
 
     if as_df:
         return {&#39;metadata&#39;: metadata, &#39;taxonomy&#39;: taxonomy, 
-            &#39;reads&#39;: reads, &#39;qpcr&#39;:qpcr}
+            &#39;reads&#39;: reads, &#39;qpcr&#39;:qpcr, &#39;perturbations&#39;: perturbations}
     else:
-
-        # print(taxonomy.head())
-        # print(metadata.head())
-        # print(reads.head())
-        # print(qpcr.head())
-
-        asvs = ASVSet(taxonomy_table=taxonomy)
-        study = Study(asvs=asvs)
-        study.parse_samples(
+        taxas = TaxaSet(taxonomy_table=taxonomy)
+        study = Study(taxas=taxas, name=dset)
+        study.parse(
             metadata=metadata,
             reads=reads,
-            qpcr=qpcr)
+            qpcr=qpcr,
+            perturbations=perturbations)
         return study
 
-def _load_qpcr_masses(dset=None):
-    &#39;&#39;&#39;Load qpcr masses table into a `pandas.DataFrame`.
-
-    Returns
-    -------
-    pandas.DataFrame
-    &#39;&#39;&#39;
-    path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;qpcr.tsv&#39;)
-    df = pd.read_csv(path, sep=&#39;\t&#39;)
-    df = df.set_index(&#39;sampleID&#39;)
-
-    if dset is not None:
-        keep = _get_sampleids(eles=df.index, dset=dset)
-        df = df.loc[keep]
-    return df
-
-def _load_reads(dset=None):
-    &#39;&#39;&#39;Load reads table into a `pandas.DataFrame`.
-
-    Returns
-    -------
-    pandas.DataFrame
-    &#39;&#39;&#39;
-    path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;counts.tsv&#39;)
-    df = pd.read_csv(path, sep=&#39;\t&#39;, index_col=0)
-
-    if dset is not None:
-        keep = _get_sampleids(eles=df.columns, dset=dset)
-        df = df[keep]
-    return df
-
-def _load_sampleid(dset=None):
-    &#39;&#39;&#39;Load sample ID table into a `pandas.DataFrame`.
-
-    Returns
-    -------
-    pandas.DataFrame
-    &#39;&#39;&#39;
-    path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;metadata.tsv&#39;)
-    df = pd.read_csv(path, sep=&#39;\t&#39;)
-    df = df.set_index(&#39;sampleID&#39;)
-
-    if dset is not None:
-        keep = _get_sampleids(eles=df.index, dset=dset)
-        df = df.loc[keep]
-    return df
-
-def _get_sampleids(eles, dset):
-    keep = []
-
-    for sampleid in eles:
-
-        mid = sampleid.split(&#39;-&#39;)[0]
-        if mid == &#39;1&#39;:
-            continue
-
-        if dset == &#39;inoculum&#39; and _is_inoc_sampleid(sampleid):
-            keep.append(sampleid)
-        elif dset == &#39;replicates&#39; and _is_negbin_sampleid(sampleid):
-            keep.append(sampleid)
-        elif dset == &#39;healthy&#39; and _is_healthy_sampleid(sampleid):
-            keep.append(sampleid)
-        elif dset == &#39;uc&#39; and _is_uc_sampleid(sampleid):
-            keep.append(sampleid)
-
-    return keep
-
-def _is_healthy_sampleid(sampleid):
-    &#39;&#39;&#39;Checks whether the sample id is for healty or UC
+def parse(name, metadata, taxonomy, reads=None, qpcr=None, perturbations=None, sep=&#39;\t&#39;):
+    &#39;&#39;&#39;Parse a dataset. Acts as a wrapper for `mdsine2.Study.parse`
 
     Parameters
     ----------
-    sampleid : str
-        Sample ID
-
+    name : str
+        This is the name of the study
+    metadata : str
+        This is the location for the metadata table
+    taxonomy : str
+        This is the location for the taxonomy table
+    reads : str
+        This is the location for the reads table
+    qpcr : str
+        This is the location for the qPCR table
+    perturbations : str
+        This is the location for the perturbations table
+    sep : str
+        This is the separator for each table
+    
     Returns
     -------
-    bool
+    mdsine2.Study
     &#39;&#39;&#39;
-    sid = sampleid.split(&#39;-&#39;)[0]
-    return sid in _HEALTHY_SUBJECTS
+    taxonomy = pd.read_csv(taxonomy, sep=sep)
+    taxas = TaxaSet()
+    taxas.parse(taxonomy_table=taxonomy)
+    study = Study(taxas, name=name)
 
-def _is_uc_sampleid(sampleid):
-    &#39;&#39;&#39;Checks whether the sample id is for healty or UC
-
-    Parameters
-    ----------
-    sampleid : str
-        Sample ID
-
-    Returns
-    -------
-    bool
-    &#39;&#39;&#39;
-    sid = sampleid.split(&#39;-&#39;)[0]
-    return sid in _UC_SUBJECTS
-
-def _is_negbin_sampleid(sampleid):
-    &#39;&#39;&#39;Checks whether the sample id is for learning the negative
-    binomial dispersion parameters
-
-    Parameters
-    ----------
-    sampleid : str
-        Sample ID
-
-    Returns
-    -------
-    bool
-    &#39;&#39;&#39;
-    return &#39;M2-D&#39; in sampleid
-
-def _is_inoc_sampleid(sampleid):
-    &#39;&#39;&#39;Checks whether the sample id is from the inoculum
-
-    Parameters
-    ----------
-    sampleid : str
-        Sample ID
-
-    Returns
-    -------
-    bool
-    &#39;&#39;&#39;
-    return &#39;inoculum&#39; in sampleid</code></pre>
+    metadata = pd.read_csv(metadata, sep=sep)
+    if reads is not None:
+        reads = pd.read_csv(reads, sep=sep)
+    if qpcr is not None:
+        qpcr = pd.read_csv(qpcr, sep=sep)
+    if perturbations is not None:
+        perturbations = pd.read_csv(perturbations, sep=sep)
+    
+    return study.parse(metadata=metadata, reads=reads, qpcr=qpcr, perturbations=perturbations)</code></pre>
 </details>
 </section>
 <section>
@@ -305,13 +382,12 @@ def _is_inoc_sampleid(sampleid):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.dataset.gibson"><code class="name flex">
-<span>def <span class="ident">gibson</span></span>(<span>dset=None, as_df=False, species_assignment='both')</span>
+<span>def <span class="ident">gibson</span></span>(<span>dset=None, as_df=False, with_perturbations=True, species_assignment='both')</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Load the Gibson dataset.</p>
 <p>Returns either a <code>mdsine2.Study</code> object or the <code>pandas.DataFrame</code> objects that
 that comprise the Gibson dataset.</p>
-<p>TODO: inline documentation about options, need to explain healthy, dfs, and taxonomy</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>dset</code></strong> :&ensp;<code>str, None</code></dt>
@@ -328,6 +404,8 @@ dict:
 'reads' -&gt; Reads table
 'qpcr' -&gt; qPCR table
 'metadata' -&gt; metadata table</dd>
+<dt><strong><code>with_perturbations</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True, load in the perturbations. Otherwise do not load them</dd>
 <dt><strong><code>species_assignment</code></strong> :&ensp;<code>str, None</code></dt>
 <dd>How to assign the species
 If 'silva', only use the Silva species assignment
@@ -344,13 +422,11 @@ If None, have no species assignment and just return the taxonomy provided by DAD
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def gibson(dset=None, as_df=False, species_assignment=&#39;both&#39;):
+<pre><code class="python">def gibson(dset=None, as_df=False, with_perturbations=True, species_assignment=&#39;both&#39;):
     &#39;&#39;&#39;Load the Gibson dataset.
 
     Returns either a `mdsine2.Study` object or the `pandas.DataFrame` objects that
     that comprise the Gibson dataset.
-
-    TODO: inline documentation about options, need to explain healthy, dfs, and taxonomy
 
     Parameters
     ----------
@@ -368,6 +444,8 @@ If None, have no species assignment and just return the taxonomy provided by DAD
             &#39;reads&#39; -&gt; Reads table
             &#39;qpcr&#39; -&gt; qPCR table
             &#39;metadata&#39; -&gt; metadata table
+    with_perturbations : bool
+        If True, load in the perturbations. Otherwise do not load them
     species_assignment : str, None
         How to assign the species
         If &#39;silva&#39;, only use the Silva species assignment
@@ -380,124 +458,98 @@ If None, have no species assignment and just return the taxonomy provided by DAD
     mdsine2.Study OR dict
     &#39;&#39;&#39;
     # Load the taxonomy assignment
-    if species_assignment == &#39;silva&#39;:
-        path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;silva_species.tsv&#39;)
-        taxonomy = pd.read_csv(path, sep=&#39;\t&#39;, index_col=0)
-    elif species_assignment == &#39;rdp&#39;:
-        path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;rdp_species.tsv&#39;)
-        taxonomy = pd.read_csv(path, sep=&#39;\t&#39;, index_col=0)
-    elif species_assignment == &#39;both&#39;:
-        rdp = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;rdp_species.tsv&#39;)
-        rdp = pd.read_csv(rdp, sep=&#39;\t&#39;, index_col=0)
-        silva = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;silva_species.tsv&#39;)
-        silva = pd.read_csv(silva, sep=&#39;\t&#39;, index_col=0)
-
-        rdp.columns = rdp.columns.str.lower()
-        silva.columns = silva.columns.str.lower()
-
-        data = []
-
-        for iii, aname in enumerate(rdp.index):
-
-            rdp_spec = rdp[&#39;species&#39;][aname]
-            silva_spec = silva[&#39;species&#39;][aname]
-            tmp = rdp.iloc[iii, :-1].to_list()
-
-            if type(rdp_spec) == float:
-                rdp_spec = &#39;NA&#39;
-            if type(silva_spec) == float:
-                silva_spec = &#39;NA&#39;
-            rdp_spec = rdp_spec.split(&#39;/&#39;)
-            silva_spec = silva_spec.split(&#39;/&#39;)
-
-            both = list(set(rdp_spec + silva_spec))
-            if &#39;NA&#39; in both and len(both) &gt; 1:
-                both.remove(&#39;NA&#39;)
-
-            if len(both) &gt; 2:
-                both = &#39;NA&#39;
-            else:
-                both = &#39;/&#39;.join(both)
-            tmp.append(both)
-            data.append(tmp)
-
-        taxonomy = pd.DataFrame(data, columns=rdp.columns, index=rdp.index)
-
-    elif species_assignment is None:
-        taxonomy = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;rdp_species.tsv&#39;)
-        taxonomy = pd.read_csv(taxonomy, sep=&#39;\t&#39;)
-        taxonomy[&#39;species&#39;][:] = &#39;NA&#39;
+    taxonomy = _Gibson.load_taxonomy(species_assignment=species_assignment)
+    metadata = _Gibson.load_sampleid(dset=dset)
+    reads = _Gibson.load_reads(dset=dset)
+    qpcr = _Gibson.load_qpcr_masses(dset=dset)
+    if with_perturbations:
+        perturbations = _Gibson.load_perturbations()
     else:
-        raise ValueError(&#39;`species_assignment` ({}) is not recognized.&#39;.format(species_assignment))
-
-    metadata = _load_sampleid(dset=dset)
-    if dset in [&#39;inoculum&#39;, &#39;replicates&#39;]:
-        # Remove the perturbations
-        metadata = metadata[[col for col in metadata.columns if &#39;perturbation:&#39; not in col]]
-    reads = _load_reads(dset=dset)
-    qpcr = _load_qpcr_masses(dset=dset)
+        perturbations = None
 
     if as_df:
         return {&#39;metadata&#39;: metadata, &#39;taxonomy&#39;: taxonomy, 
-            &#39;reads&#39;: reads, &#39;qpcr&#39;:qpcr}
+            &#39;reads&#39;: reads, &#39;qpcr&#39;:qpcr, &#39;perturbations&#39;: perturbations}
     else:
-
-        # print(taxonomy.head())
-        # print(metadata.head())
-        # print(reads.head())
-        # print(qpcr.head())
-
-        asvs = ASVSet(taxonomy_table=taxonomy)
-        study = Study(asvs=asvs)
-        study.parse_samples(
+        taxas = TaxaSet(taxonomy_table=taxonomy)
+        study = Study(taxas=taxas, name=dset)
+        study.parse(
             metadata=metadata,
             reads=reads,
-            qpcr=qpcr)
+            qpcr=qpcr,
+            perturbations=perturbations)
         return study</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.dataset.gibson_phylogenetic_tree"><code class="name flex">
-<span>def <span class="ident">gibson_phylogenetic_tree</span></span>(<span>with_reference_sequences)</span>
+<dt id="mdsine2.dataset.parse"><code class="name flex">
+<span>def <span class="ident">parse</span></span>(<span>name, metadata, taxonomy, reads=None, qpcr=None, perturbations=None, sep='\t')</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Load phylogenetic tree into an <code>ete3.Tree</code> object.</p>
+<div class="desc"><p>Parse a dataset. Acts as a wrapper for <code>mdsine2.Study.parse</code></p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>with_reference_sequences</code></strong> :&ensp;<code>bool</code></dt>
-<dd>If True, load the phylogenetic tree with the reference sequeunces from
-placement. If False, only include the ASVs and not the reference
-sequences</dd>
+<dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the name of the study</dd>
+<dt><strong><code>metadata</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the location for the metadata table</dd>
+<dt><strong><code>taxonomy</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the location for the taxonomy table</dd>
+<dt><strong><code>reads</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the location for the reads table</dd>
+<dt><strong><code>qpcr</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the location for the qPCR table</dd>
+<dt><strong><code>perturbations</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the location for the perturbations table</dd>
+<dt><strong><code>sep</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the separator for each table</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>ete3.Tree</code></dt>
+<dt><code>mdsine2.Study</code></dt>
 <dd>&nbsp;</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def gibson_phylogenetic_tree(with_reference_sequences):
-    &#39;&#39;&#39;Load phylogenetic tree into an `ete3.Tree` object.
+<pre><code class="python">def parse(name, metadata, taxonomy, reads=None, qpcr=None, perturbations=None, sep=&#39;\t&#39;):
+    &#39;&#39;&#39;Parse a dataset. Acts as a wrapper for `mdsine2.Study.parse`
 
     Parameters
     ----------
-    with_reference_sequences : bool
-        If True, load the phylogenetic tree with the reference sequeunces from
-        placement. If False, only include the ASVs and not the reference 
-        sequences
-
+    name : str
+        This is the name of the study
+    metadata : str
+        This is the location for the metadata table
+    taxonomy : str
+        This is the location for the taxonomy table
+    reads : str
+        This is the location for the reads table
+    qpcr : str
+        This is the location for the qPCR table
+    perturbations : str
+        This is the location for the perturbations table
+    sep : str
+        This is the separator for each table
+    
     Returns
     -------
-    ete3.Tree
+    mdsine2.Study
     &#39;&#39;&#39;
-    module_path = dirname(__file__)
-    if with_reference_sequences:
-        path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;phylogenetic_tree_with_reference.nhx&#39;)
-    else:
-        path = join(dirname(__file__),&#39;datasets/gibson_dataset&#39; ,&#39;phylogenetic_tree_w_branch_len_preserved.nhx&#39;)
+    taxonomy = pd.read_csv(taxonomy, sep=sep)
+    taxas = TaxaSet()
+    taxas.parse(taxonomy_table=taxonomy)
+    study = Study(taxas, name=name)
 
-    return Tree(path)</code></pre>
+    metadata = pd.read_csv(metadata, sep=sep)
+    if reads is not None:
+        reads = pd.read_csv(reads, sep=sep)
+    if qpcr is not None:
+        qpcr = pd.read_csv(qpcr, sep=sep)
+    if perturbations is not None:
+        perturbations = pd.read_csv(perturbations, sep=sep)
+    
+    return study.parse(metadata=metadata, reads=reads, qpcr=qpcr, perturbations=perturbations)</code></pre>
 </details>
 </dd>
 </dl>
@@ -519,7 +571,7 @@ sequences</dd>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="mdsine2.dataset.gibson" href="#mdsine2.dataset.gibson">gibson</a></code></li>
-<li><code><a title="mdsine2.dataset.gibson_phylogenetic_tree" href="#mdsine2.dataset.gibson_phylogenetic_tree">gibson_phylogenetic_tree</a></code></li>
+<li><code><a title="mdsine2.dataset.parse" href="#mdsine2.dataset.parse">parse</a></code></li>
 </ul>
 </li>
 </ul>

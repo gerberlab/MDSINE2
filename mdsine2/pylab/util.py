@@ -34,7 +34,7 @@ PAPER_FORMATTER = '%(paperformat)s'
 
 _TAXLEVELS = ['species', 'genus', 'family', 'class', 'order', 'phylum', 'kingdom']
 _TAXFORMATTERS = ['%(species)s', '%(genus)s', '%(family)s', '%(class)s', '%(order)s', '%(phylum)s', '%(kingdom)s']
-ASVNAME_PAPER_FORMAT = float('inf')
+TAXANAME_PAPER_FORMAT = float('inf')
 
 def isdataframe(a):
     '''Checks if `a` is a pandas.DataFrame
@@ -281,92 +281,92 @@ def itercheck(xs, f):
     '''
     return [f(x) for x in xs]
 
-def asvname_for_paper(asv, asvs):
+def taxaname_for_paper(taxa, taxas):
     '''Makes the name in the format needed for the paper
 
     Parameters
     ----------
-    asv : pylab.base.ASV
-        This is the ASV we are making the name for
-    asvs : pylab.base.ASVSet
-        This is the ASVSet object that contains the ASV
+    taxa : pylab.base.Taxa
+        This is theTaxa  we are making the name for
+    taxas : pylab.base.TaxaSet
+        This is the TaxaSet object that contains the Taxa
 
     Returns
     -------
     '''
-    asv = asvs[asv]
-    if asv.tax_is_defined('species'):
-        species = asv.taxonomy['species']
+    taxa = taxas[taxa]
+    if taxa.tax_is_defined('species'):
+        species = taxa.taxonomy['species']
         species = species.split('/')
         if len(species) >= 3:
             species = species[:2]
         species = '/'.join(species)
-        label = asvname_formatter(
+        label = taxaname_formatter(
             format='%(genus)s {spec} %(name)s'.format(
                 spec=species), 
-            asv=asv, asvs=asvs)
-    elif asv.tax_is_defined('genus'):
-        label = asvname_formatter(
+            taxa=taxa, taxas=taxas)
+    elif taxa.tax_is_defined('genus'):
+        label = taxaname_formatter(
             format='* %(genus)s %(name)s',
-            asv=asv, asvs=asvs)
-    elif asv.tax_is_defined('family'):
-        label = asvname_formatter(
+            taxa=taxa, taxas=taxas)
+    elif taxa.tax_is_defined('family'):
+        label = taxaname_formatter(
             format='** %(family)s %(name)s',
-            asv=asv, asvs=asvs)
-    elif asv.tax_is_defined('order'):
-        label = asvname_formatter(
+            taxa=taxa, taxas=taxas)
+    elif taxa.tax_is_defined('order'):
+        label = taxaname_formatter(
             format='*** %(order)s %(name)s',
-            asv=asv, asvs=asvs)
-    elif asv.tax_is_defined('class'):
-        label = asvname_formatter(
+            taxa=taxa, taxas=taxas)
+    elif taxa.tax_is_defined('class'):
+        label = taxaname_formatter(
             format='**** %(class)s %(name)s',
-            asv=asv, asvs=asvs)
-    elif asv.tax_is_defined('phylum'):
-        label = asvname_formatter(
+            taxa=taxa, taxas=taxas)
+    elif taxa.tax_is_defined('phylum'):
+        label = taxaname_formatter(
             format='***** %(phylum)s %(name)s',
-            asv=asv, asvs=asvs)
-    elif asv.tax_is_defined('kingdom'):
-        label = asvname_formatter(
+            taxa=taxa, taxas=taxas)
+    elif taxa.tax_is_defined('kingdom'):
+        label = taxaname_formatter(
             format='****** %(kingdom)s %(name)s',
-            asv=asv, asvs=asvs)
+            taxa=taxa, taxas=taxas)
     else:
-        raise ValueError('Something went wrong - no taxnonomy: {}'.format(str(asv)))
+        raise ValueError('Something went wrong - no taxnonomy: {}'.format(str(taxa)))
 
     return label
 
-def asvname_formatter(format, asv, asvs):
-    '''Format the label of an ASV. Specify the ASV by its index in the ASVSet `asvs`.
+def taxaname_formatter(format, taxa, taxas):
+    '''Format the label of an Taxa. Specify the Taxa by its index in the TaxaSet `taxas`.
 
-    If `format == mdsine.ASVNAME_PAPER_FORMAT`, then we call the function
-    `asvname_for_paper`.
+    If `format == mdsine.TAXANAME_PAPER_FORMAT`, then we call the function
+    `taxaname_for_paper`.
 
     Example:
-        asv is an ASV object at index 0 where
-        asv.genus = 'A'
-        asv.id = 1234532
+        taxa is an Taxa object at index 0 where
+        taxa.genus = 'A'
+        taxa.id = 1234532
 
-        asvname_formatter(
+        taxaname_formatter(
             format='%(genus)s: %(index)s',
-            asv=1234532,
-            asvs=asvs)
+            taxa=1234532,
+            taxas=taxas)
         >>> 'A: 0'
 
-        asvname_formatter(
+        taxaname_formatter(
             format='%(genus)s: %(genus)s',
-            asv=1234532,
-            asvs=asvs)
+            taxa=1234532,
+            taxas=taxas)
         >>> 'A: A'
 
-        asvname_formatter(
+        taxaname_formatter(
             format='%(index)s',
-            asv=1234532,
-            asvs=asvs)
+            taxa=1234532,
+            taxas=taxas)
         >>> '0'
 
-        asvname_formatter(
+        taxaname_formatter(
             format='%(geNus)s: %(genus)s',
-            asv=1234532,
-            asvs=asvs)
+            taxa=1234532,
+            taxas=taxas)
         >>> '%(geNus)s: A'
 
     Parameters
@@ -375,57 +375,57 @@ def asvname_formatter(format, asv, asvs):
         This is the format for us to do the labels
         Formatting options:
             '%(paperformat)s'
-                Return the `asvname_for_paper`
+                Return the `taxaname_for_paper`
             '%(name)s'
-                Name of the ASV (pylab.base.ASV.name)
+                Name of the Taxa (pylab.base..name)
             '%(id)s'
-                ID of the ASV (pylab.base.ASV.id)
+                ID of the Taxa (pylab.base..id)
             '%(index)s'
-                The order that this appears in the ASVSet
+                The order that this appears in the TaxaSet
             '%(species)s'
-                `'species'` taxonomic classification of the ASV
+                `'species'` taxonomic classification of the Taxa
             '%(speciesX)s'
-                `'species'` taxonomic classification of the ASV for only up to the first 
+                `'species'` taxonomic classification of the Taxa for only up to the first 
                 `X` spceified
             '%(genus)s'
-                `'genus'` taxonomic classification of the ASV
+                `'genus'` taxonomic classification of the Taxa
             '%(family)s'
-                `'family'` taxonomic classification of the ASV
+                `'family'` taxonomic classification of the Taxa
             '%(class)s'
-                `'class'` taxonomic classification of the ASV
+                `'class'` taxonomic classification of the Taxa
             '%(order)s'
-                `'order'` taxonomic classification of the ASV
+                `'order'` taxonomic classification of the Taxa
             '%(phylum)s'
-                `'phylum'` taxonomic classification of the ASV
+                `'phylum'` taxonomic classification of the Taxa
             '%(kingdom)s'
-                `'kingdom'` taxonomic classification of the ASV
+                `'kingdom'` taxonomic classification of the Taxa
 
-    asv : str, int, ASV
-        Either the ASV or an id for the ASV
-    asvs : pylab.base.ASVSet
-        Dataset containing all of the information for the ASVs
+    taxa : str, int, Taxa
+        Either the  or an id for the Taxa
+    taxas : pylab.base.TaxaSet
+        Dataset containing all of the information for the Taxas
 
     '''
-    if format == ASVNAME_PAPER_FORMAT:
-        return asvname_for_paper(asv=asv, asvs=asvs)
-    asv = asvs[asv]
-    index = asv.idx
+    if format == TAXANAME_PAPER_FORMAT:
+        return taxaname_for_paper(taxa=taxa, taxas=taxas)
+    taxa = taxas[taxa]
+    index = taxa.idx
 
-    label = format.replace(NAME_FORMATTER, str(asv.name))
-    label = label.replace(ID_FORMATTER, str(asv.id))
+    label = format.replace(NAME_FORMATTER, str(taxa.name))
+    label = label.replace(ID_FORMATTER, str(taxa.id))
     label = label.replace(INDEX_FORMATTER,  str(index))
 
     if PAPER_FORMATTER in label:
         label = label.replace(PAPER_FORMATTER, '%(temp)s')
-        label = label.replace('%(temp)s', asvname_for_paper(asv=asv, asvs=asvs))
+        label = label.replace('%(temp)s', taxaname_for_paper(taxa=taxa, taxas=taxas))
     
     for i in range(len(_TAXLEVELS)):
         taxlevel = _TAXLEVELS[i]
         fmt = _TAXFORMATTERS[i]
         try:
-            label = label.replace(fmt, str(asv.get_taxonomy(taxlevel)))
+            label = label.replace(fmt, str(taxa.get_taxonomy(taxlevel)))
         except:
-            logging.critical('asv: {}'.format(asv))
+            logging.critical('taxa: {}'.format(taxa))
             logging.critical('fmt: {}'.format(fmt))
             logging.critical('label: {}'.format(label))
             raise
@@ -589,7 +589,7 @@ def coarsen_phylogenetic_tree(tree, depth):
     ete3.Tree, dict
         ete3.Tree : is the coarsened tree
         dict : is a dictionary mapping the name of the new leaves
-            to the ASVs that are contained within it
+            to the Taxas that are contained within it
     '''
     if not istree(tree):
         raise TypeError('`tree` ({}) must be of type tree'.format(type(tree)))

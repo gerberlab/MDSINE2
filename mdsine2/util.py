@@ -10,34 +10,34 @@ from .names import STRNAMES
 from . import pylab as pl
 from . import diversity
 
-def is_gram_negative(asv):
-    '''Return true if the asv is gram - or gram positive
+def is_gram_negative(taxa):
+    '''Return true if the taxa is gram - or gram positive
     '''
-    if not asv.tax_is_defined('phylum'):
+    if not taxa.tax_is_defined('phylum'):
         return None
-    elif asv.taxonomy['phylum'].lower() == 'bacteroidetes':
+    elif taxa.taxonomy['phylum'].lower() == 'bacteroidetes':
         return True
-    elif asv.taxonomy['phylum'].lower() == 'firmicutes':
+    elif taxa.taxonomy['phylum'].lower() == 'firmicutes':
         return False
-    elif asv.taxonomy['phylum'].lower() == 'verrucomicrobia':
+    elif taxa.taxonomy['phylum'].lower() == 'verrucomicrobia':
         return True
-    elif asv.taxonomy['phylum'].lower() == 'proteobacteria':
+    elif taxa.taxonomy['phylum'].lower() == 'proteobacteria':
         return True
     else:
         raise ValueError('{} phylum not specified. If not bacteroidetes, firmicutes, verrucomicrobia, or ' \
-            'proteobacteria, you must add another phylum'.format(str(asv)))
+            'proteobacteria, you must add another phylum'.format(str(taxa)))
 
-def is_gram_negative_taxa(taxa, taxalevel, asvs):
+def is_gram_negative_taxa(taxa, taxalevel, taxas):
     '''Checks if the taxa `taxa` at the taxonomic level `taxalevel`
     is a gram negative or gram positive
     '''
-    for asv in asvs:
-        if asv.taxonomy[taxalevel] == taxa:
-            return is_gram_negative(asv)
+    for taxa in taxas:
+        if taxa.taxonomy[taxalevel] == taxa:
+            return is_gram_negative(taxa)
 
     else:
         raise ValueError('`taxa` ({}) not found at taxonomic level ({})'.format(
-            taxa. taxalevel))
+            taxa, taxalevel))
 
 def generate_interation_bayes_factors_posthoc(mcmc, section='posterior'):
     '''Generates the bayes factors on an item-item level for the interactions, 
@@ -183,14 +183,14 @@ def generate_cluster_assignments_posthoc(clustering, n_clusters='mode', linkage=
     return ret
 
 def aggregate_items(subjset, hamming_dist):
-    '''Aggregate ASVs that have an average hamming distance of `hamming_dist`
+    '''Aggregate Taxas that have an average hamming distance of `hamming_dist`
 
     Parameters
     ----------
     subjset : mdsine2.Study
         This is the `mdsine2.Study` object that we are aggregating
     hamming_dist : int
-        This is the hamming radius from one ASV to the next where we
+        This is the hamming radius from one Taxa to the next where we
         are aggregating
 
     Returns
@@ -201,22 +201,22 @@ def aggregate_items(subjset, hamming_dist):
     cnt = 0
     found = False
     iii = 0
-    logging.info('Agglomerating asvs')
+    logging.info('Agglomerating taxas')
     while not found:
-        for iii in range(iii, len(subjset.asvs)):
+        for iii in range(iii, len(subjset.taxas)):
             if iii % 200 == 0:
-                logging.info('{}/{}'.format(iii, len(subjset.asvs)))
-            asv1 = subjset.asvs[iii]
-            for asv2 in subjset.asvs.names.order[iii:]:
-                asv2 = subjset.asvs[asv2]
-                if asv1.name == asv2.name:
+                logging.info('{}/{}'.format(iii, len(subjset.taxas)))
+            taxa1 = subjset.taxas[iii]
+            for taxa2 in subjset.taxas.names.order[iii:]:
+                taxa2 = subjset.taxas[taxa2]
+                if taxa1.name == taxa2.name:
                     continue
-                if len(asv1.sequence) != len(asv2.sequence):
+                if len(taxa1.sequence) != len(taxa2.sequence):
                     continue
 
-                dist = _avg_dist(asv1, asv2)
+                dist = _avg_dist(taxa1, taxa2)
                 if dist <= hamming_dist:
-                    subjset.aggregate_items(asv1, asv2)
+                    subjset.aggregate_items(taxa1, taxa2)
                     cnt += 1
                     found = True
                     break
@@ -226,20 +226,20 @@ def aggregate_items(subjset, hamming_dist):
             found = False
         else:
             break
-    logging.info('Aggregated {} asvs'.format(cnt))
+    logging.info('Aggregated {} taxas'.format(cnt))
     return subjset
 
-def _avg_dist(asv1, asv2):
+def _avg_dist(taxa1, taxa2):
     dists = []
-    if pl.isaggregatedasv(asv1):
-        seqs1 = asv1.aggregated_seqs.values()
+    if pl.isotu(taxaa1):
+        seqs1 = taxa1.aggregated_seqs.values()
     else:
-        seqs1 = [asv1.sequence]
+        seqs1 = [taxa1.sequence]
 
-    if pl.isaggregatedasv(asv2):
-        seqs2 = asv2.aggregated_seqs.values()
+    if pl.isotu(taxa2):
+        seqs2 = taxa2.aggregated_seqs.values()
     else:
-        seqs2 = [asv2.sequence]
+        seqs2 = [taxa2.sequence]
 
     for v1 in seqs1:
         for v2 in seqs2:
@@ -255,7 +255,7 @@ def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_nu
 
     There must be at least `threshold` for at least
     `min_num_consecutive` consecutive timepoints for at least
-    `min_num_subjects` subjects for the ASV to be classified as valid.
+    `min_num_subjects` subjects for the Taxa to be classified as valid.
 
     If a colonization time is specified, we only look after that timepoint
 
@@ -279,7 +279,7 @@ def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_nu
         This is the minimum number of subjects this needs to be valid for.
         If str, we accept 'all', which we set that automatically.
     union_other_consortia : mdsine2.Study, None
-        If not None, take the union of the asvs passing the filtering of both
+        If not None, take the union of the taxas passing the filtering of both
         `subjset` and `union_other_consortia`
 
     Returns
@@ -332,21 +332,21 @@ def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_nu
     subjset = copy.deepcopy(subjset)      
     
     if union_other_consortia is not None:
-        asvs_to_keep = set()
+        taxas_to_keep = set()
         for subjset_temp in [subjset, union_other_consortia]:
-            subjset_temp = consistency(subjset_temp, dtype=dtype,
+            subjset_temp = consistency_filtering(subjset_temp, dtype=dtype,
                 threshold=threshold, min_num_consecutive=min_num_consecutive,
                 colonization_time=colonization_time, min_num_subjects=min_num_subjects,
                 union_other_consortia=None)
-            for asv_name in subjset_temp.asvs.names:
-                asvs_to_keep.add(asv_name)
+            for taxa_name in subjset_temp.taxas.names:
+                taxas_to_keep.add(taxa_name)
         to_delete = []
-        for aname in subjset.asvs.names:
-            if aname not in asvs_to_keep:
+        for aname in subjset.taxas.names:
+            if aname not in taxas_to_keep:
                 to_delete.append(aname)
     else:
         # Everything is fine, now we can do the filtering
-        talley = np.zeros(len(subjset.asvs), dtype=int)
+        talley = np.zeros(len(subjset.taxas), dtype=int)
         for i, subj in enumerate(subjset):
             matrix = subj.matrix()[dtype]
             tidx_start = None
@@ -370,17 +370,17 @@ def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_nu
                         break
 
         invalid_oidxs = np.where(talley < min_num_subjects)[0]
-        to_delete = subjset.asvs.ids.order[invalid_oidxs]
-    subjset.pop_asvs(to_delete)
+        to_delete = subjset.taxas.ids.order[invalid_oidxs]
+    subjset.pop_taxas(to_delete)
     return subjset
 
 def conditional_consistency_filtering(subjset, other, dtype, threshold, min_num_consecutive_upper,  
     min_num_consecutive_lower, min_num_subjects, colonization_time):
     '''Filters the cohorts in `subjset` with the `mdsine2.consistency_filtering`
-    filtering method but conditional on another cohort. If an ASV passes the filter
-    in the cohort `other`, the ASV can only have `min_num_consecutive_lower` 
+    filtering method but conditional on another cohort. If an Taxa passes the filter
+    in the cohort `other`, the Taxa can only have `min_num_consecutive_lower` 
     consecutive timepoints instead of `min_num_consecutive_upper`. This potentially
-    increases the overlap of the ASVs between cohorts, which is the reason why
+    increases the overlap of the Taxas between cohorts, which is the reason why
     we would do this filtering over just `mdsine2.consistency_filtering`
 
     Algorithm
@@ -389,7 +389,7 @@ def conditional_consistency_filtering(subjset, other, dtype, threshold, min_num_
     `subjset` and `other` with minimum number of consectutive timepoints 
     `min_num_consecutive_upper` and `min_num_consecutive_lower`.
 
-    For each ASV in cohort `subjset`
+    For each Taxa in cohort `subjset`
         If it passes filtering with `min_num_consecutive_upper` in `subjset`, it is included
         If it passes filtering with `min_num_consecutive_upper` in `other` AND it
             passes filtering  `min_num_consecutive_lower` in `subjset`, it is included.
@@ -443,12 +443,12 @@ def conditional_consistency_filtering(subjset, other, dtype, threshold, min_num_
 
     # Conditional consistency filtering
     to_delete = []
-    for asv in subjset_lower.asvs:
-        if asv.name in subjset_upper.asvs:
+    for taxa in subjset_lower.taxas:
+        if taxa.name in subjset_upper.taxas:
             continue
-        if asv.name in other_upper.asvs:
+        if taxa.name in other_upper.taxas:
             continue
-        to_delete.append(asv.name)
+        to_delete.append(taxa.name)
 
-    subjset_lower.pop_asvs(to_delete)
+    subjset_lower.pop_taxas(to_delete)
     return subjset_lower

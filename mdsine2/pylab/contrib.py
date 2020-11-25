@@ -80,54 +80,54 @@ class Perturbation(BasePerturbation, variables.Variable):
     ----------
     starts, ends : dict
         Start and end of the perturbation for each subject
-    asvs : pylab.base.ASVSet
-        ASVSet of asvs
+    taxas : pylab.base.TaxaSet
+        TaxaSet of taxas
     magnitude : pylab.variables.Variable, int/float, array, Optional
         If a pylab.variables.Variable is passed in it will create one
         with the value indicated. Defualt value is None
     indicator : pylab.variables.Variable, array, Optional
         This is the indicator of the perturbation. Default value is False 
-        for every asv
+        for every taxa
     probability : pylab.variables.Variable, float, Optional
-        This is the probability that the perturbation affects an ASV, e.g.
+        This is the probability that the perturbation affects a Taxa, e.g.
           probability = 0.7, there's a 70% chance that the perturbation afffects 
-          each asv
+          each taxa
     kwargs : dict
         - Extra arguments for the Node class
     '''
-    def __init__(self, asvs, starts, ends, magnitude=None, indicator=None, 
+    def __init__(self, taxas, starts, ends, magnitude=None, indicator=None, 
         probability=None, **kwargs):
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
             self.G.perturbations = []
         BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         
-        if not base.isasvset(asvs):
-            raise TypeError('`asvs` ({}) must be pylab.base.ASVSet'.format(type(asvs)))
+        if not base.istaxaset(taxas):
+            raise TypeError('`taxas` ({}) must be pylab.base.TaxaSet'.format(type(taxas)))
 
         if self.G.perturbations is None:
             self.G.perturbations = []
         self.G.perturbations.append(self)
-        self.asvs = asvs
-        n_asvs = len(self.asvs)
-        self.set_value_shape(shape=(n_asvs, ))
+        self.taxas = taxas
+        n_taxas = len(self.taxas)
+        self.set_value_shape(shape=(n_taxas, ))
 
         # Set magnitude
         if magnitude is None:
-            magnitude = np.full(n_asvs, 0)
+            magnitude = np.full(n_taxas, 0)
         if util.isnumeric(magnitude):
-            magnitude = np.full(n_asvs, magnitude)
+            magnitude = np.full(n_taxas, magnitude)
         if util.isarray(magnitude):
-            if len(magnitude) != n_asvs:
+            if len(magnitude) != n_taxas:
                 raise ValueError('`magnitue` ({}) must have length {}'.format(
-                    len(magnitude), n_asvs))
+                    len(magnitude), n_taxas))
             magnitude = variables.Variable(
                 G=self.G, dtype=float, name=self.name+DEFAULT_MAGNITUDE_SUFFIX, 
                 value=magnitude)
-            magnitude.set_value_shape((n_asvs,))
+            magnitude.set_value_shape((n_taxas,))
         elif variables.isVariable(magnitude):
-            if len(magnitude) != n_asvs:
-                raise ValueError('`magnitue` ({}) must have length {}'.format(magnitude, n_asvs))
+            if len(magnitude) != n_taxas:
+                raise ValueError('`magnitue` ({}) must have length {}'.format(magnitude, n_taxas))
         else:
             raise TypeError('`magnitude` ({}) type not recognized'.format(type(magnitude)))
               
@@ -145,20 +145,20 @@ class Perturbation(BasePerturbation, variables.Variable):
 
         # Set indicator
         if indicator is None:
-            indicator = np.full(n_asvs, False, dtype=bool)
+            indicator = np.full(n_taxas, False, dtype=bool)
         if util.isbool(indicator):
-            indicator = np.full(n_asvs, indicator, dtype=bool)
+            indicator = np.full(n_taxas, indicator, dtype=bool)
         if util.isarray(indicator):
-            if len(indicator) != n_asvs:
+            if len(indicator) != n_taxas:
                 raise ValueError('`indicator` ({}) must have length {}'.format(
-                    len(indicator), n_asvs))
+                    len(indicator), n_taxas))
             indicator = variables.Variable(
                 G=self.G, dtype=bool, name=self.name+DEFAULT_INDICATOR_SUFFIX, 
                 value=indicator)
-            indicator.set_value_shape((n_asvs,))
+            indicator.set_value_shape((n_taxas,))
         elif variables.isVariable(indicator):
-            if len(indicator) != n_asvs:
-                raise ValueError('`magnitue` ({}) must have length {}'.format(indicator, n_asvs))
+            if len(indicator) != n_taxas:
+                raise ValueError('`magnitue` ({}) must have length {}'.format(indicator, n_taxas))
         else:
             raise TypeError('`indicator` ({}) type not recognized'.format(type(indicator)))
 
@@ -169,10 +169,10 @@ class Perturbation(BasePerturbation, variables.Variable):
     def __str__(self):
         s = BasePerturbation.__str__(self)
         s += '\nMagnitude:\n'
-        for oidx in range(len(self.asvs)):
+        for oidx in range(len(self.taxas)):
             s += '\t{}: {}\n'.format(oidx, self.magnitude.value[oidx])
         s += 'Indicator:\n'
-        for oidx in range(len(self.asvs)):
+        for oidx in range(len(self.taxas)):
             s += '\t{}: {}\n'.format(oidx, self.indicator.value[oidx])
         s += 'Probability: {}'.format(self.probability.value)
         return s
@@ -180,7 +180,7 @@ class Perturbation(BasePerturbation, variables.Variable):
     def add_trace(self):
         '''Set the negative indicators as np.nan
         '''
-        self.value = np.full(len(self.asvs), np.nan)
+        self.value = np.full(len(self.taxas), np.nan)
         ind = self.indicator.value
         self.value[ind] = self.magnitude.value[ind]
         variables.Variable.add_trace(self)
@@ -207,7 +207,7 @@ class Perturbation(BasePerturbation, variables.Variable):
         if only_pos_ind:
             val = self.magnitude.value[ind]
         else:
-            val = np.zeros(len(self.asvs))
+            val = np.zeros(len(self.taxas))
             val[ind] = self.magnitude.value[ind]
         return val
 

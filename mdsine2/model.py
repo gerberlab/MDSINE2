@@ -5,7 +5,7 @@ import time
 
 from . import pylab as pl
 
-class gLVDynamicsSingleClustering(pl.BaseDynamics):
+class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
     '''Discretized Generalized Lotka-Voltera Dynamics with 
     clustered interactions and perturbations. This class provides functionality
     to forward simulate the dynamics:
@@ -21,9 +21,9 @@ class gLVDynamicsSingleClustering(pl.BaseDynamics):
     Parameters
     ----------
     growth : np.ndarray((n,))
-        This is the growth of the dynamics for each ASV
+        This is the growth of the dynamics for each Taxa
     interactions : np.ndarray((n,n)) 
-        Interactions is assumed are the ASV-ASV interactions (shape=(n,n)). The diagonal of
+        Interactions is assumed are the Taxa-Taxa interactions (shape=(n,n)). The diagonal of
         the interactions is assumed to be the self interactions.
     perturbations : list(np.ndarray((n,))), None
         These are the perturbation magnitudes for each perturbation.  If `None` then we assume 
@@ -74,7 +74,7 @@ class gLVDynamicsSingleClustering(pl.BaseDynamics):
         Parameters
         ----------
         x : np.ndarray((n,1))
-            This is the abundance as a column vector for each ASV
+            This is the abundance as a column vector for each Taxa
         t : numeric
             This is the time point we are integrating to
         dt : numeric
@@ -114,7 +114,7 @@ class gLVDynamicsSingleClustering(pl.BaseDynamics):
         self._adjusted_growth = None
         
 
-class MultiplicativeGlobal(pl.BaseProcessVariance):
+class MultiplicativeGlobal(pl.dynamics.BaseProcessVariance):
     '''This is multiplicative noise used in a lognormal model
     '''
     def __init__(self, value):
@@ -134,6 +134,4 @@ class MultiplicativeGlobal(pl.BaseProcessVariance):
 
     def finish_integration(self):
         pass
-
-
 

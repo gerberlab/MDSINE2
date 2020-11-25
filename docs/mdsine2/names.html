@@ -50,113 +50,48 @@ class _BaseNameClass:
             self.PRIOR_VAR_PERT]
 
 
-class STRNAMESClass(_BaseNameClass):
-    &#39;&#39;&#39;These are the IDs of each of the objects. You need to call the function
-    `set` with the given graph in order for them to be valid.
-    &#39;&#39;&#39;
-    def __init__(self):
-        self.GLV_PARAMETERS = None
-        self.GROWTH_VALUE = None
-        self.SELF_INTERACTION_VALUE = None
-        self.CLUSTER_INTERACTION_VALUE = None
-
-        self.CLUSTERING_OBJ = None
-        self.INTERACTIONS_OBJ = None
-
-        self.CLUSTER_INTERACTION_INDICATOR = None
-        self.CLUSTER_INTERACTION_INDICATOR_PROB = None
-
-        self.CLUSTERING = None
-        self.CONCENTRATION = None
-
-        self.AUX_TRAJECTORY = None
-        self.LATENT_TRAJECTORY = None
-        self.FILTERING = None
-        self.ZERO_INFLATION = None
-
-        self.PROCESSVAR = None
-
-        self.NEGBIN_A0 = None
-        self.NEGBIN_A1 = None
-
-        self.PRIOR_VAR_GROWTH = None
-        self.PRIOR_VAR_SELF_INTERACTIONS = None
-        self.PRIOR_VAR_INTERACTIONS = None
-        self.PRIOR_VAR_PERT = None
-
-        self.PRIOR_MEAN_GROWTH = None
-        self.PRIOR_MEAN_SELF_INTERACTIONS = None
-        self.PRIOR_MEAN_INTERACTIONS = None
-        self.PRIOR_MEAN_PERT = None
-
-        self.PERT_VALUE = None
-        self.PERT_INDICATOR = None
-        self.PERT_INDICATOR_PROB = None
-
-        self.QPCR_VARIANCES = None
-        self.QPCR_DOFS = None
-        self.QPCR_SCALES = None
-
-    def set(self, G):
-        &#39;&#39;&#39;Sets the IDs of the above variables using the string representations.
-        If these names are not initialized in the namespace then we do not add them
-        &#39;&#39;&#39;
-        for key in vars(self):
-            strname = STRNAMES.__getattribute__(key)
-            try:
-                node = G[strname]
-            except:
-                # Node does not exist, continue to next
-                continue
-            setattr(self, key, node.id)
-
-
 class StrNamesClass(_BaseNameClass):
     &#39;&#39;&#39;String representation of each of the variables
     &#39;&#39;&#39;
     def __init__(self):
-        self.GLV_PARAMETERS = &#39;beta&#39;
-        self.GROWTH_VALUE = &#39;growth&#39;
-        self.SELF_INTERACTION_VALUE = &#39;self_interactions&#39;
-        self.CLUSTER_INTERACTION_VALUE = &#39;cluster_interaction_values&#39;
+        self.CLUSTERING_OBJ = &#39;Clustering object (contains ability to change the cluster assignments)&#39;
+        self.CLUSTERING = &#39;Clustering parameter&#39;
+        self.CONCENTRATION = &#39;Clustering concentration parameter&#39;
 
-        self.CLUSTERING_OBJ = &#39;clustering_object&#39;
-        self.INTERACTIONS_OBJ = &#39;interactions_object&#39;
+        self.LATENT_TRAJECTORY = &#39;Latent trajectory parameter&#39;
+        self.FILTERING = &#39;Filtering&#39;
+        self.ZERO_INFLATION = &#39;Zero inflation&#39;
+        self.PROCESSVAR = &#39;Process Variance parameter&#39;
 
-        self.CLUSTER_INTERACTION_INDICATOR = &#39;cluster_interaction_indicators&#39;
-        self.CLUSTER_INTERACTION_INDICATOR_PROB = &#39;pi_z&#39;
+        self.NEGBIN_A0 = &#39;Negative binomial dispersion a0&#39;
+        self.NEGBIN_A1 = &#39;Negative binomial dispersion a1&#39;
 
-        self.CLUSTERING = &#39;ClusterAssignments&#39;
-        self.CONCENTRATION = &#39;clustering concentration&#39;
+        self.GLV_PARAMETERS = &#39;Logistic growth parameters (growth, self-interactions, interactions/perturbations)&#39;
 
-        self.AUX_TRAJECTORY = &#39;q&#39;
-        self.LATENT_TRAJECTORY = &#39;x&#39;
-        self.FILTERING = &#39;filtering&#39;
-        self.ZERO_INFLATION = &#39;zero_inflation&#39;
+        self.GROWTH_VALUE = &#39;Growth parameter&#39;
+        self.PRIOR_VAR_GROWTH = &#39;Variance parameter for the truncated normal prior of the growth parameter&#39;
+        self.PRIOR_MEAN_GROWTH = &#39;Mean parameter for the truncated normal prior of the growth parameter&#39;
 
-        self.PROCESSVAR = &#39;process_var&#39;
+        self.SELF_INTERACTION_VALUE = &#39;Self interaction parameter&#39;
+        self.PRIOR_VAR_SELF_INTERACTIONS = &#39;Variance parameter for the truncated normal prior of the self-interaction parameter&#39;
+        self.PRIOR_MEAN_SELF_INTERACTIONS = &#39;Mean parameter for the truncated normal prior of the self-interaction parameter&#39;
+        
+        self.INTERACTIONS_OBJ = &#39;Interactions object&#39;
+        self.CLUSTER_INTERACTION_VALUE = &#39;Cluster interaction value parameter&#39;
+        self.CLUSTER_INTERACTION_INDICATOR = &#39;Cluster interaction indicator parameter&#39;
+        self.CLUSTER_INTERACTION_INDICATOR_PROB = &#39;Cluster interaction probability&#39;
+        self.PRIOR_VAR_INTERACTIONS = &#39;Variance parameter for the normal prior of the interaction parameter&#39;
+        self.PRIOR_MEAN_INTERACTIONS = &#39;Mean parameter for the normal prior of the interaction parameter&#39;
 
-        self.NEGBIN_A0 = &#39;a0&#39;
-        self.NEGBIN_A1 = &#39;a1&#39;
+        self.PERT_VALUE = &#39;Perturbation value parameter&#39;
+        self.PERT_INDICATOR = &#39;Perturbation indicator parameter&#39;
+        self.PERT_INDICATOR_PROB = &#39;Probability parameter for the beta prior of the perturbation indicator parameter&#39;
+        self.PRIOR_VAR_PERT = &#39;Variance parameter for the normal prior of the perturbation parameter&#39;
+        self.PRIOR_MEAN_PERT = &#39;Mean parameter for the normal prior of the perturbation parameter&#39;
 
-        self.PRIOR_VAR_GROWTH = &#39;prior_var_growth&#39;
-        self.PRIOR_VAR_SELF_INTERACTIONS = &#39;prior_var_self_interactions&#39;
-        self.PRIOR_VAR_INTERACTIONS = &#39;prior_var_interactions&#39;
-
-        self.PRIOR_MEAN_GROWTH = &#39;prior_mean_growth&#39;
-        self.PRIOR_MEAN_SELF_INTERACTIONS = &#39;prior_mean_self_interactions&#39;
-        self.PRIOR_MEAN_INTERACTIONS = &#39;prior_mean_interactions&#39;
-
-        self.PERTURBATIONS = &#39;pert&#39;
-        self.PERT_VALUE = &#39;pert_value&#39;
-        self.PERT_INDICATOR = &#39;Z_pert&#39;
-        self.PERT_INDICATOR_PROB = &#39;pi_z_pert&#39;
-        self.PRIOR_VAR_PERT = &#39;prior_var_pert&#39;
-        self.PRIOR_MEAN_PERT = &#39;prior_mean_pert&#39;
-
-        self.QPCR_VARIANCES = &#39;qpcr_variance&#39;
-        self.QPCR_DOFS = &#39;qpcr_variance_dof&#39;
-        self.QPCR_SCALES = &#39;qpcr_variance_scale&#39;
+        self.QPCR_VARIANCES = &#39;qPCR variances&#39;
+        self.QPCR_DOFS = &#39;qPCR hyperprior degrees of freedom&#39;
+        self.QPCR_SCALES = &#39;qPCR hyperprior scales&#39;
 
         
 class LatexNamesClass(_BaseNameClass):
@@ -165,8 +100,9 @@ class LatexNamesClass(_BaseNameClass):
     Make sure to do a double \\ for latex names orelse the matplotlib
     string parser will throw an error&#39;&#39;&#39;
 
-    # Use the pylab.asvname_formatter method to replace each index
+    # Use the pylab.taxaname_formatter method to replace each index
     def __init__(self):
+        self.DATA = &#39;data&#39;
         self.GROWTH_VALUE = &#39;$a_{%(index)s,1}$&#39;
         self.SELF_INTERACTION_VALUE = &#39;$a_{%(index)s,2}$&#39;
         self.CLUSTER_INTERACTION_VALUE = &#39;$b_{(c_i, c_j)}$&#39;
@@ -174,7 +110,6 @@ class LatexNamesClass(_BaseNameClass):
         self.CLUSTER_INTERACTION_INDICATOR = &#39;$z^{(b)}_{(c_i, c_j)}$&#39;
         self.CLUSTER_INTERACTION_INDICATOR_PROB = &#39;$\\pi_z$&#39;
         self.CLUSTERING = &#39;$c_i$&#39;
-        self.AUX_TRAJECTORY = &#39;$q$&#39;
         self.LATENT_TRAJECTORY = &#39;$x$&#39;
         self.CONCENTRATION = &#39;$\\alpha$&#39;
         #necessary for homoscedastic
@@ -205,8 +140,7 @@ class LatexNamesClass(_BaseNameClass):
 
 
 STRNAMES = StrNamesClass()
-LATEXNAMES = LatexNamesClass()
-STRNAMES = STRNAMESClass()</code></pre>
+LATEXNAMES = LatexNamesClass()</code></pre>
 </details>
 </section>
 <section>
@@ -235,8 +169,9 @@ string parser will throw an error</p></div>
     Make sure to do a double \\ for latex names orelse the matplotlib
     string parser will throw an error&#39;&#39;&#39;
 
-    # Use the pylab.asvname_formatter method to replace each index
+    # Use the pylab.taxaname_formatter method to replace each index
     def __init__(self):
+        self.DATA = &#39;data&#39;
         self.GROWTH_VALUE = &#39;$a_{%(index)s,1}$&#39;
         self.SELF_INTERACTION_VALUE = &#39;$a_{%(index)s,2}$&#39;
         self.CLUSTER_INTERACTION_VALUE = &#39;$b_{(c_i, c_j)}$&#39;
@@ -244,7 +179,6 @@ string parser will throw an error</p></div>
         self.CLUSTER_INTERACTION_INDICATOR = &#39;$z^{(b)}_{(c_i, c_j)}$&#39;
         self.CLUSTER_INTERACTION_INDICATOR_PROB = &#39;$\\pi_z$&#39;
         self.CLUSTERING = &#39;$c_i$&#39;
-        self.AUX_TRAJECTORY = &#39;$q$&#39;
         self.LATENT_TRAJECTORY = &#39;$x$&#39;
         self.CONCENTRATION = &#39;$\\alpha$&#39;
         #necessary for homoscedastic
@@ -278,108 +212,6 @@ string parser will throw an error</p></div>
 <li>mdsine2.names._BaseNameClass</li>
 </ul>
 </dd>
-<dt id="mdsine2.names.STRNAMESClass"><code class="flex name class">
-<span>class <span class="ident">STRNAMESClass</span></span>
-</code></dt>
-<dd>
-<div class="desc"><p>These are the IDs of each of the objects. You need to call the function
-<code>set</code> with the given graph in order for them to be valid.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class STRNAMESClass(_BaseNameClass):
-    &#39;&#39;&#39;These are the IDs of each of the objects. You need to call the function
-    `set` with the given graph in order for them to be valid.
-    &#39;&#39;&#39;
-    def __init__(self):
-        self.GLV_PARAMETERS = None
-        self.GROWTH_VALUE = None
-        self.SELF_INTERACTION_VALUE = None
-        self.CLUSTER_INTERACTION_VALUE = None
-
-        self.CLUSTERING_OBJ = None
-        self.INTERACTIONS_OBJ = None
-
-        self.CLUSTER_INTERACTION_INDICATOR = None
-        self.CLUSTER_INTERACTION_INDICATOR_PROB = None
-
-        self.CLUSTERING = None
-        self.CONCENTRATION = None
-
-        self.AUX_TRAJECTORY = None
-        self.LATENT_TRAJECTORY = None
-        self.FILTERING = None
-        self.ZERO_INFLATION = None
-
-        self.PROCESSVAR = None
-
-        self.NEGBIN_A0 = None
-        self.NEGBIN_A1 = None
-
-        self.PRIOR_VAR_GROWTH = None
-        self.PRIOR_VAR_SELF_INTERACTIONS = None
-        self.PRIOR_VAR_INTERACTIONS = None
-        self.PRIOR_VAR_PERT = None
-
-        self.PRIOR_MEAN_GROWTH = None
-        self.PRIOR_MEAN_SELF_INTERACTIONS = None
-        self.PRIOR_MEAN_INTERACTIONS = None
-        self.PRIOR_MEAN_PERT = None
-
-        self.PERT_VALUE = None
-        self.PERT_INDICATOR = None
-        self.PERT_INDICATOR_PROB = None
-
-        self.QPCR_VARIANCES = None
-        self.QPCR_DOFS = None
-        self.QPCR_SCALES = None
-
-    def set(self, G):
-        &#39;&#39;&#39;Sets the IDs of the above variables using the string representations.
-        If these names are not initialized in the namespace then we do not add them
-        &#39;&#39;&#39;
-        for key in vars(self):
-            strname = STRNAMES.__getattribute__(key)
-            try:
-                node = G[strname]
-            except:
-                # Node does not exist, continue to next
-                continue
-            setattr(self, key, node.id)</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li>mdsine2.names._BaseNameClass</li>
-</ul>
-<h3>Methods</h3>
-<dl>
-<dt id="mdsine2.names.STRNAMESClass.set"><code class="name flex">
-<span>def <span class="ident">set</span></span>(<span>self, G)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Sets the IDs of the above variables using the string representations.
-If these names are not initialized in the namespace then we do not add them</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def set(self, G):
-    &#39;&#39;&#39;Sets the IDs of the above variables using the string representations.
-    If these names are not initialized in the namespace then we do not add them
-    &#39;&#39;&#39;
-    for key in vars(self):
-        strname = STRNAMES.__getattribute__(key)
-        try:
-            node = G[strname]
-        except:
-            # Node does not exist, continue to next
-            continue
-        setattr(self, key, node.id)</code></pre>
-</details>
-</dd>
-</dl>
-</dd>
 <dt id="mdsine2.names.StrNamesClass"><code class="flex name class">
 <span>class <span class="ident">StrNamesClass</span></span>
 </code></dt>
@@ -393,48 +225,44 @@ If these names are not initialized in the namespace then we do not add them</p><
     &#39;&#39;&#39;String representation of each of the variables
     &#39;&#39;&#39;
     def __init__(self):
-        self.GLV_PARAMETERS = &#39;beta&#39;
-        self.GROWTH_VALUE = &#39;growth&#39;
-        self.SELF_INTERACTION_VALUE = &#39;self_interactions&#39;
-        self.CLUSTER_INTERACTION_VALUE = &#39;cluster_interaction_values&#39;
+        self.CLUSTERING_OBJ = &#39;Clustering object (contains ability to change the cluster assignments)&#39;
+        self.CLUSTERING = &#39;Clustering parameter&#39;
+        self.CONCENTRATION = &#39;Clustering concentration parameter&#39;
 
-        self.CLUSTERING_OBJ = &#39;clustering_object&#39;
-        self.INTERACTIONS_OBJ = &#39;interactions_object&#39;
+        self.LATENT_TRAJECTORY = &#39;Latent trajectory parameter&#39;
+        self.FILTERING = &#39;Filtering&#39;
+        self.ZERO_INFLATION = &#39;Zero inflation&#39;
+        self.PROCESSVAR = &#39;Process Variance parameter&#39;
 
-        self.CLUSTER_INTERACTION_INDICATOR = &#39;cluster_interaction_indicators&#39;
-        self.CLUSTER_INTERACTION_INDICATOR_PROB = &#39;pi_z&#39;
+        self.NEGBIN_A0 = &#39;Negative binomial dispersion a0&#39;
+        self.NEGBIN_A1 = &#39;Negative binomial dispersion a1&#39;
 
-        self.CLUSTERING = &#39;ClusterAssignments&#39;
-        self.CONCENTRATION = &#39;clustering concentration&#39;
+        self.GLV_PARAMETERS = &#39;Logistic growth parameters (growth, self-interactions, interactions/perturbations)&#39;
 
-        self.AUX_TRAJECTORY = &#39;q&#39;
-        self.LATENT_TRAJECTORY = &#39;x&#39;
-        self.FILTERING = &#39;filtering&#39;
-        self.ZERO_INFLATION = &#39;zero_inflation&#39;
+        self.GROWTH_VALUE = &#39;Growth parameter&#39;
+        self.PRIOR_VAR_GROWTH = &#39;Variance parameter for the truncated normal prior of the growth parameter&#39;
+        self.PRIOR_MEAN_GROWTH = &#39;Mean parameter for the truncated normal prior of the growth parameter&#39;
 
-        self.PROCESSVAR = &#39;process_var&#39;
+        self.SELF_INTERACTION_VALUE = &#39;Self interaction parameter&#39;
+        self.PRIOR_VAR_SELF_INTERACTIONS = &#39;Variance parameter for the truncated normal prior of the self-interaction parameter&#39;
+        self.PRIOR_MEAN_SELF_INTERACTIONS = &#39;Mean parameter for the truncated normal prior of the self-interaction parameter&#39;
+        
+        self.INTERACTIONS_OBJ = &#39;Interactions object&#39;
+        self.CLUSTER_INTERACTION_VALUE = &#39;Cluster interaction value parameter&#39;
+        self.CLUSTER_INTERACTION_INDICATOR = &#39;Cluster interaction indicator parameter&#39;
+        self.CLUSTER_INTERACTION_INDICATOR_PROB = &#39;Cluster interaction probability&#39;
+        self.PRIOR_VAR_INTERACTIONS = &#39;Variance parameter for the normal prior of the interaction parameter&#39;
+        self.PRIOR_MEAN_INTERACTIONS = &#39;Mean parameter for the normal prior of the interaction parameter&#39;
 
-        self.NEGBIN_A0 = &#39;a0&#39;
-        self.NEGBIN_A1 = &#39;a1&#39;
+        self.PERT_VALUE = &#39;Perturbation value parameter&#39;
+        self.PERT_INDICATOR = &#39;Perturbation indicator parameter&#39;
+        self.PERT_INDICATOR_PROB = &#39;Probability parameter for the beta prior of the perturbation indicator parameter&#39;
+        self.PRIOR_VAR_PERT = &#39;Variance parameter for the normal prior of the perturbation parameter&#39;
+        self.PRIOR_MEAN_PERT = &#39;Mean parameter for the normal prior of the perturbation parameter&#39;
 
-        self.PRIOR_VAR_GROWTH = &#39;prior_var_growth&#39;
-        self.PRIOR_VAR_SELF_INTERACTIONS = &#39;prior_var_self_interactions&#39;
-        self.PRIOR_VAR_INTERACTIONS = &#39;prior_var_interactions&#39;
-
-        self.PRIOR_MEAN_GROWTH = &#39;prior_mean_growth&#39;
-        self.PRIOR_MEAN_SELF_INTERACTIONS = &#39;prior_mean_self_interactions&#39;
-        self.PRIOR_MEAN_INTERACTIONS = &#39;prior_mean_interactions&#39;
-
-        self.PERTURBATIONS = &#39;pert&#39;
-        self.PERT_VALUE = &#39;pert_value&#39;
-        self.PERT_INDICATOR = &#39;Z_pert&#39;
-        self.PERT_INDICATOR_PROB = &#39;pi_z_pert&#39;
-        self.PRIOR_VAR_PERT = &#39;prior_var_pert&#39;
-        self.PRIOR_MEAN_PERT = &#39;prior_mean_pert&#39;
-
-        self.QPCR_VARIANCES = &#39;qpcr_variance&#39;
-        self.QPCR_DOFS = &#39;qpcr_variance_dof&#39;
-        self.QPCR_SCALES = &#39;qpcr_variance_scale&#39;</code></pre>
+        self.QPCR_VARIANCES = &#39;qPCR variances&#39;
+        self.QPCR_DOFS = &#39;qPCR hyperprior degrees of freedom&#39;
+        self.QPCR_SCALES = &#39;qPCR hyperprior scales&#39;</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -459,12 +287,6 @@ If these names are not initialized in the namespace then we do not add them</p><
 <ul>
 <li>
 <h4><code><a title="mdsine2.names.LatexNamesClass" href="#mdsine2.names.LatexNamesClass">LatexNamesClass</a></code></h4>
-</li>
-<li>
-<h4><code><a title="mdsine2.names.STRNAMESClass" href="#mdsine2.names.STRNAMESClass">STRNAMESClass</a></code></h4>
-<ul class="">
-<li><code><a title="mdsine2.names.STRNAMESClass.set" href="#mdsine2.names.STRNAMESClass.set">set</a></code></li>
-</ul>
 </li>
 <li>
 <h4><code><a title="mdsine2.names.StrNamesClass" href="#mdsine2.names.StrNamesClass">StrNamesClass</a></code></h4>

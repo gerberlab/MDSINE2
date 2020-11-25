@@ -1,0 +1,2976 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.1" />
+<title>mdsine2.negbin API documentation</title>
+<meta name="description" content="Posterior Objects used for learning the negative binomial dispersion parameters …" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>mdsine2.negbin</code></h1>
+</header>
+<section id="section-intro">
+<p>Posterior Objects used for learning the negative binomial dispersion parameters.</p>
+<p>This contains all of the data structures used for inference: design matrices, posterior
+classes, auxiliary functions, building the graph</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#39;&#39;&#39;Posterior Objects used for learning the negative binomial dispersion parameters.
+
+This contains all of the data structures used for inference: design matrices, posterior
+classes, auxiliary functions, building the graph
+&#39;&#39;&#39;
+import numpy as np
+import logging
+import sys
+import time
+import pandas as pd
+import os
+import os.path
+import math
+
+import numpy.random as npr
+import numba
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+from . import visualization
+
+from . import pylab as pl
+from .names import STRNAMES
+from . import config
+
+@numba.jit(nopython=True, fastmath=True, cache=True)
+def negbin_loglikelihood(k,m,dispersion):
+    &#39;&#39;&#39;Loglikelihood - with parameterization in [1]
+    
+    Parameters
+    ----------
+    k : numeric
+        Observed counts
+    m : numeric
+        Mean
+    phi : float
+        Dispersion
+    
+    Returns
+    -------
+    float
+        Negative Binomial Log Likelihood
+    
+    References
+    ----------
+    [1] TE Gibson, GK Gerber. Robust and Scalable Models of Microbiome Dynamics. ICML (2018)
+    &#39;&#39;&#39;
+    r = 1/dispersion
+    return math.lgamma(k+r) - math.lgamma(k+1) - math.lgamma(r) \
+            + r * (math.log(r) - math.log(r+m)) + k * (math.log(m) - math.log(r+m))
+
+
+class Data(pl.graph.DataNode):
+    &#39;&#39;&#39;This is the raw data that we are regressing over
+
+    Parameters
+    ----------
+    subjects : pl.base.SubjectSet
+        These are a list of the subjects that we are going to get data from
+    &#39;&#39;&#39;
+
+    def __init__(self, subjects, **kwargs):
+        kwargs[&#39;name&#39;] = &#39;Data&#39;
+        pl.graph.DataNode.__init__(self, **kwargs)
+        if not pl.isstudy(subjects):
+            raise ValueError(&#39;`subjects` ({}) must be a pylab SubjectSet&#39;.format(
+                type(subjects)))
+        
+        self.taxas = subjects.taxas
+        self.subjects = subjects
+        self.n_taxas = len(self.taxas)
+
+        self.data = []
+        self.read_depths = []
+        self.qpcr = []
+        for subject in self.subjects:
+            d = subject.matrix()[&#39;raw&#39;]
+            self.data.append(d)
+            self.read_depths.append(np.sum(d, axis=0))
+            self.qpcr.append(subject.qpcr[0])
+
+        self.n_replicates = len(self.data)
+
+    def __len__(self):
+        return self.n_replicates
+
+
+class NegBinDispersionParam(pl.variables.Uniform):
+    &#39;&#39;&#39;These are for learning the a0 and a1 parameters - updated with 
+    Metropolis-Hastings
+
+    We assume these are uniform and have a uniform prior [1]
+
+    Proposal distribution is a truncated normal distribution with truncation
+    set to the same high and lows as the prior.
+
+    References
+    ----------
+    [1] Bucci, Vanni, et al. &#34;MDSINE: Microbial Dynamical Systems INference 
+        Engine for microbiome time-series analyses.&#34; Genome biology 17.1 (2016): 121.
+    &#39;&#39;&#39;
+
+    def __init__(self, name, **kwargs):
+        pl.variables.Uniform.__init__(
+            self, dtype=float, name=name, **kwargs)
+
+    def __str__(self):
+        try:
+            s = &#39;Value: {}, Acceptance rate: {}&#39;.format(
+                self.value, np.mean(self.acceptances[
+                    np.max([self.sample_iter-50, 0]):self.sample_iter]))
+        except:
+            s = str(self.value)
+        return s
+
+    def initialize(self, value, truncation_settings, proposal_option,
+        target_acceptance_rate, tune, end_tune, proposal_var=None, delay=0):
+        &#39;&#39;&#39;Initialize the negative binomial dispersion parameter
+
+        Parameters
+        ----------
+        value : numeric
+            This is the initial value
+        truncation_settings: str, tuple
+            How to set the truncation parameters. The proposal trucation will
+            be set the same way.
+                tuple - (low,high)
+                    These are the truncation parameters
+                &#39;auto&#39;
+                    (0, 1e5)
+        proposal_option : str
+            How to initialize the proposal variance:
+                &#39;auto&#39;
+                    initial_value**2 / 100
+                &#39;manual&#39;
+                    `proposal_var` must also be supplied
+        target_acceptance_rate : str, float
+            If float, this is the target acceptance rate
+            If str: 
+                &#39;optimal&#39;, &#39;auto&#39;: 0.44
+        tune : str, int
+            How often to tune the proposal. If str:
+                &#39;auto&#39;: 50
+        end_tune : str, int
+            When to stop tuning the proposal. If str:
+                &#39;auto&#39;, &#39;half-burnin&#39;: Half of burnin
+        &#39;&#39;&#39;
+        if not pl.isint(delay):
+            raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+        if delay &lt; 0:
+            raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+        self.delay = delay
+
+        # Set the propsal parameters
+        if pl.isstr(target_acceptance_rate):
+            if target_acceptance_rate in [&#39;optimal&#39;, &#39;auto&#39;]:
+                target_acceptance_rate = 0.44
+            else:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) not recognized&#39;.format(
+                    target_acceptance_rate))
+        elif pl.isfloat(target_acceptance_rate):
+            if target_acceptance_rate &lt; 0 or target_acceptance_rate &gt; 1:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) out of range&#39;.format(
+                    target_acceptance_rate))
+        else:
+            raise TypeError(&#39;`target_acceptance_rate` ({}) type not recognized&#39;.format(
+                type(target_acceptance_rate)))
+        self.target_acceptance_rate = target_acceptance_rate
+
+        if pl.isstr(tune):
+            if tune in [&#39;auto&#39;]:
+                tune = 50
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(tune))
+        elif pl.isint(tune):
+            if tune &lt; 0:
+                raise ValueError(&#39;`tune` ({}) must be &gt; 0&#39;.format(
+                    tune))
+        else:
+            raise TypeError(&#39;`tune` ({}) type not recognized&#39;.format(type(tune)))
+        self.tune = tune
+
+        if pl.isstr(end_tune):
+            if end_tune in [&#39;auto&#39;, &#39;half-burnin&#39;]:
+                end_tune = int(self.G.inference.burnin/2)
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(end_tune))
+        elif pl.isint(end_tune):
+            if end_tune &lt; 0 or end_tune &gt; self.G.inference.burnin:
+                raise ValueError(&#39;`end_tune` ({}) out of range (0, {})&#39;.format(
+                    end_tune, self.G.inference.burnin))
+        else:
+            raise TypeError(&#39;`end_tune` ({}) type not recognized&#39;.format(type(end_tune)))
+        self.end_tune = end_tune
+
+        # Set the truncation settings
+        if pl.isstr(truncation_settings):
+            if truncation_settings == &#39;auto&#39;:
+                self.low = 0.
+                self.high = 1e5
+            else:
+                raise ValueError(&#39;`truncation_settings` ({}) not recognized&#39;.format(
+                    truncation_settings))
+        elif pl.istuple(truncation_settings):
+            if len(truncation_settings) != 2:
+                raise ValueError(&#39;If `truncation_settings` is a tuple, it must have a &#39; \
+                    &#39;length of 2 ({})&#39;.format(len(truncation_settings)))
+            l,h = truncation_settings
+
+            if (not pl.isnumeric(l)) or (not pl.isnumeric(h)):
+                raise TypeError(&#39;`low` ({}) and `high` ({}) must be numerics&#39;.format(
+                    type(l), type(h)))
+            if l &lt; 0 or h &lt; 0:
+                raise ValueError(&#39;`low` ({}) and `high` ({}) must be &gt;= 0&#39;.format(l,h))
+            if h &lt;= l:
+                raise ValueError(&#39;`low` ({}) must be strictly less than high ({})&#39;.format(l,h))
+            self.high.value = h
+            self.low.value = l
+        else:
+            raise TypeError(&#39;`truncation_settings` ({}) type not recognized&#39;)
+
+        # Set the value
+        if not pl.isnumeric(value):
+            raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(value)))
+        if value &lt;= self.low or value &gt;= self.high:
+            raise ValueError(&#39;`value` ({}) out of range ({})&#39;.format(
+                value, (self.low, self.high)))
+        self.value = value
+
+        # Set the proposal variance
+        if not pl.isstr(proposal_option):
+            raise TypeError(&#39;`proposal_option` ({}) must be a str&#39;.format(
+                type(proposal_option)))
+        elif proposal_option == &#39;manual&#39;:
+            if not pl.isnumeric(proposal_var):
+                raise TypeError(&#39;`proposal_var` ({}) must be a numeric&#39;.format(
+                    type(proposal_var)))
+            if proposal_var &lt;= 0:
+                raise ValueError(&#39;`proposal_var` ({}) not proper&#39;.format(proposal_var))
+        elif proposal_option in [&#39;auto&#39;]:
+            proposal_var = (self.value ** 2)/100
+        else:
+            raise ValueError(&#39;`proposal_option` ({}) not recognized&#39;.format(
+                proposal_option))
+        self.proposal_var = proposal_var
+
+    def _update_proposal_variance(self):
+        &#39;&#39;&#39;Update the proposal variance
+        &#39;&#39;&#39;
+        if self.sample_iter == 0:
+            self.temp_acceptances = 0
+            self.acceptances = np.zeros(self.G.inference.n_samples, dtype=bool)
+        
+        elif self.sample_iter &gt; self.end_tune:
+            # Don&#39;t do any more updates
+            return
+        
+        elif self.sample_iter % self.tune == 0:
+            # Update var
+            acceptance_rate = self.temp_acceptances / self.tune
+            if acceptance_rate &gt; self.target_acceptance_rate:
+                self.proposal_var *= 1.5
+            else:
+                self.proposal_var /= 1.5
+            self.temp_acceptances = 0
+
+    def update(self):
+        &#39;&#39;&#39;Do a metropolis update
+        &#39;&#39;&#39;
+        # Update proposal variance if necessary
+        if self.sample_iter &lt; self.delay:
+            return
+        self._update_proposal_variance()
+        proposal_std = np.sqrt(self.proposal_var)
+
+        # Get the current likelihood
+        old_loglik = self.data_likelihood()
+        prev_value = self.value
+
+        # Propose a new value and get the likelihood
+        self.value = pl.random.truncnormal.sample(
+            mean=self.value, std=proposal_std,
+            low=self.low, high=self.high)
+        new_loglik = self.data_likelihood()
+
+        # reverse jump probabilities
+        jump_to_new = pl.random.truncnormal.logpdf(value=self.value, 
+            mean=prev_value, std=proposal_std, 
+            low=self.low, high=self.high)
+        jump_to_old = pl.random.truncnormal.logpdf(value=prev_value, 
+            mean=self.value, std=proposal_std, 
+            low=self.low, high=self.high)
+        
+
+        r = (new_loglik + jump_to_old) - (old_loglik + jump_to_new)
+        u = np.log(pl.random.misc.fast_sample_standard_uniform())
+        if r &gt; u:
+            self.acceptances[self.sample_iter] = True
+            self.temp_acceptances += 1
+        else:
+            self.value = prev_value
+
+    def data_likelihood(self):
+        &#39;&#39;&#39;Calculate the current log likelihood
+        &#39;&#39;&#39;
+        a0 = self.G[STRNAMES.NEGBIN_A0].value
+        a1 = self.G[STRNAMES.NEGBIN_A1].value
+        latents = [v.value for v in self.G[STRNAMES.FILTERING].value]
+        datas = [v.data for v in self.G[STRNAMES.FILTERING].value]
+        read_depths = [v.read_depths for v in self.G[STRNAMES.FILTERING].value]
+        
+        cumm = 0
+        for ridx in range(len(latents)):
+            data=datas[ridx]
+            latent = latents[ridx]
+            read_depth = read_depths[ridx]
+            total_abund = np.sum(latent)
+            rel_abund = latent / total_abund
+
+            cumm += NegBinDispersionParam._data_likelihood(a0=a0, a1=a1, latent=latent, 
+                data=data, read_depth=read_depth, rel_abund=rel_abund)
+        return cumm
+    
+    @staticmethod
+    @numba.jit(nopython=True)
+    def _data_likelihood(a0, a1, latent, data, read_depth, rel_abund):
+        cumm = 0
+
+        # For each taxa
+        for oidx in range(data.shape[0]):
+            # For each replicate
+            for k in range(data.shape[1]):
+                y = data[oidx, k]
+                mean = read_depth[k] * rel_abund[oidx]
+                dispersion = a0/rel_abund[k] + a1
+
+                # This is the negative binomial loglikelihood
+                r = 1/dispersion
+                # try:
+                cumm += math.lgamma(y+r) - math.lgamma(y+1) - math.lgamma(r) \
+                    + r * (math.log(r) - math.log(r+mean)) + y * (math.log(mean) - math.log(r+mean))
+
+                #     raise
+        return cumm
+
+    def visualize(self, path, f, section=&#39;posterior&#39;):
+        &#39;&#39;&#39;Visualize the posterior of the negative binomial dispersion parameter
+
+        Parameters
+        ----------
+        path : str
+            This is the path to save the posterior trace plots
+        f : _io.TextIOWrapper
+            File that we are writing the values to
+        section : str
+            Section of the trace to compute on. Options:
+                &#39;posterior&#39; : posterior samples
+                &#39;burnin&#39; : burn-in samples
+                &#39;entire&#39; : both burn-in and posterior samples
+
+        Returns
+        -------
+        _io.TextIOWrapper
+        &#39;&#39;&#39;
+        f.write(&#39;\n\n###################################\n{}&#39;.format(self.name))
+        f.write(&#39;\n###################################\n&#39;)
+        if not self.G.inference.tracer.is_being_traced(self):
+            f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
+            return f
+        
+        summ = pl.summary(self, section=section)
+        for k,v in summ.items():
+            f.write(&#39;\t{}: {}\n&#39;.format(k,v))
+
+        axleft, axright = visualization.render_trace(self, plt_type=&#39;both&#39;, 
+            include_burnin=True, rasterized=True, log_scale=self.name==STRNAMES.NEGBIN_A0)
+
+        # Plot the acceptance rate on the right hand side
+        ax2 = axright.twinx()
+        ax2 = visualization.render_acceptance_rate_trace(self, ax=ax2, 
+            label=&#39;Acceptance Rate&#39;, color=&#39;red&#39;, scatter=False, rasterized=True)
+
+        ax2.legend()
+        fig = plt.gcf()
+        fig.suptitle(self.name)
+        fig.tight_layout()
+        plt.savefig(path)
+        plt.close()
+        return f
+
+
+class TrajectorySet(pl.variables.Variable):
+    &#39;&#39;&#39;This aggregates a set of trajectories from each Replicate
+    &#39;&#39;&#39;
+    def __init__(self, ridx, subjname, **kwargs):
+        kwargs[&#39;name&#39;] = STRNAMES.LATENT_TRAJECTORY + &#39;_{}&#39;.format(subjname)
+        pl.variables.Variable.__init__(self, **kwargs)
+        n_taxas = len(self.G.data.taxas)
+        self.set_value_shape(shape=(n_taxas,))
+        self.ridx = ridx
+        self.value = np.zeros(n_taxas, dtype=float)
+        self.data = self.G.data.data[self.ridx]
+        self.read_depths = self.G.data.read_depths[self.ridx]
+        self.qpcr_measurement = self.G.data.qpcr[self.ridx]
+    
+        prior = pl.variables.Normal(
+            mean=pl.variables.Constant(name=self.name+&#39;_prior_mean&#39;, value=None, G=self.G),
+            var=pl.variables.Constant(name=self.name+&#39;_prior_var&#39;, value=None, G=self.G),
+            name=self.name+&#39;_prior&#39;, G=self.G)
+        self.add_prior(prior)
+
+    def __getitem__(self, ridx):
+        return self.value[ridx]
+
+    def initialize(self):
+        &#39;&#39;&#39;Initialize the value
+        &#39;&#39;&#39;
+        # Get the mean relative abundance
+        rel = np.sum(self.data, axis=1)
+        rel = rel / np.sum(rel)
+        value = rel * self.qpcr_measurement.mean()
+
+        self.value = np.zeros(len(value))
+        for i in range(len(value)):
+            self.value[i] = pl.random.truncnormal.sample(mean=value[i], std=1e-2, 
+                low=0, high=float(&#39;inf&#39;))
+
+        self.prior.mean.override_value(self.value)
+        self.prior.var.override_value(100 * np.var(self.value))
+
+
+class FilteringMP(pl.graph.Node):
+    &#39;&#39;&#39;This handles multiprocessing of the latent state
+
+    Parallelization Modes
+    ---------------------
+    &#39;debug&#39;
+        If this is selected, then we dont actually parallelize, but we go in
+        order of the objects in sequential order. We would do this if we want
+        to benchmark within each processor or do easier print statements
+    &#39;full&#39;
+        This is where each subject gets their own process
+
+    This assumes that we are using the log model for the dynamics
+    &#39;&#39;&#39;
+    def __init__(self, mp, **kwargs):
+        kwargs[&#39;name&#39;] = STRNAMES.FILTERING
+        pl.graph.Node.__init__(self, **kwargs)
+        self.value = []
+        for ridx, subj in enumerate(self.G.data.subjects):
+            self.value.append(TrajectorySet(G=self.G, ridx=ridx, subjname=subj.name))
+        
+        self.print_vals = False
+        self._strr = &#39;NA&#39;
+        self.mp = mp
+
+    def __str__(self):
+        return self._strr
+
+    @property
+    def sample_iter(self):
+        # It doesnt matter if we chose q or x because they are both the same
+        return self.value[0].sample_iter
+
+    def initialize(self, tune, end_tune, target_acceptance_rate,  qpcr_variance_inflation, 
+        delay=0):
+        &#39;&#39;&#39;Initialize the latent state
+
+        Parameters
+        ----------
+        value_option : str
+            &#39;tight-coupling&#39;
+                Set the value to the empirical mean of the trajectory with a small variance
+            &#39;small-bias&#39;
+                Add 1e-10 to all of the latent states
+        target_acceptance_rate : str, float
+            If float, this is the target acceptance rate
+            If str: 
+                &#39;optimal&#39;, &#39;auto&#39;: 0.44
+        tune : str, int
+            How often to tune the proposal. If str:
+                &#39;auto&#39;: 50
+        end_tune : str, int
+            When to stop tuning the proposal. If str:
+                &#39;auto&#39;, &#39;half-burnin&#39;: Half of burnin
+        proposal_option : str
+            How to initialize the proposal variance:
+                &#39;auto&#39;
+                    initial_value**2 / 100
+                &#39;manual&#39;
+                    `proposal_var` must also be supplied
+        qpcr_variance_inflation : float
+            This is the factor to inflate the qPCR variance
+        delay : int
+            How many Gibb stepps to delay
+        &#39;&#39;&#39;
+        if not pl.isint(delay):
+            raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+        if delay &lt; 0:
+            raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+        self.delay = delay
+
+        # Set the propsal parameters
+        if pl.isstr(target_acceptance_rate):
+            if target_acceptance_rate in [&#39;optimal&#39;, &#39;auto&#39;]:
+                target_acceptance_rate = 0.44
+            else:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) not recognized&#39;.format(
+                    target_acceptance_rate))
+        elif pl.isfloat(target_acceptance_rate):
+            if target_acceptance_rate &lt; 0 or target_acceptance_rate &gt; 1:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) out of range&#39;.format(
+                    target_acceptance_rate))
+        else:
+            raise TypeError(&#39;`target_acceptance_rate` ({}) type not recognized&#39;.format(
+                type(target_acceptance_rate)))
+        self.target_acceptance_rate = target_acceptance_rate
+
+        if pl.isstr(tune):
+            if tune in [&#39;auto&#39;]:
+                tune = 50
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(tune))
+        elif pl.isint(tune):
+            if tune &lt; 0:
+                raise ValueError(&#39;`tune` ({}) must be &gt; 0&#39;.format(
+                    tune))
+        else:
+            raise TypeError(&#39;`tune` ({}) type not recognized&#39;.format(type(tune)))
+        self.tune = tune
+
+        if pl.isstr(end_tune):
+            if end_tune in [&#39;auto&#39;, &#39;half-burnin&#39;]:
+                end_tune = int(self.G.inference.burnin/2)
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(end_tune))
+        elif pl.isint(end_tune):
+            if end_tune &lt; 0 or end_tune &gt; self.G.inference.burnin:
+                raise ValueError(&#39;`end_tune` ({}) out of range (0, {})&#39;.format(
+                    end_tune, self.G.inference.burnin))
+        else:
+            raise TypeError(&#39;`end_tune` ({}) type not recognized&#39;.format(type(end_tune)))
+        self.end_tune = end_tune
+
+        # Initialize the trajectory sets
+        for ridx in range(self.G.data.n_replicates):
+            self.value[ridx].initialize()
+
+        if self.mp == &#39;full&#39;:
+            self.pool = pl.multiprocessing.PersistentPool(G=self.G, ptype=&#39;sadw&#39;)
+        elif self.mp == &#39;debug&#39;:
+            self.pool = []
+        else:
+            raise ValueError(&#39;Filtering mutliprocessing argument ({}) not recognized&#39;.format(
+                self.mp))
+
+        for ridx in range(len(self.value)):
+            worker = _LatentWorker()
+            worker.initialize(
+                reads=self.value[ridx].data,
+                qpcr_loc=self.value[ridx].qpcr_measurement.loc,
+                qpcr_scale=np.sqrt(qpcr_variance_inflation) *self.value[ridx].qpcr_measurement.scale,
+                proposal_std=np.log(1.5),
+                prior_loc=self.value[ridx].prior.mean.value,
+                prior_scale=np.sqrt(self.value[ridx].prior.var.value),
+                tune=tune, end_tune=end_tune,
+                target_acceptance_rate=target_acceptance_rate,
+                value=self.value[ridx].value,
+                delay=delay,
+                ridx=ridx)
+            if self.mp == &#39;full&#39;:
+                self.pool.add_worker(worker)
+            else:
+                self.pool.append(worker)
+
+        self.total_n_datapoints = len(self.G.data.taxas) * len(self.G.data)
+
+    def update(self):
+        start_time = time.time()
+        a0 = self.G[STRNAMES.NEGBIN_A0].value
+        a1 = self.G[STRNAMES.NEGBIN_A1].value
+
+        kwargs={&#39;a0&#39;: a0, &#39;a1&#39;:a1}
+        str_acc = [None]*self.G.data.n_replicates
+        if self.mp == &#39;debug&#39;:
+            for ridx in range(len(self.value)):
+                _, x, acc_rate = self.pool[ridx].update(**kwargs)
+                self.value[ridx].value = x
+                str_acc[ridx] = &#39;{:.3f}&#39;.format(acc_rate)
+        else:
+            ret = self.pool.map(func=&#39;update&#39;, args=kwargs)
+            for ridx, x, acc_rate in ret:
+                self.value[ridx].value = x
+                str_acc[ridx] = &#39;{:.3f}&#39;.format(acc_rate)
+
+        t = time.time() - start_time
+        try:
+            self._strr = &#39;Time: {:.4f}, Acc: {}, data/sec: {:.2f}&#39;.format(t,
+                str(str_acc).replace(&#34;&#39;&#34;,&#39;&#39;), self.total_n_datapoints/t)
+        except:
+            self._strr = &#39;NA&#39;
+
+    def add_trace(self):
+        for x in self.value:
+            x.add_trace()
+
+    def set_trace(self, *args, **kwargs):
+        for x in self.value:
+            x.set_trace(*args, **kwargs)
+    
+    def kill(self):
+        if pl.ispersistentpool(self.pool):
+            self.pool.kill()
+
+    def visualize(self, basepath, section=&#39;posterior&#39;, taxa_formatter=&#39;%(paperformat)s&#39;):
+        &#39;&#39;&#39;Render the latent trajectories in the base folder and write the statistics.
+
+        Parameters
+        ----------
+        basepath : str
+            This is the loction to write the files to
+        section : str
+            Section of the trace to compute on. Options:
+                &#39;posterior&#39; : posterior samples
+                &#39;burnin&#39; : burn-in samples
+                &#39;entire&#39; : both burn-in and posterior samples
+        taxa_formatter : str
+            This is the format to write taxonomy of the Taxa
+        &#39;&#39;&#39;
+        chain = self.G.inference
+        taxas  = chain.graph.data.taxas
+        os.makedirs(basepath, exist_ok=True)
+
+        if chain.is_in_inference_order(STRNAMES.FILTERING):
+            taxanames = taxas.names.order
+
+            for ridx, subj in enumerate(self.G.data.subjects):
+                subj_basepath = os.path.join(basepath, subj.name)
+                os.makedirs(subj_basepath, exist_ok=True)
+
+                M_subj = subj.matrix()[&#39;abs&#39;]
+                latent_name = STRNAMES.LATENT_TRAJECTORY + &#39;_&#39; + subj.name
+                latent = self.G[latent_name]
+
+                fname_subj = os.path.join(subj_basepath, &#39;output.txt&#39;)
+                f = open(fname_subj, &#39;w&#39;)
+                f.write(&#39;Subject {} output\n&#39;.format(subj.name))
+                f.write(&#39;---------------------\n&#39;)
+
+                # Get from disk only once
+                latent_trace = latent.get_trace_from_disk(section=section)
+                summ = pl.summary(latent_trace)
+                for aidx, aname in enumerate(taxanames):
+                    f.write(&#39;\n\nTaxa {}: {}\n&#39;.format(
+                        aidx, pl.taxaname_formatter(taxa_formatter, 
+                        taxa=aname, taxas=taxas)))
+                    f.write(&#39;-------------------\n&#39;)
+
+                    # Write what the data is
+                    f.write(&#39;Data: &#39;)
+                    row = M_subj[aidx, :]
+                    for ele in row:
+                        f.write(&#39;{:.4E}  &#39;.format(ele))
+                    f.write(&#39;\n&#39;)
+
+                    f.write(&#39;Learned Values:\n&#39;)
+                    for k,v in summ.items():
+                        f.write(&#39;\t{}: {:.4E}\n&#39;.format(k,v[aidx]))
+
+                    # plot the variable
+                    axpost, axtrace = visualization.render_trace(latent_trace[:,aidx], plt_type=&#39;both&#39;, 
+                        rasterized=True, log_scale=True)
+                    for idx in range(M_subj.shape[1]):
+                        if idx == 0:
+                            label = &#39;data&#39;
+                        else:
+                            label = None
+                        axpost.axvline(x=M_subj[aidx, idx], color=&#39;green&#39;, label=label)
+                        axtrace.axhline(y=M_subj[aidx, idx], color=&#39;green&#39;, label=label)
+
+                    fig = plt.gcf()
+                    fig.suptitle(pl.taxaname_formatter(format=taxa_formatter,
+                        taxa=aname, taxas=taxas))
+                    plotpath = os.path.join(subj_basepath, &#39;{}.pdf&#39;.format(aname))
+                    plt.savefig(plotpath)
+                    plt.close()
+                f.close()
+
+
+class _LatentWorker(pl.multiprocessing.PersistentWorker):
+    &#39;&#39;&#39;Worker class for multiprocessing. Everything is in log scale
+    &#39;&#39;&#39;
+    def __init__(self):
+        return
+
+    def initialize(self, reads, qpcr_loc, qpcr_scale, prior_loc, prior_scale,
+        proposal_std, tune, end_tune, target_acceptance_rate, value, delay,
+        ridx):
+        &#39;&#39;&#39;Initialize the values
+
+        reads : np.ndarray((n_taxas x n_reps))
+        qpcr_mean : float
+        qpcr_std : float
+        prior_mean : float
+        prior_std : float
+        proposal_std : float
+        tune : int
+        end_tune : int
+        target_acceptance_rate :float
+        value : np.ndarray((n_taxas,))
+        ridx : int
+        &#39;&#39;&#39;
+        self.reads = reads
+        self.read_depths = np.sum(self.reads, axis=0)
+        self.qpcr_loc = qpcr_loc
+        self.qpcr_scale = qpcr_scale
+        self.prior_loc = prior_loc
+        self.prior_scale = prior_scale
+        self.proposal_std = proposal_std
+        self.tune = tune
+        self.end_tune = end_tune
+        self.target_acceptance_rate = target_acceptance_rate
+        self.value = value
+        self.ridx = ridx
+
+        self.sumq = np.sum(self.value)
+        self.log_sumq = np.log(self.sumq)
+
+        self.sample_iter = 0
+        self.acceptances = 0
+        self.total_acceptances = 0
+
+    def update_proposal_std(self):
+        if self.sample_iter &gt; self.end_tune:
+            return
+        if self.sample_iter == 0:
+            return
+        if self.sample_iter % self.tune == 0:
+            # Adjust
+            acc_rate = self.acceptances/self.n_props_total
+            if acc_rate &lt; 0.1:
+                logging.debug(&#39;Very low acceptance rate, scaling down past covariance&#39;)
+                self.proposal_std *= 0.01
+            elif acc_rate &lt; self.target_acceptance_rate:
+                self.proposal_std /= np.sqrt(1.5)
+            else:
+                self.proposal_std *= np.sqrt(1.5)
+            
+            self.acceptances = 0
+            self.n_props_local = 0
+
+    def update(self, a0, a1):
+        &#39;&#39;&#39;Update the latent state with the updated negative binomial
+        dispersion parameters
+        &#39;&#39;&#39;
+        self.a0 = a0
+        self.a1 = a1
+
+        self.update_proposal_std()
+        self.n_props_local = 0
+        self.n_props_total = 0
+        self.n_accepted_iter = 0
+
+        oidxs = npr.permutation(self.reads.shape[0])
+        for oidx in oidxs:
+            self.update_single(oidx=oidx)
+
+        return self.ridx, self.value, self.n_accepted_iter/len(self.value)
+
+    def update_single(self, oidx):
+        &#39;&#39;&#39;Update the latent state for the Taxa index `oidx` in this replicate
+        &#39;&#39;&#39;
+        old_log_value = np.log(self.value[oidx])
+        old_value = self.value[oidx]
+        self.oidx = oidx
+        self.curr_log_val = old_log_value
+
+        aaa = self.prior_ll()
+        bbb = self.qpcr_ll()
+        ccc = self.negbin_ll()
+
+        old_ll = aaa + bbb + ccc
+
+        # propose new value
+        log_new = pl.random.normal.sample(mean=old_log_value, 
+            std=self.proposal_std)
+        self.value[oidx] = np.exp(log_new)
+
+        self.sumq = self.sumq - old_value + self.value[oidx]
+        self.log_sumq = np.log(self.sumq)
+
+        aaa = self.prior_ll()
+        bbb = self.qpcr_ll()
+        ccc = self.negbin_ll()
+
+        new_ll = aaa + bbb + ccc
+
+        r_accept = new_ll - old_ll
+        r = pl.random.misc.fast_sample_standard_uniform()
+        if math.log(r) &gt; r_accept:
+            # Reject
+            self.sumq = self.sumq + old_value - self.value[oidx]
+            self.log_sumq = np.log(self.sumq)
+            self.value[self.oidx] = old_value
+        else:
+            self.acceptances += 1
+            self.total_acceptances += 1
+            self.n_accepted_iter += 1
+
+        self.n_props_local += 1
+        self.n_props_total += 1
+
+    def prior_ll(self):
+        return pl.random.normal.logpdf(value=self.curr_log_val, 
+            mean=self.prior_loc[self.oidx], std=self.prior_scale)
+
+    def qpcr_ll(self):
+        return pl.random.normal.logpdf(value=self.log_sumq, 
+            mean=self.qpcr_loc, std=self.qpcr_scale)
+
+    def negbin_ll(self):
+        cumm = 0
+        rel = self.value[self.oidx]/self.sumq
+        for k in range(self.reads.shape[1]):
+            cumm += negbin_loglikelihood(
+                k=self.reads[self.oidx, k],
+                m=self.read_depths[k] * rel,
+                dispersion=self.a0/rel + self.a1)
+        return cumm
+
+
+@numba.jit(nopython=True, fastmath=True, cache=True)
+def _single_calc_mean_var(means, variances, a0, a1, rels, read_depths):
+    i = 0
+    for col in range(rels.shape[1]):
+        for oidx in range(rels.shape[0]):
+            mean = rels[oidx, col] * read_depths[col]
+            disp = a0 / mean + a1
+            variances[i] = mean + disp * (mean**2)
+            means[i] = mean
+
+            i += 1
+    return means, variances
+
+def visualize_learned_negative_binomial_model(mcmc, section=&#39;posterior&#39;):
+    &#39;&#39;&#39;Visualize the negative binomial dispersion model.
+
+    Plot variance on y-axis, mean on x-axis. both in logscale.
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        This is the inference object with the negative binomial posteriors
+        and the data it was learned on
+    section : str
+        Section of the trace to compute on. Options:
+            &#39;posterior&#39; : posterior samples
+            &#39;burnin&#39; : burn-in samples
+            &#39;entire&#39; : both burn-in and posterior samples
+    
+    Returns
+    -------
+    matplotlib.pyplot.Figure
+    &#39;&#39;&#39;
+    # Get the data
+    # ------------
+    subjset = mcmc.graph.data.subjects
+    reads = []
+    for subj in subjset:
+        reads.append(subj.matrix()[&#39;raw&#39;])
+    reads = np.hstack(reads)
+    read_depths = np.sum(reads, axis=0)
+    rels = reads / read_depths + 1e-20
+
+    # Get the traces of a0 and a1
+    # ---------------------------
+    a0 = mcmc.graph[STRNAMES.NEGBIN_A0]
+    a1 = mcmc.graph[STRNAMES.NEGBIN_A1]
+
+    if mcmc.tracer.is_being_traced(STRNAMES.NEGBIN_A0):
+        a0s = a0.get_trace_from_disk(section=section)
+    else:
+        a0s = a0.value * np.ones(mcmc.n_samples - mcmc.burnin)
+    if mcmc.tracer.is_being_traced(STRNAMES.NEGBIN_A0):
+        a1s = a1.get_trace_from_disk(section=section)
+    else:
+        a1s = a1.value * np.ones(mcmc.n_samples - mcmc.burnin)
+
+    means = np.zeros(shape=(a0s.shape[0], rels.size), dtype=float)
+    variances = np.zeros(shape=(a0s.shape[0], rels.size), dtype=float)
+
+    for i in range(len(a0s)):
+        _single_calc_mean_var(
+            means=means[i,:],
+            variances=variances[i,:],
+            a0=a0s[i], a1=a1s[i], rels=rels, 
+            read_depths=read_depths)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    # plot the data
+    colors = sns.color_palette()
+    for sidx, subj in enumerate(subjset):
+        reads_subj = subj.matrix()[&#39;raw&#39;]
+
+        x = np.mean(reads_subj, axis=1)
+        y = np.var(reads_subj, axis=1)
+
+        idxs = x &gt; 0
+        x = x[idxs]
+        y = y[idxs]
+
+        ax.scatter(
+            x=x, y=y, alpha=0.5,
+            c=colors[sidx], rasterized=False, 
+            label=&#39;Subject {}&#39;.format(subj.name))
+
+    # Still need to get the 2.5th percentile, 97.5th percentile and the median
+    summ_m = pl.summary(means)
+    summ_v = pl.summary(variances)
+
+    med_m = summ_m[&#39;median&#39;]
+    med_v = summ_v[&#39;median&#39;]
+    low_v = np.nanpercentile(variances, 2.5, axis=0)
+    high_v = np.nanpercentile(variances, 97.5, axis=0)
+
+    idxs = np.argsort(med_m)
+    med_m = med_m[idxs]
+    med_v = med_v[idxs]
+    low_v = low_v[idxs]
+    high_v = high_v[idxs]
+
+    ax.plot(med_m, med_v, color=&#39;black&#39;, label=&#39;Fitted NegBin Model&#39;, rasterized=False)
+    ax.fill_between(x=med_m, y1=low_v, y2=high_v, color=&#39;black&#39;, alpha=0.3, label=&#39;95th percentile&#39;)
+
+    ax.set_yscale(&#39;log&#39;)
+    ax.set_xscale(&#39;log&#39;)
+    ax.set_xlabel(&#39;Mean (counts)&#39;)
+    ax.set_ylabel(&#39;Variance (counts)&#39;)
+    ax.set_title(&#39;Empirical mean vs variance of counts&#39;)
+    ax.set_xlim(left=0.5)
+    ax.set_ylim(bottom=0.5)
+    ax.legend()
+
+    return fig
+
+def build_graph(params, graph_name, subjset):
+    &#39;&#39;&#39;Builds the graph used for posterior inference of the negative binomial
+    dispersion parameters
+
+    Parameters
+    ----------
+    params : mdsine2.config.NegBinConfig
+        This specfies the parameters to run the model
+    graph_name : str
+        This is what we label the graph with
+    subjset : mdsine2.Study
+        This is the MDSINE2 object that contains all of the data and the Taxas
+    &#39;&#39;&#39;
+    if not config.isModelConfig(params):
+        raise TypeError(&#39;`params` ({}) needs to be a config.ModelConfig object&#39;.format(type(params)))
+    if not pl.isstudy(subjset):
+        raise TypeError(&#39;`subjset` ({}) must be a mdsine2.Study&#39;.format(type(subjset)))
+    if not pl.isstr(graph_name):
+        raise TypeError(&#39;`graph_name` ({}) must be a str&#39;.format(type(graph_name)))
+
+    # Initialize the graph and make the save location
+    # -----------------------------------------------
+    GRAPH = pl.Graph(name=graph_name, seed=params.SEED)
+    GRAPH.as_default()
+
+    basepath = params.OUTPUT_BASEPATH
+    os.makedirs(basepath, exist_ok=True)
+    basepath = os.path.join(basepath, GRAPH.name)
+    os.makedirs(basepath, exist_ok=True)
+    params.MODEL_PATH = basepath
+
+    # Initialize the inference objects
+    # --------------------------------
+    d = Data(subjset, G=GRAPH)
+
+    x = FilteringMP(mp=params.MP_FILTERING, G=GRAPH, name=STRNAMES.FILTERING)
+    a0 = NegBinDispersionParam(name=STRNAMES.NEGBIN_A0, G=GRAPH, low=0, high=1e5)
+    a1 = NegBinDispersionParam(name=STRNAMES.NEGBIN_A1, G=GRAPH, low=0, high=1e5)
+
+    mcmc = pl.BaseMCMC(burnin=params.BURNIN, n_samples=params.N_SAMPLES, graph=GRAPH)
+
+    # Set the inference order
+    # -----------------------
+    inference_order = []
+    for name in params.INFERENCE_ORDER:
+        if params.LEARN[name]:
+            inference_order.append(name)
+    mcmc.set_inference_order(inference_order)
+
+    # Initialize the parameters
+    # -------------------------
+    for name in params.INITIALIZATION_ORDER:
+        try:
+            GRAPH[name].initialize(**params.INITIALIZATION_KWARGS[name])
+        except:
+            logging.critical(&#39;Failed in {}&#39;.format(name))
+            raise
+
+    # Set tracing object
+    # ------------------
+    hdf5_filename = os.path.join(basepath, config.HDF5_FILENAME)
+    mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
+    param_filename = os.path.join(basepath, config.PARAMS_FILENAME)
+    mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CKPT)
+    mcmc.set_save_location(mcmc_filename)
+    params.save(param_filename)
+
+    return mcmc
+
+def run_graph(mcmc, crash_if_error=True):
+    &#39;&#39;&#39;Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        Inference object that is already built and initialized
+    crash_if_error : bool
+        If True, throws an error if there is an exception during inference. Otherwise
+        it continues out of inference.
+
+    Returns
+    -------
+    mdsine2.BaseMCMC
+    &#39;&#39;&#39;
+    try:
+        mcmc.run(log_every=1)
+    except Exception as e:
+        logging.critical(&#39;CHAIN `{}` CRASHED&#39;.format(mcmc.graph.name))
+        logging.critical(&#39;Error: {}&#39;.format(e))
+        if crash_if_error:
+            raise
+    mcmc.graph[STRNAMES.FILTERING].kill()
+    return mcmc</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="mdsine2.negbin.build_graph"><code class="name flex">
+<span>def <span class="ident">build_graph</span></span>(<span>params, graph_name, subjset)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Builds the graph used for posterior inference of the negative binomial
+dispersion parameters</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>params</code></strong> :&ensp;<code><a title="mdsine2.config.NegBinConfig" href="config.html#mdsine2.config.NegBinConfig">NegBinConfig</a></code></dt>
+<dd>This specfies the parameters to run the model</dd>
+<dt><strong><code>graph_name</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is what we label the graph with</dd>
+<dt><strong><code>subjset</code></strong> :&ensp;<code>mdsine2.Study</code></dt>
+<dd>This is the MDSINE2 object that contains all of the data and the Taxas</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def build_graph(params, graph_name, subjset):
+    &#39;&#39;&#39;Builds the graph used for posterior inference of the negative binomial
+    dispersion parameters
+
+    Parameters
+    ----------
+    params : mdsine2.config.NegBinConfig
+        This specfies the parameters to run the model
+    graph_name : str
+        This is what we label the graph with
+    subjset : mdsine2.Study
+        This is the MDSINE2 object that contains all of the data and the Taxas
+    &#39;&#39;&#39;
+    if not config.isModelConfig(params):
+        raise TypeError(&#39;`params` ({}) needs to be a config.ModelConfig object&#39;.format(type(params)))
+    if not pl.isstudy(subjset):
+        raise TypeError(&#39;`subjset` ({}) must be a mdsine2.Study&#39;.format(type(subjset)))
+    if not pl.isstr(graph_name):
+        raise TypeError(&#39;`graph_name` ({}) must be a str&#39;.format(type(graph_name)))
+
+    # Initialize the graph and make the save location
+    # -----------------------------------------------
+    GRAPH = pl.Graph(name=graph_name, seed=params.SEED)
+    GRAPH.as_default()
+
+    basepath = params.OUTPUT_BASEPATH
+    os.makedirs(basepath, exist_ok=True)
+    basepath = os.path.join(basepath, GRAPH.name)
+    os.makedirs(basepath, exist_ok=True)
+    params.MODEL_PATH = basepath
+
+    # Initialize the inference objects
+    # --------------------------------
+    d = Data(subjset, G=GRAPH)
+
+    x = FilteringMP(mp=params.MP_FILTERING, G=GRAPH, name=STRNAMES.FILTERING)
+    a0 = NegBinDispersionParam(name=STRNAMES.NEGBIN_A0, G=GRAPH, low=0, high=1e5)
+    a1 = NegBinDispersionParam(name=STRNAMES.NEGBIN_A1, G=GRAPH, low=0, high=1e5)
+
+    mcmc = pl.BaseMCMC(burnin=params.BURNIN, n_samples=params.N_SAMPLES, graph=GRAPH)
+
+    # Set the inference order
+    # -----------------------
+    inference_order = []
+    for name in params.INFERENCE_ORDER:
+        if params.LEARN[name]:
+            inference_order.append(name)
+    mcmc.set_inference_order(inference_order)
+
+    # Initialize the parameters
+    # -------------------------
+    for name in params.INITIALIZATION_ORDER:
+        try:
+            GRAPH[name].initialize(**params.INITIALIZATION_KWARGS[name])
+        except:
+            logging.critical(&#39;Failed in {}&#39;.format(name))
+            raise
+
+    # Set tracing object
+    # ------------------
+    hdf5_filename = os.path.join(basepath, config.HDF5_FILENAME)
+    mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
+    param_filename = os.path.join(basepath, config.PARAMS_FILENAME)
+    mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CKPT)
+    mcmc.set_save_location(mcmc_filename)
+    params.save(param_filename)
+
+    return mcmc</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.negbin.negbin_loglikelihood"><code class="name flex">
+<span>def <span class="ident">negbin_loglikelihood</span></span>(<span>k, m, dispersion)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Loglikelihood - with parameterization in [1]</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>k</code></strong> :&ensp;<code>numeric</code></dt>
+<dd>Observed counts</dd>
+<dt><strong><code>m</code></strong> :&ensp;<code>numeric</code></dt>
+<dd>Mean</dd>
+<dt><strong><code>phi</code></strong> :&ensp;<code>float</code></dt>
+<dd>Dispersion</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>Negative Binomial Log Likelihood</dd>
+</dl>
+<h2 id="references">References</h2>
+<p>[1] TE Gibson, GK Gerber. Robust and Scalable Models of Microbiome Dynamics. ICML (2018)</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@numba.jit(nopython=True, fastmath=True, cache=True)
+def negbin_loglikelihood(k,m,dispersion):
+    &#39;&#39;&#39;Loglikelihood - with parameterization in [1]
+    
+    Parameters
+    ----------
+    k : numeric
+        Observed counts
+    m : numeric
+        Mean
+    phi : float
+        Dispersion
+    
+    Returns
+    -------
+    float
+        Negative Binomial Log Likelihood
+    
+    References
+    ----------
+    [1] TE Gibson, GK Gerber. Robust and Scalable Models of Microbiome Dynamics. ICML (2018)
+    &#39;&#39;&#39;
+    r = 1/dispersion
+    return math.lgamma(k+r) - math.lgamma(k+1) - math.lgamma(r) \
+            + r * (math.log(r) - math.log(r+m)) + k * (math.log(m) - math.log(r+m))</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.negbin.run_graph"><code class="name flex">
+<span>def <span class="ident">run_graph</span></span>(<span>mcmc, crash_if_error=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Run the MCMC chain <code>mcmc</code>. Initialize the MCMC chain with <code><a title="mdsine2.negbin.build_graph" href="#mdsine2.negbin.build_graph">build_graph()</a></code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>mcmc</code></strong> :&ensp;<code>mdsine2.BaseMCMC</code></dt>
+<dd>Inference object that is already built and initialized</dd>
+<dt><strong><code>crash_if_error</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True, throws an error if there is an exception during inference. Otherwise
+it continues out of inference.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>mdsine2.BaseMCMC</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def run_graph(mcmc, crash_if_error=True):
+    &#39;&#39;&#39;Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        Inference object that is already built and initialized
+    crash_if_error : bool
+        If True, throws an error if there is an exception during inference. Otherwise
+        it continues out of inference.
+
+    Returns
+    -------
+    mdsine2.BaseMCMC
+    &#39;&#39;&#39;
+    try:
+        mcmc.run(log_every=1)
+    except Exception as e:
+        logging.critical(&#39;CHAIN `{}` CRASHED&#39;.format(mcmc.graph.name))
+        logging.critical(&#39;Error: {}&#39;.format(e))
+        if crash_if_error:
+            raise
+    mcmc.graph[STRNAMES.FILTERING].kill()
+    return mcmc</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.negbin.visualize_learned_negative_binomial_model"><code class="name flex">
+<span>def <span class="ident">visualize_learned_negative_binomial_model</span></span>(<span>mcmc, section='posterior')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Visualize the negative binomial dispersion model.</p>
+<p>Plot variance on y-axis, mean on x-axis. both in logscale.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>mcmc</code></strong> :&ensp;<code>mdsine2.BaseMCMC</code></dt>
+<dd>This is the inference object with the negative binomial posteriors
+and the data it was learned on</dd>
+<dt><strong><code>section</code></strong> :&ensp;<code>str</code></dt>
+<dd>Section of the trace to compute on. Options:
+'posterior' : posterior samples
+'burnin' : burn-in samples
+'entire' : both burn-in and posterior samples</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>matplotlib.pyplot.Figure</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def visualize_learned_negative_binomial_model(mcmc, section=&#39;posterior&#39;):
+    &#39;&#39;&#39;Visualize the negative binomial dispersion model.
+
+    Plot variance on y-axis, mean on x-axis. both in logscale.
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        This is the inference object with the negative binomial posteriors
+        and the data it was learned on
+    section : str
+        Section of the trace to compute on. Options:
+            &#39;posterior&#39; : posterior samples
+            &#39;burnin&#39; : burn-in samples
+            &#39;entire&#39; : both burn-in and posterior samples
+    
+    Returns
+    -------
+    matplotlib.pyplot.Figure
+    &#39;&#39;&#39;
+    # Get the data
+    # ------------
+    subjset = mcmc.graph.data.subjects
+    reads = []
+    for subj in subjset:
+        reads.append(subj.matrix()[&#39;raw&#39;])
+    reads = np.hstack(reads)
+    read_depths = np.sum(reads, axis=0)
+    rels = reads / read_depths + 1e-20
+
+    # Get the traces of a0 and a1
+    # ---------------------------
+    a0 = mcmc.graph[STRNAMES.NEGBIN_A0]
+    a1 = mcmc.graph[STRNAMES.NEGBIN_A1]
+
+    if mcmc.tracer.is_being_traced(STRNAMES.NEGBIN_A0):
+        a0s = a0.get_trace_from_disk(section=section)
+    else:
+        a0s = a0.value * np.ones(mcmc.n_samples - mcmc.burnin)
+    if mcmc.tracer.is_being_traced(STRNAMES.NEGBIN_A0):
+        a1s = a1.get_trace_from_disk(section=section)
+    else:
+        a1s = a1.value * np.ones(mcmc.n_samples - mcmc.burnin)
+
+    means = np.zeros(shape=(a0s.shape[0], rels.size), dtype=float)
+    variances = np.zeros(shape=(a0s.shape[0], rels.size), dtype=float)
+
+    for i in range(len(a0s)):
+        _single_calc_mean_var(
+            means=means[i,:],
+            variances=variances[i,:],
+            a0=a0s[i], a1=a1s[i], rels=rels, 
+            read_depths=read_depths)
+
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+
+    # plot the data
+    colors = sns.color_palette()
+    for sidx, subj in enumerate(subjset):
+        reads_subj = subj.matrix()[&#39;raw&#39;]
+
+        x = np.mean(reads_subj, axis=1)
+        y = np.var(reads_subj, axis=1)
+
+        idxs = x &gt; 0
+        x = x[idxs]
+        y = y[idxs]
+
+        ax.scatter(
+            x=x, y=y, alpha=0.5,
+            c=colors[sidx], rasterized=False, 
+            label=&#39;Subject {}&#39;.format(subj.name))
+
+    # Still need to get the 2.5th percentile, 97.5th percentile and the median
+    summ_m = pl.summary(means)
+    summ_v = pl.summary(variances)
+
+    med_m = summ_m[&#39;median&#39;]
+    med_v = summ_v[&#39;median&#39;]
+    low_v = np.nanpercentile(variances, 2.5, axis=0)
+    high_v = np.nanpercentile(variances, 97.5, axis=0)
+
+    idxs = np.argsort(med_m)
+    med_m = med_m[idxs]
+    med_v = med_v[idxs]
+    low_v = low_v[idxs]
+    high_v = high_v[idxs]
+
+    ax.plot(med_m, med_v, color=&#39;black&#39;, label=&#39;Fitted NegBin Model&#39;, rasterized=False)
+    ax.fill_between(x=med_m, y1=low_v, y2=high_v, color=&#39;black&#39;, alpha=0.3, label=&#39;95th percentile&#39;)
+
+    ax.set_yscale(&#39;log&#39;)
+    ax.set_xscale(&#39;log&#39;)
+    ax.set_xlabel(&#39;Mean (counts)&#39;)
+    ax.set_ylabel(&#39;Variance (counts)&#39;)
+    ax.set_title(&#39;Empirical mean vs variance of counts&#39;)
+    ax.set_xlim(left=0.5)
+    ax.set_ylim(bottom=0.5)
+    ax.legend()
+
+    return fig</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="mdsine2.negbin.Data"><code class="flex name class">
+<span>class <span class="ident">Data</span></span>
+<span>(</span><span>subjects, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is the raw data that we are regressing over</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>subjects</code></strong> :&ensp;<code>pl.base.SubjectSet</code></dt>
+<dd>These are a list of the subjects that we are going to get data from</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class Data(pl.graph.DataNode):
+    &#39;&#39;&#39;This is the raw data that we are regressing over
+
+    Parameters
+    ----------
+    subjects : pl.base.SubjectSet
+        These are a list of the subjects that we are going to get data from
+    &#39;&#39;&#39;
+
+    def __init__(self, subjects, **kwargs):
+        kwargs[&#39;name&#39;] = &#39;Data&#39;
+        pl.graph.DataNode.__init__(self, **kwargs)
+        if not pl.isstudy(subjects):
+            raise ValueError(&#39;`subjects` ({}) must be a pylab SubjectSet&#39;.format(
+                type(subjects)))
+        
+        self.taxas = subjects.taxas
+        self.subjects = subjects
+        self.n_taxas = len(self.taxas)
+
+        self.data = []
+        self.read_depths = []
+        self.qpcr = []
+        for subject in self.subjects:
+            d = subject.matrix()[&#39;raw&#39;]
+            self.data.append(d)
+            self.read_depths.append(np.sum(d, axis=0))
+            self.qpcr.append(subject.qpcr[0])
+
+        self.n_replicates = len(self.data)
+
+    def __len__(self):
+        return self.n_replicates</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.graph.DataNode" href="pylab/graph.html#mdsine2.pylab.graph.DataNode">DataNode</a></li>
+<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.graph.DataNode" href="pylab/graph.html#mdsine2.pylab.graph.DataNode">DataNode</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.graph.DataNode.delete" href="pylab/graph.html#mdsine2.pylab.graph.DataNode.delete">delete</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.DataNode.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.DataNode.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.DataNode.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.negbin.FilteringMP"><code class="flex name class">
+<span>class <span class="ident">FilteringMP</span></span>
+<span>(</span><span>mp, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This handles multiprocessing of the latent state</p>
+<h2 id="parallelization-modes">Parallelization Modes</h2>
+<p>'debug'
+If this is selected, then we dont actually parallelize, but we go in
+order of the objects in sequential order. We would do this if we want
+to benchmark within each processor or do easier print statements
+'full'
+This is where each subject gets their own process</p>
+<p>This assumes that we are using the log model for the dynamics</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class FilteringMP(pl.graph.Node):
+    &#39;&#39;&#39;This handles multiprocessing of the latent state
+
+    Parallelization Modes
+    ---------------------
+    &#39;debug&#39;
+        If this is selected, then we dont actually parallelize, but we go in
+        order of the objects in sequential order. We would do this if we want
+        to benchmark within each processor or do easier print statements
+    &#39;full&#39;
+        This is where each subject gets their own process
+
+    This assumes that we are using the log model for the dynamics
+    &#39;&#39;&#39;
+    def __init__(self, mp, **kwargs):
+        kwargs[&#39;name&#39;] = STRNAMES.FILTERING
+        pl.graph.Node.__init__(self, **kwargs)
+        self.value = []
+        for ridx, subj in enumerate(self.G.data.subjects):
+            self.value.append(TrajectorySet(G=self.G, ridx=ridx, subjname=subj.name))
+        
+        self.print_vals = False
+        self._strr = &#39;NA&#39;
+        self.mp = mp
+
+    def __str__(self):
+        return self._strr
+
+    @property
+    def sample_iter(self):
+        # It doesnt matter if we chose q or x because they are both the same
+        return self.value[0].sample_iter
+
+    def initialize(self, tune, end_tune, target_acceptance_rate,  qpcr_variance_inflation, 
+        delay=0):
+        &#39;&#39;&#39;Initialize the latent state
+
+        Parameters
+        ----------
+        value_option : str
+            &#39;tight-coupling&#39;
+                Set the value to the empirical mean of the trajectory with a small variance
+            &#39;small-bias&#39;
+                Add 1e-10 to all of the latent states
+        target_acceptance_rate : str, float
+            If float, this is the target acceptance rate
+            If str: 
+                &#39;optimal&#39;, &#39;auto&#39;: 0.44
+        tune : str, int
+            How often to tune the proposal. If str:
+                &#39;auto&#39;: 50
+        end_tune : str, int
+            When to stop tuning the proposal. If str:
+                &#39;auto&#39;, &#39;half-burnin&#39;: Half of burnin
+        proposal_option : str
+            How to initialize the proposal variance:
+                &#39;auto&#39;
+                    initial_value**2 / 100
+                &#39;manual&#39;
+                    `proposal_var` must also be supplied
+        qpcr_variance_inflation : float
+            This is the factor to inflate the qPCR variance
+        delay : int
+            How many Gibb stepps to delay
+        &#39;&#39;&#39;
+        if not pl.isint(delay):
+            raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+        if delay &lt; 0:
+            raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+        self.delay = delay
+
+        # Set the propsal parameters
+        if pl.isstr(target_acceptance_rate):
+            if target_acceptance_rate in [&#39;optimal&#39;, &#39;auto&#39;]:
+                target_acceptance_rate = 0.44
+            else:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) not recognized&#39;.format(
+                    target_acceptance_rate))
+        elif pl.isfloat(target_acceptance_rate):
+            if target_acceptance_rate &lt; 0 or target_acceptance_rate &gt; 1:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) out of range&#39;.format(
+                    target_acceptance_rate))
+        else:
+            raise TypeError(&#39;`target_acceptance_rate` ({}) type not recognized&#39;.format(
+                type(target_acceptance_rate)))
+        self.target_acceptance_rate = target_acceptance_rate
+
+        if pl.isstr(tune):
+            if tune in [&#39;auto&#39;]:
+                tune = 50
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(tune))
+        elif pl.isint(tune):
+            if tune &lt; 0:
+                raise ValueError(&#39;`tune` ({}) must be &gt; 0&#39;.format(
+                    tune))
+        else:
+            raise TypeError(&#39;`tune` ({}) type not recognized&#39;.format(type(tune)))
+        self.tune = tune
+
+        if pl.isstr(end_tune):
+            if end_tune in [&#39;auto&#39;, &#39;half-burnin&#39;]:
+                end_tune = int(self.G.inference.burnin/2)
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(end_tune))
+        elif pl.isint(end_tune):
+            if end_tune &lt; 0 or end_tune &gt; self.G.inference.burnin:
+                raise ValueError(&#39;`end_tune` ({}) out of range (0, {})&#39;.format(
+                    end_tune, self.G.inference.burnin))
+        else:
+            raise TypeError(&#39;`end_tune` ({}) type not recognized&#39;.format(type(end_tune)))
+        self.end_tune = end_tune
+
+        # Initialize the trajectory sets
+        for ridx in range(self.G.data.n_replicates):
+            self.value[ridx].initialize()
+
+        if self.mp == &#39;full&#39;:
+            self.pool = pl.multiprocessing.PersistentPool(G=self.G, ptype=&#39;sadw&#39;)
+        elif self.mp == &#39;debug&#39;:
+            self.pool = []
+        else:
+            raise ValueError(&#39;Filtering mutliprocessing argument ({}) not recognized&#39;.format(
+                self.mp))
+
+        for ridx in range(len(self.value)):
+            worker = _LatentWorker()
+            worker.initialize(
+                reads=self.value[ridx].data,
+                qpcr_loc=self.value[ridx].qpcr_measurement.loc,
+                qpcr_scale=np.sqrt(qpcr_variance_inflation) *self.value[ridx].qpcr_measurement.scale,
+                proposal_std=np.log(1.5),
+                prior_loc=self.value[ridx].prior.mean.value,
+                prior_scale=np.sqrt(self.value[ridx].prior.var.value),
+                tune=tune, end_tune=end_tune,
+                target_acceptance_rate=target_acceptance_rate,
+                value=self.value[ridx].value,
+                delay=delay,
+                ridx=ridx)
+            if self.mp == &#39;full&#39;:
+                self.pool.add_worker(worker)
+            else:
+                self.pool.append(worker)
+
+        self.total_n_datapoints = len(self.G.data.taxas) * len(self.G.data)
+
+    def update(self):
+        start_time = time.time()
+        a0 = self.G[STRNAMES.NEGBIN_A0].value
+        a1 = self.G[STRNAMES.NEGBIN_A1].value
+
+        kwargs={&#39;a0&#39;: a0, &#39;a1&#39;:a1}
+        str_acc = [None]*self.G.data.n_replicates
+        if self.mp == &#39;debug&#39;:
+            for ridx in range(len(self.value)):
+                _, x, acc_rate = self.pool[ridx].update(**kwargs)
+                self.value[ridx].value = x
+                str_acc[ridx] = &#39;{:.3f}&#39;.format(acc_rate)
+        else:
+            ret = self.pool.map(func=&#39;update&#39;, args=kwargs)
+            for ridx, x, acc_rate in ret:
+                self.value[ridx].value = x
+                str_acc[ridx] = &#39;{:.3f}&#39;.format(acc_rate)
+
+        t = time.time() - start_time
+        try:
+            self._strr = &#39;Time: {:.4f}, Acc: {}, data/sec: {:.2f}&#39;.format(t,
+                str(str_acc).replace(&#34;&#39;&#34;,&#39;&#39;), self.total_n_datapoints/t)
+        except:
+            self._strr = &#39;NA&#39;
+
+    def add_trace(self):
+        for x in self.value:
+            x.add_trace()
+
+    def set_trace(self, *args, **kwargs):
+        for x in self.value:
+            x.set_trace(*args, **kwargs)
+    
+    def kill(self):
+        if pl.ispersistentpool(self.pool):
+            self.pool.kill()
+
+    def visualize(self, basepath, section=&#39;posterior&#39;, taxa_formatter=&#39;%(paperformat)s&#39;):
+        &#39;&#39;&#39;Render the latent trajectories in the base folder and write the statistics.
+
+        Parameters
+        ----------
+        basepath : str
+            This is the loction to write the files to
+        section : str
+            Section of the trace to compute on. Options:
+                &#39;posterior&#39; : posterior samples
+                &#39;burnin&#39; : burn-in samples
+                &#39;entire&#39; : both burn-in and posterior samples
+        taxa_formatter : str
+            This is the format to write taxonomy of the Taxa
+        &#39;&#39;&#39;
+        chain = self.G.inference
+        taxas  = chain.graph.data.taxas
+        os.makedirs(basepath, exist_ok=True)
+
+        if chain.is_in_inference_order(STRNAMES.FILTERING):
+            taxanames = taxas.names.order
+
+            for ridx, subj in enumerate(self.G.data.subjects):
+                subj_basepath = os.path.join(basepath, subj.name)
+                os.makedirs(subj_basepath, exist_ok=True)
+
+                M_subj = subj.matrix()[&#39;abs&#39;]
+                latent_name = STRNAMES.LATENT_TRAJECTORY + &#39;_&#39; + subj.name
+                latent = self.G[latent_name]
+
+                fname_subj = os.path.join(subj_basepath, &#39;output.txt&#39;)
+                f = open(fname_subj, &#39;w&#39;)
+                f.write(&#39;Subject {} output\n&#39;.format(subj.name))
+                f.write(&#39;---------------------\n&#39;)
+
+                # Get from disk only once
+                latent_trace = latent.get_trace_from_disk(section=section)
+                summ = pl.summary(latent_trace)
+                for aidx, aname in enumerate(taxanames):
+                    f.write(&#39;\n\nTaxa {}: {}\n&#39;.format(
+                        aidx, pl.taxaname_formatter(taxa_formatter, 
+                        taxa=aname, taxas=taxas)))
+                    f.write(&#39;-------------------\n&#39;)
+
+                    # Write what the data is
+                    f.write(&#39;Data: &#39;)
+                    row = M_subj[aidx, :]
+                    for ele in row:
+                        f.write(&#39;{:.4E}  &#39;.format(ele))
+                    f.write(&#39;\n&#39;)
+
+                    f.write(&#39;Learned Values:\n&#39;)
+                    for k,v in summ.items():
+                        f.write(&#39;\t{}: {:.4E}\n&#39;.format(k,v[aidx]))
+
+                    # plot the variable
+                    axpost, axtrace = visualization.render_trace(latent_trace[:,aidx], plt_type=&#39;both&#39;, 
+                        rasterized=True, log_scale=True)
+                    for idx in range(M_subj.shape[1]):
+                        if idx == 0:
+                            label = &#39;data&#39;
+                        else:
+                            label = None
+                        axpost.axvline(x=M_subj[aidx, idx], color=&#39;green&#39;, label=label)
+                        axtrace.axhline(y=M_subj[aidx, idx], color=&#39;green&#39;, label=label)
+
+                    fig = plt.gcf()
+                    fig.suptitle(pl.taxaname_formatter(format=taxa_formatter,
+                        taxa=aname, taxas=taxas))
+                    plotpath = os.path.join(subj_basepath, &#39;{}.pdf&#39;.format(aname))
+                    plt.savefig(plotpath)
+                    plt.close()
+                f.close()</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
+<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="mdsine2.negbin.FilteringMP.sample_iter"><code class="name">var <span class="ident">sample_iter</span></code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def sample_iter(self):
+    # It doesnt matter if we chose q or x because they are both the same
+    return self.value[0].sample_iter</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.negbin.FilteringMP.add_trace"><code class="name flex">
+<span>def <span class="ident">add_trace</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def add_trace(self):
+    for x in self.value:
+        x.add_trace()</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.negbin.FilteringMP.initialize"><code class="name flex">
+<span>def <span class="ident">initialize</span></span>(<span>self, tune, end_tune, target_acceptance_rate, qpcr_variance_inflation, delay=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialize the latent state</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>'tight-coupling'
+Set the value to the empirical mean of the trajectory with a small variance
+'small-bias'
+Add 1e-10 to all of the latent states</dd>
+<dt><strong><code>target_acceptance_rate</code></strong> :&ensp;<code>str, float</code></dt>
+<dd>If float, this is the target acceptance rate
+If str:
+'optimal', 'auto': 0.44</dd>
+<dt><strong><code>tune</code></strong> :&ensp;<code>str, int</code></dt>
+<dd>How often to tune the proposal. If str:
+'auto': 50</dd>
+<dt><strong><code>end_tune</code></strong> :&ensp;<code>str, int</code></dt>
+<dd>When to stop tuning the proposal. If str:
+'auto', 'half-burnin': Half of burnin</dd>
+<dt><strong><code>proposal_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to initialize the proposal variance:
+'auto'
+initial_value**2 / 100
+'manual'
+<code>proposal_var</code> must also be supplied</dd>
+<dt><strong><code>qpcr_variance_inflation</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the factor to inflate the qPCR variance</dd>
+<dt><strong><code>delay</code></strong> :&ensp;<code>int</code></dt>
+<dd>How many Gibb stepps to delay</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def initialize(self, tune, end_tune, target_acceptance_rate,  qpcr_variance_inflation, 
+    delay=0):
+    &#39;&#39;&#39;Initialize the latent state
+
+    Parameters
+    ----------
+    value_option : str
+        &#39;tight-coupling&#39;
+            Set the value to the empirical mean of the trajectory with a small variance
+        &#39;small-bias&#39;
+            Add 1e-10 to all of the latent states
+    target_acceptance_rate : str, float
+        If float, this is the target acceptance rate
+        If str: 
+            &#39;optimal&#39;, &#39;auto&#39;: 0.44
+    tune : str, int
+        How often to tune the proposal. If str:
+            &#39;auto&#39;: 50
+    end_tune : str, int
+        When to stop tuning the proposal. If str:
+            &#39;auto&#39;, &#39;half-burnin&#39;: Half of burnin
+    proposal_option : str
+        How to initialize the proposal variance:
+            &#39;auto&#39;
+                initial_value**2 / 100
+            &#39;manual&#39;
+                `proposal_var` must also be supplied
+    qpcr_variance_inflation : float
+        This is the factor to inflate the qPCR variance
+    delay : int
+        How many Gibb stepps to delay
+    &#39;&#39;&#39;
+    if not pl.isint(delay):
+        raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+    if delay &lt; 0:
+        raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+    self.delay = delay
+
+    # Set the propsal parameters
+    if pl.isstr(target_acceptance_rate):
+        if target_acceptance_rate in [&#39;optimal&#39;, &#39;auto&#39;]:
+            target_acceptance_rate = 0.44
+        else:
+            raise ValueError(&#39;`target_acceptance_rate` ({}) not recognized&#39;.format(
+                target_acceptance_rate))
+    elif pl.isfloat(target_acceptance_rate):
+        if target_acceptance_rate &lt; 0 or target_acceptance_rate &gt; 1:
+            raise ValueError(&#39;`target_acceptance_rate` ({}) out of range&#39;.format(
+                target_acceptance_rate))
+    else:
+        raise TypeError(&#39;`target_acceptance_rate` ({}) type not recognized&#39;.format(
+            type(target_acceptance_rate)))
+    self.target_acceptance_rate = target_acceptance_rate
+
+    if pl.isstr(tune):
+        if tune in [&#39;auto&#39;]:
+            tune = 50
+        else:
+            raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(tune))
+    elif pl.isint(tune):
+        if tune &lt; 0:
+            raise ValueError(&#39;`tune` ({}) must be &gt; 0&#39;.format(
+                tune))
+    else:
+        raise TypeError(&#39;`tune` ({}) type not recognized&#39;.format(type(tune)))
+    self.tune = tune
+
+    if pl.isstr(end_tune):
+        if end_tune in [&#39;auto&#39;, &#39;half-burnin&#39;]:
+            end_tune = int(self.G.inference.burnin/2)
+        else:
+            raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(end_tune))
+    elif pl.isint(end_tune):
+        if end_tune &lt; 0 or end_tune &gt; self.G.inference.burnin:
+            raise ValueError(&#39;`end_tune` ({}) out of range (0, {})&#39;.format(
+                end_tune, self.G.inference.burnin))
+    else:
+        raise TypeError(&#39;`end_tune` ({}) type not recognized&#39;.format(type(end_tune)))
+    self.end_tune = end_tune
+
+    # Initialize the trajectory sets
+    for ridx in range(self.G.data.n_replicates):
+        self.value[ridx].initialize()
+
+    if self.mp == &#39;full&#39;:
+        self.pool = pl.multiprocessing.PersistentPool(G=self.G, ptype=&#39;sadw&#39;)
+    elif self.mp == &#39;debug&#39;:
+        self.pool = []
+    else:
+        raise ValueError(&#39;Filtering mutliprocessing argument ({}) not recognized&#39;.format(
+            self.mp))
+
+    for ridx in range(len(self.value)):
+        worker = _LatentWorker()
+        worker.initialize(
+            reads=self.value[ridx].data,
+            qpcr_loc=self.value[ridx].qpcr_measurement.loc,
+            qpcr_scale=np.sqrt(qpcr_variance_inflation) *self.value[ridx].qpcr_measurement.scale,
+            proposal_std=np.log(1.5),
+            prior_loc=self.value[ridx].prior.mean.value,
+            prior_scale=np.sqrt(self.value[ridx].prior.var.value),
+            tune=tune, end_tune=end_tune,
+            target_acceptance_rate=target_acceptance_rate,
+            value=self.value[ridx].value,
+            delay=delay,
+            ridx=ridx)
+        if self.mp == &#39;full&#39;:
+            self.pool.add_worker(worker)
+        else:
+            self.pool.append(worker)
+
+    self.total_n_datapoints = len(self.G.data.taxas) * len(self.G.data)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.negbin.FilteringMP.kill"><code class="name flex">
+<span>def <span class="ident">kill</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def kill(self):
+    if pl.ispersistentpool(self.pool):
+        self.pool.kill()</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.negbin.FilteringMP.set_trace"><code class="name flex">
+<span>def <span class="ident">set_trace</span></span>(<span>self, *args, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def set_trace(self, *args, **kwargs):
+    for x in self.value:
+        x.set_trace(*args, **kwargs)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.negbin.FilteringMP.update"><code class="name flex">
+<span>def <span class="ident">update</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update(self):
+    start_time = time.time()
+    a0 = self.G[STRNAMES.NEGBIN_A0].value
+    a1 = self.G[STRNAMES.NEGBIN_A1].value
+
+    kwargs={&#39;a0&#39;: a0, &#39;a1&#39;:a1}
+    str_acc = [None]*self.G.data.n_replicates
+    if self.mp == &#39;debug&#39;:
+        for ridx in range(len(self.value)):
+            _, x, acc_rate = self.pool[ridx].update(**kwargs)
+            self.value[ridx].value = x
+            str_acc[ridx] = &#39;{:.3f}&#39;.format(acc_rate)
+    else:
+        ret = self.pool.map(func=&#39;update&#39;, args=kwargs)
+        for ridx, x, acc_rate in ret:
+            self.value[ridx].value = x
+            str_acc[ridx] = &#39;{:.3f}&#39;.format(acc_rate)
+
+    t = time.time() - start_time
+    try:
+        self._strr = &#39;Time: {:.4f}, Acc: {}, data/sec: {:.2f}&#39;.format(t,
+            str(str_acc).replace(&#34;&#39;&#34;,&#39;&#39;), self.total_n_datapoints/t)
+    except:
+        self._strr = &#39;NA&#39;</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.negbin.FilteringMP.visualize"><code class="name flex">
+<span>def <span class="ident">visualize</span></span>(<span>self, basepath, section='posterior', taxa_formatter='%(paperformat)s')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Render the latent trajectories in the base folder and write the statistics.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>basepath</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the loction to write the files to</dd>
+<dt><strong><code>section</code></strong> :&ensp;<code>str</code></dt>
+<dd>Section of the trace to compute on. Options:
+'posterior' : posterior samples
+'burnin' : burn-in samples
+'entire' : both burn-in and posterior samples</dd>
+<dt><strong><code>taxa_formatter</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the format to write taxonomy of the Taxa</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def visualize(self, basepath, section=&#39;posterior&#39;, taxa_formatter=&#39;%(paperformat)s&#39;):
+    &#39;&#39;&#39;Render the latent trajectories in the base folder and write the statistics.
+
+    Parameters
+    ----------
+    basepath : str
+        This is the loction to write the files to
+    section : str
+        Section of the trace to compute on. Options:
+            &#39;posterior&#39; : posterior samples
+            &#39;burnin&#39; : burn-in samples
+            &#39;entire&#39; : both burn-in and posterior samples
+    taxa_formatter : str
+        This is the format to write taxonomy of the Taxa
+    &#39;&#39;&#39;
+    chain = self.G.inference
+    taxas  = chain.graph.data.taxas
+    os.makedirs(basepath, exist_ok=True)
+
+    if chain.is_in_inference_order(STRNAMES.FILTERING):
+        taxanames = taxas.names.order
+
+        for ridx, subj in enumerate(self.G.data.subjects):
+            subj_basepath = os.path.join(basepath, subj.name)
+            os.makedirs(subj_basepath, exist_ok=True)
+
+            M_subj = subj.matrix()[&#39;abs&#39;]
+            latent_name = STRNAMES.LATENT_TRAJECTORY + &#39;_&#39; + subj.name
+            latent = self.G[latent_name]
+
+            fname_subj = os.path.join(subj_basepath, &#39;output.txt&#39;)
+            f = open(fname_subj, &#39;w&#39;)
+            f.write(&#39;Subject {} output\n&#39;.format(subj.name))
+            f.write(&#39;---------------------\n&#39;)
+
+            # Get from disk only once
+            latent_trace = latent.get_trace_from_disk(section=section)
+            summ = pl.summary(latent_trace)
+            for aidx, aname in enumerate(taxanames):
+                f.write(&#39;\n\nTaxa {}: {}\n&#39;.format(
+                    aidx, pl.taxaname_formatter(taxa_formatter, 
+                    taxa=aname, taxas=taxas)))
+                f.write(&#39;-------------------\n&#39;)
+
+                # Write what the data is
+                f.write(&#39;Data: &#39;)
+                row = M_subj[aidx, :]
+                for ele in row:
+                    f.write(&#39;{:.4E}  &#39;.format(ele))
+                f.write(&#39;\n&#39;)
+
+                f.write(&#39;Learned Values:\n&#39;)
+                for k,v in summ.items():
+                    f.write(&#39;\t{}: {:.4E}\n&#39;.format(k,v[aidx]))
+
+                # plot the variable
+                axpost, axtrace = visualization.render_trace(latent_trace[:,aidx], plt_type=&#39;both&#39;, 
+                    rasterized=True, log_scale=True)
+                for idx in range(M_subj.shape[1]):
+                    if idx == 0:
+                        label = &#39;data&#39;
+                    else:
+                        label = None
+                    axpost.axvline(x=M_subj[aidx, idx], color=&#39;green&#39;, label=label)
+                    axtrace.axhline(y=M_subj[aidx, idx], color=&#39;green&#39;, label=label)
+
+                fig = plt.gcf()
+                fig.suptitle(pl.taxaname_formatter(format=taxa_formatter,
+                    taxa=aname, taxas=taxas))
+                plotpath = os.path.join(subj_basepath, &#39;{}.pdf&#39;.format(aname))
+                plt.savefig(plotpath)
+                plt.close()
+            f.close()</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.graph.Node.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Node.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.negbin.NegBinDispersionParam"><code class="flex name class">
+<span>class <span class="ident">NegBinDispersionParam</span></span>
+<span>(</span><span>name, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>These are for learning the a0 and a1 parameters - updated with
+Metropolis-Hastings</p>
+<p>We assume these are uniform and have a uniform prior [1]</p>
+<p>Proposal distribution is a truncated normal distribution with truncation
+set to the same high and lows as the prior.</p>
+<h2 id="references">References</h2>
+<p>[1] Bucci, Vanni, et al. "MDSINE: Microbial Dynamical Systems INference
+Engine for microbiome time-series analyses." Genome biology 17.1 (2016): 121.</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class NegBinDispersionParam(pl.variables.Uniform):
+    &#39;&#39;&#39;These are for learning the a0 and a1 parameters - updated with 
+    Metropolis-Hastings
+
+    We assume these are uniform and have a uniform prior [1]
+
+    Proposal distribution is a truncated normal distribution with truncation
+    set to the same high and lows as the prior.
+
+    References
+    ----------
+    [1] Bucci, Vanni, et al. &#34;MDSINE: Microbial Dynamical Systems INference 
+        Engine for microbiome time-series analyses.&#34; Genome biology 17.1 (2016): 121.
+    &#39;&#39;&#39;
+
+    def __init__(self, name, **kwargs):
+        pl.variables.Uniform.__init__(
+            self, dtype=float, name=name, **kwargs)
+
+    def __str__(self):
+        try:
+            s = &#39;Value: {}, Acceptance rate: {}&#39;.format(
+                self.value, np.mean(self.acceptances[
+                    np.max([self.sample_iter-50, 0]):self.sample_iter]))
+        except:
+            s = str(self.value)
+        return s
+
+    def initialize(self, value, truncation_settings, proposal_option,
+        target_acceptance_rate, tune, end_tune, proposal_var=None, delay=0):
+        &#39;&#39;&#39;Initialize the negative binomial dispersion parameter
+
+        Parameters
+        ----------
+        value : numeric
+            This is the initial value
+        truncation_settings: str, tuple
+            How to set the truncation parameters. The proposal trucation will
+            be set the same way.
+                tuple - (low,high)
+                    These are the truncation parameters
+                &#39;auto&#39;
+                    (0, 1e5)
+        proposal_option : str
+            How to initialize the proposal variance:
+                &#39;auto&#39;
+                    initial_value**2 / 100
+                &#39;manual&#39;
+                    `proposal_var` must also be supplied
+        target_acceptance_rate : str, float
+            If float, this is the target acceptance rate
+            If str: 
+                &#39;optimal&#39;, &#39;auto&#39;: 0.44
+        tune : str, int
+            How often to tune the proposal. If str:
+                &#39;auto&#39;: 50
+        end_tune : str, int
+            When to stop tuning the proposal. If str:
+                &#39;auto&#39;, &#39;half-burnin&#39;: Half of burnin
+        &#39;&#39;&#39;
+        if not pl.isint(delay):
+            raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+        if delay &lt; 0:
+            raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+        self.delay = delay
+
+        # Set the propsal parameters
+        if pl.isstr(target_acceptance_rate):
+            if target_acceptance_rate in [&#39;optimal&#39;, &#39;auto&#39;]:
+                target_acceptance_rate = 0.44
+            else:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) not recognized&#39;.format(
+                    target_acceptance_rate))
+        elif pl.isfloat(target_acceptance_rate):
+            if target_acceptance_rate &lt; 0 or target_acceptance_rate &gt; 1:
+                raise ValueError(&#39;`target_acceptance_rate` ({}) out of range&#39;.format(
+                    target_acceptance_rate))
+        else:
+            raise TypeError(&#39;`target_acceptance_rate` ({}) type not recognized&#39;.format(
+                type(target_acceptance_rate)))
+        self.target_acceptance_rate = target_acceptance_rate
+
+        if pl.isstr(tune):
+            if tune in [&#39;auto&#39;]:
+                tune = 50
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(tune))
+        elif pl.isint(tune):
+            if tune &lt; 0:
+                raise ValueError(&#39;`tune` ({}) must be &gt; 0&#39;.format(
+                    tune))
+        else:
+            raise TypeError(&#39;`tune` ({}) type not recognized&#39;.format(type(tune)))
+        self.tune = tune
+
+        if pl.isstr(end_tune):
+            if end_tune in [&#39;auto&#39;, &#39;half-burnin&#39;]:
+                end_tune = int(self.G.inference.burnin/2)
+            else:
+                raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(end_tune))
+        elif pl.isint(end_tune):
+            if end_tune &lt; 0 or end_tune &gt; self.G.inference.burnin:
+                raise ValueError(&#39;`end_tune` ({}) out of range (0, {})&#39;.format(
+                    end_tune, self.G.inference.burnin))
+        else:
+            raise TypeError(&#39;`end_tune` ({}) type not recognized&#39;.format(type(end_tune)))
+        self.end_tune = end_tune
+
+        # Set the truncation settings
+        if pl.isstr(truncation_settings):
+            if truncation_settings == &#39;auto&#39;:
+                self.low = 0.
+                self.high = 1e5
+            else:
+                raise ValueError(&#39;`truncation_settings` ({}) not recognized&#39;.format(
+                    truncation_settings))
+        elif pl.istuple(truncation_settings):
+            if len(truncation_settings) != 2:
+                raise ValueError(&#39;If `truncation_settings` is a tuple, it must have a &#39; \
+                    &#39;length of 2 ({})&#39;.format(len(truncation_settings)))
+            l,h = truncation_settings
+
+            if (not pl.isnumeric(l)) or (not pl.isnumeric(h)):
+                raise TypeError(&#39;`low` ({}) and `high` ({}) must be numerics&#39;.format(
+                    type(l), type(h)))
+            if l &lt; 0 or h &lt; 0:
+                raise ValueError(&#39;`low` ({}) and `high` ({}) must be &gt;= 0&#39;.format(l,h))
+            if h &lt;= l:
+                raise ValueError(&#39;`low` ({}) must be strictly less than high ({})&#39;.format(l,h))
+            self.high.value = h
+            self.low.value = l
+        else:
+            raise TypeError(&#39;`truncation_settings` ({}) type not recognized&#39;)
+
+        # Set the value
+        if not pl.isnumeric(value):
+            raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(value)))
+        if value &lt;= self.low or value &gt;= self.high:
+            raise ValueError(&#39;`value` ({}) out of range ({})&#39;.format(
+                value, (self.low, self.high)))
+        self.value = value
+
+        # Set the proposal variance
+        if not pl.isstr(proposal_option):
+            raise TypeError(&#39;`proposal_option` ({}) must be a str&#39;.format(
+                type(proposal_option)))
+        elif proposal_option == &#39;manual&#39;:
+            if not pl.isnumeric(proposal_var):
+                raise TypeError(&#39;`proposal_var` ({}) must be a numeric&#39;.format(
+                    type(proposal_var)))
+            if proposal_var &lt;= 0:
+                raise ValueError(&#39;`proposal_var` ({}) not proper&#39;.format(proposal_var))
+        elif proposal_option in [&#39;auto&#39;]:
+            proposal_var = (self.value ** 2)/100
+        else:
+            raise ValueError(&#39;`proposal_option` ({}) not recognized&#39;.format(
+                proposal_option))
+        self.proposal_var = proposal_var
+
+    def _update_proposal_variance(self):
+        &#39;&#39;&#39;Update the proposal variance
+        &#39;&#39;&#39;
+        if self.sample_iter == 0:
+            self.temp_acceptances = 0
+            self.acceptances = np.zeros(self.G.inference.n_samples, dtype=bool)
+        
+        elif self.sample_iter &gt; self.end_tune:
+            # Don&#39;t do any more updates
+            return
+        
+        elif self.sample_iter % self.tune == 0:
+            # Update var
+            acceptance_rate = self.temp_acceptances / self.tune
+            if acceptance_rate &gt; self.target_acceptance_rate:
+                self.proposal_var *= 1.5
+            else:
+                self.proposal_var /= 1.5
+            self.temp_acceptances = 0
+
+    def update(self):
+        &#39;&#39;&#39;Do a metropolis update
+        &#39;&#39;&#39;
+        # Update proposal variance if necessary
+        if self.sample_iter &lt; self.delay:
+            return
+        self._update_proposal_variance()
+        proposal_std = np.sqrt(self.proposal_var)
+
+        # Get the current likelihood
+        old_loglik = self.data_likelihood()
+        prev_value = self.value
+
+        # Propose a new value and get the likelihood
+        self.value = pl.random.truncnormal.sample(
+            mean=self.value, std=proposal_std,
+            low=self.low, high=self.high)
+        new_loglik = self.data_likelihood()
+
+        # reverse jump probabilities
+        jump_to_new = pl.random.truncnormal.logpdf(value=self.value, 
+            mean=prev_value, std=proposal_std, 
+            low=self.low, high=self.high)
+        jump_to_old = pl.random.truncnormal.logpdf(value=prev_value, 
+            mean=self.value, std=proposal_std, 
+            low=self.low, high=self.high)
+        
+
+        r = (new_loglik + jump_to_old) - (old_loglik + jump_to_new)
+        u = np.log(pl.random.misc.fast_sample_standard_uniform())
+        if r &gt; u:
+            self.acceptances[self.sample_iter] = True
+            self.temp_acceptances += 1
+        else:
+            self.value = prev_value
+
+    def data_likelihood(self):
+        &#39;&#39;&#39;Calculate the current log likelihood
+        &#39;&#39;&#39;
+        a0 = self.G[STRNAMES.NEGBIN_A0].value
+        a1 = self.G[STRNAMES.NEGBIN_A1].value
+        latents = [v.value for v in self.G[STRNAMES.FILTERING].value]
+        datas = [v.data for v in self.G[STRNAMES.FILTERING].value]
+        read_depths = [v.read_depths for v in self.G[STRNAMES.FILTERING].value]
+        
+        cumm = 0
+        for ridx in range(len(latents)):
+            data=datas[ridx]
+            latent = latents[ridx]
+            read_depth = read_depths[ridx]
+            total_abund = np.sum(latent)
+            rel_abund = latent / total_abund
+
+            cumm += NegBinDispersionParam._data_likelihood(a0=a0, a1=a1, latent=latent, 
+                data=data, read_depth=read_depth, rel_abund=rel_abund)
+        return cumm
+    
+    @staticmethod
+    @numba.jit(nopython=True)
+    def _data_likelihood(a0, a1, latent, data, read_depth, rel_abund):
+        cumm = 0
+
+        # For each taxa
+        for oidx in range(data.shape[0]):
+            # For each replicate
+            for k in range(data.shape[1]):
+                y = data[oidx, k]
+                mean = read_depth[k] * rel_abund[oidx]
+                dispersion = a0/rel_abund[k] + a1
+
+                # This is the negative binomial loglikelihood
+                r = 1/dispersion
+                # try:
+                cumm += math.lgamma(y+r) - math.lgamma(y+1) - math.lgamma(r) \
+                    + r * (math.log(r) - math.log(r+mean)) + y * (math.log(mean) - math.log(r+mean))
+
+                #     raise
+        return cumm
+
+    def visualize(self, path, f, section=&#39;posterior&#39;):
+        &#39;&#39;&#39;Visualize the posterior of the negative binomial dispersion parameter
+
+        Parameters
+        ----------
+        path : str
+            This is the path to save the posterior trace plots
+        f : _io.TextIOWrapper
+            File that we are writing the values to
+        section : str
+            Section of the trace to compute on. Options:
+                &#39;posterior&#39; : posterior samples
+                &#39;burnin&#39; : burn-in samples
+                &#39;entire&#39; : both burn-in and posterior samples
+
+        Returns
+        -------
+        _io.TextIOWrapper
+        &#39;&#39;&#39;
+        f.write(&#39;\n\n###################################\n{}&#39;.format(self.name))
+        f.write(&#39;\n###################################\n&#39;)
+        if not self.G.inference.tracer.is_being_traced(self):
+            f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
+            return f
+        
+        summ = pl.summary(self, section=section)
+        for k,v in summ.items():
+            f.write(&#39;\t{}: {}\n&#39;.format(k,v))
+
+        axleft, axright = visualization.render_trace(self, plt_type=&#39;both&#39;, 
+            include_burnin=True, rasterized=True, log_scale=self.name==STRNAMES.NEGBIN_A0)
+
+        # Plot the acceptance rate on the right hand side
+        ax2 = axright.twinx()
+        ax2 = visualization.render_acceptance_rate_trace(self, ax=ax2, 
+            label=&#39;Acceptance Rate&#39;, color=&#39;red&#39;, scatter=False, rasterized=True)
+
+        ax2.legend()
+        fig = plt.gcf()
+        fig.suptitle(self.name)
+        fig.tight_layout()
+        plt.savefig(path)
+        plt.close()
+        return f</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.variables.Uniform" href="pylab/variables.html#mdsine2.pylab.variables.Uniform">Uniform</a></li>
+<li><a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a></li>
+<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
+<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+<li>mdsine2.pylab.variables._BaseArithmeticClass</li>
+<li><a title="mdsine2.pylab.base.Traceable" href="pylab/base.html#mdsine2.pylab.base.Traceable">Traceable</a></li>
+<li>mdsine2.pylab.variables._RandomBase</li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.negbin.NegBinDispersionParam.data_likelihood"><code class="name flex">
+<span>def <span class="ident">data_likelihood</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate the current log likelihood</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def data_likelihood(self):
+    &#39;&#39;&#39;Calculate the current log likelihood
+    &#39;&#39;&#39;
+    a0 = self.G[STRNAMES.NEGBIN_A0].value
+    a1 = self.G[STRNAMES.NEGBIN_A1].value
+    latents = [v.value for v in self.G[STRNAMES.FILTERING].value]
+    datas = [v.data for v in self.G[STRNAMES.FILTERING].value]
+    read_depths = [v.read_depths for v in self.G[STRNAMES.FILTERING].value]
+    
+    cumm = 0
+    for ridx in range(len(latents)):
+        data=datas[ridx]
+        latent = latents[ridx]
+        read_depth = read_depths[ridx]
+        total_abund = np.sum(latent)
+        rel_abund = latent / total_abund
+
+        cumm += NegBinDispersionParam._data_likelihood(a0=a0, a1=a1, latent=latent, 
+            data=data, read_depth=read_depth, rel_abund=rel_abund)
+    return cumm</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.negbin.NegBinDispersionParam.initialize"><code class="name flex">
+<span>def <span class="ident">initialize</span></span>(<span>self, value, truncation_settings, proposal_option, target_acceptance_rate, tune, end_tune, proposal_var=None, delay=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialize the negative binomial dispersion parameter</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>numeric</code></dt>
+<dd>This is the initial value</dd>
+<dt><strong><code>truncation_settings</code></strong> :&ensp;<code>str, tuple</code></dt>
+<dd>How to set the truncation parameters. The proposal trucation will
+be set the same way.
+tuple - (low,high)
+These are the truncation parameters
+'auto'
+(0, 1e5)</dd>
+<dt><strong><code>proposal_option</code></strong> :&ensp;<code>str</code></dt>
+<dd>How to initialize the proposal variance:
+'auto'
+initial_value**2 / 100
+'manual'
+<code>proposal_var</code> must also be supplied</dd>
+<dt><strong><code>target_acceptance_rate</code></strong> :&ensp;<code>str, float</code></dt>
+<dd>If float, this is the target acceptance rate
+If str:
+'optimal', 'auto': 0.44</dd>
+<dt><strong><code>tune</code></strong> :&ensp;<code>str, int</code></dt>
+<dd>How often to tune the proposal. If str:
+'auto': 50</dd>
+<dt><strong><code>end_tune</code></strong> :&ensp;<code>str, int</code></dt>
+<dd>When to stop tuning the proposal. If str:
+'auto', 'half-burnin': Half of burnin</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def initialize(self, value, truncation_settings, proposal_option,
+    target_acceptance_rate, tune, end_tune, proposal_var=None, delay=0):
+    &#39;&#39;&#39;Initialize the negative binomial dispersion parameter
+
+    Parameters
+    ----------
+    value : numeric
+        This is the initial value
+    truncation_settings: str, tuple
+        How to set the truncation parameters. The proposal trucation will
+        be set the same way.
+            tuple - (low,high)
+                These are the truncation parameters
+            &#39;auto&#39;
+                (0, 1e5)
+    proposal_option : str
+        How to initialize the proposal variance:
+            &#39;auto&#39;
+                initial_value**2 / 100
+            &#39;manual&#39;
+                `proposal_var` must also be supplied
+    target_acceptance_rate : str, float
+        If float, this is the target acceptance rate
+        If str: 
+            &#39;optimal&#39;, &#39;auto&#39;: 0.44
+    tune : str, int
+        How often to tune the proposal. If str:
+            &#39;auto&#39;: 50
+    end_tune : str, int
+        When to stop tuning the proposal. If str:
+            &#39;auto&#39;, &#39;half-burnin&#39;: Half of burnin
+    &#39;&#39;&#39;
+    if not pl.isint(delay):
+        raise TypeError(&#39;`delay` ({}) must be an int&#39;.format(type(delay)))
+    if delay &lt; 0:
+        raise ValueError(&#39;`delay` ({}) must be &gt;= 0&#39;.format(delay))
+    self.delay = delay
+
+    # Set the propsal parameters
+    if pl.isstr(target_acceptance_rate):
+        if target_acceptance_rate in [&#39;optimal&#39;, &#39;auto&#39;]:
+            target_acceptance_rate = 0.44
+        else:
+            raise ValueError(&#39;`target_acceptance_rate` ({}) not recognized&#39;.format(
+                target_acceptance_rate))
+    elif pl.isfloat(target_acceptance_rate):
+        if target_acceptance_rate &lt; 0 or target_acceptance_rate &gt; 1:
+            raise ValueError(&#39;`target_acceptance_rate` ({}) out of range&#39;.format(
+                target_acceptance_rate))
+    else:
+        raise TypeError(&#39;`target_acceptance_rate` ({}) type not recognized&#39;.format(
+            type(target_acceptance_rate)))
+    self.target_acceptance_rate = target_acceptance_rate
+
+    if pl.isstr(tune):
+        if tune in [&#39;auto&#39;]:
+            tune = 50
+        else:
+            raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(tune))
+    elif pl.isint(tune):
+        if tune &lt; 0:
+            raise ValueError(&#39;`tune` ({}) must be &gt; 0&#39;.format(
+                tune))
+    else:
+        raise TypeError(&#39;`tune` ({}) type not recognized&#39;.format(type(tune)))
+    self.tune = tune
+
+    if pl.isstr(end_tune):
+        if end_tune in [&#39;auto&#39;, &#39;half-burnin&#39;]:
+            end_tune = int(self.G.inference.burnin/2)
+        else:
+            raise ValueError(&#39;`tune` ({}) not recognized&#39;.format(end_tune))
+    elif pl.isint(end_tune):
+        if end_tune &lt; 0 or end_tune &gt; self.G.inference.burnin:
+            raise ValueError(&#39;`end_tune` ({}) out of range (0, {})&#39;.format(
+                end_tune, self.G.inference.burnin))
+    else:
+        raise TypeError(&#39;`end_tune` ({}) type not recognized&#39;.format(type(end_tune)))
+    self.end_tune = end_tune
+
+    # Set the truncation settings
+    if pl.isstr(truncation_settings):
+        if truncation_settings == &#39;auto&#39;:
+            self.low = 0.
+            self.high = 1e5
+        else:
+            raise ValueError(&#39;`truncation_settings` ({}) not recognized&#39;.format(
+                truncation_settings))
+    elif pl.istuple(truncation_settings):
+        if len(truncation_settings) != 2:
+            raise ValueError(&#39;If `truncation_settings` is a tuple, it must have a &#39; \
+                &#39;length of 2 ({})&#39;.format(len(truncation_settings)))
+        l,h = truncation_settings
+
+        if (not pl.isnumeric(l)) or (not pl.isnumeric(h)):
+            raise TypeError(&#39;`low` ({}) and `high` ({}) must be numerics&#39;.format(
+                type(l), type(h)))
+        if l &lt; 0 or h &lt; 0:
+            raise ValueError(&#39;`low` ({}) and `high` ({}) must be &gt;= 0&#39;.format(l,h))
+        if h &lt;= l:
+            raise ValueError(&#39;`low` ({}) must be strictly less than high ({})&#39;.format(l,h))
+        self.high.value = h
+        self.low.value = l
+    else:
+        raise TypeError(&#39;`truncation_settings` ({}) type not recognized&#39;)
+
+    # Set the value
+    if not pl.isnumeric(value):
+        raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(value)))
+    if value &lt;= self.low or value &gt;= self.high:
+        raise ValueError(&#39;`value` ({}) out of range ({})&#39;.format(
+            value, (self.low, self.high)))
+    self.value = value
+
+    # Set the proposal variance
+    if not pl.isstr(proposal_option):
+        raise TypeError(&#39;`proposal_option` ({}) must be a str&#39;.format(
+            type(proposal_option)))
+    elif proposal_option == &#39;manual&#39;:
+        if not pl.isnumeric(proposal_var):
+            raise TypeError(&#39;`proposal_var` ({}) must be a numeric&#39;.format(
+                type(proposal_var)))
+        if proposal_var &lt;= 0:
+            raise ValueError(&#39;`proposal_var` ({}) not proper&#39;.format(proposal_var))
+    elif proposal_option in [&#39;auto&#39;]:
+        proposal_var = (self.value ** 2)/100
+    else:
+        raise ValueError(&#39;`proposal_option` ({}) not recognized&#39;.format(
+            proposal_option))
+    self.proposal_var = proposal_var</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.negbin.NegBinDispersionParam.update"><code class="name flex">
+<span>def <span class="ident">update</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Do a metropolis update</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def update(self):
+    &#39;&#39;&#39;Do a metropolis update
+    &#39;&#39;&#39;
+    # Update proposal variance if necessary
+    if self.sample_iter &lt; self.delay:
+        return
+    self._update_proposal_variance()
+    proposal_std = np.sqrt(self.proposal_var)
+
+    # Get the current likelihood
+    old_loglik = self.data_likelihood()
+    prev_value = self.value
+
+    # Propose a new value and get the likelihood
+    self.value = pl.random.truncnormal.sample(
+        mean=self.value, std=proposal_std,
+        low=self.low, high=self.high)
+    new_loglik = self.data_likelihood()
+
+    # reverse jump probabilities
+    jump_to_new = pl.random.truncnormal.logpdf(value=self.value, 
+        mean=prev_value, std=proposal_std, 
+        low=self.low, high=self.high)
+    jump_to_old = pl.random.truncnormal.logpdf(value=prev_value, 
+        mean=self.value, std=proposal_std, 
+        low=self.low, high=self.high)
+    
+
+    r = (new_loglik + jump_to_old) - (old_loglik + jump_to_new)
+    u = np.log(pl.random.misc.fast_sample_standard_uniform())
+    if r &gt; u:
+        self.acceptances[self.sample_iter] = True
+        self.temp_acceptances += 1
+    else:
+        self.value = prev_value</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.negbin.NegBinDispersionParam.visualize"><code class="name flex">
+<span>def <span class="ident">visualize</span></span>(<span>self, path, f, section='posterior')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Visualize the posterior of the negative binomial dispersion parameter</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>path</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the path to save the posterior trace plots</dd>
+<dt><strong><code>f</code></strong> :&ensp;<code>_io.TextIOWrapper</code></dt>
+<dd>File that we are writing the values to</dd>
+<dt><strong><code>section</code></strong> :&ensp;<code>str</code></dt>
+<dd>Section of the trace to compute on. Options:
+'posterior' : posterior samples
+'burnin' : burn-in samples
+'entire' : both burn-in and posterior samples</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>_io.TextIOWrapper</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def visualize(self, path, f, section=&#39;posterior&#39;):
+    &#39;&#39;&#39;Visualize the posterior of the negative binomial dispersion parameter
+
+    Parameters
+    ----------
+    path : str
+        This is the path to save the posterior trace plots
+    f : _io.TextIOWrapper
+        File that we are writing the values to
+    section : str
+        Section of the trace to compute on. Options:
+            &#39;posterior&#39; : posterior samples
+            &#39;burnin&#39; : burn-in samples
+            &#39;entire&#39; : both burn-in and posterior samples
+
+    Returns
+    -------
+    _io.TextIOWrapper
+    &#39;&#39;&#39;
+    f.write(&#39;\n\n###################################\n{}&#39;.format(self.name))
+    f.write(&#39;\n###################################\n&#39;)
+    if not self.G.inference.tracer.is_being_traced(self):
+        f.write(&#39;`{}` not learned\n\tValue: {}\n&#39;.format(self.name, self.value))
+        return f
+    
+    summ = pl.summary(self, section=section)
+    for k,v in summ.items():
+        f.write(&#39;\t{}: {}\n&#39;.format(k,v))
+
+    axleft, axright = visualization.render_trace(self, plt_type=&#39;both&#39;, 
+        include_burnin=True, rasterized=True, log_scale=self.name==STRNAMES.NEGBIN_A0)
+
+    # Plot the acceptance rate on the right hand side
+    ax2 = axright.twinx()
+    ax2 = visualization.render_acceptance_rate_trace(self, ax=ax2, 
+        label=&#39;Acceptance Rate&#39;, color=&#39;red&#39;, scatter=False, rasterized=True)
+
+    ax2.legend()
+    fig = plt.gcf()
+    fig.suptitle(self.name)
+    fig.tight_layout()
+    plt.savefig(path)
+    plt.close()
+    return f</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.variables.Uniform" href="pylab/variables.html#mdsine2.pylab.variables.Uniform">Uniform</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.variables.Uniform.T" href="pylab/variables.html#mdsine2.pylab.variables.Variable.T">T</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.add_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.cdf" href="pylab/variables.html#mdsine2.pylab.variables.Uniform.cdf">cdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.get_iter" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_iter">get_iter</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.get_trace_from_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_trace_from_disk">get_trace_from_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.logcdf" href="pylab/variables.html#mdsine2.pylab.variables.Uniform.logcdf">logcdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.logpdf" href="pylab/variables.html#mdsine2.pylab.variables.Uniform.logpdf">logpdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.overwrite_entire_trace_on_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.pdf" href="pylab/variables.html#mdsine2.pylab.variables.Uniform.pdf">pdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.remove_local_trace" href="pylab/variables.html#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.sample" href="pylab/variables.html#mdsine2.pylab.variables.Uniform.sample">sample</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.set_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Uniform.set_value_shape" href="pylab/variables.html#mdsine2.pylab.variables.Variable.set_value_shape">set_value_shape</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.negbin.TrajectorySet"><code class="flex name class">
+<span>class <span class="ident">TrajectorySet</span></span>
+<span>(</span><span>ridx, subjname, **kwargs)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This aggregates a set of trajectories from each Replicate</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TrajectorySet(pl.variables.Variable):
+    &#39;&#39;&#39;This aggregates a set of trajectories from each Replicate
+    &#39;&#39;&#39;
+    def __init__(self, ridx, subjname, **kwargs):
+        kwargs[&#39;name&#39;] = STRNAMES.LATENT_TRAJECTORY + &#39;_{}&#39;.format(subjname)
+        pl.variables.Variable.__init__(self, **kwargs)
+        n_taxas = len(self.G.data.taxas)
+        self.set_value_shape(shape=(n_taxas,))
+        self.ridx = ridx
+        self.value = np.zeros(n_taxas, dtype=float)
+        self.data = self.G.data.data[self.ridx]
+        self.read_depths = self.G.data.read_depths[self.ridx]
+        self.qpcr_measurement = self.G.data.qpcr[self.ridx]
+    
+        prior = pl.variables.Normal(
+            mean=pl.variables.Constant(name=self.name+&#39;_prior_mean&#39;, value=None, G=self.G),
+            var=pl.variables.Constant(name=self.name+&#39;_prior_var&#39;, value=None, G=self.G),
+            name=self.name+&#39;_prior&#39;, G=self.G)
+        self.add_prior(prior)
+
+    def __getitem__(self, ridx):
+        return self.value[ridx]
+
+    def initialize(self):
+        &#39;&#39;&#39;Initialize the value
+        &#39;&#39;&#39;
+        # Get the mean relative abundance
+        rel = np.sum(self.data, axis=1)
+        rel = rel / np.sum(rel)
+        value = rel * self.qpcr_measurement.mean()
+
+        self.value = np.zeros(len(value))
+        for i in range(len(value)):
+            self.value[i] = pl.random.truncnormal.sample(mean=value[i], std=1e-2, 
+                low=0, high=float(&#39;inf&#39;))
+
+        self.prior.mean.override_value(self.value)
+        self.prior.var.override_value(100 * np.var(self.value))</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a></li>
+<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
+<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
+<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
+<li>mdsine2.pylab.variables._BaseArithmeticClass</li>
+<li><a title="mdsine2.pylab.base.Traceable" href="pylab/base.html#mdsine2.pylab.base.Traceable">Traceable</a></li>
+</ul>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.negbin.TrajectorySet.initialize"><code class="name flex">
+<span>def <span class="ident">initialize</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Initialize the value</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def initialize(self):
+    &#39;&#39;&#39;Initialize the value
+    &#39;&#39;&#39;
+    # Get the mean relative abundance
+    rel = np.sum(self.data, axis=1)
+    rel = rel / np.sum(rel)
+    value = rel * self.qpcr_measurement.mean()
+
+    self.value = np.zeros(len(value))
+    for i in range(len(value)):
+        self.value[i] = pl.random.truncnormal.sample(mean=value[i], std=1e-2, 
+            low=0, high=float(&#39;inf&#39;))
+
+    self.prior.mean.override_value(self.value)
+    self.prior.var.override_value(100 * np.var(self.value))</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.variables.Variable.T" href="pylab/variables.html#mdsine2.pylab.variables.Variable.T">T</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.get_iter" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_iter">get_iter</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.get_trace_from_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.get_trace_from_disk">get_trace_from_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="pylab/base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="pylab/variables.html#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="pylab/base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.set_value_shape" href="pylab/variables.html#mdsine2.pylab.variables.Variable.set_value_shape">set_value_shape</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="mdsine2" href="index.html">mdsine2</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="mdsine2.negbin.build_graph" href="#mdsine2.negbin.build_graph">build_graph</a></code></li>
+<li><code><a title="mdsine2.negbin.negbin_loglikelihood" href="#mdsine2.negbin.negbin_loglikelihood">negbin_loglikelihood</a></code></li>
+<li><code><a title="mdsine2.negbin.run_graph" href="#mdsine2.negbin.run_graph">run_graph</a></code></li>
+<li><code><a title="mdsine2.negbin.visualize_learned_negative_binomial_model" href="#mdsine2.negbin.visualize_learned_negative_binomial_model">visualize_learned_negative_binomial_model</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="mdsine2.negbin.Data" href="#mdsine2.negbin.Data">Data</a></code></h4>
+</li>
+<li>
+<h4><code><a title="mdsine2.negbin.FilteringMP" href="#mdsine2.negbin.FilteringMP">FilteringMP</a></code></h4>
+<ul class="two-column">
+<li><code><a title="mdsine2.negbin.FilteringMP.add_trace" href="#mdsine2.negbin.FilteringMP.add_trace">add_trace</a></code></li>
+<li><code><a title="mdsine2.negbin.FilteringMP.initialize" href="#mdsine2.negbin.FilteringMP.initialize">initialize</a></code></li>
+<li><code><a title="mdsine2.negbin.FilteringMP.kill" href="#mdsine2.negbin.FilteringMP.kill">kill</a></code></li>
+<li><code><a title="mdsine2.negbin.FilteringMP.sample_iter" href="#mdsine2.negbin.FilteringMP.sample_iter">sample_iter</a></code></li>
+<li><code><a title="mdsine2.negbin.FilteringMP.set_trace" href="#mdsine2.negbin.FilteringMP.set_trace">set_trace</a></code></li>
+<li><code><a title="mdsine2.negbin.FilteringMP.update" href="#mdsine2.negbin.FilteringMP.update">update</a></code></li>
+<li><code><a title="mdsine2.negbin.FilteringMP.visualize" href="#mdsine2.negbin.FilteringMP.visualize">visualize</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="mdsine2.negbin.NegBinDispersionParam" href="#mdsine2.negbin.NegBinDispersionParam">NegBinDispersionParam</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.negbin.NegBinDispersionParam.data_likelihood" href="#mdsine2.negbin.NegBinDispersionParam.data_likelihood">data_likelihood</a></code></li>
+<li><code><a title="mdsine2.negbin.NegBinDispersionParam.initialize" href="#mdsine2.negbin.NegBinDispersionParam.initialize">initialize</a></code></li>
+<li><code><a title="mdsine2.negbin.NegBinDispersionParam.update" href="#mdsine2.negbin.NegBinDispersionParam.update">update</a></code></li>
+<li><code><a title="mdsine2.negbin.NegBinDispersionParam.visualize" href="#mdsine2.negbin.NegBinDispersionParam.visualize">visualize</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="mdsine2.negbin.TrajectorySet" href="#mdsine2.negbin.TrajectorySet">TrajectorySet</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.negbin.TrajectorySet.initialize" href="#mdsine2.negbin.TrajectorySet.initialize">initialize</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.1</a>.</p>
+</footer>
+</body>
+</html>

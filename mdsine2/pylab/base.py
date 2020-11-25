@@ -71,20 +71,20 @@ def isqpcrdata(x):
     '''
     return x is not None and issubclass(x.__class__, qPCRdata)
 
-def isasvset(x):
-    '''Checks whether the input is a subclass of ASVSet
+def istaxaset(x):
+    '''Checks whether the input is a subclass of TaxaSet
 
     Parameters
     ----------
     x : any
-        Input instance to check the type of ASVSet
+        Input instance to check the type of TaxaSet
     
     Returns
     -------
     bool
-        True if `x` is of type ASVSet, else False
+        True if `x` is of type TaxaSet, else False
     '''
-    return x is not None and issubclass(x.__class__, ASVSet)
+    return x is not None and issubclass(x.__class__, TaxaSet)
 
 def issavable(x):
     '''Checks whether the input is a subclass of Savable
@@ -131,50 +131,50 @@ def istraceable(x):
     '''
     return x is not None and issubclass(x.__class__, Traceable)
 
-def isasv(x):
-    '''Checks whether the input is a subclass of ASV
+def istaxa(x):
+    '''Checks whether the input is a subclass of Taxa
 
     Parameters
     ----------
     x : any
-        Input instance to check the type of ASV
+        Input instance to check the type of Taxa
     
     Returns
     -------
     bool
-        True if `x` is of type ASV, else False
+        True if `x` is of type Taxa, else False
     '''
-    return x is not None and issubclass(x.__class__, ASV)
+    return x is not None and issubclass(x.__class__, Taxa)
 
-def isaggregatedasv(x):
-    '''Checks whether the input is a subclass of AggregateASV
+def isotu(x):
+    '''Checks whether the input is a subclass of OTU
 
     Parameters
     ----------
     x : any
-        Input instance to check the type of ASV
+        Input instance to check the type of Taxa
     
     Returns
     -------
     bool
-        True if `x` is of type ASV, else False
+        True if `x` is of type Taxa, else False
     '''
-    return issubclass(x.__class__, AggregateASV)
+    return issubclass(x.__class__, OTU)
 
-def isasvtype(x):
-    '''Checks whether the input is a subclass of AggregateASV or ASV
+def istaxatype(x):
+    '''Checks whether the input is a subclass of OTU or Taxa
 
     Parameters
     ----------
     x : any
-        Input instance to check the type of AggregateASV or ASV
+        Input instance to check the type of OTU or Taxa
     
     Returns
     -------
     bool
-        True if `x` is of type AggregateASV or ASV, else False
+        True if `x` is of type OTU or Taxa, else False
     '''
-    return isasv(x) or isaggregatedasv(x)
+    return istaxa(x) or isotu(x)
 
 def issubject(x):
     '''Checks whether the input is a subclass of Subject
@@ -221,20 +221,20 @@ def isperturbation(x):
     '''
     return x is not None and issubclass(x.__class__, BasePerturbation)
 
-def condense_matrix_with_taxonomy(M, asvs, fmt):
+def condense_matrix_with_taxonomy(M, taxas, fmt):
     '''Condense the specified matrix M thats on the asv level
     to a taxonomic label specified with `fmt`. If `M` 
-    is a pandas.DataFrame then we assume the index are the ASV
+    is a pandas.DataFrame then we assume the index are the Taxa
     names. If `M` is a numpy.ndarray, then we assume that the 
-    order of the matrix mirrors the order of the asvs. `fmt` is
-    passed through `pylab.util.plutil.asvname_formatter` to get the label.
+    order of the matrix mirrors the order of the taxas. `fmt` is
+    passed through `pylab.util.plutil.taxaname_formatter` to get the label.
 
     Parameters
     ----------
     M : numpy.ndarray, pandas.DataFrame
         Matrix to condense
-    asvs : pylab.base.ASVSet
-        Set of ASVs with the relevant taxonomic information
+    taxas : pylab.base.TaxaSet
+        Set of Taxas with the relevant taxonomic information
     taxlevel : str
         This is the taxonomic level to condense to
 
@@ -246,29 +246,29 @@ def condense_matrix_with_taxonomy(M, asvs, fmt):
         numpy.ndarray, then the order of the columsn correspond and no names
         are sent.
     '''
-    if not isasvset(asvs):
-        raise TypeError('`asvs` ({}) must be a pylab.base.ASVSet'.format(type(asvs)))
+    if not istaxaset(taxas):
+        raise TypeError('`taxas` ({}) must be a pylab.base.TaxaSet'.format(type(taxas)))
     if not plutil.isstr(fmt):
         raise TypeError('`fmt` ({}) must be a str'.format(type(fmt)))
 
     if type(M) == pd.DataFrame:
         for idx in M.index:
-            if idx not in asvs:
-                raise ValueError('row `{}` not found in asvs'.format(idx))
+            if idx not in taxas:
+                raise ValueError('row `{}` not found in taxas'.format(idx))
         names = M.index
     elif plutil.isarray(M):
-        if M.shape[0] != len(asvs):
-            raise ValueError('Number of rows in M ({}) not equal to number of asvs ({})'.format(
-                M.shape[0], len(asvs)))
-        names = asvs.names.order
+        if M.shape[0] != len(taxas):
+            raise ValueError('Number of rows in M ({}) not equal to number of taxas ({})'.format(
+                M.shape[0], len(taxas)))
+        names = taxas.names.order
     else:
         raise TypeError('`M` ({}) type not recognized'.format(type(M)))
 
     # Get the rows that correspond to each row
     d = {}
     for row, name in enumerate(names):
-        asv = asvs[name]
-        tax = plutil.asvname_formatter(format=fmt, asv=asv, asvs=asvs)
+        taxa = taxas[name]
+        tax = plutil.taxaname_formatter(format=fmt, taxa=taxa, taxas=taxas)
         if tax not in d:
             d[tax] = []
         d[tax].append(row)
@@ -568,13 +568,13 @@ class ClusterItem:
         return self.name
 
 
-class ASV(ClusterItem):
-    '''Wrapper class for a single ASV
+class Taxa(ClusterItem):
+    '''Wrapper class for a single Taxa
 
     Parameters
     ----------
     name : str
-        Name given to the ASV 
+        Name given to the Taxa
     sequence : str
         Base Pair sequence
     idx : int
@@ -600,14 +600,14 @@ class ASV(ClusterItem):
         return self.taxonomy[key.lower()]
 
     def __eq__(self, val):
-        '''Compares different ASVs between each other. Checks all of the attributes but the id
+        '''Compares different Taxas between each other. Checks all of the attributes but the id
 
         Parameters
         ----------
         val : any
             This is what we are checking if they are equivalent
         '''
-        if type(val) != ASV:
+        if type(val) != Taxa:
             return False
         if self.name != val.name:
             return False
@@ -619,7 +619,7 @@ class ASV(ClusterItem):
         return True
 
     def __str__(self):
-        return 'ASV\n\tid: {}\n\tidx: {}\n\tname: {}\n' \
+        return 'Taxa\n\tid: {}\n\tidx: {}\n\tname: {}\n' \
             '\ttaxonomy:\n\t\tkingdom: {}\n\t\tphylum: {}\n' \
             '\t\tclass: {}\n\t\torder: {}\n\t\tfamily: {}\n' \
             '\t\tgenus: {}\n\t\tspecies: {}'.format(
@@ -713,7 +713,7 @@ class ASV(ClusterItem):
         return self.get_lineage(level=level)[-1]
 
     def tax_is_defined(self, level):
-        '''Whether or not the ASV is defined at the specified taxonomic level
+        '''Whether or not the Taxa is defined at the specified taxonomic level
 
         Parameters
         ----------
@@ -733,28 +733,28 @@ class ASV(ClusterItem):
         return (type(tax) != float) and (tax != DEFAULT_TAXA_NAME) and (tax != '')
 
 
-class AggregateASV(ASV):
-    '''Aggregates of ASV objects
+class OTU(Taxa):
+    '''Aggregates of Taxa objects
 
-    NOTE: For self consistency, let the class ASVSet initialize this object.
+    NOTE: For self consistency, let the class TaxaSet initialize this object.
 
     Parameters
     ----------
-    anchor, other : mdsine2.ASV, mdsine2.AggregateASV
-        These are the ASVs/Aggregates that you're joining together. The anchor is
+    anchor, other : mdsine2.Taxa, mdsine2.OTU
+        These are the Taxas/Aggregates that you're joining together. The anchor is
         the one you are setting the sequeunce and taxonomy to
     '''
     def __init__(self, anchor, other):
         name = anchor.name + '_agg'
-        ASV.__init__(self, name=name, idx=anchor.idx, sequence=anchor.sequence)
+        Taxa.__init__(self, name=name, idx=anchor.idx, sequence=anchor.sequence)
 
         _agg_taxas = {}
 
-        if isaggregatedasv(anchor):
-            if other.name in anchor.aggregated_asvs:
+        if isotu(anchor):
+            if other.name in anchor.aggregated_taxas:
                 raise ValueError('`other` ({}) already aggregated with anchor ' \
-                    '({}) ({})'.format(other.name, anchor.name, anchor.aggregated_asvs))
-            agg1 = anchor.aggregated_asvs
+                    '({}) ({})'.format(other.name, anchor.name, anchor.aggregated_taxas))
+            agg1 = anchor.aggregated_taxas
             agg1_seq = anchor.aggregated_seqs
             for k,v in anchor.aggregated_taxonomies.items():
                 _agg_taxas[k] = v
@@ -763,11 +763,11 @@ class AggregateASV(ASV):
             agg1_seq = {anchor.name: anchor.sequence}
             _agg_taxas[anchor.name] = anchor.taxonomy
 
-        if isaggregatedasv(other):
-            if anchor.name in other.aggregated_asvs:
+        if isotu(other):
+            if anchor.name in other.aggregated_taxas:
                 raise ValueError('`anchor` ({}) already aggregated with other ' \
-                    '({}) ({})'.format(anchor.name, other.name, other.aggregated_asvs))
-            agg2 = other.aggregated_asvs
+                    '({}) ({})'.format(anchor.name, other.name, other.aggregated_taxas))
+            agg2 = other.aggregated_taxas
             agg2_seq = other.aggregated_seqs
             for k,v in other.aggregated_taxonomies.items():
                 _agg_taxas[k] = v
@@ -776,7 +776,7 @@ class AggregateASV(ASV):
             agg2_seq = {other.name: other.sequence}
             _agg_taxas[other.name] = other.taxonomy
 
-        self.aggregated_asvs = agg1 + agg2
+        self.aggregated_taxas = agg1 + agg2
         self.aggregated_seqs = agg1_seq
         self.aggregated_taxonomies = _agg_taxas
         for k,v in agg2_seq.items():
@@ -785,12 +785,12 @@ class AggregateASV(ASV):
         self.taxonomy = anchor.taxonomy
 
     def __str__(self):
-        return 'AggregateASV\n\tid: {}\n\tidx: {}\n\tname: {}\n' \
+        return 'OTU\n\tid: {}\n\tidx: {}\n\tname: {}\n' \
             '\tAggregates: {}\n' \
             '\ttaxonomy:\n\t\tkingdom: {}\n\t\tphylum: {}\n' \
             '\t\tclass: {}\n\t\torder: {}\n\t\tfamily: {}\n' \
             '\t\tgenus: {}\n\t\tspecies: {}'.format(
-            self.id, self.idx, self.name, self.aggregated_asvs,
+            self.id, self.idx, self.name, self.aggregated_taxas,
             self.taxonomy['kingdom'], self.taxonomy['phylum'],
             self.taxonomy['class'], self.taxonomy['order'],
             self.taxonomy['family'], self.taxonomy['genus'],
@@ -827,30 +827,30 @@ class Clusterable(Saveable):
         raise NotImplementedError('You must implement this function')
 
 
-class ASVSet(Clusterable):
-    '''Wraps a set of `ASV` objects. You can get the ASV object via the
-    ASV id, ASV name.
+class TaxaSet(Clusterable):
+    '''Wraps a set of `` objects. You can get the  object via the
+     id,  name.
     Provides functionality for aggregating sequeunces and getting subsets for lineages.
 
     Aggregating/Deaggregating
     -------------------------
-    ASVs that are aggregated together to become OTUs are used because sequences are 
-    very close together. This class provides functionality for aggregating asvs together
-    (`mdsine2.ASVSet.aggregate_items`) and to deaggregate a specific name from an aggregation
-    (`mdsine2.ASVSet.deaggregate_item`). If this object is within a `mdsine2.Study` object,
+    s that are aggregated together to become OTUs are used because sequences are 
+    very close together. This class provides functionality for aggregating Taxas together
+    (`mdsine2.TaxaSet.aggregate_items`) and to deaggregate a specific name from an aggregation
+    (`mdsine2.TaxaSet.deaggregate_item`). If this object is within a `mdsine2.Study` object,
     MAKE SURE TO CALL THE AGGREGATION FUNCTIONS FROM THE `mdsine2.Study` OBJECT 
     (`mdsine2.Study.aggregate_items`, `mdsine2.Study.deaggregate_item`) so that the reads
-    for the agglomerates and individual ASVs can be consistent with the ASVSet.
+    for the agglomerates and individual Taxas can be consistent with the TaxaSet.
 
     Parameters
     ----------
     taxonomy_table : pandas.DataFrame
         This is the table defining the set. If this is specified, then it is passed into
-        ASVSet.parse
+        TaxaSet.parse
 
     See also
     --------
-    mdsine2.ASVSet.parse
+    mdsine2.TaxaSet.parse
     '''
 
     def __init__(self, taxonomy_table=None):
@@ -860,7 +860,7 @@ class ASVSet(Clusterable):
         self.index = []
         self._len = 0
 
-        # Add all of the ASVs from the dataframe if necessary
+        # Add all of the Taxas from the dataframe if necessary
         if taxonomy_table is not None:
             self.parse(taxonomy_table=taxonomy_table)
 
@@ -872,14 +872,14 @@ class ASVSet(Clusterable):
             return False
 
     def __getitem__(self,key):
-        '''Get an ASV by either its sequence, name, index, or id
+        '''Get an Taxa by either its sequence, name, index, or id
 
         Parameters
         ----------
         key : str, int
-            Key to reference the ASV
+            Key to reference the Taxa
         '''
-        if isasvtype(key):
+        if istaxatype(key):
             return key
         if key in self.ids:
             return self.ids[key]
@@ -887,25 +887,23 @@ class ASVSet(Clusterable):
             return self.index[key]
         elif key in self.names:
             return self.names[key]
-        elif isasv(key):
-            return key
         else:
             raise IndexError('`{}` ({}) was not found as a name, sequence, index, or id'.format(
                 key, type(key)))
 
     def __iter__(self):
-        '''Returns each ASV obejct in order
+        '''Returns each Taxa obejct in order
         '''
-        for asv in self.index:
-            yield asv
+        for taxa in self.index:
+            yield taxa
 
     def __len__(self):
-        '''Return the number of ASVs in the ASVSet
+        '''Return the number of Taxas in the TaxaSet
         '''
         return self._len
 
     @property
-    def n_asvs(self):
+    def n_taxas(self):
         '''Alias for __len__
         '''
         return self._len
@@ -915,10 +913,10 @@ class ASVSet(Clusterable):
 
         `taxonomy_table`
         ----------------
-        This is a dataframe that contains the taxonomic information for each ASV.
+        This is a dataframe that contains the taxonomic information for each Taxa.
         The columns that must be included are:
-            'name' : name of the asv
-            'sequence' : sequence of the asv
+            'name' : name of the taxa
+            'sequence' : sequence of the taxa
         All of the taxonomy specifications are optional:
             'kingdom' : kingdom taxonomy
             'phylum' : phylum taxonomy
@@ -931,9 +929,9 @@ class ASVSet(Clusterable):
         ----------
         taxonomy_table : pandas.DataFrame, Optional
             DataFrame conttaxaining the required information (Taxonomy, sequence).
-            If nothing is passed in, it will be an empty ASVSet
+            If nothing is passed in, it will be an empty TaxaSet
         '''
-        logging.info('ASVSet parsng new taxonomy table. Resetting')
+        logging.info('TaxaSet parsng new taxonomy table. Resetting')
         self.taxonomy_table = taxonomy_table
         self.ids = CustomOrderedDict()
         self.names = CustomOrderedDict()
@@ -961,8 +959,8 @@ class ASVSet(Clusterable):
         for i in taxonomy_table.index:
             seq = taxonomy_table[SEQUENCE_COLUMN_LABEL][i]
             name = taxonomy_table['name'][i]
-            asv = ASV(name=name, sequence=seq, idx=self._len)
-            asv.set_taxonomy(
+            taxa = Taxa(name=name, sequence=seq, idx=self._len)
+            taxa.set_taxonomy(
                 tax_kingdom=taxonomy_table.loc[i]['kingdom'],
                 tax_phylum=taxonomy_table.loc[i]['phylum'],
                 tax_class=taxonomy_table.loc[i]['class'],
@@ -971,124 +969,124 @@ class ASVSet(Clusterable):
                 tax_genus=taxonomy_table.loc[i]['genus'],
                 tax_species=taxonomy_table.loc[i]['species'])
 
-            self.ids[asv.id] = asv
-            self.names[asv.name] = asv
-            self.index.append(asv)  
+            self.ids[taxa.id] = taxa
+            self.names[taxa.name] = taxa
+            self.index.append(taxa)  
             self._len += 1
 
         self.ids.update_order()
         self.names.update_order()
 
-    def add_asv(self, name, sequence=None):
-        '''Adds an ASV to the set
+    def add_taxa(self, name, sequence=None):
+        '''Adds an Taxa to the set
 
         Parameters
         ----------
         name : str
-            This is the name of the ASV
+            This is the name of the Taxa
         sequence : str
-            This is the sequence of the ASV
+            This is the sequence of the Taxa
         '''
-        asv = ASV(name=name, sequence=sequence, idx=self._len)
-        self.ids[asv.id] = asv
-        self.names[asv.name] = asv
-        self.index.append(asv)
+        taxa = Taxa(name=name, sequence=sequence, idx=self._len)
+        self.ids[taxa.id] = taxa
+        self.names[taxa.name] = taxa
+        self.index.append(taxa)
 
-        # update the order of the ASVs
+        # update the order of the Taxas
         self.ids.update_order()
         self.names.update_order()
         self._len += 1
 
         return self
 
-    def del_asv(self, asv):
-        '''Deletes the ASV from the set.
+    def del_taxa(self, taxa):
+        '''Deletes the Taxa from the set.
 
         Parameters
         ----------
-        asv : str, int, ASV
-            Can either be the name, sequence, or the ID of the ASV
+        taxa : str, int, Taxa
+            Can either be the name, sequence, or the ID of the Taxa
         '''
         # Get the ID
-        asv = self[asv]
-        oidx = self.ids.index[asv.id]
+        taxa = self[taxa]
+        oidx = self.ids.index[taxa.id]
 
-        # Delete the ASV from everything
-        # asv = self[asv]
-        self.ids.pop(asv.id, None)
-        self.names.pop(asv.name, None)
+        # Delete the Taxa from everything
+        # taxa = self[taxa]
+        self.ids.pop(taxa.id, None)
+        self.names.pop(taxa.name, None)
         self.index.pop(oidx)
 
-        # update the order of the ASVs
+        # update the order of the Taxas
         self.ids.update_order()
         self.names.update_order()
 
-        # Update the indices of the asvs
+        # Update the indices of the taxas
         # Since everything points to the same object we only need to do it once
-        for aidx, asv in enumerate(self.index):
-            asv.idx = aidx
+        for aidx, taxa in enumerate(self.index):
+            taxa.idx = aidx
 
         self._len -= 1
         return self
 
     def taxonomic_similarity(self,oid1,oid2):
-        '''Calculate the taxonomic similarity between ASV1 and ASV2
+        '''Calculate the taxonomic similarity between Taxa1 and Taxa2
         Iterates through most broad to least broad taxonomic level and
         returns the fraction that are the same.
 
         Example:
-            asv1.taxonomy = (A,B,C,D)
-            asv2.taxonomy = (A,B,E,F)
+            taxa1.taxonomy = (A,B,C,D)
+            taxa2.taxonomy = (A,B,E,F)
             similarity = 0.5
 
-            asv1.taxonomy = (A,B,C,D)
-            asv2.taxonomy = (A,B,C,F)
+            taxa1.taxonomy = (A,B,C,D)
+            taxa2.taxonomy = (A,B,C,F)
             similarity = 0.75
 
-            asv1.taxonomy = (A,B,C,D)
-            asv2.taxonomy = (A,B,C,D)
+            taxa1.taxonomy = (A,B,C,D)
+            taxa2.taxonomy = (A,B,C,D)
             similarity = 1.0
 
-            asv1.taxonomy = (X,Y,Z,M)
-            asv2.taxonomy = (A,B,E,F)
+            taxa1.taxonomy = (X,Y,Z,M)
+            taxa2.taxonomy = (A,B,E,F)
             similarity = 0.0
 
         Parameters
         ----------
         oid1, oid2 : str, int
-            The name, id, or sequence for the ASV
+            The name, id, or sequence for the Taxa
         '''
         if oid1 == oid2:
             return 1
-        asv1 = self[oid1].get_lineage()
-        asv2 = self[oid2].get_lineage()
+        taxa1 = self[oid1].get_lineage()
+        taxa2 = self[oid2].get_lineage()
         i = 0
-        for a in asv1:
-            if a == asv2[i]:
+        for a in taxa1:
+            if a == taxa2[i]:
                 i += 1
             else:
                 break
-        return i/8 # including ASV
+        return i/8 # including Taxa
 
     def aggregate_items(self, anchor, other):
-        '''Create an aggreate asv with the anchor `anchor` and other asv  `other`.
+        '''Create an OTU with the anchor `anchor` and other taxa  `other`.
         The aggregate takes the sequence and the taxonomy from the anchor.
 
         Parameters
         ----------
-        anchor, other : str, int, mdsine2.ASV, mdsine2.AggregateASV
-            These are the ASVs/Aggregates that you're joining together. The anchor is
+        anchor, other : str, int, mdsine2.Taxa, mdsine2.OTU
+            These are the Taxas/Aggregates that you're joining together. The anchor is
             the one you are setting the sequeunce and taxonomy to
 
         Returns
         -------
-        mdsine2.AggregateASV
-            This is the new aggregated ASV containing anchor and other
+        mdsine2.OTU
+            This is the new aggregated Taxa containing anchor and other
         '''
         anchor = self[anchor]
         other = self[other]
         
-        agg = AggregateASV(anchor=anchor, other=other)
+        agg = OTU(anchor=anchor, other=other)
 
         self.index[agg.idx] = agg
         self.index.pop(other.idx)
@@ -1096,12 +1094,12 @@ class ASVSet(Clusterable):
         self.ids = CustomOrderedDict()
         self.names = CustomOrderedDict()
 
-        for idx, asv in enumerate(self.index):
-            asv.idx = idx
-            self.ids[asv.id] = asv
-            self.names[asv.name] = asv
+        for idx, taxa in enumerate(self.index):
+            taxa.idx = idx
+            self.ids[taxa.id] = taxa
+            self.names[taxa.name] = taxa
         
-        # update the order of the ASVs
+        # update the order of the Taxas
         self.ids.update_order()
         self.names.update_order()
 
@@ -1109,35 +1107,35 @@ class ASVSet(Clusterable):
         return agg
 
     def deaggregate_item(self, agg, other):
-        '''Deaggregate the sequence `other` from AggregateASV `agg`.
+        '''Deaggregate the sequence `other` from OTU `agg`.
         `other` is then appended to the end 
 
         Parameters
         ----------
-        agg : AggregateASV, str
-            This is an AggregateASV with multiple sequences contained. Must 
+        agg : OTU, str
+            This is an OTU with multiple sequences contained. Must 
             have the name `other` in there
         other : str
-            This is the name of the ASV that should be taken out of `agg`
+            This is the name of the Taxa that should be taken out of `agg`
 
         Returns
         -------
-        mdsine2.ASV
-            This is the deaggregated ASV
+        mdsine2.Taxa
+            This is the deaggregated Taxa
         '''
         agg = self[agg]
-        if not isaggregatedasv(agg):
-            raise TypeError('`agg` ({}) must be an AggregatedASV'.format(type(agg)))
+        if not isotu(agg):
+            raise TypeError('`agg` ({}) must be an AggregatedTaxa'.format(type(agg)))
         if not plutil.isstr(other):
             raise TypeError('`other` ({}) must be a str'.format(type(other)))
-        if other not in agg.aggregated_asvs:
+        if other not in agg.aggregated_taxas:
             raise ValueError('`other` ({}) is not contained in `agg` ({}) ({})'.format(
-                other, agg.name, agg.aggregated_asvs))
+                other, agg.name, agg.aggregated_taxas))
 
-        other = ASV(name=other, sequence=agg.aggregated_seqs[other], idx=self._len)
+        other = Taxa(name=other, sequence=agg.aggregated_seqs[other], idx=self._len)
         other.taxonomy = agg.aggregated_taxonomies[other.name]
         agg.aggregated_seqs.pop(other.name, None)
-        agg.aggregated_asvs.remove(other.name)
+        agg.aggregated_taxas.remove(other.name)
         agg.aggregated_taxonomies.pop(other.name, None)
 
         self.index.append(other)
@@ -1155,23 +1153,23 @@ class ASVSet(Clusterable):
         Example
         -------
         Names before in order:
-        [ASV_22, ASV_9982, TUDD_8484]
+        [Taxa_22, Taxa_9982, TUDD_8484]
 
-        Calling asvs.rename(prefix='OTU')
+        Calling taxas.rename(prefix='OTU')
         New names:
         [OTU_1, OTU_2, OTU_3]
 
-        Calling asvs.rename(prefix='OTU', zero_based_index=True)
+        Calling taxas.rename(prefix='OTU', zero_based_index=True)
         New names:
         [OTU_0, OTU_1, OTU_2]
 
         Parameters
         ----------
         prefix : str
-            This is the prefix of the new ASVs. The name of the ASVs will change
+            This is the prefix of the new Taxas. The name of the Taxas will change
             to `'{}_{}'.format(prefix, index)`
         zero_based_index : bool
-            If this is False, then we start the enumeration of the ASVs from 1
+            If this is False, then we start the enumeration of the Taxas from 1
             instead of 0. If True, then the enumeration starts at 0
         '''
         if not plutil.isstr(prefix):
@@ -1185,10 +1183,10 @@ class ASVSet(Clusterable):
             offset = 1
 
         self.names = CustomOrderedDict()
-        for asv in self.index:
-            newname = prefix + '_{}'.format(int(asv.idx + offset))
-            asv.name = newname
-            self.names[asv.name] = asv
+        for taxa in self.index:
+            newname = prefix + '_{}'.format(int(taxa.idx + offset))
+            taxa.name = newname
+            self.names[taxa.name] = taxa
 
 
 class qPCRdata:
@@ -1326,17 +1324,17 @@ class CustomOrderedDict(dict):
 
     def update_order(self):
         '''This will update the reverse dictionary based on the index. It will 
-        also redo the indexes if an ASV was deleted
+        also redo the indexes if an Taxa was deleted
         '''
         self.order = np.array(list(self.keys()))
         self.index = {}
-        for i, asv in enumerate(self.order):
-            self.index[asv] = i
+        for i, taxa in enumerate(self.order):
+            self.index[taxa] = i
 
 
 class Subject(Saveable):
     '''Data for a single subject
-    The ASVSet order is done with respect to the ordering in the `reads_table`
+    The TaxaSet order is done with respect to the ordering in the `reads_table`
     Parameters
     ----------
     parent : Study
@@ -1351,7 +1349,7 @@ class Subject(Saveable):
         self.qpcr = {}
         self.reads = {}
         self.times = np.asarray([])
-        self._reads_individ = {} # for taking out aggregated asvs
+        self._reads_individ = {} # for taking out aggregated taxas
 
     def add_time(self, timepoint):
         '''Add the timepoint `timepoint`. Set the reads and qpcr at that timepoint
@@ -1371,12 +1369,12 @@ class Subject(Saveable):
         timepoint : numeric, array
             This is the time that the measurement occurs. If it is an array, then
             we are adding for multiple timepoints
-        reads : np.ndarray(NASVS, N_TIMEPOINTS)
-            These are the reads for the ASVs in order. Assumed to be in the 
-            same order as the ASVSet. If it is a dataframe then we use the rows
-            to index the ASV names. If timepoints is an array, then we are adding 
+        reads : np.ndarray(NTAXAS, N_TIMEPOINTS)
+            These are the reads for the Taxas in order. Assumed to be in the 
+            same order as the TaxaSet. If it is a dataframe then we use the rows
+            to index the Taxa names. If timepoints is an array, then we are adding 
             for multiple timepoints. In this case we assume that the rows index the 
-            ASV and the columns index the timepoint.
+            Taxa and the columns index the timepoint.
         '''
         if not plutil.isarray(timepoints):
             timepoints = [timepoints]
@@ -1390,9 +1388,9 @@ class Subject(Saveable):
             reads = reads.reshape(-1,1)
         if reads.ndim != 2:
             raise ValueError('`reads` {} must be a matrix'.format(reads.shape))
-        if reads.shape[0] != len(self.asvs) or reads.shape[1] != len(timepoints):
-            raise ValueError('`reads` shape {} does not align with the number of asvs ({}) ' \
-                'or timepoints ({})'.format(reads.shape, len(self.asvs), len(timepoints)))
+        if reads.shape[0] != len(self.taxas) or reads.shape[1] != len(timepoints):
+            raise ValueError('`reads` shape {} does not align with the number of taxas ({}) ' \
+                'or timepoints ({})'.format(reads.shape, len(self.taxas), len(timepoints)))
 
         for tidx, timepoint in enumerate(timepoints):
             if timepoint in self.reads:
@@ -1491,8 +1489,8 @@ class Subject(Saveable):
         return self.parent.perturbations
 
     @property
-    def asvs(self):
-        return self.parent.asvs
+    def taxas(self):
+        return self.parent.taxas
 
     @property
     def index(self):
@@ -1510,7 +1508,7 @@ class Subject(Saveable):
         If there is no qPCR data, then the absolute abundance is set to None.
         '''
 
-        shape = (len(self.asvs), len(self.times))
+        shape = (len(self.taxas), len(self.times))
         raw = np.zeros(shape=shape, dtype=int)
         rel = np.zeros(shape=shape, dtype=float)
         abs = np.zeros(shape=shape, dtype=float)
@@ -1537,7 +1535,7 @@ class Subject(Saveable):
         These are the parameters for `matrix`
         '''
         d = self.matrix(**kwargs)
-        index = self.asvs.names.order
+        index = self.taxas.names.order
         times = self.times
         for key in d:
             d[key] = pd.DataFrame(data=d[key], index=index, columns=times)
@@ -1561,7 +1559,7 @@ class Subject(Saveable):
         return np.sum(self.reads[t])
 
     def cluster_by_taxlevel(self, dtype, taxlevel, index_formatter=None, smart_unspec=True):
-        '''Clusters the ASVs into the taxonomic level indicated in `taxlevel`.
+        '''Clusters the Taxas into the taxonomic level indicated in `taxlevel`.
 
         Smart Unspecified
         -----------------
@@ -1581,7 +1579,7 @@ class Subject(Saveable):
                 'rel': This is the relative abundances
                 'abs': This is the absolute abundance (qPCR * rel)
         index_formatter : str
-            How to make the index using `pylab.util.plutil.asvname_formatter`. Note that you cannot
+            How to make the index using `pylab.util.plutil.taxaname_formatter`. Note that you cannot
             specify anything at a lower taxonomic level than what youre clustering at. For 
             example, you cannot cluster at the 'class' level and then specify '%(genus)s' 
             in the index formatter.
@@ -1592,7 +1590,7 @@ class Subject(Saveable):
         pandas.DataFrame
             Dataframe of the data
         dict (str->str)
-            Maps ASV name to the row it got allocated to
+            Maps Taxa name to the row it got allocated to
         '''
         # Type checking
         if not plutil.isstr(dtype):
@@ -1620,7 +1618,7 @@ class Subject(Saveable):
         index_formatter = index_formatter.replace('%(asv)s', '%(name)s')
 
         # Everything is valid, get the data dataframe and the return dataframe
-        asvname_map = {}
+        taxaname_map = {}
         df = self.df()[dtype]
         cols = list(df.columns)
         cols.append(taxlevel)
@@ -1628,38 +1626,38 @@ class Subject(Saveable):
 
         # Get the level in the taxonomy, create a new entry if it is not there already
         taxas = {} # lineage -> label
-        for i, asv in enumerate(self.asvs):
+        for i, taxa in enumerate(self.taxas):
             row = df.index[i]
-            tax = asv.get_lineage(level=taxlevel)
+            tax = taxa.get_lineage(level=taxlevel)
             tax = tuple(tax)
             tax = str(tax).replace("'", '')
             if tax in taxas:
                 dfnew.loc[taxas[tax]] += df.loc[row]
             else:
-                if not asv.tax_is_defined(taxlevel) and smart_unspec:
+                if not taxa.tax_is_defined(taxlevel) and smart_unspec:
                     # Get the least common ancestor above the taxlevel
                     taxlevelidx = TAX_IDXS[taxlevel]
                     ttt = None
                     while taxlevelidx > -1:
-                        if asv.tax_is_defined(_TAX_REV_IDXS[taxlevelidx]):
+                        if taxa.tax_is_defined(_TAX_REV_IDXS[taxlevelidx]):
                             ttt = _TAX_REV_IDXS[taxlevelidx]
                             break
                         taxlevelidx -= 1
                     if ttt is None:
-                        raise ValueError('Could not find a single taxlevel: {}'.format(str(asv)))
+                        raise ValueError('Could not find a single taxlevel: {}'.format(str(taxa)))
                     taxas[tax] = '{} {}, {} NA'.format(ttt.capitalize(), 
-                        asv.taxonomy[ttt], taxlevel.capitalize())
+                        taxa.taxonomy[ttt], taxlevel.capitalize())
                 else:
-                    taxas[tax] = plutil.asvname_formatter(format=index_formatter, asv=asv, asvs=self.asvs)
+                    taxas[tax] = plutil.taxaname_formatter(format=index_formatter, taxa=taxa, taxas=self.taxas)
                 toadd = pd.DataFrame(np.array(list(df.loc[row])).reshape(1,-1),
                     index=[taxas[tax]], columns=dfnew.columns)
                 dfnew = dfnew.append(toadd)
             
-            if taxas[tax] not in asvname_map:
-                asvname_map[taxas[tax]] = []
-            asvname_map[taxas[tax]].append(asv.name)
+            if taxas[tax] not in taxaname_map:
+                taxaname_map[taxas[tax]] = []
+            taxaname_map[taxas[tax]].append(taxa.name)
         
-        return dfnew, asvname_map
+        return dfnew, taxaname_map
 
     def _split_on_perturbations(self):
         '''If there are perturbations, then we take out the data on perturbations
@@ -1720,23 +1718,23 @@ class Subject(Saveable):
             self.parent[mid].times = self.times[start:end]
 
     def _deaggregate_item(self, agg, other):
-        '''Deaggregate the sequence `other` from AggregateASV `agg`.
+        '''Deaggregate the sequence `other` from OTU `agg`.
         `other` is then appended to the end. This is called from 
         `mdsine2.Study.deaggregate_item`.
 
         Parameters
         ----------
-        agg : AggregateASV
-            This is an AggregateASV with multiple sequences contained. Must 
+        agg : OTU
+            This is an OTU with multiple sequences contained. Must 
             have the name `other` in there
         other : str
-            This is the name of the ASV that should be taken out of `agg`
+            This is the name of the Taxa that should be taken out of `agg`
         '''
         # Append the reads of the deaggregated at the bottom and subtract them
         # from the aggregated index
         if other not in self._reads_individ:
             raise ValueError('`other` ({}) reads not found in archive. This probably ' \
-                'happened because you called `aggregate_items` from the ASVSet object' \
+                'happened because you called `aggregate_items` from the TaxaSet object' \
                 ' instead from this object. Study object not consistent. Failing.'.format(other))
         
         aggidx = agg.idx
@@ -1745,8 +1743,8 @@ class Subject(Saveable):
                 new_reads = self._reads_individ[other][t]
             except:
                 raise ValueError('Timepoint `{}` added into subject `{}` after ' \
-                    'ASV `{}` was removed. Study object is not consistent. You ' \
-                    'cannot add in other timepoints after you aggregate asvs. Failing.'.format(
+                    'Taxa `{}` was removed. Study object is not consistent. You ' \
+                    'cannot add in other timepoints after you aggregate taxas. Failing.'.format(
                         t, self.name, other))
             self.reads[t][aggidx] = self.reads[t][aggidx] - new_reads
             self.reads[t] = np.append(self.reads[t], new_reads)
@@ -1754,24 +1752,24 @@ class Subject(Saveable):
         return
 
     def _aggregate_items(self, anchor, other):
-        '''Aggregate the asv `other` into `anchor`. This is called from 
+        '''Aggregate the taxa `other` into `anchor`. This is called from 
         `mdsine2.Study.aggregate_items`.
 
         Parameters
         ----------
-        anchor, other : AggregateASV, ASV
-            These are the ASVs to combine
+        anchor, other : OTU, Taxa
+            These are the s to combine
         '''
-        # If one of them are ASVs, then record their individual reads
+        # If one of them are Taxas, then record their individual reads
         # if we want to dissociate them later
-        for asv in [anchor, other]:
-            if isasv(asv):
-                if asv.name in self._reads_individ:
-                    raise ValueError('ASV is already in this dict. This should not happen.')
-                aidx = asv.idx
-                self._reads_individ[asv.name] = {}
+        for taxa in [anchor, other]:
+            if istaxatype(taxa):
+                if taxa.name in self._reads_individ:
+                    raise ValueError('Taxa is already in this dict. This should not happen.')
+                aidx = taxa.idx
+                self._reads_individ[taxa.name] = {}
                 for t in self.times:
-                    self._reads_individ[asv.name][t] = self.reads[t][aidx]
+                    self._reads_individ[taxa.name][t] = self.reads[t][aidx]
         
         for t in self.times:
             self.reads[t][anchor.idx] += self.reads[t][other.idx]
@@ -1784,19 +1782,19 @@ class Study(Saveable):
 
     Paramters
     ---------
-    asvs : ASVSet, Optional
-        Contains all of the ASVs
+    taxas : TaxaSet, Optional
+        Contains all of the s
     '''
-    def __init__(self, asvs, name='unnamed-study'):
+    def __init__(self, taxas, name='unnamed-study'):
         self.name = name
         self.id = id(self)
         self._subjects = {}
         self.perturbations = None
         self.qpcr_normalization_factor = None
-        if not isasvset(asvs):
-            raise ValueError('If `asvs` ({}) is specified, it must be an ASVSet' \
-                ' type'.format(type(asvs)))
-        self.asvs = asvs
+        if not istaxaset(taxas):
+            raise ValueError('If `taxas` ({}) is specified, it must be an TaxaSet' \
+                ' type'.format(type(taxas)))
+        self.taxas = taxas
 
         self._samples = {}
         
@@ -1828,8 +1826,8 @@ class Study(Saveable):
                 'perturbation:`name`' -> int : This is a perturbation meta data where the
                     name of the perturbation is `name`
         reads : pandas.DataFrame, None
-            Contains the reads for each one of the samples and asvs
-                index (str) : indexes the ASV name
+            Contains the reads for each one of the samples and taxas
+                index (str) : indexes the Taxa name
                 columns (str) : indexes the sample ID
             If nothing is passed in, the reads are set to None
         qpcr : pandas.DataFrame, None
@@ -1930,7 +1928,7 @@ class Study(Saveable):
                 self[sid].add_qpcr(timepoints=t, qpcr=cfuspergram)
         return self
             
-    def metadata_to_csv(self, path, sep='\t'):
+    def write_metadata_to_csv(self, path, sep='\t'):
         '''Write the internal metadata to a table
 
         Parameters
@@ -1949,13 +1947,61 @@ class Study(Saveable):
         df = pd.DataFrame(data, columns=columns)
         df.to_csv(path, sep=sep, index=False, header=True)
 
-    def reads_to_csv(self, path, sep='\t'):
-        raise NotImplementedError('Need to implement it')
+    def write_reads_to_csv(self, path, sep='\t'):
+        '''Write the reads to a table
 
-    def qpcr_to_csv(self, path, sep='\t'):
-        raise NotImplementedError('Need to implement it')
+        Parameters
+        ----------
+        path : str
+            This is the location to save the reads file
+        sep : str
+            This is the separator of the table
+        '''
+        data = [[taxa.name for taxa in self.taxas]]
+        index = ['name']
+        for sampleid in self._samples:
+            index.append(sampleid)
+            sid, t = self._samples[sampleid]
 
-    def perturbations_to_csv(self, path, sep='\t'):
+            reads = self[sid].reads[t]
+            data.append(reads)
+
+        df = pd.DataFrame(data, index=index).T
+        df.to_csv(path, sep=sep, index=False, header=True)
+
+    def write_qpcr_to_csv(self, path, sep='\t'):
+        '''Write the qPCR measurements to a table
+
+        Parameters
+        ----------
+        path : str
+            This is the location to save the qPCR file
+        sep : str
+            This is the separator of the table
+        '''
+        max_n_measurements = -1
+        data = []
+        for sampleid in self._samples:
+            sid, t = self._samples[sampleid]
+            subj = self[sid]
+            ms = subj.qpcr[t].data
+            if len(ms) > max_n_measurements:
+                max_n_measurements = len(ms)
+            ms = [sampleid] + ms.tolist()
+            data.append(ms)
+        
+        for i, ms in enumerate(data):
+            if len(ms)-1 < max_n_measurements:
+                data[i] = np.append(
+                    ms, 
+                    np.nan * np.ones(max_n_measurements - len(ms)))
+        
+        columns = ['sampleid'] + ['measurement{}'.format(i+1) for i in range(max_n_measurements)]
+
+        df = pd.DataFrame(data, columns=columns)
+        df.to_csv(path, sep=sep, index=False, header=True)
+
+    def write_perturbations_to_csv(self, path, sep='\t'):
         '''Write the perturbations to a table
 
         Parameters
@@ -1968,10 +2014,12 @@ class Study(Saveable):
         columns = ['name', 'start', 'end', 'subject']
         data = []
         for perturbation in self.perturbations:
-            
-        for sampleid in self._samples:
-            sid, t = self._samples[sampleid]
-            data.append([sampleid, sid, t])
+            for subjname in perturbation.starts:
+                data.append([
+                    perturbation.name, 
+                    perturbation.starts[subjname],
+                    perturbation.ends[subjname],
+                    subjname])
 
         df = pd.DataFrame(data, columns=columns)
         df.to_csv(path, sep=sep, index=False, header=True)
@@ -2029,7 +2077,7 @@ class Study(Saveable):
                 sids[i] = list(self._subjects.keys())[sids[i]]
             elif not plutil.isstr(sids[i]):
                 raise ValueError('`sid` ({}) must be a str'.format(type(sids[i])))
-        ret = Study(asvs=self.asvs)
+        ret = Study(taxas=self.taxas)
         ret.perturbations = self.perturbations
         ret.qpcr_normalization_factor = self.qpcr_normalization_factor
 
@@ -2040,37 +2088,37 @@ class Study(Saveable):
                 raise ValueError('`sid` ({}) not found'.format(sid))
         return ret
 
-    def pop_asvs_like(self, study):
-        '''Remove ASVs in the ASVSet so that it matches the ASVSet in `study`
+    def pop_taxas_like(self, study):
+        '''Remove s in the TaxaSet so that it matches the TaxaSet in `study`
 
         Parameters
         ----------
         study : mdsine2.study
-            This is the study object we are mirroring in terms of ASVs
+            This is the study object we are mirroring in terms of Taxas
         '''
         to_delete = []
-        for asv in self.asvs:
-            if asv.name not in study.asvs:
-                to_delete.append(asv.name)
-        self.pop_asvs(to_delete)
+        for taxa in self.taxas:
+            if taxa.name not in study.taxas:
+                to_delete.append(taxa.name)
+        self.pop_taxas(to_delete)
 
-    def pop_asvs(self, oids):
-        '''Delete the ASVs indicated in oidxs. Updates the reads table and
-        the internal ASVSet
+    def pop_taxas(self, oids):
+        '''Delete the Taxas indicated in oidxs. Updates the reads table and
+        the internal TaxaSet
 
         Parameters
         ----------
         oids : str, int, list(str/int)
-            These are the identifiers for each of the ASV/s to delete
+            These are the identifiers for each of the Taxa/s to delete
         '''
         # get indices
         oidxs = []
         for oid in oids:
-            oidxs.append(self.asvs[oid].idx)
+            oidxs.append(self.taxas[oid].idx)
         
-        # Delete the ASVs from asvset
+        # Delete the s from taxaset
         for oid in oids:
-            self.asvs.del_asv(oid)
+            self.taxas.del_taxa(oid)
 
         # Delete the reads
         for subj in self:
@@ -2079,83 +2127,83 @@ class Study(Saveable):
         return self
 
     def deaggregate_item(self, agg, other):
-        '''Deaggregate the sequence `other` from AggregateASV `agg`.
+        '''Deaggregate the sequence `other` from OTU `agg`.
         `other` is then appended to the end 
 
         Parameters
         ----------
-        agg : AggregateASV, str
-            This is an AggregateASV with multiple sequences contained. Must 
+        agg : Aggregate, str
+            This is an OTU with multiple sequences contained. Must 
             have the name `other` in there
         other : str
-            This is the name of the ASV that should be taken out of `agg`
+            This is the name of the Taxa that should be taken out of `agg`
 
         Returns
         -------
-        mdsine2.ASV
-            This is the deaggregated ASV
+        mdsine2.Taxa
+            This is the deaggregated Taxa
         '''
-        agg = self.asvs[agg]
-        if not isaggregatedasv(agg):
-            raise TypeError('`agg` ({}) must be an AggregatedASV'.format(type(agg)))
+        agg = self.taxas[agg]
+        if not isotu(agg):
+            raise TypeError('`agg` ({}) must be an AggregatedTaxa'.format(type(agg)))
         if not plutil.isstr(other):
             raise TypeError('`other` ({}) must be a str'.format(type(other)))
-        if other not in agg.aggregated_asvs:
+        if other not in agg.aggregated_taxas:
             raise ValueError('`other` ({}) is not contained in `agg` ({}) ({})'.format(
-                other, agg.name, agg.aggregated_asvs))
+                other, agg.name, agg.aggregated_taxas))
 
         for subj in self:
             subj._deaggregate_item(agg=agg, other=other)
-        return self.asvs.deaggregate_item(agg, other)
+        return self.taxas.deaggregate_item(agg, other)
 
     def aggregate_items_like(self, study, prefix=None):
-        '''Aggregate ASVs like they are in study `study`
+        '''Aggregate s like they are in study `study`
 
         Parameters
         ----------
         study : mdsine2.Study
             Data object we are mirroring
         prefix : str
-            If provided, this is how you rename the ASVs after aggregation
+            If provided, this is how you rename the Taxas after aggregation
         '''
-        for asv in study.asvs:
-            if isaggregatedasv(asv):
-                aname = asv.aggregated_asvs[0]
-                for bname in asv.aggregated_asvs[1:]:
+        for taxa in study.taxas:
+            if isotu(taxa):
+                aname = taxa.aggregated_taxas[0]
+                for bname in taxa.aggregated_taxas[1:]:
                     self.aggregate_items(aname, bname)
         if prefix is not None:
-            self.asvs.rename(prefix=prefix)
+            self.taxas.rename(prefix=prefix)
 
-    def aggregate_items(self, asv1, asv2):
-        '''Aggregates the abundances of `asv1` and `asv2`. Updates the reads table and
-        internal ASVSet
+    def aggregate_items(self, taxa1, taxa2):
+        '''Aggregates the abundances of `taxa1` and `taxa2`. Updates the reads table and
+        internal TaxaSet
 
         Parameters
         ----------
-        asv1, asv2 : str, int, mdsine2.ASV, mdsine2.AggregateASV
-            These are the ASVs you are agglomerating together
+        taxa1, taxa2 : str, int, mdsine2.Taxa, mdsine2.OTU
+            These are the Taxas you are agglomerating together
 
         Returns
         -------
-        mdsine2.AggregateASV
-            This is the new aggregated ASV containing anchor and other
+        mdsine2.OTU
+            This is the new aggregated Taxa containing anchor and other
         '''
         # Find the anchor - use the highest index
-        aidx1 = self.asvs[asv1].idx
-        aidx2 = self.asvs[asv2].idx
+        aidx1 = self.taxas[taxa1].idx
+        aidx2 = self.taxas[taxa2].idx
 
         if aidx1 == aidx2:
-            raise ValueError('Cannot aggregate the same asv: {}'.format(self.asvs[asv1]))
+            raise ValueError('Cannot aggregate the same taxa: {}'.format(self.taxas[taxa1]))
         elif aidx1 < aidx2:
-            anchor = self.asvs[asv1]
-            other = self.asvs[asv2]
+            anchor = self.taxas[taxa1]
+            other = self.taxas[taxa2]
         else:
-            anchor = self.asvs[asv2]
-            other = self.asvs[asv1]
+            anchor = self.taxas[taxa2]
+            other = self.taxas[taxa1]
 
         for subj in self:
             subj._aggregate_items(anchor=anchor, other=other)
-        return self.asvs.aggregate_items(anchor=anchor, other=other)
+        return self.taxas.aggregate_items(anchor=anchor, other=other)
 
     def pop_times(self, times, sids='all'):
         '''Discard the times in `times` for the subjects listed in `sids`.
@@ -2352,7 +2400,7 @@ class Study(Saveable):
         else:
             raise TypeError('`times` type ({}) not recognized'.format(type(times)))
 
-        shape = (len(self.asvs), len(times))
+        shape = (len(self.taxas), len(times))
         M = np.zeros(shape, dtype=float)
         for tidx, t in enumerate(times):
             temp = None
@@ -2371,7 +2419,7 @@ class Study(Saveable):
                 else:
                     temp = temp + (a.reshape(-1,1), )
             if temp is None:
-                temp = np.zeros(len(self.asvs)) * np.nan
+                temp = np.zeros(len(self.taxas)) * np.nan
             else:
                 temp = np.hstack(temp)
                 temp = aggfunc(temp, axis=1)
@@ -2384,13 +2432,13 @@ class Study(Saveable):
 
         Aggregation of subjects
         -----------------------
-        What are the values for the ASVs? Set the aggregation type using the parameter `agg`. 
+        What are the values for the Taxas? Set the aggregation type using the parameter `agg`. 
         These are the types of aggregations:
-            'mean': Mean abundance of the ASV at a timepoint over all the subjects
-            'median': Median abundance of the ASV at a timepoint over all the subjects
-            'sum': Sum of all the abundances of the ASV at a timepoint over all the subjects
-            'max': Maximum abundance of the ASV at a timepoint over all the subjects
-            'min': Minimum abundance of the ASV at a timepoint over all the subjects
+            'mean': Mean abundance of the Taxa at a timepoint over all the subjects
+            'median': Median abundance of the Taxa at a timepoint over all the subjects
+            'sum': Sum of all the abundances of the Taxa at a timepoint over all the subjects
+            'max': Maximum abundance of the Taxa at a timepoint over all the subjects
+            'min': Minimum abundance of the Taxa at a timepoint over all the subjects
 
         Aggregation of times
         --------------------
@@ -2415,13 +2463,13 @@ class Study(Saveable):
         
         Returns
         -------
-        np.ndarray(n_asvs, n_times)
+        np.ndarray(n_taxas, n_times)
         '''
         M, _ =  self._matrix(dtype=dtype, agg=agg, times=times)
         return M
 
     def df(self, *args, **kwargs):
-        '''Returns a dataframe of the data in matrix. Rows are ASVs, columns are times.
+        '''Returns a dataframe of the data in matrix. Rows are Taxas, columns are times.
 
         Returns
         -------
@@ -2432,6 +2480,6 @@ class Study(Saveable):
         mdsine2.matrix
         '''
         M, times = self._matrix(*args, **kwargs)
-        index = [asv.name for asv in self.asvs]
+        index = [taxa.name for taxa in self.taxas]
         return pd.DataFrame(data=M, index=index, columns=times)
 

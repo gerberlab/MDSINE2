@@ -93,10 +93,10 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
 
     # Instantiate the posterior classes
     # ---------------------------------
-    asvs = subjset.asvs
+    taxas = subjset.taxas
     d = design_matrices.Data(subjects=subjset, G=GRAPH, 
         zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
-    clustering = pl.Clustering(clusters=None, items=asvs, G=GRAPH,
+    clustering = pl.Clustering(clusters=None, items=taxas, G=GRAPH,
         name=STRNAMES.CLUSTERING_OBJ)
 
     # Interactions
@@ -655,7 +655,7 @@ def calculate_stability_over_gibbs(mcmc, section='auto', log_every=1000):
     
     Returns
     -------
-    np.ndarray (n_gibb, n_asvs, n_asvs)
+    np.ndarray (n_gibb, n_taxas, n_taxas)
     '''
     # Type check
     # ----------
@@ -705,7 +705,7 @@ def calculate_stability_over_gibbs(mcmc, section='auto', log_every=1000):
 
     # Load data
     # ---------
-    N_ASVS = len(mcmc.graph.data.asvs)
+    N_TAXAS = len(mcmc.graph.data.taxas)
     logging.info('Loading data for stability')
     growth = mcmc.graph[STRNAMES.GROWTH_VALUE]
     if mcmc.tracer.is_being_traced(STRNAMES.GROWTH_VALUE):
@@ -714,7 +714,7 @@ def calculate_stability_over_gibbs(mcmc, section='auto', log_every=1000):
             growth = growth[:LEN_ARR, ...]
     else:
         growth = growth.value
-        growth = growth.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_ASVS))
+        growth = growth.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_TAXAS))
 
     si = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE]
     if mcmc.tracer.is_being_traced(STRNAMES.SELF_INTERACTION_VALUE):
@@ -723,7 +723,7 @@ def calculate_stability_over_gibbs(mcmc, section='auto', log_every=1000):
             si = si[:LEN_ARR, ...]
     else:
         si = si.value
-        si = si.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_ASVS))
+        si = si.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_TAXAS))
 
     interactions = mcmc.graph[STRNAMES.GROWTH_VALUE]
     if mcmc.tracer.is_being_traced(STRNAMES.GROWTH_VALUE):
@@ -733,10 +733,10 @@ def calculate_stability_over_gibbs(mcmc, section='auto', log_every=1000):
             interactions = interactions[:LEN_ARR, ...]
     else:
         interactions = interactions.get_datalevel_value_matrix(set_neg_indicators_to_nan=False)
-        interactions = interactions.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_ASVS, N_ASVS))
+        interactions = interactions.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_TAXAS, N_TAXAS))
 
     # Set the self-interactions as the diagonal
-    for i in range(N_ASVS):
+    for i in range(N_TAXAS):
         interactions[:,i,i] = - np.absolute(si[:, i])
 
     # Calculate stability

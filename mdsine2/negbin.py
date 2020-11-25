@@ -66,9 +66,9 @@ class Data(pl.graph.DataNode):
             raise ValueError('`subjects` ({}) must be a pylab SubjectSet'.format(
                 type(subjects)))
         
-        self.asvs = subjects.asvs
+        self.taxas = subjects.taxas
         self.subjects = subjects
-        self.n_asvs = len(self.asvs)
+        self.n_taxas = len(self.taxas)
 
         self.data = []
         self.read_depths = []
@@ -326,7 +326,7 @@ class NegBinDispersionParam(pl.variables.Uniform):
     def _data_likelihood(a0, a1, latent, data, read_depth, rel_abund):
         cumm = 0
 
-        # For each asv
+        # For each taxa
         for oidx in range(data.shape[0]):
             # For each replicate
             for k in range(data.shape[1]):
@@ -395,10 +395,10 @@ class TrajectorySet(pl.variables.Variable):
     def __init__(self, ridx, subjname, **kwargs):
         kwargs['name'] = STRNAMES.LATENT_TRAJECTORY + '_{}'.format(subjname)
         pl.variables.Variable.__init__(self, **kwargs)
-        n_asvs = len(self.G.data.asvs)
-        self.set_value_shape(shape=(n_asvs,))
+        n_taxas = len(self.G.data.taxas)
+        self.set_value_shape(shape=(n_taxas,))
         self.ridx = ridx
-        self.value = np.zeros(n_asvs, dtype=float)
+        self.value = np.zeros(n_taxas, dtype=float)
         self.data = self.G.data.data[self.ridx]
         self.read_depths = self.G.data.read_depths[self.ridx]
         self.qpcr_measurement = self.G.data.qpcr[self.ridx]
@@ -573,7 +573,7 @@ class FilteringMP(pl.graph.Node):
             else:
                 self.pool.append(worker)
 
-        self.total_n_datapoints = len(self.G.data.asvs) * len(self.G.data)
+        self.total_n_datapoints = len(self.G.data.taxas) * len(self.G.data)
 
     def update(self):
         start_time = time.time()
@@ -612,7 +612,7 @@ class FilteringMP(pl.graph.Node):
         if pl.ispersistentpool(self.pool):
             self.pool.kill()
 
-    def visualize(self, basepath, section='posterior', asv_formatter='%(paperformat)s'):
+    def visualize(self, basepath, section='posterior', taxa_formatter='%(paperformat)s'):
         '''Render the latent trajectories in the base folder and write the statistics.
 
         Parameters
@@ -624,15 +624,15 @@ class FilteringMP(pl.graph.Node):
                 'posterior' : posterior samples
                 'burnin' : burn-in samples
                 'entire' : both burn-in and posterior samples
-        asv_formatter : str
-            This is the format to write taxonomy of the ASV
+        taxa_formatter : str
+            This is the format to write taxonomy of the Taxa
         '''
         chain = self.G.inference
-        asvs  = chain.graph.data.asvs
+        taxas  = chain.graph.data.taxas
         os.makedirs(basepath, exist_ok=True)
 
         if chain.is_in_inference_order(STRNAMES.FILTERING):
-            asvnames = asvs.names.order
+            taxanames = taxas.names.order
 
             for ridx, subj in enumerate(self.G.data.subjects):
                 subj_basepath = os.path.join(basepath, subj.name)
@@ -650,10 +650,10 @@ class FilteringMP(pl.graph.Node):
                 # Get from disk only once
                 latent_trace = latent.get_trace_from_disk(section=section)
                 summ = pl.summary(latent_trace)
-                for aidx, aname in enumerate(asvnames):
-                    f.write('\n\nASV {}: {}\n'.format(
-                        aidx, pl.asvname_formatter(asv_formatter, 
-                        asv=aname, asvs=asvs)))
+                for aidx, aname in enumerate(taxanames):
+                    f.write('\n\nTaxa {}: {}\n'.format(
+                        aidx, pl.taxaname_formatter(taxa_formatter, 
+                        taxa=aname, taxas=taxas)))
                     f.write('-------------------\n')
 
                     # Write what the data is
@@ -679,8 +679,8 @@ class FilteringMP(pl.graph.Node):
                         axtrace.axhline(y=M_subj[aidx, idx], color='green', label=label)
 
                     fig = plt.gcf()
-                    fig.suptitle(pl.asvname_formatter(format=asv_formatter,
-                        asv=aname, asvs=asvs))
+                    fig.suptitle(pl.taxaname_formatter(format=taxa_formatter,
+                        taxa=aname, taxas=taxas))
                     plotpath = os.path.join(subj_basepath, '{}.pdf'.format(aname))
                     plt.savefig(plotpath)
                     plt.close()
@@ -698,7 +698,7 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
         ridx):
         '''Initialize the values
 
-        reads : np.ndarray((n_asvs x n_reps))
+        reads : np.ndarray((n_taxas x n_reps))
         qpcr_mean : float
         qpcr_std : float
         prior_mean : float
@@ -707,7 +707,7 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
         tune : int
         end_tune : int
         target_acceptance_rate :float
-        value : np.ndarray((n_asvs,))
+        value : np.ndarray((n_taxas,))
         ridx : int
         '''
         self.reads = reads
@@ -768,7 +768,7 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
         return self.ridx, self.value, self.n_accepted_iter/len(self.value)
 
     def update_single(self, oidx):
-        '''Update the latent state for the ASV index `oidx` in this replicate
+        '''Update the latent state for the Taxa index `oidx` in this replicate
         '''
         old_log_value = np.log(self.value[oidx])
         old_value = self.value[oidx]
@@ -956,7 +956,7 @@ def build_graph(params, graph_name, subjset):
     graph_name : str
         This is what we label the graph with
     subjset : mdsine2.Study
-        This is the MDSINE2 object that contains all of the data and the ASVs
+        This is the MDSINE2 object that contains all of the data and the Taxas
     '''
     if not config.isModelConfig(params):
         raise TypeError('`params` ({}) needs to be a config.ModelConfig object'.format(type(params)))

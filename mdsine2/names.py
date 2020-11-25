@@ -69,7 +69,7 @@ class LatexNamesClass(_BaseNameClass):
     Make sure to do a double \\ for latex names orelse the matplotlib
     string parser will throw an error'''
 
-    # Use the pylab.asvname_formatter method to replace each index
+    # Use the pylab.taxaname_formatter method to replace each index
     def __init__(self):
         self.DATA = 'data'
         self.GROWTH_VALUE = '$a_{%(index)s,1}$'

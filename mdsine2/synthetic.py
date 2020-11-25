@@ -29,9 +29,9 @@ class SyntheticData(pl.Saveable):
     Dynamics with clustered interactions and perturbations. The 
     dynamical class is specified in the module `model`.
 
-    NOTE: We cannot specify the dynamical class until we have our `asvs` 
+    NOTE: We cannot specify the dynamical class until we have our `taxas` 
     object so we wait to define it then, and it is done automatically 
-    once we call the function `set_asvs`
+    once we call the function `set_taxas`
 
     Parameters
     ----------
@@ -70,63 +70,63 @@ class SyntheticData(pl.Saveable):
             A[i,i] = -self.dynamics.self_interactions[i]
         return A
 
-    def set_asvs(self, n_asvs=None, sequences=None, filename=None, asvs=None):
-        '''Sets the ASVset. If you have a list of sequences you want to read in,
-        pass in the list of `sequences` and it will create a new ASV for every sequence. 
-        If you  just want to specify how many ASVs you want and you dont care about 
-        sequences, then specify the number of ASVs with `n_asvs`. If there is an
-        ASVSet saved on file, you can load it with the keyword `filename`.
+    def set_taxas(self, n_taxas=None, sequences=None, filename=None, taxas=None):
+        '''Sets the set. If you have a list of sequences you want to read in,
+        pass in the list of `sequences` and it will create a new Taxa for every sequence. 
+        If you  just want to specify how many Taxas you want and you dont care about 
+        sequences, then specify the number of Taxas with `n_taxas`. If there is an
+        TaxaSet saved on file, you can load it with the keyword `filename`.
 
         Defines the dynamics once done.
 
         Example:
-            >>> self.set_asvs(n_asvs=5)
-            5 ASVs with random sequences
+            >>> self.set_taxas(n_taxas=5)
+            5 Taxas with random sequences
 
             >>> seq = ['AAAA', 'TTTT', 'GGGG', 'CCCC']
-            >>> self.set_asvs(sequences=seq)
-            3 ASVs with the sequences specified above
+            >>> self.set_taxas(sequences=seq)
+            3 Taxas with the sequences specified above
             
-            >>> self.set_asvs(filename='pickles/test.pkl')
-            Reads in the ASVSet saved at 'pickles/test.pkl'
+            >>> self.set_taxas(filename='pickles/test.pkl')
+            Reads in the TaxaSet saved at 'pickles/test.pkl'
 
         Parameters
         ----------
-        n_asvs : int, Optional
-            How many ASVs you want. This is unnecessary if you specify a list of 
+        n_taxas : int, Optional
+            How many Taxas you want. This is unnecessary if you specify a list of 
             sequences.
         sequences : array(str), Optional
-            The sequence for each ASV. If you do not want any, dont specify anything
-            and specify the number of ASVs. If nothing is provided it will create
-            a random sequence of sequences for each ASV
+            The sequence for each Taxa. If you do not want any, dont specify anything
+            and specify the number of Taxas. If nothing is provided it will create
+            a random sequence of sequences for each Taxa
         filename : str, Optional
-            The filename to lead the ASV
-        asvs : pylab.base.ASVSet
-            This is an ASVSet object
+            The filename to lead the Taxa
+        taxas : pylab.base.TaxaSet
+            This is an TaxaSet object
 
         Returns
         -------
-        pl.ASVSet
-            This is the ASVSet that gets created
+        pl.TaxaSet
+            This is the TaxaSet that gets created
         '''
-        a = n_asvs is not None
+        a = n_taxas is not None
         b = sequences is not None
         c = filename is not None
-        d = asvs is not None
+        d = taxas is not None
 
         if a + b + c + d != 1:
-            raise TypeError('Only one of `n_asvs` ({}), `sequences` ({}), '\
-                '`filename` ({}), or asvs ({})  can be specified'.format(
-                type(n_asvs), type(sequences), type(filename), type(asvs)))
+            raise TypeError('Only one of `n_taxas` ({}), `sequences` ({}), '\
+                '`filename` ({}), or taxas ({})  can be specified'.format(
+                type(n_taxas), type(sequences), type(filename), type(taxas)))
         
-        if n_asvs is not None:
-            if not pl.isint(n_asvs):
-                raise TypeError('`n_asvs` ({}) must be an int'.format(type(n_asvs)))
-            self.asvs = pl.ASVSet()
-            for i in range(n_asvs):
-                name = 'ASV_{}'.format(i)
+        if n_taxas is not None:
+            if not pl.isint(n_taxas):
+                raise TypeError('`n_taxas` ({}) must be an int'.format(type(n_taxas)))
+            self.taxas = pl.TaxaSet()
+            for i in range(n_taxas):
+                name = 'Taxa_{}'.format(i)
                 seq = ''.join(random.choices(['A','T','G','C','U'], k=50))
-                self.asvs.add_asv(name=name, sequence=seq)
+                self.taxas.add_taxa(name=name, sequence=seq)
         elif sequences is not None:
             if not pl.isarray(sequences):
                 raise TypeError('`sequences` ({}) must be an array'.format(type(sequences)))
@@ -134,16 +134,16 @@ class SyntheticData(pl.Saveable):
                 raise TypeError('All elements in `sequences` must be strs: {}'.format(
                     pl.itercheck(sequences, pl.isstr)))
             for i, seq in enumerate(sequences):
-                name = 'ASV_{}'.format(i)
-                self.asvs.add_asv(name=name, sequence=seq)
+                name = 'Taxa_{}'.format(i)
+                self.taxas.add_taxa(name=name, sequence=seq)
         elif filename is not None:
             if not pl.isstr(filename):
                 raise TypeError('`filename` ({}) must be a str'.format(type(filename)))
-            self.asvs = pl.ASVSet.load(filename)
+            self.taxas = pl.TaxaSet.load(filename)
         else:
-            self.asvs = asvs
+            self.taxas = taxas
 
-        self.dynamics = model.gLVDynamicsSingleClustering(asvs=self.asvs, 
+        self.dynamics = model.gLVDynamicsSingleClustering(taxas=self.taxas, 
             perturbations_additive=self.perturbations_additive)
         
     def set_cluster_assignments(self, clusters=None, n_clusters=None, evenness=None):
@@ -154,7 +154,7 @@ class SyntheticData(pl.Saveable):
         Parameters
         ----------
         clusters : list(list(int))
-            These are the cluster assignments of the ASVs
+            These are the cluster assignments of the Taxas
         n_clusters : int
             Number of clusters to create
         evenness : str, 1 or 2-dim array
@@ -181,8 +181,8 @@ class SyntheticData(pl.Saveable):
         --------
         pylab.cluster.Clustering.__init__
         '''
-        if self.asvs is None:
-            raise ValueError('Must specify the ASVSet before by calling `self.set_asvs`')
+        if self.taxas is None:
+            raise ValueError('Must specify the TaxaSet before by calling `self.set_taxas`')
 
         if clusters is None:
             if not pl.isint(n_clusters):
@@ -192,22 +192,22 @@ class SyntheticData(pl.Saveable):
             start = 0
             if pl.isstr(evenness):
                 if evenness == 'even':
-                    size = int(len(self.asvs)/n_clusters)
+                    size = int(len(self.taxas)/n_clusters)
                     for _ in range(n_clusters-1):
                         clusters.append(np.arange(start,start+size, dtype=int))
                         start += size
-                    clusters.append(np.arange(start, len(self.asvs), dtype=int))
+                    clusters.append(np.arange(start, len(self.taxas), dtype=int))
                 elif evenness == 'sequence':
                     logging.info('Making affinity matrix from sequences')
-                    evenness = np.diag(np.ones(len(self.asvs), dtype=float))
+                    evenness = np.diag(np.ones(len(self.taxas), dtype=float))
 
-                    for i in range(len(self.asvs)):
-                        for j in range(len(self.asvs)):
+                    for i in range(len(self.taxas)):
+                        for j in range(len(self.taxas)):
                             if j <= i:
                                 continue
                             # Subtract because we want to make a similarity matrix
                             dist = 1-diversity.beta.hamming(
-                                list(self.asvs[i].sequence), list(self.asvs[j].sequence))
+                                list(self.taxas[i].sequence), list(self.taxas[j].sequence))
                             evenness[i,j] = dist
                             evenness[j,i] = dist
 
@@ -224,9 +224,9 @@ class SyntheticData(pl.Saveable):
                 elif evenness.ndim == 2:
                     if evenness.shape[0] != evenness.shape[1]:
                         raise ValueError('Must be a square matrix')
-                    if evenness.shape[0] != len(self.asvs):
-                        raise ValueError('Length of the side ({}) must be the same as the number of ASVs ({})'.format(
-                            evenness.shape[0], len(self.asvs)))
+                    if evenness.shape[0] != len(self.taxas):
+                        raise ValueError('Length of the side ({}) must be the same as the number of s ({})'.format(
+                            evenness.shape[0], len(self.taxas)))
                     
                     c = AgglomerativeClustering(
                         n_clusters=n_clusters,
@@ -248,21 +248,21 @@ class SyntheticData(pl.Saveable):
 
         # Initialize clustering object
         logging.info('cluster assignments: {}'.format(clusters))
-        self.dynamics.clustering = pl.Clustering(clusters = clusters, items=self.asvs, G=self.G)
+        self.dynamics.clustering = pl.Clustering(clusters = clusters, items=self.taxas, G=self.G)
         return self
 
     def shuffle_cluster_assignments(self, p):
         '''Shuffle the cluster assignments that were specified in `set_cluster_assignments`.
 
-        `p` indicates what proportion of the ASVs to be reassigned. Example: `p=.1` means
-        that you want to shuffle 10% of the ASVs.
+        `p` indicates what proportion of the Taxas to be reassigned. Example: `p=.1` means
+        that you want to shuffle 10% of the Taxas.
 
         NOTE: THIS SHOULD BE CALLED BEFORE YOU CALL THE FUNCTION `sample_dynamics`.
 
         Parameters
         ----------
         p : float
-            Proportion of the ASVs to be shuffled
+            Proportion of the Taxas to be shuffled
         '''
         if self.dynamics.clustering is None:
             raise ValueError('Must specfiy the clusters before you call this function')
@@ -271,10 +271,10 @@ class SyntheticData(pl.Saveable):
         if p < 0 or p > 1:
             raise ValueError('`p` ({}) should be 0 =< p =< 1'.format(p))
 
-        n = int(p*len(self.asvs))
-        oidxs = np.random.randint(len(self.asvs), size=n)
+        n = int(p*len(self.taxas))
+        oidxs = np.random.randint(len(self.taxas), size=n)
 
-        logging.info('ASV indices to shuffle: {}'.format(oidxs))
+        logging.info('Taxa indices to shuffle: {}'.format(oidxs))
 
         for oidx in oidxs:
             curr_cid = self.dynamics.clustering.idx2cid[oidx]
@@ -385,7 +385,7 @@ class SyntheticData(pl.Saveable):
         if std_strength <= 0:
             raise ValueError('`std_stregnth` ({}) must be > 0'.format(std_strength))
 
-        # Set indicator at the ASV level
+        # Set indicator at the Taxa level
         if set_num:
             # Pick the number of clusters on
             order = copy.deepcopy(self.dynamics.clustering.order)
@@ -459,7 +459,7 @@ class SyntheticData(pl.Saveable):
             self.dynamics.perturbations.append(a)
         return a
 
-    def icml_topology(self, n_asvs=13, max_abundance=None):
+    def icml_topology(self, n_taxas=13, max_abundance=None):
         '''Recreate the dynamical system used in the ICML paper [1]. If you use the 
         default parameters you will get the same interaction matrix that was used in [1].
 
@@ -468,43 +468,43 @@ class SyntheticData(pl.Saveable):
 
         Parameters
         ----------
-        n_asvs : int
-            These are how many ASVs to include in the system. We will always have 3 clusters and
-            the proportion of ASVs in each cluster is as follows:
+        n_taxas : int
+            These are how many Taxas to include in the system. We will always have 3 clusters and
+            the proportion of Taxas in each cluster is as follows:
                 cluster 1 - 5/13
                 cluster 2 - 6/13
                 cluster 3 - 2/13
-            We assign each ASV to each cluster the best we can, any extra ASVs we put into cluster 3
+            We assign each Taxa to each cluster the best we can, any extra Taxas we put into cluster 3
         max_abundance : numeric, None
             This is the abundance to set the maximum. All of the other 
             parameters change proportionally. If `None` then we assume no change.
         '''
-        if not pl.isint(n_asvs):
-            raise TypeError('`n_asvs` ({}) must be an int'.format(type(n_asvs)))
-        if n_asvs < 3:
-            raise ValueError('`n_asvs` ({}) must be >= 3'.format(n_asvs))
+        if not pl.isint(n_taxas):
+            raise TypeError('`n_taxas` ({}) must be an int'.format(type(n_taxas)))
+        if n_taxas < 3:
+            raise ValueError('`n_taxas` ({}) must be >= 3'.format(n_taxas))
         if max_abundance is not None:
             if not pl.isnumeric(max_abundance):
                 raise TypeError('`max_abundance` ({}) must be a numeric'.format(type(max_abundance)))
             if max_abundance <= 0:
                 raise ValueError('`max_abundance` ({}) must be > 0'.format(max_abundance))
         
-        # Generate ASVs
-        self.set_asvs(n_asvs)
+        # Generate s
+        self.set_taxas(n_taxas)
 
         # Make cluster assignments with the approximate proportions
-        c0size = int(5*n_asvs/13)
-        c1size = int(6*n_asvs/13)
-        c2size = int(n_asvs - c0size - c1size)
+        c0size = int(5*n_taxas/13)
+        c1size = int(6*n_taxas/13)
+        c2size = int(n_taxas - c0size - c1size)
 
-        frac = 150*n_asvs/13
+        frac = 150*n_taxas/13
 
         clusters = [
             np.arange(0, c0size, dtype=int).tolist(), 
             np.arange(c0size, c0size+c1size, dtype=int).tolist(),
             np.arange(c0size+c1size, c0size+c1size+c2size, dtype=int).tolist()]
 
-        self.dynamics.clustering = pl.Clustering(clusters=clusters, items=self.asvs, G=self.G)
+        self.dynamics.clustering = pl.Clustering(clusters=clusters, items=self.taxas, G=self.G)
         self.dynamics.interactions = pl.Interactions(clustering=self.dynamics.clustering, 
             use_indicators=True, G=self.G)
 
@@ -528,16 +528,16 @@ class SyntheticData(pl.Saveable):
                 interaction.value = 0
                 interaction.indicator = False
         
-        self.dynamics.growth = pl.random.uniform.sample(low=18, high=22, size=n_asvs)/150
-        # self.dynamics.growth = pl.random.uniform.sample(.1, 0.6, size=n_asvs)
-        # self.dynamics.growth = pl.random.uniform.sample(low=.1 + 0.2, high=math.log(10) - 0.2, size=n_asvs)
-        # self.dynamics.growth = pl.random.uniform.sample(low=0.12, high=2, size=n_asvs)
-        self.dynamics.self_interactions = np.ones(n_asvs, dtype=float)*(5)/150
-        # self.dynamics.self_interactions = pl.random.uniform.sample(-.05/150, -50/150, size=n_asvs)
+        self.dynamics.growth = pl.random.uniform.sample(low=18, high=22, size=n_taxas)/150
+        # self.dynamics.growth = pl.random.uniform.sample(.1, 0.6, size=n_taxas)
+        # self.dynamics.growth = pl.random.uniform.sample(low=.1 + 0.2, high=math.log(10) - 0.2, size=n_taxas)
+        # self.dynamics.growth = pl.random.uniform.sample(low=0.12, high=2, size=n_taxas)
+        self.dynamics.self_interactions = np.ones(n_taxas, dtype=float)*(5)/150
+        # self.dynamics.self_interactions = pl.random.uniform.sample(-.05/150, -50/150, size=n_taxas)
 
         if max_abundance is not None:
-            # self.dynamics.growth = pl.random.uniform.sample(low=.1, high=math.log(10), size=n_asvs)
-            # self.dynamics.growth = pl.random.uniform.sample(low=.21, high=.5, size=n_asvs)/2
+            # self.dynamics.growth = pl.random.uniform.sample(low=.1, high=math.log(10), size=n_taxas)
+            # self.dynamics.growth = pl.random.uniform.sample(low=.21, high=.5, size=n_taxas)/2
             # rescale the abundance such that hte max the max is ~max_abundance
             frac = 25/max_abundance
             self.dynamics.self_interactions *= frac
@@ -545,7 +545,7 @@ class SyntheticData(pl.Saveable):
                 if interaction.indicator:
                     interaction.value *= frac
     
-    def icml_topology_real(self, n_asvs=13, max_abundance=None, scale_interaction=None):
+    def icml_topology_real(self, n_taxas=13, max_abundance=None, scale_interaction=None):
         '''Recreate the dynamical system used in the ICML paper [1]. If you use the 
         default parameters you will get the same interaction matrix that was used in [1].
 
@@ -554,21 +554,21 @@ class SyntheticData(pl.Saveable):
 
         Parameters
         ----------
-        n_asvs : int
-            These are how many ASVs to include in the system. We will always have 3 clusters and
-            the proportion of ASVs in each cluster is as follows:
+        n_taxas : int
+            These are how many Taxas to include in the system. We will always have 3 clusters and
+            the proportion of Taxas in each cluster is as follows:
                 cluster 1 - 5/13
                 cluster 2 - 6/13
                 cluster 3 - 2/13
-            We assign each ASV to each cluster the best we can, any extra ASVs we put into cluster 3
+            We assign each Taxa to each cluster the best we can, any extra Taxas we put into cluster 3
         max_abundance : numeric, None
             This is the abundance to set the maximum. All of the other 
             parameters change proportionally. If `None` then we assume no change.
         '''
-        if not pl.isint(n_asvs):
-            raise TypeError('`n_asvs` ({}) must be an int'.format(type(n_asvs)))
-        if n_asvs < 3:
-            raise ValueError('`n_asvs` ({}) must be >= 3'.format(n_asvs))
+        if not pl.isint(n_taxas):
+            raise TypeError('`n_taxas` ({}) must be an int'.format(type(n_taxas)))
+        if n_taxas < 3:
+            raise ValueError('`n_taxas` ({}) must be >= 3'.format(n_taxas))
         if max_abundance is not None:
             if not pl.isnumeric(max_abundance):
                 raise TypeError('`max_abundance` ({}) must be a numeric'.format(type(max_abundance)))
@@ -576,22 +576,22 @@ class SyntheticData(pl.Saveable):
                 raise ValueError('`max_abundance` ({}) must be > 0'.format(max_abundance))
         if scale_interaction is None:
             scale_interaction = 1
-        # Generate ASVs
-        self.set_asvs(n_asvs)
+        # Generate Taxas
+        self.set_taxas(n_taxas)
 
         # Make cluster assignments with the approximate proportions
-        c0size = int(5*n_asvs/13)
-        c1size = int(6*n_asvs/13)
-        c2size = int(n_asvs - c0size - c1size)
+        c0size = int(5*n_taxas/13)
+        c1size = int(6*n_taxas/13)
+        c2size = int(n_taxas - c0size - c1size)
 
-        frac = 150*n_asvs/13
+        frac = 150*n_taxas/13
 
         clusters = [
             np.arange(0, c0size, dtype=int).tolist(), 
             np.arange(c0size, c0size+c1size, dtype=int).tolist(),
             np.arange(c0size+c1size, c0size+c1size+c2size, dtype=int).tolist()]
 
-        self.dynamics.clustering = pl.Clustering(clusters=clusters, items=self.asvs, G=self.G)
+        self.dynamics.clustering = pl.Clustering(clusters=clusters, items=self.taxas, G=self.G)
         self.dynamics.interactions = pl.Interactions(clustering=self.dynamics.clustering, 
             use_indicators=True, G=self.G)
 
@@ -615,15 +615,15 @@ class SyntheticData(pl.Saveable):
                 interaction.value = 0
                 interaction.indicator = False
         
-        # self.dynamics.growth = pl.random.uniform.sample(low=18, high=22, size=n_asvs)/150
-        self.dynamics.growth = pl.random.uniform.sample(0.5, 1.5, size=n_asvs)
-        # self.dynamics.growth = pl.random.uniform.sample(low=.1 + 0.2, high=math.log(10) - 0.2, size=n_asvs)
-        self.dynamics.self_interactions = np.ones(n_asvs, dtype=float)*(5)/150
-        # self.dynamics.self_interactions = pl.random.uniform.sample(-.05/150, -50/150, size=n_asvs)
+        # self.dynamics.growth = pl.random.uniform.sample(low=18, high=22, size=n_taxas)/150
+        self.dynamics.growth = pl.random.uniform.sample(0.5, 1.5, size=n_taxas)
+        # self.dynamics.growth = pl.random.uniform.sample(low=.1 + 0.2, high=math.log(10) - 0.2, size=n_taxas)
+        self.dynamics.self_interactions = np.ones(n_taxas, dtype=float)*(5)/150
+        # self.dynamics.self_interactions = pl.random.uniform.sample(-.05/150, -50/150, size=n_taxas)
 
         if max_abundance is not None:
-            # self.dynamics.growth = pl.random.uniform.sample(low=.1, high=math.log(10), size=n_asvs)
-            # self.dynamics.growth = pl.random.uniform.sample(low=.21, high=.5, size=n_asvs)/2
+            # self.dynamics.growth = pl.random.uniform.sample(low=.1, high=math.log(10), size=n_taxas)
+            # self.dynamics.growth = pl.random.uniform.sample(low=.21, high=.5, size=n_taxas)/2
             # rescale the abundance such that hte max the max is ~max_abundance
             frac = 25/max_abundance
             self.dynamics.self_interactions *= frac
@@ -997,7 +997,7 @@ class SyntheticData(pl.Saveable):
         n_valid = 1
 
         while n_valid > 0:
-            init_abundance = self.init_dist.sample(size=len(self.asvs)).reshape(-1,1)
+            init_abundance = self.init_dist.sample(size=len(self.taxas)).reshape(-1,1)
             d = self.dynamics.integrate(
                 initial_conditions=init_abundance,
                 dt=self.dt, processvar=processvar, subsample=True, 
@@ -1034,18 +1034,18 @@ class SyntheticData(pl.Saveable):
         ---------------------
         We first simulate the read depth for each day from a negative binomial
         that was fitted using the read depth of our data from `subjset` (using function 
-        minimization). To generate the indivual counts for each ASV, we then 'sample' 
+        minimization). To generate the indivual counts for each Taxa, we then 'sample' 
         from a dirichlet multinomial using the sample read depth as our counts and the 
         `alpha` parameter as the multiplicative concentration for our relative abundances, where
             $\mathbf{\alpha}_i = \alpha * r_i$,
-            $\mathbf{\alpha}_i$ is the concentration parameter for ASV $i$ to sample from a dirichlet
+            $\mathbf{\alpha}_i$ is the concentration parameter for Taxa $i$ to sample from a dirichlet
             distribution,
-            $r_i$ is the relative abundance for ASV $i$,
+            $r_i$ is the relative abundance for Taxa $i$,
             $\alpha$ is the input concentration
         To emulate a dirichlet multinomial distribution, we first sample the relative abundances 
-        of each of the ASVs from a dirichlet distribution using our alpha term as sepcified above, 
+        of each of the s from a dirichlet distribution using our alpha term as sepcified above, 
         and then sample from a multinomial distribution given our sampled a read depth and our 
-        probabilities sampled concentrations for each ASV from the dirichlet distribution.
+        probabilities sampled concentrations for each Taxa from the dirichlet distribution.
 
         Parameters
         ----------
@@ -1102,7 +1102,7 @@ class SyntheticData(pl.Saveable):
         readdepth_negbin = scipy.stats.nbinom(n_pred, p_pred)
         
         # Make data, record the data with noise
-        ret_subjset = pl.Study(asvs=self.asvs)
+        ret_subjset = pl.Study(taxas=self.taxas)
         for ridx in range(self.n_replicates):
             mid = str(ridx)
             ret_subjset.add(name=mid)
@@ -1164,7 +1164,7 @@ class SyntheticData(pl.Saveable):
         for times in self.times:
             n_time_points += len(times)
 
-        ret_subjset = pl.Study(asvs=self.asvs)
+        ret_subjset = pl.Study(taxas=self.taxas)
         data = self.data
         times = self.times
         for ridx in np.arange(self.n_replicates):
@@ -1342,7 +1342,7 @@ class SyntheticData(pl.Saveable):
         for times in self.times:
             n_time_points += len(times)
 
-        ret_subjset = pl.Study(asvs=self.asvs)
+        ret_subjset = pl.Study(taxas=self.taxas)
         data = self.data
         times = self.times
         for ridx in replicates:
@@ -1393,7 +1393,7 @@ class SyntheticData(pl.Saveable):
         -------
         pylab.Base.Study
         '''
-        subjset = pl.Study(asvs=self.asvs)
+        subjset = pl.Study(taxas=self.taxas)
         data = self.data
         times = self.times
 
@@ -1836,7 +1836,7 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
     
     How the synthetic system is set
     -------------------------------
-    n_asvs: Set to the number in chain.
+    n_taxas: Set to the number in chain.
     clustering: The clusters assignments are set to the value of the Clustering class
     interactions: Set to the expected value of the posterior. We only include interactions
         whose bayes factor is greater than `min_bayes_factor`.
@@ -1845,7 +1845,7 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
         of the posterior. We only include perturbation effects whose bayes factor is
         greater than `min_bayes_factor`
     growth and self-interactions: These are set to the learned values for each of the 
-        asvs.
+        taxas.
     init_dist: The distirbution of the initial timepoints are set by fitting a log normal
         ditribution to the `init_dist_timepoint`th timepoint
 
@@ -1895,8 +1895,8 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
     GRAPH = chain.graph
     DATA = GRAPH.data
     SUBJSET = DATA.subjects
-    ASVS = DATA.asvs
-    logging.info('Number of ASVs ({})'.format(len(ASVS)))
+    TAXAS = DATA.taxas
+    logging.info('Number of Taxas ({})'.format(len(TAXAS)))
 
     n_days = -1
     for subj in SUBJSET:
@@ -1915,7 +1915,7 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
     synth = SyntheticData(n_days=n_days,
         perturbations_additive=perturbations_additive)
 
-    synth.set_asvs(asvs=DATA.asvs)
+    synth.set_taxas(taxas=DATA.taxas)
     synth.set_cluster_assignments(clusters=CLUSTERING.toarray())
 
     # Set the interactions
@@ -1923,11 +1923,11 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
     synth.dynamics.interactions = pl.Interactions(clustering=synth.dynamics.clustering, 
         use_indicators=True, G=synth.G)
     logging.info('Generating bayes factors')
-    bayes_factors_asvs = INTERACTIONS.generate_bayes_factors_posthoc(
+    bayes_factors_taxas = INTERACTIONS.generate_bayes_factors_posthoc(
         prior=GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR].prior,
         section='posterior')
     logging.info('Getting values')
-    cluster_interactions_asvs = pl.variables.summary(INTERACTIONS, set_nan_to_0=False,
+    cluster_interactions_taxas = pl.variables.summary(INTERACTIONS, set_nan_to_0=False,
         section='posterior', only=['mean'])['mean']
 
     logging.info('Set the interactions')
@@ -1937,7 +1937,7 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
         tcidx = synth.dynamics.clustering.cid2cidx[interaction.target_cid]
         scidx = synth.dynamics.clustering.cid2cidx[interaction.source_cid]
 
-        # Get a set of target and source asv indices of the interaction (it can
+        # Get a set of target and source taxa indices of the interaction (it can
         # be any of them because we assume the chain was run with a fixed topology)
         taidx = list(CLUSTERING.clusters[CLUSTERING.order[tcidx]].members)[0]
         saidx = list(CLUSTERING.clusters[CLUSTERING.order[scidx]].members)[0]
@@ -1945,8 +1945,8 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
         # If the bayes factor of the interaction is greater than the minimum bayes
         # factor, then we set the interaction. If it is less, then we set the 
         # indicator to false
-        if bayes_factors_asvs[taidx, saidx] > min_bayes_factor:
-            interaction.value = cluster_interactions_asvs[taidx, saidx]
+        if bayes_factors_taxas[taidx, saidx] > min_bayes_factor:
+            interaction.value = cluster_interactions_taxas[taidx, saidx]
             interaction.indicator = True
         else:
             interaction.value = 0
@@ -1960,7 +1960,7 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
             start=PERTURBATION.start, end=PERTURBATION.end,
             G=synth.G, clustering=synth.dynamics.clustering)
 
-        # values and bayes factors are on an asv level
+        # values and bayes factors are on an taxa level
         values = pl.variables.summary(PERTURBATION, section='posterior', 
             only=['mean'])['mean']
         indicator_trace = ~np.isnan(PERTURBATION.get_trace_from_disk(section='posterior'))

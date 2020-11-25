@@ -124,7 +124,7 @@ class Integratable:
         Parameters
         ----------
         x : np.ndarray((n,1))
-            This is the abundance as a column vector for each ASV
+            This is the abundance as a column vector for each Taxa
         t : numeric
             This is the time point we are integrating to
         dt : numeric
@@ -196,7 +196,7 @@ def integrate(dynamics, initial_conditions, dt, n_days, processvar=None,
     processvar : BaseProcessVariance, None
         This is the process variance we want to inject into the integration.
         If None, we assume there is no process variance and it is a normal ODE
-    initial_conditions : np.ndarray((n_asvs,1), dtype=float)
+    initial_conditions : np.ndarray((n_taxas,1), dtype=float)
         These are the initial conditions to integrate from. This must be a 
         column array.
     dt : float
@@ -232,8 +232,8 @@ def integrate(dynamics, initial_conditions, dt, n_days, processvar=None,
     Returns
     -------
     dict
-        &#39;X&#39;: np.ndarray((n_asvs, k), dtype=float)
-            The abundances for each ASV (row) for each time (column)
+        &#39;X&#39;: np.ndarray((n_taxas, k), dtype=float)
+            The abundances for each Taxa (row) for each time (column)
         &#39;times&#39;: np.ndarray((k, ), dtype=float)
             These are the times, in days, for each column
     &#39;&#39;&#39;
@@ -361,7 +361,7 @@ scale in this function is specified by <code>dt</code>.</p>
 <dt><strong><code>processvar</code></strong> :&ensp;<code><a title="mdsine2.pylab.dynamics.BaseProcessVariance" href="#mdsine2.pylab.dynamics.BaseProcessVariance">BaseProcessVariance</a>, None</code></dt>
 <dd>This is the process variance we want to inject into the integration.
 If None, we assume there is no process variance and it is a normal ODE</dd>
-<dt><strong><code>initial_conditions</code></strong> :&ensp;<code>np.ndarray((n_asvs,1), dtype=float)</code></dt>
+<dt><strong><code>initial_conditions</code></strong> :&ensp;<code>np.ndarray((n_taxas,1), dtype=float)</code></dt>
 <dd>These are the initial conditions to integrate from. This must be a
 column array.</dd>
 <dt><strong><code>dt</code></strong> :&ensp;<code>float</code></dt>
@@ -402,8 +402,8 @@ will never log</li>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>dict</code></dt>
-<dd>'X': np.ndarray((n_asvs, k), dtype=float)
-The abundances for each ASV (row) for each time (column)
+<dd>'X': np.ndarray((n_taxas, k), dtype=float)
+The abundances for each Taxa (row) for each time (column)
 'times': np.ndarray((k, ), dtype=float)
 These are the times, in days, for each column</dd>
 </dl></div>
@@ -435,7 +435,7 @@ These are the times, in days, for each column</dd>
     processvar : BaseProcessVariance, None
         This is the process variance we want to inject into the integration.
         If None, we assume there is no process variance and it is a normal ODE
-    initial_conditions : np.ndarray((n_asvs,1), dtype=float)
+    initial_conditions : np.ndarray((n_taxas,1), dtype=float)
         These are the initial conditions to integrate from. This must be a 
         column array.
     dt : float
@@ -471,8 +471,8 @@ These are the times, in days, for each column</dd>
     Returns
     -------
     dict
-        &#39;X&#39;: np.ndarray((n_asvs, k), dtype=float)
-            The abundances for each ASV (row) for each time (column)
+        &#39;X&#39;: np.ndarray((n_taxas, k), dtype=float)
+            The abundances for each Taxa (row) for each time (column)
         &#39;times&#39;: np.ndarray((k, ), dtype=float)
             These are the times, in days, for each column
     &#39;&#39;&#39;
@@ -811,7 +811,7 @@ These are the times, in days, for each column</dd>
         Parameters
         ----------
         x : np.ndarray((n,1))
-            This is the abundance as a column vector for each ASV
+            This is the abundance as a column vector for each Taxa
         t : numeric
             This is the time point we are integrating to
         dt : numeric
@@ -873,7 +873,7 @@ efficiency</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>x</code></strong> :&ensp;<code>np.ndarray((n,1))</code></dt>
-<dd>This is the abundance as a column vector for each ASV</dd>
+<dd>This is the abundance as a column vector for each Taxa</dd>
 <dt><strong><code>t</code></strong> :&ensp;<code>numeric</code></dt>
 <dd>This is the time point we are integrating to</dd>
 <dt><strong><code>dt</code></strong> :&ensp;<code>numeric</code></dt>
@@ -892,7 +892,7 @@ are integrating from</dd>
     Parameters
     ----------
     x : np.ndarray((n,1))
-        This is the abundance as a column vector for each ASV
+        This is the abundance as a column vector for each Taxa
     t : numeric
         This is the time point we are integrating to
     dt : numeric

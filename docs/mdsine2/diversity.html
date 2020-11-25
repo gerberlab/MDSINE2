@@ -60,7 +60,7 @@ class alpha:
         Entropy is defined as
             E = - \sum_i (b_i * \log(b_i))
         where
-            b_i is the relative abundance of the ith ASV
+            b_i is the relative abundance of the ith Taxa
         
         Parameters
         ----------
@@ -86,7 +86,7 @@ class alpha:
         Entropy is defined as
             E = - \sum_i (b_i * \log_n(b_i))
         where
-            b_i is the relative abundance of the ith ASV
+            b_i is the relative abundance of the ith Taxa
         
         Parameters
         ----------
@@ -140,7 +140,14 @@ class beta:
 
     @staticmethod
     def hamming(u,v):
-        return distance.hamming(u,v)
+        if len(u) != len(v):
+            raise ValueError(&#39;Cannot compare different distances&#39;)
+        result=0
+        for i,j in zip(u,v):
+            if i!=j:
+                # print(f&#39;char not math{i,j}in {x}&#39;)
+                result+=1
+        return result
 
     @staticmethod
     def unifrac(*args,**kwargs):
@@ -203,7 +210,7 @@ def _validate_counts(counts, cast_as_ints=True):
         Entropy is defined as
             E = - \sum_i (b_i * \log(b_i))
         where
-            b_i is the relative abundance of the ith ASV
+            b_i is the relative abundance of the ith Taxa
         
         Parameters
         ----------
@@ -229,7 +236,7 @@ def _validate_counts(counts, cast_as_ints=True):
         Entropy is defined as
             E = - \sum_i (b_i * \log_n(b_i))
         where
-            b_i is the relative abundance of the ith ASV
+            b_i is the relative abundance of the ith Taxa
         
         Parameters
         ----------
@@ -281,7 +288,7 @@ def _validate_counts(counts, cast_as_ints=True):
 <p>Entropy is defined as
 E = - \sum_i (b_i * \log(b_i))
 where
-b_i is the relative abundance of the ith ASV</p>
+b_i is the relative abundance of the ith Taxa</p>
 <h2 id="parameters">Parameters</h2>
 <p>counts (array_like)
 - Vector of counts</p>
@@ -301,7 +308,7 @@ def entropy(counts):
     Entropy is defined as
         E = - \sum_i (b_i * \log(b_i))
     where
-        b_i is the relative abundance of the ith ASV
+        b_i is the relative abundance of the ith Taxa
     
     Parameters
     ----------
@@ -329,7 +336,7 @@ def entropy(counts):
 <p>Entropy is defined as
 E = - \sum_i (b_i * \log_n(b_i))
 where
-b_i is the relative abundance of the ith ASV</p>
+b_i is the relative abundance of the ith Taxa</p>
 <h2 id="parameters">Parameters</h2>
 <p>counts (array_like)
 - Vector of counts</p>
@@ -349,7 +356,7 @@ def normalized_entropy(counts):
     Entropy is defined as
         E = - \sum_i (b_i * \log_n(b_i))
     where
-        b_i is the relative abundance of the ith ASV
+        b_i is the relative abundance of the ith Taxa
     
     Parameters
     ----------
@@ -435,7 +442,14 @@ def shannon_entropy(counts, base=2):
 
     @staticmethod
     def hamming(u,v):
-        return distance.hamming(u,v)
+        if len(u) != len(v):
+            raise ValueError(&#39;Cannot compare different distances&#39;)
+        result=0
+        for i,j in zip(u,v):
+            if i!=j:
+                # print(f&#39;char not math{i,j}in {x}&#39;)
+                result+=1
+        return result
 
     @staticmethod
     def unifrac(*args,**kwargs):
@@ -468,7 +482,14 @@ def braycurtis(u,v):
 </summary>
 <pre><code class="python">@staticmethod
 def hamming(u,v):
-    return distance.hamming(u,v)</code></pre>
+    if len(u) != len(v):
+        raise ValueError(&#39;Cannot compare different distances&#39;)
+    result=0
+    for i,j in zip(u,v):
+        if i!=j:
+            # print(f&#39;char not math{i,j}in {x}&#39;)
+            result+=1
+    return result</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.diversity.beta.jaccard"><code class="name flex">

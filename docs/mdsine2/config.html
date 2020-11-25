@@ -68,6 +68,7 @@ import logging
 import numpy as np
 import pandas as pd
 import sys
+import os.path
 
 from .names import STRNAMES
 from . import pylab as pl
@@ -91,24 +92,6 @@ INTERMEDIATE_RESULTS_FILENAME = &#39;intermediate_results.tsv&#39;
 
 PHYLOGENETIC_TREE_FILENAME = &#39;raw_data/phylogenetic_tree_branch_len_preserved.nhx&#39;
 
-def calculate_reads_a0a1(desired_percent_variation):
-    &#39;&#39;&#39;
-    At the full noise level, in terms of % noise of the signal at:
-        10000 reads, the signal is ~10% noise
-        100 reads, the signal is ~20% noise
-        10 reads, the signal is ~30% noise
-
-    When we scale the a0 and a1 terms, we are assuming that you want to
-    scale the high abundance bacteria for that signal and we scale the
-    a0 parameter such that they stay relative to each other.
-
-    If == -1 we set to the full noise
-    &#39;&#39;&#39;
-    if desired_percent_variation == -1:
-        desired_percent_variation = 0.05
-    p = desired_percent_variation / 0.05
-    return NEGBIN_A0*p, NEGBIN_A1*p
-
 def isModelConfig(x):
     &#39;&#39;&#39;Checks if the input array is a model config object
 
@@ -123,7 +106,6 @@ def isModelConfig(x):
         True if `x` is a a model config object
     &#39;&#39;&#39;
     return x is not None and issubclass(x.__class__, _BaseModelConfig)
-
 
 class _BaseModelConfig(pl.Saveable):
 
@@ -148,10 +130,10 @@ class MDSINE2ModelConfig(_BaseModelConfig):
     ----------
     &#39;&#39;&#39;
     def __init__(self, basepath, data_seed, init_seed, burnin, n_samples,
-        negbin_a0, negbin_a1, qpcr_scale, leave_out=None, max_n_asvs=None, 
+        negbin_a0, negbin_a1, leave_out=None, max_n_taxas=None, 
         checkpoint=100):
-
-        self.OUTPUT_BASEPATH = basepath
+        self.OUTPUT_BASEPATH = os.path.abspath(basepath)
+        self.MODEL_PATH = None
         self.DATA_SEED = data_seed
         self.INIT_SEED = init_seed
         self.BURNIN = burnin
@@ -162,7 +144,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
 
         self.QPCR_NORMALIZATION_MAX_VALUE = 100
         self.LEAVE_OUT = leave_out
-        self.MAX_N_ASVS = max_n_asvs
+        self.MAX_N_TAXAS = max_n_taxas
         self.ZERO_INFLATION_TRANSITION_POLICY = None #&#39;ignore&#39;
 
         self.GROWTH_TRUNCATION_SETTINGS = &#39;positive&#39;
@@ -173,7 +155,6 @@ class MDSINE2ModelConfig(_BaseModelConfig):
 
         self.NEGBIN_A0 = negbin_a0
         self.NEGBIN_A1 = negbin_a1
-        self.QPCR_NOISE_SCALE = qpcr_scale
         self.N_QPCR_BUCKETS = 3
 
         self.INTERMEDIATE_VALIDATION_T = 1 * 3600 # Every hour
@@ -332,7 +313,6 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB: {
                 &#39;value_option&#39;: &#39;auto&#39;,
                 &#39;hyperparam_option&#39;: &#39;strong-sparse&#39;,
-                &#39;N&#39;: 25,
                 &#39;delay&#39;: 0},
             STRNAMES.FILTERING: {
                 &#39;x_value_option&#39;:  &#39;loess&#39;,
@@ -357,7 +337,6 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 &#39;delay&#39;: 0, &#39;n_iter&#39;: 20},
             STRNAMES.CLUSTERING: {
                 &#39;value_option&#39;: &#39;spearman&#39;, #&#39;fixed-topology&#39;,
-                # &#39;value&#39;: &#39;output_real/pylab24/real_runs/strong_priors/healthy1_5_0.0001_rel_2_5/ds0_is0_b5000_ns15000_mo-1_logTrue_pertsmult/graph_leave_out-1/mcmc.pkl&#39;,
                 &#39;delay&#39;: 2,
                 &#39;n_clusters&#39;: 30,
                 &#39;run_every_n_iterations&#39;: 4},
@@ -408,7 +387,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         &#39;&#39;&#39;
         s = &#39;ds{}_is{}_b{}_ns{}_lo{}_mo{}&#39;.format(
             self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES, self.LEAVE_OUT,
-            self.MAX_N_ASVS)
+            self.MAX_N_TAXAS)
         return s
 
     def cv_suffix(self):
@@ -416,13 +395,80 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         &#39;&#39;&#39;
         s = &#39;ds{}_is{}_b{}_ns{}_mo{}&#39;.format(
             self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES,
-            self.MAX_N_ASVS)
+            self.MAX_N_TAXAS)
         return s
 
     def cv_single_suffix(self):
         &#39;&#39;&#39;Create a suffix for a single cv round
         &#39;&#39;&#39;
         return &#39;leave_out{}&#39;.format(self.LEAVE_OUT)
+
+    def make_metadata_file(self, fname):
+        &#39;&#39;&#39;Make a metadata file that does an overview of the parameters in this class
+        &#39;&#39;&#39;
+
+        mystr = &#39;Global parameters\n&#39; \
+            &#39;-----------------\n&#39; \
+            &#39;Random seed: {seed}\n&#39; \
+            &#39;Total number of Gibb steps: {n_samples}\n&#39; \
+            &#39;Number of Gibb steps for burn-in: {burnin}\n&#39; \
+            &#39;Saved location: {model_path}\n\n&#39; \
+            &#39;Negative binomial dispersion parameters\n&#39; \
+            &#39;---------------------------------------\n&#39; \
+            &#39;a0: {a0:.4E}\n&#39; \
+            &#39;a1: {a1:.4E}\n\n&#39; \
+            &#39;Parameters learned and their order\n&#39; \
+            &#39;----------------------------------\n&#39; \
+            &#39;{params_learned}\n\n&#39; \
+            &#39;Selected Initialization choices\n&#39; \
+            &#39;-------------------------------\n&#39; \
+            &#39;Cluster interaction probability prior: {clus_ind_prior}\n&#39; \
+            &#39;Perturbation probability prior: {pert_ind_prior}\n&#39; \
+            &#39;Filtering initialization: {filt}\n&#39; \
+            &#39;Cluster initialization: {clus_init}\n&#39;
+        # params learned
+        # --------------
+        i = 0
+        params_learned = &#39;&#39;
+        for pname in self.INFERENCE_ORDER:
+            if self.LEARN[pname]:
+                params_learned += &#39;{}: {}\n&#39;.format(i, pname)
+                i += 1
+        
+        # init choices
+        # ------------
+        if self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;spearman&#39;:
+            clus_init = &#39;Spearman Correlation, {} clusters&#39;.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;n_clusters&#39;])
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;no-clusters&#39;:
+            clus_init = &#39;No clusters, everything in its own cluster&#39;
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;fixed-topology&#39;:
+            clus_init = &#39;Same topology as {}&#39;.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value&#39;])
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;manual&#39;:
+            clus_init = &#39;Manually with assignments {}&#39;.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value&#39;])
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;random&#39;:
+            clus_init = &#39;Randomly, with {} clusters&#39;.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;n_clusters&#39;])
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;taxonomy&#39;:
+            clus_init = &#39;By taxonomic similarity, with {} clusters&#39;.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;n_clusters&#39;])
+        else:
+            clus_init = &#39;Something slse&#39;
+
+
+        f = open(fname, &#39;w&#39;)
+        f.write(mystr.format(
+            seed=self.DATA_SEED, n_samples=self.N_SAMPLES,
+            burnin=self.BURNIN, model_path=self.MODEL_PATH,
+            a0=self.NEGBIN_A0, a1=self.NEGBIN_A1,
+            params_learned=params_learned,
+            clus_ind_prior=self.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB][&#39;hyperparam_option&#39;],
+            pert_ind_prior=self.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB][&#39;hyperparam_option&#39;],
+            filt=self.INITIALIZATION_KWARGS[STRNAMES.FILTERING][&#39;x_value_option&#39;],
+            clus_init=clus_init))
+        f.close()
 
 
 class FilteringConfig(pl.Saveable):
@@ -433,7 +479,7 @@ class FilteringConfig(pl.Saveable):
     Filters the subjects by looking at the consistency of the counts.
     There must be at least `min_num_counts` for at least
     `min_num_consecutive` consecutive timepoints for at least
-    `min_num_subjects` subjects for the ASV to be classified as valid.
+    `min_num_subjects` subjects for the  to be classified as valid.
 
     Parameters
     ----------
@@ -444,7 +490,7 @@ class FilteringConfig(pl.Saveable):
         This is the minimum number of counts/abudnance/relative abundance that 
         there must be at each consecutive timepoint
     min_num_subjects : int, None
-        This is how many subjects this must be true for for the ASV to be
+        This is how many subjects this must be true for for the Taxa to be
         valid. If it is None then it only requires one subject.
     colonization_time : int
         How many days we consider colonization (ignore during filtering)
@@ -532,11 +578,12 @@ class NegBinConfig(_BaseModelConfig):
             basepath += &#39;/&#39;
 
         self.SEED = seed
-        self.OUTPUT_BASEPATH = basepath
+        self.OUTPUT_BASEPATH = os.path.abspath(basepath)
+        self.MODEL_PATH = None
         self.BURNIN = burnin
         self.N_SAMPLES = n_samples
         self.CKPT = ckpt
-        self.MP_FILTERING = &#39;full&#39;
+        self.MP_FILTERING = &#39;debug&#39;
 
         self.INFERENCE_ORDER = [
             STRNAMES.NEGBIN_A0,
@@ -555,7 +602,7 @@ class NegBinConfig(_BaseModelConfig):
 
         self.INITIALIZATION_KWARGS = {
             STRNAMES.NEGBIN_A0: {
-                &#39;value&#39;: 1e-4,
+                &#39;value&#39;: 1e-10,
                 &#39;truncation_settings&#39;: (0, 1e5),
                 &#39;tune&#39;: 50,
                 &#39;end_tune&#39;: int(self.BURNIN/2),
@@ -563,7 +610,7 @@ class NegBinConfig(_BaseModelConfig):
                 &#39;proposal_option&#39;: &#39;auto&#39;,
                 &#39;delay&#39;: 0},
             STRNAMES.NEGBIN_A1: {
-                &#39;value&#39;: 0.5,
+                &#39;value&#39;: 0.1,
                 &#39;tune&#39;: 50,
                 &#39;truncation_settings&#39;: (0, 1e5),
                 &#39;end_tune&#39;: int(self.BURNIN/2),
@@ -588,41 +635,6 @@ class NegBinConfig(_BaseModelConfig):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="mdsine2.config.calculate_reads_a0a1"><code class="name flex">
-<span>def <span class="ident">calculate_reads_a0a1</span></span>(<span>desired_percent_variation)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>At the full noise level, in terms of % noise of the signal at:
-10000 reads, the signal is ~10% noise
-100 reads, the signal is ~20% noise
-10 reads, the signal is ~30% noise</p>
-<p>When we scale the a0 and a1 terms, we are assuming that you want to
-scale the high abundance bacteria for that signal and we scale the
-a0 parameter such that they stay relative to each other.</p>
-<p>If == -1 we set to the full noise</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def calculate_reads_a0a1(desired_percent_variation):
-    &#39;&#39;&#39;
-    At the full noise level, in terms of % noise of the signal at:
-        10000 reads, the signal is ~10% noise
-        100 reads, the signal is ~20% noise
-        10 reads, the signal is ~30% noise
-
-    When we scale the a0 and a1 terms, we are assuming that you want to
-    scale the high abundance bacteria for that signal and we scale the
-    a0 parameter such that they stay relative to each other.
-
-    If == -1 we set to the full noise
-    &#39;&#39;&#39;
-    if desired_percent_variation == -1:
-        desired_percent_variation = 0.05
-    p = desired_percent_variation / 0.05
-    return NEGBIN_A0*p, NEGBIN_A1*p</code></pre>
-</details>
-</dd>
 <dt id="mdsine2.config.isModelConfig"><code class="name flex">
 <span>def <span class="ident">isModelConfig</span></span>(<span>x)</span>
 </code></dt>
@@ -673,7 +685,8 @@ a0 parameter such that they stay relative to each other.</p>
 <p>Filters the subjects by looking at the consistency of the counts.
 There must be at least <code>min_num_counts</code> for at least
 <code>min_num_consecutive</code> consecutive timepoints for at least
-<code>min_num_subjects</code> subjects for the ASV to be classified as valid.</p>
+<code>min_num_subjects</code> subjects for the
+to be classified as valid.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>min_num_consec</code></strong> :&ensp;<code>int</code></dt>
@@ -683,7 +696,7 @@ must be at least <code>min_num_counts</code></dd>
 <dd>This is the minimum number of counts/abudnance/relative abundance that
 there must be at each consecutive timepoint</dd>
 <dt><strong><code>min_num_subjects</code></strong> :&ensp;<code>int, None</code></dt>
-<dd>This is how many subjects this must be true for for the ASV to be
+<dd>This is how many subjects this must be true for for the Taxa to be
 valid. If it is None then it only requires one subject.</dd>
 <dt><strong><code>colonization_time</code></strong> :&ensp;<code>int</code></dt>
 <dd>How many days we consider colonization (ignore during filtering)</dd>
@@ -700,7 +713,7 @@ valid. If it is None then it only requires one subject.</dd>
     Filters the subjects by looking at the consistency of the counts.
     There must be at least `min_num_counts` for at least
     `min_num_consecutive` consecutive timepoints for at least
-    `min_num_subjects` subjects for the ASV to be classified as valid.
+    `min_num_subjects` subjects for the  to be classified as valid.
 
     Parameters
     ----------
@@ -711,7 +724,7 @@ valid. If it is None then it only requires one subject.</dd>
         This is the minimum number of counts/abudnance/relative abundance that 
         there must be at each consecutive timepoint
     min_num_subjects : int, None
-        This is how many subjects this must be true for for the ASV to be
+        This is how many subjects this must be true for for the Taxa to be
         valid. If it is None then it only requires one subject.
     colonization_time : int
         How many days we consider colonization (ignore during filtering)
@@ -848,7 +861,7 @@ steam and a file</dd>
 </dd>
 <dt id="mdsine2.config.MDSINE2ModelConfig"><code class="flex name class">
 <span>class <span class="ident">MDSINE2ModelConfig</span></span>
-<span>(</span><span>basepath, data_seed, init_seed, burnin, n_samples, negbin_a0, negbin_a1, qpcr_scale, leave_out=None, max_n_asvs=None, checkpoint=100)</span>
+<span>(</span><span>basepath, data_seed, init_seed, burnin, n_samples, negbin_a0, negbin_a1, leave_out=None, max_n_taxas=None, checkpoint=100)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Configuration parameters for the model</p>
@@ -869,10 +882,10 @@ steam and a file</dd>
     ----------
     &#39;&#39;&#39;
     def __init__(self, basepath, data_seed, init_seed, burnin, n_samples,
-        negbin_a0, negbin_a1, qpcr_scale, leave_out=None, max_n_asvs=None, 
+        negbin_a0, negbin_a1, leave_out=None, max_n_taxas=None, 
         checkpoint=100):
-
-        self.OUTPUT_BASEPATH = basepath
+        self.OUTPUT_BASEPATH = os.path.abspath(basepath)
+        self.MODEL_PATH = None
         self.DATA_SEED = data_seed
         self.INIT_SEED = init_seed
         self.BURNIN = burnin
@@ -883,7 +896,7 @@ steam and a file</dd>
 
         self.QPCR_NORMALIZATION_MAX_VALUE = 100
         self.LEAVE_OUT = leave_out
-        self.MAX_N_ASVS = max_n_asvs
+        self.MAX_N_TAXAS = max_n_taxas
         self.ZERO_INFLATION_TRANSITION_POLICY = None #&#39;ignore&#39;
 
         self.GROWTH_TRUNCATION_SETTINGS = &#39;positive&#39;
@@ -894,7 +907,6 @@ steam and a file</dd>
 
         self.NEGBIN_A0 = negbin_a0
         self.NEGBIN_A1 = negbin_a1
-        self.QPCR_NOISE_SCALE = qpcr_scale
         self.N_QPCR_BUCKETS = 3
 
         self.INTERMEDIATE_VALIDATION_T = 1 * 3600 # Every hour
@@ -1053,7 +1065,6 @@ steam and a file</dd>
             STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB: {
                 &#39;value_option&#39;: &#39;auto&#39;,
                 &#39;hyperparam_option&#39;: &#39;strong-sparse&#39;,
-                &#39;N&#39;: 25,
                 &#39;delay&#39;: 0},
             STRNAMES.FILTERING: {
                 &#39;x_value_option&#39;:  &#39;loess&#39;,
@@ -1078,7 +1089,6 @@ steam and a file</dd>
                 &#39;delay&#39;: 0, &#39;n_iter&#39;: 20},
             STRNAMES.CLUSTERING: {
                 &#39;value_option&#39;: &#39;spearman&#39;, #&#39;fixed-topology&#39;,
-                # &#39;value&#39;: &#39;output_real/pylab24/real_runs/strong_priors/healthy1_5_0.0001_rel_2_5/ds0_is0_b5000_ns15000_mo-1_logTrue_pertsmult/graph_leave_out-1/mcmc.pkl&#39;,
                 &#39;delay&#39;: 2,
                 &#39;n_clusters&#39;: 30,
                 &#39;run_every_n_iterations&#39;: 4},
@@ -1129,7 +1139,7 @@ steam and a file</dd>
         &#39;&#39;&#39;
         s = &#39;ds{}_is{}_b{}_ns{}_lo{}_mo{}&#39;.format(
             self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES, self.LEAVE_OUT,
-            self.MAX_N_ASVS)
+            self.MAX_N_TAXAS)
         return s
 
     def cv_suffix(self):
@@ -1137,13 +1147,80 @@ steam and a file</dd>
         &#39;&#39;&#39;
         s = &#39;ds{}_is{}_b{}_ns{}_mo{}&#39;.format(
             self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES,
-            self.MAX_N_ASVS)
+            self.MAX_N_TAXAS)
         return s
 
     def cv_single_suffix(self):
         &#39;&#39;&#39;Create a suffix for a single cv round
         &#39;&#39;&#39;
-        return &#39;leave_out{}&#39;.format(self.LEAVE_OUT)</code></pre>
+        return &#39;leave_out{}&#39;.format(self.LEAVE_OUT)
+
+    def make_metadata_file(self, fname):
+        &#39;&#39;&#39;Make a metadata file that does an overview of the parameters in this class
+        &#39;&#39;&#39;
+
+        mystr = &#39;Global parameters\n&#39; \
+            &#39;-----------------\n&#39; \
+            &#39;Random seed: {seed}\n&#39; \
+            &#39;Total number of Gibb steps: {n_samples}\n&#39; \
+            &#39;Number of Gibb steps for burn-in: {burnin}\n&#39; \
+            &#39;Saved location: {model_path}\n\n&#39; \
+            &#39;Negative binomial dispersion parameters\n&#39; \
+            &#39;---------------------------------------\n&#39; \
+            &#39;a0: {a0:.4E}\n&#39; \
+            &#39;a1: {a1:.4E}\n\n&#39; \
+            &#39;Parameters learned and their order\n&#39; \
+            &#39;----------------------------------\n&#39; \
+            &#39;{params_learned}\n\n&#39; \
+            &#39;Selected Initialization choices\n&#39; \
+            &#39;-------------------------------\n&#39; \
+            &#39;Cluster interaction probability prior: {clus_ind_prior}\n&#39; \
+            &#39;Perturbation probability prior: {pert_ind_prior}\n&#39; \
+            &#39;Filtering initialization: {filt}\n&#39; \
+            &#39;Cluster initialization: {clus_init}\n&#39;
+        # params learned
+        # --------------
+        i = 0
+        params_learned = &#39;&#39;
+        for pname in self.INFERENCE_ORDER:
+            if self.LEARN[pname]:
+                params_learned += &#39;{}: {}\n&#39;.format(i, pname)
+                i += 1
+        
+        # init choices
+        # ------------
+        if self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;spearman&#39;:
+            clus_init = &#39;Spearman Correlation, {} clusters&#39;.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;n_clusters&#39;])
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;no-clusters&#39;:
+            clus_init = &#39;No clusters, everything in its own cluster&#39;
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;fixed-topology&#39;:
+            clus_init = &#39;Same topology as {}&#39;.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value&#39;])
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;manual&#39;:
+            clus_init = &#39;Manually with assignments {}&#39;.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value&#39;])
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;random&#39;:
+            clus_init = &#39;Randomly, with {} clusters&#39;.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;n_clusters&#39;])
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;taxonomy&#39;:
+            clus_init = &#39;By taxonomic similarity, with {} clusters&#39;.format(
+                self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;n_clusters&#39;])
+        else:
+            clus_init = &#39;Something slse&#39;
+
+
+        f = open(fname, &#39;w&#39;)
+        f.write(mystr.format(
+            seed=self.DATA_SEED, n_samples=self.N_SAMPLES,
+            burnin=self.BURNIN, model_path=self.MODEL_PATH,
+            a0=self.NEGBIN_A0, a1=self.NEGBIN_A1,
+            params_learned=params_learned,
+            clus_ind_prior=self.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB][&#39;hyperparam_option&#39;],
+            pert_ind_prior=self.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB][&#39;hyperparam_option&#39;],
+            filt=self.INITIALIZATION_KWARGS[STRNAMES.FILTERING][&#39;x_value_option&#39;],
+            clus_init=clus_init))
+        f.close()</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -1181,8 +1258,85 @@ steam and a file</dd>
     &#39;&#39;&#39;
     s = &#39;ds{}_is{}_b{}_ns{}_mo{}&#39;.format(
         self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES,
-        self.MAX_N_ASVS)
+        self.MAX_N_TAXAS)
     return s</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.config.MDSINE2ModelConfig.make_metadata_file"><code class="name flex">
+<span>def <span class="ident">make_metadata_file</span></span>(<span>self, fname)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Make a metadata file that does an overview of the parameters in this class</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def make_metadata_file(self, fname):
+    &#39;&#39;&#39;Make a metadata file that does an overview of the parameters in this class
+    &#39;&#39;&#39;
+
+    mystr = &#39;Global parameters\n&#39; \
+        &#39;-----------------\n&#39; \
+        &#39;Random seed: {seed}\n&#39; \
+        &#39;Total number of Gibb steps: {n_samples}\n&#39; \
+        &#39;Number of Gibb steps for burn-in: {burnin}\n&#39; \
+        &#39;Saved location: {model_path}\n\n&#39; \
+        &#39;Negative binomial dispersion parameters\n&#39; \
+        &#39;---------------------------------------\n&#39; \
+        &#39;a0: {a0:.4E}\n&#39; \
+        &#39;a1: {a1:.4E}\n\n&#39; \
+        &#39;Parameters learned and their order\n&#39; \
+        &#39;----------------------------------\n&#39; \
+        &#39;{params_learned}\n\n&#39; \
+        &#39;Selected Initialization choices\n&#39; \
+        &#39;-------------------------------\n&#39; \
+        &#39;Cluster interaction probability prior: {clus_ind_prior}\n&#39; \
+        &#39;Perturbation probability prior: {pert_ind_prior}\n&#39; \
+        &#39;Filtering initialization: {filt}\n&#39; \
+        &#39;Cluster initialization: {clus_init}\n&#39;
+    # params learned
+    # --------------
+    i = 0
+    params_learned = &#39;&#39;
+    for pname in self.INFERENCE_ORDER:
+        if self.LEARN[pname]:
+            params_learned += &#39;{}: {}\n&#39;.format(i, pname)
+            i += 1
+    
+    # init choices
+    # ------------
+    if self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;spearman&#39;:
+        clus_init = &#39;Spearman Correlation, {} clusters&#39;.format(
+            self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;n_clusters&#39;])
+    elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;no-clusters&#39;:
+        clus_init = &#39;No clusters, everything in its own cluster&#39;
+    elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;fixed-topology&#39;:
+        clus_init = &#39;Same topology as {}&#39;.format(
+            self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value&#39;])
+    elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;manual&#39;:
+        clus_init = &#39;Manually with assignments {}&#39;.format(
+            self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value&#39;])
+    elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;random&#39;:
+        clus_init = &#39;Randomly, with {} clusters&#39;.format(
+            self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;n_clusters&#39;])
+    elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;value_option&#39;] == &#39;taxonomy&#39;:
+        clus_init = &#39;By taxonomic similarity, with {} clusters&#39;.format(
+            self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING][&#39;n_clusters&#39;])
+    else:
+        clus_init = &#39;Something slse&#39;
+
+
+    f = open(fname, &#39;w&#39;)
+    f.write(mystr.format(
+        seed=self.DATA_SEED, n_samples=self.N_SAMPLES,
+        burnin=self.BURNIN, model_path=self.MODEL_PATH,
+        a0=self.NEGBIN_A0, a1=self.NEGBIN_A1,
+        params_learned=params_learned,
+        clus_ind_prior=self.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB][&#39;hyperparam_option&#39;],
+        pert_ind_prior=self.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB][&#39;hyperparam_option&#39;],
+        filt=self.INITIALIZATION_KWARGS[STRNAMES.FILTERING][&#39;x_value_option&#39;],
+        clus_init=clus_init))
+    f.close()</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.config.MDSINE2ModelConfig.suffix"><code class="name flex">
@@ -1199,7 +1353,7 @@ steam and a file</dd>
     &#39;&#39;&#39;
     s = &#39;ds{}_is{}_b{}_ns{}_lo{}_mo{}&#39;.format(
         self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES, self.LEAVE_OUT,
-        self.MAX_N_ASVS)
+        self.MAX_N_TAXAS)
     return s</code></pre>
 </details>
 </dd>
@@ -1262,11 +1416,12 @@ to learn are <code>SYNTHETIC_A0</code> AND <code>SYNTHETIC_A1</code>.</dd>
             basepath += &#39;/&#39;
 
         self.SEED = seed
-        self.OUTPUT_BASEPATH = basepath
+        self.OUTPUT_BASEPATH = os.path.abspath(basepath)
+        self.MODEL_PATH = None
         self.BURNIN = burnin
         self.N_SAMPLES = n_samples
         self.CKPT = ckpt
-        self.MP_FILTERING = &#39;full&#39;
+        self.MP_FILTERING = &#39;debug&#39;
 
         self.INFERENCE_ORDER = [
             STRNAMES.NEGBIN_A0,
@@ -1285,7 +1440,7 @@ to learn are <code>SYNTHETIC_A0</code> AND <code>SYNTHETIC_A1</code>.</dd>
 
         self.INITIALIZATION_KWARGS = {
             STRNAMES.NEGBIN_A0: {
-                &#39;value&#39;: 1e-4,
+                &#39;value&#39;: 1e-10,
                 &#39;truncation_settings&#39;: (0, 1e5),
                 &#39;tune&#39;: 50,
                 &#39;end_tune&#39;: int(self.BURNIN/2),
@@ -1293,7 +1448,7 @@ to learn are <code>SYNTHETIC_A0</code> AND <code>SYNTHETIC_A1</code>.</dd>
                 &#39;proposal_option&#39;: &#39;auto&#39;,
                 &#39;delay&#39;: 0},
             STRNAMES.NEGBIN_A1: {
-                &#39;value&#39;: 0.5,
+                &#39;value&#39;: 0.1,
                 &#39;tune&#39;: 50,
                 &#39;truncation_settings&#39;: (0, 1e5),
                 &#39;end_tune&#39;: int(self.BURNIN/2),
@@ -1360,7 +1515,6 @@ to learn are <code>SYNTHETIC_A0</code> AND <code>SYNTHETIC_A1</code>.</dd>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="mdsine2.config.calculate_reads_a0a1" href="#mdsine2.config.calculate_reads_a0a1">calculate_reads_a0a1</a></code></li>
 <li><code><a title="mdsine2.config.isModelConfig" href="#mdsine2.config.isModelConfig">isModelConfig</a></code></li>
 </ul>
 </li>
@@ -1380,6 +1534,7 @@ to learn are <code>SYNTHETIC_A0</code> AND <code>SYNTHETIC_A1</code>.</dd>
 <ul class="">
 <li><code><a title="mdsine2.config.MDSINE2ModelConfig.cv_single_suffix" href="#mdsine2.config.MDSINE2ModelConfig.cv_single_suffix">cv_single_suffix</a></code></li>
 <li><code><a title="mdsine2.config.MDSINE2ModelConfig.cv_suffix" href="#mdsine2.config.MDSINE2ModelConfig.cv_suffix">cv_suffix</a></code></li>
+<li><code><a title="mdsine2.config.MDSINE2ModelConfig.make_metadata_file" href="#mdsine2.config.MDSINE2ModelConfig.make_metadata_file">make_metadata_file</a></code></li>
 <li><code><a title="mdsine2.config.MDSINE2ModelConfig.suffix" href="#mdsine2.config.MDSINE2ModelConfig.suffix">suffix</a></code></li>
 </ul>
 </li>

@@ -129,9 +129,9 @@ class metrics:
         
         Parameters
         ----------
-        pred : np.array(n_gibbs, n_asvs, n_asvs)
+        pred : np.array(n_gibbs, n_taxas, n_taxas)
             This is the raw interaction matrix over each gibb step
-        truth : np.array(n_asvs, n_asvs)
+        truth : np.array(n_taxas, n_taxas)
             This is the true raw interaction matrix
         signed : bool
             If True, then we take the sign into consideration. Essentially, 0, (+), and (-) are 
@@ -537,9 +537,9 @@ to the diagonal until it becomes numerically stable</dd>
         
         Parameters
         ----------
-        pred : np.array(n_gibbs, n_asvs, n_asvs)
+        pred : np.array(n_gibbs, n_taxas, n_taxas)
             This is the raw interaction matrix over each gibb step
-        truth : np.array(n_asvs, n_asvs)
+        truth : np.array(n_taxas, n_taxas)
             This is the true raw interaction matrix
         signed : bool
             If True, then we take the sign into consideration. Essentially, 0, (+), and (-) are 
@@ -975,9 +975,9 @@ ARE SQUARE MATRICES.</p>
 <h2 id="example">Example</h2>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>pred</code></strong> :&ensp;<code>np.array(n_gibbs, n_asvs, n_asvs)</code></dt>
+<dt><strong><code>pred</code></strong> :&ensp;<code>np.array(n_gibbs, n_taxas, n_taxas)</code></dt>
 <dd>This is the raw interaction matrix over each gibb step</dd>
-<dt><strong><code>truth</code></strong> :&ensp;<code>np.array(n_asvs, n_asvs)</code></dt>
+<dt><strong><code>truth</code></strong> :&ensp;<code>np.array(n_taxas, n_taxas)</code></dt>
 <dd>This is the true raw interaction matrix</dd>
 <dt><strong><code>signed</code></strong> :&ensp;<code>bool</code></dt>
 <dd>If True, then we take the sign into consideration. Essentially, 0, (+), and (-) are
@@ -1013,9 +1013,9 @@ def rocauc_posterior_interactions(pred, truth, signed=False, average=&#39;weight
     
     Parameters
     ----------
-    pred : np.array(n_gibbs, n_asvs, n_asvs)
+    pred : np.array(n_gibbs, n_taxas, n_taxas)
         This is the raw interaction matrix over each gibb step
-    truth : np.array(n_asvs, n_asvs)
+    truth : np.array(n_taxas, n_taxas)
         This is the true raw interaction matrix
     signed : bool
         If True, then we take the sign into consideration. Essentially, 0, (+), and (-) are 

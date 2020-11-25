@@ -84,7 +84,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
     ----------
     '''
     def __init__(self, basepath, data_seed, init_seed, burnin, n_samples,
-        negbin_a0, negbin_a1, leave_out=None, max_n_asvs=None, 
+        negbin_a0, negbin_a1, leave_out=None, max_n_taxas=None, 
         checkpoint=100):
         self.OUTPUT_BASEPATH = os.path.abspath(basepath)
         self.MODEL_PATH = None
@@ -98,7 +98,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
 
         self.QPCR_NORMALIZATION_MAX_VALUE = 100
         self.LEAVE_OUT = leave_out
-        self.MAX_N_ASVS = max_n_asvs
+        self.MAX_N_TAXAS = max_n_taxas
         self.ZERO_INFLATION_TRANSITION_POLICY = None #'ignore'
 
         self.GROWTH_TRUNCATION_SETTINGS = 'positive'
@@ -341,7 +341,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         '''
         s = 'ds{}_is{}_b{}_ns{}_lo{}_mo{}'.format(
             self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES, self.LEAVE_OUT,
-            self.MAX_N_ASVS)
+            self.MAX_N_TAXAS)
         return s
 
     def cv_suffix(self):
@@ -349,7 +349,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         '''
         s = 'ds{}_is{}_b{}_ns{}_mo{}'.format(
             self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES,
-            self.MAX_N_ASVS)
+            self.MAX_N_TAXAS)
         return s
 
     def cv_single_suffix(self):
@@ -433,7 +433,7 @@ class FilteringConfig(pl.Saveable):
     Filters the subjects by looking at the consistency of the counts.
     There must be at least `min_num_counts` for at least
     `min_num_consecutive` consecutive timepoints for at least
-    `min_num_subjects` subjects for the ASV to be classified as valid.
+    `min_num_subjects` subjects for the  to be classified as valid.
 
     Parameters
     ----------
@@ -444,7 +444,7 @@ class FilteringConfig(pl.Saveable):
         This is the minimum number of counts/abudnance/relative abundance that 
         there must be at each consecutive timepoint
     min_num_subjects : int, None
-        This is how many subjects this must be true for for the ASV to be
+        This is how many subjects this must be true for for the Taxa to be
         valid. If it is None then it only requires one subject.
     colonization_time : int
         How many days we consider colonization (ignore during filtering)

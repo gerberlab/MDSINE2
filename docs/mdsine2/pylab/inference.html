@@ -26,30 +26,22 @@
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import sys
-import os
+<pre><code class="python">import os
 import copy
 import h5py
-import collections
 import logging
 import time
 import shutil
 import inspect
+import pickle
 
 import numpy as np
-import numpy.random as npr
-import scipy.stats
-import scipy.sparse
-import qpsolvers
-
-# import matplotlib.pyplot as plt
 
 from .graph import get_default_graph, isgraph, isnode
-from .base import Saveable, istraceable
+from .base import Saveable
 from .variables import isVariable
-from .errors import MathError, UndefinedError, InheritanceError
+from .errors import UndefinedError, InheritanceError
 from . import util
-from . import multiprocessing as plmp
 
 # Constants
 DEFAULT_LOG_EVERY = 5
@@ -76,21 +68,6 @@ def isMCMC(x):
         True if `x` is a an MCMC inference object
     &#39;&#39;&#39;
     return x is not None and issubclass(x.__class__, BaseMCMC)
-
-def isML(x):
-    &#39;&#39;&#39;Checks if the input array is an maximum likelihood inference object
-
-    Parameters
-    ----------
-    x : any
-        Instance we are checking
-    
-    Returns
-    -------
-    bool
-        True if `x` is a an maximum likelihood inference object
-    &#39;&#39;&#39;
-    return x is not None and issubclass(x.__class__, MLRR)
 
 def ismodel(x):
     &#39;&#39;&#39;Checks if the input array is a model object
@@ -195,6 +172,42 @@ class BaseMCMC(BaseModel):
         self._intermediate_t = None
         self._intermediate_kwargs = None
 
+    @classmethod
+    def load(cls, filename):
+        &#39;&#39;&#39;Override base Saveable to redo the filename of the
+        tracer object if it has one
+        
+        Paramters
+        ---------
+        filename : str
+            This is the location of the file to unpickle
+        &#39;&#39;&#39;
+        with open(str(filename), &#39;rb&#39;) as handle:
+            b = pickle.load(handle)
+        
+        # redo the filename to the new path if it has a save location
+        if hasattr(b, &#39;_save_loc&#39;):
+            filename = os.path.abspath(filename)
+            b._save_loc = filename
+
+            # Redo the filename of the tracer object if necessart
+            if b.tracer is not None:
+                if b.tracer.filename is not None:
+                    _, tracer_fname = os.path.split(b.tracer.filename)
+                    currpath, _ = os.path.split(b._save_loc)
+
+                    new_loc = os.path.join(currpath, tracer_fname)
+
+                    if os.path.isfile(new_loc):
+                        b.tracer.filename = new_loc
+                    else:
+                        raise ValueError(&#39;Looking for tracer hdf5 object in {}, could not find it &#39; \
+                            &#39;in the local path even though inference says it contains the object. On &#39; \
+                            &#39;file it shows the location {}&#39;.format(
+                                new_loc, b.tracer.filename))
+
+        return b
+
     def names(self):
         &#39;&#39;&#39;Get the names of the nodes in the inference object
 
@@ -259,9 +272,7 @@ class BaseMCMC(BaseModel):
         -------
         bool
         &#39;&#39;&#39;
-        if not isVariable(var):
-            if var not in self.graph:
-                raise IndexError(&#39;`var` ({}) ({}) not recognized in graph&#39;.format(type(var), var))
+        if not isnode(var):
             var = self.graph[var].id
         else:
             var = var.id
@@ -455,8 +466,6 @@ class BaseMCMC(BaseModel):
                 # Sample posterior in the order indicated and add the trace
                 for _id in self.inf_order:
                     try:
-                        if i == 0:
-                            self.graph.nodes[_id].add_init_value()
                         self.graph.nodes[_id].update()
                         self.graph.nodes[_id].add_trace()
                     except:
@@ -470,12 +479,29 @@ class BaseMCMC(BaseModel):
                         if self.diagnostic_variables[name].sample_iter == self.sample_iter:
                             self.diagnostic_variables[name].add_trace()
 
+                # If we just saved the traces to disk, save the MCMC object
+                if self.sample_iter % self.ckpt == 0 and self.sample_iter &gt; 0:
+                    try:
+                        self.save()
+                    except:
+                        logging.critical(&#39;If you want to checkpoint, you must set the save location &#39; \
+                            &#39;of tracer, graph, and mcmc using the function self.set_save_location()&#39;)
+                        print(self._save_loc)
+                        raise
+
             # Finish the tracing
             self.graph.tracer.finish_tracing()
             self.ran = True
             logging.info(&#39;Inference total time: {}/Gibb step&#39;.format(
                 (time.time() - total_time)/self.n_samples))
             
+            # Remove the local traces
+            logging.info(&#39;remove local traces&#39;)
+            for node in self.graph:
+                if isVariable(node):
+                    node.remove_local_trace()
+            self.save()
+
             return self
         except:
             for a in self.graph._persistent_pntr:
@@ -525,7 +551,7 @@ class Tracer(Saveable):
         if self.filename is not None:
             if not util.isstr(filename):
                 raise TypeError(&#39;filename ({}) must be a str&#39;.format(type(filename)))
-            self.filename = filename
+            self.filename = os.path.abspath(filename)
             self.f = h5py.File(self.filename, &#39;w&#39;, libver=&#39;latest&#39;)
             self.being_traced = set()
 
@@ -625,7 +651,8 @@ class Tracer(Saveable):
             if var in self.graph:
                 var = self.graph[var].name
             else:
-                raise IndexError(&#39;`var` ({}) ({}) not recognized in graph&#39;.format(type(var), var))
+                # raise IndexError(&#39;`var` ({}) ({}) not recognized in graph&#39;.format(type(var), var))
+                return False
         return var in self.being_traced
 
     def set_trace(self, name, shape, dtype):
@@ -860,255 +887,6 @@ class Tracer(Saveable):
             dset = self.f[name]
             dset.attrs[&#39;end_iter&#39;] = gibb_step_start
         self.close()
-        
-
-class MLRR(BaseModel):
-    &#39;&#39;&#39;This performs Maximum Likelihood Ridge Regression (MLRR) (L2 
-    regression) or Maximum Likelihood Constrained Ridge Regression (MLCRR) 
-    via Quadratic programming.
-
-            \theta = inv( X.T @ X + D) @ X.T @ y
-
-    Constraints
-    -----------
-    These are the constraints on the infered values of the regression. If nothing is 
-    set then we assume that it is an unconstrained syste.
-
-    We perform the constrained regression using a quadratic programming approach
-
-            minimize:
-                (1/2) * x.T * P * x + q.T * x
-            where:
-                P = 2 * ( X.T @ X + D)
-                q = -2 * X.T @ y
-            subject to:
-                G * x &lt;= h
-                A * x == b
-
-    Parameters
-    ----------
-    constrain : bool
-        If `True`, it will do a constrained regression on the defined parameters.
-        You set the constraints with the fucntion `set_constraints`. If nothing 
-        is specified then we assume an unconstrained system (-\infy, \infy) (this
-        is effectively the same as doing an unconstrained regression). If `False`
-        we assume there are no constraints on the system.
-    graph : pylab.graph.Graph, Optional
-        This is the graph that has all the parameters. If nothing is provided it
-        will automatically detect the default graph.
-    &#39;&#39;&#39;
-    def __init__(self, constrain, *args, **kwargs):
-        BaseModel.__init__(self, *args, **kwargs)
-        if not util.isbool(constrain):
-            raise TypeError(&#39;`constrain` ({}) must be a bool&#39;.format(type(constrain)))
-        self.constrain = constrain
-
-        self._penalties = {}
-        self._constraints = {}
-        self.order = None
-
-    def set_penalty(self, parameter, penalty):
-        &#39;&#39;&#39;Sets the penalty `penalty` for the parameter `parameter`. If you
-        want a global parameter set `parameter=pylab.inference.GLOBAL_PARAMETER`.
-
-        Parameters
-        ----------
-        parameter : int, str, pl.Variable, pylab.inference.GLOBAL_PARAMETER
-            This the the parameter you want. If it is set to 
-            `pylab.inference.GLOBAL_PARAMETER` then we set all the parameters with
-            the penalty
-        penalty : float
-            This is the \lambda term used as the penalty for the parameter `parameter`
-        &#39;&#39;&#39;
-        if not util.isnumeric(penalty):
-            raise TypeError(&#39;`penalty` ({}) must be a numeric&#39;.format(type(penalty)))
-        if penalty &lt; 0:
-            raise ValueError(&#39;`penalty` ({}) must be &gt;= 0&#39;.format(penalty))
-        if parameter != GLOBAL_PARAMETER:
-            try:
-                parameter = self.graph[parameter]
-            except:
-                raise IndexError(&#39;`parameter` ({}) not found in graph&#39;.format(
-                    parameter))
-            if parameter.name in self._penalties:
-                raise ValueError(&#39;parameter `{}` already set in penalties with the &#39; \
-                    &#39;penalty `{}`&#39;.format(parameter.name, self._penalties[parameter.name]))
-            self._penalties[parameter.name] = penalty
-        else:
-            for node in self.graph:
-                if node.name in self._penalties:
-                    raise ValueError(&#39;parameter `{}` already has the penalty `{}`&#39;.format(
-                        node.name, self._penalties[node.name]))
-                self._penalties[node.name] = penalty
-
-    def set_constraints(self, G=None, h=None, A=None, b=None):
-        &#39;&#39;&#39;Set the constraints of the system. The constraints are set that:
-
-            minimize:
-                (1/2) * x.T * P * x + q.T * x
-            where:
-                P = 2 * ( X.T @ X + D)
-                q = -2 * X.T @ y
-            subject to:
-                G * x &lt;= h
-                A * x == b
-
-        Parameters
-        ----------
-        G : numpy.ndarray
-            Linear inequality constraint matrix
-        h : numpy.ndarray
-            Linear inequality constraint vector
-        A : numpy.ndarray
-            Linear equality constraint matrix
-        b : numpy.ndarray
-            Linear equality constraint vector
-        &#39;&#39;&#39;
-        if not self.constrain:
-            raise ValueError(&#39;`There are no constraints in MLRR - must specify a constrained&#39; \
-                &#39; MLRR by setting constrain=True during initialization&#39;)
-        self.G = G
-        self.h = h
-        self.A = A
-        self.b = b
-
-    def set_parameter_order(self, order):
-        &#39;&#39;&#39;Set the order of the parameters
-        &#39;&#39;&#39;
-        self.order = []
-        if not util.isarray(order):
-            order = [order]
-        for i in order:
-            if i not in self.graph:
-                raise ValueError(&#39;`{}` not in graph&#39;.format(i))
-            node = self.graph[i]
-            self.order.append(node.name)
-
-    def run_single(self, X, y, D=None):
-        &#39;&#39;&#39;Run the regression
-
-        Parameters
-        ----------
-        X : array_like
-            This is the Covariate matrix.
-            Must have the shape (nrows, ncols)
-        y : np.ndarray
-            This is the observation matrix.
-            Must have the shape (nrows, 1)
-        D : np.ndarray
-            This is the penalty matrix. If this is not passed in it
-            will use the inner parameters.
-        &#39;&#39;&#39;
-        if not util.isarray(X):
-            raise TypeError(&#39;`X` ({}) must be array_like&#39;.format(type(X)))
-        if not util.isarray(y):
-            raise TypeError(&#39;`y` ({}) must be array_like&#39;.format(type(y)))
-        
-        sizes = [len(self.graph[name]) for name in self.order]
-        if D is None:
-            D = MLRR.build_D(penalties=self._penalties, order=self.order, 
-                sizes=sizes, sparse=False)
-
-        if D.shape[1] != X.shape[1]:
-            raise ValueError(&#39;`D` ({}) and `X` ({}) have mismatched shapes&#39;.format(
-                D.shape, X.shape))
-
-        if self.constrain:
-            theta = MLRR.run_MLCRR(X=X, y=y, D=D, G=self.G, 
-                h=self.h, A=self.A, b=self.b)
-        else:
-            theta = MLRR.run_MLRR(X, y, D)
-
-        # Assign the values to each of the variables
-        i = 0
-        for idx, pname in enumerate(self.order):
-            v = theta[i:i+sizes[idx]]
-            self.graph[pname].value = v
-            i += sizes[idx]
-
-        return self
-
-    @staticmethod
-    def build_D(penalties, order, sizes, sparse):
-        &#39;&#39;&#39;Creates the diagonal penalty matrix for the regression.
-
-        Parameters
-        ----------
-        penalties : dict (str -&gt; float)
-            Maps the name of the variable to the value of the penalty
-        order : array(str)
-            This is the order of the parameters in X
-        sizes : array(int)
-            These are the sizes of each of the parameters in order
-        sparse : bool
-            If True, return a sparse array. If not return a numpy.ndarray
-
-        Returns
-        -------
-        array_like
-        &#39;&#39;&#39;
-        diag = []
-        for i, name in enumerate(order):
-            diag = np.append(diag, 
-                np.full(sizes[i], penalties[name]))
-        
-        if sparse:
-            rows = np.arange(len(diag))
-            D = scipy.sparse.coo_matrix((diag, (rows, rows)), shape=(len(diag), len(diag)))
-        else:
-            D = np.diag(diag)
-        return D
-    
-    @staticmethod
-    def run_MLCRR(X, y, D, G, h, A, b):
-        &#39;&#39;&#39;Run L2 regression with a constraint on the parameters using a quadratic
-        programming approach:
-                minimize:
-                    (1/2) * x.T * P * x + q.T * x
-                where:
-                    P = 2 * ( X.T @ X + D)
-                    q = -2 * X.T @ y
-                subject to:
-                    G * x &lt;= h
-                    A * x == b
-        &#39;&#39;&#39;
-        # Try on run MLRR without constraints and see if that works
-        theta = MLRR.run_MLRR(X=X, y=y, D=D)
-
-        if G is not None and h is None:
-            aaa = np.asarray(G @ theta).ravel()
-            bbb = h.ravel()
-            if np.all(aaa &lt;= bbb):
-                # Check the other constraint, this one passes
-                if A is not None and b is not None:
-                    ccc = np.asarray(A @ theta).ravel()
-                    ddd = b.ravel()
-                    if np.all(ccc == ddd):
-                        # This passes without needing quadratic programming
-                        return theta
-
-        # Perform quadratic programming
-        P = 2 * (X.T @ X + D)
-        if scipy.sparse.issparse(P):
-            P = util.toarray(P)
-        q = -2 * ( X.T @ y )
-        if scipy.sparse.issparse(q):
-            q = util.toarray(q).ravel()
-
-        h = h.ravel()
-        q = q.ravel()
-
-        return qpsolvers.solve_qp(P=P, q=q, G=G, h=h, A=A, b=b, solver=&#39;quadprog&#39;)
-
-    @staticmethod
-    def run_MLRR(X, y, D):
-        &#39;&#39;&#39;Run Maximum Likelihood Ridge Regression without constraints
-        &#39;&#39;&#39;
-        a = X.T @ X + D
-        if scipy.sparse.issparse:
-            a = util.toarray(a)
-        ainv = np.linalg.pinv(a)
-        return np.asarray(ainv @ X.T @ y)
 
 
 def r_hat(chains, vname, start, end, idx=None, returnBW=False):
@@ -1273,41 +1051,6 @@ Moore-Penrose pseudoinverse</p></div>
         True if `x` is a an MCMC inference object
     &#39;&#39;&#39;
     return x is not None and issubclass(x.__class__, BaseMCMC)</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.inference.isML"><code class="name flex">
-<span>def <span class="ident">isML</span></span>(<span>x)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Checks if the input array is an maximum likelihood inference object</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>x</code></strong> :&ensp;<code>any</code></dt>
-<dd>Instance we are checking</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>bool</code></dt>
-<dd>True if <code>x</code> is a an maximum likelihood inference object</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def isML(x):
-    &#39;&#39;&#39;Checks if the input array is an maximum likelihood inference object
-
-    Parameters
-    ----------
-    x : any
-        Instance we are checking
-    
-    Returns
-    -------
-    bool
-        True if `x` is a an maximum likelihood inference object
-    &#39;&#39;&#39;
-    return x is not None and issubclass(x.__class__, MLRR)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.ismodel"><code class="name flex">
@@ -1616,6 +1359,42 @@ Number of posterior samples = n_samples-burnin</dd>
         self._intermediate_t = None
         self._intermediate_kwargs = None
 
+    @classmethod
+    def load(cls, filename):
+        &#39;&#39;&#39;Override base Saveable to redo the filename of the
+        tracer object if it has one
+        
+        Paramters
+        ---------
+        filename : str
+            This is the location of the file to unpickle
+        &#39;&#39;&#39;
+        with open(str(filename), &#39;rb&#39;) as handle:
+            b = pickle.load(handle)
+        
+        # redo the filename to the new path if it has a save location
+        if hasattr(b, &#39;_save_loc&#39;):
+            filename = os.path.abspath(filename)
+            b._save_loc = filename
+
+            # Redo the filename of the tracer object if necessart
+            if b.tracer is not None:
+                if b.tracer.filename is not None:
+                    _, tracer_fname = os.path.split(b.tracer.filename)
+                    currpath, _ = os.path.split(b._save_loc)
+
+                    new_loc = os.path.join(currpath, tracer_fname)
+
+                    if os.path.isfile(new_loc):
+                        b.tracer.filename = new_loc
+                    else:
+                        raise ValueError(&#39;Looking for tracer hdf5 object in {}, could not find it &#39; \
+                            &#39;in the local path even though inference says it contains the object. On &#39; \
+                            &#39;file it shows the location {}&#39;.format(
+                                new_loc, b.tracer.filename))
+
+        return b
+
     def names(self):
         &#39;&#39;&#39;Get the names of the nodes in the inference object
 
@@ -1680,9 +1459,7 @@ Number of posterior samples = n_samples-burnin</dd>
         -------
         bool
         &#39;&#39;&#39;
-        if not isVariable(var):
-            if var not in self.graph:
-                raise IndexError(&#39;`var` ({}) ({}) not recognized in graph&#39;.format(type(var), var))
+        if not isnode(var):
             var = self.graph[var].id
         else:
             var = var.id
@@ -1876,8 +1653,6 @@ Number of posterior samples = n_samples-burnin</dd>
                 # Sample posterior in the order indicated and add the trace
                 for _id in self.inf_order:
                     try:
-                        if i == 0:
-                            self.graph.nodes[_id].add_init_value()
                         self.graph.nodes[_id].update()
                         self.graph.nodes[_id].add_trace()
                     except:
@@ -1891,12 +1666,29 @@ Number of posterior samples = n_samples-burnin</dd>
                         if self.diagnostic_variables[name].sample_iter == self.sample_iter:
                             self.diagnostic_variables[name].add_trace()
 
+                # If we just saved the traces to disk, save the MCMC object
+                if self.sample_iter % self.ckpt == 0 and self.sample_iter &gt; 0:
+                    try:
+                        self.save()
+                    except:
+                        logging.critical(&#39;If you want to checkpoint, you must set the save location &#39; \
+                            &#39;of tracer, graph, and mcmc using the function self.set_save_location()&#39;)
+                        print(self._save_loc)
+                        raise
+
             # Finish the tracing
             self.graph.tracer.finish_tracing()
             self.ran = True
             logging.info(&#39;Inference total time: {}/Gibb step&#39;.format(
                 (time.time() - total_time)/self.n_samples))
             
+            # Remove the local traces
+            logging.info(&#39;remove local traces&#39;)
+            for node in self.graph:
+                if isVariable(node):
+                    node.remove_local_trace()
+            self.save()
+
             return self
         except:
             for a in self.graph._persistent_pntr:
@@ -1920,6 +1712,59 @@ Number of posterior samples = n_samples-burnin</dd>
 <li><a title="mdsine2.pylab.inference.BaseModel" href="#mdsine2.pylab.inference.BaseModel">BaseModel</a></li>
 <li><a title="mdsine2.pylab.base.Saveable" href="base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
 </ul>
+<h3>Static methods</h3>
+<dl>
+<dt id="mdsine2.pylab.inference.BaseMCMC.load"><code class="name flex">
+<span>def <span class="ident">load</span></span>(<span>filename)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Override base Saveable to redo the filename of the
+tracer object if it has one</p>
+<h2 id="paramters">Paramters</h2>
+<p>filename : str
+This is the location of the file to unpickle</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@classmethod
+def load(cls, filename):
+    &#39;&#39;&#39;Override base Saveable to redo the filename of the
+    tracer object if it has one
+    
+    Paramters
+    ---------
+    filename : str
+        This is the location of the file to unpickle
+    &#39;&#39;&#39;
+    with open(str(filename), &#39;rb&#39;) as handle:
+        b = pickle.load(handle)
+    
+    # redo the filename to the new path if it has a save location
+    if hasattr(b, &#39;_save_loc&#39;):
+        filename = os.path.abspath(filename)
+        b._save_loc = filename
+
+        # Redo the filename of the tracer object if necessart
+        if b.tracer is not None:
+            if b.tracer.filename is not None:
+                _, tracer_fname = os.path.split(b.tracer.filename)
+                currpath, _ = os.path.split(b._save_loc)
+
+                new_loc = os.path.join(currpath, tracer_fname)
+
+                if os.path.isfile(new_loc):
+                    b.tracer.filename = new_loc
+                else:
+                    raise ValueError(&#39;Looking for tracer hdf5 object in {}, could not find it &#39; \
+                        &#39;in the local path even though inference says it contains the object. On &#39; \
+                        &#39;file it shows the location {}&#39;.format(
+                            new_loc, b.tracer.filename))
+
+    return b</code></pre>
+</details>
+</dd>
+</dl>
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.inference.BaseMCMC.continue_inference"><code class="name flex">
@@ -2009,9 +1854,7 @@ If is is a str - it is assumed this is the name of the variable</dd>
     -------
     bool
     &#39;&#39;&#39;
-    if not isVariable(var):
-        if var not in self.graph:
-            raise IndexError(&#39;`var` ({}) ({}) not recognized in graph&#39;.format(type(var), var))
+    if not isnode(var):
         var = self.graph[var].id
     else:
         var = var.id
@@ -2148,8 +1991,6 @@ If the logger is set to DEBUG then override to log every iteration.</dd>
             # Sample posterior in the order indicated and add the trace
             for _id in self.inf_order:
                 try:
-                    if i == 0:
-                        self.graph.nodes[_id].add_init_value()
                     self.graph.nodes[_id].update()
                     self.graph.nodes[_id].add_trace()
                 except:
@@ -2163,12 +2004,29 @@ If the logger is set to DEBUG then override to log every iteration.</dd>
                     if self.diagnostic_variables[name].sample_iter == self.sample_iter:
                         self.diagnostic_variables[name].add_trace()
 
+            # If we just saved the traces to disk, save the MCMC object
+            if self.sample_iter % self.ckpt == 0 and self.sample_iter &gt; 0:
+                try:
+                    self.save()
+                except:
+                    logging.critical(&#39;If you want to checkpoint, you must set the save location &#39; \
+                        &#39;of tracer, graph, and mcmc using the function self.set_save_location()&#39;)
+                    print(self._save_loc)
+                    raise
+
         # Finish the tracing
         self.graph.tracer.finish_tracing()
         self.ran = True
         logging.info(&#39;Inference total time: {}/Gibb step&#39;.format(
             (time.time() - total_time)/self.n_samples))
         
+        # Remove the local traces
+        logging.info(&#39;remove local traces&#39;)
+        for node in self.graph:
+            if isVariable(node):
+                node.remove_local_trace()
+        self.save()
+
         return self
     except:
         for a in self.graph._persistent_pntr:
@@ -2400,7 +2258,6 @@ If None then there is no intermediate checkpointing</dd>
 <ul class="hlist">
 <li><code><b><a title="mdsine2.pylab.inference.BaseModel" href="#mdsine2.pylab.inference.BaseModel">BaseModel</a></b></code>:
 <ul class="hlist">
-<li><code><a title="mdsine2.pylab.inference.BaseModel.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.BaseModel.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.BaseModel.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 </ul>
@@ -2449,7 +2306,6 @@ If nothing is provided, it grabs the default graph</dd>
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="mdsine2.pylab.inference.BaseMCMC" href="#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a></li>
-<li><a title="mdsine2.pylab.inference.MLRR" href="#mdsine2.pylab.inference.MLRR">MLRR</a></li>
 </ul>
 <h3>Inherited members</h3>
 <ul class="hlist">
@@ -2458,655 +2314,6 @@ If nothing is provided, it grabs the default graph</dd>
 <li><code><a title="mdsine2.pylab.base.Saveable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Saveable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.base.Saveable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
-<dt id="mdsine2.pylab.inference.MLRR"><code class="flex name class">
-<span>class <span class="ident">MLRR</span></span>
-<span>(</span><span>constrain, *args, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>This performs Maximum Likelihood Ridge Regression (MLRR) (L2
-regression) or Maximum Likelihood Constrained Ridge Regression (MLCRR)
-via Quadratic programming.</p>
-<pre><code>        heta = inv( X.T @ X + D) @ X.T @ y
-</code></pre>
-<h2 id="constraints">Constraints</h2>
-<p>These are the constraints on the infered values of the regression. If nothing is
-set then we assume that it is an unconstrained syste.</p>
-<p>We perform the constrained regression using a quadratic programming approach</p>
-<pre><code>    minimize:
-        (1/2) * x.T * P * x + q.T * x
-    where:
-        P = 2 * ( X.T @ X + D)
-        q = -2 * X.T @ y
-    subject to:
-        G * x &lt;= h
-        A * x == b
-</code></pre>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>constrain</code></strong> :&ensp;<code>bool</code></dt>
-<dd>If <code>True</code>, it will do a constrained regression on the defined parameters.
-You set the constraints with the fucntion <code>set_constraints</code>. If nothing
-is specified then we assume an unconstrained system (-\infy, \infy) (this
-is effectively the same as doing an unconstrained regression). If <code>False</code>
-we assume there are no constraints on the system.</dd>
-<dt><strong><code>graph</code></strong> :&ensp;<code>pylab.graph.Graph, Optional</code></dt>
-<dd>This is the graph that has all the parameters. If nothing is provided it
-will automatically detect the default graph.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class MLRR(BaseModel):
-    &#39;&#39;&#39;This performs Maximum Likelihood Ridge Regression (MLRR) (L2 
-    regression) or Maximum Likelihood Constrained Ridge Regression (MLCRR) 
-    via Quadratic programming.
-
-            \theta = inv( X.T @ X + D) @ X.T @ y
-
-    Constraints
-    -----------
-    These are the constraints on the infered values of the regression. If nothing is 
-    set then we assume that it is an unconstrained syste.
-
-    We perform the constrained regression using a quadratic programming approach
-
-            minimize:
-                (1/2) * x.T * P * x + q.T * x
-            where:
-                P = 2 * ( X.T @ X + D)
-                q = -2 * X.T @ y
-            subject to:
-                G * x &lt;= h
-                A * x == b
-
-    Parameters
-    ----------
-    constrain : bool
-        If `True`, it will do a constrained regression on the defined parameters.
-        You set the constraints with the fucntion `set_constraints`. If nothing 
-        is specified then we assume an unconstrained system (-\infy, \infy) (this
-        is effectively the same as doing an unconstrained regression). If `False`
-        we assume there are no constraints on the system.
-    graph : pylab.graph.Graph, Optional
-        This is the graph that has all the parameters. If nothing is provided it
-        will automatically detect the default graph.
-    &#39;&#39;&#39;
-    def __init__(self, constrain, *args, **kwargs):
-        BaseModel.__init__(self, *args, **kwargs)
-        if not util.isbool(constrain):
-            raise TypeError(&#39;`constrain` ({}) must be a bool&#39;.format(type(constrain)))
-        self.constrain = constrain
-
-        self._penalties = {}
-        self._constraints = {}
-        self.order = None
-
-    def set_penalty(self, parameter, penalty):
-        &#39;&#39;&#39;Sets the penalty `penalty` for the parameter `parameter`. If you
-        want a global parameter set `parameter=pylab.inference.GLOBAL_PARAMETER`.
-
-        Parameters
-        ----------
-        parameter : int, str, pl.Variable, pylab.inference.GLOBAL_PARAMETER
-            This the the parameter you want. If it is set to 
-            `pylab.inference.GLOBAL_PARAMETER` then we set all the parameters with
-            the penalty
-        penalty : float
-            This is the \lambda term used as the penalty for the parameter `parameter`
-        &#39;&#39;&#39;
-        if not util.isnumeric(penalty):
-            raise TypeError(&#39;`penalty` ({}) must be a numeric&#39;.format(type(penalty)))
-        if penalty &lt; 0:
-            raise ValueError(&#39;`penalty` ({}) must be &gt;= 0&#39;.format(penalty))
-        if parameter != GLOBAL_PARAMETER:
-            try:
-                parameter = self.graph[parameter]
-            except:
-                raise IndexError(&#39;`parameter` ({}) not found in graph&#39;.format(
-                    parameter))
-            if parameter.name in self._penalties:
-                raise ValueError(&#39;parameter `{}` already set in penalties with the &#39; \
-                    &#39;penalty `{}`&#39;.format(parameter.name, self._penalties[parameter.name]))
-            self._penalties[parameter.name] = penalty
-        else:
-            for node in self.graph:
-                if node.name in self._penalties:
-                    raise ValueError(&#39;parameter `{}` already has the penalty `{}`&#39;.format(
-                        node.name, self._penalties[node.name]))
-                self._penalties[node.name] = penalty
-
-    def set_constraints(self, G=None, h=None, A=None, b=None):
-        &#39;&#39;&#39;Set the constraints of the system. The constraints are set that:
-
-            minimize:
-                (1/2) * x.T * P * x + q.T * x
-            where:
-                P = 2 * ( X.T @ X + D)
-                q = -2 * X.T @ y
-            subject to:
-                G * x &lt;= h
-                A * x == b
-
-        Parameters
-        ----------
-        G : numpy.ndarray
-            Linear inequality constraint matrix
-        h : numpy.ndarray
-            Linear inequality constraint vector
-        A : numpy.ndarray
-            Linear equality constraint matrix
-        b : numpy.ndarray
-            Linear equality constraint vector
-        &#39;&#39;&#39;
-        if not self.constrain:
-            raise ValueError(&#39;`There are no constraints in MLRR - must specify a constrained&#39; \
-                &#39; MLRR by setting constrain=True during initialization&#39;)
-        self.G = G
-        self.h = h
-        self.A = A
-        self.b = b
-
-    def set_parameter_order(self, order):
-        &#39;&#39;&#39;Set the order of the parameters
-        &#39;&#39;&#39;
-        self.order = []
-        if not util.isarray(order):
-            order = [order]
-        for i in order:
-            if i not in self.graph:
-                raise ValueError(&#39;`{}` not in graph&#39;.format(i))
-            node = self.graph[i]
-            self.order.append(node.name)
-
-    def run_single(self, X, y, D=None):
-        &#39;&#39;&#39;Run the regression
-
-        Parameters
-        ----------
-        X : array_like
-            This is the Covariate matrix.
-            Must have the shape (nrows, ncols)
-        y : np.ndarray
-            This is the observation matrix.
-            Must have the shape (nrows, 1)
-        D : np.ndarray
-            This is the penalty matrix. If this is not passed in it
-            will use the inner parameters.
-        &#39;&#39;&#39;
-        if not util.isarray(X):
-            raise TypeError(&#39;`X` ({}) must be array_like&#39;.format(type(X)))
-        if not util.isarray(y):
-            raise TypeError(&#39;`y` ({}) must be array_like&#39;.format(type(y)))
-        
-        sizes = [len(self.graph[name]) for name in self.order]
-        if D is None:
-            D = MLRR.build_D(penalties=self._penalties, order=self.order, 
-                sizes=sizes, sparse=False)
-
-        if D.shape[1] != X.shape[1]:
-            raise ValueError(&#39;`D` ({}) and `X` ({}) have mismatched shapes&#39;.format(
-                D.shape, X.shape))
-
-        if self.constrain:
-            theta = MLRR.run_MLCRR(X=X, y=y, D=D, G=self.G, 
-                h=self.h, A=self.A, b=self.b)
-        else:
-            theta = MLRR.run_MLRR(X, y, D)
-
-        # Assign the values to each of the variables
-        i = 0
-        for idx, pname in enumerate(self.order):
-            v = theta[i:i+sizes[idx]]
-            self.graph[pname].value = v
-            i += sizes[idx]
-
-        return self
-
-    @staticmethod
-    def build_D(penalties, order, sizes, sparse):
-        &#39;&#39;&#39;Creates the diagonal penalty matrix for the regression.
-
-        Parameters
-        ----------
-        penalties : dict (str -&gt; float)
-            Maps the name of the variable to the value of the penalty
-        order : array(str)
-            This is the order of the parameters in X
-        sizes : array(int)
-            These are the sizes of each of the parameters in order
-        sparse : bool
-            If True, return a sparse array. If not return a numpy.ndarray
-
-        Returns
-        -------
-        array_like
-        &#39;&#39;&#39;
-        diag = []
-        for i, name in enumerate(order):
-            diag = np.append(diag, 
-                np.full(sizes[i], penalties[name]))
-        
-        if sparse:
-            rows = np.arange(len(diag))
-            D = scipy.sparse.coo_matrix((diag, (rows, rows)), shape=(len(diag), len(diag)))
-        else:
-            D = np.diag(diag)
-        return D
-    
-    @staticmethod
-    def run_MLCRR(X, y, D, G, h, A, b):
-        &#39;&#39;&#39;Run L2 regression with a constraint on the parameters using a quadratic
-        programming approach:
-                minimize:
-                    (1/2) * x.T * P * x + q.T * x
-                where:
-                    P = 2 * ( X.T @ X + D)
-                    q = -2 * X.T @ y
-                subject to:
-                    G * x &lt;= h
-                    A * x == b
-        &#39;&#39;&#39;
-        # Try on run MLRR without constraints and see if that works
-        theta = MLRR.run_MLRR(X=X, y=y, D=D)
-
-        if G is not None and h is None:
-            aaa = np.asarray(G @ theta).ravel()
-            bbb = h.ravel()
-            if np.all(aaa &lt;= bbb):
-                # Check the other constraint, this one passes
-                if A is not None and b is not None:
-                    ccc = np.asarray(A @ theta).ravel()
-                    ddd = b.ravel()
-                    if np.all(ccc == ddd):
-                        # This passes without needing quadratic programming
-                        return theta
-
-        # Perform quadratic programming
-        P = 2 * (X.T @ X + D)
-        if scipy.sparse.issparse(P):
-            P = util.toarray(P)
-        q = -2 * ( X.T @ y )
-        if scipy.sparse.issparse(q):
-            q = util.toarray(q).ravel()
-
-        h = h.ravel()
-        q = q.ravel()
-
-        return qpsolvers.solve_qp(P=P, q=q, G=G, h=h, A=A, b=b, solver=&#39;quadprog&#39;)
-
-    @staticmethod
-    def run_MLRR(X, y, D):
-        &#39;&#39;&#39;Run Maximum Likelihood Ridge Regression without constraints
-        &#39;&#39;&#39;
-        a = X.T @ X + D
-        if scipy.sparse.issparse:
-            a = util.toarray(a)
-        ainv = np.linalg.pinv(a)
-        return np.asarray(ainv @ X.T @ y)</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="mdsine2.pylab.inference.BaseModel" href="#mdsine2.pylab.inference.BaseModel">BaseModel</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
-</ul>
-<h3>Static methods</h3>
-<dl>
-<dt id="mdsine2.pylab.inference.MLRR.build_D"><code class="name flex">
-<span>def <span class="ident">build_D</span></span>(<span>penalties, order, sizes, sparse)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Creates the diagonal penalty matrix for the regression.</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>penalties</code></strong> :&ensp;<code>dict (str -&gt; float)</code></dt>
-<dd>Maps the name of the variable to the value of the penalty</dd>
-<dt><strong><code>order</code></strong> :&ensp;<code>array(str)</code></dt>
-<dd>This is the order of the parameters in X</dd>
-<dt><strong><code>sizes</code></strong> :&ensp;<code>array(int)</code></dt>
-<dd>These are the sizes of each of the parameters in order</dd>
-<dt><strong><code>sparse</code></strong> :&ensp;<code>bool</code></dt>
-<dd>If True, return a sparse array. If not return a numpy.ndarray</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>array_like</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@staticmethod
-def build_D(penalties, order, sizes, sparse):
-    &#39;&#39;&#39;Creates the diagonal penalty matrix for the regression.
-
-    Parameters
-    ----------
-    penalties : dict (str -&gt; float)
-        Maps the name of the variable to the value of the penalty
-    order : array(str)
-        This is the order of the parameters in X
-    sizes : array(int)
-        These are the sizes of each of the parameters in order
-    sparse : bool
-        If True, return a sparse array. If not return a numpy.ndarray
-
-    Returns
-    -------
-    array_like
-    &#39;&#39;&#39;
-    diag = []
-    for i, name in enumerate(order):
-        diag = np.append(diag, 
-            np.full(sizes[i], penalties[name]))
-    
-    if sparse:
-        rows = np.arange(len(diag))
-        D = scipy.sparse.coo_matrix((diag, (rows, rows)), shape=(len(diag), len(diag)))
-    else:
-        D = np.diag(diag)
-    return D</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.inference.MLRR.run_MLCRR"><code class="name flex">
-<span>def <span class="ident">run_MLCRR</span></span>(<span>X, y, D, G, h, A, b)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Run L2 regression with a constraint on the parameters using a quadratic
-programming approach:
-minimize:
-(1/2) * x.T * P * x + q.T * x
-where:
-P = 2 * ( X.T @ X + D)
-q = -2 * X.T @ y
-subject to:
-G * x &lt;= h
-A * x == b</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@staticmethod
-def run_MLCRR(X, y, D, G, h, A, b):
-    &#39;&#39;&#39;Run L2 regression with a constraint on the parameters using a quadratic
-    programming approach:
-            minimize:
-                (1/2) * x.T * P * x + q.T * x
-            where:
-                P = 2 * ( X.T @ X + D)
-                q = -2 * X.T @ y
-            subject to:
-                G * x &lt;= h
-                A * x == b
-    &#39;&#39;&#39;
-    # Try on run MLRR without constraints and see if that works
-    theta = MLRR.run_MLRR(X=X, y=y, D=D)
-
-    if G is not None and h is None:
-        aaa = np.asarray(G @ theta).ravel()
-        bbb = h.ravel()
-        if np.all(aaa &lt;= bbb):
-            # Check the other constraint, this one passes
-            if A is not None and b is not None:
-                ccc = np.asarray(A @ theta).ravel()
-                ddd = b.ravel()
-                if np.all(ccc == ddd):
-                    # This passes without needing quadratic programming
-                    return theta
-
-    # Perform quadratic programming
-    P = 2 * (X.T @ X + D)
-    if scipy.sparse.issparse(P):
-        P = util.toarray(P)
-    q = -2 * ( X.T @ y )
-    if scipy.sparse.issparse(q):
-        q = util.toarray(q).ravel()
-
-    h = h.ravel()
-    q = q.ravel()
-
-    return qpsolvers.solve_qp(P=P, q=q, G=G, h=h, A=A, b=b, solver=&#39;quadprog&#39;)</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.inference.MLRR.run_MLRR"><code class="name flex">
-<span>def <span class="ident">run_MLRR</span></span>(<span>X, y, D)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Run Maximum Likelihood Ridge Regression without constraints</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@staticmethod
-def run_MLRR(X, y, D):
-    &#39;&#39;&#39;Run Maximum Likelihood Ridge Regression without constraints
-    &#39;&#39;&#39;
-    a = X.T @ X + D
-    if scipy.sparse.issparse:
-        a = util.toarray(a)
-    ainv = np.linalg.pinv(a)
-    return np.asarray(ainv @ X.T @ y)</code></pre>
-</details>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="mdsine2.pylab.inference.MLRR.run_single"><code class="name flex">
-<span>def <span class="ident">run_single</span></span>(<span>self, X, y, D=None)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Run the regression</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>X</code></strong> :&ensp;<code>array_like</code></dt>
-<dd>This is the Covariate matrix.
-Must have the shape (nrows, ncols)</dd>
-<dt><strong><code>y</code></strong> :&ensp;<code>np.ndarray</code></dt>
-<dd>This is the observation matrix.
-Must have the shape (nrows, 1)</dd>
-<dt><strong><code>D</code></strong> :&ensp;<code>np.ndarray</code></dt>
-<dd>This is the penalty matrix. If this is not passed in it
-will use the inner parameters.</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def run_single(self, X, y, D=None):
-    &#39;&#39;&#39;Run the regression
-
-    Parameters
-    ----------
-    X : array_like
-        This is the Covariate matrix.
-        Must have the shape (nrows, ncols)
-    y : np.ndarray
-        This is the observation matrix.
-        Must have the shape (nrows, 1)
-    D : np.ndarray
-        This is the penalty matrix. If this is not passed in it
-        will use the inner parameters.
-    &#39;&#39;&#39;
-    if not util.isarray(X):
-        raise TypeError(&#39;`X` ({}) must be array_like&#39;.format(type(X)))
-    if not util.isarray(y):
-        raise TypeError(&#39;`y` ({}) must be array_like&#39;.format(type(y)))
-    
-    sizes = [len(self.graph[name]) for name in self.order]
-    if D is None:
-        D = MLRR.build_D(penalties=self._penalties, order=self.order, 
-            sizes=sizes, sparse=False)
-
-    if D.shape[1] != X.shape[1]:
-        raise ValueError(&#39;`D` ({}) and `X` ({}) have mismatched shapes&#39;.format(
-            D.shape, X.shape))
-
-    if self.constrain:
-        theta = MLRR.run_MLCRR(X=X, y=y, D=D, G=self.G, 
-            h=self.h, A=self.A, b=self.b)
-    else:
-        theta = MLRR.run_MLRR(X, y, D)
-
-    # Assign the values to each of the variables
-    i = 0
-    for idx, pname in enumerate(self.order):
-        v = theta[i:i+sizes[idx]]
-        self.graph[pname].value = v
-        i += sizes[idx]
-
-    return self</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.inference.MLRR.set_constraints"><code class="name flex">
-<span>def <span class="ident">set_constraints</span></span>(<span>self, G=None, h=None, A=None, b=None)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Set the constraints of the system. The constraints are set that:</p>
-<pre><code>minimize:
-    (1/2) * x.T * P * x + q.T * x
-where:
-    P = 2 * ( X.T @ X + D)
-    q = -2 * X.T @ y
-subject to:
-    G * x &lt;= h
-    A * x == b
-</code></pre>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>G</code></strong> :&ensp;<code>numpy.ndarray</code></dt>
-<dd>Linear inequality constraint matrix</dd>
-<dt><strong><code>h</code></strong> :&ensp;<code>numpy.ndarray</code></dt>
-<dd>Linear inequality constraint vector</dd>
-<dt><strong><code>A</code></strong> :&ensp;<code>numpy.ndarray</code></dt>
-<dd>Linear equality constraint matrix</dd>
-<dt><strong><code>b</code></strong> :&ensp;<code>numpy.ndarray</code></dt>
-<dd>Linear equality constraint vector</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def set_constraints(self, G=None, h=None, A=None, b=None):
-    &#39;&#39;&#39;Set the constraints of the system. The constraints are set that:
-
-        minimize:
-            (1/2) * x.T * P * x + q.T * x
-        where:
-            P = 2 * ( X.T @ X + D)
-            q = -2 * X.T @ y
-        subject to:
-            G * x &lt;= h
-            A * x == b
-
-    Parameters
-    ----------
-    G : numpy.ndarray
-        Linear inequality constraint matrix
-    h : numpy.ndarray
-        Linear inequality constraint vector
-    A : numpy.ndarray
-        Linear equality constraint matrix
-    b : numpy.ndarray
-        Linear equality constraint vector
-    &#39;&#39;&#39;
-    if not self.constrain:
-        raise ValueError(&#39;`There are no constraints in MLRR - must specify a constrained&#39; \
-            &#39; MLRR by setting constrain=True during initialization&#39;)
-    self.G = G
-    self.h = h
-    self.A = A
-    self.b = b</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.inference.MLRR.set_parameter_order"><code class="name flex">
-<span>def <span class="ident">set_parameter_order</span></span>(<span>self, order)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Set the order of the parameters</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def set_parameter_order(self, order):
-    &#39;&#39;&#39;Set the order of the parameters
-    &#39;&#39;&#39;
-    self.order = []
-    if not util.isarray(order):
-        order = [order]
-    for i in order:
-        if i not in self.graph:
-            raise ValueError(&#39;`{}` not in graph&#39;.format(i))
-        node = self.graph[i]
-        self.order.append(node.name)</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.inference.MLRR.set_penalty"><code class="name flex">
-<span>def <span class="ident">set_penalty</span></span>(<span>self, parameter, penalty)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Sets the penalty <code>penalty</code> for the parameter <code>parameter</code>. If you
-want a global parameter set <code>parameter=pylab.inference.GLOBAL_PARAMETER</code>.</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>parameter</code></strong> :&ensp;<code>int, str, pl.Variable, pylab.inference.GLOBAL_PARAMETER</code></dt>
-<dd>This the the parameter you want. If it is set to
-<code>pylab.inference.GLOBAL_PARAMETER</code> then we set all the parameters with
-the penalty</dd>
-<dt><strong><code>penalty</code></strong> :&ensp;<code>float</code></dt>
-<dd>This is the \lambda term used as the penalty for the parameter <code>parameter</code></dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def set_penalty(self, parameter, penalty):
-    &#39;&#39;&#39;Sets the penalty `penalty` for the parameter `parameter`. If you
-    want a global parameter set `parameter=pylab.inference.GLOBAL_PARAMETER`.
-
-    Parameters
-    ----------
-    parameter : int, str, pl.Variable, pylab.inference.GLOBAL_PARAMETER
-        This the the parameter you want. If it is set to 
-        `pylab.inference.GLOBAL_PARAMETER` then we set all the parameters with
-        the penalty
-    penalty : float
-        This is the \lambda term used as the penalty for the parameter `parameter`
-    &#39;&#39;&#39;
-    if not util.isnumeric(penalty):
-        raise TypeError(&#39;`penalty` ({}) must be a numeric&#39;.format(type(penalty)))
-    if penalty &lt; 0:
-        raise ValueError(&#39;`penalty` ({}) must be &gt;= 0&#39;.format(penalty))
-    if parameter != GLOBAL_PARAMETER:
-        try:
-            parameter = self.graph[parameter]
-        except:
-            raise IndexError(&#39;`parameter` ({}) not found in graph&#39;.format(
-                parameter))
-        if parameter.name in self._penalties:
-            raise ValueError(&#39;parameter `{}` already set in penalties with the &#39; \
-                &#39;penalty `{}`&#39;.format(parameter.name, self._penalties[parameter.name]))
-        self._penalties[parameter.name] = penalty
-    else:
-        for node in self.graph:
-            if node.name in self._penalties:
-                raise ValueError(&#39;parameter `{}` already has the penalty `{}`&#39;.format(
-                    node.name, self._penalties[node.name]))
-            self._penalties[node.name] = penalty</code></pre>
-</details>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="mdsine2.pylab.inference.BaseModel" href="#mdsine2.pylab.inference.BaseModel">BaseModel</a></b></code>:
-<ul class="hlist">
-<li><code><a title="mdsine2.pylab.inference.BaseModel.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.pylab.inference.BaseModel.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.pylab.inference.BaseModel.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 </ul>
 </li>
 </ul>
@@ -3166,7 +2373,7 @@ corrupt state from writing).</p>
         if self.filename is not None:
             if not util.isstr(filename):
                 raise TypeError(&#39;filename ({}) must be a str&#39;.format(type(filename)))
-            self.filename = filename
+            self.filename = os.path.abspath(filename)
             self.f = h5py.File(self.filename, &#39;w&#39;, libver=&#39;latest&#39;)
             self.being_traced = set()
 
@@ -3266,7 +2473,8 @@ corrupt state from writing).</p>
             if var in self.graph:
                 var = self.graph[var].name
             else:
-                raise IndexError(&#39;`var` ({}) ({}) not recognized in graph&#39;.format(type(var), var))
+                # raise IndexError(&#39;`var` ({}) ({}) not recognized in graph&#39;.format(type(var), var))
+                return False
         return var in self.being_traced
 
     def set_trace(self, name, shape, dtype):
@@ -3854,7 +3062,8 @@ Example, multiple dimensions:
         if var in self.graph:
             var = self.graph[var].name
         else:
-            raise IndexError(&#39;`var` ({}) ({}) not recognized in graph&#39;.format(type(var), var))
+            # raise IndexError(&#39;`var` ({}) ({}) not recognized in graph&#39;.format(type(var), var))
+            return False
     return var in self.being_traced</code></pre>
 </details>
 </dd>
@@ -4059,7 +3268,6 @@ from RAM (self.graph[name]/trace) into disk memory.</p>
 <ul class="">
 <li><code><a title="mdsine2.pylab.inference.OLS" href="#mdsine2.pylab.inference.OLS">OLS</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.isMCMC" href="#mdsine2.pylab.inference.isMCMC">isMCMC</a></code></li>
-<li><code><a title="mdsine2.pylab.inference.isML" href="#mdsine2.pylab.inference.isML">isML</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.ismodel" href="#mdsine2.pylab.inference.ismodel">ismodel</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.r_hat" href="#mdsine2.pylab.inference.r_hat">r_hat</a></code></li>
 </ul>
@@ -4072,6 +3280,7 @@ from RAM (self.graph[name]/trace) into disk memory.</p>
 <li><code><a title="mdsine2.pylab.inference.BaseMCMC.continue_inference" href="#mdsine2.pylab.inference.BaseMCMC.continue_inference">continue_inference</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.BaseMCMC.ids" href="#mdsine2.pylab.inference.BaseMCMC.ids">ids</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.BaseMCMC.is_in_inference_order" href="#mdsine2.pylab.inference.BaseMCMC.is_in_inference_order">is_in_inference_order</a></code></li>
+<li><code><a title="mdsine2.pylab.inference.BaseMCMC.load" href="#mdsine2.pylab.inference.BaseMCMC.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.BaseMCMC.names" href="#mdsine2.pylab.inference.BaseMCMC.names">names</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.BaseMCMC.run" href="#mdsine2.pylab.inference.BaseMCMC.run">run</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.BaseMCMC.set_diagnostic_variables" href="#mdsine2.pylab.inference.BaseMCMC.set_diagnostic_variables">set_diagnostic_variables</a></code></li>
@@ -4082,18 +3291,6 @@ from RAM (self.graph[name]/trace) into disk memory.</p>
 </li>
 <li>
 <h4><code><a title="mdsine2.pylab.inference.BaseModel" href="#mdsine2.pylab.inference.BaseModel">BaseModel</a></code></h4>
-</li>
-<li>
-<h4><code><a title="mdsine2.pylab.inference.MLRR" href="#mdsine2.pylab.inference.MLRR">MLRR</a></code></h4>
-<ul class="two-column">
-<li><code><a title="mdsine2.pylab.inference.MLRR.build_D" href="#mdsine2.pylab.inference.MLRR.build_D">build_D</a></code></li>
-<li><code><a title="mdsine2.pylab.inference.MLRR.run_MLCRR" href="#mdsine2.pylab.inference.MLRR.run_MLCRR">run_MLCRR</a></code></li>
-<li><code><a title="mdsine2.pylab.inference.MLRR.run_MLRR" href="#mdsine2.pylab.inference.MLRR.run_MLRR">run_MLRR</a></code></li>
-<li><code><a title="mdsine2.pylab.inference.MLRR.run_single" href="#mdsine2.pylab.inference.MLRR.run_single">run_single</a></code></li>
-<li><code><a title="mdsine2.pylab.inference.MLRR.set_constraints" href="#mdsine2.pylab.inference.MLRR.set_constraints">set_constraints</a></code></li>
-<li><code><a title="mdsine2.pylab.inference.MLRR.set_parameter_order" href="#mdsine2.pylab.inference.MLRR.set_parameter_order">set_parameter_order</a></code></li>
-<li><code><a title="mdsine2.pylab.inference.MLRR.set_penalty" href="#mdsine2.pylab.inference.MLRR.set_penalty">set_penalty</a></code></li>
-</ul>
 </li>
 <li>
 <h4><code><a title="mdsine2.pylab.inference.Tracer" href="#mdsine2.pylab.inference.Tracer">Tracer</a></code></h4>

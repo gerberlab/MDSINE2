@@ -28,11 +28,12 @@
 </summary>
 <pre><code class="python"># Import top level
 from . import pylab
-# from . import posterior
 from . import visualization
 from . import diversity
 from . import dataset
 from . import config
+from . import posterior
+from . import negbin
 
 # Import key modules from pylab
 from .pylab import random
@@ -42,11 +43,11 @@ from .pylab import variables
 from .pylab.util import isnumeric, isbool, isfloat, isint, isarray, issquare, isstr, \
     itercheck, istype, istuple, isdict, istree
 from .pylab.variables import isVariable, isRandomVariable
-from .pylab.base import isqpcrdata, isasvset, isasv, issavable, istraceable, \
-    issubject, isstudy, isperturbation, isclusterable, isaggregatedasv, isasvtype
+from .pylab.base import isqpcrdata, istaxaset, istaxa, issavable, istraceable, \
+    issubject, isstudy, isperturbation, isclusterable, isotu, istaxatype
 from .pylab.random import israndom
 from .pylab.cluster import isclustering, isclusterproperty, isclustervalue
-from .pylab.inference import isMCMC, isML, ismodel
+from .pylab.inference import isMCMC, ismodel
 from .pylab.graph import isgraph, isnode
 from .pylab.metropolis import isMetropKernel
 from .pylab.dynamics import isdynamics, isprocessvariance, isintegratable
@@ -54,24 +55,26 @@ from .pylab.contrib import isclusterperturbationindicator, isclusterperturbation
 from .pylab.multiprocessing import ispersistentworker, ispersistentpool, isDASW, isSADW
 
 # Import commonly used Pylab functions and classes
-from .pylab.util import asvname_formatter, toarray, fast_index, coarsen_phylogenetic_tree
-from .pylab.base import ASV, ASVSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
+from .pylab.util import taxaname_formatter, toarray, fast_index, coarsen_phylogenetic_tree, \
+    taxaname_for_paper, TAXANAME_PAPER_FORMAT
+from .pylab.base import Taxa, OTU, TaxaSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
     Subject, Study, condense_matrix_with_taxonomy
-from .pylab.variables import Variable, Constant
+from .pylab.variables import Variable, Constant, summary
 from .pylab.graph import Graph, Node
 from .pylab.cluster import Clustering
 from .pylab.random import seed
 from .pylab.contrib import Interactions
 from .pylab.inference import BaseMCMC
+from .pylab.dynamics import integrate, BaseDynamics
 
 # Import PyLab errors
 from .pylab.errors import UndefinedError, MathError, GraphIDError, InheritanceError, \
     InitializationError
 
 from . import config
-from .run import build_graph, normalize_parameters, denormalize_parameters, \
-    calculate_stability_over_gibbs
-from .util import asvname_for_paper, is_gram_negative, is_gram_negative_taxa, \
+from .run import initialize_graph, normalize_parameters, denormalize_parameters, \
+    calculate_stability_over_gibbs, run_graph
+from .util import is_gram_negative, is_gram_negative_taxa, \
     generate_interation_bayes_factors_posthoc, generate_perturbation_bayes_factors_posthoc, \
     aggregate_items
 from .util import consistency_filtering, conditional_consistency_filtering</code></pre>
@@ -80,10 +83,6 @@ from .util import consistency_filtering, conditional_consistency_filtering</code
 <section>
 <h2 class="section-title" id="header-submodules">Sub-modules</h2>
 <dl>
-<dt><code class="name"><a title="mdsine2.clustering" href="clustering.html">mdsine2.clustering</a></code></dt>
-<dd>
-<div class="desc"><p>Clustering parameters for the posterior</p></div>
-</dd>
 <dt><code class="name"><a title="mdsine2.config" href="config.html">mdsine2.config</a></code></dt>
 <dd>
 <div class="desc"><p>This module holds classes for the logging and model configuration
@@ -103,18 +102,6 @@ functions …</p></div>
 <div class="desc"><p>Alpha and Beta diversity measures. This is heavily influenced by skbio. Acts as a wrapper
 for the beta diversity measures …</p></div>
 </dd>
-<dt><code class="name"><a title="mdsine2.filtering" href="filtering.html">mdsine2.filtering</a></code></dt>
-<dd>
-<div class="desc"><p>Filtering parameters for the posterior</p></div>
-</dd>
-<dt><code class="name"><a title="mdsine2.interactions" href="interactions.html">mdsine2.interactions</a></code></dt>
-<dd>
-<div class="desc"><p>Logistic growth parameters for the posterior</p></div>
-</dd>
-<dt><code class="name"><a title="mdsine2.logistic_growth" href="logistic_growth.html">mdsine2.logistic_growth</a></code></dt>
-<dd>
-<div class="desc"><p>Logistic growth parameters for the posterior</p></div>
-</dd>
 <dt><code class="name"><a title="mdsine2.model" href="model.html">mdsine2.model</a></code></dt>
 <dd>
 <div class="desc"><p>Make the Dynamics</p></div>
@@ -124,21 +111,17 @@ for the beta diversity measures …</p></div>
 <div class="desc"><p>These are the names, IDs, and Latex representations of the
 parameters that we are learning.</p></div>
 </dd>
-<dt><code class="name"><a title="mdsine2.perturbations" href="perturbations.html">mdsine2.perturbations</a></code></dt>
+<dt><code class="name"><a title="mdsine2.negbin" href="negbin.html">mdsine2.negbin</a></code></dt>
 <dd>
-<div class="desc"><p>Perturbation parameters for the posterior</p></div>
+<div class="desc"><p>Posterior Objects used for learning the negative binomial dispersion parameters …</p></div>
 </dd>
-<dt><code class="name"><a title="mdsine2.processvariance" href="processvariance.html">mdsine2.processvariance</a></code></dt>
+<dt><code class="name"><a title="mdsine2.posterior" href="posterior.html">mdsine2.posterior</a></code></dt>
 <dd>
-<div class="desc"><p>Process variance parameters for the posterior</p></div>
+<div class="desc"><p>Posterior objects used for inference of MDSINE2 model</p></div>
 </dd>
 <dt><code class="name"><a title="mdsine2.pylab" href="pylab/index.html">mdsine2.pylab</a></code></dt>
 <dd>
 <div class="desc"></div>
-</dd>
-<dt><code class="name"><a title="mdsine2.qpcr" href="qpcr.html">mdsine2.qpcr</a></code></dt>
-<dd>
-<div class="desc"><p>qPCR variance parameters for the posterior</p></div>
 </dd>
 <dt><code class="name"><a title="mdsine2.run" href="run.html">mdsine2.run</a></code></dt>
 <dd>
@@ -150,12 +133,7 @@ parameters that we are learning.</p></div>
 </dd>
 <dt><code class="name"><a title="mdsine2.util" href="util.html">mdsine2.util</a></code></dt>
 <dd>
-<div class="desc"><p>Utility functions for the posterior</p></div>
-</dd>
-<dt><code class="name"><a title="mdsine2.util_negbin" href="util_negbin.html">mdsine2.util_negbin</a></code></dt>
-<dd>
-<div class="desc"><p>Stores the classes and functions used in the <code>main_negbin</code> module that
-is used to learn the negative binomial dispersion parameters offline.</p></div>
+<div class="desc"><p>Utility functions for mdsine2</p></div>
 </dd>
 <dt><code class="name"><a title="mdsine2.visualization" href="visualization.html">mdsine2.visualization</a></code></dt>
 <dd>
@@ -178,24 +156,18 @@ is used to learn the negative binomial dispersion parameters offline.</p></div>
 <ul id="index">
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
-<li><code><a title="mdsine2.clustering" href="clustering.html">mdsine2.clustering</a></code></li>
 <li><code><a title="mdsine2.config" href="config.html">mdsine2.config</a></code></li>
 <li><code><a title="mdsine2.dataset" href="dataset.html">mdsine2.dataset</a></code></li>
 <li><code><a title="mdsine2.design_matrices" href="design_matrices.html">mdsine2.design_matrices</a></code></li>
 <li><code><a title="mdsine2.diversity" href="diversity.html">mdsine2.diversity</a></code></li>
-<li><code><a title="mdsine2.filtering" href="filtering.html">mdsine2.filtering</a></code></li>
-<li><code><a title="mdsine2.interactions" href="interactions.html">mdsine2.interactions</a></code></li>
-<li><code><a title="mdsine2.logistic_growth" href="logistic_growth.html">mdsine2.logistic_growth</a></code></li>
 <li><code><a title="mdsine2.model" href="model.html">mdsine2.model</a></code></li>
 <li><code><a title="mdsine2.names" href="names.html">mdsine2.names</a></code></li>
-<li><code><a title="mdsine2.perturbations" href="perturbations.html">mdsine2.perturbations</a></code></li>
-<li><code><a title="mdsine2.processvariance" href="processvariance.html">mdsine2.processvariance</a></code></li>
+<li><code><a title="mdsine2.negbin" href="negbin.html">mdsine2.negbin</a></code></li>
+<li><code><a title="mdsine2.posterior" href="posterior.html">mdsine2.posterior</a></code></li>
 <li><code><a title="mdsine2.pylab" href="pylab/index.html">mdsine2.pylab</a></code></li>
-<li><code><a title="mdsine2.qpcr" href="qpcr.html">mdsine2.qpcr</a></code></li>
 <li><code><a title="mdsine2.run" href="run.html">mdsine2.run</a></code></li>
 <li><code><a title="mdsine2.synthetic" href="synthetic.html">mdsine2.synthetic</a></code></li>
 <li><code><a title="mdsine2.util" href="util.html">mdsine2.util</a></code></li>
-<li><code><a title="mdsine2.util_negbin" href="util_negbin.html">mdsine2.util_negbin</a></code></li>
 <li><code><a title="mdsine2.visualization" href="visualization.html">mdsine2.visualization</a></code></li>
 </ul>
 </li>

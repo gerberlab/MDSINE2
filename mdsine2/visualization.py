@@ -22,7 +22,7 @@ These functions plot how the value of a variable changes over inference:
     - render_acceptance_rate_trace
     - render_trace
 
-Linewidths are automatically shutoff if the number of ASVs is greater than 75
+Linewidths are automatically shutoff if the number of Taxas is greater than 75
 '''
 import numpy as np
 import logging
@@ -73,7 +73,7 @@ def set_default_tax_level(level):
     ----------
     level : str
         This is the level to set it at. It must be either:
-            'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'ASV'
+            'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'asv'
     '''
     global DEFAULT_TAX_LEVEL
     if not pl.isstr(level):
@@ -202,7 +202,7 @@ def shade_in_perturbations(ax, perturbations, subj, textcolor='black', textsize=
 # --------
 # Heatmaps
 # --------
-def render_bayes_factors(bayes_factors, asvs, clustering=None, ax=None,
+def render_bayes_factors(bayes_factors, taxas, clustering=None, ax=None,
     n_colors=100, max_value=None, xticklabels='%(index)s', yticklabels='%(name)s %(index)s',
     include_tick_marks=False, linewidths=0.8, linecolor='black',cmap='Blues',
     include_colorbar=True, title='Microbe Interaction Bayes Factors', figure_size=None,
@@ -214,12 +214,12 @@ def render_bayes_factors(bayes_factors, asvs, clustering=None, ax=None,
     ----------
     bayes_factors : 2-dim np.ndarray
         - Square matrix indicating the bayes factors of the interaction
-    asvs : pl.base.ASVSet, None
-        - This is the object that contains all of the ASV metadata
+    taxas : pl.base.TaxaSet, None
+        - This is the object that contains all of the Taxa metadata
         - If this is None, then we do no checking if the size of the `interaction_matrix`
-          corresponds to the size of asvs
+          corresponds to the size of taxas
     clustering : pylab.cluster.ClusteringBase, Optional
-        - Clustering object if you want the ASVs in the same cluster to be grouped
+        - Clustering object if you want the Taxas in the same cluster to be grouped
           together
     ax : matplotlib.pyplot.Axes, Optional
         - The axes to plot on. If nothing is provided a new figure will be created
@@ -230,7 +230,7 @@ def render_bayes_factors(bayes_factors, asvs, clustering=None, ax=None,
         - If None, then there is no clipping
     xticklabels, yticklabels : str, list, None, Optional
         - These are the labels for the x and y axis, respectively.
-        - If it is a list then it must have `asvs.n_asvs` elements.
+        - If it is a list then it must have `taxas.n_taxas` elements.
         - If it is a string, it is the formatter for each of the rows/columns.
         - If it is None, then do not make any ticklabels
     include_tick_marks : bool, Optional
@@ -249,7 +249,7 @@ def render_bayes_factors(bayes_factors, asvs, clustering=None, ax=None,
     figure_size : 2-tuple, Optional
         - This is the size of the figure (in inches)
         - If nothing is specified it will default to adding 10 inches in each
-          dimension for every 50 ASVs
+          dimension for every 50 Taxas
     
     Returns
     -------
@@ -272,7 +272,7 @@ def render_bayes_factors(bayes_factors, asvs, clustering=None, ax=None,
 
     # Type checking and initialization
     d = _init_parameters_heatmap(matrix=bayes_factors,
-        asvs=asvs, clustering=clustering, xticklabels=xticklabels,
+        taxas=taxas, clustering=clustering, xticklabels=xticklabels,
         yticklabels=yticklabels, ax=ax, figure_size=figure_size,
         linewidths=linewidths, order=order)
     ax = d['ax']
@@ -309,7 +309,7 @@ def render_bayes_factors(bayes_factors, asvs, clustering=None, ax=None,
         ax.set_title(title)
     return ax
 
-def render_cocluster_proportions(coclusters, asvs, ax=None,
+def render_cocluster_proportions(coclusters, taxas, ax=None,
     n_colors=100, xticklabels='%(index)s', yticklabels='%(name)s %(index)s',
     include_tick_marks=False, linewidths=0.8, linecolor='black', cmap='Blues',
     include_colorbar=True, title='Microbe Co-cluster Proportions', figure_size=None,
@@ -320,15 +320,15 @@ def render_cocluster_proportions(coclusters, asvs, ax=None,
     ----------
     coclusters : 2-dim np.ndarray
         - Square matrix indicating the cocluster proportions
-    asvs : pylab.base.ASVSet
-        - This is the object that contains all of the ASV metadata
+    taxas : pylab.base.TaxaSet
+        - This is the object that contains all of the Taxa metadata
     ax : matplotlib.pyplot.Axes, Optional
         - The axes to plot on. If nothing is provided a new figure will be created
     n_colors : int, Optional
         - The number of colors to generate for the colormap.
     xticklabels, yticklabels : str, list, None, Optional
         - These are the labels for the x and y axis, respectively.
-        - If it is a list then it must have `asvs.n_asvs` elements.
+        - If it is a list then it must have `taxas.n_taxas` elements.
         - If it is a string, it is the formatter for each of the rows/columns.
         - If it is None, then do not make any ticklabels
     include_tick_marks : bool, Optional
@@ -347,7 +347,7 @@ def render_cocluster_proportions(coclusters, asvs, ax=None,
     figure_size : 2-tuple, Optional
         - This is the size of the figure (in inches)
         - If nothing is specified it will default to adding 10 inches in each
-          dimension for every 50 ASVs
+          dimension for every 50 Taxas
 
     Returns
     -------
@@ -368,7 +368,7 @@ def render_cocluster_proportions(coclusters, asvs, ax=None,
 
     # Type checking and initialization
     d = _init_parameters_heatmap(matrix=coclusters,
-        asvs=asvs, xticklabels=xticklabels, clustering=None,
+        taxas=taxas, xticklabels=xticklabels, clustering=None,
         yticklabels=yticklabels, ax=ax, figure_size=figure_size,
         linewidths=linewidths, order=order)
     ax = d['ax']
@@ -401,7 +401,7 @@ def render_cocluster_proportions(coclusters, asvs, ax=None,
         ax.set_title(title)
     return ax
 
-def render_interaction_strength(interaction_matrix, log_scale, asvs, clustering=None,
+def render_interaction_strength(interaction_matrix, log_scale, taxas, clustering=None,
     ax=None, center_colors=False, n_colors=100, xticklabels='%(index)s', 
     vmax=None, vmin=None, yticklabels='%(name)s %(index)s', 
     include_tick_marks=False, linewidths=0.8, linecolor='black',
@@ -409,7 +409,7 @@ def render_interaction_strength(interaction_matrix, log_scale, asvs, clustering=
     figure_size=None, order=None):
     '''Render the interaction strength matrix. If you want the values in log scale,
     it will annotate the box with the sign of the interaction and plot the absolute
-    value of the interaction. If you want the ASVs in the same clusters to be grouped
+    value of the interaction. If you want the Taxas in the same clusters to be grouped
     together, specify the clustering object in `cluster`.
 
     Parameters
@@ -419,12 +419,12 @@ def render_interaction_strength(interaction_matrix, log_scale, asvs, clustering=
     log_scale : bool
         - If True, plots with log scale. If False it plots with regular
           scale
-    asvs : pylab.base.ASVSet, None
-        - This is the object that contains all of the ASV metadata
+    taxas : pylab.base.TaxaSet, None
+        - This is the object that contains all of the Taxa metadata
         - If this is None, then we do no checking if the size of the `interaction_matrix`
-          corresponds to the size of asvs
+          corresponds to the size of taxas
     clustering : pylab.cluster.ClusteringBase, Optional
-        - Clustering object if you want the ASVs in the same cluster to be grouped
+        - Clustering object if you want the Taxas in the same cluster to be grouped
           together
     ax : matplotlib.pyplot.Axes, Optional
         - The axes to plot on. If nothing is provided a new figure will be created
@@ -438,8 +438,8 @@ def render_interaction_strength(interaction_matrix, log_scale, asvs, clustering=
           infered from the data
     xticklabels, yticklabels : str, list, None, Optional
         - These are the labels for the x and y axis, respectively.
-        - For details on the format, look at `pylab.asvname_formatter`
-        - If it is a list then it must have `asvs.n_asvs` elements.
+        - For details on the format, look at `pylab.taxaname_formatter`
+        - If it is a list then it must have `taxas.n_taxas` elements.
         - If it is a string, it is the formatter for each of the rows/columns.
         - If it is None, then do not make any ticklabels
     include_tick_marks : bool, Optional
@@ -458,7 +458,7 @@ def render_interaction_strength(interaction_matrix, log_scale, asvs, clustering=
     figure_size : 2-tuple, Optional
         - This is the size of the figure (in inches)
         - If nothing is specified it will default to adding 10 inches in each
-          dimension for every 50 ASVs
+          dimension for every 50 Taxas
     
     Returns
     -------
@@ -479,7 +479,7 @@ def render_interaction_strength(interaction_matrix, log_scale, asvs, clustering=
 
     # Type checking and initialization
     d = _init_parameters_heatmap(matrix=interaction_matrix,
-        asvs=asvs, clustering=clustering, xticklabels=xticklabels,
+        taxas=taxas, clustering=clustering, xticklabels=xticklabels,
         yticklabels=yticklabels, ax=ax, figure_size=figure_size,
         linewidths=linewidths, order=order)
     ax = d['ax']
@@ -1140,19 +1140,19 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
     ylim=None, markersize=4, shade_perturbations=True, legend=True, set_0_to_nan=False, 
     color_code_clusters=False, clustering=None, cmap=None, alpha=1.0, linestyle='-', ax=None,
     include_errorbars=False, grid=False, label_formatter=None, label_func=None, **kwargs):
-    '''Plots the abundance over time for the ASVs in `subj`.
+    '''Plots the abundance over time for the Taxas in `subj`.
 
     What you're plotting
     --------------------
     There are several different types of abundances you can plot, which is specified using
     the `dtype` (str) parameter:
     'raw'
-        This plots the counts of the ASVs. `subj` must be a single pl.base.Subject object.
+        This plots the counts of the Taxas. `subj` must be a single pl.base.Subject object.
     'rel'
-        This plots the relative abundance of the ASVs. `subj` must be a single 
+        This plots the relative abundance of the Taxas. `subj` must be a single 
         pl.base.Subject object.
     'abs'
-        This plots the absolute abundance of the ASVs. `subj` must be a single 
+        This plots the absolute abundance of the Taxas. `subj` must be a single 
         pl.base.Subject object.
     'qpcr'
         This plots the qPCR measurements at each time point. `subj` can also be a 
@@ -1163,37 +1163,37 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
     
     Aggregating by taxanomic level
     ------------------------------
-    If the taxonomy of the ASVs are specified, you can aggregate ASVs into specific 
+    If the taxonomy of the Taxas are specified, you can aggregate Taxas into specific 
     taxonomic levels and plot them as a trajectory by using the parameter `taxlevel`.
-    Example: if `taxlevel='phylum'` then we add all of the abundances/reads of the ASVs
+    Example: if `taxlevel='phylum'` then we add all of the abundances/reads of the Taxas
     that are in the same Phylum. If `taxlevel=None` then we do no aggregation. If you 
     set `taxlevel='default'` then it aggregates at the default taxonomic level, which 
     can be set using the function `plotting.set_default_tax_level(level)`. NOTE: these 
     are only necessary if dtype is either 'raw', 're', or 'abs'.
 
     The `label_formatter` (str) tells the function how to set the index of the dataframe
-    it returns using `pylab.asvname_formatter`. If nothing is specified then it 
+    it returns using `pylab.taxaname_formatter`. If nothing is specified then it 
     will return the entire taxonomy as a label for the taxa. NOTE, you cannot specifiy
     a taxonomy *below* that youre clustering at. For example, you cannot cluster at the 
     'class' level and then specify `'%(genus)s'` in `label_formatter`.
 
     What to plot?
     -------------
-    You can plot a subset of the ASVs by using the `plot_` arguments. If None of those
+    You can plot a subset of the Taxas by using the `plot_` arguments. If None of those
     parameters are specified, then it will plot everything. NOTE: You can only specify 
     one of the `plot_` at a time. NOTE: these are only necessary if dtype is either 
     'raw', 're', or 'abs'.
 
     plot_abundant : int
-    If you want to only plot the x most abundant ASVs, specify that number 
+    If you want to only plot the x most abundant Taxas, specify that number 
     with `plot_abundant` (`int`) as a positive number. Example: `plot_abundant = 15` will
     only plot the 15 most abundant. If `plot_abundant` is a negative number, it will
     plot the least abundant. Example: `plot_abundant = -15` will only plot the 15 least 
     abundant. 
     
     plot_specific : list
-    If you want to only plot specific ASVs, you can specify them by any identification
-    (index, name, ID, etc.) as a list of ASVs to plot.
+    If you want to only plot specific Taxas, you can specify them by any identification
+    (index, name, ID, etc.) as a list of Taxas to plot.
     NOTE: If you specify `plot_specific` and you are clustering along a taxonomic level, then
     you specify the names at the taxonomic level you clustered at.
     Example::
@@ -1201,7 +1201,7 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
         VALID: plot_specific = [('Bacteria', 'Bacteroidetes'), ('Bacteria', 'Firmicutes')]
         INVALID: plot_specific = ['Bacteroidetes', 'Firmicutes'] # Need full taxonomy
         INVALID: plot_specific = ['Bacteroidia', 'Clostridia'] # This is at the class level
-        INVALID: plot_specific = ['ASV_32'] # These names are no longer valid
+        INVALID: plot_specific = ['Taxa_32'] # These names are no longer valid
 
     plot_clusters : list(int), int
     If you want to plot specific clusters (or a single cluster), you can specify the cluster
@@ -1238,15 +1238,15 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
         If True, it will plot the y-axis in log scale. If nothing is specified then it 
         will pick it automatically.
     plot_abundant : int, None
-        If specified, it will plot only this number most abundant ASVs
+        If specified, it will plot only this number most abundant Taxas
     plot_specific : array_like, None
-        If specified, it will only plot the ASVs specified indicated in here. Else
+        If specified, it will only plot the Taxas specified indicated in here. Else
         it will plot everything
     plot_clusters : array_like, None
         If specified, only plots the clusters specified. Note that the `clustering` parameter
         must also be specified
     highlight : list(float), None
-        These are a list of tuples (asv, timepoint) we want to highlight (circle). 
+        These are a list of tuples (taxa, timepoint) we want to highlight (circle). 
         Each element must be a time in `subj.times`. If nothing is specified then we do not
         circle anything
     ylim : 2-tuple, Optional
@@ -1260,9 +1260,9 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
     shade_perturbations : bool
         If True, shade in the perturbations
     color_code_clusters : bool
-        If True, set all of the ASVs in a cluster to the same color. Note that the `clustering` 
+        If True, set all of the Taxas in a cluster to the same color. Note that the `clustering` 
         parameter must also be specified. NOTE: if you are aggregating the data at a taxonomic 
-        level (taxlevel is not None or 'asv'), then this is automatically overridden to False.
+        level (taxlevel is not None or 'taxa'), then this is automatically overridden to False.
         If specified, it overrides the legend to False.
     clustering : pylab.cluster.Clustering
         Clustering object. Only necessary if `plot_clusters` or `color_code_clusters` are specified
@@ -1366,7 +1366,7 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
                         raise TypeError('Every element in `plot_clusters` ({}) ({}) must ' \
                             'be an int'.format(plot_clusters,
                                 pl.itercheck(plot_clusters, pl.isint)))
-            if taxlevel != 'asv':
+            if taxlevel != 'taxa':
                 raise ValueError('Cannot plot clusters (`plot_clusters` ({})) and aggregate by a' \
                     ' taxonomic level (`taxlevel` ({}))'.format(plot_clusters, taxlevel))            
             if not pl.isclustering(clustering):
@@ -1376,9 +1376,9 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
             raise TypeError('`color_code_clusters` ({}) must be a bool'.format(
                 type(color_code_clusters)))
         if color_code_clusters:
-            if taxlevel != 'asv':
+            if taxlevel != 'taxa':
                 logging.warning('Overriding `color_code_clusters` to False because `taxlevel`' \
-                    ' ({}) is not None nor "asv"'.format(taxlevel))
+                    ' ({}) is not None nor "taxa"'.format(taxlevel))
                 color_code_clusters = False
             if legend:
                 logging.warning('Overriding `legend` to False because `color_code_clusters` is True')
@@ -1418,8 +1418,8 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
         if plot_specific is not None:
             idxs = []
             for a in plot_specific:
-                temp_asv = subj.asvs[a]
-                idxs.append(temp_asv.idx)
+                temp_taxa = subj.taxas[a]
+                idxs.append(temp_taxa.idx)
         elif plot_abundant is not None:
             matrix = df.values
             abnds = np.sum(matrix, axis=1)
@@ -1455,7 +1455,7 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
             datapoints = np.asarray(list(df.iloc[idx]))
 
             if label_func is not None:
-                label = label_func(subj.asvs[label], asvs=subj.asvs)
+                label = label_func(subj.taxas[label], taxas=subj.taxas)
             # print(label) 
 
             if set_0_to_nan:
@@ -1574,21 +1574,21 @@ def taxonomic_distribution_over_time(subj, taxlevel=None,
 
     Aggregating by taxanomic level
     ------------------------------
-    If the taxonomy of the ASVs are specified, you can aggregate ASVs into specific 
+    If the taxonomy of the Taxas are specified, you can aggregate Taxas into specific 
     taxonomic levels and plot them using the parameter `taxlevel`.
-    Example: if `taxlevel='phylum'` then we add all of the reads of the ASVs
+    Example: if `taxlevel='phylum'` then we add all of the reads of the Taxas
     that are in the same Phylum. If `taxlevel=None` then we do no aggregation. If you 
     set `taxlevel='default'` then it aggregates at the default taxonomic level, which 
     can be set using the function `plotting.set_default_tax_level(level)`.
 
     The `label_formatter` (str) tells the function how to set the index of the dataframe
-    it returns using `pylab.asvname_formatter`. If nothing is specified then it 
+    it returns using `pylab.taxaname_formatter`. If nothing is specified then it 
     will return the entire taxonomy as a label for the taxa. NOTE, you cannot specifiy
     a taxonomy *below* that youre clustering at. For example, you cannot cluster at the 
     'class' level and then specify `'%(genus)s'` in `label_formatter`.
 
     plot_abundant : int
-    If you want to only plot the x most abundant ASVs, specify that number 
+    If you want to only plot the x most abundant Taxas, specify that number 
     with `plot_abundant` (`int`) as a positive number. Example: `plot_abundant = 15` will
     only plot the 15 most abundant. If `plot_abundant` is a negative number, it will
     plot the least abundant. Example: `plot_abundant = -15` will only plot the 15 least 
@@ -1606,7 +1606,7 @@ def taxonomic_distribution_over_time(subj, taxlevel=None,
         If specified, only plots the top or bottom `plot_abundant` elements.
         If None then nothing happens
     label_formatter : str, None
-        If specified, it will tell how to make the legend using the asvname_formatter.
+        If specified, it will tell how to make the legend using the taxaname_formatter.
         This can only be used if the `taxlevel` is not specified.
     kwargs : dict
         xlabel, ylabel, title : str
@@ -1698,7 +1698,7 @@ def taxonomic_distribution_over_time(subj, taxlevel=None,
 
     if legend:
         # handles, labels = ax.get_legend_handles_labels()
-        # Reverse the inferit order of the legend so it matches the graph
+        # Reverse the inherit order of the legend so it matches the graph
         # ax.legend(handles[::-1], labels[::-1], bbox_to_anchor=(1,1))
         ax.legend(bbox_to_anchor=(1,1), )
 
@@ -1708,50 +1708,50 @@ def taxonomic_distribution_over_time(subj, taxlevel=None,
 def _tax_is_defined(tax, level):
     return (type(tax) != float) and (tax != DEFAULT_TAXA_NAME) and (tax != '')
 
-def _agg_asvname_for_paper(agg, asvname):
-    '''Makes the name in the format needed for the paper for an aggregate asv
+def _agg_taxaname_for_paper(agg, taxaname):
+    '''Makes the name in the format needed for the paper for an aggregate taxa
     '''
-    if _tax_is_defined(agg.aggregated_taxonomies[asvname], 'species'):
-        species = agg.aggregated_taxonomies[asvname]['species']
+    if _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'species'):
+        species = agg.aggregated_taxonomies[taxaname]['species']
         species = species.split('/')
         if len(species) >= 3:
             species = species[:2]
         species = '/'.join(species)
         label = '{genus} {spec} {name}'.format(
-                genus=agg.aggregated_taxonomies[asvname]['genus'],
+                genus=agg.aggregated_taxonomies[taxaname]['genus'],
                 spec=species,
-                name=asvname)
-    elif _tax_is_defined(agg.aggregated_taxonomies[asvname], 'genus'):
+                name=taxaname)
+    elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'genus'):
         label = '* {genus} {name}'.format(
-                genus=agg.aggregated_taxonomies[asvname]['genus'],
-                name=asvname)
-    elif _tax_is_defined(agg.aggregated_taxonomies[asvname], 'family'):
+                genus=agg.aggregated_taxonomies[taxaname]['genus'],
+                name=taxaname)
+    elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'family'):
          label = '** {family} {name}'.format(
-                family=agg.aggregated_taxonomies[asvname]['family'],
-                name=asvname)
-    elif _tax_is_defined(agg.aggregated_taxonomies[asvname], 'order'):
+                family=agg.aggregated_taxonomies[taxaname]['family'],
+                name=taxaname)
+    elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'order'):
         label = '*** {order} {name}'.format(
-                order=agg.aggregated_taxonomies[asvname]['order'],
-                name=asvname)
-    elif _tax_is_defined(agg.aggregated_taxonomies[asvname], 'class'):
+                order=agg.aggregated_taxonomies[taxaname]['order'],
+                name=taxaname)
+    elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'class'):
         label = '**** {clas} {name}'.format(
-                clas=agg.aggregated_taxonomies[asvname]['class'],
-                name=asvname)
-    elif _tax_is_defined(agg.aggregated_taxonomies[asvname], 'phylum'):
+                clas=agg.aggregated_taxonomies[taxaname]['class'],
+                name=taxaname)
+    elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'phylum'):
         label = '***** {phylum} {name}'.format(
-                phylum=agg.aggregated_taxonomies[asvname]['phylum'],
-                name=asvname)
-    elif _tax_is_defined(agg.aggregated_taxonomies[asvname], 'kingdom'):
+                phylum=agg.aggregated_taxonomies[taxaname]['phylum'],
+                name=taxaname)
+    elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'kingdom'):
         label = '****** {kingdom} {name}'.format(
-                kingdom=agg.aggregated_taxonomies[asvname]['kingdom'],
-                name=asvname)
+                kingdom=agg.aggregated_taxonomies[taxaname]['kingdom'],
+                name=taxaname)
 
     return label
 
 def aggregate_asv_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None, 
     title='Subject %(subjectname)s', xlabel='auto', ylabel='auto', vmin=None, vmax=None,
     alpha_agg=0.5, alpha_asv=1., legend=True, fontstyle=None, shade_perturbations=True):
-    '''Plot the abundances of the aggregated ASVs within the OTU `agg` for the subject `subj`
+    '''Plot the abundances of the aggregated Taxas within the OTU `agg` for the subject `subj`
 
     Each subject within the study has its own axis within the figure. If you want to
     plot only specific subjects, pass them in with the parameter `subjs`
@@ -1759,9 +1759,9 @@ def aggregate_asv_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
     Parameters
     ----------
     subj : mdsine2.Subject
-        This is the subject oobject that contains all of the data for the subjsets as well as the ASVs
-    agg : str, mdsine2.AggregateASV, int
-        This is the identifier for the aggregate ASV you want to plot
+        This is the subject oobject that contains all of the data for the subjsets as well as the Taxas
+    agg : str, mdsine2.OTU, int
+        This is the identifier for the aggregate Taxa you want to plot
     dtype : str
         This is the type of plot you want. Options:
             'raw' : Counts
@@ -1788,9 +1788,9 @@ def aggregate_asv_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
     vmin, vmax : float
         These are the minimum and maximum values in the yaxis, respectively.
     alpha_agg : float
-        This is the alpha of the aggregate ASV plot
+        This is the alpha of the aggregate Taxa plot
     alpha_asv : float
-        This is the alpha of the individual ASV plots
+        This is the alpha of the individual Taxa plots
     legend : bool
         If True, render the legend on the right hand side
     fontstyle : str
@@ -1806,7 +1806,7 @@ def aggregate_asv_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
     '''
     if not pl.issubject(subj):
         raise TypeError('`subj` ({}) must be a mdsine2.Subject object'.format(type(subj)))
-    if agg not in subj.asvs:
+    if agg not in subj.taxas:
         raise ValueError('`agg` ({}) not found in study'.format(agg))
     if dtype not in ['rel', 'abs', 'raw']:
         raise ValueError('`dtype` ({}) not recognized'.format(dtype))
@@ -1832,7 +1832,7 @@ def aggregate_asv_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
         fig = plt.figure()
         ax = fig.add_subplot(111)
     
-    agg = subj.asvs[agg]
+    agg = subj.taxas[agg]
     M = subj.matrix()[dtype]
 
     # Plot the aggregate
@@ -1840,12 +1840,12 @@ def aggregate_asv_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
         marker='x')
 
     individ_trajs = {}
-    for asvname in agg.aggregated_asvs:
-        if asvname not in subj._reads_individ:
+    for taxaname in agg.aggregated_taxas:
+        if taxaname not in subj._reads_individ:
             raise ValueError('This should not happend. Failing.')
         temp = []
         for t in subj.times:
-            abund = subj._reads_individ[asvname][t]
+            abund = subj._reads_individ[taxaname][t]
 
             if dtype == 'rel':
                 abund = abund / np.sum(subj.reads[t])
@@ -1853,7 +1853,7 @@ def aggregate_asv_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
                 abund = abund * subj.qpcr[t].mean()
             temp.append(abund)
 
-        label = _agg_asvname_for_paper(agg=agg, asvname=asvname)
+        label = _agg_taxaname_for_paper(agg=agg, taxaname=taxaname)
         individ_trajs[label] = temp
     
     for label in individ_trajs:
@@ -1921,20 +1921,20 @@ def _is_just_zero_or_nan(matrix):
                 return False
     return True
 
-def _format_ticklabel(format, order, asvs):
+def _format_ticklabel(format, order, taxas):
     '''Format the xtick labels witha  slightly different format than that in 
-    `pylab.asvname_formatter`: Overrides the %(index)s to be where it appears 
+    `pylab.taxaname_formatter`: Overrides the %(index)s to be where it appears 
     in the local order, not the global order
 
     Parameters
     ----------
     format : str
-        - This is the format to make the ticklabel for each ASV. The format can be 
-          seen in `pylab.asvname_formatter`.
+        - This is the format to make the ticklabel for each Taxa. The format can be 
+          seen in `pylab.taxaname_formatter`.
     order : array_like
-        - This is the list of the ASV indices in the order that they should appear.
-    asvs : pylab.base.ASVSet
-        - This is where all the information is stored for the ASVs
+        - This is the list of the Taxa indices in the order that they should appear.
+    taxas : pylab.base.TaxaSet
+        - This is where all the information is stored for the Taxas
 
     Returns
     -------
@@ -1943,13 +1943,13 @@ def _format_ticklabel(format, order, asvs):
 
     See also
     --------
-    pylab.asvname_formatter
+    pylab.taxaname_formatter
     '''
     ticklabels =[]
 
     for num, idx in enumerate(order):
         fmt = format.replace('%(index)s', str(num))
-        label = pl.asvname_formatter(format=fmt, asv=idx, asvs=asvs)
+        label = pl.taxaname_formatter(format=fmt, taxa=idx, taxas=taxas)
         ticklabels.append(label)
     return ticklabels
 
@@ -1998,7 +1998,7 @@ def _set_heatmap_default_args(linewidths=None, linecolor=None, n_colors=None, xt
         'xticklabels': xticklabels, 'yticklabels': yticklabels, 
         'include_colorbar': include_colorbar, 'include_tick_marks': include_tick_marks}
 
-def _init_parameters_heatmap(matrix, asvs, clustering, xticklabels, yticklabels, ax, figure_size,
+def _init_parameters_heatmap(matrix, taxas, clustering, xticklabels, yticklabels, ax, figure_size,
     linewidths, order):
     '''Checks if the parameters are initialized correctly for the standard arguments
     for `render_interaction_strength`, `render_cocluster_proportions`, and
@@ -2008,10 +2008,10 @@ def _init_parameters_heatmap(matrix, asvs, clustering, xticklabels, yticklabels,
     ----------
     matrix : array_like (2-dimensional)
         - 2D matrix that can be casted to a numpy ndarray
-    asvs : pylab.Base.ASVSet
-        - This is the ASVSet that contains all of the information about the ASVs
+    taxas : pylab.Base.TaxaSet
+        - This is the TaxaSet that contains all of the information about the Taxas
     clustering : pylab.cluster.Clustering
-        - This is the clustering object that tells the assignments for each of the ASVs
+        - This is the clustering object that tells the assignments for each of the Taxas
     xticklables, yticklables : str, array_like
         - These are either the string formats to make each of the labels or they are 
           the actual labels for each of the entries for the horizontal or vertical axis
@@ -2020,13 +2020,13 @@ def _init_parameters_heatmap(matrix, asvs, clustering, xticklabels, yticklabels,
           object will be created
     figure_size : 2-tuple(numeric, numeric), None
         - This is the size to create the figure. If nothing is provided it will be
-          automatically set based on the number of ASVs
+          automatically set based on the number of Taxas
     linewidths : numeric
-        - If the number of ASVs exceeds a certain number (75), it will automatically set 
+        - If the number of Taxas exceeds a certain number (75), it will automatically set 
           the linewidths to 0
     order : array_like, None
-        - This is the order to set for the ASVs. The order has the ASV identifier (name, index, 
-          id, etc.) for each ASV. If None then it does it by the order of the ASVs or by the 
+        - This is the order to set for the Taxas. The order has the Taxa identifier (name, index, 
+          id, etc.) for each Taxa. If None then it does it by the order of the Taxas or by the 
           clustering object.
     Returns
     -------
@@ -2057,14 +2057,14 @@ def _init_parameters_heatmap(matrix, asvs, clustering, xticklabels, yticklabels,
     if matrix.shape[0] != matrix.shape[1]:
         raise ValueError('`matrix` ({}) must be square'.format(
             matrix.shape))
-    if asvs is not None:
-        if not pl.isasvset(asvs):
-            raise ValueError('`asvs` ({}) must be a subclass of pylab.data.ASVSet'.format(
-                asvs.__class__))
-        if matrix.shape[0] != asvs.n_asvs:
+    if taxas is not None:
+        if not pl.istaxaset(taxas):
+            raise ValueError('`taxas` ({}) must be a subclass of pylab.data.TaxaSet'.format(
+                taxas.__class__))
+        if matrix.shape[0] != taxas.n_taxas:
             raise ValueError('The size of the interaction matrix ({}) must ' \
-                'equal the number of ASVs in `asvs` ({})'.format(
-                    matrix.shape[0], asvs.n_asvs))
+                'equal the number of Taxas in `taxas` ({})'.format(
+                    matrix.shape[0], taxas.n_taxas))
     if clustering is not None:
         if not pl.isclustering(clustering):
             raise ValueError('`clustering` ({}) must be a subclass of ' \
@@ -2087,14 +2087,14 @@ def _init_parameters_heatmap(matrix, asvs, clustering, xticklabels, yticklabels,
     if order is not None:
         if not pl.isarray(order):
             raise TypeError('`order` ({}) if specified must be an array'.format(type(order)))
-        if len(order) != len(asvs):
-            raise TypeError('`order` ({}) must be {} elements'.format(len(order), len(asvs)))
+        if len(order) != len(taxas):
+            raise TypeError('`order` ({}) must be {} elements'.format(len(order), len(taxas)))
         for i in order:
-            if i not in asvs:
-                raise IndexError('ASV identifier ({}) not found in ASVs'.format(i))
+            if i not in taxas:
+                raise IndexError(' identifier ({}) not found in s'.format(i))
 
-    if asvs is not None:
-        N = len(asvs)
+    if taxas is not None:
+        N = len(taxas)
     else:
         N = matrix.shape[0]
 
@@ -2104,7 +2104,7 @@ def _init_parameters_heatmap(matrix, asvs, clustering, xticklabels, yticklabels,
 
         # Set figure size
         if figure_size is None:
-            # For each 50 ASVs add 10 inches to each dimension
+            # For each 50 Taxas add 10 inches to each dimension
             x = math.ceil(N/50)
             l = int(10*x)
             figure_size = (l,l)
@@ -2112,11 +2112,11 @@ def _init_parameters_heatmap(matrix, asvs, clustering, xticklabels, yticklabels,
     else:
         fig = plt.gcf()
 
-    # Make asv order based on clusters if necessary
+    # Make taxa order based on clusters if necessary
     if order is not None:
         temp = []
         for oidx in order:
-            temp.append(asvs[oidx].idx)
+            temp.append(taxas[oidx].idx)
         order = temp
     elif clustering is not None:
         # get the index order
@@ -2142,9 +2142,9 @@ def _init_parameters_heatmap(matrix, asvs, clustering, xticklabels, yticklabels,
     if yticklabels is None:
         yticklabels = False
     if type(xticklabels) == str:
-        xticklabels = _format_ticklabel(format=xticklabels, order=order, asvs=asvs)
+        xticklabels = _format_ticklabel(format=xticklabels, order=order, taxas=taxas)
     if type(yticklabels) == str:
-        yticklabels = _format_ticklabel(format=yticklabels, order=order, asvs=asvs)
+        yticklabels = _format_ticklabel(format=yticklabels, order=order, taxas=taxas)
     if N > 75:
         linewidths = 0
 

@@ -112,56 +112,56 @@ class Perturbation(BasePerturbation, variables.Variable):
 
     Parameters
     ----------
-    start, end : int, float
-        Start and end of the perturbation
-    asvs : pylab.base.ASVSet
-        ASVSet of asvs
+    starts, ends : dict
+        Start and end of the perturbation for each subject
+    taxas : pylab.base.TaxaSet
+        TaxaSet of taxas
     magnitude : pylab.variables.Variable, int/float, array, Optional
         If a pylab.variables.Variable is passed in it will create one
         with the value indicated. Defualt value is None
     indicator : pylab.variables.Variable, array, Optional
         This is the indicator of the perturbation. Default value is False 
-        for every asv
+        for every taxa
     probability : pylab.variables.Variable, float, Optional
-        This is the probability that the perturbation affects an ASV, e.g.
+        This is the probability that the perturbation affects a Taxa, e.g.
           probability = 0.7, there&#39;s a 70% chance that the perturbation afffects 
-          each asv
+          each taxa
     kwargs : dict
         - Extra arguments for the Node class
     &#39;&#39;&#39;
-    def __init__(self, start, end, asvs, magnitude=None, indicator=None, 
+    def __init__(self, taxas, starts, ends, magnitude=None, indicator=None, 
         probability=None, **kwargs):
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
             self.G.perturbations = []
-        BasePerturbation.__init__(self, start=start, end=end, name=self.name)
+        BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         
-        if not base.isasvset(asvs):
-            raise TypeError(&#39;`asvs` ({}) must be pylab.base.ASVSet&#39;.format(type(asvs)))
+        if not base.istaxaset(taxas):
+            raise TypeError(&#39;`taxas` ({}) must be pylab.base.TaxaSet&#39;.format(type(taxas)))
 
         if self.G.perturbations is None:
             self.G.perturbations = []
         self.G.perturbations.append(self)
-        self.asvs = asvs
-        n_asvs = len(self.asvs)
-        self.set_value_shape(shape=(n_asvs, ))
+        self.taxas = taxas
+        n_taxas = len(self.taxas)
+        self.set_value_shape(shape=(n_taxas, ))
 
         # Set magnitude
         if magnitude is None:
-            magnitude = np.full(n_asvs, 0)
+            magnitude = np.full(n_taxas, 0)
         if util.isnumeric(magnitude):
-            magnitude = np.full(n_asvs, magnitude)
+            magnitude = np.full(n_taxas, magnitude)
         if util.isarray(magnitude):
-            if len(magnitude) != n_asvs:
+            if len(magnitude) != n_taxas:
                 raise ValueError(&#39;`magnitue` ({}) must have length {}&#39;.format(
-                    len(magnitude), n_asvs))
+                    len(magnitude), n_taxas))
             magnitude = variables.Variable(
                 G=self.G, dtype=float, name=self.name+DEFAULT_MAGNITUDE_SUFFIX, 
                 value=magnitude)
-            magnitude.set_value_shape((n_asvs,))
+            magnitude.set_value_shape((n_taxas,))
         elif variables.isVariable(magnitude):
-            if len(magnitude) != n_asvs:
-                raise ValueError(&#39;`magnitue` ({}) must have length {}&#39;.format(magnitude, n_asvs))
+            if len(magnitude) != n_taxas:
+                raise ValueError(&#39;`magnitue` ({}) must have length {}&#39;.format(magnitude, n_taxas))
         else:
             raise TypeError(&#39;`magnitude` ({}) type not recognized&#39;.format(type(magnitude)))
               
@@ -179,20 +179,20 @@ class Perturbation(BasePerturbation, variables.Variable):
 
         # Set indicator
         if indicator is None:
-            indicator = np.full(n_asvs, False, dtype=bool)
+            indicator = np.full(n_taxas, False, dtype=bool)
         if util.isbool(indicator):
-            indicator = np.full(n_asvs, indicator, dtype=bool)
+            indicator = np.full(n_taxas, indicator, dtype=bool)
         if util.isarray(indicator):
-            if len(indicator) != n_asvs:
+            if len(indicator) != n_taxas:
                 raise ValueError(&#39;`indicator` ({}) must have length {}&#39;.format(
-                    len(indicator), n_asvs))
+                    len(indicator), n_taxas))
             indicator = variables.Variable(
                 G=self.G, dtype=bool, name=self.name+DEFAULT_INDICATOR_SUFFIX, 
                 value=indicator)
-            indicator.set_value_shape((n_asvs,))
+            indicator.set_value_shape((n_taxas,))
         elif variables.isVariable(indicator):
-            if len(indicator) != n_asvs:
-                raise ValueError(&#39;`magnitue` ({}) must have length {}&#39;.format(indicator, n_asvs))
+            if len(indicator) != n_taxas:
+                raise ValueError(&#39;`magnitue` ({}) must have length {}&#39;.format(indicator, n_taxas))
         else:
             raise TypeError(&#39;`indicator` ({}) type not recognized&#39;.format(type(indicator)))
 
@@ -203,10 +203,10 @@ class Perturbation(BasePerturbation, variables.Variable):
     def __str__(self):
         s = BasePerturbation.__str__(self)
         s += &#39;\nMagnitude:\n&#39;
-        for oidx in range(len(self.asvs)):
+        for oidx in range(len(self.taxas)):
             s += &#39;\t{}: {}\n&#39;.format(oidx, self.magnitude.value[oidx])
         s += &#39;Indicator:\n&#39;
-        for oidx in range(len(self.asvs)):
+        for oidx in range(len(self.taxas)):
             s += &#39;\t{}: {}\n&#39;.format(oidx, self.indicator.value[oidx])
         s += &#39;Probability: {}&#39;.format(self.probability.value)
         return s
@@ -214,19 +214,15 @@ class Perturbation(BasePerturbation, variables.Variable):
     def add_trace(self):
         &#39;&#39;&#39;Set the negative indicators as np.nan
         &#39;&#39;&#39;
-        self.value = np.full(len(self.asvs), np.nan)
+        self.value = np.full(len(self.taxas), np.nan)
         ind = self.indicator.value
         self.value[ind] = self.magnitude.value[ind]
         variables.Variable.add_trace(self)
 
-    def add_init_value(self):
-        &#39;&#39;&#39;Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
+    def remove_local_trace(self):
+        &#39;&#39;&#39;Delete the local trace
         &#39;&#39;&#39;
-        self.value = np.full(len(self.asvs), np.nan)
-        ind = self.indicator.value
-        self.value[ind] = self.magnitude.value[ind]
-        variables.Variable.add_init_value(self)
+        self.trace = None
 
     def array(self, only_pos_ind=False):
         &#39;&#39;&#39;Return the magnitudes with the indicatrs indexed out
@@ -245,7 +241,7 @@ class Perturbation(BasePerturbation, variables.Variable):
         if only_pos_ind:
             val = self.magnitude.value[ind]
         else:
-            val = np.zeros(len(self.asvs))
+            val = np.zeros(len(self.taxas))
             val[ind] = self.magnitude.value[ind]
         return val
 
@@ -276,6 +272,11 @@ class ClusterPerturbationValue(ClusterValue):
         for cid in cids_added:
             self.value[cid] = self.prior.sample()
 
+    def remove_local_trace(self):
+        &#39;&#39;&#39;Delete the local trace
+        &#39;&#39;&#39;
+        self.trace = None
+
 
 class ClusterPerturbationIndicator(ClusterValue):
     &#39;&#39;&#39;Extends the `pylab.cluster.ClusterValue` object so that it works for being a 
@@ -299,6 +300,11 @@ class ClusterPerturbationIndicator(ClusterValue):
         self.value = {}
         for cid in self.clustering.order:
             self.value[cid] = False
+
+    def remove_local_trace(self):
+        &#39;&#39;&#39;Delete the local trace
+        &#39;&#39;&#39;
+        self.trace = None
 
     def clusters_changed(self, cids_added, cids_removed):
         &#39;&#39;&#39;Delete old clusters, sample from `probability` for the
@@ -479,7 +485,7 @@ class ClusterPerturbation(BasePerturbation, variables.Variable):
     
     Parameters
     ----------
-    start, end : int, float
+    starts, ends : int, float
         - Start and end of the perturbation
     clustering : pylab.cluster.Clustering
         - This is the clustering object it is being set with
@@ -496,7 +502,7 @@ class ClusterPerturbation(BasePerturbation, variables.Variable):
     kwargs : dict
         - Extra arguments for the Node class
     &#39;&#39;&#39;
-    def __init__(self, start, end, clustering,
+    def __init__(self, clustering, starts, ends,
         magnitude=None, indicator=None, probability=None,
         signal_when_clusters_change=False,
         signal_when_item_assignment_changes=False, **kwargs):
@@ -513,7 +519,7 @@ class ClusterPerturbation(BasePerturbation, variables.Variable):
         if self.G.perturbations is None:
             self.G.perturbations = []
 
-        BasePerturbation.__init__(self, start=start, end=end, name=self.name)
+        BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         self.G.perturbations.append(self)
         self.clustering = clustering
         self.set_value_shape(shape=(len(self.clustering.items), ))
@@ -659,14 +665,10 @@ class ClusterPerturbation(BasePerturbation, variables.Variable):
         self.value[ind] = self.magnitude.item_array()[ind]
         variables.Variable.add_trace(self)
 
-    def add_init_value(self):
-        &#39;&#39;&#39;Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
+    def remove_local_trace(self):
+        &#39;&#39;&#39;Delete the local trace
         &#39;&#39;&#39;
-        self.value = np.full(len(self.clustering.items), np.nan)
-        ind = self.indicator.item_arg_array()
-        self.value[ind] = self.magnitude.item_array()[ind]
-        variables.Variable.add_init_value(self)
+        self.trace = None
 
     def set_values_from_array(self, values, use_indicators=True):
         &#39;&#39;&#39;Sets the values from an array of the same order as the clusters.
@@ -1414,6 +1416,11 @@ class Interactions(ClusterProperty, Node, Traceable):
         shape = (tracer.ckpt, ) + self._shape
         self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
 
+    def remove_local_trace(self):
+        &#39;&#39;&#39;Delete the local trace
+        &#39;&#39;&#39;
+        self.trace = None
+
     def add_trace(self):
         &#39;&#39;&#39;Adds the current value to the trace. If the buffer is full
         it will end it to disk
@@ -1427,12 +1434,6 @@ class Interactions(ClusterProperty, Node, Traceable):
             shape = (self.G.tracer.ckpt, ) + self._shape
             self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
             self.ckpt_iter = 0
-
-    def add_init_value(self):
-        &#39;&#39;&#39;Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        &#39;&#39;&#39;
-        self._init_value = self.get_datalevel_value_matrix(set_neg_indicators_to_nan=True)
 
     def get_adjacent(self, cid, incoming, outgoing, use_indicators=True):
         &#39;&#39;&#39;Get all of the cluster IDs that have a positive interaction going into
@@ -1631,7 +1632,7 @@ def _always_return_nan(*args, **kwargs):
 <dl>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbation"><code class="flex name class">
 <span>class <span class="ident">ClusterPerturbation</span></span>
-<span>(</span><span>start, end, clustering, magnitude=None, indicator=None, probability=None, signal_when_clusters_change=False, signal_when_item_assignment_changes=False, **kwargs)</span>
+<span>(</span><span>clustering, starts, ends, magnitude=None, indicator=None, probability=None, signal_when_clusters_change=False, signal_when_item_assignment_changes=False, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This is an basic implementation for a perturbation where the
@@ -1643,7 +1644,7 @@ calculate ~np.isnan for the trace. This will give an indicator
 array that you can then use to calculate the bayes factor.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>start</code></strong>, <strong><code>end</code></strong> :&ensp;<code>int, float</code></dt>
+<dt><strong><code>starts</code></strong>, <strong><code>ends</code></strong> :&ensp;<code>int, float</code></dt>
 <dd>
 <ul>
 <li>Start and end of the perturbation</li>
@@ -1700,7 +1701,7 @@ each cluster</li>
     
     Parameters
     ----------
-    start, end : int, float
+    starts, ends : int, float
         - Start and end of the perturbation
     clustering : pylab.cluster.Clustering
         - This is the clustering object it is being set with
@@ -1717,7 +1718,7 @@ each cluster</li>
     kwargs : dict
         - Extra arguments for the Node class
     &#39;&#39;&#39;
-    def __init__(self, start, end, clustering,
+    def __init__(self, clustering, starts, ends,
         magnitude=None, indicator=None, probability=None,
         signal_when_clusters_change=False,
         signal_when_item_assignment_changes=False, **kwargs):
@@ -1734,7 +1735,7 @@ each cluster</li>
         if self.G.perturbations is None:
             self.G.perturbations = []
 
-        BasePerturbation.__init__(self, start=start, end=end, name=self.name)
+        BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         self.G.perturbations.append(self)
         self.clustering = clustering
         self.set_value_shape(shape=(len(self.clustering.items), ))
@@ -1880,14 +1881,10 @@ each cluster</li>
         self.value[ind] = self.magnitude.item_array()[ind]
         variables.Variable.add_trace(self)
 
-    def add_init_value(self):
-        &#39;&#39;&#39;Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
+    def remove_local_trace(self):
+        &#39;&#39;&#39;Delete the local trace
         &#39;&#39;&#39;
-        self.value = np.full(len(self.clustering.items), np.nan)
-        ind = self.indicator.item_arg_array()
-        self.value[ind] = self.magnitude.item_array()[ind]
-        variables.Variable.add_init_value(self)
+        self.trace = None
 
     def set_values_from_array(self, values, use_indicators=True):
         &#39;&#39;&#39;Sets the values from an array of the same order as the clusters.
@@ -2086,6 +2083,21 @@ magnitude.value = -0.5
     return val</code></pre>
 </details>
 </dd>
+<dt id="mdsine2.pylab.contrib.ClusterPerturbation.remove_local_trace"><code class="name flex">
+<span>def <span class="ident">remove_local_trace</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete the local trace</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def remove_local_trace(self):
+    &#39;&#39;&#39;Delete the local trace
+    &#39;&#39;&#39;
+    self.trace = None</code></pre>
+</details>
+</dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbation.set_values_from_array"><code class="name flex">
 <span>def <span class="ident">set_values_from_array</span></span>(<span>self, values, use_indicators=True)</span>
 </code></dt>
@@ -2145,12 +2157,6 @@ the values correspond to every cluster</p></div>
 <li><code><b><a title="mdsine2.pylab.base.BasePerturbation" href="base.html#mdsine2.pylab.base.BasePerturbation">BasePerturbation</a></b></code>:
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.base.BasePerturbation.isactive" href="base.html#mdsine2.pylab.base.BasePerturbation.isactive">isactive</a></code></li>
-<li><code><a title="mdsine2.pylab.base.BasePerturbation.timetuple" href="base.html#mdsine2.pylab.base.BasePerturbation.timetuple">timetuple</a></code></li>
-</ul>
-</li>
-<li><code><b><a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a></b></code>:
-<ul class="hlist">
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="variables.html#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
 </ul>
 </li>
 <li><code><b><a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a></b></code>:
@@ -2218,6 +2224,11 @@ and provides a direct pointer to the probability object</p>
         self.value = {}
         for cid in self.clustering.order:
             self.value[cid] = False
+
+    def remove_local_trace(self):
+        &#39;&#39;&#39;Delete the local trace
+        &#39;&#39;&#39;
+        self.trace = None
 
     def clusters_changed(self, cids_added, cids_removed):
         &#39;&#39;&#39;Delete old clusters, sample from `probability` for the
@@ -2754,7 +2765,6 @@ value[cluster2] = False</p>
 <li><code><b><a title="mdsine2.pylab.cluster.ClusterValue" href="cluster.html#mdsine2.pylab.cluster.ClusterValue">ClusterValue</a></b></code>:
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_init_value" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_trace" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.add_trace">add_trace</a></code></li>
@@ -2769,6 +2779,7 @@ value[cluster2] = False</p>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.cluster.ClusterValue.remove_local_trace" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.reset" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.reset">reset</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
@@ -2815,7 +2826,12 @@ changed</p></div>
         for cid in cids_removed:
             self.value.pop(cid)
         for cid in cids_added:
-            self.value[cid] = self.prior.sample()</code></pre>
+            self.value[cid] = self.prior.sample()
+
+    def remove_local_trace(self):
+        &#39;&#39;&#39;Delete the local trace
+        &#39;&#39;&#39;
+        self.trace = None</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2868,7 +2884,6 @@ cids_removed (list(int))
 <li><code><b><a title="mdsine2.pylab.cluster.ClusterValue" href="cluster.html#mdsine2.pylab.cluster.ClusterValue">ClusterValue</a></b></code>:
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_init_value" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_trace" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.add_trace">add_trace</a></code></li>
@@ -2883,6 +2898,7 @@ cids_removed (list(int))
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.cluster.ClusterValue.remove_local_trace" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.reset" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.reset">reset</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
@@ -3665,6 +3681,11 @@ Defaults to always returning True</dd>
         shape = (tracer.ckpt, ) + self._shape
         self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
 
+    def remove_local_trace(self):
+        &#39;&#39;&#39;Delete the local trace
+        &#39;&#39;&#39;
+        self.trace = None
+
     def add_trace(self):
         &#39;&#39;&#39;Adds the current value to the trace. If the buffer is full
         it will end it to disk
@@ -3678,12 +3699,6 @@ Defaults to always returning True</dd>
             shape = (self.G.tracer.ckpt, ) + self._shape
             self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
             self.ckpt_iter = 0
-
-    def add_init_value(self):
-        &#39;&#39;&#39;Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        &#39;&#39;&#39;
-        self._init_value = self.get_datalevel_value_matrix(set_neg_indicators_to_nan=True)
 
     def get_adjacent(self, cid, incoming, outgoing, use_indicators=True):
         &#39;&#39;&#39;Get all of the cluster IDs that have a positive interaction going into
@@ -3758,23 +3773,6 @@ def size(self):
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="mdsine2.pylab.contrib.Interactions.add_init_value"><code class="name flex">
-<span>def <span class="ident">add_init_value</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Set the initialization value. This is called by <code>pylab.inference.BaseMCMC.run</code>
-when first updating the variable. User should not use this function</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def add_init_value(self):
-    &#39;&#39;&#39;Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-    when first updating the variable. User should not use this function
-    &#39;&#39;&#39;
-    self._init_value = self.get_datalevel_value_matrix(set_neg_indicators_to_nan=True)</code></pre>
-</details>
-</dd>
 <dt id="mdsine2.pylab.contrib.Interactions.clusters_changed"><code class="name flex">
 <span>def <span class="ident">clusters_changed</span></span>(<span>self, cids_added, cids_removed)</span>
 </code></dt>
@@ -4632,6 +4630,21 @@ If this is specified, get only the positive indicators going into the cluster
     return cumm</code></pre>
 </details>
 </dd>
+<dt id="mdsine2.pylab.contrib.Interactions.remove_local_trace"><code class="name flex">
+<span>def <span class="ident">remove_local_trace</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete the local trace</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def remove_local_trace(self):
+    &#39;&#39;&#39;Delete the local trace
+    &#39;&#39;&#39;
+    self.trace = None</code></pre>
+</details>
+</dd>
 <dt id="mdsine2.pylab.contrib.Interactions.set_indicators"><code class="name flex">
 <span>def <span class="ident">set_indicators</span></span>(<span>self, arr)</span>
 </code></dt>
@@ -4765,7 +4778,7 @@ single interaction</p></div>
 </dd>
 <dt id="mdsine2.pylab.contrib.Perturbation"><code class="flex name class">
 <span>class <span class="ident">Perturbation</span></span>
-<span>(</span><span>start, end, asvs, magnitude=None, indicator=None, probability=None, **kwargs)</span>
+<span>(</span><span>taxas, starts, ends, magnitude=None, indicator=None, probability=None, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This is an implementation of a perturbation where the
@@ -4775,20 +4788,20 @@ calculate ~np.isnan for the trace. This will give an indicator
 array that you can then use to calculate the bayes factor.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>start</code></strong>, <strong><code>end</code></strong> :&ensp;<code>int, float</code></dt>
-<dd>Start and end of the perturbation</dd>
-<dt><strong><code>asvs</code></strong> :&ensp;<code>pylab.base.ASVSet</code></dt>
-<dd>ASVSet of asvs</dd>
+<dt><strong><code>starts</code></strong>, <strong><code>ends</code></strong> :&ensp;<code>dict</code></dt>
+<dd>Start and end of the perturbation for each subject</dd>
+<dt><strong><code>taxas</code></strong> :&ensp;<code>pylab.base.TaxaSet</code></dt>
+<dd>TaxaSet of taxas</dd>
 <dt><strong><code>magnitude</code></strong> :&ensp;<code>pylab.variables.Variable, int/float, array, Optional</code></dt>
 <dd>If a pylab.variables.Variable is passed in it will create one
 with the value indicated. Defualt value is None</dd>
 <dt><strong><code>indicator</code></strong> :&ensp;<code>pylab.variables.Variable, array, Optional</code></dt>
 <dd>This is the indicator of the perturbation. Default value is False
-for every asv</dd>
+for every taxa</dd>
 <dt><strong><code>probability</code></strong> :&ensp;<code>pylab.variables.Variable, float, Optional</code></dt>
-<dd>This is the probability that the perturbation affects an ASV, e.g.
+<dd>This is the probability that the perturbation affects a Taxa, e.g.
 probability = 0.7, there's a 70% chance that the perturbation afffects
-each asv</dd>
+each taxa</dd>
 <dt><strong><code>kwargs</code></strong> :&ensp;<code>dict</code></dt>
 <dd>
 <ul>
@@ -4810,56 +4823,56 @@ each asv</dd>
 
     Parameters
     ----------
-    start, end : int, float
-        Start and end of the perturbation
-    asvs : pylab.base.ASVSet
-        ASVSet of asvs
+    starts, ends : dict
+        Start and end of the perturbation for each subject
+    taxas : pylab.base.TaxaSet
+        TaxaSet of taxas
     magnitude : pylab.variables.Variable, int/float, array, Optional
         If a pylab.variables.Variable is passed in it will create one
         with the value indicated. Defualt value is None
     indicator : pylab.variables.Variable, array, Optional
         This is the indicator of the perturbation. Default value is False 
-        for every asv
+        for every taxa
     probability : pylab.variables.Variable, float, Optional
-        This is the probability that the perturbation affects an ASV, e.g.
+        This is the probability that the perturbation affects a Taxa, e.g.
           probability = 0.7, there&#39;s a 70% chance that the perturbation afffects 
-          each asv
+          each taxa
     kwargs : dict
         - Extra arguments for the Node class
     &#39;&#39;&#39;
-    def __init__(self, start, end, asvs, magnitude=None, indicator=None, 
+    def __init__(self, taxas, starts, ends, magnitude=None, indicator=None, 
         probability=None, **kwargs):
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
             self.G.perturbations = []
-        BasePerturbation.__init__(self, start=start, end=end, name=self.name)
+        BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         
-        if not base.isasvset(asvs):
-            raise TypeError(&#39;`asvs` ({}) must be pylab.base.ASVSet&#39;.format(type(asvs)))
+        if not base.istaxaset(taxas):
+            raise TypeError(&#39;`taxas` ({}) must be pylab.base.TaxaSet&#39;.format(type(taxas)))
 
         if self.G.perturbations is None:
             self.G.perturbations = []
         self.G.perturbations.append(self)
-        self.asvs = asvs
-        n_asvs = len(self.asvs)
-        self.set_value_shape(shape=(n_asvs, ))
+        self.taxas = taxas
+        n_taxas = len(self.taxas)
+        self.set_value_shape(shape=(n_taxas, ))
 
         # Set magnitude
         if magnitude is None:
-            magnitude = np.full(n_asvs, 0)
+            magnitude = np.full(n_taxas, 0)
         if util.isnumeric(magnitude):
-            magnitude = np.full(n_asvs, magnitude)
+            magnitude = np.full(n_taxas, magnitude)
         if util.isarray(magnitude):
-            if len(magnitude) != n_asvs:
+            if len(magnitude) != n_taxas:
                 raise ValueError(&#39;`magnitue` ({}) must have length {}&#39;.format(
-                    len(magnitude), n_asvs))
+                    len(magnitude), n_taxas))
             magnitude = variables.Variable(
                 G=self.G, dtype=float, name=self.name+DEFAULT_MAGNITUDE_SUFFIX, 
                 value=magnitude)
-            magnitude.set_value_shape((n_asvs,))
+            magnitude.set_value_shape((n_taxas,))
         elif variables.isVariable(magnitude):
-            if len(magnitude) != n_asvs:
-                raise ValueError(&#39;`magnitue` ({}) must have length {}&#39;.format(magnitude, n_asvs))
+            if len(magnitude) != n_taxas:
+                raise ValueError(&#39;`magnitue` ({}) must have length {}&#39;.format(magnitude, n_taxas))
         else:
             raise TypeError(&#39;`magnitude` ({}) type not recognized&#39;.format(type(magnitude)))
               
@@ -4877,20 +4890,20 @@ each asv</dd>
 
         # Set indicator
         if indicator is None:
-            indicator = np.full(n_asvs, False, dtype=bool)
+            indicator = np.full(n_taxas, False, dtype=bool)
         if util.isbool(indicator):
-            indicator = np.full(n_asvs, indicator, dtype=bool)
+            indicator = np.full(n_taxas, indicator, dtype=bool)
         if util.isarray(indicator):
-            if len(indicator) != n_asvs:
+            if len(indicator) != n_taxas:
                 raise ValueError(&#39;`indicator` ({}) must have length {}&#39;.format(
-                    len(indicator), n_asvs))
+                    len(indicator), n_taxas))
             indicator = variables.Variable(
                 G=self.G, dtype=bool, name=self.name+DEFAULT_INDICATOR_SUFFIX, 
                 value=indicator)
-            indicator.set_value_shape((n_asvs,))
+            indicator.set_value_shape((n_taxas,))
         elif variables.isVariable(indicator):
-            if len(indicator) != n_asvs:
-                raise ValueError(&#39;`magnitue` ({}) must have length {}&#39;.format(indicator, n_asvs))
+            if len(indicator) != n_taxas:
+                raise ValueError(&#39;`magnitue` ({}) must have length {}&#39;.format(indicator, n_taxas))
         else:
             raise TypeError(&#39;`indicator` ({}) type not recognized&#39;.format(type(indicator)))
 
@@ -4901,10 +4914,10 @@ each asv</dd>
     def __str__(self):
         s = BasePerturbation.__str__(self)
         s += &#39;\nMagnitude:\n&#39;
-        for oidx in range(len(self.asvs)):
+        for oidx in range(len(self.taxas)):
             s += &#39;\t{}: {}\n&#39;.format(oidx, self.magnitude.value[oidx])
         s += &#39;Indicator:\n&#39;
-        for oidx in range(len(self.asvs)):
+        for oidx in range(len(self.taxas)):
             s += &#39;\t{}: {}\n&#39;.format(oidx, self.indicator.value[oidx])
         s += &#39;Probability: {}&#39;.format(self.probability.value)
         return s
@@ -4912,19 +4925,15 @@ each asv</dd>
     def add_trace(self):
         &#39;&#39;&#39;Set the negative indicators as np.nan
         &#39;&#39;&#39;
-        self.value = np.full(len(self.asvs), np.nan)
+        self.value = np.full(len(self.taxas), np.nan)
         ind = self.indicator.value
         self.value[ind] = self.magnitude.value[ind]
         variables.Variable.add_trace(self)
 
-    def add_init_value(self):
-        &#39;&#39;&#39;Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
+    def remove_local_trace(self):
+        &#39;&#39;&#39;Delete the local trace
         &#39;&#39;&#39;
-        self.value = np.full(len(self.asvs), np.nan)
-        ind = self.indicator.value
-        self.value[ind] = self.magnitude.value[ind]
-        variables.Variable.add_init_value(self)
+        self.trace = None
 
     def array(self, only_pos_ind=False):
         &#39;&#39;&#39;Return the magnitudes with the indicatrs indexed out
@@ -4943,7 +4952,7 @@ each asv</dd>
         if only_pos_ind:
             val = self.magnitude.value[ind]
         else:
-            val = np.zeros(len(self.asvs))
+            val = np.zeros(len(self.taxas))
             val[ind] = self.magnitude.value[ind]
         return val</code></pre>
 </details>
@@ -4971,7 +4980,7 @@ each asv</dd>
 <pre><code class="python">def add_trace(self):
     &#39;&#39;&#39;Set the negative indicators as np.nan
     &#39;&#39;&#39;
-    self.value = np.full(len(self.asvs), np.nan)
+    self.value = np.full(len(self.taxas), np.nan)
     ind = self.indicator.value
     self.value[ind] = self.magnitude.value[ind]
     variables.Variable.add_trace(self)</code></pre>
@@ -5013,9 +5022,24 @@ each asv</dd>
     if only_pos_ind:
         val = self.magnitude.value[ind]
     else:
-        val = np.zeros(len(self.asvs))
+        val = np.zeros(len(self.taxas))
         val[ind] = self.magnitude.value[ind]
     return val</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.contrib.Perturbation.remove_local_trace"><code class="name flex">
+<span>def <span class="ident">remove_local_trace</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Delete the local trace</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def remove_local_trace(self):
+    &#39;&#39;&#39;Delete the local trace
+    &#39;&#39;&#39;
+    self.trace = None</code></pre>
 </details>
 </dd>
 </dl>
@@ -5024,12 +5048,6 @@ each asv</dd>
 <li><code><b><a title="mdsine2.pylab.base.BasePerturbation" href="base.html#mdsine2.pylab.base.BasePerturbation">BasePerturbation</a></b></code>:
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.base.BasePerturbation.isactive" href="base.html#mdsine2.pylab.base.BasePerturbation.isactive">isactive</a></code></li>
-<li><code><a title="mdsine2.pylab.base.BasePerturbation.timetuple" href="base.html#mdsine2.pylab.base.BasePerturbation.timetuple">timetuple</a></code></li>
-</ul>
-</li>
-<li><code><b><a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a></b></code>:
-<ul class="hlist">
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="variables.html#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
 </ul>
 </li>
 <li><code><b><a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a></b></code>:
@@ -5084,6 +5102,7 @@ each asv</dd>
 <li><code><a title="mdsine2.pylab.contrib.ClusterPerturbation.add_trace" href="#mdsine2.pylab.contrib.ClusterPerturbation.add_trace">add_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.ClusterPerturbation.cluster_array" href="#mdsine2.pylab.contrib.ClusterPerturbation.cluster_array">cluster_array</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.ClusterPerturbation.item_array" href="#mdsine2.pylab.contrib.ClusterPerturbation.item_array">item_array</a></code></li>
+<li><code><a title="mdsine2.pylab.contrib.ClusterPerturbation.remove_local_trace" href="#mdsine2.pylab.contrib.ClusterPerturbation.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.ClusterPerturbation.set_values_from_array" href="#mdsine2.pylab.contrib.ClusterPerturbation.set_values_from_array">set_values_from_array</a></code></li>
 </ul>
 </li>
@@ -5110,7 +5129,6 @@ each asv</dd>
 <li>
 <h4><code><a title="mdsine2.pylab.contrib.Interactions" href="#mdsine2.pylab.contrib.Interactions">Interactions</a></code></h4>
 <ul class="">
-<li><code><a title="mdsine2.pylab.contrib.Interactions.add_init_value" href="#mdsine2.pylab.contrib.Interactions.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.clusters_changed" href="#mdsine2.pylab.contrib.Interactions.clusters_changed">clusters_changed</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.generate_in_out_degree_posthoc" href="#mdsine2.pylab.contrib.Interactions.generate_in_out_degree_posthoc">generate_in_out_degree_posthoc</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.get_adjacent" href="#mdsine2.pylab.contrib.Interactions.get_adjacent">get_adjacent</a></code></li>
@@ -5128,6 +5146,7 @@ each asv</dd>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.key_pairs" href="#mdsine2.pylab.contrib.Interactions.key_pairs">key_pairs</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.num_neg_indicators" href="#mdsine2.pylab.contrib.Interactions.num_neg_indicators">num_neg_indicators</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.num_pos_indicators" href="#mdsine2.pylab.contrib.Interactions.num_pos_indicators">num_pos_indicators</a></code></li>
+<li><code><a title="mdsine2.pylab.contrib.Interactions.remove_local_trace" href="#mdsine2.pylab.contrib.Interactions.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.set_indicators" href="#mdsine2.pylab.contrib.Interactions.set_indicators">set_indicators</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.set_values" href="#mdsine2.pylab.contrib.Interactions.set_values">set_values</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.size" href="#mdsine2.pylab.contrib.Interactions.size">size</a></code></li>
@@ -5138,6 +5157,7 @@ each asv</dd>
 <ul class="">
 <li><code><a title="mdsine2.pylab.contrib.Perturbation.add_trace" href="#mdsine2.pylab.contrib.Perturbation.add_trace">add_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Perturbation.array" href="#mdsine2.pylab.contrib.Perturbation.array">array</a></code></li>
+<li><code><a title="mdsine2.pylab.contrib.Perturbation.remove_local_trace" href="#mdsine2.pylab.contrib.Perturbation.remove_local_trace">remove_local_trace</a></code></li>
 </ul>
 </li>
 </ul>

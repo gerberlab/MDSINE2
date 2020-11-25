@@ -52,13 +52,13 @@ In the above example, sample `sample1` is at time `0.0`, for subject `subj1` and
 ## Code
 ---
 
-To parse your own data, first create a `md2.ASVSet` object:
+To parse your own data, first create a `md2.TaxaSet` object:
 ```python
-asvs = md2.ASVSet(taxonomy_table=taxonomy)
+taxas = md2.TaxaSet(taxonomy_table=taxonomy)
 ```
 Then, create the `md2.Study` object
 ```python
-study = md2.Study(asvs=asvs)
+study = md2.Study(taxas=taxas)
 study.parse(
     metadata=metadata,
     reads=reads,

@@ -15,8 +15,8 @@ from .pylab import variables
 from .pylab.util import isnumeric, isbool, isfloat, isint, isarray, issquare, isstr, \
     itercheck, istype, istuple, isdict, istree
 from .pylab.variables import isVariable, isRandomVariable
-from .pylab.base import isqpcrdata, isasvset, isasv, issavable, istraceable, \
-    issubject, isstudy, isperturbation, isclusterable, isaggregatedasv, isasvtype
+from .pylab.base import isqpcrdata, istaxaset, istaxa, issavable, istraceable, \
+    issubject, isstudy, isperturbation, isclusterable, isotu, istaxatype
 from .pylab.random import israndom
 from .pylab.cluster import isclustering, isclusterproperty, isclustervalue
 from .pylab.inference import isMCMC, ismodel
@@ -27,9 +27,9 @@ from .pylab.contrib import isclusterperturbationindicator, isclusterperturbation
 from .pylab.multiprocessing import ispersistentworker, ispersistentpool, isDASW, isSADW
 
 # Import commonly used Pylab functions and classes
-from .pylab.util import asvname_formatter, toarray, fast_index, coarsen_phylogenetic_tree, \
-    asvname_for_paper, ASVNAME_PAPER_FORMAT
-from .pylab.base import ASV, ASVSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
+from .pylab.util import taxaname_formatter, toarray, fast_index, coarsen_phylogenetic_tree, \
+    taxaname_for_paper, TAXANAME_PAPER_FORMAT
+from .pylab.base import Taxa, OTU, TaxaSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
     Subject, Study, condense_matrix_with_taxonomy
 from .pylab.variables import Variable, Constant, summary
 from .pylab.graph import Graph, Node
@@ -37,7 +37,7 @@ from .pylab.cluster import Clustering
 from .pylab.random import seed
 from .pylab.contrib import Interactions
 from .pylab.inference import BaseMCMC
-from .pylab.dynamics import integrate
+from .pylab.dynamics import integrate, BaseDynamics
 
 # Import PyLab errors
 from .pylab.errors import UndefinedError, MathError, GraphIDError, InheritanceError, \

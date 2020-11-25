@@ -21,7 +21,7 @@ class alpha:
         Entropy is defined as
             E = - \sum_i (b_i * \log(b_i))
         where
-            b_i is the relative abundance of the ith ASV
+            b_i is the relative abundance of the ith Taxa
         
         Parameters
         ----------
@@ -47,7 +47,7 @@ class alpha:
         Entropy is defined as
             E = - \sum_i (b_i * \log_n(b_i))
         where
-            b_i is the relative abundance of the ith ASV
+            b_i is the relative abundance of the ith Taxa
         
         Parameters
         ----------

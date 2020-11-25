@@ -545,6 +545,11 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
             shape += self._shape
         self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
 
+    def remove_local_trace(self):
+        &#39;&#39;&#39;Destroy the local trace of the object
+        &#39;&#39;&#39;
+        self.trace = None
+
     def add_trace(self):
         &#39;&#39;&#39;Adds the current value to the trace. If the buffer is full
         it will end it to disk
@@ -569,31 +574,9 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
             self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
             self.ckpt_iter = 0
 
-            # Save the other objects
-            try:
-                self.G.inference.save()
-                self.G.tracer.save()
-                self.G.save()
-            except:
-                logging.critical(&#39;If you want to checkpoint, you must set the save location &#39; \
-                    &#39;of tracer, graph, and mcmc using the function self.set_save_location()&#39;)
-                print(self.G.tracer_save_loc)
-                print(self.G.inference._save_loc)
-                print(self.G._save_loc)
-                raise
         if self.ckpt_iter &gt; len(self.trace):
             raise ValueError(&#39;Iteration {} too long for RAM trace {}&#39;.format(self.ckpt_iter, 
                 len(self.trace)))
-
-    def add_init_value(self):
-        &#39;&#39;&#39;Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        &#39;&#39;&#39;
-        if isarray(self.value):
-            value = np.array(self.value)
-        else:
-            value = self.value
-        self._init_value = value
 
     def set_value_shape(self, shape):
         &#39;&#39;&#39;Set the shape
@@ -2000,7 +1983,6 @@ def p(self):
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.variables.Variable.T" href="#mdsine2.pylab.variables.Variable.T">T</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
@@ -2013,6 +1995,7 @@ def p(self):
 <li><code><a title="mdsine2.pylab.variables.Variable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
@@ -2099,7 +2082,7 @@ These are the extra parameters for the Node class</p></div>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="mdsine2.interactions.ClusterInteractionIndicatorProbability" href="../interactions.html#mdsine2.interactions.ClusterInteractionIndicatorProbability">ClusterInteractionIndicatorProbability</a></li>
+<li><a title="mdsine2.posterior.ClusterInteractionIndicatorProbability" href="../posterior.html#mdsine2.posterior.ClusterInteractionIndicatorProbability">ClusterInteractionIndicatorProbability</a></li>
 </ul>
 <h3>Instance variables</h3>
 <dl>
@@ -2182,7 +2165,6 @@ def b(self):
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.variables.Variable.T" href="#mdsine2.pylab.variables.Variable.T">T</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
@@ -2195,6 +2177,7 @@ def b(self):
 <li><code><a title="mdsine2.pylab.variables.Variable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
@@ -2422,7 +2405,7 @@ pylab.variables.Variable</p></div>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="mdsine2.clustering.Concentration" href="../clustering.html#mdsine2.clustering.Concentration">Concentration</a></li>
+<li><a title="mdsine2.posterior.Concentration" href="../posterior.html#mdsine2.posterior.Concentration">Concentration</a></li>
 </ul>
 <h3>Instance variables</h3>
 <dl>
@@ -2542,7 +2525,6 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.variables.Variable.T" href="#mdsine2.pylab.variables.Variable.T">T</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
@@ -2555,6 +2537,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <li><code><a title="mdsine2.pylab.variables.Variable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
@@ -2819,7 +2802,6 @@ specified, then use the current value</p>
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.variables.Variable.T" href="#mdsine2.pylab.variables.Variable.T">T</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
@@ -2832,6 +2814,7 @@ specified, then use the current value</p>
 <li><code><a title="mdsine2.pylab.variables.Variable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
@@ -3247,7 +3230,6 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.variables.Variable.T" href="#mdsine2.pylab.variables.Variable.T">T</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
@@ -3260,6 +3242,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <li><code><a title="mdsine2.pylab.variables.Variable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
@@ -3368,8 +3351,8 @@ These are the extra parameters for the Node class</p></div>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="mdsine2.interactions.ClusterInteractionValue" href="../interactions.html#mdsine2.interactions.ClusterInteractionValue">ClusterInteractionValue</a></li>
-<li><a title="mdsine2.logistic_growth.RegressCoeff" href="../logistic_growth.html#mdsine2.logistic_growth.RegressCoeff">RegressCoeff</a></li>
+<li><a title="mdsine2.posterior.ClusterInteractionValue" href="../posterior.html#mdsine2.posterior.ClusterInteractionValue">ClusterInteractionValue</a></li>
+<li><a title="mdsine2.posterior.RegressCoeff" href="../posterior.html#mdsine2.posterior.RegressCoeff">RegressCoeff</a></li>
 </ul>
 <h3>Instance variables</h3>
 <dl>
@@ -3482,7 +3465,6 @@ values</p>
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.variables.Variable.T" href="#mdsine2.pylab.variables.Variable.T">T</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
@@ -3495,6 +3477,7 @@ values</p>
 <li><code><a title="mdsine2.pylab.variables.Variable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
@@ -3686,7 +3669,6 @@ def p(self):
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.variables.Variable.T" href="#mdsine2.pylab.variables.Variable.T">T</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
@@ -3699,6 +3681,7 @@ def p(self):
 <li><code><a title="mdsine2.pylab.variables.Variable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
@@ -3878,9 +3861,9 @@ def p(self):
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="mdsine2.interactions.PriorMeanInteractions" href="../interactions.html#mdsine2.interactions.PriorMeanInteractions">PriorMeanInteractions</a></li>
-<li><a title="mdsine2.perturbations.PerturbationMagnitudes" href="../perturbations.html#mdsine2.perturbations.PerturbationMagnitudes">PerturbationMagnitudes</a></li>
-<li><a title="mdsine2.perturbations.PriorMeanPerturbationSingle" href="../perturbations.html#mdsine2.perturbations.PriorMeanPerturbationSingle">PriorMeanPerturbationSingle</a></li>
+<li><a title="mdsine2.posterior.PerturbationMagnitudes" href="../posterior.html#mdsine2.posterior.PerturbationMagnitudes">PerturbationMagnitudes</a></li>
+<li><a title="mdsine2.posterior.PriorMeanInteractions" href="../posterior.html#mdsine2.posterior.PriorMeanInteractions">PriorMeanInteractions</a></li>
+<li><a title="mdsine2.posterior.PriorMeanPerturbationSingle" href="../posterior.html#mdsine2.posterior.PriorMeanPerturbationSingle">PriorMeanPerturbationSingle</a></li>
 </ul>
 <h3>Instance variables</h3>
 <dl>
@@ -4137,7 +4120,6 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.variables.Variable.T" href="#mdsine2.pylab.variables.Variable.T">T</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
@@ -4150,6 +4132,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <li><code><a title="mdsine2.pylab.variables.Variable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
@@ -4298,12 +4281,12 @@ scale <code>scale</code>.</p>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="mdsine2.interactions.PriorVarInteractions" href="../interactions.html#mdsine2.interactions.PriorVarInteractions">PriorVarInteractions</a></li>
-<li><a title="mdsine2.logistic_growth.PriorVarMH" href="../logistic_growth.html#mdsine2.logistic_growth.PriorVarMH">PriorVarMH</a></li>
-<li><a title="mdsine2.perturbations.PriorVarPerturbationSingle" href="../perturbations.html#mdsine2.perturbations.PriorVarPerturbationSingle">PriorVarPerturbationSingle</a></li>
-<li><a title="mdsine2.processvariance.ProcessVarGlobal" href="../processvariance.html#mdsine2.processvariance.ProcessVarGlobal">ProcessVarGlobal</a></li>
-<li><a title="mdsine2.qpcr.qPCRScaleL" href="../qpcr.html#mdsine2.qpcr.qPCRScaleL">qPCRScaleL</a></li>
-<li><a title="mdsine2.qpcr.qPCRVarianceReplicate" href="../qpcr.html#mdsine2.qpcr.qPCRVarianceReplicate">qPCRVarianceReplicate</a></li>
+<li><a title="mdsine2.posterior.PriorVarInteractions" href="../posterior.html#mdsine2.posterior.PriorVarInteractions">PriorVarInteractions</a></li>
+<li><a title="mdsine2.posterior.PriorVarMH" href="../posterior.html#mdsine2.posterior.PriorVarMH">PriorVarMH</a></li>
+<li><a title="mdsine2.posterior.PriorVarPerturbationSingle" href="../posterior.html#mdsine2.posterior.PriorVarPerturbationSingle">PriorVarPerturbationSingle</a></li>
+<li><a title="mdsine2.posterior.ProcessVarGlobal" href="../posterior.html#mdsine2.posterior.ProcessVarGlobal">ProcessVarGlobal</a></li>
+<li><a title="mdsine2.posterior.qPCRScaleL" href="../posterior.html#mdsine2.posterior.qPCRScaleL">qPCRScaleL</a></li>
+<li><a title="mdsine2.posterior.qPCRVarianceReplicate" href="../posterior.html#mdsine2.posterior.qPCRVarianceReplicate">qPCRVarianceReplicate</a></li>
 </ul>
 <h3>Instance variables</h3>
 <dl>
@@ -4489,7 +4472,6 @@ single sample.</dd>
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.variables.Variable.T" href="#mdsine2.pylab.variables.Variable.T">T</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
@@ -4502,6 +4484,7 @@ single sample.</dd>
 <li><code><a title="mdsine2.pylab.variables.Variable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
@@ -4715,9 +4698,9 @@ low, and high</p>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="mdsine2.logistic_growth.Growth" href="../logistic_growth.html#mdsine2.logistic_growth.Growth">Growth</a></li>
-<li><a title="mdsine2.logistic_growth.PriorMeanMH" href="../logistic_growth.html#mdsine2.logistic_growth.PriorMeanMH">PriorMeanMH</a></li>
-<li><a title="mdsine2.logistic_growth.SelfInteractions" href="../logistic_growth.html#mdsine2.logistic_growth.SelfInteractions">SelfInteractions</a></li>
+<li><a title="mdsine2.posterior.Growth" href="../posterior.html#mdsine2.posterior.Growth">Growth</a></li>
+<li><a title="mdsine2.posterior.PriorMeanMH" href="../posterior.html#mdsine2.posterior.PriorMeanMH">PriorMeanMH</a></li>
+<li><a title="mdsine2.posterior.SelfInteractions" href="../posterior.html#mdsine2.posterior.SelfInteractions">SelfInteractions</a></li>
 </ul>
 <h3>Instance variables</h3>
 <dl>
@@ -4992,7 +4975,6 @@ instead of <code>self.value</code>.</p>
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.variables.Variable.T" href="#mdsine2.pylab.variables.Variable.T">T</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
@@ -5005,6 +4987,7 @@ instead of <code>self.value</code>.</p>
 <li><code><a title="mdsine2.pylab.variables.Variable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
@@ -5187,7 +5170,8 @@ instead of <code>self.value</code>.</p>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="mdsine2.qpcr.qPCRDegsOfFreedomL" href="../qpcr.html#mdsine2.qpcr.qPCRDegsOfFreedomL">qPCRDegsOfFreedomL</a></li>
+<li><a title="mdsine2.negbin.NegBinDispersionParam" href="../negbin.html#mdsine2.negbin.NegBinDispersionParam">NegBinDispersionParam</a></li>
+<li><a title="mdsine2.posterior.qPCRDegsOfFreedomL" href="../posterior.html#mdsine2.posterior.qPCRDegsOfFreedomL">qPCRDegsOfFreedomL</a></li>
 </ul>
 <h3>Instance variables</h3>
 <dl>
@@ -5471,7 +5455,6 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.variables.Variable.T" href="#mdsine2.pylab.variables.Variable.T">T</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
@@ -5484,6 +5467,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <li><code><a title="mdsine2.pylab.variables.Variable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
@@ -5560,6 +5544,11 @@ These are the extra parameters for the Node class</p></div>
             shape += self._shape
         self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
 
+    def remove_local_trace(self):
+        &#39;&#39;&#39;Destroy the local trace of the object
+        &#39;&#39;&#39;
+        self.trace = None
+
     def add_trace(self):
         &#39;&#39;&#39;Adds the current value to the trace. If the buffer is full
         it will end it to disk
@@ -5584,31 +5573,9 @@ These are the extra parameters for the Node class</p></div>
             self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
             self.ckpt_iter = 0
 
-            # Save the other objects
-            try:
-                self.G.inference.save()
-                self.G.tracer.save()
-                self.G.save()
-            except:
-                logging.critical(&#39;If you want to checkpoint, you must set the save location &#39; \
-                    &#39;of tracer, graph, and mcmc using the function self.set_save_location()&#39;)
-                print(self.G.tracer_save_loc)
-                print(self.G.inference._save_loc)
-                print(self.G._save_loc)
-                raise
         if self.ckpt_iter &gt; len(self.trace):
             raise ValueError(&#39;Iteration {} too long for RAM trace {}&#39;.format(self.ckpt_iter, 
                 len(self.trace)))
-
-    def add_init_value(self):
-        &#39;&#39;&#39;Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-        when first updating the variable. User should not use this function
-        &#39;&#39;&#39;
-        if isarray(self.value):
-            value = np.array(self.value)
-        else:
-            value = self.value
-        self._init_value = value
 
     def set_value_shape(self, shape):
         &#39;&#39;&#39;Set the shape
@@ -5637,9 +5604,11 @@ These are the extra parameters for the Node class</p></div>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="mdsine2.interactions.ClusterInteractionIndicators" href="../interactions.html#mdsine2.interactions.ClusterInteractionIndicators">ClusterInteractionIndicators</a></li>
-<li><a title="mdsine2.perturbations.PriorMeanPerturbations" href="../perturbations.html#mdsine2.perturbations.PriorMeanPerturbations">PriorMeanPerturbations</a></li>
-<li><a title="mdsine2.perturbations.PriorVarPerturbations" href="../perturbations.html#mdsine2.perturbations.PriorVarPerturbations">PriorVarPerturbations</a></li>
+<li><a title="mdsine2.negbin.TrajectorySet" href="../negbin.html#mdsine2.negbin.TrajectorySet">TrajectorySet</a></li>
+<li><a title="mdsine2.posterior.ClusterInteractionIndicators" href="../posterior.html#mdsine2.posterior.ClusterInteractionIndicators">ClusterInteractionIndicators</a></li>
+<li><a title="mdsine2.posterior.PriorMeanPerturbations" href="../posterior.html#mdsine2.posterior.PriorMeanPerturbations">PriorMeanPerturbations</a></li>
+<li><a title="mdsine2.posterior.PriorVarPerturbations" href="../posterior.html#mdsine2.posterior.PriorVarPerturbations">PriorVarPerturbations</a></li>
+<li>mdsine2.posterior._qPCRBase</li>
 <li><a title="mdsine2.pylab.contrib.ClusterPerturbation" href="contrib.html#mdsine2.pylab.contrib.ClusterPerturbation">ClusterPerturbation</a></li>
 <li><a title="mdsine2.pylab.contrib.Perturbation" href="contrib.html#mdsine2.pylab.contrib.Perturbation">Perturbation</a></li>
 <li><a title="mdsine2.pylab.variables.Bernoulli" href="#mdsine2.pylab.variables.Bernoulli">Bernoulli</a></li>
@@ -5653,7 +5622,6 @@ These are the extra parameters for the Node class</p></div>
 <li><a title="mdsine2.pylab.variables.SICS" href="#mdsine2.pylab.variables.SICS">SICS</a></li>
 <li><a title="mdsine2.pylab.variables.TruncatedNormal" href="#mdsine2.pylab.variables.TruncatedNormal">TruncatedNormal</a></li>
 <li><a title="mdsine2.pylab.variables.Uniform" href="#mdsine2.pylab.variables.Uniform">Uniform</a></li>
-<li>mdsine2.qpcr._qPCRBase</li>
 </ul>
 <h3>Instance variables</h3>
 <dl>
@@ -5674,25 +5642,19 @@ def T(self):
 </dl>
 <h3>Methods</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.Variable.add_init_value"><code class="name flex">
-<span>def <span class="ident">add_init_value</span></span>(<span>self)</span>
+<dt id="mdsine2.pylab.variables.Variable.remove_local_trace"><code class="name flex">
+<span>def <span class="ident">remove_local_trace</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Set the initialization value. This is called by <code>pylab.inference.BaseMCMC.run</code>
-when first updating the variable. User should not use this function</p></div>
+<div class="desc"><p>Destroy the local trace of the object</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def add_init_value(self):
-    &#39;&#39;&#39;Set the initialization value. This is called by `pylab.inference.BaseMCMC.run`
-    when first updating the variable. User should not use this function
+<pre><code class="python">def remove_local_trace(self):
+    &#39;&#39;&#39;Destroy the local trace of the object
     &#39;&#39;&#39;
-    if isarray(self.value):
-        value = np.array(self.value)
-    else:
-        value = self.value
-    self._init_value = value</code></pre>
+    self.trace = None</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Variable.set_value_shape"><code class="name flex">
@@ -5924,7 +5886,7 @@ when first updating the variable. User should not use this function</p></div>
 <h4><code><a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></h4>
 <ul class="">
 <li><code><a title="mdsine2.pylab.variables.Variable.T" href="#mdsine2.pylab.variables.Variable.T">T</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_init_value" href="#mdsine2.pylab.variables.Variable.add_init_value">add_init_value</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Variable.set_value_shape" href="#mdsine2.pylab.variables.Variable.set_value_shape">set_value_shape</a></code></li>
 </ul>
 </li>

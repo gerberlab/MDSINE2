@@ -34,7 +34,7 @@ import time
 
 from . import pylab as pl
 
-class gLVDynamicsSingleClustering(pl.BaseDynamics):
+class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
     &#39;&#39;&#39;Discretized Generalized Lotka-Voltera Dynamics with 
     clustered interactions and perturbations. This class provides functionality
     to forward simulate the dynamics:
@@ -50,9 +50,9 @@ class gLVDynamicsSingleClustering(pl.BaseDynamics):
     Parameters
     ----------
     growth : np.ndarray((n,))
-        This is the growth of the dynamics for each ASV
+        This is the growth of the dynamics for each Taxa
     interactions : np.ndarray((n,n)) 
-        Interactions is assumed are the ASV-ASV interactions (shape=(n,n)). The diagonal of
+        Interactions is assumed are the Taxa-Taxa interactions (shape=(n,n)). The diagonal of
         the interactions is assumed to be the self interactions.
     perturbations : list(np.ndarray((n,))), None
         These are the perturbation magnitudes for each perturbation.  If `None` then we assume 
@@ -103,7 +103,7 @@ class gLVDynamicsSingleClustering(pl.BaseDynamics):
         Parameters
         ----------
         x : np.ndarray((n,1))
-            This is the abundance as a column vector for each ASV
+            This is the abundance as a column vector for each Taxa
         t : numeric
             This is the time point we are integrating to
         dt : numeric
@@ -143,7 +143,7 @@ class gLVDynamicsSingleClustering(pl.BaseDynamics):
         self._adjusted_growth = None
         
 
-class MultiplicativeGlobal(pl.BaseProcessVariance):
+class MultiplicativeGlobal(pl.dynamics.BaseProcessVariance):
     &#39;&#39;&#39;This is multiplicative noise used in a lognormal model
     &#39;&#39;&#39;
     def __init__(self, value):
@@ -184,7 +184,7 @@ class MultiplicativeGlobal(pl.BaseProcessVariance):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class MultiplicativeGlobal(pl.BaseProcessVariance):
+<pre><code class="python">class MultiplicativeGlobal(pl.dynamics.BaseProcessVariance):
     &#39;&#39;&#39;This is multiplicative noise used in a lognormal model
     &#39;&#39;&#39;
     def __init__(self, value):
@@ -238,9 +238,9 @@ sum_{c_i != c_j} b_{c_i, c_j} x_{k,j})</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>growth</code></strong> :&ensp;<code>np.ndarray((n,))</code></dt>
-<dd>This is the growth of the dynamics for each ASV</dd>
+<dd>This is the growth of the dynamics for each Taxa</dd>
 <dt><strong><code>interactions</code></strong> :&ensp;<code>np.ndarray((n,n)) </code></dt>
-<dd>Interactions is assumed are the ASV-ASV interactions (shape=(n,n)). The diagonal of
+<dd>Interactions is assumed are the Taxa-Taxa interactions (shape=(n,n)). The diagonal of
 the interactions is assumed to be the self interactions.</dd>
 <dt><strong><code>perturbations</code></strong> :&ensp;<code>list(np.ndarray((n,))), None</code></dt>
 <dd>These are the perturbation magnitudes for each perturbation.
@@ -258,7 +258,7 @@ there are no perturbations. If this is specified then <code>perturbation_starts<
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class gLVDynamicsSingleClustering(pl.BaseDynamics):
+<pre><code class="python">class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
     &#39;&#39;&#39;Discretized Generalized Lotka-Voltera Dynamics with 
     clustered interactions and perturbations. This class provides functionality
     to forward simulate the dynamics:
@@ -274,9 +274,9 @@ there are no perturbations. If this is specified then <code>perturbation_starts<
     Parameters
     ----------
     growth : np.ndarray((n,))
-        This is the growth of the dynamics for each ASV
+        This is the growth of the dynamics for each Taxa
     interactions : np.ndarray((n,n)) 
-        Interactions is assumed are the ASV-ASV interactions (shape=(n,n)). The diagonal of
+        Interactions is assumed are the Taxa-Taxa interactions (shape=(n,n)). The diagonal of
         the interactions is assumed to be the self interactions.
     perturbations : list(np.ndarray((n,))), None
         These are the perturbation magnitudes for each perturbation.  If `None` then we assume 
@@ -327,7 +327,7 @@ there are no perturbations. If this is specified then <code>perturbation_starts<
         Parameters
         ----------
         x : np.ndarray((n,1))
-            This is the abundance as a column vector for each ASV
+            This is the abundance as a column vector for each Taxa
         t : numeric
             This is the time point we are integrating to
         dt : numeric
@@ -401,7 +401,7 @@ there are no perturbations. If this is specified then <code>perturbation_starts<
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>x</code></strong> :&ensp;<code>np.ndarray((n,1))</code></dt>
-<dd>This is the abundance as a column vector for each ASV</dd>
+<dd>This is the abundance as a column vector for each Taxa</dd>
 <dt><strong><code>t</code></strong> :&ensp;<code>numeric</code></dt>
 <dd>This is the time point we are integrating to</dd>
 <dt><strong><code>dt</code></strong> :&ensp;<code>numeric</code></dt>
@@ -418,7 +418,7 @@ are integrating from</dd>
     Parameters
     ----------
     x : np.ndarray((n,1))
-        This is the abundance as a column vector for each ASV
+        This is the abundance as a column vector for each Taxa
     t : numeric
         This is the time point we are integrating to
     dt : numeric

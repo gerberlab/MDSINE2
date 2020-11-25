@@ -29,31 +29,24 @@
 <pre><code class="python">import logging
 import numpy as np
 import h5py
+import os
 
 # Custom modules
 from . import config
-from .names import STRNAMES, STRNAMES
+from .names import STRNAMES
 from . import design_matrices
-
-# Import the posterior classes
-from . import interactions as posteriorInteractions
-from . import clustering as posteriorClustering
-from . import filtering as posteriorFiltering
-from . import logistic_growth as posteriorLogisticGrowth
-from . import perturbations as posteriorPerturbations
-from . import processvariance as posteriorProcessVar
-from . import qpcr as posteriorQPCR
+from . import posterior
 
 from . import pylab as pl
 
-def build_graph(params, graph_name, subjset, continue_inference=None, 
+def initialize_graph(params, graph_name, subjset, continue_inference=None, 
     intermediate_validation=None):
     &#39;&#39;&#39;Builds the graph with the posterior classes and creates an
     mdsine2.BaseMCMC inference chain object that you ran run inference with
 
     Parameters
     ----------
-    params : config.ModelConfig
+    params : mdsine2.config.ModelConfig
         This class specifies all of the parameters of the model.
     graph_name : str
         Name of the graph you want to build
@@ -92,34 +85,55 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
 
         GRAPH = pl.graph.Graph.load(params.GRAPH_FILENAME)
     else:
-        GRAPH = pl.Graph(name=graph_name, seed=params.INIT_SEED)
+        GRAPH = pl.Graph(name=graph_name)
     GRAPH.as_default()
+    pl.seed(params.INIT_SEED)
 
     # Continue inference if necessary
     # -------------------------------
     if continue_inference is not None:
-        STRNAMES.set(G=GRAPH)
         logging.info(&#39;Continuing inference at Gibb step {}&#39;.format(continue_inference))
         mcmc = pl.inference.BaseMCMC.load(params.MCMC_FILENAME)
         mcmc.continue_inference(gibb_step_start=continue_inference)
 
         return mcmc
 
+    # Make the basepath
+    # -----------------
+    basepath = os.path.join(params.OUTPUT_BASEPATH, GRAPH.name)
+    os.makedirs(basepath, exist_ok=True)
+    params.MODEL_PATH = basepath
+
+    # Normalize the qpcr measurements for numerical stability
+    # -------------------------------------------------------
+    if params.QPCR_NORMALIZATION_MAX_VALUE is not None:
+        subjset.normalize_qpcr(max_value=params.QPCR_NORMALIZATION_MAX_VALUE)
+        logging.info(&#39;Normalizing abundances for a max value of {}. Normalization &#39; \
+            &#39;constant: {:.4E}&#39;.format(params.QPCR_NORMALIZATION_MAX_VALUE, 
+            subjset.qpcr_normalization_factor))
+        
+        params.INITIALIZATION_KWARGS[STRNAMES.FILTERING][&#39;v2&#39;] *= subjset.qpcr_normalization_factor
+        params.INITIALIZATION_KWARGS[STRNAMES.SELF_INTERACTION_VALUE][&#39;rescale_value&#39;] = \
+            subjset.qpcr_normalization_factor
+    
+    subjset_filename = os.path.join(basepath, config.SUBJSET_FILENAME)
+    subjset.save(subjset_filename)
+
     # Instantiate the posterior classes
     # ---------------------------------
-    asvs = subjset.asvs
-    d = design_matrices.Data(asvs=subjset.asvs, subjects=subjset,
-        G=GRAPH, zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
-    clustering = pl.Clustering(clusters=None, items=asvs, G=GRAPH,
+    taxas = subjset.taxas
+    d = design_matrices.Data(subjects=subjset, G=GRAPH, 
+        zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
+    clustering = pl.Clustering(clusters=None, items=taxas, G=GRAPH,
         name=STRNAMES.CLUSTERING_OBJ)
 
     # Interactions
-    var_interactions = posteriorInteractions.PriorVarInteractions(
+    var_interactions = posterior.PriorVarInteractions(
         prior=pl.variables.SICS(
             dof=pl.Constant(None, G=GRAPH),
             scale=pl.Constant(None, G=GRAPH), 
         G=GRAPH), G=GRAPH)
-    mean_interactions = posteriorInteractions.PriorMeanInteractions(
+    mean_interactions = posterior.PriorMeanInteractions(
         prior=pl.variables.Normal(
             mean=pl.Constant(None, G=GRAPH),
             var=pl.Constant(None, G=GRAPH), 
@@ -127,20 +141,20 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     interaction_value = pl.variables.Normal(
         mean=mean_interactions, var=var_interactions, G=GRAPH)
 
-    interaction_indicator = posteriorInteractions.ClusterInteractionIndicatorProbability(
+    interaction_indicator = posterior.ClusterInteractionIndicatorProbability(
         prior=pl.variables.Beta(a=pl.Constant(None, G=GRAPH), b=pl.Constant(None, G=GRAPH), G=GRAPH),
         G=GRAPH)
-    interactions = posteriorInteractions.ClusterInteractionValue(
+    interactions = posterior.ClusterInteractionValue(
         prior=interaction_value, clustering=clustering, G=GRAPH)
-    Z = posteriorInteractions.ClusterInteractionIndicators(prior=interaction_indicator, G=GRAPH)
+    Z = posterior.ClusterInteractionIndicators(prior=interaction_indicator, G=GRAPH)
 
     # Growth
-    var_growth = posteriorLogisticGrowth.PriorVarMH(
+    var_growth = posterior.PriorVarMH(
         prior=pl.variables.SICS(
             dof=pl.Constant(None, G=GRAPH),
             scale=pl.Constant(None, G=GRAPH), G=GRAPH),
         child_name=STRNAMES.GROWTH_VALUE, G=GRAPH)
-    mean_growth = posteriorLogisticGrowth.PriorMeanMH(
+    mean_growth = posterior.PriorMeanMH(
         prior=pl.variables.TruncatedNormal(
             mean=pl.Constant(None, G=GRAPH),
             var=pl.Constant(None, G=GRAPH), G=GRAPH), 
@@ -148,15 +162,15 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     prior_growth = pl.variables.Normal(
         mean=mean_growth, var=var_growth,
         name=&#39;prior_{}&#39;.format(STRNAMES.GROWTH_VALUE), G=GRAPH)
-    growth = posteriorLogisticGrowth.Growth(prior=prior_growth, G=GRAPH)
+    growth = posterior.Growth(prior=prior_growth, G=GRAPH)
 
     # Self-Interactions
-    var_si = posteriorLogisticGrowth.PriorVarMH(
+    var_si = posterior.PriorVarMH(
         prior=pl.variables.SICS(
             dof=pl.Constant(None, G=GRAPH),
             scale=pl.Constant(None, G=GRAPH), G=GRAPH),
         child_name=STRNAMES.SELF_INTERACTION_VALUE, G=GRAPH)
-    mean_si = posteriorLogisticGrowth.PriorMeanMH(
+    mean_si = posterior.PriorMeanMH(
         prior=pl.variables.TruncatedNormal(
             mean=pl.Constant(None, G=GRAPH),
             var=pl.Constant(None, G=GRAPH), G=GRAPH), 
@@ -164,50 +178,47 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
     prior_si = pl.variables.Normal(
         mean=mean_si, var=var_si,
         name=&#39;prior_{}&#39;.format(STRNAMES.SELF_INTERACTION_VALUE), G=GRAPH)
-    self_interactions = posteriorLogisticGrowth.SelfInteractions(prior=prior_si, G=GRAPH)
+    self_interactions = posterior.SelfInteractions(prior=prior_si, G=GRAPH)
 
     # Process Variance
     prior_processvar = pl.variables.SICS( 
         dof=pl.Constant(None, G=GRAPH),
         scale=pl.Constant(None, G=GRAPH), G=GRAPH)
-    processvar = posteriorProcessVar.ProcessVarGlobal(G=GRAPH, prior=prior_processvar)
+    processvar = posterior.ProcessVarGlobal(G=GRAPH, prior=prior_processvar)
 
     # Clustering
     prior_concentration = pl.variables.Gamma(
         shape=pl.Constant(None, G=GRAPH),
         scale=pl.Constant(None, G=GRAPH),
         G=GRAPH)
-    concentration = posteriorClustering.Concentration(
+    concentration = posterior.Concentration(
         prior=prior_concentration, G=GRAPH)
-    cluster_assignments = posteriorClustering.ClusterAssignments(
+    cluster_assignments = posterior.ClusterAssignments(
         clustering=clustering, concentration=concentration,
         G=GRAPH, mp=params.MP_CLUSTERING)
 
     # Filtering and zero inflation
-    filtering = posteriorFiltering.FilteringLogMP(G=GRAPH, mp=params.MP_FILTERING, 
+    filtering = posterior.FilteringLogMP(G=GRAPH, mp=params.MP_FILTERING, 
         zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
-    zero_inflation = posteriorFiltering.ZeroInflation(G=GRAPH)
+    zero_inflation = posterior.ZeroInflation(G=GRAPH)
 
     # Perturbations
     if subjset.perturbations is not None:
         for pidx, subj_pert in enumerate(subjset.perturbations):
-            if subj_pert.name is None:
-                name = STRNAMES.PERTURBATIONS + str(pidx)
-            else:
-                name = subj_pert.name
+            name = subj_pert.name
             perturbation = pl.ClusterPerturbation(
-                start=subj_pert.start, 
-                end=subj_pert.end, probability=pl.variables.Beta(
+                starts=subj_pert.starts, ends=subj_pert.ends, 
+                probability=pl.variables.Beta(
                     name=name + &#39;_probability&#39;, G=GRAPH, value=None, a=None, b=None),
                 clustering=clustering, G=GRAPH, name=name,
                 signal_when_clusters_change=False, signal_when_item_assignment_changes=False)
 
-            magnitude_var = posteriorPerturbations.PriorVarPerturbationSingle(
+            magnitude_var = posterior.PriorVarPerturbationSingle(
                 prior=pl.variables.SICS(
                     dof=pl.Constant(None, G=GRAPH),
                     scale=pl.Constant(None, G=GRAPH), G=GRAPH), 
                 perturbation=perturbation, G=GRAPH)
-            magnitude_mean = posteriorPerturbations.PriorMeanPerturbationSingle(
+            magnitude_mean = posterior.PriorMeanPerturbationSingle(
                 prior=pl.variables.Normal(
                     mean=pl.Constant(None, G=GRAPH),
                     var=pl.Constant(None, G=GRAPH),
@@ -222,24 +233,24 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
                 G=GRAPH)
             perturbation.probability.add_prior(prior_prob)
         
-        magnitude_var_perts = posteriorPerturbations.PriorVarPerturbations(G=GRAPH)
-        magnitude_mean_perts = posteriorPerturbations.PriorMeanPerturbations(G=GRAPH)
-        magnitude_perts = posteriorPerturbations.PerturbationMagnitudes(G=GRAPH)
-        indicator_perts = posteriorPerturbations.PerturbationIndicators(G=GRAPH, need_to_trace=False, relative=True)
-        indicator_prob_perts = posteriorPerturbations.PerturbationProbabilities(G=GRAPH)
+        magnitude_var_perts = posterior.PriorVarPerturbations(G=GRAPH)
+        magnitude_mean_perts = posterior.PriorMeanPerturbations(G=GRAPH)
+        magnitude_perts = posterior.PerturbationMagnitudes(G=GRAPH)
+        indicator_perts = posterior.PerturbationIndicators(G=GRAPH, need_to_trace=False, relative=True)
+        indicator_prob_perts = posterior.PerturbationProbabilities(G=GRAPH)
     else:
         magnitude_perts = None
         pert_ind = None
         pert_ind_prob = None
 
-    beta = posteriorLogisticGrowth.RegressCoeff(
+    beta = posterior.RegressCoeff(
         growth=growth, self_interactions=self_interactions,
         interactions=interactions, pert_mag=magnitude_perts, G=GRAPH)
 
     # Set qPCR variance priors and hyper priors
-    qpcr_variances = posteriorQPCR.qPCRVariances(G=GRAPH, L=params.N_QPCR_BUCKETS)
-    qpcr_dofs = posteriorQPCR.qPCRDegsOfFreedoms(G=GRAPH, L=params.N_QPCR_BUCKETS)
-    qpcr_scales = posteriorQPCR.qPCRScales(G=GRAPH, L=params.N_QPCR_BUCKETS)
+    qpcr_variances = posterior.qPCRVariances(G=GRAPH, L=params.N_QPCR_BUCKETS)
+    qpcr_dofs = posterior.qPCRDegsOfFreedoms(G=GRAPH, L=params.N_QPCR_BUCKETS)
+    qpcr_scales = posterior.qPCRScales(G=GRAPH, L=params.N_QPCR_BUCKETS)
 
     for l in range(params.N_QPCR_BUCKETS):
         qpcr_scale_prior = pl.variables.SICS( 
@@ -282,9 +293,6 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
             iii += 1
     qpcr_dofs.set_shape()
     qpcr_scales.set_shape()
-
-    # Set the IDs of the variables in the graph
-    STRNAMES.set(G=GRAPH)
 
     # Set up inference and the inference order.
     # -----------------------------------------
@@ -411,11 +419,42 @@ def build_graph(params, graph_name, subjset, continue_inference=None,
 
     # Setup filenames
     # ---------------
-    mcmc.set_tracer(filename=params.HDF5_FILENAME, ckpt=params.CHECKPOINT)
-    mcmc.tracer.set_save_location(params.TRACER_FILENAME)
-    mcmc.set_save_location(params.MCMC_FILENAME)
-    GRAPH.set_save_location(params.GRAPH_FILENAME)
+    hdf5_filename = os.path.join(basepath, config.HDF5_FILENAME)
+    mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
+    mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CHECKPOINT)
+    mcmc.set_save_location(mcmc_filename)
+    params.save(os.path.join(basepath, config.PARAMS_FILENAME))
+    pl.seed(params.DATA_SEED)
 
+    return mcmc
+
+def run_graph(mcmc, crash_if_error=True):
+    &#39;&#39;&#39;Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        Inference object that is already built and initialized
+    crash_if_error : bool
+        If True, throws an error if there is an exception during inference. Otherwise
+        it continues out of inference.
+
+    Returns
+    -------
+    mdsine2.BaseMCMC
+    &#39;&#39;&#39;
+    try:
+        mcmc.run(log_every=1)
+    except Exception as e:
+        logging.critical(&#39;CHAIN `{}` CRASHED&#39;.format(mcmc.graph.name))
+        logging.critical(&#39;Error: {}&#39;.format(e))
+        if crash_if_error:
+            raise
+    mcmc.graph[STRNAMES.FILTERING].kill()
+    mcmc.graph[STRNAMES.CLUSTERING].kill()
+
+    if mcmc.graph.data.subjects.qpcr_normalization_factor is not None:
+        mcmc, mcmc.graph.data.subjects = denormalize_parameters(mcmc)
     return mcmc
 
 def normalize_parameters(mcmc, subjset):
@@ -438,8 +477,10 @@ def normalize_parameters(mcmc, subjset):
         f = h5py.File(GRAPH.tracer.filename, &#39;r+&#39;, libver=&#39;latest&#39;)
         ckpt = GRAPH.tracer.ckpt
 
-        GRAPH[STRNAMES.PROCESSVAR].c_m *= subjset.qpcr_normalization_factor
-        GRAPH[STRNAMES.FILTERING].v2 *= subjset.qpcr_normalization_factor
+        try:
+            GRAPH[STRNAMES.FILTERING].v2 *= subjset.qpcr_normalization_factor
+        except:
+            logging.info(&#39;v2 not applicable&#39;)
 
         # Adjust the self interactions if necessary
         if STRNAMES.SELF_INTERACTION_VALUE in mcmc.tracer.being_traced:
@@ -489,22 +530,21 @@ def normalize_parameters(mcmc, subjset):
             dset[:] = dset[:] / (subjset.qpcr_normalization_factor**2)
 
         if mcmc.is_in_inference_order(STRNAMES.FILTERING):
-            for ridx in range(len(subjset)):
-                for dset_name in [STRNAMES.LATENT_TRAJECTORY, STRNAMES.AUX_TRAJECTORY]:
-                    name = dset_name + &#39;_ridx{}&#39;.format(ridx)
-                    if name not in f:
-                        continue
-                    dset = f[name]
-                    total_samples = dset.attrs[&#39;end_iter&#39;]
-                    i = 0
-                    while (i * ckpt) &lt; total_samples:
-                        start_idx = int(i * ckpt)
-                        end_idx = int((i+1) * ckpt)
+            for subj in subjset:
+                name = STRNAMES.LATENT_TRAJECTORY + &#39;_{}&#39;.format(subj.name)
+                if name not in f:
+                    continue
+                dset = f[name]
+                total_samples = dset.attrs[&#39;end_iter&#39;]
+                i = 0
+                while (i * ckpt) &lt; total_samples:
+                    start_idx = int(i * ckpt)
+                    end_idx = int((i+1) * ckpt)
 
-                        if end_idx &gt; total_samples:
-                            end_idx = total_samples
-                        dset[start_idx: end_idx] = dset[start_idx: end_idx]*subjset.qpcr_normalization_factor
-                        i += 1
+                    if end_idx &gt; total_samples:
+                        end_idx = total_samples
+                    dset[start_idx: end_idx] = dset[start_idx: end_idx]*subjset.qpcr_normalization_factor
+                    i += 1
 
         f.close()
     else:
@@ -512,7 +552,7 @@ def normalize_parameters(mcmc, subjset):
     
     return mcmc, subjset
 
-def denormalize_parameters(mcmc, subjset):
+def denormalize_parameters(mcmc):
     &#39;&#39;&#39;Denormalize the abundance of the parameters by the normalization factor
     in the subject set
 
@@ -528,13 +568,17 @@ def denormalize_parameters(mcmc, subjset):
     mdsine2.BaseMCMC, mdsine2.Study
     &#39;&#39;&#39;
     GRAPH = mcmc.graph
+    subjset = mcmc.graph.data.subjects
     if subjset.qpcr_normalization_factor is not None:
         logging.info(&#39;Denormalizing the parameters&#39;)
 
         f = h5py.File(GRAPH.tracer.filename, &#39;r+&#39;, libver=&#39;latest&#39;)
         ckpt = GRAPH.tracer.ckpt
 
-        GRAPH[STRNAMES.FILTERING].v2 /= subjset.qpcr_normalization_factor
+        try:
+            GRAPH[STRNAMES.FILTERING].v2 /= subjset.qpcr_normalization_factor
+        except:
+            logging.info(&#39;v2 not applicable&#39;)
 
         # Adjust the self interactions if necessary
         if STRNAMES.SELF_INTERACTION_VALUE in mcmc.tracer.being_traced:
@@ -584,8 +628,8 @@ def denormalize_parameters(mcmc, subjset):
             dset[:] = dset[:] * (subjset.qpcr_normalization_factor**2)
 
         if mcmc.is_in_inference_order(STRNAMES.FILTERING):
-            for ridx in range(len(mcmc.graph.data.subjects)):
-                name = STRNAMES.LATENT_TRAJECTORY + &#39;_ridx{}&#39;.format(ridx)
+            for subj in subjset:
+                name = STRNAMES.LATENT_TRAJECTORY + &#39;_{}&#39;.format(subj.name)
                 if name not in f:
                     continue
                 dset = f[name]
@@ -602,6 +646,7 @@ def denormalize_parameters(mcmc, subjset):
 
         f.close()
         subjset.denormalize_qpcr()
+        mcmc.save()
     else:
         logging.info(&#39;Data already denormalized&#39;)
     return mcmc, subjset
@@ -638,7 +683,7 @@ def calculate_stability_over_gibbs(mcmc, section=&#39;auto&#39;, log_every=1000)
     
     Returns
     -------
-    np.ndarray (n_gibb, n_asvs, n_asvs)
+    np.ndarray (n_gibb, n_taxas, n_taxas)
     &#39;&#39;&#39;
     # Type check
     # ----------
@@ -688,7 +733,7 @@ def calculate_stability_over_gibbs(mcmc, section=&#39;auto&#39;, log_every=1000)
 
     # Load data
     # ---------
-    N_ASVS = len(mcmc.graph.data.asvs)
+    N_TAXAS = len(mcmc.graph.data.taxas)
     logging.info(&#39;Loading data for stability&#39;)
     growth = mcmc.graph[STRNAMES.GROWTH_VALUE]
     if mcmc.tracer.is_being_traced(STRNAMES.GROWTH_VALUE):
@@ -697,7 +742,7 @@ def calculate_stability_over_gibbs(mcmc, section=&#39;auto&#39;, log_every=1000)
             growth = growth[:LEN_ARR, ...]
     else:
         growth = growth.value
-        growth = growth.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_ASVS))
+        growth = growth.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_TAXAS))
 
     si = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE]
     if mcmc.tracer.is_being_traced(STRNAMES.SELF_INTERACTION_VALUE):
@@ -706,7 +751,7 @@ def calculate_stability_over_gibbs(mcmc, section=&#39;auto&#39;, log_every=1000)
             si = si[:LEN_ARR, ...]
     else:
         si = si.value
-        si = si.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_ASVS))
+        si = si.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_TAXAS))
 
     interactions = mcmc.graph[STRNAMES.GROWTH_VALUE]
     if mcmc.tracer.is_being_traced(STRNAMES.GROWTH_VALUE):
@@ -716,10 +761,10 @@ def calculate_stability_over_gibbs(mcmc, section=&#39;auto&#39;, log_every=1000)
             interactions = interactions[:LEN_ARR, ...]
     else:
         interactions = interactions.get_datalevel_value_matrix(set_neg_indicators_to_nan=False)
-        interactions = interactions.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_ASVS, N_ASVS))
+        interactions = interactions.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_TAXAS, N_TAXAS))
 
     # Set the self-interactions as the diagonal
-    for i in range(N_ASVS):
+    for i in range(N_TAXAS):
         interactions[:,i,i] = - np.absolute(si[:, i])
 
     # Calculate stability
@@ -735,14 +780,7 @@ def calculate_stability_over_gibbs(mcmc, section=&#39;auto&#39;, log_every=1000)
                 logging.info(&#39;{}/{}&#39;.foramt(i, LEN_ARR))
         
         ret[i] = np.diag(growth[i]) @ interactions[i]
-    return ret
-
-
-
-
-    
-
-    </code></pre>
+    return ret</code></pre>
 </details>
 </section>
 <section>
@@ -752,15 +790,308 @@ def calculate_stability_over_gibbs(mcmc, section=&#39;auto&#39;, log_every=1000)
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="mdsine2.run.build_graph"><code class="name flex">
-<span>def <span class="ident">build_graph</span></span>(<span>params, graph_name, subjset, continue_inference=None, intermediate_validation=None)</span>
+<dt id="mdsine2.run.calculate_stability_over_gibbs"><code class="name flex">
+<span>def <span class="ident">calculate_stability_over_gibbs</span></span>(<span>mcmc, section='auto', log_every=1000)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Calculate the stability over each of the Gibb steps in the chain <code>mcmc</code></p>
+<p>stability = diag(r) @ A, where
+r : growth rates
+A : interaction matrix</p>
+<p>Note that if the growth, self_interactions, or interactions are fixed during inference,
+we use the fixed values</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>mcmc</code></strong> :&ensp;<code>mdsine2.BaseMCMC</code></dt>
+<dd>Inference object that contains the traces</dd>
+<dt><strong><code>section</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the section of the trace we are calculating over. Options:
+'entire' : burn-in and the posterior
+'burnin' : just the burn-in samples
+'posterior' : just the posterior samples
+'auto' : most robust choice. If the chain did not do the total number of
+Gibb steps, it will only calcualte the stability over the Gibb steps that
+it has samples for. If the number is less than the burn-in, it will return the
+stability over the burn-in. If the number of Gibb steps is greater than the
+number of burn-in. It will only return the stability of the samples in the posterior.
+If the inference has done the total number of gibb samples, then it is done over the
+entire posterior.</dd>
+<dt><strong><code>log_every</code></strong> :&ensp;<code>int, None</code></dt>
+<dd>Print out the Gibb step the stability calcualtion is currently doing ever <code>log_every</code> Gibb
+steps. If None then there is not display.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray (n_gibb, n_taxas, n_taxas)</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def calculate_stability_over_gibbs(mcmc, section=&#39;auto&#39;, log_every=1000):
+    &#39;&#39;&#39;Calculate the stability over each of the Gibb steps in the chain `mcmc`
+
+    stability = diag(r) @ A, where
+        r : growth rates
+        A : interaction matrix
+
+    Note that if the growth, self_interactions, or interactions are fixed during inference,
+    we use the fixed values
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        Inference object that contains the traces
+    section : str
+        This is the section of the trace we are calculating over. Options:
+            &#39;entire&#39; : burn-in and the posterior
+            &#39;burnin&#39; : just the burn-in samples
+            &#39;posterior&#39; : just the posterior samples
+            &#39;auto&#39; : most robust choice. If the chain did not do the total number of
+                Gibb steps, it will only calcualte the stability over the Gibb steps that
+                it has samples for. If the number is less than the burn-in, it will return the
+                stability over the burn-in. If the number of Gibb steps is greater than the 
+                number of burn-in. It will only return the stability of the samples in the posterior.
+                If the inference has done the total number of gibb samples, then it is done over the
+                entire posterior.
+    log_every : int, None
+        Print out the Gibb step the stability calcualtion is currently doing ever `log_every` Gibb
+        steps. If None then there is not display.
+    
+    Returns
+    -------
+    np.ndarray (n_gibb, n_taxas, n_taxas)
+    &#39;&#39;&#39;
+    # Type check
+    # ----------
+    if not pl.isMCMC(mcmc):
+        raise TypeError(&#39;`mcmc` ({}) must be a mdsine2.BaseMCMC object&#39;.format(type(mcmc)))
+    if log_every is not None:
+        if not pl.isint(log_every):
+            raise TypeError(&#39;`log_every` ({}) must be an int&#39;.format(type(log_every)))
+        if log_every &lt;= 0:
+            raise ValueError(&#39;`log_every` ({}) must be &gt; 0&#39;.format(log_every))
+
+    smaller_arr = False
+    if not pl.isstr(section):
+        raise TypeError(&#39;`section` ({}) must be a str&#39;.format(type(section)))
+    if section == &#39;burnin&#39;:
+        if mcmc.sample_iter &gt;= mcmc.burnin:
+            LEN_ARR = mcmc.burnin
+        else:
+            raise ValueError(&#39;chain `{}` only has {} Gibb steps but you chose to `burnin` ({}) section.&#39;.format(
+                mcmc.graph.name, mcmc.sample_iter, mcmc.burnin))
+    elif section == &#39;posterior&#39;:
+        if mcmc.ran:
+            LEN_ARR = mcmc.n_samples - mcmc.burnin
+        else:
+            raise ValueError(&#39;chain `{}` only has {} Gibb steps but you chose to `posterior` ({}) section.&#39;.format(
+                mcmc.graph.name, mcmc.sample_iter, mcmc.n_samples))
+    elif section == &#39;entire&#39;:
+        if mcmc.ran:
+            LEN_ARR = mcmc.n_samples
+        else:
+            raise ValueError(&#39;chain `{}` only has {} Gibb steps but you chose to `entire` ({}) section.&#39;.format(
+                mcmc.graph.name, mcmc.sample_iter, mcmc.n_samples))
+    elif section == &#39;auto&#39;:
+        if mcmc.ran:
+            LEN_ARR = mcmc.n_samples
+            section=&#39;posterior&#39;
+        elif mcmc.sample_iter &gt; mcmc.burnin:
+            section = &#39;posterior&#39;
+            LEN_ARR = mcmc.sample_iter + 1 - mcmc.burnin
+            smaller_arr = True
+        else:
+            section = &#39;burnin&#39;
+            LEN_ARR = mcmc.sample_iter + 1
+            smaller_arr = True
+    else:
+        raise ValueError(&#39;`section` ({}) not recognized&#39;.format(section))
+
+    # Load data
+    # ---------
+    N_TAXAS = len(mcmc.graph.data.taxas)
+    logging.info(&#39;Loading data for stability&#39;)
+    growth = mcmc.graph[STRNAMES.GROWTH_VALUE]
+    if mcmc.tracer.is_being_traced(STRNAMES.GROWTH_VALUE):
+        growth = growth.get_trace_from_disk(section=section)
+        if smaller_arr:
+            growth = growth[:LEN_ARR, ...]
+    else:
+        growth = growth.value
+        growth = growth.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_TAXAS))
+
+    si = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE]
+    if mcmc.tracer.is_being_traced(STRNAMES.SELF_INTERACTION_VALUE):
+        si = si.get_trace_from_disk(section=section)
+        if smaller_arr:
+            si = si[:LEN_ARR, ...]
+    else:
+        si = si.value
+        si = si.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_TAXAS))
+
+    interactions = mcmc.graph[STRNAMES.GROWTH_VALUE]
+    if mcmc.tracer.is_being_traced(STRNAMES.GROWTH_VALUE):
+        interactions = interactions.get_trace_from_disk(section=section)
+        interactions[np.isnan(interactions)] = 0
+        if smaller_arr:
+            interactions = interactions[:LEN_ARR, ...]
+    else:
+        interactions = interactions.get_datalevel_value_matrix(set_neg_indicators_to_nan=False)
+        interactions = interactions.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_TAXAS, N_TAXAS))
+
+    # Set the self-interactions as the diagonal
+    for i in range(N_TAXAS):
+        interactions[:,i,i] = - np.absolute(si[:, i])
+
+    # Calculate stability
+    # -------------------
+    if log_every is None:
+        log_every = LEN_ARR + 1
+    ret = np.zeros(shape=interactions.shape)
+    for i in range(ret.shape[0]):
+        if i % log_every == 0:
+            if i == 0:
+                continue
+            else:
+                logging.info(&#39;{}/{}&#39;.foramt(i, LEN_ARR))
+        
+        ret[i] = np.diag(growth[i]) @ interactions[i]
+    return ret</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.run.denormalize_parameters"><code class="name flex">
+<span>def <span class="ident">denormalize_parameters</span></span>(<span>mcmc)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Denormalize the abundance of the parameters by the normalization factor
+in the subject set</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>mcmc</code></strong> :&ensp;<code>mdsine2.BaseMCMC</code></dt>
+<dd>This is the inference object that has all of the parameters in it</dd>
+<dt><strong><code>subjset</code></strong> :&ensp;<code>mdsine2.Study</code></dt>
+<dd>This is the data object that contains all of the trajectories</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>mdsine2.BaseMCMC, mdsine2.Study</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def denormalize_parameters(mcmc):
+    &#39;&#39;&#39;Denormalize the abundance of the parameters by the normalization factor
+    in the subject set
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        This is the inference object that has all of the parameters in it
+    subjset : mdsine2.Study
+        This is the data object that contains all of the trajectories
+
+    Returns
+    -------
+    mdsine2.BaseMCMC, mdsine2.Study
+    &#39;&#39;&#39;
+    GRAPH = mcmc.graph
+    subjset = mcmc.graph.data.subjects
+    if subjset.qpcr_normalization_factor is not None:
+        logging.info(&#39;Denormalizing the parameters&#39;)
+
+        f = h5py.File(GRAPH.tracer.filename, &#39;r+&#39;, libver=&#39;latest&#39;)
+        ckpt = GRAPH.tracer.ckpt
+
+        try:
+            GRAPH[STRNAMES.FILTERING].v2 /= subjset.qpcr_normalization_factor
+        except:
+            logging.info(&#39;v2 not applicable&#39;)
+
+        # Adjust the self interactions if necessary
+        if STRNAMES.SELF_INTERACTION_VALUE in mcmc.tracer.being_traced:
+            dset = f[STRNAMES.SELF_INTERACTION_VALUE]
+            dset[:,:] = dset[:,:] * subjset.qpcr_normalization_factor
+
+        if STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS in mcmc.tracer.being_traced:
+            dset = f[STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS]
+            dset[:] = dset[:] * subjset.qpcr_normalization_factor
+
+        if mcmc.is_in_inference_order(STRNAMES.PRIOR_VAR_SELF_INTERACTIONS):
+            dset = f[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS]
+            dset[:] = dset[:] * (subjset.qpcr_normalization_factor**2)
+
+        if mcmc.is_in_inference_order(STRNAMES.QPCR_VARIANCES):
+            vs = GRAPH[STRNAMES.QPCR_VARIANCES]
+            for l in range(vs.L):
+                dset = f[STRNAMES.QPCR_VARIANCES + &#39;_{}&#39;.format(l)]
+                dset[:] = dset[:] * (subjset.qpcr_normalization_factor**2)
+
+        if mcmc.is_in_inference_order(STRNAMES.QPCR_SCALES):
+            vs = GRAPH[STRNAMES.QPCR_SCALES]
+            for l in range(vs.L):
+                dset = f[STRNAMES.QPCR_SCALES + &#39;_{}&#39;.format(l)]
+                dset[:] = dset[:] * (subjset.qpcr_normalization_factor**2)
+
+        # Adjust the interactions if necessary
+        if mcmc.tracer.is_being_traced(STRNAMES.INTERACTIONS_OBJ):
+            dset = f[STRNAMES.INTERACTIONS_OBJ]
+            total_samples = dset.attrs[&#39;end_iter&#39;]
+            i = 0
+            while (i * ckpt) &lt; total_samples:
+                start_idx = int(i * ckpt)
+                end_idx = int((i+1) * ckpt)
+
+                if end_idx &gt; total_samples:
+                    end_idx = total_samples
+                dset[start_idx: end_idx] = dset[start_idx: end_idx] * subjset.qpcr_normalization_factor
+                i += 1
+        
+        if mcmc.is_in_inference_order(STRNAMES.PRIOR_MEAN_INTERACTIONS):
+            dset = f[STRNAMES.PRIOR_MEAN_INTERACTIONS]
+            dset[:] = dset[:] * subjset.qpcr_normalization_factor
+
+        if mcmc.is_in_inference_order(STRNAMES.PRIOR_VAR_INTERACTIONS):
+            dset = f[STRNAMES.PRIOR_VAR_INTERACTIONS]
+            dset[:] = dset[:] * (subjset.qpcr_normalization_factor**2)
+
+        if mcmc.is_in_inference_order(STRNAMES.FILTERING):
+            for subj in subjset:
+                name = STRNAMES.LATENT_TRAJECTORY + &#39;_{}&#39;.format(subj.name)
+                if name not in f:
+                    continue
+                dset = f[name]
+                total_samples = dset.attrs[&#39;end_iter&#39;]
+                i = 0
+                while (i * ckpt) &lt; total_samples:
+                    start_idx = int(i * ckpt)
+                    end_idx = int((i+1) * ckpt)
+
+                    if end_idx &gt; total_samples:
+                        end_idx = total_samples
+                    dset[start_idx: end_idx] = dset[start_idx: end_idx]/subjset.qpcr_normalization_factor
+                    i += 1
+
+        f.close()
+        subjset.denormalize_qpcr()
+        mcmc.save()
+    else:
+        logging.info(&#39;Data already denormalized&#39;)
+    return mcmc, subjset</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.run.initialize_graph"><code class="name flex">
+<span>def <span class="ident">initialize_graph</span></span>(<span>params, graph_name, subjset, continue_inference=None, intermediate_validation=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Builds the graph with the posterior classes and creates an
 mdsine2.BaseMCMC inference chain object that you ran run inference with</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>params</code></strong> :&ensp;<code>config.ModelConfig</code></dt>
+<dt><strong><code>params</code></strong> :&ensp;<code>mdsine2.config.ModelConfig</code></dt>
 <dd>This class specifies all of the parameters of the model.</dd>
 <dt><strong><code>graph_name</code></strong> :&ensp;<code>str</code></dt>
 <dd>Name of the graph you want to build</dd>
@@ -787,14 +1118,14 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def build_graph(params, graph_name, subjset, continue_inference=None, 
+<pre><code class="python">def initialize_graph(params, graph_name, subjset, continue_inference=None, 
     intermediate_validation=None):
     &#39;&#39;&#39;Builds the graph with the posterior classes and creates an
     mdsine2.BaseMCMC inference chain object that you ran run inference with
 
     Parameters
     ----------
-    params : config.ModelConfig
+    params : mdsine2.config.ModelConfig
         This class specifies all of the parameters of the model.
     graph_name : str
         Name of the graph you want to build
@@ -833,34 +1164,55 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
 
         GRAPH = pl.graph.Graph.load(params.GRAPH_FILENAME)
     else:
-        GRAPH = pl.Graph(name=graph_name, seed=params.INIT_SEED)
+        GRAPH = pl.Graph(name=graph_name)
     GRAPH.as_default()
+    pl.seed(params.INIT_SEED)
 
     # Continue inference if necessary
     # -------------------------------
     if continue_inference is not None:
-        STRNAMES.set(G=GRAPH)
         logging.info(&#39;Continuing inference at Gibb step {}&#39;.format(continue_inference))
         mcmc = pl.inference.BaseMCMC.load(params.MCMC_FILENAME)
         mcmc.continue_inference(gibb_step_start=continue_inference)
 
         return mcmc
 
+    # Make the basepath
+    # -----------------
+    basepath = os.path.join(params.OUTPUT_BASEPATH, GRAPH.name)
+    os.makedirs(basepath, exist_ok=True)
+    params.MODEL_PATH = basepath
+
+    # Normalize the qpcr measurements for numerical stability
+    # -------------------------------------------------------
+    if params.QPCR_NORMALIZATION_MAX_VALUE is not None:
+        subjset.normalize_qpcr(max_value=params.QPCR_NORMALIZATION_MAX_VALUE)
+        logging.info(&#39;Normalizing abundances for a max value of {}. Normalization &#39; \
+            &#39;constant: {:.4E}&#39;.format(params.QPCR_NORMALIZATION_MAX_VALUE, 
+            subjset.qpcr_normalization_factor))
+        
+        params.INITIALIZATION_KWARGS[STRNAMES.FILTERING][&#39;v2&#39;] *= subjset.qpcr_normalization_factor
+        params.INITIALIZATION_KWARGS[STRNAMES.SELF_INTERACTION_VALUE][&#39;rescale_value&#39;] = \
+            subjset.qpcr_normalization_factor
+    
+    subjset_filename = os.path.join(basepath, config.SUBJSET_FILENAME)
+    subjset.save(subjset_filename)
+
     # Instantiate the posterior classes
     # ---------------------------------
-    asvs = subjset.asvs
-    d = design_matrices.Data(asvs=subjset.asvs, subjects=subjset,
-        G=GRAPH, zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
-    clustering = pl.Clustering(clusters=None, items=asvs, G=GRAPH,
+    taxas = subjset.taxas
+    d = design_matrices.Data(subjects=subjset, G=GRAPH, 
+        zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
+    clustering = pl.Clustering(clusters=None, items=taxas, G=GRAPH,
         name=STRNAMES.CLUSTERING_OBJ)
 
     # Interactions
-    var_interactions = posteriorInteractions.PriorVarInteractions(
+    var_interactions = posterior.PriorVarInteractions(
         prior=pl.variables.SICS(
             dof=pl.Constant(None, G=GRAPH),
             scale=pl.Constant(None, G=GRAPH), 
         G=GRAPH), G=GRAPH)
-    mean_interactions = posteriorInteractions.PriorMeanInteractions(
+    mean_interactions = posterior.PriorMeanInteractions(
         prior=pl.variables.Normal(
             mean=pl.Constant(None, G=GRAPH),
             var=pl.Constant(None, G=GRAPH), 
@@ -868,20 +1220,20 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
     interaction_value = pl.variables.Normal(
         mean=mean_interactions, var=var_interactions, G=GRAPH)
 
-    interaction_indicator = posteriorInteractions.ClusterInteractionIndicatorProbability(
+    interaction_indicator = posterior.ClusterInteractionIndicatorProbability(
         prior=pl.variables.Beta(a=pl.Constant(None, G=GRAPH), b=pl.Constant(None, G=GRAPH), G=GRAPH),
         G=GRAPH)
-    interactions = posteriorInteractions.ClusterInteractionValue(
+    interactions = posterior.ClusterInteractionValue(
         prior=interaction_value, clustering=clustering, G=GRAPH)
-    Z = posteriorInteractions.ClusterInteractionIndicators(prior=interaction_indicator, G=GRAPH)
+    Z = posterior.ClusterInteractionIndicators(prior=interaction_indicator, G=GRAPH)
 
     # Growth
-    var_growth = posteriorLogisticGrowth.PriorVarMH(
+    var_growth = posterior.PriorVarMH(
         prior=pl.variables.SICS(
             dof=pl.Constant(None, G=GRAPH),
             scale=pl.Constant(None, G=GRAPH), G=GRAPH),
         child_name=STRNAMES.GROWTH_VALUE, G=GRAPH)
-    mean_growth = posteriorLogisticGrowth.PriorMeanMH(
+    mean_growth = posterior.PriorMeanMH(
         prior=pl.variables.TruncatedNormal(
             mean=pl.Constant(None, G=GRAPH),
             var=pl.Constant(None, G=GRAPH), G=GRAPH), 
@@ -889,15 +1241,15 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
     prior_growth = pl.variables.Normal(
         mean=mean_growth, var=var_growth,
         name=&#39;prior_{}&#39;.format(STRNAMES.GROWTH_VALUE), G=GRAPH)
-    growth = posteriorLogisticGrowth.Growth(prior=prior_growth, G=GRAPH)
+    growth = posterior.Growth(prior=prior_growth, G=GRAPH)
 
     # Self-Interactions
-    var_si = posteriorLogisticGrowth.PriorVarMH(
+    var_si = posterior.PriorVarMH(
         prior=pl.variables.SICS(
             dof=pl.Constant(None, G=GRAPH),
             scale=pl.Constant(None, G=GRAPH), G=GRAPH),
         child_name=STRNAMES.SELF_INTERACTION_VALUE, G=GRAPH)
-    mean_si = posteriorLogisticGrowth.PriorMeanMH(
+    mean_si = posterior.PriorMeanMH(
         prior=pl.variables.TruncatedNormal(
             mean=pl.Constant(None, G=GRAPH),
             var=pl.Constant(None, G=GRAPH), G=GRAPH), 
@@ -905,50 +1257,47 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
     prior_si = pl.variables.Normal(
         mean=mean_si, var=var_si,
         name=&#39;prior_{}&#39;.format(STRNAMES.SELF_INTERACTION_VALUE), G=GRAPH)
-    self_interactions = posteriorLogisticGrowth.SelfInteractions(prior=prior_si, G=GRAPH)
+    self_interactions = posterior.SelfInteractions(prior=prior_si, G=GRAPH)
 
     # Process Variance
     prior_processvar = pl.variables.SICS( 
         dof=pl.Constant(None, G=GRAPH),
         scale=pl.Constant(None, G=GRAPH), G=GRAPH)
-    processvar = posteriorProcessVar.ProcessVarGlobal(G=GRAPH, prior=prior_processvar)
+    processvar = posterior.ProcessVarGlobal(G=GRAPH, prior=prior_processvar)
 
     # Clustering
     prior_concentration = pl.variables.Gamma(
         shape=pl.Constant(None, G=GRAPH),
         scale=pl.Constant(None, G=GRAPH),
         G=GRAPH)
-    concentration = posteriorClustering.Concentration(
+    concentration = posterior.Concentration(
         prior=prior_concentration, G=GRAPH)
-    cluster_assignments = posteriorClustering.ClusterAssignments(
+    cluster_assignments = posterior.ClusterAssignments(
         clustering=clustering, concentration=concentration,
         G=GRAPH, mp=params.MP_CLUSTERING)
 
     # Filtering and zero inflation
-    filtering = posteriorFiltering.FilteringLogMP(G=GRAPH, mp=params.MP_FILTERING, 
+    filtering = posterior.FilteringLogMP(G=GRAPH, mp=params.MP_FILTERING, 
         zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
-    zero_inflation = posteriorFiltering.ZeroInflation(G=GRAPH)
+    zero_inflation = posterior.ZeroInflation(G=GRAPH)
 
     # Perturbations
     if subjset.perturbations is not None:
         for pidx, subj_pert in enumerate(subjset.perturbations):
-            if subj_pert.name is None:
-                name = STRNAMES.PERTURBATIONS + str(pidx)
-            else:
-                name = subj_pert.name
+            name = subj_pert.name
             perturbation = pl.ClusterPerturbation(
-                start=subj_pert.start, 
-                end=subj_pert.end, probability=pl.variables.Beta(
+                starts=subj_pert.starts, ends=subj_pert.ends, 
+                probability=pl.variables.Beta(
                     name=name + &#39;_probability&#39;, G=GRAPH, value=None, a=None, b=None),
                 clustering=clustering, G=GRAPH, name=name,
                 signal_when_clusters_change=False, signal_when_item_assignment_changes=False)
 
-            magnitude_var = posteriorPerturbations.PriorVarPerturbationSingle(
+            magnitude_var = posterior.PriorVarPerturbationSingle(
                 prior=pl.variables.SICS(
                     dof=pl.Constant(None, G=GRAPH),
                     scale=pl.Constant(None, G=GRAPH), G=GRAPH), 
                 perturbation=perturbation, G=GRAPH)
-            magnitude_mean = posteriorPerturbations.PriorMeanPerturbationSingle(
+            magnitude_mean = posterior.PriorMeanPerturbationSingle(
                 prior=pl.variables.Normal(
                     mean=pl.Constant(None, G=GRAPH),
                     var=pl.Constant(None, G=GRAPH),
@@ -963,24 +1312,24 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
                 G=GRAPH)
             perturbation.probability.add_prior(prior_prob)
         
-        magnitude_var_perts = posteriorPerturbations.PriorVarPerturbations(G=GRAPH)
-        magnitude_mean_perts = posteriorPerturbations.PriorMeanPerturbations(G=GRAPH)
-        magnitude_perts = posteriorPerturbations.PerturbationMagnitudes(G=GRAPH)
-        indicator_perts = posteriorPerturbations.PerturbationIndicators(G=GRAPH, need_to_trace=False, relative=True)
-        indicator_prob_perts = posteriorPerturbations.PerturbationProbabilities(G=GRAPH)
+        magnitude_var_perts = posterior.PriorVarPerturbations(G=GRAPH)
+        magnitude_mean_perts = posterior.PriorMeanPerturbations(G=GRAPH)
+        magnitude_perts = posterior.PerturbationMagnitudes(G=GRAPH)
+        indicator_perts = posterior.PerturbationIndicators(G=GRAPH, need_to_trace=False, relative=True)
+        indicator_prob_perts = posterior.PerturbationProbabilities(G=GRAPH)
     else:
         magnitude_perts = None
         pert_ind = None
         pert_ind_prob = None
 
-    beta = posteriorLogisticGrowth.RegressCoeff(
+    beta = posterior.RegressCoeff(
         growth=growth, self_interactions=self_interactions,
         interactions=interactions, pert_mag=magnitude_perts, G=GRAPH)
 
     # Set qPCR variance priors and hyper priors
-    qpcr_variances = posteriorQPCR.qPCRVariances(G=GRAPH, L=params.N_QPCR_BUCKETS)
-    qpcr_dofs = posteriorQPCR.qPCRDegsOfFreedoms(G=GRAPH, L=params.N_QPCR_BUCKETS)
-    qpcr_scales = posteriorQPCR.qPCRScales(G=GRAPH, L=params.N_QPCR_BUCKETS)
+    qpcr_variances = posterior.qPCRVariances(G=GRAPH, L=params.N_QPCR_BUCKETS)
+    qpcr_dofs = posterior.qPCRDegsOfFreedoms(G=GRAPH, L=params.N_QPCR_BUCKETS)
+    qpcr_scales = posterior.qPCRScales(G=GRAPH, L=params.N_QPCR_BUCKETS)
 
     for l in range(params.N_QPCR_BUCKETS):
         qpcr_scale_prior = pl.variables.SICS( 
@@ -1023,9 +1372,6 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
             iii += 1
     qpcr_dofs.set_shape()
     qpcr_scales.set_shape()
-
-    # Set the IDs of the variables in the graph
-    STRNAMES.set(G=GRAPH)
 
     # Set up inference and the inference order.
     # -----------------------------------------
@@ -1152,300 +1498,14 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
 
     # Setup filenames
     # ---------------
-    mcmc.set_tracer(filename=params.HDF5_FILENAME, ckpt=params.CHECKPOINT)
-    mcmc.tracer.set_save_location(params.TRACER_FILENAME)
-    mcmc.set_save_location(params.MCMC_FILENAME)
-    GRAPH.set_save_location(params.GRAPH_FILENAME)
+    hdf5_filename = os.path.join(basepath, config.HDF5_FILENAME)
+    mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
+    mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CHECKPOINT)
+    mcmc.set_save_location(mcmc_filename)
+    params.save(os.path.join(basepath, config.PARAMS_FILENAME))
+    pl.seed(params.DATA_SEED)
 
     return mcmc</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.run.calculate_stability_over_gibbs"><code class="name flex">
-<span>def <span class="ident">calculate_stability_over_gibbs</span></span>(<span>mcmc, section='auto', log_every=1000)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Calculate the stability over each of the Gibb steps in the chain <code>mcmc</code></p>
-<p>stability = diag(r) @ A, where
-r : growth rates
-A : interaction matrix</p>
-<p>Note that if the growth, self_interactions, or interactions are fixed during inference,
-we use the fixed values</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>mcmc</code></strong> :&ensp;<code>mdsine2.BaseMCMC</code></dt>
-<dd>Inference object that contains the traces</dd>
-<dt><strong><code>section</code></strong> :&ensp;<code>str</code></dt>
-<dd>This is the section of the trace we are calculating over. Options:
-'entire' : burn-in and the posterior
-'burnin' : just the burn-in samples
-'posterior' : just the posterior samples
-'auto' : most robust choice. If the chain did not do the total number of
-Gibb steps, it will only calcualte the stability over the Gibb steps that
-it has samples for. If the number is less than the burn-in, it will return the
-stability over the burn-in. If the number of Gibb steps is greater than the
-number of burn-in. It will only return the stability of the samples in the posterior.
-If the inference has done the total number of gibb samples, then it is done over the
-entire posterior.</dd>
-<dt><strong><code>log_every</code></strong> :&ensp;<code>int, None</code></dt>
-<dd>Print out the Gibb step the stability calcualtion is currently doing ever <code>log_every</code> Gibb
-steps. If None then there is not display.</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>np.ndarray (n_gibb, n_asvs, n_asvs)</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def calculate_stability_over_gibbs(mcmc, section=&#39;auto&#39;, log_every=1000):
-    &#39;&#39;&#39;Calculate the stability over each of the Gibb steps in the chain `mcmc`
-
-    stability = diag(r) @ A, where
-        r : growth rates
-        A : interaction matrix
-
-    Note that if the growth, self_interactions, or interactions are fixed during inference,
-    we use the fixed values
-
-    Parameters
-    ----------
-    mcmc : mdsine2.BaseMCMC
-        Inference object that contains the traces
-    section : str
-        This is the section of the trace we are calculating over. Options:
-            &#39;entire&#39; : burn-in and the posterior
-            &#39;burnin&#39; : just the burn-in samples
-            &#39;posterior&#39; : just the posterior samples
-            &#39;auto&#39; : most robust choice. If the chain did not do the total number of
-                Gibb steps, it will only calcualte the stability over the Gibb steps that
-                it has samples for. If the number is less than the burn-in, it will return the
-                stability over the burn-in. If the number of Gibb steps is greater than the 
-                number of burn-in. It will only return the stability of the samples in the posterior.
-                If the inference has done the total number of gibb samples, then it is done over the
-                entire posterior.
-    log_every : int, None
-        Print out the Gibb step the stability calcualtion is currently doing ever `log_every` Gibb
-        steps. If None then there is not display.
-    
-    Returns
-    -------
-    np.ndarray (n_gibb, n_asvs, n_asvs)
-    &#39;&#39;&#39;
-    # Type check
-    # ----------
-    if not pl.isMCMC(mcmc):
-        raise TypeError(&#39;`mcmc` ({}) must be a mdsine2.BaseMCMC object&#39;.format(type(mcmc)))
-    if log_every is not None:
-        if not pl.isint(log_every):
-            raise TypeError(&#39;`log_every` ({}) must be an int&#39;.format(type(log_every)))
-        if log_every &lt;= 0:
-            raise ValueError(&#39;`log_every` ({}) must be &gt; 0&#39;.format(log_every))
-
-    smaller_arr = False
-    if not pl.isstr(section):
-        raise TypeError(&#39;`section` ({}) must be a str&#39;.format(type(section)))
-    if section == &#39;burnin&#39;:
-        if mcmc.sample_iter &gt;= mcmc.burnin:
-            LEN_ARR = mcmc.burnin
-        else:
-            raise ValueError(&#39;chain `{}` only has {} Gibb steps but you chose to `burnin` ({}) section.&#39;.format(
-                mcmc.graph.name, mcmc.sample_iter, mcmc.burnin))
-    elif section == &#39;posterior&#39;:
-        if mcmc.ran:
-            LEN_ARR = mcmc.n_samples - mcmc.burnin
-        else:
-            raise ValueError(&#39;chain `{}` only has {} Gibb steps but you chose to `posterior` ({}) section.&#39;.format(
-                mcmc.graph.name, mcmc.sample_iter, mcmc.n_samples))
-    elif section == &#39;entire&#39;:
-        if mcmc.ran:
-            LEN_ARR = mcmc.n_samples
-        else:
-            raise ValueError(&#39;chain `{}` only has {} Gibb steps but you chose to `entire` ({}) section.&#39;.format(
-                mcmc.graph.name, mcmc.sample_iter, mcmc.n_samples))
-    elif section == &#39;auto&#39;:
-        if mcmc.ran:
-            LEN_ARR = mcmc.n_samples
-            section=&#39;posterior&#39;
-        elif mcmc.sample_iter &gt; mcmc.burnin:
-            section = &#39;posterior&#39;
-            LEN_ARR = mcmc.sample_iter + 1 - mcmc.burnin
-            smaller_arr = True
-        else:
-            section = &#39;burnin&#39;
-            LEN_ARR = mcmc.sample_iter + 1
-            smaller_arr = True
-    else:
-        raise ValueError(&#39;`section` ({}) not recognized&#39;.format(section))
-
-    # Load data
-    # ---------
-    N_ASVS = len(mcmc.graph.data.asvs)
-    logging.info(&#39;Loading data for stability&#39;)
-    growth = mcmc.graph[STRNAMES.GROWTH_VALUE]
-    if mcmc.tracer.is_being_traced(STRNAMES.GROWTH_VALUE):
-        growth = growth.get_trace_from_disk(section=section)
-        if smaller_arr:
-            growth = growth[:LEN_ARR, ...]
-    else:
-        growth = growth.value
-        growth = growth.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_ASVS))
-
-    si = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE]
-    if mcmc.tracer.is_being_traced(STRNAMES.SELF_INTERACTION_VALUE):
-        si = si.get_trace_from_disk(section=section)
-        if smaller_arr:
-            si = si[:LEN_ARR, ...]
-    else:
-        si = si.value
-        si = si.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_ASVS))
-
-    interactions = mcmc.graph[STRNAMES.GROWTH_VALUE]
-    if mcmc.tracer.is_being_traced(STRNAMES.GROWTH_VALUE):
-        interactions = interactions.get_trace_from_disk(section=section)
-        interactions[np.isnan(interactions)] = 0
-        if smaller_arr:
-            interactions = interactions[:LEN_ARR, ...]
-    else:
-        interactions = interactions.get_datalevel_value_matrix(set_neg_indicators_to_nan=False)
-        interactions = interactions.reshape(-1,1) + np.zeros(shape=(LEN_ARR, N_ASVS, N_ASVS))
-
-    # Set the self-interactions as the diagonal
-    for i in range(N_ASVS):
-        interactions[:,i,i] = - np.absolute(si[:, i])
-
-    # Calculate stability
-    # -------------------
-    if log_every is None:
-        log_every = LEN_ARR + 1
-    ret = np.zeros(shape=interactions.shape)
-    for i in range(ret.shape[0]):
-        if i % log_every == 0:
-            if i == 0:
-                continue
-            else:
-                logging.info(&#39;{}/{}&#39;.foramt(i, LEN_ARR))
-        
-        ret[i] = np.diag(growth[i]) @ interactions[i]
-    return ret</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.run.denormalize_parameters"><code class="name flex">
-<span>def <span class="ident">denormalize_parameters</span></span>(<span>mcmc, subjset)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Denormalize the abundance of the parameters by the normalization factor
-in the subject set</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>mcmc</code></strong> :&ensp;<code>mdsine2.BaseMCMC</code></dt>
-<dd>This is the inference object that has all of the parameters in it</dd>
-<dt><strong><code>subjset</code></strong> :&ensp;<code>mdsine2.Study</code></dt>
-<dd>This is the data object that contains all of the trajectories</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>mdsine2.BaseMCMC, mdsine2.Study</code></dt>
-<dd>&nbsp;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def denormalize_parameters(mcmc, subjset):
-    &#39;&#39;&#39;Denormalize the abundance of the parameters by the normalization factor
-    in the subject set
-
-    Parameters
-    ----------
-    mcmc : mdsine2.BaseMCMC
-        This is the inference object that has all of the parameters in it
-    subjset : mdsine2.Study
-        This is the data object that contains all of the trajectories
-
-    Returns
-    -------
-    mdsine2.BaseMCMC, mdsine2.Study
-    &#39;&#39;&#39;
-    GRAPH = mcmc.graph
-    if subjset.qpcr_normalization_factor is not None:
-        logging.info(&#39;Denormalizing the parameters&#39;)
-
-        f = h5py.File(GRAPH.tracer.filename, &#39;r+&#39;, libver=&#39;latest&#39;)
-        ckpt = GRAPH.tracer.ckpt
-
-        GRAPH[STRNAMES.FILTERING].v2 /= subjset.qpcr_normalization_factor
-
-        # Adjust the self interactions if necessary
-        if STRNAMES.SELF_INTERACTION_VALUE in mcmc.tracer.being_traced:
-            dset = f[STRNAMES.SELF_INTERACTION_VALUE]
-            dset[:,:] = dset[:,:] * subjset.qpcr_normalization_factor
-
-        if STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS in mcmc.tracer.being_traced:
-            dset = f[STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS]
-            dset[:] = dset[:] * subjset.qpcr_normalization_factor
-
-        if mcmc.is_in_inference_order(STRNAMES.PRIOR_VAR_SELF_INTERACTIONS):
-            dset = f[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS]
-            dset[:] = dset[:] * (subjset.qpcr_normalization_factor**2)
-
-        if mcmc.is_in_inference_order(STRNAMES.QPCR_VARIANCES):
-            vs = GRAPH[STRNAMES.QPCR_VARIANCES]
-            for l in range(vs.L):
-                dset = f[STRNAMES.QPCR_VARIANCES + &#39;_{}&#39;.format(l)]
-                dset[:] = dset[:] * (subjset.qpcr_normalization_factor**2)
-
-        if mcmc.is_in_inference_order(STRNAMES.QPCR_SCALES):
-            vs = GRAPH[STRNAMES.QPCR_SCALES]
-            for l in range(vs.L):
-                dset = f[STRNAMES.QPCR_SCALES + &#39;_{}&#39;.format(l)]
-                dset[:] = dset[:] * (subjset.qpcr_normalization_factor**2)
-
-        # Adjust the interactions if necessary
-        if mcmc.tracer.is_being_traced(STRNAMES.INTERACTIONS_OBJ):
-            dset = f[STRNAMES.INTERACTIONS_OBJ]
-            total_samples = dset.attrs[&#39;end_iter&#39;]
-            i = 0
-            while (i * ckpt) &lt; total_samples:
-                start_idx = int(i * ckpt)
-                end_idx = int((i+1) * ckpt)
-
-                if end_idx &gt; total_samples:
-                    end_idx = total_samples
-                dset[start_idx: end_idx] = dset[start_idx: end_idx] * subjset.qpcr_normalization_factor
-                i += 1
-        
-        if mcmc.is_in_inference_order(STRNAMES.PRIOR_MEAN_INTERACTIONS):
-            dset = f[STRNAMES.PRIOR_MEAN_INTERACTIONS]
-            dset[:] = dset[:] * subjset.qpcr_normalization_factor
-
-        if mcmc.is_in_inference_order(STRNAMES.PRIOR_VAR_INTERACTIONS):
-            dset = f[STRNAMES.PRIOR_VAR_INTERACTIONS]
-            dset[:] = dset[:] * (subjset.qpcr_normalization_factor**2)
-
-        if mcmc.is_in_inference_order(STRNAMES.FILTERING):
-            for ridx in range(len(mcmc.graph.data.subjects)):
-                name = STRNAMES.LATENT_TRAJECTORY + &#39;_ridx{}&#39;.format(ridx)
-                if name not in f:
-                    continue
-                dset = f[name]
-                total_samples = dset.attrs[&#39;end_iter&#39;]
-                i = 0
-                while (i * ckpt) &lt; total_samples:
-                    start_idx = int(i * ckpt)
-                    end_idx = int((i+1) * ckpt)
-
-                    if end_idx &gt; total_samples:
-                        end_idx = total_samples
-                    dset[start_idx: end_idx] = dset[start_idx: end_idx]/subjset.qpcr_normalization_factor
-                    i += 1
-
-        f.close()
-        subjset.denormalize_qpcr()
-    else:
-        logging.info(&#39;Data already denormalized&#39;)
-    return mcmc, subjset</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.run.normalize_parameters"><code class="name flex">
@@ -1490,8 +1550,10 @@ in the subject set</p>
         f = h5py.File(GRAPH.tracer.filename, &#39;r+&#39;, libver=&#39;latest&#39;)
         ckpt = GRAPH.tracer.ckpt
 
-        GRAPH[STRNAMES.PROCESSVAR].c_m *= subjset.qpcr_normalization_factor
-        GRAPH[STRNAMES.FILTERING].v2 *= subjset.qpcr_normalization_factor
+        try:
+            GRAPH[STRNAMES.FILTERING].v2 *= subjset.qpcr_normalization_factor
+        except:
+            logging.info(&#39;v2 not applicable&#39;)
 
         # Adjust the self interactions if necessary
         if STRNAMES.SELF_INTERACTION_VALUE in mcmc.tracer.being_traced:
@@ -1541,28 +1603,79 @@ in the subject set</p>
             dset[:] = dset[:] / (subjset.qpcr_normalization_factor**2)
 
         if mcmc.is_in_inference_order(STRNAMES.FILTERING):
-            for ridx in range(len(subjset)):
-                for dset_name in [STRNAMES.LATENT_TRAJECTORY, STRNAMES.AUX_TRAJECTORY]:
-                    name = dset_name + &#39;_ridx{}&#39;.format(ridx)
-                    if name not in f:
-                        continue
-                    dset = f[name]
-                    total_samples = dset.attrs[&#39;end_iter&#39;]
-                    i = 0
-                    while (i * ckpt) &lt; total_samples:
-                        start_idx = int(i * ckpt)
-                        end_idx = int((i+1) * ckpt)
+            for subj in subjset:
+                name = STRNAMES.LATENT_TRAJECTORY + &#39;_{}&#39;.format(subj.name)
+                if name not in f:
+                    continue
+                dset = f[name]
+                total_samples = dset.attrs[&#39;end_iter&#39;]
+                i = 0
+                while (i * ckpt) &lt; total_samples:
+                    start_idx = int(i * ckpt)
+                    end_idx = int((i+1) * ckpt)
 
-                        if end_idx &gt; total_samples:
-                            end_idx = total_samples
-                        dset[start_idx: end_idx] = dset[start_idx: end_idx]*subjset.qpcr_normalization_factor
-                        i += 1
+                    if end_idx &gt; total_samples:
+                        end_idx = total_samples
+                    dset[start_idx: end_idx] = dset[start_idx: end_idx]*subjset.qpcr_normalization_factor
+                    i += 1
 
         f.close()
     else:
         logging.info(&#39;Objects are already normalized&#39;)
     
     return mcmc, subjset</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.run.run_graph"><code class="name flex">
+<span>def <span class="ident">run_graph</span></span>(<span>mcmc, crash_if_error=True)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Run the MCMC chain <code>mcmc</code>. Initialize the MCMC chain with <code>build_graph</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>mcmc</code></strong> :&ensp;<code>mdsine2.BaseMCMC</code></dt>
+<dd>Inference object that is already built and initialized</dd>
+<dt><strong><code>crash_if_error</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True, throws an error if there is an exception during inference. Otherwise
+it continues out of inference.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>mdsine2.BaseMCMC</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def run_graph(mcmc, crash_if_error=True):
+    &#39;&#39;&#39;Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        Inference object that is already built and initialized
+    crash_if_error : bool
+        If True, throws an error if there is an exception during inference. Otherwise
+        it continues out of inference.
+
+    Returns
+    -------
+    mdsine2.BaseMCMC
+    &#39;&#39;&#39;
+    try:
+        mcmc.run(log_every=1)
+    except Exception as e:
+        logging.critical(&#39;CHAIN `{}` CRASHED&#39;.format(mcmc.graph.name))
+        logging.critical(&#39;Error: {}&#39;.format(e))
+        if crash_if_error:
+            raise
+    mcmc.graph[STRNAMES.FILTERING].kill()
+    mcmc.graph[STRNAMES.CLUSTERING].kill()
+
+    if mcmc.graph.data.subjects.qpcr_normalization_factor is not None:
+        mcmc, mcmc.graph.data.subjects = denormalize_parameters(mcmc)
+    return mcmc</code></pre>
 </details>
 </dd>
 </dl>
@@ -1583,10 +1696,11 @@ in the subject set</p>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="mdsine2.run.build_graph" href="#mdsine2.run.build_graph">build_graph</a></code></li>
 <li><code><a title="mdsine2.run.calculate_stability_over_gibbs" href="#mdsine2.run.calculate_stability_over_gibbs">calculate_stability_over_gibbs</a></code></li>
 <li><code><a title="mdsine2.run.denormalize_parameters" href="#mdsine2.run.denormalize_parameters">denormalize_parameters</a></code></li>
+<li><code><a title="mdsine2.run.initialize_graph" href="#mdsine2.run.initialize_graph">initialize_graph</a></code></li>
 <li><code><a title="mdsine2.run.normalize_parameters" href="#mdsine2.run.normalize_parameters">normalize_parameters</a></code></li>
+<li><code><a title="mdsine2.run.run_graph" href="#mdsine2.run.run_graph">run_graph</a></code></li>
 </ul>
 </li>
 </ul>

@@ -117,7 +117,7 @@ def negbin_loglikelihood_MH_condensed_not_fast(k,m,dispersion):
             + r * (math.log(r) - math.log(rm)) + k * (math.log(m) - math.log(rm))
 
 def expected_n_clusters(G):
-    '''Calculate the expected number of clusters given the number of ASVs
+    '''Calculate the expected number of clusters given the number of Taxas
 
     Parameters
     ----------
@@ -130,9 +130,9 @@ def expected_n_clusters(G):
         Expected number of clusters
     '''
     conc = G[STRNAMES.CONCENTRATION].prior.mean()
-    return conc * np.log((G.data.n_asvs + conc) / conc)
+    return conc * np.log((G.data.n_taxas + conc) / conc)
 
-def build_prior_covariance(G, cov, order, sparse=True, diag=False, cuda=False):
+def build_prior_covariance(G, cov, order, sparse=True, diag=False):
     '''Build basic prior covariance or precision for the variables
     specified in `order`
 
@@ -149,9 +149,6 @@ def build_prior_covariance(G, cov, order, sparse=True, diag=False, cuda=False):
     diag : bool
         If True, returns the diagonal of the matrix. If this is True, it
         overwhelms the flag `sparse`
-    cuda : bool
-        If True, returns the array/matrix on the gpu (if there is one). Will not return 
-        in sparse form - only dense.
 
     Returns
     -------
@@ -159,14 +156,14 @@ def build_prior_covariance(G, cov, order, sparse=True, diag=False, cuda=False):
         Prior covariance or precision matrix in either dense (np.ndarray) or
         sparse (scipy.sparse.dia_matrix) form
     '''
-    n_asvs = G.data.n_asvs
+    n_taxas = G.data.n_taxas
     a = []
     for reprname in order:
         if reprname == STRNAMES.GROWTH_VALUE:
-            a.append(np.full(n_asvs, G[STRNAMES.PRIOR_VAR_GROWTH].value))
+            a.append(np.full(n_taxas, G[STRNAMES.PRIOR_VAR_GROWTH].value))
 
         elif reprname == STRNAMES.SELF_INTERACTION_VALUE:
-            a.append(np.full(n_asvs, G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value))
+            a.append(np.full(n_taxas, G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value))
 
         elif reprname == STRNAMES.CLUSTER_INTERACTION_VALUE:
             n_interactions = G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators
@@ -188,18 +185,14 @@ def build_prior_covariance(G, cov, order, sparse=True, diag=False, cuda=False):
         arr = np.asarray(list(itertools.chain.from_iterable(a)))
     if not cov:
         arr = 1/arr
-    # if cuda:
-    #     arr = torch.DoubleTensor(arr).to(_COMPUTE_DEVICE)
     if diag:
         return arr
-    # if cuda:
-    #     return torch.diag(arr)
     if sparse:
         return scipy.sparse.dia_matrix((arr,[0]), shape=(len(arr),len(arr))).tocsc()
     else:
         return np.diag(arr)
 
-def build_prior_mean(G, order, shape=None, cuda=False):
+def build_prior_mean(G, order, shape=None):
     '''Builds the prior mean vector for all the variables in `order`.
 
     Parameters
@@ -212,8 +205,6 @@ def build_prior_mean(G, order, shape=None, cuda=False):
         prior mean is a scalar and we set that value for every single value.
     shape : tuple, None
         Shape to cast the array into
-    cuda : bool
-        If True, returns the array/matrix on the gpu (if there is one)
 
     Returns
     -------
@@ -223,9 +214,9 @@ def build_prior_mean(G, order, shape=None, cuda=False):
     for name in order:
         v = G[name]
         if v.id == STRNAMES.GROWTH_VALUE:
-            a.append(v.prior.mean.value * np.ones(G.data.n_asvs))
+            a.append(v.prior.mean.value * np.ones(G.data.n_taxas))
         elif v.id == STRNAMES.SELF_INTERACTION_VALUE:
-            a.append(v.prior.mean.value * np.ones(G.data.n_asvs))
+            a.append(v.prior.mean.value * np.ones(G.data.n_taxas))
         elif v.id == STRNAMES.CLUSTER_INTERACTION_VALUE:
             a.append(
                 np.full(
@@ -244,8 +235,6 @@ def build_prior_mean(G, order, shape=None, cuda=False):
         a = np.asarray(list(itertools.chain.from_iterable(a)))
     if shape is not None:
         a = a.reshape(*shape)
-    # if cuda:
-    #     a = torch.DoubleTensor(a).to(_COMPUTE_DEVICE)
     return a
 
 def sample_categorical_log(log_p):
@@ -417,7 +406,7 @@ def _make_cluster_order(graph, section):
     clustering set with the mode number of clusters learned.
 
     If clustering was not learned, then we add the clusters in cluster
-    order, and set the ASV/OTU indexes sorted within each cluster.
+    order, and set the Taxa indexes sorted within each cluster.
 
     Parameters
     ----------
@@ -585,7 +574,7 @@ class _Loess(object):
 # ----------------
 class ProcessVarGlobal(pl.variables.SICS):
     '''Learn a Process variance where we learn th same process variance
-    for each ASV. This assumes that the model we're using uses the logscale
+    for each Taxa. This assumes that the model we're using uses the logscale
     of the data.
     '''
     def __init__(self, prior, **kwargs):
@@ -878,7 +867,7 @@ class Concentration(pl.variables.Gamma):
 
         clustering = self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].clustering
         k = len(clustering)
-        n = self.G.data.n_asvs
+        n = self.G.data.n_taxas
         for i in range(self.n_iter):
             #first sample eta from a beta distribution
             eta = npr.beta(self.value+1,n)
@@ -915,10 +904,10 @@ class Concentration(pl.variables.Gamma):
 
 
 class ClusterAssignments(pl.graph.Node):
-    '''This is the posterior of the cluster assignments for each ASV.
+    '''This is the posterior of the cluster assignments for each Taxa.
 
-    To calculate the loglikelihood of an ASV being in a cluster, we have to
-    marginalize out the cluster that the ASV belongs to - this means marginalizing
+    To calculate the loglikelihood of an Taxa being in a cluster, we have to
+    marginalize out the cluster that the Taxa belongs to - this means marginalizing
     out the interactions going in and out of the cluster in question, along with all
     the perturbations associated with it.
     '''
@@ -991,7 +980,7 @@ class ClusterAssignments(pl.graph.Node):
 
         Note - if `n_clusters` is not specified and the cluster initialization
         method requires it - it will be set to the expected number of clusters
-        which = log(n_asvs)/log(2)
+        which = log(n_taxas)/log(2)
 
         Parameters
         ----------
@@ -1001,15 +990,15 @@ class ClusterAssignments(pl.graph.Node):
                 'manual'
                     Manually set the cluster assignments
                 'no-clusters'
-                    Every ASV in their own cluster
+                    Every Taxa in their own cluster
                 'random'
-                    Every ASV is randomly assigned to the number of clusters. `n_clusters` required
+                    Every Taxa is randomly assigned to the number of clusters. `n_clusters` required
                 'taxonomy'
-                    Cluster ASVs based on their taxonomic similarity. `n_clusters` required
+                    Cluster Taxas based on their taxonomic similarity. `n_clusters` required
                 'sequence'
-                    Cluster ASVs based on their sequence similarity. `n_clusters` required
+                    Cluster Taxas based on their sequence similarity. `n_clusters` required
                 'phylogeny'
-                    Cluster ASVs based on their phylogenetic similarity. `n_clusters` required
+                    Cluster Taxas based on their phylogenetic similarity. `n_clusters` required
                 'spearman', 'auto'
                     Creates a distance matrix based on the spearman rank similarity
                     between two trajectories. We use the raw data. `n_clusters` required
@@ -1021,18 +1010,18 @@ class ClusterAssignments(pl.graph.Node):
         hyperparam_option : None
             Not used in this function - only here for API consistency
         value : list of list
-            Cluster assingments for each of the ASVs
+            Cluster assingments for each of the Taxas
             Only necessary if `value_option` == 'manual'
         n_clusters : int, str
             Necessary if `value_option` is not 'manual' or 'no-clusters'
             If str, options:
-                'expected', 'auto': log_2(n_asvs)
+                'expected', 'auto': log_2(n_taxas)
         run_every_n_iterations : int
             Only run the update every `run_every_n_iterations` iterations
         '''
         from sklearn.cluster import AgglomerativeClustering
         from .util import generate_cluster_assignments_posthoc
-        asvs = self.G.data.asvs
+        taxas = self.G.data.taxas
 
         self.run_every_n_iterations = run_every_n_iterations
         self.delay = delay
@@ -1047,12 +1036,12 @@ class ClusterAssignments(pl.graph.Node):
                 raise TypeError('`n_clusters` ({}) must be a str or an int'.format(type(n_clusters)))
             if n_clusters <= 0:
                 raise ValueError('`n_clusters` ({}) must be > 0'.format(n_clusters))
-            if n_clusters > self.G.data.n_asvs:
-                raise ValueError('`n_clusters` ({}) must be <= than the number of ASVs ({})'.format(
-                    n_clusters, self.G.data.n_asvs))
+            if n_clusters > self.G.data.n_taxas:
+                raise ValueError('`n_clusters` ({}) must be <= than the number of s ({})'.format(
+                    n_clusters, self.G.data.n_taxas))
 
         if value_option == 'manual':
-            # Check that all of the ASVs are in the init and that it is in the right structure
+            # Check that all of the s are in the init and that it is in the right structure
             if not pl.isarray(value):
                 raise ValueError('if `value_option` is "manual", value ({}) must ' \
                     'be of type array'.format(value.__class__))
@@ -1076,13 +1065,13 @@ class ClusterAssignments(pl.graph.Node):
                 for oidx in cluster:
                     if not pl.isint(oidx):
                         raise ValueError('`oidx` ({}) must be an int'.format(oidx.__class__))
-                    if oidx >= len(asvs):
-                        raise ValueError('oidx `{}` not in our ASVSet'.format(oidx))
+                    if oidx >= len(taxas):
+                        raise ValueError('oidx `{}` not in our TaxaSet'.format(oidx))
                     all_oidxs.add(oidx)
 
-            for oidx in range(len(asvs)):
+            for oidx in range(len(taxas)):
                 if oidx not in all_oidxs:
-                    raise ValueError('oidx `{}` in ASVSet not in `value` ({})'.format(
+                    raise ValueError('oidx `{}` in TaxaSet not in `value` ({})'.format(
                         oidx, value))
             # Now everything is checked and valid
 
@@ -1093,18 +1082,18 @@ class ClusterAssignments(pl.graph.Node):
 
             CHAIN2 = pl.inference.BaseMCMC.load(value)
             CLUSTERING2 = CHAIN2.graph[STRNAMES.CLUSTERING_OBJ]
-            ASVS2 = CHAIN2.graph.data.asvs
-            asvs_curr = self.G.data.asvs
-            for asv in ASVS2:
-                if asv.name not in asvs_curr:
-                    raise ValueError('Cannot perform fixed topology because the ASV {} in ' \
+            TAXAS2 = CHAIN2.graph.data.taxas
+            taxas_curr = self.G.data.taxas
+            for taxa in TAXAS2:
+                if taxa.name not in taxas_curr:
+                    raise ValueError('Cannot perform fixed topology because the  {} in ' \
                         'the passed in clustering is not in this clustering: {}'.format(
-                            asv.name, asvs_curr.names.order))
-            for asv in asvs_curr:
-                if asv.name not in ASVS2:
-                    raise ValueError('Cannot perform fixed topology because the ASV {} in ' \
+                            taxa.name, taxas_curr.names.order))
+            for taxa in taxas_curr:
+                if taxa.name not in TAXAS2:
+                    raise ValueError('Cannot perform fixed topology because the  {} in ' \
                         'the current clustering is not in the passed in clustering: {}'.format(
-                            asv.name, ASVS2.names.order))
+                            taxa.name, TAXAS2.names.order))
 
             # Get the most likely cluster configuration and set as the value for the passed in cluster
             ret = generate_cluster_assignments_posthoc(CLUSTERING2, n_clusters='mode', set_as_value=False)
@@ -1112,21 +1101,21 @@ class ClusterAssignments(pl.graph.Node):
             logging.info('Clustering set to:\n{}'.format(str(CLUSTERING2)))
 
             # Set the passed in cluster assignment as the current cluster assignment
-            # Need to be careful because the indices of the ASVs might not line up
+            # Need to be careful because the indices of the s might not line up
             clusters = []
             for cluster in CLUSTERING2:
-                anames = [asvs_curr[ASVS2.names.order[aidx]].name for aidx in cluster.members]
-                aidxs = [asvs_curr[aname].idx for aname in anames]
+                anames = [taxas_curr[TAXAS2.names.order[aidx]].name for aidx in cluster.members]
+                aidxs = [taxas_curr[aname].idx for aname in anames]
                 clusters.append(aidxs)
 
         elif value_option == 'no-clusters':
             clusters = []
-            for oidx in range(len(asvs)):
+            for oidx in range(len(taxas)):
                 clusters.append([oidx])
 
         elif value_option == 'random':
             clusters = {}
-            for oidx in range(len(asvs)):
+            for oidx in range(len(taxas)):
                 idx = npr.choice(n_clusters)
                 if idx in clusters:
                     clusters[idx].append(oidx)
@@ -1139,12 +1128,12 @@ class ClusterAssignments(pl.graph.Node):
 
         elif value_option == 'taxonomy':
             # Create an affinity matrix, we can precompute the self-similarity to 1
-            M = np.diag(np.ones(len(asvs), dtype=float))
-            for i, oid1 in enumerate(asvs.ids.order):
-                for j, oid2 in enumerate(asvs.ids.order):
+            M = np.diag(np.ones(len(taxas), dtype=float))
+            for i, oid1 in enumerate(taxas.ids.order):
+                for j, oid2 in enumerate(taxas.ids.order):
                     if i == j:
                         continue
-                    M[i,j] = asvs.taxonomic_similarity(oid1=oid1, oid2=oid2)
+                    M[i,j] = taxas.taxonomic_similarity(oid1=oid1, oid2=oid2)
 
             c = AgglomerativeClustering(
                 n_clusters=n_clusters,
@@ -1164,16 +1153,16 @@ class ClusterAssignments(pl.graph.Node):
             import diversity
 
             logging.info('Making affinity matrix from sequences')
-            evenness = np.diag(np.ones(len(self.G.data.asvs), dtype=float))
+            evenness = np.diag(np.ones(len(self.G.data.taxas), dtype=float))
 
-            for i in range(len(self.G.data.asvs)):
-                for j in range(len(self.G.data.asvs)):
+            for i in range(len(self.G.data.taxas)):
+                for j in range(len(self.G.data.taxas)):
                     if j <= i:
                         continue
                     # Subtract because we want to make a similarity matrix
                     dist = 1-diversity.beta.hamming(
-                        list(self.G.data.asvs[i].sequence),
-                        list(self.G.data.asvs[j].sequence))
+                        list(self.G.data.taxas[i].sequence),
+                        list(self.G.data.taxas[j].sequence))
                     evenness[i,j] = dist
                     evenness[j,i] = dist
 
@@ -1193,12 +1182,12 @@ class ClusterAssignments(pl.graph.Node):
             # Use spearman correlation to create a distance matrix
             # Use agglomerative clustering to make the clusters based
             # on distance matrix (distance = 1 - pearson(x,y))
-            dm = np.zeros(shape=(len(asvs), len(asvs)))
+            dm = np.zeros(shape=(len(taxas), len(taxas)))
             data = []
             for ridx in range(self.G.data.n_replicates):
                 data.append(self.G.data.abs_data[ridx])
             data = np.hstack(data)
-            for i in range(len(asvs)):
+            for i in range(len(taxas)):
                 for j in range(i+1):
                     distance = (1 - scipy.stats.spearmanr(data[i, :], data[j, :])[0])/2
                     dm[i,j] = distance
@@ -1224,7 +1213,7 @@ class ClusterAssignments(pl.graph.Node):
         else:
             raise ValueError('`value_option` "{}" not recognized'.format(value_option))
 
-        # Move all the ASVs into their assigned clusters
+        # Move all the Taxas into their assigned clusters
         for cluster in clusters:
             cid = None
             for oidx in cluster:
@@ -1259,20 +1248,20 @@ class ClusterAssignments(pl.graph.Node):
             self.pool = None
 
         self.ndts_bias = []
-        self.n_asvs = len(self.G.data.asvs)
+        self.n_taxas = len(self.G.data.taxas)
         self.n_replicates = self.G.data.n_replicates
         self.n_dts_for_replicate = self.G.data.n_dts_for_replicate
         self.total_dts = np.sum(self.n_dts_for_replicate)
         for ridx in range(self.G.data.n_replicates):
             self.ndts_bias.append(
-                np.arange(0, self.G.data.n_dts_for_replicate[ridx] * self.n_asvs, self.n_asvs))
+                np.arange(0, self.G.data.n_dts_for_replicate[ridx] * self.n_taxas, self.n_taxas))
         self.replicate_bias = np.zeros(self.n_replicates, dtype=int)
         for ridx in range(1, self.n_replicates):
             self.replicate_bias[ridx] = self.replicate_bias[ridx-1] + \
-                self.n_asvs * self.n_dts_for_replicate[ridx - 1]
+                self.n_taxas * self.n_dts_for_replicate[ridx - 1]
 
     def visualize(self, basepath, f, section='posterior', 
-        asv_formatter='%(paperformat)s', yticklabels='%(paperformat)s %(index)s', 
+        taxa_formatter='%(paperformat)s', yticklabels='%(paperformat)s %(index)s', 
         xticklabels='%(index)s'):
         '''Render the traces in the folder `basepath` and write the 
         learned values to the file `f`.
@@ -1288,9 +1277,9 @@ class ClusterAssignments(pl.graph.Node):
                 'posterior' : posterior samples
                 'burnin' : burn-in samples
                 'entire' : both burn-in and posterior samples
-        asv_formatter : str, None
-            This is the format of the label to return for each ASV. If None, it will return
-            the asvs name
+        taxa_formatter : str, None
+            This is the format of the label to return for each . If None, it will return
+            the taxas name
         yticklabels, xticklabels : str
             These are the formats to plot the y-axis and x0axis, respectively.
 
@@ -1299,7 +1288,7 @@ class ClusterAssignments(pl.graph.Node):
         _io.TextIOWrapper
         '''
         
-        asvs = self.G.data.asvs
+        taxas = self.G.data.taxas
         f.write('\n\n###################################\n')
         f.write(self.name)
         f.write('\n###################################\n')
@@ -1308,7 +1297,7 @@ class ClusterAssignments(pl.graph.Node):
             for cidx, cluster in enumerate(self.clustering):
                 f.write('Cluster {}:\n'.format(cidx+1))
                 for aidx in cluster.members:
-                    label = pl.asvname_formatter(format=asv_formatter, asv=asvs[aidx], asvs=asvs)
+                    label = pl.taxaname_formatter(format=taxa_formatter, taxa=taxas[aidx], taxas=taxas)
                     f.write('\t- {}\n'.format(label))
 
             return f
@@ -1330,21 +1319,21 @@ class ClusterAssignments(pl.graph.Node):
         ret = generate_cluster_assignments_posthoc(clustering=self.clustering, n_clusters='mode', 
             section=section, set_as_value=True)
         data = []
-        for asv in asvs:
-            data.append([asv.name, ret[asv.idx]])
+        for taxa in taxas:
+            data.append([taxa.name, ret[taxa.idx]])
         df = pd.DataFrame(data, columns=['name', 'Cluster Assignment'])
         df.to_csv(os.path.join(basepath, 'clusterassignments.tsv'), sep='\t', index=False, header=True)
         order = _make_cluster_order(graph=self.G, section=section)
 
         visualization.render_cocluster_proportions(
-            coclusters=coclusters, asvs=self.G.data.asvs, order=order,
+            coclusters=coclusters, taxas=self.G.data.taxas, order=order,
             yticklabels=yticklabels, include_tick_marks=False, xticklabels=xticklabels,
             title='Cluster Assignments')
 
         # Write out cocluster values
         coclusters = coclusters[order, :]
         coclusters = coclusters[:, order]
-        labels = [asvs[aidx].name for aidx in order]
+        labels = [taxas[aidx].name for aidx in order]
         df = pd.DataFrame(coclusters, index=labels, columns=labels)
         df.to_csv(os.path.join(basepath, 'coclusters.tsv'), index=True, header=True)
 
@@ -1357,7 +1346,7 @@ class ClusterAssignments(pl.graph.Node):
         for cidx, cluster in enumerate(self.clustering):
             f.write('Cluster {} - Size {}\n'.format(cidx, len(cluster)))
             for oidx in cluster.members:
-                label = pl.asvname_formatter(format=asv_formatter, asv=asvs[oidx], asvs=asvs)
+                label = pl.taxaname_formatter(format=taxa_formatter, taxa=taxas[oidx], taxas=taxas)
                 f.write('\t- {}\n'.format(label))
 
         return f
@@ -1394,25 +1383,25 @@ class ClusterAssignments(pl.graph.Node):
 
         print('in clustering')
         start_time = time.time()
-        oidxs = npr.permutation(np.arange(len(self.G.data.asvs)))
+        oidxs = npr.permutation(np.arange(len(self.G.data.taxas)))
 
         for oidx in oidxs:
-            self.gibbs_update_single_asv_slow(oidx=oidx)
+            self.gibbs_update_single_taxa_slow(oidx=oidx)
         self._strtime = time.time() - start_time
 
-    def gibbs_update_single_asv_slow(self, oidx):
+    def gibbs_update_single_taxa_slow(self, oidx):
         '''The update function is based off of Algorithm 8 in 'Markov Chain
         Sampling Methods for Dirichlet Process Mixture Models' by Radford M.
         Neal, 2000.
 
-        Calculate the marginal likelihood of the asv in every cluster
+        Calculate the marginal likelihood of the taxa in every cluster
         and a new cluster then sample from `self.sample_categorical_log`
         to get the cluster assignment.
 
         Parameters
         ----------
         oidx : int
-            ASV index that we are updating the cluster assignment of
+            Taxa index that we are updating the cluster assignment of
         '''
         curr_cluster = self.clustering.idx2cid[oidx]
         concentration = self.concentration.value
@@ -1437,7 +1426,7 @@ class ClusterAssignments(pl.graph.Node):
             if curr_cluster == cid:
                 continue
 
-            # Move ASV and recompute the matrices
+            # Move Taxa and recompute the matrices
             self.clustering.move_item(idx=oidx,cid=cid)
             self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
             self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
@@ -1566,28 +1555,28 @@ class ClusterAssignments(pl.graph.Node):
         self.y = self.G.data.construct_lhs(lhs, 
             kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations': False}})
 
-        oidxs = npr.permutation(np.arange(len(self.G.data.asvs)))
+        oidxs = npr.permutation(np.arange(len(self.G.data.taxas)))
         iii = 0
         for oidx in oidxs:
             logging.info('{}/{}: {}'.format(iii, len(oidxs), oidx))
-            self.gibbs_update_single_asv_slow_fast(oidx=oidx)
+            self.gibbs_update_single_taxa_slow_fast(oidx=oidx)
             iii += 1
         self._strtime = time.time() - start_time
     
     # @profile
-    def gibbs_update_single_asv_slow_fast(self, oidx):
+    def gibbs_update_single_taxa_slow_fast(self, oidx):
         '''The update function is based off of Algorithm 8 in 'Markov Chain
         Sampling Methods for Dirichlet Process Mixture Models' by Radford M.
         Neal, 2000.
 
-        Calculate the marginal likelihood of the asv in every cluster
+        Calculate the marginal likelihood of the taxa in every cluster
         and a new cluster then sample from `self.sample_categorical_log`
         to get the cluster assignment.
 
         Parameters
         ----------
         oidx : int
-            ASV index that we are updating the cluster assignment of
+            Taxa index that we are updating the cluster assignment of
         '''
         curr_cluster = self.clustering.idx2cid[oidx]
         concentration = self.concentration.value
@@ -1612,7 +1601,7 @@ class ClusterAssignments(pl.graph.Node):
             if curr_cluster == cid:
                 continue
 
-            # Move ASV and recompute the matrices
+            # Move Taxa and recompute the matrices
             self.clustering.move_item(idx=oidx,cid=cid)
             self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
             self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
@@ -1769,14 +1758,14 @@ class ClusterAssignments(pl.graph.Node):
     # =============================================
     def update_mp(self):
         '''Implements `update_slow` but parallelizes calculating the likelihood
-        of being in a cluster. NOTE that this does not parallelize on the ASV level.
+        of being in a cluster. NOTE that this does not parallelize on the Taxa level.
 
         On the first gibb step with initialize the workers that we implement with DASW (
         different arguments, single worker). For more information what this means look
         at pylab.multiprocessing documentation.
 
         If we initialized our pool as a pylab.multiprocessing.PersistentPool, then we 
-        multiprocess the likelihood calculations for each asv. If we didnt then this 
+        multiprocess the likelihood calculations for each taxa. If we didnt then this 
         implementation has the same performance as `ClusterAssignments.update_slow_fast`.
         '''
         if self.G.data.zero_inflation_transition_policy is not None:
@@ -1786,8 +1775,8 @@ class ClusterAssignments(pl.graph.Node):
         DMP = self.G.data.design_matrices[STRNAMES.PERT_VALUE]
         if self.clustering.n_clusters.sample_iter == 0 or self.pool == []:
             kwargs = {
-                'n_asvs': len(self.G.data.asvs),
-                'total_n_dts_per_asv': self.G.data.total_n_dts_per_asv,
+                'n_taxas': len(self.G.data.taxas),
+                'total_n_dts_per_taxa': self.G.data.total_n_dts_per_taxa,
                 'n_replicates': self.G.data.n_replicates,
                 'n_dts_for_replicate': self.G.data.n_dts_for_replicate,
                 'there_are_perturbations': self._there_are_perturbations,
@@ -1851,16 +1840,16 @@ class ClusterAssignments(pl.graph.Node):
         else:
             self.pool.initialize_gibbs(**kwargs)
 
-        oidxs = npr.permutation(np.arange(len(self.G.data.asvs)))
+        oidxs = npr.permutation(np.arange(len(self.G.data.taxas)))
         for iii, oidx in enumerate(oidxs):
-            logging.info('{}/{} - {}'.format(iii, len(self.G.data.asvs), oidx))
+            logging.info('{}/{} - {}'.format(iii, len(self.G.data.taxas), oidx))
             self.oidx = oidx
-            self.gibbs_update_single_asv_parallel()
+            self.gibbs_update_single_taxa_parallel()
 
         self._strtime = time.time() - start_time
 
-    def gibbs_update_single_asv_parallel(self):
-        '''Update for a single asvs
+    def gibbs_update_single_taxa_parallel(self):
+        '''Update for a single taxas
         '''
         self.original_cluster = self.clustering.idx2cid[self.oidx]
         self.curr_cluster = self.original_cluster
@@ -1985,9 +1974,9 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
 
     Parameters
     ----------
-    n_asvs : int
+    n_taxas : int
         Total number of OTUs
-    total_n_dts_per_asv : int
+    total_n_dts_per_taxa : int
         Total number of time changes for each OTU
     n_replicates : int
         Total number of replicates
@@ -2011,12 +2000,12 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         These are the number of rows for the mixing matrix for the interactions and
         perturbations respectively.
     '''
-    def __init__(self, n_asvs, total_n_dts_per_asv, n_replicates, n_dts_for_replicate,
+    def __init__(self, n_taxas, total_n_dts_per_taxa, n_replicates, n_dts_for_replicate,
         there_are_perturbations, keypair2col_interactions, keypair2col_perturbations,
         n_perturbations, base_Xrows, base_Xcols, base_Xshape, base_Xpertrows, base_Xpertcols,
         base_Xpertshape, n_rowsM, n_rowsMpert):
-        self.n_asvs = n_asvs
-        self.total_n_dts_per_asv = total_n_dts_per_asv
+        self.n_taxas = n_taxas
+        self.total_n_dts_per_taxa = total_n_dts_per_taxa
         self.n_replicates = n_replicates
         self.n_dts_for_replicate = n_dts_for_replicate
         self.there_are_perturbations = there_are_perturbations
@@ -2318,8 +2307,8 @@ class CondensedClustering:
     Parameters
     ----------
     oidx2cidx : np.ndarray
-        Maps the cluster assignment to each asv.
-        index -> ASV index
+        Maps the cluster assignment to each taxa.
+        index -> Taxa index
         output -> cluster index
 
     '''
@@ -2359,15 +2348,15 @@ class TrajectorySet(pl.graph.Node):
         name = STRNAMES.LATENT_TRAJECTORY
         pl.graph.Node.__init__(self, name=name, G=G)
         self.value = []
-        n_asvs = self.G.data.n_asvs
+        n_taxas = self.G.data.n_taxas
 
         for ridx, subj in enumerate(self.G.data.subjects):
             n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
 
             # initialize values to zeros for initialization
             self.value.append(pl.variables.Variable(
-                name=name+'_{}'.format(subj.name), G=G, shape=(n_asvs, n_timepoints),
-                value=np.zeros((n_asvs, n_timepoints), dtype=float), **kwargs))
+                name=name+'_{}'.format(subj.name), G=G, shape=(n_taxas, n_timepoints),
+                value=np.zeros((n_taxas, n_timepoints), dtype=float), **kwargs))
         prior = pl.variables.Normal(
             mean=pl.variables.Constant(name=self.name+'_prior_mean', value=0, G=self.G),
             var=pl.variables.Constant(name=self.name+'_prior_var', value=1, G=self.G),
@@ -2384,10 +2373,10 @@ class TrajectorySet(pl.graph.Node):
     def reset_value_size(self):
         '''Change the size of the trajectory when we set the intermediate timepoints
         '''
-        n_asvs = self.G.data.n_asvs
+        n_taxas = self.G.data.n_taxas
         for ridx in range(len(self.value)):
             n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
-            self.value[ridx].value = np.zeros((n_asvs, n_timepoints),dtype=float)
+            self.value[ridx].value = np.zeros((n_taxas, n_timepoints),dtype=float)
             self.value[ridx].set_value_shape(self.value[ridx].value.shape)
 
     def _vectorize(self):
@@ -2409,7 +2398,7 @@ class TrajectorySet(pl.graph.Node):
         '''
         for ridx in range(self.G.data.n_replicates):
             for tidx in range(self.G.data.n_timepoints_for_replicate[ridx]):
-                for oidx in range(self.G.data.asvs.n_asvs):
+                for oidx in range(self.G.data.taxas.n_taxas):
                     yield (ridx, tidx, oidx)
 
     def set_trace(self, *args, **kwargs):
@@ -2422,11 +2411,11 @@ class TrajectorySet(pl.graph.Node):
             self.value[ridx].value[~self.G[STRNAMES.ZERO_INFLATION].value[ridx]] = np.nan
             self.value[ridx].add_trace()
 
-    def visualize(self, ridx, section, basepath, asv_formatter, vmin=None, vmax=None):
+    def visualize(self, ridx, section, basepath, taxa_formatter, vmin=None, vmax=None):
         '''Visualize the replicate at index `ridx`
         '''
         subjset = self.G.data.subjects
-        asvs = subjset.asvs
+        taxas = subjset.taxas
         subj = subjset.iloc(ridx)
         obj = self.value[ridx]
         logging.info('Retrieving trace for subject {}'.format(subj.name))
@@ -2437,7 +2426,7 @@ class TrajectorySet(pl.graph.Node):
         trace = obj.get_trace_from_disk(section=section)
         summ = pl.summary(trace)
         data_times = self.G.data.times[ridx]
-        index = [asv.name for asv in asvs]
+        index = [taxa.name for taxa in taxas]
 
         # Make the tables
         for k,arr in summ.items():
@@ -2446,11 +2435,11 @@ class TrajectorySet(pl.graph.Node):
                 sep='\t', index=True, header=True)
 
         acceptance_rates = []
-        for oidx in range(len(subjset.asvs)):
+        for oidx in range(len(subjset.taxas)):
             print(oidx)
             fig = plt.figure()
-            title = pl.asvname_formatter(format=asv_formatter, asv=oidx, asvs=asvs)
-            title += '\nSubject {}, {}'.format(subj.name, asvs[oidx].name)
+            title = pl.taxaname_formatter(format=taxa_formatter, taxa=oidx, taxas=taxas)
+            title += '\nSubject {}, {}'.format(subj.name, taxas[oidx].name)
             fig.suptitle(title)
             ax = fig.add_subplot(111)
 
@@ -2471,10 +2460,10 @@ class TrajectorySet(pl.graph.Node):
             ax = visualization.shade_in_perturbations(ax, perturbations=subjset.perturbations, subj=subj)
             ax.legend(bbox_to_anchor=(1.05, 1))
             fig.tight_layout()
-            plt.savefig(os.path.join(basepath, '{}.pdf'.format(asvs[oidx].name)))
+            plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxas[oidx].name)))
             plt.close()
 
-            # Calculate the acceptance rate at every asv and timepoint
+            # Calculate the acceptance rate at every taxa and timepoint
             temp = []
             for tidx in range(trace.shape[-1]):
                 temp.append(pl.metropolis.acceptance_rate(x=trace[:, oidx, tidx], 
@@ -2896,7 +2885,7 @@ class FilteringLogMP(pl.graph.Node):
                 tidx_high = np.searchsorted(
                     self.G.data.times[ridx], self.G.data.times[ridx][tidx]+self.bandwidth)
 
-                for oidx in range(len(self.G.data.asvs)):
+                for oidx in range(len(self.G.data.taxas)):
                     val = np.mean(self.G.data.data[ridx][oidx, tidx_low: tidx_high])
                     self.x[ridx][oidx,tidx] = pl.random.truncnormal.sample(
                         mean=val,
@@ -2910,7 +2899,7 @@ class FilteringLogMP(pl.graph.Node):
         '''
         for ridx in range(self.G.data.n_replicates):
             xx = self.G.data.times[ridx]
-            for oidx in range(len(self.G.data.asvs)):
+            for oidx in range(len(self.G.data.taxas)):
                 yy = self.G.data.data[ridx][oidx, :]
                 loess = _Loess(xx, yy)
 
@@ -3003,7 +2992,7 @@ class FilteringLogMP(pl.graph.Node):
         except:
             self._strr = 'NA'
 
-    def visualize(self, basepath, section='posterior', asv_formatter='%(name)s', 
+    def visualize(self, basepath, section='posterior', taxa_formatter='%(name)s', 
         vmin=None, vmax=None):
         '''Plot the posterior for each filtering object
 
@@ -3016,9 +3005,9 @@ class FilteringLogMP(pl.graph.Node):
                 'posterior' : posterior samples
                 'burnin' : burn-in samples
                 'entire' : both burn-in and posterior samples
-        asv_formatter : str, None
-            This is the format of the label to return for each ASV. If None, it will return
-            the asvs name
+        taxa_formatter : str, None
+            This is the format of the label to return for each . If None, it will return
+            the taxas name
         vmin, vmax : float
             These are the maximum and minimum values to plot the abundance of
         '''
@@ -3027,7 +3016,7 @@ class FilteringLogMP(pl.graph.Node):
             path = os.path.join(basepath, 'Subject_{}'.format(subj.name))
             os.makedirs(path, exist_ok=True)
             self.x.visualize(ridx=ridx, section=section, basepath=path, 
-                asv_formatter=asv_formatter)
+                taxa_formatter=taxa_formatter)
 
 
 class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
@@ -3097,7 +3086,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         zero_inflation_transition_policy):
         '''Initialize the object at the beginning of the inference
 
-        n_o = Number of ASVs
+        n_o = Number of Taxas
         n_gT = Number of given time points
         n_T = Total number of time points, including intermediate
         n_P = Number of Perturbations
@@ -3110,7 +3099,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             These are the qPCR observations for every timepoint in log space.
         reads : dict (float -> np.ndarray((n_o, )))
             The counts for each of the given timepoints. Each value is an
-            array for the counts for each of the ASVs
+            array for the counts for each of the Taxas
         there_are_intermediate_timepoints : bool
             If True, then there are intermediate timepoints, else there are only
             given timepoints
@@ -3118,8 +3107,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             If True, that means there are perturbations, else there are no
             perturbations
         pv_global : bool
-            If True, it means the process variance is is global for each ASV. If
-            False it means that there is a separate `pv` for each ASV
+            If True, it means the process variance is is global for each Taxa. If
+            False it means that there is a separate `pv` for each Taxa
         pv : float, np.ndarray
             This is the process variance value. This is a float if `pv_global` is True
             and it is an array if `pv_global` is False.
@@ -3127,7 +3116,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             This is the prior mean and std for `x` used when sampling the reverse for
             the first timepoint
         tune : int
-            How often we should update the proposal for each ASV
+            How often we should update the proposal for each Taxa
         delay : int
             How many MCMC iterations we should delay the start of updating
         end_iter : int
@@ -3173,7 +3162,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.proposal_init_scale = proposal_init_scale
         self.a0 = a0
         self.a1 = a1
-        self.n_asvs = x.shape[0]
+        self.n_taxas = x.shape[0]
         self.n_timepoints = len(times)
         self.n_timepoints_minus_1 = len(times)-1
         self.logx = np.log(x)
@@ -3315,16 +3304,16 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         Parameters
         ----------
-        growth : np.ndarray((n_asvs, ))
-            Growth rates for each ASV
-        self_interactions : np.ndarray((n_asvs, ))
-            Self-interactions for each ASV
+        growth : np.ndarray((n_taxas, ))
+            Growth rates for each Taxa
+        self_interactions : np.ndarray((n_taxas, ))
+            Self-interactions for each Taxa
         pv : numeric, np.ndarray
             This is the process variance
-        interactions : np.ndarray((n_asvs, n_asvs))
-            These are the ASV-ASV interactions
-        perturbations : np.ndarray((n_perturbations, n_asvs))
-            Perturbation values in the right perturbation order, per ASV
+        interactions : np.ndarray((n_taxas, n_taxas))
+            These are the Taxa-Taxa interactions
+        perturbations : np.ndarray((n_perturbations, n_taxas))
+            Perturbation values in the right perturbation order, per Taxa
         zero_inflation : np.ndarray
             These are the points that are delibertly pushed down to zero
         qpcr_variances : np.ndarray
@@ -3360,8 +3349,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             self.growth_rate_non_pert = growth.ravel()
             self.growth_rate_on_pert = growth.reshape(-1,1) * (1 + perturbations)
                 
-        # Go through each randomly ASV and go in time order
-        oidxs = npr.permutation(self.n_asvs)
+        # Go through each randomly Taxa and go in time order
+        oidxs = npr.permutation(self.n_taxas)
         # print('===============================')
         # print('===============================')
         # print('ridx', self.ridx)
@@ -3495,18 +3484,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             do_forward = True
             do_reverse = True
 
-        # t = self.times[self.tidx]
-        # # proposal
-        # mu1 = self.curr_logx[tidx]
-        # rel = self.reads[t][oidx]/self.read_depths[t]
-        # if rel == 0:
-        #     rel = 1e-5
-        # mu2 = np.log(rel*np.exp(self.curr_qpcr_loc + (self.curr_qpcr_scale/2)))
-
-        # var1 = self.proposal_std[(tidx, oidx)]**2
-        # var2 = (self.curr_qpcr_scale)**2
-        # mu,var = prod_gaussians(means=[mu1,mu2], variances=[var1,var2])
-
         try:
             logx_new = pl.random.misc.fast_sample_normal(
                 self.curr_logx[tidx],
@@ -3515,37 +3492,9 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             print('mu', self.curr_logx[tidx])
             print('std', self.proposal_std)
             raise
-        # try:
-        #     logx_new = pl.random.misc.fast_sample_normal(
-        #         mu, np.sqrt(var))
-        # except:
-        #     print('mu', mu)
-        #     print('std', np.sqrt(var))
-        #     raise
-
         x_new = np.exp(logx_new)
         prev_logx_value = self.curr_logx[tidx]
         prev_x_value = self.curr_x[tidx]
-
-        # print('prex_x', prev_x_value, np.exp(prev_logx_value))
-        # print('prev_logx', prev_logx_value)
-
-        # if tidx == 5:
-        #     print('\ntidx', tidx)
-        #     print('oidx', oidx)
-        #     print('t', self.times[self.tidx])
-        #     print('curr_logx', self.curr_logx[tidx])
-        #     # print('curr_logx', self.curr_logx[tidx])
-        #     # print('mu1, mu2', mu1, mu2)
-        #     # print('mu', mu)
-        #     # print('var1, var2', var1,var2)
-        #     # print('var',var)
-        #     print('prop_logx', logx_new)
-        #     # print('start perts', self.pert_starts)
-        #     # print('end perts', self.pert_ends)
-        #     # print('in perturbation transition?', self.in_pert_transition[tidx])
-        #     # print('fully in pert?', self.fully_in_pert[self.tidx])
-        #     print('forward growth', self.forward_growth_rate)
 
         if do_forward:
             prev_aaa = self.forward_loglik()
@@ -3556,12 +3505,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         else:
             prev_bbb = 0
         prev_ddd = self.data_loglik()
-
-        # if tidx == 5:
-        #     print('\nold')
-        #     print('forward ll', aaa)
-        #     print('reverse ll', bbb)
-        #     print('data ll', ddd)
 
         l_old = prev_aaa + prev_bbb + prev_ddd
 
@@ -3579,37 +3522,15 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             new_bbb = 0
         new_ddd = self.data_loglik()
 
-        # if tidx == 5:
-        #     print('\nnew')
-        #     print('forward ll', aaa)
-        #     print('reverse ll', bbb)
-        #     print('data ll', ddd)
-        #     print('\nold x value', prev_x_value)
-        #     print('old logx value', prev_logx_value)
-        #     print('proposal std', self.proposal_std[(tidx, oidx)])
-        #     print('new x value', x_new)
-        #     print('new logx value', logx_new)
-
         l_new = new_aaa + new_bbb + new_ddd
         r_accept = l_new - l_old
 
-        # if tidx == 0:
-        #     print('\n\noidx {} diff lls:'.format(oidx), r_accept)
-        #     print('\tforward', new_aaa - prev_aaa)
-        #     print('\treverse', new_bbb - prev_bbb)
-        #     print('\tdata', new_ddd - prev_ddd)
-
-        # if tidx == 5:
-        #     print('r_accept', r_accept)
         r = pl.random.misc.fast_sample_standard_uniform()
         if math.log(r) > r_accept:
-            # print('reject')
-            # reject
             self.sum_q[tidx] = self.sum_q[tidx] + prev_x_value - x_new
             self.curr_x[tidx] = prev_x_value
             self.curr_logx[tidx] = prev_logx_value
         else:
-            # print('accept')
             self.x[oidx, tidx] = x_new
             self.logx[oidx, tidx] = logx_new
             self.acceptances += 1
@@ -3749,7 +3670,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         Zero-inflation
         --------------
-        When we get here, the current asv at `tidx` is not a structural zero, but 
+        When we get here, the current taxa at `tidx` is not a structural zero, but 
         there might be other bugs in the system that do have a structural zero there.
         Thus we do nan adds
         '''
@@ -3788,15 +3709,15 @@ class ZeroInflation(pl.graph.Node):
 
         for ridx in range(self.G.data.n_replicates):
             n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
-            self.value.append(np.ones(shape=(len(self.G.data.asvs), n_timepoints), dtype=bool))
+            self.value.append(np.ones(shape=(len(self.G.data.taxas), n_timepoints), dtype=bool))
 
     def reset_value_size(self):
         '''Change the size of the trajectory when we set the intermediate timepoints
         '''
-        n_asvs = self.G.data.n_asvs
+        n_taxas = self.G.data.n_taxas
         for ridx in range(len(self.value)):
             n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
-            self.value[ridx] = np.ones((n_asvs, n_timepoints), dtype=bool)
+            self.value[ridx] = np.ones((n_taxas, n_timepoints), dtype=bool)
 
     def __str__(self):
         return self._strr
@@ -3823,7 +3744,7 @@ class ZeroInflation(pl.graph.Node):
             for ridx in range(self.G.data.n_replicates):
                 n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
                 self.value.append(np.ones(
-                    shape=(len(self.G.data.asvs), n_timepoints), dtype=bool))
+                    shape=(len(self.G.data.taxas), n_timepoints), dtype=bool))
             turn_on = None
             turn_off = None
 
@@ -3833,15 +3754,15 @@ class ZeroInflation(pl.graph.Node):
             for ridx in range(self.G.data.n_replicates):
                 n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
                 self.value.append(np.ones(
-                    shape=(len(self.G.data.asvs), n_timepoints), dtype=bool))
+                    shape=(len(self.G.data.taxas), n_timepoints), dtype=bool))
 
             # Get cdiff
-            cdiff_idx = self.G.data.asvs['Clostridium-difficile'].idx
+            cdiff_idx = self.G.data.taxas['Clostridium-difficile'].idx
             turn_off = []
             turn_on = []
             for ridx in range(self.G.data.n_replicates):
                 for tidx, t in enumerate(self.G.data.times[ridx]):
-                    for oidx in range(len(self.G.data.asvs)):
+                    for oidx in range(len(self.G.data.taxas)):
                         if t < 28 and oidx == cdiff_idx:
                             self.value[ridx][cdiff_idx, tidx] = False
                             turn_off.append((ridx, tidx, cdiff_idx))
@@ -4112,7 +4033,7 @@ class ClusterInteractionValue(pl.variables.MVN):
     def __init__(self, prior, clustering, **kwargs):
         kwargs['name'] = STRNAMES.CLUSTER_INTERACTION_VALUE
         pl.variables.MVN.__init__(self, dtype=float, **kwargs)
-        self.set_value_shape(shape=(len(self.G.data.asvs),len(self.G.data.asvs)))
+        self.set_value_shape(shape=(len(self.G.data.taxas),len(self.G.data.taxas)))
         self.add_prior(prior)
         self.clustering = clustering
         self.obj = pl.contrib.Interactions(
@@ -4265,7 +4186,7 @@ class ClusterInteractionValue(pl.variables.MVN):
     def add_trace(self):
         self.obj.add_trace()
 
-    def visualize(self, basepath, section='posterior', asv_formatter='%(paperformat)s', 
+    def visualize(self, basepath, section='posterior', taxa_formatter='%(paperformat)s', 
         yticklabels='%(paperformat)s %(index)s', xticklabels='%(index)s'):
         '''Render the interaction matrices in the folder `basepath`
 
@@ -4278,9 +4199,9 @@ class ClusterInteractionValue(pl.variables.MVN):
                 'posterior' : posterior samples
                 'burnin' : burn-in samples
                 'entire' : both burn-in and posterior samples
-        asv_formatter : str, None
-            This is the format of the label to return for each ASV. If None, it will return
-            the asvs name
+        taxa_formatter : str, None
+            This is the format of the label to return for each Taxa. If None, it will return
+            the taxas name
         yticklabels, xticklabels : str
             These are the formats to plot the y-axis and x0axis, respectively.
         '''
@@ -4288,15 +4209,15 @@ class ClusterInteractionValue(pl.variables.MVN):
             logging.info('Interactions are not being learned')
         
         # Get cluster ordering
-        asvs = self.G.data.asvs
+        taxas = self.G.data.taxas
         order = _make_cluster_order(graph=self.G, section=section)
-        labels = [asvs[aidx].name for aidx in order]
+        labels = [taxas[aidx].name for aidx in order]
         summ = pl.summary(self.obj, set_nan_to_0=True, section=section)
 
         for k,M in summ.items():
 
             visualization.render_interaction_strength(interaction_matrix=M,
-                log_scale=True, asvs=self.G.data.asvs, yticklabels=yticklabels,
+                log_scale=True, taxas=self.G.data.taxas, yticklabels=yticklabels,
                 xticklabels=xticklabels, order=order, 
                 title='{} Interactions'.format(k.capitalize()))
             fig = plt.gcf()
@@ -4355,7 +4276,7 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
                     - b = N(N-1), N are the expected number of clusters
                 - 'very-strong-sparse'
                     - a = 0.5
-                    - b = n_asvs * (n_asvs-1)
+                    - b = n_taxas * (n_taxas-1)
         N : str, int
             This is the number of clusters to set the hyperparam options to 
             (if they are dependent on the number of cluster). If 'auto', set to the expected number
@@ -4407,7 +4328,7 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
             self.prior.a.override_value(0.5)
             self.prior.b.override_value((N * (N - 1)))
         elif hyperparam_option == 'very-strong-sparse':
-            N = self.G.data.n_asvs
+            N = self.G.data.n_taxas
             self.prior.a.override_value(0.5)
             self.prior.b.override_value((N * (N - 1)))
         else:
@@ -4485,8 +4406,8 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         kwargs['name'] = STRNAMES.CLUSTER_INTERACTION_INDICATOR
         pl.variables.Variable.__init__(self, dtype=bool, **kwargs)
-        self.n_asvs = len(self.G.data.asvs)
-        self.set_value_shape(shape=(self.n_asvs, self.n_asvs))
+        self.n_taxas = len(self.G.data.taxas)
+        self.set_value_shape(shape=(self.n_taxas, self.n_taxas))
         self.add_prior(prior)
         self.clustering = self.G[STRNAMES.CLUSTERING_OBJ]
         self.mp = mp
@@ -4524,7 +4445,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         self._there_are_perturbations = self.G.perturbations is not None
         self.update_cnt_indicators()
         self.interactions = self.G[STRNAMES.INTERACTIONS_OBJ]
-        self.n_asvs = len(self.G.data.asvs)
+        self.n_taxas = len(self.G.data.taxas)
 
         # These are for the function `self._make_idx_for_clusters`
         self.ndts_bias = []
@@ -4534,18 +4455,18 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         self.replicate_bias = np.zeros(self.n_replicates, dtype=int)
         for ridx in range(1, self.n_replicates):
             self.replicate_bias[ridx] = self.replicate_bias[ridx-1] + \
-                self.n_asvs * self.n_dts_for_replicate[ridx - 1]
+                self.n_taxas * self.n_dts_for_replicate[ridx - 1]
         for ridx in range(self.G.data.n_replicates):
             self.ndts_bias.append(
-                np.arange(0, self.G.data.n_dts_for_replicate[ridx] * self.n_asvs, self.n_asvs))
+                np.arange(0, self.G.data.n_dts_for_replicate[ridx] * self.n_taxas, self.n_taxas))
 
-        # Makes a dictionary that maps the asv index to the rows that it the ASV in
+        # Makes a dictionary that maps the taxa index to the rows that it the  in
         self.oidx2rows = {}
-        for oidx in range(self.n_asvs):
+        for oidx in range(self.n_taxas):
             idxs = np.zeros(self.total_dts, dtype=int)
             i = 0
             for ridx in range(self.n_replicates):
-                temp = np.arange(0, self.n_dts_for_replicate[ridx] * self.n_asvs, self.n_asvs)
+                temp = np.arange(0, self.n_dts_for_replicate[ridx] * self.n_taxas, self.n_taxas)
                 temp = temp + oidx
                 temp = temp + self.replicate_bias[ridx]
                 l = len(temp)
@@ -4631,7 +4552,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
     # @profile
     def _make_idx_vector_for_clusters(self):
         '''Creates a dictionary that maps the cluster id to the
-        rows that correspond to each ASV in the cluster.
+        rows that correspond to each Taxa in the cluster.
 
         We cannot cast this with numba because it does not support Fortran style
         raveling :(.
@@ -4694,18 +4615,18 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         --------------------------------------------
         ys : dict (int -> np.ndarray)
             Maps the target cluster id to the observation matrix that it
-            corresponds to (only the ASVs in the target cluster). This 
+            corresponds to (only the Taxas in the target cluster). This 
             array already has the growth and self-interactions subtracted
             out:
                 $ \frac{log(x_{k+1}) - log(x_{k})}{dt} - a_{1,k} - a_{2,k}x_{k} $
         process_precs : dict (int -> np.ndarray)
             Maps the target cluster id to the vector of the process precision
-            that corresponds to the target cluster (only the ASVs in the target
+            that corresponds to the target cluster (only the Taxas in the target
             cluster). This is a 1D array that corresponds to the diagonal of what
             would be the precision matrix.
         interactionXs : dict (int -> np.ndarray)
             Maps the target cluster id to the matrix of the design matrix of the
-            interactions. Only includes the rows that correspond to the ASVs in the
+            interactions. Only includes the rows that correspond to the Taxas in the
             target cluster. It includes every single column as if all of the indicators
             are on. We only index out the columns when we are doing the marginalization.
         prior_prec_interaction : float
@@ -4828,7 +4749,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         '''Update the indicators variables by calculating the relative loglikelihoods
         of it being on as supposed to off. Because this is a relative loglikelihood,
         we only need to take into account the following parameters of the model:
-            - Only the ASVs in the target cluster of the interaction
+            - Only the Taxas in the target cluster of the interaction
             - Only the positively indicated interactions going into the
               target cluster.
 
@@ -4915,12 +4836,8 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         b = np.asarray(beta_mean.T @ beta_prec @ beta_mean)[0,0]
         ll3 = -0.5 * (a  - b)
 
-        return {
-            'ret': ll2+ll3,
-            'beta_logdet': beta_logdet,
-            'priorvar_logdet': priorvar_logdet,
-            'bEb': b,
-            'bEbprior': a}
+        return {'ret': ll2+ll3, 'beta_logdet': beta_logdet, 'priorvar_logdet': priorvar_logdet,
+            'bEb': b, 'bEbprior': a}
 
     def update_single_idx_fast(self, idx):
         '''Calculate the relative log likelihood of changing the indicator of the
@@ -5019,12 +4936,6 @@ class ClusterInteractionIndicators(pl.variables.Variable):
                 self.prior_prec_perturbations[tcid])
 
         if X.shape[1] == 0:
-            # return {
-            #     'ret': 0,
-            #     'beta_logdet': 0,
-            #     'priorvar_logdet': 0,
-            #     'bEb': 0,
-            #     'bEbprior': 0}
             return 0
 
         prior_prec = np.diag(prior_prec_diag)
@@ -5073,14 +4984,10 @@ class ClusterInteractionIndicators(pl.variables.Variable):
             X = pl.toarray(self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].matrix)
             print(X.shape)
             print(np.any(np.isnan(X)))
-
             n_on = 0
             for row in range(X.shape[0]):
                 n_on += np.any(np.isnan(X[row]))
-
             print('nans on {}/{} rows'.format(n_on, X.shape[0]))
-                    
-
             raise
         
         if val:
@@ -5092,19 +4999,12 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         ll2 = 0.5 * (beta_logdet - priorvar_logdet)
         ll3 = 0.5 * (bEb - bEbprior)
-
-        # return {
-        #     'ret': ll2+ll3,
-        #     'beta_logdet': beta_logdet,
-        #     'priorvar_logdet': priorvar_logdet,
-        #     'bEb': bEb,
-        #     'bEbprior': bEbprior}
         return ll2 + ll3
             
     def kill(self):
         pass
 
-    def visualize(self, basepath, section='posterior', asv_formatter='%(paperformat)s', 
+    def visualize(self, basepath, section='posterior', taxa_formatter='%(paperformat)s', 
         yticklabels='%(paperformat)s %(index)s', xticklabels='%(index)s', vmax=10):
         '''Render the interaction matrices in the folder `basepath`
 
@@ -5117,9 +5017,9 @@ class ClusterInteractionIndicators(pl.variables.Variable):
                 'posterior' : posterior samples
                 'burnin' : burn-in samples
                 'entire' : both burn-in and posterior samples
-        asv_formatter : str, None
-            This is the format of the label to return for each ASV. If None, it will return
-            the asvs name
+        taxa_formatter : str, None
+            This is the format of the label to return for each . If None, it will return
+            the taxas name
         yticklabels, xticklabels : str
             These are the formats to plot the y-axis and x0axis, respectively.
         '''
@@ -5129,12 +5029,12 @@ class ClusterInteractionIndicators(pl.variables.Variable):
             logging.info('Interactions are not being learned')
         
         # Get cluster ordering
-        asvs = self.G.data.asvs
+        taxas = self.G.data.taxas
         order = _make_cluster_order(graph=self.G, section=section)
 
         # Plot the bayes factors
         bfs = generate_interation_bayes_factors_posthoc(mcmc=self.G.inference, section=section)
-        visualization.render_bayes_factors(bfs, asvs=self.G.data.asvs, 
+        visualization.render_bayes_factors(bfs, taxas=self.G.data.taxas, 
             order=order, max_value=vmax, xticklabels=xticklabels, yticklabels=yticklabels)
         fig = plt.gcf()
         fig.tight_layout()
@@ -5143,7 +5043,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         bfs = bfs[order, :]
         bfs = bfs[:, order]
-        labels = [asvs[aidx].name for aidx in order]
+        labels = [taxas[aidx].name for aidx in order]
         df = pd.DataFrame(bfs, index=labels, columns=labels)
         df.to_csv(os.path.join(basepath, 'bayes_factors.tsv'), sep='\t', index=True, header=True)
 
@@ -5331,9 +5231,9 @@ class PriorVarMH(pl.variables.SICS):
         elif dof_option == 'diffuse':
             dof = 2.5
         elif dof_option in ['weak', 'auto']:
-            dof = len(self.G.data.asvs)/9
+            dof = len(self.G.data.taxas)/9
         elif dof_option == 'strong':
-            dof = len(self.G.data.asvs)/2
+            dof = len(self.G.data.taxas)/2
         else:
             raise ValueError('`dof_option` ({}) not recognized'.format(dof_option))
         if dof < 2:
@@ -5361,9 +5261,9 @@ class PriorVarMH(pl.variables.SICS):
             cov = pinv(prec, self)
             mean = cov @ X.T @ y
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                mean = 1e4*(np.median(mean[:self.G.data.n_asvs]) ** 2)
+                mean = 1e4*(np.median(mean[:self.G.data.n_taxas]) ** 2)
             else:
-                mean = 1e4*(np.median(mean[self.G.data.n_asvs:]) ** 2)
+                mean = 1e4*(np.median(mean[self.G.data.n_taxas:]) ** 2)
 
             # Calculate the scale
             scale = mean * (self.prior.dof.value - 2) / self.prior.dof.value
@@ -5392,9 +5292,9 @@ class PriorVarMH(pl.variables.SICS):
             cov = pinv(prec, self)
             mean = cov @ X.T @ y
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                value = 1e4*(np.median(mean[:self.G.data.n_asvs]) ** 2)
+                value = 1e4*(np.median(mean[:self.G.data.n_taxas]) ** 2)
             else:
-                value = 1e4*(np.median(mean[self.G.data.n_asvs:]) ** 2)
+                value = 1e4*(np.median(mean[self.G.data.n_taxas:]) ** 2)
         elif value_option in ['prior-mean', 'auto']:
             value = self.prior.mean()
         else:
@@ -5464,18 +5364,6 @@ class PriorVarMH(pl.variables.SICS):
         r = (new_target_ll - prev_prop_ll) - \
             (prev_target_ll - new_prop_ll)
         u = np.log(pl.random.misc.fast_sample_standard_uniform())
-
-        # print('\n\n\n{} prior_var\n----------'.format(self.child_name))
-        # print('prev_value', prev_value)
-        # print('prev_target_ll', prev_target_ll)
-        # print('prev_prop_ll', prev_prop_ll)
-        # print('new value', new_value)
-        # print('new_target_ll', new_target_ll)
-        # print('new_prop_ll', new_prop_ll)
-        # print('mu', mu)
-        # print('prev_value_std', prev_value_std)
-        # print('new_value_std', new_value_std)
-        # print('\nr', r, u)
 
         if r >= u:
             self.acceptances[self.sample_iter] = True
@@ -5689,9 +5577,6 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             if truncation_settings == 'positive':
                 self.low = 0.
                 self.high = float('inf')
-            # elif truncation_settings == 'negative':
-            #     self.low = float('-inf')
-            #     self.high = 0
             elif truncation_settings == 'in-vivo':
                 self.low = 0.1
                 self.high = np.log(10)
@@ -5744,7 +5629,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             mean = cov @ X.T @ y
 
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                mean = np.median(mean[:self.G.data.n_asvs])
+                mean = np.median(mean[:self.G.data.n_taxas])
             else:
                 mean = np.median(mean)
         else:
@@ -5777,7 +5662,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             mean = cov @ X.T @ y
 
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                mean = np.median(mean[:self.G.data.n_asvs])
+                mean = np.median(mean[:self.G.data.n_taxas])
             else:
                 mean = np.median(mean)
             var = 1e4 * (mean**2)
@@ -5811,7 +5696,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             mean = cov @ X.T @ y
 
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                value = mean[:self.G.data.n_asvs]
+                value = mean[:self.G.data.n_taxas]
             else:
                 value = mean
         elif value_option in ['auto', 'prior-mean']:
@@ -5994,7 +5879,7 @@ class Growth(pl.variables.TruncatedNormal):
         kwargs['name'] = STRNAMES.GROWTH_VALUE
         pl.variables.TruncatedNormal.__init__(self, mean=None, var=None, low=0.,
             high=float('inf'), dtype=float, **kwargs)
-        self.set_value_shape(shape=(len(self.G.data.asvs),))
+        self.set_value_shape(shape=(len(self.G.data.taxas),))
         self.add_prior(prior)
         self.delay = 0
         self._initialized = False
@@ -6088,10 +5973,10 @@ class Growth(pl.variables.TruncatedNormal):
             raise TypeError('`value_option` ({}) must be a str'.format(type(value_option)))
         if value_option == 'manual':
             if not pl.isarray(value):
-                value = np.ones(len(self.G.data.asvs))*value
-            if len(value) != self.G.data.n_asvs:
+                value = np.ones(len(self.G.data.taxas))*value
+            if len(value) != self.G.data.n_taxas:
                 raise ValueError('`value` ({}) must be ({}) long'.format(
-                    len(value), len(self.G.data.asvs)))
+                    len(value), len(self.G.data.taxas)))
             self.value = value
         elif value_option == 'linear-regression':
             rhs = [
@@ -6107,11 +5992,11 @@ class Growth(pl.variables.TruncatedNormal):
             prec = X.T @ X
             cov = pinv(prec, self)
             mean = (cov @ X.transpose().dot(y)).ravel()
-            self.value = np.absolute(mean[:len(self.G.data.asvs)])
+            self.value = np.absolute(mean[:len(self.G.data.taxas)])
         elif value_option in ['auto', 'ones']:
-            self.value = np.ones(len(self.G.data.asvs), dtype=float)
+            self.value = np.ones(len(self.G.data.taxas), dtype=float)
         elif value_option == 'prior-mean':
-            self.value = self.prior.mean.value * np.ones(self.G.data.n_asvs)
+            self.value = self.prior.mean.value * np.ones(self.G.data.n_taxas)
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
 
@@ -6129,7 +6014,7 @@ class Growth(pl.variables.TruncatedNormal):
         self.sample()
 
         if not pl.isarray(self.value):
-            # This will happen if there is 1 ASV
+            # This will happen if there is 1 Taxa
             self.value = np.array([self.value])
 
         if np.any(np.isnan(self.value)):
@@ -6173,10 +6058,10 @@ class Growth(pl.variables.TruncatedNormal):
         self.mean.value = np.asarray(cov @ (X.T @ process_prec.dot(y) + pm)).ravel()
         self.var.value = np.diag(cov)
 
-    def visualize(self, basepath, section='posterior', asv_formatter='%(name)s', 
+    def visualize(self, basepath, section='posterior', taxa_formatter='%(name)s', 
         true_value=None):
         '''Render the traces in the folder `basepath`. Makes a `pandas.DataFrame` table
-        where the index is the ASV name in `asv_formatter` and the columns are
+        where the index is the Taxa name in `taxa_formatter` and the columns are
         `mean`, `median`, `25th percentile`, `75th` percentile`.
 
         Parameters
@@ -6188,9 +6073,9 @@ class Growth(pl.variables.TruncatedNormal):
                 'posterior' : posterior samples
                 'burnin' : burn-in samples
                 'entire' : both burn-in and posterior samples
-        asv_formatter : str, None
-            This is the format of the label to return for each ASV. If None, it will return
-            the asvs name
+        taxa_formatter : str, None
+            This is the format of the label to return for each Taxa. If None, it will return
+            the taxas name
         true_value : np.ndarray
             Ground truth values of the variable
 
@@ -6202,18 +6087,18 @@ class Growth(pl.variables.TruncatedNormal):
             logging.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
             return pd.DataFrame()
 
-        asvs = self.G.data.subjects.asvs
+        taxas = self.G.data.subjects.taxas
         summ = pl.summary(self, section=section)
         data = []
         index = []
         columns = ['name'] + [k for k in summ]
 
-        for idx in range(len(asvs)):
-            if asv_formatter is not None:
-                prefix = pl.asvname_formatter(format=asv_formatter, asv=asvs[idx], asvs=asvs)
+        for idx in range(len(taxas)):
+            if taxa_formatter is not None:
+                prefix = pl.taxaname_formatter(format=taxa_formatter, taxa=taxas[idx], taxas=taxas)
             else:
-                prefix = asvs[idx].name
-            index.append(asvs[idx].name)
+                prefix = taxas[idx].name
+            index.append(taxas[idx].name)
             temp = [prefix]
             for _,v in summ.items():
                 temp.append(v[idx])
@@ -6240,7 +6125,7 @@ class Growth(pl.variables.TruncatedNormal):
         else:
             prior_std_trace = np.sqrt(self.prior.var.value) * np.ones(len_posterior, dtype=float)
 
-        for idx in range(len(asvs)):
+        for idx in range(len(taxas)):
             fig = plt.figure()
             ax_posterior = fig.add_subplot(1,2,1)
             visualization.render_trace(var=self, idx=idx, plt_type='hist',
@@ -6278,7 +6163,7 @@ class Growth(pl.variables.TruncatedNormal):
             fig.suptitle('{}'.format(index[idx]))
             fig.tight_layout()
             fig.subplots_adjust(top=0.85)
-            plt.savefig(os.path.join(basepath, '{}.pdf'.format(asvs[idx].name)))
+            plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxas[idx].name)))
             plt.close()
 
         return df
@@ -6293,7 +6178,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         kwargs['name'] = STRNAMES.SELF_INTERACTION_VALUE
         pl.variables.TruncatedNormal.__init__(self, mean=None, var=None, low=0.,
             high=float('inf'), dtype=float, **kwargs)
-        self.set_value_shape(shape=(len(self.G.data.asvs),))
+        self.set_value_shape(shape=(len(self.G.data.taxas),))
         self.add_prior(prior)
 
     def __str__(self):
@@ -6419,10 +6304,10 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             raise TypeError('`value_option` ({}) must be a str'.format(type(value_option)))
         if value_option == 'manual':
             if not pl.isarray(value):
-                value = np.ones(len(self.G.data.asvs))*value
-            if len(value) != self.G.data.n_asvs:
+                value = np.ones(len(self.G.data.taxas))*value
+            if len(value) != self.G.data.n_taxas:
                 raise ValueError('`value` ({}) must be ({}) long'.format(
-                    len(value), len(self.G.data.asvs)))
+                    len(value), len(self.G.data.taxas)))
             self.value = value
         elif value_option == 'fixed-growth':
             X = self.G.data.construct_rhs(keys=[STRNAMES.SELF_INTERACTION_VALUE],
@@ -6450,9 +6335,9 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             prec = X.T @ X
             cov = pinv(prec, self)
             mean = (cov @ X.transpose().dot(y)).ravel()
-            self.value = np.absolute(mean[len(self.G.data.asvs):])
+            self.value = np.absolute(mean[len(self.G.data.taxas):])
         elif value_option == 'prior-mean':
-            self.value = self.prior.mean.value * np.ones(self.G.data.n_asvs)
+            self.value = self.prior.mean.value * np.ones(self.G.data.n_taxas)
         elif value_option in ['steady-state', 'auto']:
             # check quantile
             if not pl.isnumeric(q):
@@ -6480,7 +6365,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
                     else:
                         datas = np.hstack((datas, self.G.data.data[ridx]))
 
-            # Set the steady-state for each ASV
+            # Set the steady-state for each Taxa
             ss = np.quantile(datas, q=q, axis=1)
 
             # Get the self-interactions by using the values of the growth terms
@@ -6512,7 +6397,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         self.sample()
 
         if not pl.isarray(self.value):
-            # This will happen if there is 1 ASV
+            # This will happen if there is 1 Taxa
             self.value = np.array([self.value])
 
         if np.any(np.isnan(self.value)):
@@ -6540,17 +6425,17 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         prior_prec = build_prior_covariance(G=self.G, cov=False,
             order=rhs, sparse=True)
 
-        pm = prior_prec @ (self.prior.mean.value * np.ones(self.G.data.n_asvs).reshape(-1,1))
+        pm = prior_prec @ (self.prior.mean.value * np.ones(self.G.data.n_taxas).reshape(-1,1))
 
         prec = X.T @ process_prec @ X + prior_prec
         cov = pinv(prec, self)
         self.mean.value = np.asarray(cov @ (X.T @ process_prec.dot(y) + pm)).ravel()
         self.var.value = np.diag(cov)
 
-    def visualize(self, basepath, section='posterior', asv_formatter='%(name)s', 
+    def visualize(self, basepath, section='posterior', taxa_formatter='%(name)s', 
         true_value=None):
         '''Render the traces in the folder `basepath`. Makes a `pandas.DataFrame` table
-        where the index is the ASV name in `asv_formatter` and the columns are
+        where the index is the Taxa name in `taxa_formatter` and the columns are
         `mean`, `median`, `25th percentile`, `75th` percentile`.
 
         Parameters
@@ -6562,9 +6447,9 @@ class SelfInteractions(pl.variables.TruncatedNormal):
                 'posterior' : posterior samples
                 'burnin' : burn-in samples
                 'entire' : both burn-in and posterior samples
-        asv_formatter : str, None
-            This is the format of the label to return for each ASV. If None, it will return
-            the asvs name
+        taxa_formatter : str, None
+            This is the format of the label to return for each Taxa. If None, it will return
+            the taxas name
         true_value : np.ndarray
             Ground truth values of the variable
 
@@ -6576,18 +6461,18 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             logging.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
             return pd.DataFrame()
 
-        asvs = self.G.data.subjects.asvs
+        taxas = self.G.data.subjects.taxas
         summ = pl.summary(self, section=section)
         data = []
         index = []
         columns = ['name'] + [k for k in summ]
 
-        for idx in range(len(asvs)):
-            if asv_formatter is not None:
-                prefix = pl.asvname_formatter(format=asv_formatter, asv=asvs[idx], asvs=asvs)
+        for idx in range(len(taxas)):
+            if taxa_formatter is not None:
+                prefix = pl.taxaname_formatter(format=taxa_formatter, taxa=taxas[idx], taxas=taxas)
             else:
-                prefix = asvs[idx].name
-            index.append(asvs[idx].name)
+                prefix = taxas[idx].name
+            index.append(taxas[idx].name)
             temp = [prefix]
             for _,v in summ.items():
                 temp.append(v[idx])
@@ -6614,7 +6499,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         else:
             prior_std_trace = np.sqrt(self.prior.var.value) * np.ones(len_posterior, dtype=float)
 
-        for idx in range(len(asvs)):
+        for idx in range(len(taxas)):
             fig = plt.figure()
             ax_posterior = fig.add_subplot(1,2,1)
             visualization.render_trace(var=self, idx=idx, plt_type='hist',
@@ -6652,7 +6537,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             fig.suptitle('{}'.format(index[idx]))
             fig.tight_layout()
             fig.subplots_adjust(top=0.85)
-            plt.savefig(os.path.join(basepath, '{}.pdf'.format(asvs[idx].name)))
+            plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxas[idx].name)))
             plt.close()
 
         return df
@@ -6670,7 +6555,7 @@ class RegressCoeff(pl.variables.MVN):
     growth : posterior.Growth
         This is the class that has the growth variables
     self_interactions : posterior.SelfInteractions
-        The self interaction terms for the ASVs
+        The self interaction terms for the Taxas
     interactions : ClusterInteractionValue
         These are the cluster interaction values
     pert_mag : PerturbationMagnitudes, None
@@ -6698,7 +6583,7 @@ class RegressCoeff(pl.variables.MVN):
         kwargs['name'] = STRNAMES.GLV_PARAMETERS
         pl.variables.MVN.__init__(self, mean=None, cov=None, dtype=float, **kwargs)
 
-        self.n_asvs = self.G.data.n_asvs
+        self.n_taxas = self.G.data.n_taxas
         self.growth = growth
         self.self_interactions = self_interactions
         self.interactions = interactions
@@ -6777,9 +6662,9 @@ class RegressCoeff(pl.variables.MVN):
     # @profile
     def asarray(self):
         '''
-        Builds the full regression coefficient vector. If `asv_id` and
+        Builds the full regression coefficient vector. If `taxa_id` and
         `cid` are None, build the entire thing. Else build it for
-        the ASV or cluster specifically.
+        the Taxa or cluster specifically.
 
         Parameters
         ----------
@@ -6892,13 +6777,13 @@ class RegressCoeff(pl.variables.MVN):
 
     def _update_acceptances(self):
         if self.growth.sample_iter == 0:
-            self.temp_acceptances= np.zeros(len(self.G.data.asvs), dtype=int)
+            self.temp_acceptances= np.zeros(len(self.G.data.taxas), dtype=int)
             self.acceptances = np.zeros(shape=(self.G.inference.n_samples, 
-                len(self.G.data.asvs)), dtype=bool)
+                len(self.G.data.taxas)), dtype=bool)
         elif self.growth.sample_iter > self.end_tune:
             return
         elif self.growth.sample_iter % self.tune == 0:
-            self.temp_acceptances = np.zeros(len(self.G.data.asvs), dtype=int)
+            self.temp_acceptances = np.zeros(len(self.G.data.taxas), dtype=int)
 
     def _update_growth_and_self_interactions(self):
         '''Update the growth and self-interactions
@@ -7117,9 +7002,9 @@ class PerturbationMagnitudes(pl.variables.Normal):
     def toarray(self):
         return self.asarray()
 
-    def visualize(self, basepath, pidx, section='posterior', asv_formatter='%(name)s'):
+    def visualize(self, basepath, pidx, section='posterior', taxa_formatter='%(name)s'):
         '''Render the traces in the folder `basepath`. Makes a `pandas.DataFrame` table
-        where the index is the ASV name in `asv_formatter` and the columns are
+        where the index is the Taxa name in `taxa_formatter` and the columns are
         `mean`, `median`, `25th percentile`, `75th` percentile`.
 
         Parameters
@@ -7131,17 +7016,17 @@ class PerturbationMagnitudes(pl.variables.Normal):
                 'posterior' : posterior samples
                 'burnin' : burn-in samples
                 'entire' : both burn-in and posterior samples
-        asv_formatter : str, None
-            This is the format of the label to return for each ASV. If None, it will return
-            the asvs name
+        taxa_formatter : str, None
+            This is the format of the label to return for each Taxa. If None, it will return
+            the taxas name
         '''
         perturbation = self.perturbations[pidx]
-        asvs = self.G.data.asvs
+        taxas = self.G.data.taxas
 
         summ = pl.summary(perturbation, set_nan_to_0=True, section=section)
         data = np.asarray([arr for _,arr in summ.items()]).T
         df = pd.DataFrame(data, columns=[k for k in summ], 
-            index=[asv.name for asv in self.G.data.asvs])
+            index=[taxa.name for taxa in self.G.data.taxas])
         df.to_csv(os.path.join(basepath, 'values.tsv'), sep='\t', index=True, header=True)
 
         if section == 'posterior':
@@ -7161,7 +7046,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
         else:
             prior_std_trace = np.ones(len_posterior) + np.sqrt(perturbation.magnitude.prior.var.value)
         
-        for oidx in range(len(self.G.data.asvs)):
+        for oidx in range(len(self.G.data.taxas)):
             fig = plt.figure()
             ax_posterior = fig.add_subplot(1,2,1)
             visualization.render_trace(var=perturbation, idx=oidx, plt_type='hist',
@@ -7183,11 +7068,11 @@ class PerturbationMagnitudes(pl.variables.Normal):
             visualization.render_trace(var=perturbation, idx=oidx, plt_type='trace', 
                 ax=ax_trace, section=section, include_burnin=True, rasterized=True)
 
-            fig.suptitle('{}'.format(pl.asvname_formatter(
-                format=asv_formatter, asv=oidx, asvs=self.G.data.asvs)))
+            fig.suptitle('{}'.format(pl.taxaname_formatter(
+                format=taxa_formatter, taxa=oidx, taxas=self.G.data.taxas)))
             fig.tight_layout()
             fig.subplots_adjust(top=0.85)
-            plt.savefig(os.path.join(basepath, '{}.pdf'.format(asvs[oidx].name)))
+            plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxas[oidx].name)))
             plt.close()
 
 
@@ -7247,7 +7132,7 @@ class PerturbationProbabilities(pl.Node):
                     b = N, N are the expected number of clusters
                 'very-strong-sparse'
                     a = 0.5
-                    b = N, N are the expected number of ASVs
+                    b = N, N are the expected number of Taxas
         N : str, int
             This is the number of clusters to set the hyperparam options to 
             (if they are dependent on the number of cluster). If 'auto', set to the expected number
@@ -7301,7 +7186,7 @@ class PerturbationProbabilities(pl.Node):
             a = 0.5
             b = N
         elif hyperparam_option == 'very-strong-sparse':
-            N = self.G.data.n_asvs
+            N = self.G.data.n_taxas
             a = 0.5
             b = N
         else:
@@ -7489,13 +7374,13 @@ class PerturbationIndicators(pl.Node):
         self.n_dts_for_replicate = self.G.data.n_dts_for_replicate
         self.total_dts = np.sum(self.n_dts_for_replicate)
         self.replicate_bias = np.zeros(self.n_replicates, dtype=int)
-        self.n_asvs = len(self.G.data.asvs)
+        self.n_taxas = len(self.G.data.taxas)
         for ridx in range(1, self.n_replicates):
             self.replicate_bias[ridx] = self.replicate_bias[ridx-1] + \
-                self.n_asvs * self.n_dts_for_replicate[ridx - 1]
+                self.n_taxas * self.n_dts_for_replicate[ridx - 1]
         for ridx in range(self.G.data.n_replicates):
             self.ndts_bias.append(
-                np.arange(0, self.G.data.n_dts_for_replicate[ridx] * self.n_asvs, self.n_asvs))
+                np.arange(0, self.G.data.n_dts_for_replicate[ridx] * self.n_taxas, self.n_taxas))
 
         s = 'Perturbation indicator initialization results:\n'
         for i, perturbation in enumerate(self.perturbations):
@@ -7505,7 +7390,7 @@ class PerturbationIndicators(pl.Node):
 
     def _make_idx_for_clusters(self):
         '''Creates a dictionary that maps the cluster id to the
-        rows that correspond to each ASV in the cluster.
+        rows that correspond to each Taxa in the cluster.
 
         We cannot cast this with numba because it does not support Fortran style
         raveling :(.
@@ -7571,13 +7456,13 @@ class PerturbationIndicators(pl.Node):
         --------------------------------------------
         ys : dict (int -> np.ndarray)
             Maps the target cluster id to the observation matrix that it
-            corresponds to (only the ASVs in the target cluster). This 
+            corresponds to (only the Taxas in the target cluster). This 
             array already has the growth and self-interactions subtracted
             out:
                 $ \frac{log(x_{k+1}) - log(x_{k})}{dt} - a_{1,k} - a_{2,k}x_{k} $
         process_precs : dict (int -> np.ndarray)
             Maps the target cluster id to the vector of the process precision
-            that corresponds to the target cluster (only the ASVs in the target
+            that corresponds to the target cluster (only the Taxas in the target
             cluster). This is a 1D array that corresponds to the diagonal of what
             would be the precision matrix.
         interactionXs : dict (int -> np.ndarray)
@@ -7695,7 +7580,7 @@ class PerturbationIndicators(pl.Node):
         supposed to as is. Because this is a relative loglikelihood, we
         only need to take into account the following parameters of the
         model:
-            - Only the ASVs in the cluster in question
+            - Only the Taxas in the cluster in question
             - Only the perturbations for that cluster
             - Only the interactions going into the cluster
 
@@ -7874,10 +7759,10 @@ class PerturbationIndicators(pl.Node):
         ----------
         This is the index of the indicator in vectorized form
         '''
-        cidx = idx % self.G.data.n_asvs
+        cidx = idx % self.G.data.n_taxas
         cid = self.clustering.order[cidx]
         
-        pidx = idx // self.G.data.n_asvs
+        pidx = idx // self.G.data.n_taxas
         perturbation = self.perturbations[pidx]
 
         d_on = self.calculate_marginal_loglikelihood(cid=cid, val=True,
@@ -7890,16 +7775,6 @@ class PerturbationIndicators(pl.Node):
 
         ll_on = d_on['ret'] + prior_ll_on
         ll_off = d_off['ret'] + prior_ll_off
-
-        # print('slow\n\ttotal: {}\n\tbeta_logdet_diff: {}\n\t' \
-        #     'priorvar_logdet_diff: {}\n\tbEb_diff: {}\n\t' \
-        #     'bEbprior_diff: {}'.format(
-        #         ll_on - ll_off,
-        #         d_on['beta_logdet'] - d_off['beta_logdet'],
-        #         d_on['priorvar_logdet'] - d_off['priorvar_logdet'],
-        #         d_on['bEb'] - d_off['bEb'],
-        #         d_on['bEbprior'] - d_off['bEbprior']))
-
         dd = [ll_off, ll_on]
 
         res = bool(sample_categorical_log(dd))
@@ -7991,12 +7866,13 @@ class PerturbationIndicators(pl.Node):
         bayes_factors = generate_perturbation_bayes_factors_posthoc(
             mcmc=self.G.inference, perturbation=perturbation, section=section)
         df = pd.DataFrame([bayes_factors], index=[perturbation.name], 
-            columns=[asv.name for asv in self.G.data.asvs])
+            columns=[taxa.name for taxa in self.G.data.taxas])
         df.to_csv(path, sep='\t', index=True, header=True)
 
 
 class PriorVarPerturbations(pl.Variable):
-    '''Agglomerates the prior variances of the magnitudes for the perturbations.
+    '''Class iterates over the perturbations for updating the variance of the prior
+    for each perturbation
 
     All perturbations get the same hyperparameters
     '''
@@ -8221,7 +8097,8 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
 
 
 class PriorMeanPerturbations(pl.Variable):
-    '''Agglomerates the prior variances of the magnitudes for the perturbations.
+    '''Class iterates over the perturbations for updating the mean of the prior
+    for each perturbation
 
     All perturbations get the same hyperparameters
     '''
@@ -8312,10 +8189,11 @@ class PriorMeanPerturbations(pl.Variable):
         -------
         _io.TextIOWrapper
         '''
+        perturbation = self.pertubrations[pidx]
         if not self.G.inference.is_in_inference_order(self.name):
             return f
         return _scalar_visualize(path=path, f=f, section=section,
-            obj=self.perturbations[pidx].magnitude.prior.mean,
+            obj=self.perturbations.magnitude.prior.mean,
             log_scale=False)
 
 
@@ -8968,17 +8846,6 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
         r = (new_target_ll - prev_prop_ll) - \
             (prev_target_ll - new_prop_ll)
         u = np.log(pl.random.misc.fast_sample_standard_uniform())
-
-        # print('\n\n\n{} prior_mean\n----------'.format(self.child_name))
-        # print('x', x)
-        # print('prev_dof', prev_dof)
-        # print('prev_target_ll', prev_target_ll)
-        # print('prev_prop_ll', prev_prop_ll)
-        # print('new dof', new_dof)
-        # print('new_target_ll', new_target_ll)
-        # print('new_prop_ll', new_prop_ll)
-        # print('\nr', r, u)
-            
         if r >= u:
             self.acceptances[self.sample_iter] = True
             self.value = new_dof
@@ -9248,16 +9115,6 @@ class qPCRScaleL(pl.variables.SICS):
             (prev_target_ll - new_prop_ll)
         u = np.log(pl.random.misc.fast_sample_standard_uniform())
 
-        # print('\n\n\n{} prior_mean\n----------'.format(self.child_name))
-        # print('x', x)
-        # print('prev_scale', prev_scale)
-        # print('prev_target_ll', prev_target_ll)
-        # print('prev_prop_ll', prev_prop_ll)
-        # print('new scale', new_scale)
-        # print('new_target_ll', new_target_ll)
-        # print('new_prop_ll', new_prop_ll)
-        # print('\nr', r, u)
-            
         if r >= u:
             self.acceptances[self.sample_iter] = True
             self.value = new_scale

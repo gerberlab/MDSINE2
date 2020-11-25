@@ -4,7 +4,7 @@ import os
 import sys
 from ete3 import Tree
 
-from .pylab import ASVSet, Study
+from .pylab import TaxaSet, Study
 
 __all__ = ['gibson', 'parse']
 
@@ -233,7 +233,7 @@ class _Gibson:
         ----------
         with_reference_sequences : bool
             If True, load the phylogenetic tree with the reference sequeunces from
-            placement. If False, only include the ASVs and not the reference 
+            placement. If False, only include the s and not the reference 
             sequences
 
         Returns
@@ -297,8 +297,8 @@ def gibson(dset=None, as_df=False, with_perturbations=True, species_assignment='
         return {'metadata': metadata, 'taxonomy': taxonomy, 
             'reads': reads, 'qpcr':qpcr, 'perturbations': perturbations}
     else:
-        asvs = ASVSet(taxonomy_table=taxonomy)
-        study = Study(asvs=asvs, name=dset)
+        taxas = TaxaSet(taxonomy_table=taxonomy)
+        study = Study(taxas=taxas, name=dset)
         study.parse(
             metadata=metadata,
             reads=reads,
@@ -331,9 +331,9 @@ def parse(name, metadata, taxonomy, reads=None, qpcr=None, perturbations=None, s
     mdsine2.Study
     '''
     taxonomy = pd.read_csv(taxonomy, sep=sep)
-    asvs = ASVSet()
-    asvs.parse(taxonomy_table=taxonomy)
-    study = Study(asvs, name=name)
+    taxas = TaxaSet()
+    taxas.parse(taxonomy_table=taxonomy)
+    study = Study(taxas, name=name)
 
     metadata = pd.read_csv(metadata, sep=sep)
     if reads is not None:
