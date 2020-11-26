@@ -473,7 +473,7 @@ class ClusterPerturbationIndicator(ClusterValue):
         return ret
 
 
-class ClusterPerturbation(BasePerturbation, variables.Variable):
+class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
     &#39;&#39;&#39;This is an basic implementation for a perturbation where the 
     values **DO** depend on clusters. We trace the values at the item level.
     Effectively the same as `pylab.contrib.Perturbation` but it si extended
@@ -1630,8 +1630,8 @@ def _always_return_nan(*args, **kwargs):
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="mdsine2.pylab.contrib.ClusterPerturbation"><code class="flex name class">
-<span>class <span class="ident">ClusterPerturbation</span></span>
+<dt id="mdsine2.pylab.contrib.ClusterPerturbationEffect"><code class="flex name class">
+<span>class <span class="ident">ClusterPerturbationEffect</span></span>
 <span>(</span><span>clustering, starts, ends, magnitude=None, indicator=None, probability=None, signal_when_clusters_change=False, signal_when_item_assignment_changes=False, **kwargs)</span>
 </code></dt>
 <dd>
@@ -1689,7 +1689,7 @@ each cluster</li>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class ClusterPerturbation(BasePerturbation, variables.Variable):
+<pre><code class="python">class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
     &#39;&#39;&#39;This is an basic implementation for a perturbation where the 
     values **DO** depend on clusters. We trace the values at the item level.
     Effectively the same as `pylab.contrib.Perturbation` but it si extended
@@ -1931,7 +1931,7 @@ each cluster</li>
 </ul>
 <h3>Methods</h3>
 <dl>
-<dt id="mdsine2.pylab.contrib.ClusterPerturbation.add_trace"><code class="name flex">
+<dt id="mdsine2.pylab.contrib.ClusterPerturbationEffect.add_trace"><code class="name flex">
 <span>def <span class="ident">add_trace</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -1949,7 +1949,7 @@ each cluster</li>
     variables.Variable.add_trace(self)</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.contrib.ClusterPerturbation.cluster_array"><code class="name flex">
+<dt id="mdsine2.pylab.contrib.ClusterPerturbationEffect.cluster_array"><code class="name flex">
 <span>def <span class="ident">cluster_array</span></span>(<span>self, only_pos_ind=False)</span>
 </code></dt>
 <dd>
@@ -2015,7 +2015,7 @@ magnitude.value = -0.5
     return val</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.contrib.ClusterPerturbation.item_array"><code class="name flex">
+<dt id="mdsine2.pylab.contrib.ClusterPerturbationEffect.item_array"><code class="name flex">
 <span>def <span class="ident">item_array</span></span>(<span>self, only_pos_ind=False)</span>
 </code></dt>
 <dd>
@@ -2083,7 +2083,7 @@ magnitude.value = -0.5
     return val</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.contrib.ClusterPerturbation.remove_local_trace"><code class="name flex">
+<dt id="mdsine2.pylab.contrib.ClusterPerturbationEffect.remove_local_trace"><code class="name flex">
 <span>def <span class="ident">remove_local_trace</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -2098,7 +2098,7 @@ magnitude.value = -0.5
     self.trace = None</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.contrib.ClusterPerturbation.set_values_from_array"><code class="name flex">
+<dt id="mdsine2.pylab.contrib.ClusterPerturbationEffect.set_values_from_array"><code class="name flex">
 <span>def <span class="ident">set_values_from_array</span></span>(<span>self, values, use_indicators=True)</span>
 </code></dt>
 <dd>
@@ -5097,13 +5097,13 @@ each taxa</dd>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="mdsine2.pylab.contrib.ClusterPerturbation" href="#mdsine2.pylab.contrib.ClusterPerturbation">ClusterPerturbation</a></code></h4>
+<h4><code><a title="mdsine2.pylab.contrib.ClusterPerturbationEffect" href="#mdsine2.pylab.contrib.ClusterPerturbationEffect">ClusterPerturbationEffect</a></code></h4>
 <ul class="">
-<li><code><a title="mdsine2.pylab.contrib.ClusterPerturbation.add_trace" href="#mdsine2.pylab.contrib.ClusterPerturbation.add_trace">add_trace</a></code></li>
-<li><code><a title="mdsine2.pylab.contrib.ClusterPerturbation.cluster_array" href="#mdsine2.pylab.contrib.ClusterPerturbation.cluster_array">cluster_array</a></code></li>
-<li><code><a title="mdsine2.pylab.contrib.ClusterPerturbation.item_array" href="#mdsine2.pylab.contrib.ClusterPerturbation.item_array">item_array</a></code></li>
-<li><code><a title="mdsine2.pylab.contrib.ClusterPerturbation.remove_local_trace" href="#mdsine2.pylab.contrib.ClusterPerturbation.remove_local_trace">remove_local_trace</a></code></li>
-<li><code><a title="mdsine2.pylab.contrib.ClusterPerturbation.set_values_from_array" href="#mdsine2.pylab.contrib.ClusterPerturbation.set_values_from_array">set_values_from_array</a></code></li>
+<li><code><a title="mdsine2.pylab.contrib.ClusterPerturbationEffect.add_trace" href="#mdsine2.pylab.contrib.ClusterPerturbationEffect.add_trace">add_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.contrib.ClusterPerturbationEffect.cluster_array" href="#mdsine2.pylab.contrib.ClusterPerturbationEffect.cluster_array">cluster_array</a></code></li>
+<li><code><a title="mdsine2.pylab.contrib.ClusterPerturbationEffect.item_array" href="#mdsine2.pylab.contrib.ClusterPerturbationEffect.item_array">item_array</a></code></li>
+<li><code><a title="mdsine2.pylab.contrib.ClusterPerturbationEffect.remove_local_trace" href="#mdsine2.pylab.contrib.ClusterPerturbationEffect.remove_local_trace">remove_local_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.contrib.ClusterPerturbationEffect.set_values_from_array" href="#mdsine2.pylab.contrib.ClusterPerturbationEffect.set_values_from_array">set_values_from_array</a></code></li>
 </ul>
 </li>
 <li>

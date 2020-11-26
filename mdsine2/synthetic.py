@@ -421,7 +421,7 @@ class SyntheticData(pl.Saveable):
                 magnitude[i] = pl.random.normal.sample(loc=mean*sign, 
                     scale=std_strength)
 
-        a = pl.contrib.ClusterPerturbation(start=start, end=end, magnitude=magnitude,
+        a = pl.contrib.ClusterPerturbationEffect(start=start, end=end, magnitude=magnitude,
             clustering=self.dynamics.clustering, indicator=indicator, G=self.G)
         
         logging.info('Perturbation:\n\tstart,end ({},{})\n\t' \
@@ -451,7 +451,7 @@ class SyntheticData(pl.Saveable):
         '''
         if self.dynamics.clustering is None:
             raise ValueError('Must sample the system before you call this function')
-        a = pl.contrib.ClusterPerturbation(start=start, end=end, magnitude=magnitude,
+        a = pl.contrib.ClusterPerturbationEffect(start=start, end=end, magnitude=magnitude,
             indicator=indicator, clustering=self.dynamics.clustering, G=self.G)
         if self.dynamics.perturbations is None:
             self.dynamics.perturbations = [a]
@@ -678,7 +678,7 @@ class SyntheticData(pl.Saveable):
                     # pl.random.normal.sample(loc=-1, scale=0.1),
                     0, pl.random.normal.sample(loc=1, scale=0.1), 0])
         indicator0 = np.array([False, True, False], dtype=bool)
-        p0 = pl.contrib.ClusterPerturbation(start=starts[0], end=ends[0], 
+        p0 = pl.contrib.ClusterPerturbationEffect(start=starts[0], end=ends[0], 
             magnitude=magnitude0, indicator=indicator0, G=self.G, 
             clustering=self.dynamics.clustering)
 
@@ -692,7 +692,7 @@ class SyntheticData(pl.Saveable):
                     pl.random.normal.sample(loc=1, scale=0.1), 0,
                     pl.random.normal.sample(loc=-2, scale=0.1)])
         indicator1 = np.array([True, False, True], dtype=bool)
-        p1 = pl.contrib.ClusterPerturbation(start=starts[1], end=ends[1], 
+        p1 = pl.contrib.ClusterPerturbationEffect(start=starts[1], end=ends[1], 
             magnitude=magnitude1, indicator=indicator1, G=self.G, 
             clustering=self.dynamics.clustering)
 
@@ -706,7 +706,7 @@ class SyntheticData(pl.Saveable):
                     0, pl.random.normal.sample(mean=-0.5, std=0.1),
                     pl.random.normal.sample(mean=1, std=0.1)])
         indicator2 = np.array([False, True, True], dtype=bool)
-        p2 = pl.contrib.ClusterPerturbation(start=starts[2], end=ends[2], 
+        p2 = pl.contrib.ClusterPerturbationEffect(start=starts[2], end=ends[2], 
             magnitude=magnitude2, indicator=indicator2, G=self.G, 
             clustering=self.dynamics.clustering)
 
@@ -1956,7 +1956,7 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
     # ---------------------
     _ps = []
     for PERTURBATION in PERTURBATIONS:
-        perturbation = pl.contrib.ClusterPerturbation(
+        perturbation = pl.contrib.ClusterPerturbationEffect(
             start=PERTURBATION.start, end=PERTURBATION.end,
             G=synth.G, clustering=synth.dynamics.clustering)
 

@@ -231,7 +231,7 @@ def aggregate_items(subjset, hamming_dist):
 
 def _avg_dist(taxa1, taxa2):
     dists = []
-    if pl.isotu(taxaa1):
+    if pl.isotu(taxa1):
         seqs1 = taxa1.aggregated_seqs.values()
     else:
         seqs1 = [taxa1.sequence]

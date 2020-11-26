@@ -81,9 +81,9 @@ from .util import isarray, isbool, isstr, istype, istuple
 # Constants
 DEFAULT_VARIABLE_TYPE = float
 
-DEFAULT_NORMAL_LOC_SUFFIX = &#39;_mean&#39;
-DEFAULT_NORMAL_SCALE2_SUFFIX = &#39;_var&#39;
-DEFAULT_LOGNORMAL_SCALE_SUFFIX = &#39;_std&#39;
+DEFAULT_NORMAL_LOC_SUFFIX = &#39;_loc&#39;
+DEFAULT_NORMAL_SCALE2_SUFFIX = &#39;_scale2&#39;
+DEFAULT_LOGNORMAL_SCALE_SUFFIX = &#39;_scale&#39;
 DEFAULT_UNIFORM_LOW_SUFFIX = &#39;_low&#39;
 DEFAULT_UNIFORM_HIGH_SUFFIX = &#39;_high&#39;
 DEFAULT_SICS_DOF_SUFFIX = &#39;_dof&#39;
@@ -597,57 +597,63 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
 
 
 class Normal(Variable, _RandomBase):
-    &#39;&#39;&#39;Scalar normal variable parameterized by the mean and variance
+    &#39;&#39;&#39;Scalar normal variable parameterized by the loc (mean) and scale2
+    (variance)
 
     Parameters
     ----------
-    mean : float, int
+    loc : float, int
         This is the mean of the distribution
-    var : float, int
+    scale2 : float, int
         This is the variance of the distribution
     kwargs : dict
         These are extra parameters for the Node class
     &#39;&#39;&#39;
-    def __init__(self, mean=None, var=None, **kwargs):
+    def __init__(self, loc=None, scale2=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
-        if not isnode(mean):
-            self._mean = Variable(
-                value=mean,
+        if not isnode(loc):
+            self._loc = Variable(
+                value=loc,
                 name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
-            self._mean = mean
-        if not isnode(var):
-            self._var = Variable(
-                value=var,
+            self._loc = loc
+        if not isnode(scale2):
+            self._scale2 = Variable(
+                value=scale2,
                 name=self.name + DEFAULT_NORMAL_SCALE2_SUFFIX,
                 G=self.G)
         else:
-            self._var = var
+            self._scale2 = scale2
 
         # Set graph with parents
-        self.add_parent(self._mean)
-        self.add_parent(self._var)
+        self.add_parent(self._loc)
+        self.add_parent(self._scale2)
 
     @property
-    def mean(self):
-        return self._mean
+    def loc(self):
+        return self._loc
 
     @property
-    def var(self):
-        return self._var
+    def scale2(self):
+        return self._scale2
 
-    @property
     def std(self):
-        return np.sqrt(self._var.value)
+        return np.sqrt(self._scale2.value)
 
     def mode(self):
-        return self._mean.value
+        return self._loc.value
+
+    def mean(self):
+        return self._loc.value
+
+    def variance(self):
+        return self._scale2.value
 
     def sample(self, size=None):
-        &#39;&#39;&#39;Sample the distirbution given `self.mean` and `self.var`
+        &#39;&#39;&#39;Sample the distirbution given `self.loc` and `self.sca;e2`
 
         Parameters
         ----------
@@ -659,13 +665,13 @@ class Normal(Variable, _RandomBase):
         float
         &#39;&#39;&#39;
         self.value = random.normal.sample(
-            mean=self._mean.value, 
-            std=np.sqrt(self._var.value),
+            loc=self._loc.value, 
+            scale=np.sqrt(self._scale2.value),
             size=size)
         return self.value
 
     def pdf(self, value=None):
-        &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.mean`, and `self.var`.
+        &#39;&#39;&#39;Calculate the pdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
         Parameters
@@ -679,11 +685,11 @@ class Normal(Variable, _RandomBase):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.normal.pdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value))
+        return random.normal.pdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value))
 
     def logpdf(self, value=None):
-        &#39;&#39;&#39;Calculate the logpdf given `self.value`, `self.mean`, and `self.var`.
+        &#39;&#39;&#39;Calculate the logpdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
         Parameters
@@ -697,11 +703,11 @@ class Normal(Variable, _RandomBase):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.normal.logpdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value))
+        return random.normal.logpdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value))
 
     def cdf(self, value=None):
-        &#39;&#39;&#39;Calculate the cdf given `self.value`, `self.mean`, and `self.var`.
+        &#39;&#39;&#39;Calculate the cdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
         Parameters
@@ -715,11 +721,11 @@ class Normal(Variable, _RandomBase):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.normal.cdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value))
+        return random.normal.cdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value))
 
     def logcdf(self, value=None):
-        &#39;&#39;&#39;Calculate the logcdf given `self.value`, `self.mean`, and `self.var`.
+        &#39;&#39;&#39;Calculate the logcdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
         Parameters
@@ -733,8 +739,8 @@ class Normal(Variable, _RandomBase):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.normal.logcdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value))
+        return random.normal.logcdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value))
 
 
 class Lognormal(Variable, _RandomBase):
@@ -742,48 +748,48 @@ class Lognormal(Variable, _RandomBase):
 
     Parameters
     ----------
-    mean : numeric, array
-        This is the mean of the distribution
+    loc : numeric, array
+        This is the loc of the distribution
     std : numeric array
         This is the standard deviation of the array
     kwargs
     &#39;&#39;&#39;
-    def __init__(self, mean, std, **kwargs):
+    def __init__(self, loc, std, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
-        if not isnode(mean):
-            self._mean = Variable(
-                value=mean,
+        if not isnode(loc):
+            self._loc = Variable(
+                value=loc,
                 name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
-            self._mean = mean
+            self._loc = loc
         if not isnode(std):
-            self._std = Variable(
+            self._scale = Variable(
                 value=std,
                 name=self.name + DEFAULT_LOGNORMAL_SCALE_SUFFIX,
                 G=self.G)
         else:
-            self._std = std
+            self._scale = std
 
         # Set graph with parents
-        self.add_parent(self._mean)
-        self.add_parent(self._std)
+        self.add_parent(self._loc)
+        self.add_parent(self._scale)
 
     @property
-    def mean(self):
-        return self._mean
+    def loc(self):
+        return self._loc
 
     @property
-    def std(self):
-        return self._std
+    def scale(self):
+        return self._scale
 
     def mode(self):
-        return self._mean.value
+        return self._loc.value
 
     def sample(self, size=None):
-        &#39;&#39;&#39;Sample the distirbution given `self.mean` and `self.var`
+        &#39;&#39;&#39;Sample the distirbution
 
         Parameters
         ----------
@@ -795,14 +801,13 @@ class Lognormal(Variable, _RandomBase):
         float
         &#39;&#39;&#39;
         self.value = random.lognormal.sample(
-            mean=self._mean.value, 
-            std=self._std.value,
+            loc=self._loc.value, 
+            scale=self._scale.value,
             size=size)
         return self.value
 
     def pdf(self, value=None):
-        &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.mean`, and `self.var`.
-        If `value` is provided we use `value` instead of `self.value`.
+        &#39;&#39;&#39;Calculate the pdf
 
         Parameters
         ----------
@@ -815,12 +820,11 @@ class Lognormal(Variable, _RandomBase):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.lognormal.pdf(value=value, mean=self._mean.value,
-            std=self._std.value)
+        return random.lognormal.pdf(value=value, loc=self._loc.value,
+            scale=self._scale.value)
 
     def logpdf(self, value=None):
-        &#39;&#39;&#39;Calculate the logpdf given `self.value`, `self.mean`, and `self.var`.
-        If `value` is provided we use `value` instead of `self.value`.
+        &#39;&#39;&#39;Calculate the logpdf
 
         Parameters
         ----------
@@ -833,12 +837,11 @@ class Lognormal(Variable, _RandomBase):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.lognormal.logpdf(value=value, mean=self._mean.value,
-            std=self._std.value)
+        return random.lognormal.logpdf(value=value, loc=self._loc.value,
+            scale=self._scale.value)
 
     def cdf(self, value=None):
-        &#39;&#39;&#39;Calculate the cdf given `self.value`, `self.mean`, and `self.var`.
-        If `value` is provided we use `value` instead of `self.value`.
+        &#39;&#39;&#39;Calculate the cdf
 
         Parameters
         ----------
@@ -851,12 +854,11 @@ class Lognormal(Variable, _RandomBase):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.lognormal.cdf(value=value, mean=self._mean.value,
-            std=self._std.value)
+        return random.lognormal.cdf(value=value, mean=self._loc.value,
+            std=self._scale.value)
 
     def logcdf(self, value=None):
-        &#39;&#39;&#39;Calculate the logcdf given `self.value`, `self.mean`, and `self.var`.
-        If `value` is provided we use `value` instead of `self.value`.
+        &#39;&#39;&#39;Calculate the logcdf
 
         Parameters
         ----------
@@ -869,8 +871,8 @@ class Lognormal(Variable, _RandomBase):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.lognormal.logcdf(value=value, mean=self._mean.value,
-            std=self._std.value)
+        return random.lognormal.logcdf(value=value, mean=self._loc.value,
+            std=self._scale.value)
 
 
 class Uniform(Variable, _RandomBase):
@@ -1018,14 +1020,15 @@ class Uniform(Variable, _RandomBase):
 
 
 class TruncatedNormal(Variable, _RandomBase):
-    &#39;&#39;&#39;Scalar truncated normal variable parameterized by the mean, variance,
+    &#39;&#39;&#39;Scalar truncated normal variable parameterized by the mean `loc`, 
+    variance `scale2`,
     low, and high
 
     Parameters
     ----------
-    mean : float, int
+    loc : float, int
         This is the mean of the distribution
-    var : float, int
+    scale2 : float, int
         This is the variance of the distribution
     low : float, int
         This is the lowest value that can be sampled
@@ -1034,7 +1037,7 @@ class TruncatedNormal(Variable, _RandomBase):
     kwargs : dict
         These are extra parameters for the Node class
     &#39;&#39;&#39;
-    def __init__(self, mean, var, low=None, high=None, **kwargs):
+    def __init__(self, loc, scale2, low=None, high=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         if low is None:
@@ -1046,51 +1049,50 @@ class TruncatedNormal(Variable, _RandomBase):
                 low,high))
 
         # Wrap parameters in nodes
-        if not isnode(mean):
-            self._mean = Variable(
-                value=mean,
+        if not isnode(loc):
+            self._loc = Variable(
+                value=loc,
                 name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
-            self._mean = mean
-        if not isnode(var):
-            self._var = Variable(
-                value=var,
+            self._loc = loc
+        if not isnode(scale2):
+            self._scale2 = Variable(
+                value=scale2,
                 name=self.name + DEFAULT_NORMAL_SCALE2_SUFFIX,
                 G=self.G)
         else:
-            self._var = var
+            self._scale2 = scale2
 
         self.low=low
         self.high=high
 
         # Set graph with parents
-        self.add_parent(self._mean)
-        self.add_parent(self._var)
+        self.add_parent(self._loc)
+        self.add_parent(self._scale2)
 
     @property
-    def mean(self):
-        return self._mean
+    def loc(self):
+        return self._loc
 
     @property
-    def var(self):
-        return self._var
+    def scale2(self):
+        return self._scale2
 
     @property
-    def std(self):
-        return np.sqrt(self._var.value)
+    def scale(self):
+        return np.sqrt(self._scale2.value)
 
     def mode(self):
-        if self.low &lt;= self.mean and self.mean &lt;= self.high:
-            return self.mean
-        elif self.mean &lt; self.low:
+        if self.low &lt;= self.loc and self.loc &lt;= self.high:
+            return self.loc
+        elif self.loc &lt; self.low:
             return self.low
         else:
             return self.high
 
     def sample(self, size=None):
-        &#39;&#39;&#39;Sample the distirbution given `self.mean`, `self.var`, 
-        `self.low`, and `self.high`
+        &#39;&#39;&#39;Sample the distirbution given the current parameters
 
         Parameters
         ----------
@@ -1104,16 +1106,14 @@ class TruncatedNormal(Variable, _RandomBase):
         self.value = random.truncnormal.sample(
             low=self.low,
             high=self.high,
-            mean=self._mean.value,
-            std=np.sqrt(self._var.value),
+            loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value),
             size=size)
 
         return self.value
 
     def pdf(self, value=None):
-        &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.mean`, `self.var`, 
-        `self.low` and `self.high`. If `value` is provided we use `value` 
-        instead of `self.value`.
+        &#39;&#39;&#39;Calculate the pdf given the current parameters.
 
         Parameters
         ----------
@@ -1126,13 +1126,11 @@ class TruncatedNormal(Variable, _RandomBase):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.truncnormal.pdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value), low=self.low, high=self.high)
+        return random.truncnormal.pdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
     def logpdf(self, value=None):
-        &#39;&#39;&#39;Calculate the logpdf given `self.value`, `self.mean`, `self.var`, 
-        `self.low` and `self.high`. If `value` is provided we use `value` 
-        instead of `self.value`.
+        &#39;&#39;&#39;Calculate the logpdf given the current parameters.
 
         Parameters
         ----------
@@ -1145,13 +1143,11 @@ class TruncatedNormal(Variable, _RandomBase):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.truncnormal.logpdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value), low=self.low, high=self.high)
+        return random.truncnormal.logpdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
     def cdf(self, value=None):
-        &#39;&#39;&#39;Calculate the cdf given `self.value`, `self.mean`, `self.var`, 
-        `self.low` and `self.high`. If `value` is provided we use `value` 
-        instead of `self.value`.
+        &#39;&#39;&#39;Calculate the cdf given the current parameters.
 
         Parameters
         ----------
@@ -1164,13 +1160,11 @@ class TruncatedNormal(Variable, _RandomBase):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.truncnormal.cdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value), low=self.low, high=self.high)
+        return random.truncnormal.cdf(value=value, mean=self._loc.value,
+            std=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
     def logcdf(self, value=None):
-        &#39;&#39;&#39;Calculate the logcdf given `self.value`, `self.mean`, `self.var`, 
-        `self.low` and `self.high`. If `value` is provided we use `value` 
-        instead of `self.value`.
+        &#39;&#39;&#39;Calculate the logcdf given the current parameters.
 
         Parameters
         ----------
@@ -1183,8 +1177,8 @@ class TruncatedNormal(Variable, _RandomBase):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.truncnormal.logcdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value), low=self.low, high=self.high)
+        return random.truncnormal.logcdf(value=value, mean=self._loc.value,
+            std=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
 
 class SICS(Variable, _RandomBase):
@@ -2825,14 +2819,14 @@ specified, then use the current value</p>
 </dd>
 <dt id="mdsine2.pylab.variables.Lognormal"><code class="flex name class">
 <span>class <span class="ident">Lognormal</span></span>
-<span>(</span><span>mean, std, **kwargs)</span>
+<span>(</span><span>loc, std, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Lognormal distribution</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>mean</code></strong> :&ensp;<code>numeric, array</code></dt>
-<dd>This is the mean of the distribution</dd>
+<dt><strong><code>loc</code></strong> :&ensp;<code>numeric, array</code></dt>
+<dd>This is the loc of the distribution</dd>
 <dt><strong><code>std</code></strong> :&ensp;<code>numeric array</code></dt>
 <dd>This is the standard deviation of the array</dd>
 <dt><strong><code>kwargs</code></strong></dt>
@@ -2847,48 +2841,48 @@ specified, then use the current value</p>
 
     Parameters
     ----------
-    mean : numeric, array
-        This is the mean of the distribution
+    loc : numeric, array
+        This is the loc of the distribution
     std : numeric array
         This is the standard deviation of the array
     kwargs
     &#39;&#39;&#39;
-    def __init__(self, mean, std, **kwargs):
+    def __init__(self, loc, std, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
-        if not isnode(mean):
-            self._mean = Variable(
-                value=mean,
+        if not isnode(loc):
+            self._loc = Variable(
+                value=loc,
                 name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
-            self._mean = mean
+            self._loc = loc
         if not isnode(std):
-            self._std = Variable(
+            self._scale = Variable(
                 value=std,
                 name=self.name + DEFAULT_LOGNORMAL_SCALE_SUFFIX,
                 G=self.G)
         else:
-            self._std = std
+            self._scale = std
 
         # Set graph with parents
-        self.add_parent(self._mean)
-        self.add_parent(self._std)
+        self.add_parent(self._loc)
+        self.add_parent(self._scale)
 
     @property
-    def mean(self):
-        return self._mean
+    def loc(self):
+        return self._loc
 
     @property
-    def std(self):
-        return self._std
+    def scale(self):
+        return self._scale
 
     def mode(self):
-        return self._mean.value
+        return self._loc.value
 
     def sample(self, size=None):
-        &#39;&#39;&#39;Sample the distirbution given `self.mean` and `self.var`
+        &#39;&#39;&#39;Sample the distirbution
 
         Parameters
         ----------
@@ -2900,14 +2894,13 @@ specified, then use the current value</p>
         float
         &#39;&#39;&#39;
         self.value = random.lognormal.sample(
-            mean=self._mean.value, 
-            std=self._std.value,
+            loc=self._loc.value, 
+            scale=self._scale.value,
             size=size)
         return self.value
 
     def pdf(self, value=None):
-        &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.mean`, and `self.var`.
-        If `value` is provided we use `value` instead of `self.value`.
+        &#39;&#39;&#39;Calculate the pdf
 
         Parameters
         ----------
@@ -2920,12 +2913,11 @@ specified, then use the current value</p>
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.lognormal.pdf(value=value, mean=self._mean.value,
-            std=self._std.value)
+        return random.lognormal.pdf(value=value, loc=self._loc.value,
+            scale=self._scale.value)
 
     def logpdf(self, value=None):
-        &#39;&#39;&#39;Calculate the logpdf given `self.value`, `self.mean`, and `self.var`.
-        If `value` is provided we use `value` instead of `self.value`.
+        &#39;&#39;&#39;Calculate the logpdf
 
         Parameters
         ----------
@@ -2938,12 +2930,11 @@ specified, then use the current value</p>
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.lognormal.logpdf(value=value, mean=self._mean.value,
-            std=self._std.value)
+        return random.lognormal.logpdf(value=value, loc=self._loc.value,
+            scale=self._scale.value)
 
     def cdf(self, value=None):
-        &#39;&#39;&#39;Calculate the cdf given `self.value`, `self.mean`, and `self.var`.
-        If `value` is provided we use `value` instead of `self.value`.
+        &#39;&#39;&#39;Calculate the cdf
 
         Parameters
         ----------
@@ -2956,12 +2947,11 @@ specified, then use the current value</p>
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.lognormal.cdf(value=value, mean=self._mean.value,
-            std=self._std.value)
+        return random.lognormal.cdf(value=value, mean=self._loc.value,
+            std=self._scale.value)
 
     def logcdf(self, value=None):
-        &#39;&#39;&#39;Calculate the logcdf given `self.value`, `self.mean`, and `self.var`.
-        If `value` is provided we use `value` instead of `self.value`.
+        &#39;&#39;&#39;Calculate the logcdf
 
         Parameters
         ----------
@@ -2974,8 +2964,8 @@ specified, then use the current value</p>
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.lognormal.logcdf(value=value, mean=self._mean.value,
-            std=self._std.value)</code></pre>
+        return random.lognormal.logcdf(value=value, mean=self._loc.value,
+            std=self._scale.value)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -2989,7 +2979,7 @@ specified, then use the current value</p>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.Lognormal.mean"><code class="name">var <span class="ident">mean</span></code></dt>
+<dt id="mdsine2.pylab.variables.Lognormal.loc"><code class="name">var <span class="ident">loc</span></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -2997,11 +2987,11 @@ specified, then use the current value</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def mean(self):
-    return self._mean</code></pre>
+def loc(self):
+    return self._loc</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.Lognormal.std"><code class="name">var <span class="ident">std</span></code></dt>
+<dt id="mdsine2.pylab.variables.Lognormal.scale"><code class="name">var <span class="ident">scale</span></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -3009,8 +2999,8 @@ def mean(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def std(self):
-    return self._std</code></pre>
+def scale(self):
+    return self._scale</code></pre>
 </details>
 </dd>
 </dl>
@@ -3020,8 +3010,7 @@ def std(self):
 <span>def <span class="ident">cdf</span></span>(<span>self, value=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the cdf given <code>self.value</code>, <code>self.mean</code>, and <code>self.var</code>.
-If <code>value</code> is provided we use <code>value</code> instead of <code>self.value</code>.</p>
+<div class="desc"><p>Calculate the cdf</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>value</code></strong> :&ensp;<code>float, int, None</code></dt>
@@ -3037,8 +3026,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def cdf(self, value=None):
-    &#39;&#39;&#39;Calculate the cdf given `self.value`, `self.mean`, and `self.var`.
-    If `value` is provided we use `value` instead of `self.value`.
+    &#39;&#39;&#39;Calculate the cdf
 
     Parameters
     ----------
@@ -3051,16 +3039,15 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
     &#39;&#39;&#39;
     if value is None:
         value = self.value
-    return random.lognormal.cdf(value=value, mean=self._mean.value,
-        std=self._std.value)</code></pre>
+    return random.lognormal.cdf(value=value, mean=self._loc.value,
+        std=self._scale.value)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Lognormal.logcdf"><code class="name flex">
 <span>def <span class="ident">logcdf</span></span>(<span>self, value=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the logcdf given <code>self.value</code>, <code>self.mean</code>, and <code>self.var</code>.
-If <code>value</code> is provided we use <code>value</code> instead of <code>self.value</code>.</p>
+<div class="desc"><p>Calculate the logcdf</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>value</code></strong> :&ensp;<code>float, int, None</code></dt>
@@ -3076,8 +3063,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def logcdf(self, value=None):
-    &#39;&#39;&#39;Calculate the logcdf given `self.value`, `self.mean`, and `self.var`.
-    If `value` is provided we use `value` instead of `self.value`.
+    &#39;&#39;&#39;Calculate the logcdf
 
     Parameters
     ----------
@@ -3090,16 +3076,15 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
     &#39;&#39;&#39;
     if value is None:
         value = self.value
-    return random.lognormal.logcdf(value=value, mean=self._mean.value,
-        std=self._std.value)</code></pre>
+    return random.lognormal.logcdf(value=value, mean=self._loc.value,
+        std=self._scale.value)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Lognormal.logpdf"><code class="name flex">
 <span>def <span class="ident">logpdf</span></span>(<span>self, value=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the logpdf given <code>self.value</code>, <code>self.mean</code>, and <code>self.var</code>.
-If <code>value</code> is provided we use <code>value</code> instead of <code>self.value</code>.</p>
+<div class="desc"><p>Calculate the logpdf</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>value</code></strong> :&ensp;<code>float, int, None</code></dt>
@@ -3115,8 +3100,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def logpdf(self, value=None):
-    &#39;&#39;&#39;Calculate the logpdf given `self.value`, `self.mean`, and `self.var`.
-    If `value` is provided we use `value` instead of `self.value`.
+    &#39;&#39;&#39;Calculate the logpdf
 
     Parameters
     ----------
@@ -3129,8 +3113,8 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
     &#39;&#39;&#39;
     if value is None:
         value = self.value
-    return random.lognormal.logpdf(value=value, mean=self._mean.value,
-        std=self._std.value)</code></pre>
+    return random.lognormal.logpdf(value=value, loc=self._loc.value,
+        scale=self._scale.value)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Lognormal.mode"><code class="name flex">
@@ -3143,15 +3127,14 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def mode(self):
-    return self._mean.value</code></pre>
+    return self._loc.value</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Lognormal.pdf"><code class="name flex">
 <span>def <span class="ident">pdf</span></span>(<span>self, value=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the pdf given <code>self.value</code>, <code>self.mean</code>, and <code>self.var</code>.
-If <code>value</code> is provided we use <code>value</code> instead of <code>self.value</code>.</p>
+<div class="desc"><p>Calculate the pdf</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>value</code></strong> :&ensp;<code>float, int, None</code></dt>
@@ -3167,8 +3150,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def pdf(self, value=None):
-    &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.mean`, and `self.var`.
-    If `value` is provided we use `value` instead of `self.value`.
+    &#39;&#39;&#39;Calculate the pdf
 
     Parameters
     ----------
@@ -3181,15 +3163,15 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
     &#39;&#39;&#39;
     if value is None:
         value = self.value
-    return random.lognormal.pdf(value=value, mean=self._mean.value,
-        std=self._std.value)</code></pre>
+    return random.lognormal.pdf(value=value, loc=self._loc.value,
+        scale=self._scale.value)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Lognormal.sample"><code class="name flex">
 <span>def <span class="ident">sample</span></span>(<span>self, size=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Sample the distirbution given <code>self.mean</code> and <code>self.var</code></p>
+<div class="desc"><p>Sample the distirbution</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>size</code></strong> :&ensp;<code>int, None, Optional</code></dt>
@@ -3205,7 +3187,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def sample(self, size=None):
-    &#39;&#39;&#39;Sample the distirbution given `self.mean` and `self.var`
+    &#39;&#39;&#39;Sample the distirbution
 
     Parameters
     ----------
@@ -3217,8 +3199,8 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
     float
     &#39;&#39;&#39;
     self.value = random.lognormal.sample(
-        mean=self._mean.value, 
-        std=self._std.value,
+        loc=self._loc.value, 
+        scale=self._scale.value,
         size=size)
     return self.value</code></pre>
 </details>
@@ -3692,15 +3674,16 @@ def p(self):
 </dd>
 <dt id="mdsine2.pylab.variables.Normal"><code class="flex name class">
 <span>class <span class="ident">Normal</span></span>
-<span>(</span><span>mean=None, var=None, **kwargs)</span>
+<span>(</span><span>loc=None, scale2=None, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Scalar normal variable parameterized by the mean and variance</p>
+<div class="desc"><p>Scalar normal variable parameterized by the loc (mean) and scale2
+(variance)</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>mean</code></strong> :&ensp;<code>float, int</code></dt>
+<dt><strong><code>loc</code></strong> :&ensp;<code>float, int</code></dt>
 <dd>This is the mean of the distribution</dd>
-<dt><strong><code>var</code></strong> :&ensp;<code>float, int</code></dt>
+<dt><strong><code>scale2</code></strong> :&ensp;<code>float, int</code></dt>
 <dd>This is the variance of the distribution</dd>
 <dt><strong><code>kwargs</code></strong> :&ensp;<code>dict</code></dt>
 <dd>These are extra parameters for the Node class</dd>
@@ -3710,57 +3693,63 @@ def p(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Normal(Variable, _RandomBase):
-    &#39;&#39;&#39;Scalar normal variable parameterized by the mean and variance
+    &#39;&#39;&#39;Scalar normal variable parameterized by the loc (mean) and scale2
+    (variance)
 
     Parameters
     ----------
-    mean : float, int
+    loc : float, int
         This is the mean of the distribution
-    var : float, int
+    scale2 : float, int
         This is the variance of the distribution
     kwargs : dict
         These are extra parameters for the Node class
     &#39;&#39;&#39;
-    def __init__(self, mean=None, var=None, **kwargs):
+    def __init__(self, loc=None, scale2=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
-        if not isnode(mean):
-            self._mean = Variable(
-                value=mean,
+        if not isnode(loc):
+            self._loc = Variable(
+                value=loc,
                 name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
-            self._mean = mean
-        if not isnode(var):
-            self._var = Variable(
-                value=var,
+            self._loc = loc
+        if not isnode(scale2):
+            self._scale2 = Variable(
+                value=scale2,
                 name=self.name + DEFAULT_NORMAL_SCALE2_SUFFIX,
                 G=self.G)
         else:
-            self._var = var
+            self._scale2 = scale2
 
         # Set graph with parents
-        self.add_parent(self._mean)
-        self.add_parent(self._var)
+        self.add_parent(self._loc)
+        self.add_parent(self._scale2)
 
     @property
-    def mean(self):
-        return self._mean
+    def loc(self):
+        return self._loc
 
     @property
-    def var(self):
-        return self._var
+    def scale2(self):
+        return self._scale2
 
-    @property
     def std(self):
-        return np.sqrt(self._var.value)
+        return np.sqrt(self._scale2.value)
 
     def mode(self):
-        return self._mean.value
+        return self._loc.value
+
+    def mean(self):
+        return self._loc.value
+
+    def variance(self):
+        return self._scale2.value
 
     def sample(self, size=None):
-        &#39;&#39;&#39;Sample the distirbution given `self.mean` and `self.var`
+        &#39;&#39;&#39;Sample the distirbution given `self.loc` and `self.sca;e2`
 
         Parameters
         ----------
@@ -3772,13 +3761,13 @@ def p(self):
         float
         &#39;&#39;&#39;
         self.value = random.normal.sample(
-            mean=self._mean.value, 
-            std=np.sqrt(self._var.value),
+            loc=self._loc.value, 
+            scale=np.sqrt(self._scale2.value),
             size=size)
         return self.value
 
     def pdf(self, value=None):
-        &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.mean`, and `self.var`.
+        &#39;&#39;&#39;Calculate the pdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
         Parameters
@@ -3792,11 +3781,11 @@ def p(self):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.normal.pdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value))
+        return random.normal.pdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value))
 
     def logpdf(self, value=None):
-        &#39;&#39;&#39;Calculate the logpdf given `self.value`, `self.mean`, and `self.var`.
+        &#39;&#39;&#39;Calculate the logpdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
         Parameters
@@ -3810,11 +3799,11 @@ def p(self):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.normal.logpdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value))
+        return random.normal.logpdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value))
 
     def cdf(self, value=None):
-        &#39;&#39;&#39;Calculate the cdf given `self.value`, `self.mean`, and `self.var`.
+        &#39;&#39;&#39;Calculate the cdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
         Parameters
@@ -3828,11 +3817,11 @@ def p(self):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.normal.cdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value))
+        return random.normal.cdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value))
 
     def logcdf(self, value=None):
-        &#39;&#39;&#39;Calculate the logcdf given `self.value`, `self.mean`, and `self.var`.
+        &#39;&#39;&#39;Calculate the logcdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
         Parameters
@@ -3846,8 +3835,8 @@ def p(self):
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.normal.logcdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value))</code></pre>
+        return random.normal.logcdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value))</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -3867,7 +3856,7 @@ def p(self):
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.Normal.mean"><code class="name">var <span class="ident">mean</span></code></dt>
+<dt id="mdsine2.pylab.variables.Normal.loc"><code class="name">var <span class="ident">loc</span></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -3875,11 +3864,11 @@ def p(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def mean(self):
-    return self._mean</code></pre>
+def loc(self):
+    return self._loc</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.Normal.std"><code class="name">var <span class="ident">std</span></code></dt>
+<dt id="mdsine2.pylab.variables.Normal.scale2"><code class="name">var <span class="ident">scale2</span></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -3887,20 +3876,8 @@ def mean(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def std(self):
-    return np.sqrt(self._var.value)</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.variables.Normal.var"><code class="name">var <span class="ident">var</span></code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@property
-def var(self):
-    return self._var</code></pre>
+def scale2(self):
+    return self._scale2</code></pre>
 </details>
 </dd>
 </dl>
@@ -3910,7 +3887,7 @@ def var(self):
 <span>def <span class="ident">cdf</span></span>(<span>self, value=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the cdf given <code>self.value</code>, <code>self.mean</code>, and <code>self.var</code>.
+<div class="desc"><p>Calculate the cdf given the internal parameters.
 If <code>value</code> is provided we use <code>value</code> instead of <code>self.value</code>.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
@@ -3927,7 +3904,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def cdf(self, value=None):
-    &#39;&#39;&#39;Calculate the cdf given `self.value`, `self.mean`, and `self.var`.
+    &#39;&#39;&#39;Calculate the cdf given the internal parameters.
     If `value` is provided we use `value` instead of `self.value`.
 
     Parameters
@@ -3941,15 +3918,15 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
     &#39;&#39;&#39;
     if value is None:
         value = self.value
-    return random.normal.cdf(value=value, mean=self._mean.value,
-        std=np.sqrt(self._var.value))</code></pre>
+    return random.normal.cdf(value=value, loc=self._loc.value,
+        scale=np.sqrt(self._scale2.value))</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Normal.logcdf"><code class="name flex">
 <span>def <span class="ident">logcdf</span></span>(<span>self, value=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the logcdf given <code>self.value</code>, <code>self.mean</code>, and <code>self.var</code>.
+<div class="desc"><p>Calculate the logcdf given the internal parameters.
 If <code>value</code> is provided we use <code>value</code> instead of <code>self.value</code>.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
@@ -3966,7 +3943,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def logcdf(self, value=None):
-    &#39;&#39;&#39;Calculate the logcdf given `self.value`, `self.mean`, and `self.var`.
+    &#39;&#39;&#39;Calculate the logcdf given the internal parameters.
     If `value` is provided we use `value` instead of `self.value`.
 
     Parameters
@@ -3980,15 +3957,15 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
     &#39;&#39;&#39;
     if value is None:
         value = self.value
-    return random.normal.logcdf(value=value, mean=self._mean.value,
-        std=np.sqrt(self._var.value))</code></pre>
+    return random.normal.logcdf(value=value, loc=self._loc.value,
+        scale=np.sqrt(self._scale2.value))</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Normal.logpdf"><code class="name flex">
 <span>def <span class="ident">logpdf</span></span>(<span>self, value=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the logpdf given <code>self.value</code>, <code>self.mean</code>, and <code>self.var</code>.
+<div class="desc"><p>Calculate the logpdf given the internal parameters.
 If <code>value</code> is provided we use <code>value</code> instead of <code>self.value</code>.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
@@ -4005,7 +3982,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def logpdf(self, value=None):
-    &#39;&#39;&#39;Calculate the logpdf given `self.value`, `self.mean`, and `self.var`.
+    &#39;&#39;&#39;Calculate the logpdf given the internal parameters.
     If `value` is provided we use `value` instead of `self.value`.
 
     Parameters
@@ -4019,8 +3996,21 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
     &#39;&#39;&#39;
     if value is None:
         value = self.value
-    return random.normal.logpdf(value=value, mean=self._mean.value,
-        std=np.sqrt(self._var.value))</code></pre>
+    return random.normal.logpdf(value=value, loc=self._loc.value,
+        scale=np.sqrt(self._scale2.value))</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.variables.Normal.mean"><code class="name flex">
+<span>def <span class="ident">mean</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def mean(self):
+    return self._loc.value</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Normal.mode"><code class="name flex">
@@ -4033,14 +4023,14 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def mode(self):
-    return self._mean.value</code></pre>
+    return self._loc.value</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Normal.pdf"><code class="name flex">
 <span>def <span class="ident">pdf</span></span>(<span>self, value=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the pdf given <code>self.value</code>, <code>self.mean</code>, and <code>self.var</code>.
+<div class="desc"><p>Calculate the pdf given the internal parameters.
 If <code>value</code> is provided we use <code>value</code> instead of <code>self.value</code>.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
@@ -4057,7 +4047,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def pdf(self, value=None):
-    &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.mean`, and `self.var`.
+    &#39;&#39;&#39;Calculate the pdf given the internal parameters.
     If `value` is provided we use `value` instead of `self.value`.
 
     Parameters
@@ -4071,15 +4061,15 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
     &#39;&#39;&#39;
     if value is None:
         value = self.value
-    return random.normal.pdf(value=value, mean=self._mean.value,
-        std=np.sqrt(self._var.value))</code></pre>
+    return random.normal.pdf(value=value, loc=self._loc.value,
+        scale=np.sqrt(self._scale2.value))</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Normal.sample"><code class="name flex">
 <span>def <span class="ident">sample</span></span>(<span>self, size=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Sample the distirbution given <code>self.mean</code> and <code>self.var</code></p>
+<div class="desc"><p>Sample the distirbution given <code>self.loc</code> and <code>self.sca;e2</code></p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>size</code></strong> :&ensp;<code>int, None, Optional</code></dt>
@@ -4095,7 +4085,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def sample(self, size=None):
-    &#39;&#39;&#39;Sample the distirbution given `self.mean` and `self.var`
+    &#39;&#39;&#39;Sample the distirbution given `self.loc` and `self.sca;e2`
 
     Parameters
     ----------
@@ -4107,10 +4097,36 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
     float
     &#39;&#39;&#39;
     self.value = random.normal.sample(
-        mean=self._mean.value, 
-        std=np.sqrt(self._var.value),
+        loc=self._loc.value, 
+        scale=np.sqrt(self._scale2.value),
         size=size)
     return self.value</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.variables.Normal.std"><code class="name flex">
+<span>def <span class="ident">std</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def std(self):
+    return np.sqrt(self._scale2.value)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.variables.Normal.variance"><code class="name flex">
+<span>def <span class="ident">variance</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def variance(self):
+    return self._scale2.value</code></pre>
 </details>
 </dd>
 </dl>
@@ -4495,16 +4511,17 @@ single sample.</dd>
 </dd>
 <dt id="mdsine2.pylab.variables.TruncatedNormal"><code class="flex name class">
 <span>class <span class="ident">TruncatedNormal</span></span>
-<span>(</span><span>mean, var, low=None, high=None, **kwargs)</span>
+<span>(</span><span>loc, scale2, low=None, high=None, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Scalar truncated normal variable parameterized by the mean, variance,
+<div class="desc"><p>Scalar truncated normal variable parameterized by the mean <code>loc</code>,
+variance <code>scale2</code>,
 low, and high</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>mean</code></strong> :&ensp;<code>float, int</code></dt>
+<dt><strong><code>loc</code></strong> :&ensp;<code>float, int</code></dt>
 <dd>This is the mean of the distribution</dd>
-<dt><strong><code>var</code></strong> :&ensp;<code>float, int</code></dt>
+<dt><strong><code>scale2</code></strong> :&ensp;<code>float, int</code></dt>
 <dd>This is the variance of the distribution</dd>
 <dt><strong><code>low</code></strong> :&ensp;<code>float, int</code></dt>
 <dd>This is the lowest value that can be sampled</dd>
@@ -4518,14 +4535,15 @@ low, and high</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class TruncatedNormal(Variable, _RandomBase):
-    &#39;&#39;&#39;Scalar truncated normal variable parameterized by the mean, variance,
+    &#39;&#39;&#39;Scalar truncated normal variable parameterized by the mean `loc`, 
+    variance `scale2`,
     low, and high
 
     Parameters
     ----------
-    mean : float, int
+    loc : float, int
         This is the mean of the distribution
-    var : float, int
+    scale2 : float, int
         This is the variance of the distribution
     low : float, int
         This is the lowest value that can be sampled
@@ -4534,7 +4552,7 @@ low, and high</p>
     kwargs : dict
         These are extra parameters for the Node class
     &#39;&#39;&#39;
-    def __init__(self, mean, var, low=None, high=None, **kwargs):
+    def __init__(self, loc, scale2, low=None, high=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         if low is None:
@@ -4546,51 +4564,50 @@ low, and high</p>
                 low,high))
 
         # Wrap parameters in nodes
-        if not isnode(mean):
-            self._mean = Variable(
-                value=mean,
+        if not isnode(loc):
+            self._loc = Variable(
+                value=loc,
                 name=self.name + DEFAULT_NORMAL_LOC_SUFFIX,
                 G=self.G)
         else:
-            self._mean = mean
-        if not isnode(var):
-            self._var = Variable(
-                value=var,
+            self._loc = loc
+        if not isnode(scale2):
+            self._scale2 = Variable(
+                value=scale2,
                 name=self.name + DEFAULT_NORMAL_SCALE2_SUFFIX,
                 G=self.G)
         else:
-            self._var = var
+            self._scale2 = scale2
 
         self.low=low
         self.high=high
 
         # Set graph with parents
-        self.add_parent(self._mean)
-        self.add_parent(self._var)
+        self.add_parent(self._loc)
+        self.add_parent(self._scale2)
 
     @property
-    def mean(self):
-        return self._mean
+    def loc(self):
+        return self._loc
 
     @property
-    def var(self):
-        return self._var
+    def scale2(self):
+        return self._scale2
 
     @property
-    def std(self):
-        return np.sqrt(self._var.value)
+    def scale(self):
+        return np.sqrt(self._scale2.value)
 
     def mode(self):
-        if self.low &lt;= self.mean and self.mean &lt;= self.high:
-            return self.mean
-        elif self.mean &lt; self.low:
+        if self.low &lt;= self.loc and self.loc &lt;= self.high:
+            return self.loc
+        elif self.loc &lt; self.low:
             return self.low
         else:
             return self.high
 
     def sample(self, size=None):
-        &#39;&#39;&#39;Sample the distirbution given `self.mean`, `self.var`, 
-        `self.low`, and `self.high`
+        &#39;&#39;&#39;Sample the distirbution given the current parameters
 
         Parameters
         ----------
@@ -4604,16 +4621,14 @@ low, and high</p>
         self.value = random.truncnormal.sample(
             low=self.low,
             high=self.high,
-            mean=self._mean.value,
-            std=np.sqrt(self._var.value),
+            loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value),
             size=size)
 
         return self.value
 
     def pdf(self, value=None):
-        &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.mean`, `self.var`, 
-        `self.low` and `self.high`. If `value` is provided we use `value` 
-        instead of `self.value`.
+        &#39;&#39;&#39;Calculate the pdf given the current parameters.
 
         Parameters
         ----------
@@ -4626,13 +4641,11 @@ low, and high</p>
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.truncnormal.pdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value), low=self.low, high=self.high)
+        return random.truncnormal.pdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
     def logpdf(self, value=None):
-        &#39;&#39;&#39;Calculate the logpdf given `self.value`, `self.mean`, `self.var`, 
-        `self.low` and `self.high`. If `value` is provided we use `value` 
-        instead of `self.value`.
+        &#39;&#39;&#39;Calculate the logpdf given the current parameters.
 
         Parameters
         ----------
@@ -4645,13 +4658,11 @@ low, and high</p>
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.truncnormal.logpdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value), low=self.low, high=self.high)
+        return random.truncnormal.logpdf(value=value, loc=self._loc.value,
+            scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
     def cdf(self, value=None):
-        &#39;&#39;&#39;Calculate the cdf given `self.value`, `self.mean`, `self.var`, 
-        `self.low` and `self.high`. If `value` is provided we use `value` 
-        instead of `self.value`.
+        &#39;&#39;&#39;Calculate the cdf given the current parameters.
 
         Parameters
         ----------
@@ -4664,13 +4675,11 @@ low, and high</p>
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.truncnormal.cdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value), low=self.low, high=self.high)
+        return random.truncnormal.cdf(value=value, mean=self._loc.value,
+            std=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
     def logcdf(self, value=None):
-        &#39;&#39;&#39;Calculate the logcdf given `self.value`, `self.mean`, `self.var`, 
-        `self.low` and `self.high`. If `value` is provided we use `value` 
-        instead of `self.value`.
+        &#39;&#39;&#39;Calculate the logcdf given the current parameters.
 
         Parameters
         ----------
@@ -4683,8 +4692,8 @@ low, and high</p>
         &#39;&#39;&#39;
         if value is None:
             value = self.value
-        return random.truncnormal.logcdf(value=value, mean=self._mean.value,
-            std=np.sqrt(self._var.value), low=self.low, high=self.high)</code></pre>
+        return random.truncnormal.logcdf(value=value, mean=self._loc.value,
+            std=np.sqrt(self._scale2.value), low=self.low, high=self.high)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -4704,7 +4713,7 @@ low, and high</p>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.TruncatedNormal.mean"><code class="name">var <span class="ident">mean</span></code></dt>
+<dt id="mdsine2.pylab.variables.TruncatedNormal.loc"><code class="name">var <span class="ident">loc</span></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -4712,11 +4721,11 @@ low, and high</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def mean(self):
-    return self._mean</code></pre>
+def loc(self):
+    return self._loc</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.TruncatedNormal.std"><code class="name">var <span class="ident">std</span></code></dt>
+<dt id="mdsine2.pylab.variables.TruncatedNormal.scale"><code class="name">var <span class="ident">scale</span></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -4724,11 +4733,11 @@ def mean(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def std(self):
-    return np.sqrt(self._var.value)</code></pre>
+def scale(self):
+    return np.sqrt(self._scale2.value)</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.TruncatedNormal.var"><code class="name">var <span class="ident">var</span></code></dt>
+<dt id="mdsine2.pylab.variables.TruncatedNormal.scale2"><code class="name">var <span class="ident">scale2</span></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -4736,8 +4745,8 @@ def std(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def var(self):
-    return self._var</code></pre>
+def scale2(self):
+    return self._scale2</code></pre>
 </details>
 </dd>
 </dl>
@@ -4747,9 +4756,7 @@ def var(self):
 <span>def <span class="ident">cdf</span></span>(<span>self, value=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the cdf given <code>self.value</code>, <code>self.mean</code>, <code>self.var</code>,
-<code>self.low</code> and <code>self.high</code>. If <code>value</code> is provided we use <code>value</code>
-instead of <code>self.value</code>.</p>
+<div class="desc"><p>Calculate the cdf given the current parameters.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>value</code></strong> :&ensp;<code>float, int, None</code></dt>
@@ -4765,9 +4772,7 @@ instead of <code>self.value</code>.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def cdf(self, value=None):
-    &#39;&#39;&#39;Calculate the cdf given `self.value`, `self.mean`, `self.var`, 
-    `self.low` and `self.high`. If `value` is provided we use `value` 
-    instead of `self.value`.
+    &#39;&#39;&#39;Calculate the cdf given the current parameters.
 
     Parameters
     ----------
@@ -4780,17 +4785,15 @@ instead of <code>self.value</code>.</p>
     &#39;&#39;&#39;
     if value is None:
         value = self.value
-    return random.truncnormal.cdf(value=value, mean=self._mean.value,
-        std=np.sqrt(self._var.value), low=self.low, high=self.high)</code></pre>
+    return random.truncnormal.cdf(value=value, mean=self._loc.value,
+        std=np.sqrt(self._scale2.value), low=self.low, high=self.high)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.TruncatedNormal.logcdf"><code class="name flex">
 <span>def <span class="ident">logcdf</span></span>(<span>self, value=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the logcdf given <code>self.value</code>, <code>self.mean</code>, <code>self.var</code>,
-<code>self.low</code> and <code>self.high</code>. If <code>value</code> is provided we use <code>value</code>
-instead of <code>self.value</code>.</p>
+<div class="desc"><p>Calculate the logcdf given the current parameters.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>value</code></strong> :&ensp;<code>float, int, None</code></dt>
@@ -4806,9 +4809,7 @@ instead of <code>self.value</code>.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def logcdf(self, value=None):
-    &#39;&#39;&#39;Calculate the logcdf given `self.value`, `self.mean`, `self.var`, 
-    `self.low` and `self.high`. If `value` is provided we use `value` 
-    instead of `self.value`.
+    &#39;&#39;&#39;Calculate the logcdf given the current parameters.
 
     Parameters
     ----------
@@ -4821,17 +4822,15 @@ instead of <code>self.value</code>.</p>
     &#39;&#39;&#39;
     if value is None:
         value = self.value
-    return random.truncnormal.logcdf(value=value, mean=self._mean.value,
-        std=np.sqrt(self._var.value), low=self.low, high=self.high)</code></pre>
+    return random.truncnormal.logcdf(value=value, mean=self._loc.value,
+        std=np.sqrt(self._scale2.value), low=self.low, high=self.high)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.TruncatedNormal.logpdf"><code class="name flex">
 <span>def <span class="ident">logpdf</span></span>(<span>self, value=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the logpdf given <code>self.value</code>, <code>self.mean</code>, <code>self.var</code>,
-<code>self.low</code> and <code>self.high</code>. If <code>value</code> is provided we use <code>value</code>
-instead of <code>self.value</code>.</p>
+<div class="desc"><p>Calculate the logpdf given the current parameters.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>value</code></strong> :&ensp;<code>float, int, None</code></dt>
@@ -4847,9 +4846,7 @@ instead of <code>self.value</code>.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def logpdf(self, value=None):
-    &#39;&#39;&#39;Calculate the logpdf given `self.value`, `self.mean`, `self.var`, 
-    `self.low` and `self.high`. If `value` is provided we use `value` 
-    instead of `self.value`.
+    &#39;&#39;&#39;Calculate the logpdf given the current parameters.
 
     Parameters
     ----------
@@ -4862,8 +4859,8 @@ instead of <code>self.value</code>.</p>
     &#39;&#39;&#39;
     if value is None:
         value = self.value
-    return random.truncnormal.logpdf(value=value, mean=self._mean.value,
-        std=np.sqrt(self._var.value), low=self.low, high=self.high)</code></pre>
+    return random.truncnormal.logpdf(value=value, loc=self._loc.value,
+        scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.TruncatedNormal.mode"><code class="name flex">
@@ -4876,9 +4873,9 @@ instead of <code>self.value</code>.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def mode(self):
-    if self.low &lt;= self.mean and self.mean &lt;= self.high:
-        return self.mean
-    elif self.mean &lt; self.low:
+    if self.low &lt;= self.loc and self.loc &lt;= self.high:
+        return self.loc
+    elif self.loc &lt; self.low:
         return self.low
     else:
         return self.high</code></pre>
@@ -4888,9 +4885,7 @@ instead of <code>self.value</code>.</p>
 <span>def <span class="ident">pdf</span></span>(<span>self, value=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the pdf given <code>self.value</code>, <code>self.mean</code>, <code>self.var</code>,
-<code>self.low</code> and <code>self.high</code>. If <code>value</code> is provided we use <code>value</code>
-instead of <code>self.value</code>.</p>
+<div class="desc"><p>Calculate the pdf given the current parameters.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>value</code></strong> :&ensp;<code>float, int, None</code></dt>
@@ -4906,9 +4901,7 @@ instead of <code>self.value</code>.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def pdf(self, value=None):
-    &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.mean`, `self.var`, 
-    `self.low` and `self.high`. If `value` is provided we use `value` 
-    instead of `self.value`.
+    &#39;&#39;&#39;Calculate the pdf given the current parameters.
 
     Parameters
     ----------
@@ -4921,16 +4914,15 @@ instead of <code>self.value</code>.</p>
     &#39;&#39;&#39;
     if value is None:
         value = self.value
-    return random.truncnormal.pdf(value=value, mean=self._mean.value,
-        std=np.sqrt(self._var.value), low=self.low, high=self.high)</code></pre>
+    return random.truncnormal.pdf(value=value, loc=self._loc.value,
+        scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.TruncatedNormal.sample"><code class="name flex">
 <span>def <span class="ident">sample</span></span>(<span>self, size=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Sample the distirbution given <code>self.mean</code>, <code>self.var</code>,
-<code>self.low</code>, and <code>self.high</code></p>
+<div class="desc"><p>Sample the distirbution given the current parameters</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>size</code></strong> :&ensp;<code>int, None, Optional</code></dt>
@@ -4946,8 +4938,7 @@ instead of <code>self.value</code>.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def sample(self, size=None):
-    &#39;&#39;&#39;Sample the distirbution given `self.mean`, `self.var`, 
-    `self.low`, and `self.high`
+    &#39;&#39;&#39;Sample the distirbution given the current parameters
 
     Parameters
     ----------
@@ -4961,8 +4952,8 @@ instead of <code>self.value</code>.</p>
     self.value = random.truncnormal.sample(
         low=self.low,
         high=self.high,
-        mean=self._mean.value,
-        std=np.sqrt(self._var.value),
+        loc=self._loc.value,
+        scale=np.sqrt(self._scale2.value),
         size=size)
 
     return self.value</code></pre>
@@ -5609,7 +5600,7 @@ These are the extra parameters for the Node class</p></div>
 <li><a title="mdsine2.posterior.PriorMeanPerturbations" href="../posterior.html#mdsine2.posterior.PriorMeanPerturbations">PriorMeanPerturbations</a></li>
 <li><a title="mdsine2.posterior.PriorVarPerturbations" href="../posterior.html#mdsine2.posterior.PriorVarPerturbations">PriorVarPerturbations</a></li>
 <li>mdsine2.posterior._qPCRBase</li>
-<li><a title="mdsine2.pylab.contrib.ClusterPerturbation" href="contrib.html#mdsine2.pylab.contrib.ClusterPerturbation">ClusterPerturbation</a></li>
+<li><a title="mdsine2.pylab.contrib.ClusterPerturbationEffect" href="contrib.html#mdsine2.pylab.contrib.ClusterPerturbationEffect">ClusterPerturbationEffect</a></li>
 <li><a title="mdsine2.pylab.contrib.Perturbation" href="contrib.html#mdsine2.pylab.contrib.Perturbation">Perturbation</a></li>
 <li><a title="mdsine2.pylab.variables.Bernoulli" href="#mdsine2.pylab.variables.Bernoulli">Bernoulli</a></li>
 <li><a title="mdsine2.pylab.variables.Beta" href="#mdsine2.pylab.variables.Beta">Beta</a></li>
@@ -5796,13 +5787,13 @@ def T(self):
 <h4><code><a title="mdsine2.pylab.variables.Lognormal" href="#mdsine2.pylab.variables.Lognormal">Lognormal</a></code></h4>
 <ul class="two-column">
 <li><code><a title="mdsine2.pylab.variables.Lognormal.cdf" href="#mdsine2.pylab.variables.Lognormal.cdf">cdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Lognormal.loc" href="#mdsine2.pylab.variables.Lognormal.loc">loc</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Lognormal.logcdf" href="#mdsine2.pylab.variables.Lognormal.logcdf">logcdf</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Lognormal.logpdf" href="#mdsine2.pylab.variables.Lognormal.logpdf">logpdf</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Lognormal.mean" href="#mdsine2.pylab.variables.Lognormal.mean">mean</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Lognormal.mode" href="#mdsine2.pylab.variables.Lognormal.mode">mode</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Lognormal.pdf" href="#mdsine2.pylab.variables.Lognormal.pdf">pdf</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Lognormal.sample" href="#mdsine2.pylab.variables.Lognormal.sample">sample</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Lognormal.std" href="#mdsine2.pylab.variables.Lognormal.std">std</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Lognormal.scale" href="#mdsine2.pylab.variables.Lognormal.scale">scale</a></code></li>
 </ul>
 </li>
 <li>
@@ -5830,14 +5821,16 @@ def T(self):
 <h4><code><a title="mdsine2.pylab.variables.Normal" href="#mdsine2.pylab.variables.Normal">Normal</a></code></h4>
 <ul class="two-column">
 <li><code><a title="mdsine2.pylab.variables.Normal.cdf" href="#mdsine2.pylab.variables.Normal.cdf">cdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Normal.loc" href="#mdsine2.pylab.variables.Normal.loc">loc</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Normal.logcdf" href="#mdsine2.pylab.variables.Normal.logcdf">logcdf</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Normal.logpdf" href="#mdsine2.pylab.variables.Normal.logpdf">logpdf</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Normal.mean" href="#mdsine2.pylab.variables.Normal.mean">mean</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Normal.mode" href="#mdsine2.pylab.variables.Normal.mode">mode</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Normal.pdf" href="#mdsine2.pylab.variables.Normal.pdf">pdf</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Normal.sample" href="#mdsine2.pylab.variables.Normal.sample">sample</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Normal.scale2" href="#mdsine2.pylab.variables.Normal.scale2">scale2</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.Normal.std" href="#mdsine2.pylab.variables.Normal.std">std</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Normal.var" href="#mdsine2.pylab.variables.Normal.var">var</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.Normal.variance" href="#mdsine2.pylab.variables.Normal.variance">variance</a></code></li>
 </ul>
 </li>
 <li>
@@ -5856,14 +5849,14 @@ def T(self):
 <h4><code><a title="mdsine2.pylab.variables.TruncatedNormal" href="#mdsine2.pylab.variables.TruncatedNormal">TruncatedNormal</a></code></h4>
 <ul class="two-column">
 <li><code><a title="mdsine2.pylab.variables.TruncatedNormal.cdf" href="#mdsine2.pylab.variables.TruncatedNormal.cdf">cdf</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.TruncatedNormal.loc" href="#mdsine2.pylab.variables.TruncatedNormal.loc">loc</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.TruncatedNormal.logcdf" href="#mdsine2.pylab.variables.TruncatedNormal.logcdf">logcdf</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.TruncatedNormal.logpdf" href="#mdsine2.pylab.variables.TruncatedNormal.logpdf">logpdf</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.TruncatedNormal.mean" href="#mdsine2.pylab.variables.TruncatedNormal.mean">mean</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.TruncatedNormal.mode" href="#mdsine2.pylab.variables.TruncatedNormal.mode">mode</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.TruncatedNormal.pdf" href="#mdsine2.pylab.variables.TruncatedNormal.pdf">pdf</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.TruncatedNormal.sample" href="#mdsine2.pylab.variables.TruncatedNormal.sample">sample</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.TruncatedNormal.std" href="#mdsine2.pylab.variables.TruncatedNormal.std">std</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.TruncatedNormal.var" href="#mdsine2.pylab.variables.TruncatedNormal.var">var</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.TruncatedNormal.scale" href="#mdsine2.pylab.variables.TruncatedNormal.scale">scale</a></code></li>
+<li><code><a title="mdsine2.pylab.variables.TruncatedNormal.scale2" href="#mdsine2.pylab.variables.TruncatedNormal.scale2">scale2</a></code></li>
 </ul>
 </li>
 <li>

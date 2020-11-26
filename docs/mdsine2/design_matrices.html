@@ -812,8 +812,9 @@ class Data(DataNode):
 class ObservationVector(Node):
     &#39;&#39;&#39;This is the left hand side (lhs) vector
     &#39;&#39;&#39;
-    def __init__(self, **kwargs):
-        Node.__init__(self, **kwargs)
+    def __init__(self, name, G):
+        self.G = G
+        self.name = name
         self.G.data.lhs = self
         self.vector = None
 
@@ -826,10 +827,10 @@ class ObservationVector(Node):
         raise NotImplementedError(&#39;You must implement this function&#39;)
 
 
-class DesignMatrix(Node):
+class DesignMatrix:
     &#39;&#39;&#39;This is a covariate class
     &#39;&#39;&#39;
-    def __init__(self, varname, update=False, add_to_dict=True, **kwargs):
+    def __init__(self, varname, G, update=False, add_to_dict=True):
         &#39;&#39;&#39;Parameters
 
         varname (str)
@@ -841,15 +842,16 @@ class DesignMatrix(Node):
             - If True, it adds to the design_matrices dictionary.
             - Else it does not
         &#39;&#39;&#39;
-        kwargs[&#39;name&#39;] = varname + &#39;_design_matrix&#39;
-        Node.__init__(self, **kwargs)
+
+        name = varname + &#39;_design_matrix&#39;
+        self.name = name
+        self.G = G
         self.varname = varname
         if add_to_dict:
-            var_id = self.G[varname].id
-            self.G.data.design_matrices[var_id] = self
+            self.G.data.design_matrices[varname] = self
         self.matrix = None
         if update:
-            self.G.data.toupdate.add(var_id)
+            self.G.data.toupdate.add(varname)
 
     def build(self):
         raise NotImplementedError(&#39;You must implement this function&#39;)
@@ -2728,8 +2730,6 @@ We ignore the change from not being there to being there and vice versa.</dd>
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="mdsine2.pylab.graph.DataNode" href="pylab/graph.html#mdsine2.pylab.graph.DataNode">DataNode</a></li>
-<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -3433,16 +3433,13 @@ aidx: Taxa index (not the same as Taxa name)</p>
 <li><code><b><a title="mdsine2.pylab.graph.DataNode" href="pylab/graph.html#mdsine2.pylab.graph.DataNode">DataNode</a></b></code>:
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.graph.DataNode.delete" href="pylab/graph.html#mdsine2.pylab.graph.DataNode.delete">delete</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.DataNode.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.DataNode.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.DataNode.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 </ul>
 </li>
 </ul>
 </dd>
 <dt id="mdsine2.design_matrices.DesignMatrix"><code class="flex name class">
 <span>class <span class="ident">DesignMatrix</span></span>
-<span>(</span><span>varname, update=False, add_to_dict=True, **kwargs)</span>
+<span>(</span><span>varname, G, update=False, add_to_dict=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This is a covariate class</p>
@@ -3459,10 +3456,10 @@ add_to_dict (bool)
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class DesignMatrix(Node):
+<pre><code class="python">class DesignMatrix:
     &#39;&#39;&#39;This is a covariate class
     &#39;&#39;&#39;
-    def __init__(self, varname, update=False, add_to_dict=True, **kwargs):
+    def __init__(self, varname, G, update=False, add_to_dict=True):
         &#39;&#39;&#39;Parameters
 
         varname (str)
@@ -3474,15 +3471,16 @@ add_to_dict (bool)
             - If True, it adds to the design_matrices dictionary.
             - Else it does not
         &#39;&#39;&#39;
-        kwargs[&#39;name&#39;] = varname + &#39;_design_matrix&#39;
-        Node.__init__(self, **kwargs)
+
+        name = varname + &#39;_design_matrix&#39;
+        self.name = name
+        self.G = G
         self.varname = varname
         if add_to_dict:
-            var_id = self.G[varname].id
-            self.G.data.design_matrices[var_id] = self
+            self.G.data.design_matrices[varname] = self
         self.matrix = None
         if update:
-            self.G.data.toupdate.add(var_id)
+            self.G.data.toupdate.add(varname)
 
     def build(self):
         raise NotImplementedError(&#39;You must implement this function&#39;)
@@ -3516,12 +3514,6 @@ add_to_dict (bool)
         &#39;&#39;&#39;
         return pl.toarray(self.matrix, dest=dest, T=T)</code></pre>
 </details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
-<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
-</ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="mdsine2.design_matrices.GrowthDesignMatrix" href="#mdsine2.design_matrices.GrowthDesignMatrix">GrowthDesignMatrix</a></li>
@@ -3623,24 +3615,6 @@ the shapes are compatible. Else create a new array</dd>
 </details>
 </dd>
 </dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></b></code>:
-<ul class="hlist">
-<li><code><a title="mdsine2.pylab.graph.Node.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.Node.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.Node.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.Node.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.Node.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.Node.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.Node.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.Node.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.Node.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.Node.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.Node.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
-</ul>
-</li>
-</ul>
 </dd>
 <dt id="mdsine2.design_matrices.GrowthDesignMatrix"><code class="flex name class">
 <span>class <span class="ident">GrowthDesignMatrix</span></span>
@@ -3828,9 +3802,6 @@ add_to_dict (bool)
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></li>
-<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
-<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -4035,17 +4006,6 @@ without perturbations</p></div>
 <ul class="hlist">
 <li><code><b><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></b></code>:
 <ul class="hlist">
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.toarray" href="#mdsine2.design_matrices.DesignMatrix.toarray">toarray</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.update_value" href="#mdsine2.design_matrices.DesignMatrix.update_value">update_value</a></code></li>
 </ul>
@@ -4180,9 +4140,6 @@ add_to_dict (bool)
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></li>
-<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
-<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -4245,17 +4202,6 @@ add_to_dict (bool)
 <ul class="hlist">
 <li><code><b><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></b></code>:
 <ul class="hlist">
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.set_to_lhs" href="#mdsine2.design_matrices.DesignMatrix.set_to_lhs">set_to_lhs</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.toarray" href="#mdsine2.design_matrices.DesignMatrix.toarray">toarray</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.update_value" href="#mdsine2.design_matrices.DesignMatrix.update_value">update_value</a></code></li>
@@ -4381,9 +4327,6 @@ add_to_dict (bool)
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></li>
-<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
-<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
 </ul>
 <h3>Instance variables</h3>
 <dl>
@@ -4434,17 +4377,6 @@ def shape(self):
 <ul class="hlist">
 <li><code><b><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></b></code>:
 <ul class="hlist">
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.set_to_lhs" href="#mdsine2.design_matrices.DesignMatrix.set_to_lhs">set_to_lhs</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.toarray" href="#mdsine2.design_matrices.DesignMatrix.toarray">toarray</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.update_value" href="#mdsine2.design_matrices.DesignMatrix.update_value">update_value</a></code></li>
@@ -4796,9 +4728,6 @@ add_to_dict (bool)
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></li>
-<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
-<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
 </ul>
 <h3>Static methods</h3>
 <dl>
@@ -5195,17 +5124,6 @@ of the clusters in <code>cids</code>.</p>
 <ul class="hlist">
 <li><code><b><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></b></code>:
 <ul class="hlist">
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.set_to_lhs" href="#mdsine2.design_matrices.DesignMatrix.set_to_lhs">set_to_lhs</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.toarray" href="#mdsine2.design_matrices.DesignMatrix.toarray">toarray</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.update_value" href="#mdsine2.design_matrices.DesignMatrix.update_value">update_value</a></code></li>
@@ -5421,7 +5339,7 @@ the subject index</dd>
 </dd>
 <dt id="mdsine2.design_matrices.ObservationVector"><code class="flex name class">
 <span>class <span class="ident">ObservationVector</span></span>
-<span>(</span><span>**kwargs)</span>
+<span>(</span><span>name, G)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This is the left hand side (lhs) vector</p></div>
@@ -5432,8 +5350,9 @@ the subject index</dd>
 <pre><code class="python">class ObservationVector(Node):
     &#39;&#39;&#39;This is the left hand side (lhs) vector
     &#39;&#39;&#39;
-    def __init__(self, **kwargs):
-        Node.__init__(self, **kwargs)
+    def __init__(self, name, G):
+        self.G = G
+        self.name = name
         self.G.data.lhs = self
         self.vector = None
 
@@ -5690,9 +5609,6 @@ add_to_dict (bool)
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></li>
-<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
-<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
 </ul>
 <h3>Static methods</h3>
 <dl>
@@ -5803,17 +5719,6 @@ def init(rows, cols, n_perturbations, n_taxas, n_replicates, tidxs_in_perturbati
 <ul class="hlist">
 <li><code><b><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></b></code>:
 <ul class="hlist">
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.set_to_lhs" href="#mdsine2.design_matrices.DesignMatrix.set_to_lhs">set_to_lhs</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.toarray" href="#mdsine2.design_matrices.DesignMatrix.toarray">toarray</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.update_value" href="#mdsine2.design_matrices.DesignMatrix.update_value">update_value</a></code></li>
@@ -5916,9 +5821,6 @@ add_to_dict (bool)
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></li>
-<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
-<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -5970,17 +5872,6 @@ add_to_dict (bool)
 <ul class="hlist">
 <li><code><b><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></b></code>:
 <ul class="hlist">
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.set_to_lhs" href="#mdsine2.design_matrices.DesignMatrix.set_to_lhs">set_to_lhs</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.toarray" href="#mdsine2.design_matrices.DesignMatrix.toarray">toarray</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.update_value" href="#mdsine2.design_matrices.DesignMatrix.update_value">update_value</a></code></li>
@@ -6086,9 +5977,6 @@ add_to_dict (bool)
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></li>
-<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
-<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -6150,17 +6038,6 @@ add_to_dict (bool)
 <ul class="hlist">
 <li><code><b><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></b></code>:
 <ul class="hlist">
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.set_to_lhs" href="#mdsine2.design_matrices.DesignMatrix.set_to_lhs">set_to_lhs</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.toarray" href="#mdsine2.design_matrices.DesignMatrix.toarray">toarray</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.update_value" href="#mdsine2.design_matrices.DesignMatrix.update_value">update_value</a></code></li>
@@ -6249,9 +6126,6 @@ add_to_dict (bool)
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></li>
-<li><a title="mdsine2.pylab.graph.Node" href="pylab/graph.html#mdsine2.pylab.graph.Node">Node</a></li>
-<li><a title="mdsine2.pylab.graph.BaseNode" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="pylab/base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
 </ul>
 <h3>Methods</h3>
 <dl>
@@ -6323,17 +6197,6 @@ growth/self interaction</p></div>
 <ul class="hlist">
 <li><code><b><a title="mdsine2.design_matrices.DesignMatrix" href="#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></b></code>:
 <ul class="hlist">
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_child" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_parent" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_prior" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.add_undirected" href="pylab/graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.degree" href="pylab/graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.delete" href="pylab/graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.get_adjacent_keys" href="pylab/graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.load" href="pylab/base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.metropolis" href="pylab/graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.save" href="pylab/base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.design_matrices.DesignMatrix.set_save_location" href="pylab/base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.toarray" href="#mdsine2.design_matrices.DesignMatrix.toarray">toarray</a></code></li>
 <li><code><a title="mdsine2.design_matrices.DesignMatrix.update_value" href="#mdsine2.design_matrices.DesignMatrix.update_value">update_value</a></code></li>
 </ul>

@@ -35,7 +35,7 @@ from .pylab.variables import Variable, Constant, summary
 from .pylab.graph import Graph, Node
 from .pylab.cluster import Clustering
 from .pylab.random import seed
-from .pylab.contrib import Interactions
+from .pylab.contrib import Interactions, ClusterPerturbationEffect
 from .pylab.inference import BaseMCMC
 from .pylab.dynamics import integrate, BaseDynamics
 

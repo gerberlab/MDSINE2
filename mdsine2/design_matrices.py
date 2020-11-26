@@ -759,8 +759,9 @@ class Data(DataNode):
 class ObservationVector(Node):
     '''This is the left hand side (lhs) vector
     '''
-    def __init__(self, **kwargs):
-        Node.__init__(self, **kwargs)
+    def __init__(self, name, G):
+        self.G = G
+        self.name = name
         self.G.data.lhs = self
         self.vector = None
 
@@ -773,10 +774,10 @@ class ObservationVector(Node):
         raise NotImplementedError('You must implement this function')
 
 
-class DesignMatrix(Node):
+class DesignMatrix:
     '''This is a covariate class
     '''
-    def __init__(self, varname, update=False, add_to_dict=True, **kwargs):
+    def __init__(self, varname, G, update=False, add_to_dict=True):
         '''Parameters
 
         varname (str)
@@ -788,15 +789,16 @@ class DesignMatrix(Node):
             - If True, it adds to the design_matrices dictionary.
             - Else it does not
         '''
-        kwargs['name'] = varname + '_design_matrix'
-        Node.__init__(self, **kwargs)
+
+        name = varname + '_design_matrix'
+        self.name = name
+        self.G = G
         self.varname = varname
         if add_to_dict:
-            var_id = self.G[varname].id
-            self.G.data.design_matrices[var_id] = self
+            self.G.data.design_matrices[varname] = self
         self.matrix = None
         if update:
-            self.G.data.toupdate.add(var_id)
+            self.G.data.toupdate.add(varname)
 
     def build(self):
         raise NotImplementedError('You must implement this function')

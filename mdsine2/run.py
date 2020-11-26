@@ -178,7 +178,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     if subjset.perturbations is not None:
         for pidx, subj_pert in enumerate(subjset.perturbations):
             name = subj_pert.name
-            perturbation = pl.ClusterPerturbation(
+            perturbation = pl.ClusterPerturbationEffect(
                 starts=subj_pert.starts, ends=subj_pert.ends, 
                 probability=pl.variables.Beta(
                     name=name + '_probability', G=GRAPH, value=None, a=None, b=None),
@@ -306,10 +306,9 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
             # Initialize the basic data matrices after initializing filtering
             lhs = design_matrices.LHSVector(G=GRAPH, name='lhs_vector')
             lhs.build()
-            growthDM = design_matrices.GrowthDesignMatrix(G=GRAPH, name='growth_design_matrix')
+            growthDM = design_matrices.GrowthDesignMatrix(G=GRAPH)
             growthDM.build_without_perturbations()
-            selfinteractionsDM = design_matrices.SelfInteractionDesignMatrix(G=GRAPH,
-                name='self_interactions_design_matrix')
+            selfinteractionsDM = design_matrices.SelfInteractionDesignMatrix(G=GRAPH)
             selfinteractionsDM.build()
         if name == STRNAMES.CLUSTER_INTERACTION_INDICATOR:
             # Initialize the interactions data matrices after initializing the interactions
@@ -326,12 +325,12 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     logging.info('\n\n\n')
     logging.info('Initialization Values:')
     logging.info('Growth')
-    logging.info('\tprior.mean: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].prior.mean.value))
+    logging.info('\tprior.loc: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].prior.loc.value))
     logging.info('\tprior.scale2: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].prior.scale2.value))
     logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].value.flatten()))
 
     logging.info('Self-Interactions')
-    logging.info('\tprior.mean: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].prior.mean.value))
+    logging.info('\tprior.loc: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].prior.loc.value))
     logging.info('\tprior.scale2: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].prior.scale2.value))
     logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].value.flatten()))
 
@@ -370,7 +369,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
         for perturbation in GRAPH.perturbations:
             logging.info('\tperturbation {}'.format(perturbation.name))
             logging.info('\t\tvalue: {}'.format(perturbation.magnitude.value))
-            logging.info('\t\tprior.mean: {}'.format(perturbation.magnitude.prior.mean.value))
+            logging.info('\t\tprior.loc: {}'.format(perturbation.magnitude.prior.loc.value))
         logging.info('Perturbation prior variances:')
         for perturbation in GRAPH.perturbations:
             logging.info('\t\tdof: {}'.format(perturbation.magnitude.prior.scale2.prior.dof.value))
@@ -427,6 +426,7 @@ def run_graph(mcmc, crash_if_error=True):
 
     if mcmc.graph.data.subjects.qpcr_normalization_factor is not None:
         mcmc, mcmc.graph.data.subjects = denormalize_parameters(mcmc)
+    mcmc.graph.data.design_matrices = None
     return mcmc
 
 def normalize_parameters(mcmc, subjset):

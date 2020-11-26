@@ -187,20 +187,20 @@ class misc:
         return C_SAMPLE.c_standard_uniform()
 
     @staticmethod
-    def fast_sample_normal(mean, std):
+    def fast_sample_normal(loc, scale):
         &#39;&#39;&#39;Sample from a c_implementation of a normal distribution.
         Only accepts floats
 
         Parameters
         ----------
-        mean, std : float
+        loc, scale : float
             Mean and standard devition, respectively
 
         Returns
         -------
         float
         &#39;&#39;&#39;
-        return C_SAMPLE.c_normal(mean, std)
+        return C_SAMPLE.c_normal(loc, scale)
 
 
 class _BaseSample:
@@ -237,126 +237,333 @@ class _BaseSample:
 
 
 class normal(_BaseSample):
-    &#39;&#39;&#39;Scalar normal distribution parameterized by a mean and standard deviation
+    &#39;&#39;&#39;Normal distribution parameterized by a mean and standard deviation
     &#39;&#39;&#39;
     @staticmethod
-    def sample(mean=0, std=1, size=None):
-        &#39;&#39;&#39;Sample from a normal random distribution
+    def sample(loc=0, scale=1, size=None):
+        &#39;&#39;&#39;Sample from a normal random distribution. This can be vectorized
+
+        NOTE: If you want to sample a single scalar value with a normal distribution,
+        use the function `mdsine2.random.misc.fast_sample_normal`
+
+        Parameters
+        ----------
+        loc : np.ndarray, float
+            This is the mean
+        scale : np.ndarray, float
+            This is the scale
+        size : int
+            Number of samples to return
+
+        Returns
+        -------
+        np.ndarray, float
+
+        See Also
+        --------
+        mdsine2.random.misc.fast_sample_normal
         &#39;&#39;&#39;
-        return npr.normal(mean, std, size=size)
+        return npr.normal(loc, scale, size=size)
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def pdf(value, mean, std):
-        return _INV_SQRT_2PI * EXP(-0.5*((value-mean)/std)**2) / std
+    def pdf(value, loc, scale):
+        &#39;&#39;&#39;Returns the probability density function of a normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return _INV_SQRT_2PI * EXP(-0.5*((value-loc)/scale)**2) / scale
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def logpdf(value, mean, std):
-        return _LOG_INV_SQRT_2PI + (-0.5*((value-mean)/std)**2) - LOG(std)
+    def logpdf(value, loc, scale):
+        &#39;&#39;&#39;Returns the log probability density function of a normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return _LOG_INV_SQRT_2PI + (-0.5*((value-loc)/scale)**2) - LOG(scale)
 
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def cdf(value, mean, std):
-        return 0.5 * (1 + ERF(_INV_SQRT_2 * ((value-mean)/std)))
+    def cdf(value, loc, scale):
+        &#39;&#39;&#39;Returns the cumulative density function of a normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return 0.5 * (1 + ERF(_INV_SQRT_2 * ((value-loc)/scale)))
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def logcdf(value, mean, std):
-        return _LOG_ONE_HALF + LOG(1 + ERF(_INV_SQRT_2 * ((value-mean)/std)))
+    def logcdf(value, loc, scale):
+        &#39;&#39;&#39;Returns the log cumulative density function of a normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return _LOG_ONE_HALF + LOG(1 + ERF(_INV_SQRT_2 * ((value-loc)/scale)))
 
 
 class lognormal(_BaseSample):
-    &#39;&#39;&#39;Sample from a log-normal distribution:
-
+    &#39;&#39;&#39;Log-normal distribution:
     X = exp(\mu + \sigma Z), Z ~ Normal(0,1)
     &#39;&#39;&#39; 
     @staticmethod
-    def sample(mean, std, size=None):
-        return np.exp(mean + std * npr.normal(0,1,size=size))
+    def sample(loc, scale, size=None):
+        &#39;&#39;&#39;Sample from a log-normal random distribution. This can be vectorized
+
+        Parameters
+        ----------
+        loc : np.ndarray, float
+            This is the mean
+        scale : np.ndarray, float
+            This is the scale
+        size : int
+            Number of samples to return
+
+        Returns
+        -------
+        np.ndarray, float
+        &#39;&#39;&#39;
+        return np.exp(loc + scale * npr.normal(0,1,size=size))
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def pdf(value, mean, std):
-        return _INV_SQRT_2PI * (1/(std*value)) * EXP(-0.5 * \
-            ((LOG(value)-mean)/std) ** 2)
+    def pdf(value, loc, scale):
+        &#39;&#39;&#39;Returns the probability density function of a log-normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return _INV_SQRT_2PI * (1/(scale*value)) * EXP(-0.5 * \
+            ((LOG(value)-loc)/scale) ** 2)
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def logpdf(value, mean, std):
-        return _LOG_INV_SQRT_2PI - LOG(std) - LOG(value) + \
-            (-0.5*((LOG(value)-mean)/std)**2)
+    def logpdf(value, loc, scale):
+        &#39;&#39;&#39;Returns the log probability density function of a log-normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return _LOG_INV_SQRT_2PI - LOG(scale) - LOG(value) + \
+            (-0.5*((LOG(value)-loc)/scale)**2)
 
 
 class truncnormal(_BaseSample):
+    &#39;&#39;&#39;Truncated normal distribution.
 
+    We parameterize the truncated normal distribution with the mean `loc` and 
+    standard deviation `scale` of the underlying normal distirbution and then we
+    specified the truncation bounds:    
+    
+    For example:
+        mdsine2.random.truncnormal.sample(0, 3, low=-2, high=10)
+            Here, the mean in 0, the standard deviation is 3, the lower bound is -2,
+            and the high is 10.
+
+    NOTE: THIS IS A DIFFERENT PARAMETERIZATION THAN SCIPY
+    &#39;&#39;&#39;
     @staticmethod
-    def sample(mean, std, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), size=None):
+    def sample(loc, scale, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), size=None):
         &#39;&#39;&#39;Sample from a truncated normal random distribution defined on
-        [low, high] with mean `mean` and standard deviation `std`
+        [low, high] with mean `loc` and standard deviation `scale`
+
+        Parameters
+        ----------
+        loc : np.ndarray, float
+            This is the mean
+        scale : np.ndarray, float
+            This is the scale
+        low, high : float
+            Truncation points of normal distribution
+        size : int
+            Number of samples to return
+        
+        Returns
+        -------
+        np.ndarray, float
         &#39;&#39;&#39;
         if size is not None:
             if CUSTOM_DIST_AVAIL:
                 try:
                     value = np.asarray([C_SAMPLE.c_truncated_normal(
-                        mean,std,low,high) for i in range(len(size))])
+                        loc,scale,low,high) for i in range(len(size))])
                 except:
                     value = scipy.stats.truncnorm(
-                        a=(low-mean)/std,
-                        b=(high-mean)/std,
-                        loc=mean,
-                        scale=std).rvs(size=size)
+                        a=(low-loc)/scale,
+                        b=(high-loc)/scale,
+                        loc=loc,
+                        scale=scale).rvs(size=size)
             else:
                 value = scipy.stats.truncnorm(
-                    a=(low-mean)/std,
-                    b=(high-mean)/std,
-                    loc=mean,
-                    scale=std).rvs(size=size)
+                    a=(low-loc)/scale,
+                    b=(high-loc)/scale,
+                    loc=loc,
+                    scale=scale).rvs(size=size)
         else:
             if CUSTOM_DIST_AVAIL:
                 try:
-                    value = C_SAMPLE.c_truncated_normal(mean, std, low, high)
+                    value = C_SAMPLE.c_truncated_normal(loc, scale, low, high)
                 except:
-                    # likely because the mean and std are vectors
+                    # likely because the loc and scale are vectors
                     # try vectorizing it
                     value = np.asarray([C_SAMPLE.c_truncated_normal(
-                        mean[i],std[i],low,high) for i in range(len(mean))])
+                        loc[i],scale[i],low,high) for i in range(len(loc))])
             else:
                 value = scipy.stats.truncnorm(
-                    a=(low-mean)/std,
-                    b=(high-mean)/std,
-                    loc=mean,
-                    scale=std).rvs(size=size)
+                    a=(low-loc)/scale,
+                    b=(high-loc)/scale,
+                    loc=loc,
+                    scale=scale).rvs(size=size)
         return value
 
     @staticmethod
-    def sample_vec(mean, std, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), size=None):
-        &#39;&#39;&#39;Sample from a truncated normal random distribution defined on
-        [low, high] with mean `mean` and standard deviation `std`
+    def pdf(value, loc, scale, low, high):
+        &#39;&#39;&#39;Returns the probability density function of a truncated normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+        low, high : float
+            Truncation points of normal distribution
+
+        Returns
+        -------
+        float
         &#39;&#39;&#39;
-        return np.asarray([C_SAMPLE.c_truncated_normal(
-            mean[i],std[i],low,high) for i in range(len(mean))])
+        return scipy.stats.truncnorm.pdf(value, (low-loc)/scale, (high-loc)/scale, loc, scale)
 
     @staticmethod
-    # @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def pdf(value, mean, std, low, high):
-        return scipy.stats.truncnorm.pdf(value, (low-mean)/std, (high-mean)/std, mean, std)
+    def logpdf(value, loc, scale, low, high):
+        &#39;&#39;&#39;Returns the log probability density function of a truncated normal distribution
 
-    @staticmethod
-    # @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def logpdf(value, mean, std, low, high):
-        return scipy.stats.truncnorm.logpdf(value, (low-mean)/std, (high-mean)/std, mean, std)
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+        low, high : float
+            Truncation points of normal distribution
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return scipy.stats.truncnorm.logpdf(value, (low-loc)/scale, (high-loc)/scale, loc, scale)
 
 
 class multivariate_normal(_BaseSample):
+    &#39;&#39;&#39;Multivariate normal distribution - this is the same sampling methods as Numpy
+    &#39;&#39;&#39;
 
     @staticmethod
     def sample(mean, cov, size=None):
+        &#39;&#39;&#39;Sample from a multivariate normal random distribution.
+
+        Parameters
+        ----------
+        mean : np.ndarray
+            This is the mean
+        cov : np.ndarray
+            This is the covaraiance 
+        size : int
+            Number of samples to return
+
+        Returns
+        -------
+        np.ndarray
+        &#39;&#39;&#39;
         return npr.multivariate_normal(mean=mean, cov=cov, size=size)
 
     @staticmethod
     def logpdf(value, mean, cov):
+        &#39;&#39;&#39;Returns the probability density function of a multivariate normal distribution
+
+        Parameters
+        ----------
+        value : np.ndarray
+            This is the value we are calculating at
+        mean : np.ndarray
+            This is the mean
+        cov : np.ndarray
+            This is the scale
+
+        Returns
+        -------
+        np.ndarray
+        &#39;&#39;&#39;
         k = cov.shape[0]
         logdet = _log_det_func(cov)
         prec = np.linalg.pinv(cov)
@@ -368,20 +575,64 @@ class multivariate_normal(_BaseSample):
 
 
 class gamma(_BaseSample):
-
+    &#39;&#39;&#39;Gamma random distribution - this is the same parameterization as
+    Numpy and scipy
+    &#39;&#39;&#39;
     @staticmethod
     def sample(shape, scale, size=None):
+        &#39;&#39;&#39;Sample from a gamma random distribution. This can be vectorized
+
+        Parameters
+        ----------
+        shape : np.ndarray, float
+            This is the shape parameter
+        scale : np.ndarray, float
+            This is the scale parameter
+        size : int
+            Number of samples to return
+
+        Returns
+        -------
+        np.ndarray, float
+        &#39;&#39;&#39;
         return npr.gamma(shape=shape, scale=scale, size=size)
 
     @staticmethod
     def pdf(value, shape, scale):
+        &#39;&#39;&#39;Returns the probability density function of a gamma distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        shape : float
+            This is the shape parameter
+        scale : float
+            This is the scale parameter
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
         return scipy.stats.gamma.pdf(x=value, a=shape, scale=scale)
 
 
 class beta(_BaseSample):
-
+    &#39;&#39;&#39;Beta random distribution - same parameterization as numpy
+    &#39;&#39;&#39;
     @staticmethod
     def sample(a, b, size=None):
+        &#39;&#39;&#39;Sample from a beta random distribution. This can be vectorized
+
+        Parameters
+        ----------
+        a, b : np.ndarray, float
+            These are the a and b parmeters of the distribution
+
+        Returns
+        -------
+        np.ndarray, float
+        &#39;&#39;&#39;
         return npr.beta(a=a, b=b, size=size)
 
 
@@ -658,15 +909,27 @@ def sample(p=0.5, size=None):
 <span>class <span class="ident">beta</span></span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Beta random distribution - same parameterization as numpy</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class beta(_BaseSample):
-
+    &#39;&#39;&#39;Beta random distribution - same parameterization as numpy
+    &#39;&#39;&#39;
     @staticmethod
     def sample(a, b, size=None):
+        &#39;&#39;&#39;Sample from a beta random distribution. This can be vectorized
+
+        Parameters
+        ----------
+        a, b : np.ndarray, float
+            These are the a and b parmeters of the distribution
+
+        Returns
+        -------
+        np.ndarray, float
+        &#39;&#39;&#39;
         return npr.beta(a=a, b=b, size=size)</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -679,13 +942,34 @@ def sample(p=0.5, size=None):
 <span>def <span class="ident">sample</span></span>(<span>a, b, size=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Sample a random variable from the distribution</p></div>
+<div class="desc"><p>Sample from a beta random distribution. This can be vectorized</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>a</code></strong>, <strong><code>b</code></strong> :&ensp;<code>np.ndarray, float</code></dt>
+<dd>These are the a and b parmeters of the distribution</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray, float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
 def sample(a, b, size=None):
+    &#39;&#39;&#39;Sample from a beta random distribution. This can be vectorized
+
+    Parameters
+    ----------
+    a, b : np.ndarray, float
+        These are the a and b parmeters of the distribution
+
+    Returns
+    -------
+    np.ndarray, float
+    &#39;&#39;&#39;
     return npr.beta(a=a, b=b, size=size)</code></pre>
 </details>
 </dd>
@@ -695,19 +979,52 @@ def sample(a, b, size=None):
 <span>class <span class="ident">gamma</span></span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Gamma random distribution - this is the same parameterization as
+Numpy and scipy</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class gamma(_BaseSample):
-
+    &#39;&#39;&#39;Gamma random distribution - this is the same parameterization as
+    Numpy and scipy
+    &#39;&#39;&#39;
     @staticmethod
     def sample(shape, scale, size=None):
+        &#39;&#39;&#39;Sample from a gamma random distribution. This can be vectorized
+
+        Parameters
+        ----------
+        shape : np.ndarray, float
+            This is the shape parameter
+        scale : np.ndarray, float
+            This is the scale parameter
+        size : int
+            Number of samples to return
+
+        Returns
+        -------
+        np.ndarray, float
+        &#39;&#39;&#39;
         return npr.gamma(shape=shape, scale=scale, size=size)
 
     @staticmethod
     def pdf(value, shape, scale):
+        &#39;&#39;&#39;Returns the probability density function of a gamma distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        shape : float
+            This is the shape parameter
+        scale : float
+            This is the scale parameter
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
         return scipy.stats.gamma.pdf(x=value, a=shape, scale=scale)</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -720,13 +1037,42 @@ def sample(a, b, size=None):
 <span>def <span class="ident">pdf</span></span>(<span>value, shape, scale)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the pdf</p></div>
+<div class="desc"><p>Returns the probability density function of a gamma distribution</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the value we are calculating at</dd>
+<dt><strong><code>shape</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the shape parameter</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the scale parameter</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
 def pdf(value, shape, scale):
+    &#39;&#39;&#39;Returns the probability density function of a gamma distribution
+
+    Parameters
+    ----------
+    value : float
+        This is the value we are calculating at
+    shape : float
+        This is the shape parameter
+    scale : float
+        This is the scale parameter
+
+    Returns
+    -------
+    float
+    &#39;&#39;&#39;
     return scipy.stats.gamma.pdf(x=value, a=shape, scale=scale)</code></pre>
 </details>
 </dd>
@@ -734,13 +1080,42 @@ def pdf(value, shape, scale):
 <span>def <span class="ident">sample</span></span>(<span>shape, scale, size=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Sample a random variable from the distribution</p></div>
+<div class="desc"><p>Sample from a gamma random distribution. This can be vectorized</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>shape</code></strong> :&ensp;<code>np.ndarray, float</code></dt>
+<dd>This is the shape parameter</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>np.ndarray, float</code></dt>
+<dd>This is the scale parameter</dd>
+<dt><strong><code>size</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of samples to return</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray, float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
 def sample(shape, scale, size=None):
+    &#39;&#39;&#39;Sample from a gamma random distribution. This can be vectorized
+
+    Parameters
+    ----------
+    shape : np.ndarray, float
+        This is the shape parameter
+    scale : np.ndarray, float
+        This is the scale parameter
+    size : int
+        Number of samples to return
+
+    Returns
+    -------
+    np.ndarray, float
+    &#39;&#39;&#39;
     return npr.gamma(shape=shape, scale=scale, size=size)</code></pre>
 </details>
 </dd>
@@ -860,32 +1235,76 @@ def sample(shape, scale, size=None):
 <span>class <span class="ident">lognormal</span></span>
 </code></dt>
 <dd>
-<div class="desc"><p>Sample from a log-normal distribution:</p>
-<p>X = exp(\mu + \sigma Z), Z ~ Normal(0,1)</p></div>
+<div class="desc"><p>Log-normal distribution:
+X = exp(\mu + \sigma Z), Z ~ Normal(0,1)</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class lognormal(_BaseSample):
-    &#39;&#39;&#39;Sample from a log-normal distribution:
-
+    &#39;&#39;&#39;Log-normal distribution:
     X = exp(\mu + \sigma Z), Z ~ Normal(0,1)
     &#39;&#39;&#39; 
     @staticmethod
-    def sample(mean, std, size=None):
-        return np.exp(mean + std * npr.normal(0,1,size=size))
+    def sample(loc, scale, size=None):
+        &#39;&#39;&#39;Sample from a log-normal random distribution. This can be vectorized
+
+        Parameters
+        ----------
+        loc : np.ndarray, float
+            This is the mean
+        scale : np.ndarray, float
+            This is the scale
+        size : int
+            Number of samples to return
+
+        Returns
+        -------
+        np.ndarray, float
+        &#39;&#39;&#39;
+        return np.exp(loc + scale * npr.normal(0,1,size=size))
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def pdf(value, mean, std):
-        return _INV_SQRT_2PI * (1/(std*value)) * EXP(-0.5 * \
-            ((LOG(value)-mean)/std) ** 2)
+    def pdf(value, loc, scale):
+        &#39;&#39;&#39;Returns the probability density function of a log-normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return _INV_SQRT_2PI * (1/(scale*value)) * EXP(-0.5 * \
+            ((LOG(value)-loc)/scale) ** 2)
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def logpdf(value, mean, std):
-        return _LOG_INV_SQRT_2PI - LOG(std) - LOG(value) + \
-            (-0.5*((LOG(value)-mean)/std)**2)</code></pre>
+    def logpdf(value, loc, scale):
+        &#39;&#39;&#39;Returns the log probability density function of a log-normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return _LOG_INV_SQRT_2PI - LOG(scale) - LOG(value) + \
+            (-0.5*((LOG(value)-loc)/scale)**2)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -894,49 +1313,136 @@ def sample(shape, scale, size=None):
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.lognormal.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>value, mean, std)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>value, loc, scale)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns the log probability density function of a log-normal distribution</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the value we are calculating at</dd>
+<dt><strong><code>loc</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the mean</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the scale</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def logpdf(value, mean, std):
-    return _LOG_INV_SQRT_2PI - LOG(std) - LOG(value) + \
-        (-0.5*((LOG(value)-mean)/std)**2)</code></pre>
+def logpdf(value, loc, scale):
+    &#39;&#39;&#39;Returns the log probability density function of a log-normal distribution
+
+    Parameters
+    ----------
+    value : float
+        This is the value we are calculating at
+    loc : float
+        This is the mean
+    scale : float
+        This is the scale
+
+    Returns
+    -------
+    float
+    &#39;&#39;&#39;
+    return _LOG_INV_SQRT_2PI - LOG(scale) - LOG(value) + \
+        (-0.5*((LOG(value)-loc)/scale)**2)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.lognormal.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>value, mean, std)</span>
+<span>def <span class="ident">pdf</span></span>(<span>value, loc, scale)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns the probability density function of a log-normal distribution</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the value we are calculating at</dd>
+<dt><strong><code>loc</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the mean</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the scale</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def pdf(value, mean, std):
-    return _INV_SQRT_2PI * (1/(std*value)) * EXP(-0.5 * \
-        ((LOG(value)-mean)/std) ** 2)</code></pre>
+def pdf(value, loc, scale):
+    &#39;&#39;&#39;Returns the probability density function of a log-normal distribution
+
+    Parameters
+    ----------
+    value : float
+        This is the value we are calculating at
+    loc : float
+        This is the mean
+    scale : float
+        This is the scale
+
+    Returns
+    -------
+    float
+    &#39;&#39;&#39;
+    return _INV_SQRT_2PI * (1/(scale*value)) * EXP(-0.5 * \
+        ((LOG(value)-loc)/scale) ** 2)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.lognormal.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>mean, std, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>loc, scale, size=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Sample a random variable from the distribution</p></div>
+<div class="desc"><p>Sample from a log-normal random distribution. This can be vectorized</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>loc</code></strong> :&ensp;<code>np.ndarray, float</code></dt>
+<dd>This is the mean</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>np.ndarray, float</code></dt>
+<dd>This is the scale</dd>
+<dt><strong><code>size</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of samples to return</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray, float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(mean, std, size=None):
-    return np.exp(mean + std * npr.normal(0,1,size=size))</code></pre>
+def sample(loc, scale, size=None):
+    &#39;&#39;&#39;Sample from a log-normal random distribution. This can be vectorized
+
+    Parameters
+    ----------
+    loc : np.ndarray, float
+        This is the mean
+    scale : np.ndarray, float
+        This is the scale
+    size : int
+        Number of samples to return
+
+    Returns
+    -------
+    np.ndarray, float
+    &#39;&#39;&#39;
+    return np.exp(loc + scale * npr.normal(0,1,size=size))</code></pre>
 </details>
 </dd>
 </dl>
@@ -981,32 +1487,32 @@ def sample(mean, std, size=None):
         return C_SAMPLE.c_standard_uniform()
 
     @staticmethod
-    def fast_sample_normal(mean, std):
+    def fast_sample_normal(loc, scale):
         &#39;&#39;&#39;Sample from a c_implementation of a normal distribution.
         Only accepts floats
 
         Parameters
         ----------
-        mean, std : float
+        loc, scale : float
             Mean and standard devition, respectively
 
         Returns
         -------
         float
         &#39;&#39;&#39;
-        return C_SAMPLE.c_normal(mean, std)</code></pre>
+        return C_SAMPLE.c_normal(loc, scale)</code></pre>
 </details>
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.misc.fast_sample_normal"><code class="name flex">
-<span>def <span class="ident">fast_sample_normal</span></span>(<span>mean, std)</span>
+<span>def <span class="ident">fast_sample_normal</span></span>(<span>loc, scale)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample from a c_implementation of a normal distribution.
 Only accepts floats</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>mean</code></strong>, <strong><code>std</code></strong> :&ensp;<code>float</code></dt>
+<dt><strong><code>loc</code></strong>, <strong><code>scale</code></strong> :&ensp;<code>float</code></dt>
 <dd>Mean and standard devition, respectively</dd>
 </dl>
 <h2 id="returns">Returns</h2>
@@ -1019,20 +1525,20 @@ Only accepts floats</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def fast_sample_normal(mean, std):
+def fast_sample_normal(loc, scale):
     &#39;&#39;&#39;Sample from a c_implementation of a normal distribution.
     Only accepts floats
 
     Parameters
     ----------
-    mean, std : float
+    loc, scale : float
         Mean and standard devition, respectively
 
     Returns
     -------
     float
     &#39;&#39;&#39;
-    return C_SAMPLE.c_normal(mean, std)</code></pre>
+    return C_SAMPLE.c_normal(loc, scale)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.misc.fast_sample_standard_uniform"><code class="name flex">
@@ -1100,19 +1606,51 @@ def multivariate_normal_fast_2d(mean, cov):
 <span>class <span class="ident">multivariate_normal</span></span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Multivariate normal distribution - this is the same sampling methods as Numpy</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class multivariate_normal(_BaseSample):
+    &#39;&#39;&#39;Multivariate normal distribution - this is the same sampling methods as Numpy
+    &#39;&#39;&#39;
 
     @staticmethod
     def sample(mean, cov, size=None):
+        &#39;&#39;&#39;Sample from a multivariate normal random distribution.
+
+        Parameters
+        ----------
+        mean : np.ndarray
+            This is the mean
+        cov : np.ndarray
+            This is the covaraiance 
+        size : int
+            Number of samples to return
+
+        Returns
+        -------
+        np.ndarray
+        &#39;&#39;&#39;
         return npr.multivariate_normal(mean=mean, cov=cov, size=size)
 
     @staticmethod
     def logpdf(value, mean, cov):
+        &#39;&#39;&#39;Returns the probability density function of a multivariate normal distribution
+
+        Parameters
+        ----------
+        value : np.ndarray
+            This is the value we are calculating at
+        mean : np.ndarray
+            This is the mean
+        cov : np.ndarray
+            This is the scale
+
+        Returns
+        -------
+        np.ndarray
+        &#39;&#39;&#39;
         k = cov.shape[0]
         logdet = _log_det_func(cov)
         prec = np.linalg.pinv(cov)
@@ -1132,13 +1670,42 @@ def multivariate_normal_fast_2d(mean, cov):
 <span>def <span class="ident">logpdf</span></span>(<span>value, mean, cov)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the logpdf</p></div>
+<div class="desc"><p>Returns the probability density function of a multivariate normal distribution</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>This is the value we are calculating at</dd>
+<dt><strong><code>mean</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>This is the mean</dd>
+<dt><strong><code>cov</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>This is the scale</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
 def logpdf(value, mean, cov):
+    &#39;&#39;&#39;Returns the probability density function of a multivariate normal distribution
+
+    Parameters
+    ----------
+    value : np.ndarray
+        This is the value we are calculating at
+    mean : np.ndarray
+        This is the mean
+    cov : np.ndarray
+        This is the scale
+
+    Returns
+    -------
+    np.ndarray
+    &#39;&#39;&#39;
     k = cov.shape[0]
     logdet = _log_det_func(cov)
     prec = np.linalg.pinv(cov)
@@ -1153,13 +1720,42 @@ def logpdf(value, mean, cov):
 <span>def <span class="ident">sample</span></span>(<span>mean, cov, size=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Sample a random variable from the distribution</p></div>
+<div class="desc"><p>Sample from a multivariate normal random distribution.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>mean</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>This is the mean</dd>
+<dt><strong><code>cov</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>This is the covaraiance</dd>
+<dt><strong><code>size</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of samples to return</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
 def sample(mean, cov, size=None):
+    &#39;&#39;&#39;Sample from a multivariate normal random distribution.
+
+    Parameters
+    ----------
+    mean : np.ndarray
+        This is the mean
+    cov : np.ndarray
+        This is the covaraiance 
+    size : int
+        Number of samples to return
+
+    Returns
+    -------
+    np.ndarray
+    &#39;&#39;&#39;
     return npr.multivariate_normal(mean=mean, cov=cov, size=size)</code></pre>
 </details>
 </dd>
@@ -1357,40 +1953,120 @@ def sample(mean, dispersion, size=None):
 <span>class <span class="ident">normal</span></span>
 </code></dt>
 <dd>
-<div class="desc"><p>Scalar normal distribution parameterized by a mean and standard deviation</p></div>
+<div class="desc"><p>Normal distribution parameterized by a mean and standard deviation</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class normal(_BaseSample):
-    &#39;&#39;&#39;Scalar normal distribution parameterized by a mean and standard deviation
+    &#39;&#39;&#39;Normal distribution parameterized by a mean and standard deviation
     &#39;&#39;&#39;
     @staticmethod
-    def sample(mean=0, std=1, size=None):
-        &#39;&#39;&#39;Sample from a normal random distribution
+    def sample(loc=0, scale=1, size=None):
+        &#39;&#39;&#39;Sample from a normal random distribution. This can be vectorized
+
+        NOTE: If you want to sample a single scalar value with a normal distribution,
+        use the function `mdsine2.random.misc.fast_sample_normal`
+
+        Parameters
+        ----------
+        loc : np.ndarray, float
+            This is the mean
+        scale : np.ndarray, float
+            This is the scale
+        size : int
+            Number of samples to return
+
+        Returns
+        -------
+        np.ndarray, float
+
+        See Also
+        --------
+        mdsine2.random.misc.fast_sample_normal
         &#39;&#39;&#39;
-        return npr.normal(mean, std, size=size)
+        return npr.normal(loc, scale, size=size)
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def pdf(value, mean, std):
-        return _INV_SQRT_2PI * EXP(-0.5*((value-mean)/std)**2) / std
+    def pdf(value, loc, scale):
+        &#39;&#39;&#39;Returns the probability density function of a normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return _INV_SQRT_2PI * EXP(-0.5*((value-loc)/scale)**2) / scale
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def logpdf(value, mean, std):
-        return _LOG_INV_SQRT_2PI + (-0.5*((value-mean)/std)**2) - LOG(std)
+    def logpdf(value, loc, scale):
+        &#39;&#39;&#39;Returns the log probability density function of a normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return _LOG_INV_SQRT_2PI + (-0.5*((value-loc)/scale)**2) - LOG(scale)
 
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def cdf(value, mean, std):
-        return 0.5 * (1 + ERF(_INV_SQRT_2 * ((value-mean)/std)))
+    def cdf(value, loc, scale):
+        &#39;&#39;&#39;Returns the cumulative density function of a normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return 0.5 * (1 + ERF(_INV_SQRT_2 * ((value-loc)/scale)))
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def logcdf(value, mean, std):
-        return _LOG_ONE_HALF + LOG(1 + ERF(_INV_SQRT_2 * ((value-mean)/std)))</code></pre>
+    def logcdf(value, loc, scale):
+        &#39;&#39;&#39;Returns the log cumulative density function of a normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return _LOG_ONE_HALF + LOG(1 + ERF(_INV_SQRT_2 * ((value-loc)/scale)))</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -1399,79 +2075,233 @@ def sample(mean, dispersion, size=None):
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.normal.cdf"><code class="name flex">
-<span>def <span class="ident">cdf</span></span>(<span>value, mean, std)</span>
+<span>def <span class="ident">cdf</span></span>(<span>value, loc, scale)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns the cumulative density function of a normal distribution</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the value we are calculating at</dd>
+<dt><strong><code>loc</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the mean</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the scale</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-def cdf(value, mean, std):
-    return 0.5 * (1 + ERF(_INV_SQRT_2 * ((value-mean)/std)))</code></pre>
+def cdf(value, loc, scale):
+    &#39;&#39;&#39;Returns the cumulative density function of a normal distribution
+
+    Parameters
+    ----------
+    value : float
+        This is the value we are calculating at
+    loc : float
+        This is the mean
+    scale : float
+        This is the scale
+
+    Returns
+    -------
+    float
+    &#39;&#39;&#39;
+    return 0.5 * (1 + ERF(_INV_SQRT_2 * ((value-loc)/scale)))</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.normal.logcdf"><code class="name flex">
-<span>def <span class="ident">logcdf</span></span>(<span>value, mean, std)</span>
+<span>def <span class="ident">logcdf</span></span>(<span>value, loc, scale)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns the log cumulative density function of a normal distribution</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the value we are calculating at</dd>
+<dt><strong><code>loc</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the mean</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the scale</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-def logcdf(value, mean, std):
-    return _LOG_ONE_HALF + LOG(1 + ERF(_INV_SQRT_2 * ((value-mean)/std)))</code></pre>
+def logcdf(value, loc, scale):
+    &#39;&#39;&#39;Returns the log cumulative density function of a normal distribution
+
+    Parameters
+    ----------
+    value : float
+        This is the value we are calculating at
+    loc : float
+        This is the mean
+    scale : float
+        This is the scale
+
+    Returns
+    -------
+    float
+    &#39;&#39;&#39;
+    return _LOG_ONE_HALF + LOG(1 + ERF(_INV_SQRT_2 * ((value-loc)/scale)))</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.normal.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>value, mean, std)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>value, loc, scale)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns the log probability density function of a normal distribution</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the value we are calculating at</dd>
+<dt><strong><code>loc</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the mean</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the scale</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def logpdf(value, mean, std):
-    return _LOG_INV_SQRT_2PI + (-0.5*((value-mean)/std)**2) - LOG(std)</code></pre>
+def logpdf(value, loc, scale):
+    &#39;&#39;&#39;Returns the log probability density function of a normal distribution
+
+    Parameters
+    ----------
+    value : float
+        This is the value we are calculating at
+    loc : float
+        This is the mean
+    scale : float
+        This is the scale
+
+    Returns
+    -------
+    float
+    &#39;&#39;&#39;
+    return _LOG_INV_SQRT_2PI + (-0.5*((value-loc)/scale)**2) - LOG(scale)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.normal.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>value, mean, std)</span>
+<span>def <span class="ident">pdf</span></span>(<span>value, loc, scale)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Returns the probability density function of a normal distribution</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the value we are calculating at</dd>
+<dt><strong><code>loc</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the mean</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the scale</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def pdf(value, mean, std):
-    return _INV_SQRT_2PI * EXP(-0.5*((value-mean)/std)**2) / std</code></pre>
+def pdf(value, loc, scale):
+    &#39;&#39;&#39;Returns the probability density function of a normal distribution
+
+    Parameters
+    ----------
+    value : float
+        This is the value we are calculating at
+    loc : float
+        This is the mean
+    scale : float
+        This is the scale
+
+    Returns
+    -------
+    float
+    &#39;&#39;&#39;
+    return _INV_SQRT_2PI * EXP(-0.5*((value-loc)/scale)**2) / scale</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.normal.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>mean=0, std=1, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>loc=0, scale=1, size=None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Sample from a normal random distribution</p></div>
+<div class="desc"><p>Sample from a normal random distribution. This can be vectorized</p>
+<p>NOTE: If you want to sample a single scalar value with a normal distribution,
+use the function <code>mdsine2.random.misc.fast_sample_normal</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>loc</code></strong> :&ensp;<code>np.ndarray, float</code></dt>
+<dd>This is the mean</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>np.ndarray, float</code></dt>
+<dd>This is the scale</dd>
+<dt><strong><code>size</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of samples to return</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray, float</code></dt>
+<dd>&nbsp;</dd>
+</dl>
+<h2 id="see-also">See Also</h2>
+<p><code>mdsine2.random.misc.fast_sample_normal</code></p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(mean=0, std=1, size=None):
-    &#39;&#39;&#39;Sample from a normal random distribution
+def sample(loc=0, scale=1, size=None):
+    &#39;&#39;&#39;Sample from a normal random distribution. This can be vectorized
+
+    NOTE: If you want to sample a single scalar value with a normal distribution,
+    use the function `mdsine2.random.misc.fast_sample_normal`
+
+    Parameters
+    ----------
+    loc : np.ndarray, float
+        This is the mean
+    scale : np.ndarray, float
+        This is the scale
+    size : int
+        Number of samples to return
+
+    Returns
+    -------
+    np.ndarray, float
+
+    See Also
+    --------
+    mdsine2.random.misc.fast_sample_normal
     &#39;&#39;&#39;
-    return npr.normal(mean, std, size=size)</code></pre>
+    return npr.normal(loc, scale, size=size)</code></pre>
 </details>
 </dd>
 </dl>
@@ -1574,69 +2404,129 @@ def sample(dof, scale, size=None):
 <span>class <span class="ident">truncnormal</span></span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Truncated normal distribution.</p>
+<p>We parameterize the truncated normal distribution with the mean <code>loc</code> and
+standard deviation <code>scale</code> of the underlying normal distirbution and then we
+specified the truncation bounds:
+</p>
+<p>For example:
+mdsine2.random.truncnormal.sample(0, 3, low=-2, high=10)
+Here, the mean in 0, the standard deviation is 3, the lower bound is -2,
+and the high is 10.</p>
+<p>NOTE: THIS IS A DIFFERENT PARAMETERIZATION THAN SCIPY</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class truncnormal(_BaseSample):
+    &#39;&#39;&#39;Truncated normal distribution.
 
+    We parameterize the truncated normal distribution with the mean `loc` and 
+    standard deviation `scale` of the underlying normal distirbution and then we
+    specified the truncation bounds:    
+    
+    For example:
+        mdsine2.random.truncnormal.sample(0, 3, low=-2, high=10)
+            Here, the mean in 0, the standard deviation is 3, the lower bound is -2,
+            and the high is 10.
+
+    NOTE: THIS IS A DIFFERENT PARAMETERIZATION THAN SCIPY
+    &#39;&#39;&#39;
     @staticmethod
-    def sample(mean, std, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), size=None):
+    def sample(loc, scale, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), size=None):
         &#39;&#39;&#39;Sample from a truncated normal random distribution defined on
-        [low, high] with mean `mean` and standard deviation `std`
+        [low, high] with mean `loc` and standard deviation `scale`
+
+        Parameters
+        ----------
+        loc : np.ndarray, float
+            This is the mean
+        scale : np.ndarray, float
+            This is the scale
+        low, high : float
+            Truncation points of normal distribution
+        size : int
+            Number of samples to return
+        
+        Returns
+        -------
+        np.ndarray, float
         &#39;&#39;&#39;
         if size is not None:
             if CUSTOM_DIST_AVAIL:
                 try:
                     value = np.asarray([C_SAMPLE.c_truncated_normal(
-                        mean,std,low,high) for i in range(len(size))])
+                        loc,scale,low,high) for i in range(len(size))])
                 except:
                     value = scipy.stats.truncnorm(
-                        a=(low-mean)/std,
-                        b=(high-mean)/std,
-                        loc=mean,
-                        scale=std).rvs(size=size)
+                        a=(low-loc)/scale,
+                        b=(high-loc)/scale,
+                        loc=loc,
+                        scale=scale).rvs(size=size)
             else:
                 value = scipy.stats.truncnorm(
-                    a=(low-mean)/std,
-                    b=(high-mean)/std,
-                    loc=mean,
-                    scale=std).rvs(size=size)
+                    a=(low-loc)/scale,
+                    b=(high-loc)/scale,
+                    loc=loc,
+                    scale=scale).rvs(size=size)
         else:
             if CUSTOM_DIST_AVAIL:
                 try:
-                    value = C_SAMPLE.c_truncated_normal(mean, std, low, high)
+                    value = C_SAMPLE.c_truncated_normal(loc, scale, low, high)
                 except:
-                    # likely because the mean and std are vectors
+                    # likely because the loc and scale are vectors
                     # try vectorizing it
                     value = np.asarray([C_SAMPLE.c_truncated_normal(
-                        mean[i],std[i],low,high) for i in range(len(mean))])
+                        loc[i],scale[i],low,high) for i in range(len(loc))])
             else:
                 value = scipy.stats.truncnorm(
-                    a=(low-mean)/std,
-                    b=(high-mean)/std,
-                    loc=mean,
-                    scale=std).rvs(size=size)
+                    a=(low-loc)/scale,
+                    b=(high-loc)/scale,
+                    loc=loc,
+                    scale=scale).rvs(size=size)
         return value
 
     @staticmethod
-    def sample_vec(mean, std, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), size=None):
-        &#39;&#39;&#39;Sample from a truncated normal random distribution defined on
-        [low, high] with mean `mean` and standard deviation `std`
+    def pdf(value, loc, scale, low, high):
+        &#39;&#39;&#39;Returns the probability density function of a truncated normal distribution
+
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+        low, high : float
+            Truncation points of normal distribution
+
+        Returns
+        -------
+        float
         &#39;&#39;&#39;
-        return np.asarray([C_SAMPLE.c_truncated_normal(
-            mean[i],std[i],low,high) for i in range(len(mean))])
+        return scipy.stats.truncnorm.pdf(value, (low-loc)/scale, (high-loc)/scale, loc, scale)
 
     @staticmethod
-    # @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def pdf(value, mean, std, low, high):
-        return scipy.stats.truncnorm.pdf(value, (low-mean)/std, (high-mean)/std, mean, std)
+    def logpdf(value, loc, scale, low, high):
+        &#39;&#39;&#39;Returns the log probability density function of a truncated normal distribution
 
-    @staticmethod
-    # @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def logpdf(value, mean, std, low, high):
-        return scipy.stats.truncnorm.logpdf(value, (low-mean)/std, (high-mean)/std, mean, std)</code></pre>
+        Parameters
+        ----------
+        value : float
+            This is the value we are calculating at
+        loc : float
+            This is the mean
+        scale : float
+            This is the scale
+        low, high : float
+            Truncation points of normal distribution
+
+        Returns
+        -------
+        float
+        &#39;&#39;&#39;
+        return scipy.stats.truncnorm.logpdf(value, (low-loc)/scale, (high-loc)/scale, loc, scale)</code></pre>
 </details>
 <h3>Ancestors</h3>
 <ul class="hlist">
@@ -1645,102 +2535,178 @@ def sample(dof, scale, size=None):
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.truncnormal.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>value, mean, std, low, high)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>value, loc, scale, low, high)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the logpdf</p></div>
+<div class="desc"><p>Returns the log probability density function of a truncated normal distribution</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the value we are calculating at</dd>
+<dt><strong><code>loc</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the mean</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the scale</dd>
+<dt><strong><code>low</code></strong>, <strong><code>high</code></strong> :&ensp;<code>float</code></dt>
+<dd>Truncation points of normal distribution</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-# @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-def logpdf(value, mean, std, low, high):
-    return scipy.stats.truncnorm.logpdf(value, (low-mean)/std, (high-mean)/std, mean, std)</code></pre>
+def logpdf(value, loc, scale, low, high):
+    &#39;&#39;&#39;Returns the log probability density function of a truncated normal distribution
+
+    Parameters
+    ----------
+    value : float
+        This is the value we are calculating at
+    loc : float
+        This is the mean
+    scale : float
+        This is the scale
+    low, high : float
+        Truncation points of normal distribution
+
+    Returns
+    -------
+    float
+    &#39;&#39;&#39;
+    return scipy.stats.truncnorm.logpdf(value, (low-loc)/scale, (high-loc)/scale, loc, scale)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.truncnormal.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>value, mean, std, low, high)</span>
+<span>def <span class="ident">pdf</span></span>(<span>value, loc, scale, low, high)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Calculate the pdf</p></div>
+<div class="desc"><p>Returns the probability density function of a truncated normal distribution</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>value</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the value we are calculating at</dd>
+<dt><strong><code>loc</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the mean</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the scale</dd>
+<dt><strong><code>low</code></strong>, <strong><code>high</code></strong> :&ensp;<code>float</code></dt>
+<dd>Truncation points of normal distribution</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-# @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-def pdf(value, mean, std, low, high):
-    return scipy.stats.truncnorm.pdf(value, (low-mean)/std, (high-mean)/std, mean, std)</code></pre>
+def pdf(value, loc, scale, low, high):
+    &#39;&#39;&#39;Returns the probability density function of a truncated normal distribution
+
+    Parameters
+    ----------
+    value : float
+        This is the value we are calculating at
+    loc : float
+        This is the mean
+    scale : float
+        This is the scale
+    low, high : float
+        Truncation points of normal distribution
+
+    Returns
+    -------
+    float
+    &#39;&#39;&#39;
+    return scipy.stats.truncnorm.pdf(value, (low-loc)/scale, (high-loc)/scale, loc, scale)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.truncnormal.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>mean, std, low=-inf, high=inf, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>loc, scale, low=-inf, high=inf, size=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample from a truncated normal random distribution defined on
-[low, high] with mean <code>mean</code> and standard deviation <code>std</code></p></div>
+[low, high] with mean <code>loc</code> and standard deviation <code>scale</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>loc</code></strong> :&ensp;<code>np.ndarray, float</code></dt>
+<dd>This is the mean</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>np.ndarray, float</code></dt>
+<dd>This is the scale</dd>
+<dt><strong><code>low</code></strong>, <strong><code>high</code></strong> :&ensp;<code>float</code></dt>
+<dd>Truncation points of normal distribution</dd>
+<dt><strong><code>size</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of samples to return</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray, float</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(mean, std, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), size=None):
+def sample(loc, scale, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), size=None):
     &#39;&#39;&#39;Sample from a truncated normal random distribution defined on
-    [low, high] with mean `mean` and standard deviation `std`
+    [low, high] with mean `loc` and standard deviation `scale`
+
+    Parameters
+    ----------
+    loc : np.ndarray, float
+        This is the mean
+    scale : np.ndarray, float
+        This is the scale
+    low, high : float
+        Truncation points of normal distribution
+    size : int
+        Number of samples to return
+    
+    Returns
+    -------
+    np.ndarray, float
     &#39;&#39;&#39;
     if size is not None:
         if CUSTOM_DIST_AVAIL:
             try:
                 value = np.asarray([C_SAMPLE.c_truncated_normal(
-                    mean,std,low,high) for i in range(len(size))])
+                    loc,scale,low,high) for i in range(len(size))])
             except:
                 value = scipy.stats.truncnorm(
-                    a=(low-mean)/std,
-                    b=(high-mean)/std,
-                    loc=mean,
-                    scale=std).rvs(size=size)
+                    a=(low-loc)/scale,
+                    b=(high-loc)/scale,
+                    loc=loc,
+                    scale=scale).rvs(size=size)
         else:
             value = scipy.stats.truncnorm(
-                a=(low-mean)/std,
-                b=(high-mean)/std,
-                loc=mean,
-                scale=std).rvs(size=size)
+                a=(low-loc)/scale,
+                b=(high-loc)/scale,
+                loc=loc,
+                scale=scale).rvs(size=size)
     else:
         if CUSTOM_DIST_AVAIL:
             try:
-                value = C_SAMPLE.c_truncated_normal(mean, std, low, high)
+                value = C_SAMPLE.c_truncated_normal(loc, scale, low, high)
             except:
-                # likely because the mean and std are vectors
+                # likely because the loc and scale are vectors
                 # try vectorizing it
                 value = np.asarray([C_SAMPLE.c_truncated_normal(
-                    mean[i],std[i],low,high) for i in range(len(mean))])
+                    loc[i],scale[i],low,high) for i in range(len(loc))])
         else:
             value = scipy.stats.truncnorm(
-                a=(low-mean)/std,
-                b=(high-mean)/std,
-                loc=mean,
-                scale=std).rvs(size=size)
+                a=(low-loc)/scale,
+                b=(high-loc)/scale,
+                loc=loc,
+                scale=scale).rvs(size=size)
     return value</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.random.truncnormal.sample_vec"><code class="name flex">
-<span>def <span class="ident">sample_vec</span></span>(<span>mean, std, low=-inf, high=inf, size=None)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Sample from a truncated normal random distribution defined on
-[low, high] with mean <code>mean</code> and standard deviation <code>std</code></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@staticmethod
-def sample_vec(mean, std, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), size=None):
-    &#39;&#39;&#39;Sample from a truncated normal random distribution defined on
-    [low, high] with mean `mean` and standard deviation `std`
-    &#39;&#39;&#39;
-    return np.asarray([C_SAMPLE.c_truncated_normal(
-        mean[i],std[i],low,high) for i in range(len(mean))])</code></pre>
 </details>
 </dd>
 </dl>
@@ -1998,7 +2964,6 @@ def sample(low=0, high=1, size=None):
 <li><code><a title="mdsine2.pylab.random.truncnormal.logpdf" href="#mdsine2.pylab.random.truncnormal.logpdf">logpdf</a></code></li>
 <li><code><a title="mdsine2.pylab.random.truncnormal.pdf" href="#mdsine2.pylab.random.truncnormal.pdf">pdf</a></code></li>
 <li><code><a title="mdsine2.pylab.random.truncnormal.sample" href="#mdsine2.pylab.random.truncnormal.sample">sample</a></code></li>
-<li><code><a title="mdsine2.pylab.random.truncnormal.sample_vec" href="#mdsine2.pylab.random.truncnormal.sample_vec">sample_vec</a></code></li>
 </ul>
 </li>
 <li>

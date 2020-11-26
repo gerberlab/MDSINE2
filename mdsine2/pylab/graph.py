@@ -333,12 +333,14 @@ class BaseNode(Saveable):
         self.G.nodes.pop(self.id)
 
 
-class DataNode(BaseNode):
+class DataNode:
     '''Base class for an object that wants to be used as the data class in inference.
 
     '''
-    def __init__(self, *args, **kwargs):
-        BaseNode.__init__(self, *args, **kwargs)
+    def __init__(self, name=None, name_prefix=None, G=None):
+        self.G = G
+        self.name = name
+        self.id = id(self)
         if self.G.data is not None:
             logging.info('Overriding old data object in graph {}'.format(self))
         self.G.data = self
@@ -347,7 +349,6 @@ class DataNode(BaseNode):
         '''Deletes this data object from the graph it belogns to
         '''
         self.G.data=None
-        BaseNode.delete(self)
 
 
 class Node(BaseNode):

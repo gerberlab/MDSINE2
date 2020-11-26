@@ -439,7 +439,7 @@ class ClusterPerturbationIndicator(ClusterValue):
         return ret
 
 
-class ClusterPerturbation(BasePerturbation, variables.Variable):
+class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
     '''This is an basic implementation for a perturbation where the 
     values **DO** depend on clusters. We trace the values at the item level.
     Effectively the same as `pylab.contrib.Perturbation` but it si extended

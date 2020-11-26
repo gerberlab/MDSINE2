@@ -1794,7 +1794,7 @@ def _agg_taxaname_for_paper(agg, taxaname):
 
     return label
 
-def aggregate_asv_abundances(subj, agg, dtype=&#39;rel&#39;, yscale_log=True, ax=None, 
+def aggregate_taxa_abundances(subj, agg, dtype=&#39;rel&#39;, yscale_log=True, ax=None, 
     title=&#39;Subject %(subjectname)s&#39;, xlabel=&#39;auto&#39;, ylabel=&#39;auto&#39;, vmin=None, vmax=None,
     alpha_agg=0.5, alpha_asv=1., legend=True, fontstyle=None, shade_perturbations=True):
     &#39;&#39;&#39;Plot the abundances of the aggregated Taxas within the OTU `agg` for the subject `subj`
@@ -2914,8 +2914,8 @@ Size of the figure</dd>
     return ax</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.visualization.aggregate_asv_abundances"><code class="name flex">
-<span>def <span class="ident">aggregate_asv_abundances</span></span>(<span>subj, agg, dtype='rel', yscale_log=True, ax=None, title='Subject %(subjectname)s', xlabel='auto', ylabel='auto', vmin=None, vmax=None, alpha_agg=0.5, alpha_asv=1.0, legend=True, fontstyle=None, shade_perturbations=True)</span>
+<dt id="mdsine2.visualization.aggregate_taxa_abundances"><code class="name flex">
+<span>def <span class="ident">aggregate_taxa_abundances</span></span>(<span>subj, agg, dtype='rel', yscale_log=True, ax=None, title='Subject %(subjectname)s', xlabel='auto', ylabel='auto', vmin=None, vmax=None, alpha_agg=0.5, alpha_asv=1.0, legend=True, fontstyle=None, shade_perturbations=True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Plot the abundances of the aggregated Taxas within the OTU <code>agg</code> for the subject <code>subj</code></p>
@@ -2974,7 +2974,7 @@ If None then do not set</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def aggregate_asv_abundances(subj, agg, dtype=&#39;rel&#39;, yscale_log=True, ax=None, 
+<pre><code class="python">def aggregate_taxa_abundances(subj, agg, dtype=&#39;rel&#39;, yscale_log=True, ax=None, 
     title=&#39;Subject %(subjectname)s&#39;, xlabel=&#39;auto&#39;, ylabel=&#39;auto&#39;, vmin=None, vmax=None,
     alpha_agg=0.5, alpha_asv=1., legend=True, fontstyle=None, shade_perturbations=True):
     &#39;&#39;&#39;Plot the abundances of the aggregated Taxas within the OTU `agg` for the subject `subj`
@@ -5181,7 +5181,7 @@ If True, add a legend</dd>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
 <li><code><a title="mdsine2.visualization.abundance_over_time" href="#mdsine2.visualization.abundance_over_time">abundance_over_time</a></code></li>
-<li><code><a title="mdsine2.visualization.aggregate_asv_abundances" href="#mdsine2.visualization.aggregate_asv_abundances">aggregate_asv_abundances</a></code></li>
+<li><code><a title="mdsine2.visualization.aggregate_taxa_abundances" href="#mdsine2.visualization.aggregate_taxa_abundances">aggregate_taxa_abundances</a></code></li>
 <li><code><a title="mdsine2.visualization.alpha_diversity_over_time" href="#mdsine2.visualization.alpha_diversity_over_time">alpha_diversity_over_time</a></code></li>
 <li><code><a title="mdsine2.visualization.render_acceptance_rate_trace" href="#mdsine2.visualization.render_acceptance_rate_trace">render_acceptance_rate_trace</a></code></li>
 <li><code><a title="mdsine2.visualization.render_bayes_factors" href="#mdsine2.visualization.render_bayes_factors">render_bayes_factors</a></code></li>

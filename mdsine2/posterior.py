@@ -213,16 +213,16 @@ def build_prior_mean(G, order, shape=None):
     a = []
     for name in order:
         v = G[name]
-        if v.id == STRNAMES.GROWTH_VALUE:
+        if v.name == STRNAMES.GROWTH_VALUE:
             a.append(v.prior.loc.value * np.ones(G.data.n_taxas))
-        elif v.id == STRNAMES.SELF_INTERACTION_VALUE:
+        elif v.name == STRNAMES.SELF_INTERACTION_VALUE:
             a.append(v.prior.loc.value * np.ones(G.data.n_taxas))
-        elif v.id == STRNAMES.CLUSTER_INTERACTION_VALUE:
+        elif v.name == STRNAMES.CLUSTER_INTERACTION_VALUE:
             a.append(
                 np.full(
                     G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators,
                     v.prior.loc.value))
-        elif v.id == STRNAMES.PERT_VALUE:
+        elif v.name == STRNAMES.PERT_VALUE:
             for perturbation in G.perturbations:
                 a.append(np.full(
                     perturbation.indicator.num_on_clusters(),
@@ -2468,7 +2468,7 @@ class FilteringLogMP(pl.graph.Node):
         '''
         kwargs['name'] = STRNAMES.FILTERING
         pl.graph.Node.__init__(self, **kwargs)
-        self.x = TrajectorySet(name=STRNAMES.LATENT_TRAJECTORY, G=self.G)
+        self.x = TrajectorySet(G=self.G)
         self.mp = mp
         self.zero_inflation_transition_policy = zero_inflation_transition_policy
 

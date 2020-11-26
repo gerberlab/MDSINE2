@@ -244,8 +244,8 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 &#39;delay&#39;: 0},
             STRNAMES.PRIOR_MEAN_PERT: {
                 &#39;value_option&#39;: &#39;prior-mean&#39;,
-                &#39;mean_option&#39;: &#39;zero&#39;,
-                &#39;var_option&#39;: &#39;diffuse&#39;,
+                &#39;loc_option&#39;: &#39;zero&#39;,
+                &#39;scale2_option&#39;: &#39;diffuse&#39;,
                 &#39;delay&#39;:0},
             STRNAMES.PRIOR_VAR_GROWTH: {
                 &#39;value_option&#39;: &#39;prior-mean&#39;,
@@ -258,14 +258,14 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 &#39;delay&#39;:0},
             STRNAMES.PRIOR_MEAN_GROWTH: {
                 &#39;value_option&#39;: &#39;prior-mean&#39;,
-                &#39;mean_option&#39;: &#39;manual&#39;,
-                &#39;var_option&#39;: &#39;diffuse-linear-regression&#39;,
+                &#39;loc_option&#39;: &#39;manual&#39;,
+                &#39;scale2_option&#39;: &#39;diffuse-linear-regression&#39;,
                 &#39;proposal_option&#39;: &#39;auto&#39;,
                 &#39;target_acceptance_rate&#39;: 0.44,
                 &#39;tune&#39;: 50,
                 &#39;end_tune&#39;: &#39;half-burnin&#39;,
                 &#39;truncation_settings&#39;: self.GROWTH_TRUNCATION_SETTINGS,
-                &#39;delay&#39;:0, &#39;mean&#39;: 1},
+                &#39;delay&#39;:0, &#39;loc&#39;: 1},
             STRNAMES.GROWTH_VALUE: {
                 &#39;value_option&#39;: &#39;linear-regression&#39;, #&#39;prior-mean&#39;,
                 &#39;truncation_settings&#39;: self.GROWTH_TRUNCATION_SETTINGS,
@@ -281,8 +281,8 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 &#39;delay&#39;:0},
             STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS: {
                 &#39;value_option&#39;: &#39;prior-mean&#39;,
-                &#39;mean_option&#39;: &#39;median-linear-regression&#39;,
-                &#39;var_option&#39;: &#39;diffuse-linear-regression&#39;,
+                &#39;loc_option&#39;: &#39;median-linear-regression&#39;,
+                &#39;scale2_option&#39;: &#39;diffuse-linear-regression&#39;,
                 &#39;proposal_option&#39;: &#39;auto&#39;,
                 &#39;target_acceptance_rate&#39;: 0.44,
                 &#39;tune&#39;: 50,
@@ -301,8 +301,8 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 &#39;delay&#39;: 0},
             STRNAMES.PRIOR_MEAN_INTERACTIONS: {
                 &#39;value_option&#39;: &#39;prior-mean&#39;,
-                &#39;mean_option&#39;: &#39;zero&#39;,
-                &#39;var_option&#39;: &#39;same-as-aii&#39;,
+                &#39;loc_option&#39;: &#39;zero&#39;,
+                &#39;scale2_option&#39;: &#39;same-as-aii&#39;,
                 &#39;delay&#39;:0},
             STRNAMES.CLUSTER_INTERACTION_VALUE: {
                 &#39;value_option&#39;: &#39;all-off&#39;,
@@ -346,9 +346,6 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 &#39;tune&#39;: 50,
                 &#39;end_tune&#39;: &#39;half-burnin&#39;},
             STRNAMES.PROCESSVAR: {
-                # &#39;v1&#39;: 0.2**2,
-                # &#39;v2&#39;: 1,
-                # &#39;q_option&#39;: &#39;previous-t&#39;}, #&#39;previous-t&#39;},
                 &#39;dof_option&#39;: &#39;diffuse&#39;, # &#39;half&#39;, 
                 &#39;scale_option&#39;: &#39;med&#39;,
                 &#39;value_option&#39;: &#39;prior-mean&#39;,
@@ -996,8 +993,8 @@ steam and a file</dd>
                 &#39;delay&#39;: 0},
             STRNAMES.PRIOR_MEAN_PERT: {
                 &#39;value_option&#39;: &#39;prior-mean&#39;,
-                &#39;mean_option&#39;: &#39;zero&#39;,
-                &#39;var_option&#39;: &#39;diffuse&#39;,
+                &#39;loc_option&#39;: &#39;zero&#39;,
+                &#39;scale2_option&#39;: &#39;diffuse&#39;,
                 &#39;delay&#39;:0},
             STRNAMES.PRIOR_VAR_GROWTH: {
                 &#39;value_option&#39;: &#39;prior-mean&#39;,
@@ -1010,14 +1007,14 @@ steam and a file</dd>
                 &#39;delay&#39;:0},
             STRNAMES.PRIOR_MEAN_GROWTH: {
                 &#39;value_option&#39;: &#39;prior-mean&#39;,
-                &#39;mean_option&#39;: &#39;manual&#39;,
-                &#39;var_option&#39;: &#39;diffuse-linear-regression&#39;,
+                &#39;loc_option&#39;: &#39;manual&#39;,
+                &#39;scale2_option&#39;: &#39;diffuse-linear-regression&#39;,
                 &#39;proposal_option&#39;: &#39;auto&#39;,
                 &#39;target_acceptance_rate&#39;: 0.44,
                 &#39;tune&#39;: 50,
                 &#39;end_tune&#39;: &#39;half-burnin&#39;,
                 &#39;truncation_settings&#39;: self.GROWTH_TRUNCATION_SETTINGS,
-                &#39;delay&#39;:0, &#39;mean&#39;: 1},
+                &#39;delay&#39;:0, &#39;loc&#39;: 1},
             STRNAMES.GROWTH_VALUE: {
                 &#39;value_option&#39;: &#39;linear-regression&#39;, #&#39;prior-mean&#39;,
                 &#39;truncation_settings&#39;: self.GROWTH_TRUNCATION_SETTINGS,
@@ -1033,8 +1030,8 @@ steam and a file</dd>
                 &#39;delay&#39;:0},
             STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS: {
                 &#39;value_option&#39;: &#39;prior-mean&#39;,
-                &#39;mean_option&#39;: &#39;median-linear-regression&#39;,
-                &#39;var_option&#39;: &#39;diffuse-linear-regression&#39;,
+                &#39;loc_option&#39;: &#39;median-linear-regression&#39;,
+                &#39;scale2_option&#39;: &#39;diffuse-linear-regression&#39;,
                 &#39;proposal_option&#39;: &#39;auto&#39;,
                 &#39;target_acceptance_rate&#39;: 0.44,
                 &#39;tune&#39;: 50,
@@ -1053,8 +1050,8 @@ steam and a file</dd>
                 &#39;delay&#39;: 0},
             STRNAMES.PRIOR_MEAN_INTERACTIONS: {
                 &#39;value_option&#39;: &#39;prior-mean&#39;,
-                &#39;mean_option&#39;: &#39;zero&#39;,
-                &#39;var_option&#39;: &#39;same-as-aii&#39;,
+                &#39;loc_option&#39;: &#39;zero&#39;,
+                &#39;scale2_option&#39;: &#39;same-as-aii&#39;,
                 &#39;delay&#39;:0},
             STRNAMES.CLUSTER_INTERACTION_VALUE: {
                 &#39;value_option&#39;: &#39;all-off&#39;,
@@ -1098,9 +1095,6 @@ steam and a file</dd>
                 &#39;tune&#39;: 50,
                 &#39;end_tune&#39;: &#39;half-burnin&#39;},
             STRNAMES.PROCESSVAR: {
-                # &#39;v1&#39;: 0.2**2,
-                # &#39;v2&#39;: 1,
-                # &#39;q_option&#39;: &#39;previous-t&#39;}, #&#39;previous-t&#39;},
                 &#39;dof_option&#39;: &#39;diffuse&#39;, # &#39;half&#39;, 
                 &#39;scale_option&#39;: &#39;med&#39;,
                 &#39;value_option&#39;: &#39;prior-mean&#39;,

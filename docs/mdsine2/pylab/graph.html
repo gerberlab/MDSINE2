@@ -365,12 +365,14 @@ class BaseNode(Saveable):
         self.G.nodes.pop(self.id)
 
 
-class DataNode(BaseNode):
+class DataNode:
     &#39;&#39;&#39;Base class for an object that wants to be used as the data class in inference.
 
     &#39;&#39;&#39;
-    def __init__(self, *args, **kwargs):
-        BaseNode.__init__(self, *args, **kwargs)
+    def __init__(self, name=None, name_prefix=None, G=None):
+        self.G = G
+        self.name = name
+        self.id = id(self)
         if self.G.data is not None:
             logging.info(&#39;Overriding old data object in graph {}&#39;.format(self))
         self.G.data = self
@@ -379,7 +381,6 @@ class DataNode(BaseNode):
         &#39;&#39;&#39;Deletes this data object from the graph it belogns to
         &#39;&#39;&#39;
         self.G.data=None
-        BaseNode.delete(self)
 
 
 class Node(BaseNode):
@@ -795,7 +796,6 @@ _default_graph_id = _default_graph.id</code></pre>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="mdsine2.pylab.graph.DataNode" href="#mdsine2.pylab.graph.DataNode">DataNode</a></li>
 <li><a title="mdsine2.pylab.graph.Node" href="#mdsine2.pylab.graph.Node">Node</a></li>
 </ul>
 <h3>Methods</h3>
@@ -867,24 +867,19 @@ _default_graph_id = _default_graph.id</code></pre>
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li><a title="mdsine2.pylab.graph.DataNode" href="#mdsine2.pylab.graph.DataNode">DataNode</a></li>
-<li><a title="mdsine2.pylab.graph.BaseNode" href="#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
 </ul>
 <h3>Inherited members</h3>
 <ul class="hlist">
 <li><code><b><a title="mdsine2.pylab.graph.DataNode" href="#mdsine2.pylab.graph.DataNode">DataNode</a></b></code>:
 <ul class="hlist">
 <li><code><a title="mdsine2.pylab.graph.DataNode.delete" href="#mdsine2.pylab.graph.DataNode.delete">delete</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.DataNode.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.DataNode.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.DataNode.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 </ul>
 </li>
 </ul>
 </dd>
 <dt id="mdsine2.pylab.graph.DataNode"><code class="flex name class">
 <span>class <span class="ident">DataNode</span></span>
-<span>(</span><span>*args, **kwargs)</span>
+<span>(</span><span>name=None, name_prefix=None, G=None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Base class for an object that wants to be used as the data class in inference.</p></div>
@@ -892,12 +887,14 @@ _default_graph_id = _default_graph.id</code></pre>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">class DataNode(BaseNode):
+<pre><code class="python">class DataNode:
     &#39;&#39;&#39;Base class for an object that wants to be used as the data class in inference.
 
     &#39;&#39;&#39;
-    def __init__(self, *args, **kwargs):
-        BaseNode.__init__(self, *args, **kwargs)
+    def __init__(self, name=None, name_prefix=None, G=None):
+        self.G = G
+        self.name = name
+        self.id = id(self)
         if self.G.data is not None:
             logging.info(&#39;Overriding old data object in graph {}&#39;.format(self))
         self.G.data = self
@@ -905,14 +902,8 @@ _default_graph_id = _default_graph.id</code></pre>
     def delete(self):
         &#39;&#39;&#39;Deletes this data object from the graph it belogns to
         &#39;&#39;&#39;
-        self.G.data=None
-        BaseNode.delete(self)</code></pre>
+        self.G.data=None</code></pre>
 </details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="mdsine2.pylab.graph.BaseNode" href="#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
-</ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
 <li><a title="mdsine2.design_matrices.Data" href="../design_matrices.html#mdsine2.design_matrices.Data">Data</a></li>
@@ -933,21 +924,10 @@ _default_graph_id = _default_graph.id</code></pre>
 <pre><code class="python">def delete(self):
     &#39;&#39;&#39;Deletes this data object from the graph it belogns to
     &#39;&#39;&#39;
-    self.G.data=None
-    BaseNode.delete(self)</code></pre>
+    self.G.data=None</code></pre>
 </details>
 </dd>
 </dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="mdsine2.pylab.graph.BaseNode" href="#mdsine2.pylab.graph.BaseNode">BaseNode</a></b></code>:
-<ul class="hlist">
-<li><code><a title="mdsine2.pylab.graph.BaseNode.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.BaseNode.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.BaseNode.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
-</ul>
-</li>
-</ul>
 </dd>
 <dt id="mdsine2.pylab.graph.Graph"><code class="flex name class">
 <span>class <span class="ident">Graph</span></span>
@@ -1551,7 +1531,6 @@ open it in Cytoscape.</p>
 </ul>
 <h3>Subclasses</h3>
 <ul class="hlist">
-<li><a title="mdsine2.design_matrices.DesignMatrix" href="../design_matrices.html#mdsine2.design_matrices.DesignMatrix">DesignMatrix</a></li>
 <li><a title="mdsine2.design_matrices.ObservationVector" href="../design_matrices.html#mdsine2.design_matrices.ObservationVector">ObservationVector</a></li>
 <li><a title="mdsine2.negbin.FilteringMP" href="../negbin.html#mdsine2.negbin.FilteringMP">FilteringMP</a></li>
 <li><a title="mdsine2.posterior.ClusterAssignments" href="../posterior.html#mdsine2.posterior.ClusterAssignments">ClusterAssignments</a></li>

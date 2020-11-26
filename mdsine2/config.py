@@ -219,7 +219,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'tune': 50,
                 'end_tune': 'half-burnin',
                 'truncation_settings': self.GROWTH_TRUNCATION_SETTINGS,
-                'delay':0, 'mean': 1},
+                'delay':0, 'loc': 1},
             STRNAMES.GROWTH_VALUE: {
                 'value_option': 'linear-regression', #'prior-mean',
                 'truncation_settings': self.GROWTH_TRUNCATION_SETTINGS,

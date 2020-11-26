@@ -1748,7 +1748,7 @@ def _agg_taxaname_for_paper(agg, taxaname):
 
     return label
 
-def aggregate_asv_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None, 
+def aggregate_taxa_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None, 
     title='Subject %(subjectname)s', xlabel='auto', ylabel='auto', vmin=None, vmax=None,
     alpha_agg=0.5, alpha_asv=1., legend=True, fontstyle=None, shade_perturbations=True):
     '''Plot the abundances of the aggregated Taxas within the OTU `agg` for the subject `subj`

@@ -35,7 +35,7 @@ from .variables import Variable, Constant, summary
 from .graph import Graph, Node, hasprior
 from .cluster import Clustering
 from .random import seed
-from .contrib import Interactions, ClusterPerturbation
+from .contrib import Interactions, ClusterPerturbationEffect
 from .inference import BaseMCMC
 from .dynamics import integrate
 
