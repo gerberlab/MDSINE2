@@ -47,6 +47,7 @@ import os.path
 
 from . import util as plutil
 from .errors import NeedToImplementError
+from . import diversity
 
 # Constants
 DEFAULT_TAXA_NAME = 'NA'
@@ -479,7 +480,7 @@ class BasePerturbation:
         ValueError
             If there are no start and end times set
         '''
-        if self.start is None:
+        if self.starts is None:
             raise ValueError('`start` is not set in {}'.format(self.name))
         try:
             start = self.starts[subj]
@@ -796,10 +797,64 @@ class OTU(Taxa):
             self.taxonomy['family'], self.taxonomy['genus'],
             self.taxonomy['species'])
 
-    def calculate_consensus_sequence(self):
+    def generate_consensus_seq(self, threshold=0.65, noconsensus_char='N'):
+        '''Generate the consensus sequence for the OTU given the sequences
+        of all the contained ASVs
+
+        Parameters
+        ----------
+        threshold : float
+            This is the threshold for consensus (0 < threshold <= 1)
+        noconsensus_char : str
+            This is the character to replace
+
+        NOTE
+        ----
+        Situation where all of the sequences are not the same length is not implemented
         '''
-        '''
-        pass
+        agg_seqs = [seq for seq in self.aggregated_seqs.values()]
+        l = None
+        for seq in agg_seqs:
+            if l is None:
+                l = len(seq)
+            if len(seq) != l:
+                raise NotImplementedError('Unaligned sequences not implemented yet')
+
+        consensus_seq = ''
+        for i in range(l):
+            found = {}
+            for seq in agg_seqs:
+                base = seq[i]
+                if base not in found:
+                    found[base] = 1
+                else:
+                    found[base] += 1
+            if len(found) == 1:
+                # Every sequence agrees on this base. Set
+                consensus_seq += found[list(found.keys())[0]]
+            else:
+                baseset = False
+                for base in found:
+                    if found[base]/len(agg_seqs) >= threshold:
+                        # This means we meet the threshold for consensus - set the base
+                        baseset = True
+                        consensus_seq += base
+                        break
+                if not baseset:
+                    # No consensus was set - set to `noconsensus_char`
+                    consensus_seq += noconsensus_char
+
+        # Check for errors with consensus sequence
+        for seq in agg_seqs:
+            perc_dist = diversity.beta.hamming(seq, consensus_seq, 
+                ignore_char=noconsensus_char)/l
+            if perc_dist < 0.97:
+                logging.warning('Taxa {} has a hamming distance < 97% ({}) to the generated ' \
+                    'consensus sequence {} from individual sequence {}. Check that sequences ' \
+                    'make sense'.format(self.name, perc_dist, consensus_seq, seq))
+
+        # Set the consensus sequence as the OTU's sequence
+        self.sequence = consensus_seq
 
 
 class Clusterable(Saveable):
@@ -1187,6 +1242,21 @@ class TaxaSet(Clusterable):
             newname = prefix + '_{}'.format(int(taxa.idx + offset))
             taxa.name = newname
             self.names[taxa.name] = taxa
+
+    def generate_consensus_seqs(self, threshold=0.65):
+        '''Generate the consensus sequence for all of the Taxa given the sequences
+        of all the contained ASVs of the respective OTUs
+
+        Parameters
+        ----------
+        threshold : float
+            This is the threshold for consensus (0 < threshold <= 1)
+        noconsensus_char : str
+            This is the character to replace
+        '''
+        for taxa in self:
+            if isotu(taxa):
+                taxa.generate_consensus_seq(threshold=threshold)
 
 
 class qPCRdata:

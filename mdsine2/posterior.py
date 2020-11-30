@@ -1144,7 +1144,7 @@ class ClusterAssignments(pl.graph.Node):
             clusters = [val for val in clusters.values()]
 
         elif value_option == 'sequence':
-            import diversity
+            from pylab import diversity
 
             logging.info('Making affinity matrix from sequences')
             evenness = np.diag(np.ones(len(self.G.data.taxas), dtype=float))
@@ -8042,11 +8042,11 @@ class PriorMeanPerturbations(pl.Variable):
         -------
         _io.TextIOWrapper
         '''
-        perturbation = self.pertubrations[pidx]
+        perturbation = self.perturbations[pidx]
         if not self.G.inference.is_in_inference_order(self.name):
             return f
         return _scalar_visualize(path=path, f=f, section=section,
-            obj=self.perturbations.magnitude.prior.loc,
+            obj=perturbation.magnitude.prior.loc,
             log_scale=False)
 
 

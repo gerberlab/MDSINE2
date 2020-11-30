@@ -100,13 +100,29 @@ class beta:
         return distance.jaccard(u,v)
 
     @staticmethod
-    def hamming(u,v):
+    def hamming(u, v, ignore_char='N'):
+        '''Calculate the hamming distance between `u` and `v`
+
+        Parameters
+        ----------
+        u, v : iterable
+            Iterable objects of the same size that we are comparing
+        ignore_Ns : str, None
+            If not None, then we ignore positions which are this character.
+            This is used if we want to skip over positions that are not a consensus.
+
+        Returns
+        -------
+        int
+        '''
         if len(u) != len(v):
             raise ValueError('Cannot compare different distances')
         result=0
         for i,j in zip(u,v):
+            if ignore_char is not None:
+                if i == ignore_char or j == ignore_char:
+                    continue
             if i!=j:
-                # print(f'char not math{i,j}in {x}')
                 result+=1
         return result
 

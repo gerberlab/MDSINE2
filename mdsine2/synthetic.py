@@ -16,7 +16,7 @@ from sklearn.cluster import AgglomerativeClustering
 
 from . import pylab as pl
 from . import model
-from . import diversity
+from .pylab import diversity
 
 class SyntheticData(pl.Saveable):
     '''This class is used to generate synthetic data using fixed

@@ -9,6 +9,7 @@ from . import cluster
 from . import math
 from . import contrib
 from . import dynamics
+from . import diversity
 
 
 # Get is* methods

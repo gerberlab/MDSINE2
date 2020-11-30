@@ -8,7 +8,7 @@ import copy
 
 from .names import STRNAMES
 from . import pylab as pl
-from . import diversity
+from .pylab import diversity
 
 def is_gram_negative(taxa):
     '''Return true if the taxa is gram - or gram positive
