@@ -806,12 +806,22 @@ class OTU(Taxa):
         threshold : float
             This is the threshold for consensus (0 < threshold <= 1)
         noconsensus_char : str
-            This is the character to replace
+            This is the character to set base if no consensus base is found
+            at the respective position.
 
         NOTE
         ----
         Situation where all of the sequences are not the same length is not implemented
         '''
+        if not plutil.isstr(noconsensus_char):
+            raise TypeError('`noconsensus_char` ({}) must be a str'.format(
+                type(noconsensus_char)))
+        if not plutil.isnumeric(threshold):
+            raise TypeError('`threshold` ({}) must be a numeric'.format(threshold))
+        if threshold < 0 or threshold > 1:
+            raise ValueError('`threshold` ({}) must be 0 <= thresold <= 1'.format(threshold))
+
+        # Check if all of the sequences are the same length
         agg_seqs = [seq for seq in self.aggregated_seqs.values()]
         l = None
         for seq in agg_seqs:
@@ -820,8 +830,11 @@ class OTU(Taxa):
             if len(seq) != l:
                 raise NotImplementedError('Unaligned sequences not implemented yet')
 
+        # Generate the consensus base for each base position
         consensus_seq = ''
         for i in range(l):
+
+            # Count the number of times each base occurs at position `i`
             found = {}
             for seq in agg_seqs:
                 base = seq[i]
@@ -829,27 +842,37 @@ class OTU(Taxa):
                     found[base] = 1
                 else:
                     found[base] += 1
+
+            # Set the base
             if len(found) == 1:
                 # Every sequence agrees on this base. Set
-                consensus_seq += found[list(found.keys())[0]]
+                consensus_seq += list(found.keys())[0]
             else:
-                baseset = False
+                # Get the maximum consensus
+                consensus_percent = -1
+                consensus_base = None
                 for base in found:
-                    if found[base]/len(agg_seqs) >= threshold:
-                        # This means we meet the threshold for consensus - set the base
-                        baseset = True
-                        consensus_seq += base
-                        break
-                if not baseset:
-                    # No consensus was set - set to `noconsensus_char`
+                    consensus = 1 - (found[base]/len(agg_seqs))
+                    if consensus > consensus_percent:
+                        consensus_percent = consensus
+                        consensus_base = base
+
+                # Set the consensus base if it passes the threshold
+                if consensus_percent >= threshold:
+                    logging.debug('Consensus found for taxa {} in position {} as {}, found ' \
+                        '{}'.format(self.name, i, consensus_base, found))
+                    consensus_seq += consensus_base
+                else:
+                    logging.debug('No consensus for taxa {} in position {}. Consensus: {}' \
+                        ', found {}'.format(self.name, i, consensus, found))
                     consensus_seq += noconsensus_char
 
         # Check for errors with consensus sequence
         for seq in agg_seqs:
             perc_dist = diversity.beta.hamming(seq, consensus_seq, 
                 ignore_char=noconsensus_char)/l
-            if perc_dist < 0.97:
-                logging.warning('Taxa {} has a hamming distance < 97% ({}) to the generated ' \
+            if perc_dist > 0.03:
+                logging.warning('Taxa {} has a hamming distance > 3% ({}) to the generated ' \
                     'consensus sequence {} from individual sequence {}. Check that sequences ' \
                     'make sense'.format(self.name, perc_dist, consensus_seq, seq))
 
@@ -1243,7 +1266,7 @@ class TaxaSet(Clusterable):
             taxa.name = newname
             self.names[taxa.name] = taxa
 
-    def generate_consensus_seqs(self, threshold=0.65):
+    def generate_consensus_seqs(self, threshold=0.65, noconsensus_char='N'):
         '''Generate the consensus sequence for all of the Taxa given the sequences
         of all the contained ASVs of the respective OTUs
 
@@ -1256,7 +1279,9 @@ class TaxaSet(Clusterable):
         '''
         for taxa in self:
             if isotu(taxa):
-                taxa.generate_consensus_seq(threshold=threshold)
+                taxa.generate_consensus_seq(
+                    threshold=threshold, 
+                    noconsensus_char=noconsensus_char)
 
 
 class qPCRdata:
@@ -1443,7 +1468,7 @@ class Subject(Saveable):
             These are the reads for the Taxas in order. Assumed to be in the 
             same order as the TaxaSet. If it is a dataframe then we use the rows
             to index the Taxa names. If timepoints is an array, then we are adding 
-            for multiple timepoints. In this case we assume that the rows index the 
+            for multiple timepoints. In this case we assume that the rows index  the 
             Taxa and the columns index the timepoint.
         '''
         if not plutil.isarray(timepoints):
@@ -1464,8 +1489,9 @@ class Subject(Saveable):
 
         for tidx, timepoint in enumerate(timepoints):
             if timepoint in self.reads:
-                logging.debug('There are already reads specified at time `{}` for subject `{}`, overwriting'.format(
-                    timepoint, self.name))
+                if self.reads[timepoint] is not None:
+                    logging.debug('There are already reads specified at time `{}` for subject `{}`, overwriting'.format(
+                        timepoint, self.name))
                 
             self.reads[timepoint] = reads[:,tidx]
             if timepoint not in self.times:
@@ -1536,8 +1562,9 @@ class Subject(Saveable):
 
         for tidx, timepoint in enumerate(timepoints):
             if timepoint in self.qpcr:
-                logging.debug('There are already qpcr measurements specified at time `{}` for subject `{}`, overwriting'.format(
-                    timepoint, self.name))
+                if self.qpcr[timepoint] is not None:
+                    logging.debug('There are already qpcr measurements specified at time `{}` for subject `{}`, overwriting'.format(
+                        timepoint, self.name))
             if masses is not None:
                 mass = masses[tidx]
             else:

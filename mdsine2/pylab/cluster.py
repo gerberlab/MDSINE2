@@ -383,13 +383,13 @@ class Clustering(Node, Traceable):
         if not util.isarray(a):
             raise TypeError('`a` ({}) must be an array'.format(type(a)))
         a = np.asarray(a)
-        if np.any(a , 0):
-            raise ValueError('All values in `a` must be > 0')
+        if np.any(a < 0):
+            raise ValueError('All values in `a` must be >= 0')
         for i in range(np.max(a)):
             if i not in a:
                 raise ValueError('Index `{}` skipped in a'.format(i))
         
-        for cidx in range(np.max(a)):
+        for cidx in range(np.max(a)+1):
             idxs = np.where(a == cidx)[0]
             cid = self.make_new_cluster_with(idxs[0])
             for idx in idxs[1:]:

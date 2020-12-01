@@ -999,7 +999,7 @@ class ClusterAssignments(pl.graph.Node):
                 'spearman', 'auto'
                     Creates a distance matrix based on the spearman rank similarity
                     between two trajectories. We use the raw data. `n_clusters` required
-                'fixed-topology'
+                'fixed-clustering'
                     Sets the clustering assignment to the most likely clustering configuration
                     specified in the graph at the location `value` (`value` is a str).
                     We take the mean coclusterings and do agglomerative clustering on that matrix
@@ -1023,7 +1023,7 @@ class ClusterAssignments(pl.graph.Node):
         self.run_every_n_iterations = run_every_n_iterations
         self.delay = delay
 
-        if value_option not in ['manual', 'no-clusters', 'fixed-topology']:
+        if value_option not in ['manual', 'no-clusters', 'fixed-clustering']:
             if pl.isstr(n_clusters):
                 if n_clusters in ['expected', 'auto']:
                     n_clusters = expected_n_clusters(self.G)
@@ -1072,7 +1072,7 @@ class ClusterAssignments(pl.graph.Node):
                         oidx, value))
             # Now everything is checked and valid
 
-        elif value_option == 'fixed-topology':
+        elif value_option == 'fixed-clustering':
             logging.info('Fixed topology initialization')
             if not pl.isstr(value):
                 raise TypeError('`value` ({}) must be a str'.format(value))
@@ -3949,6 +3949,142 @@ class PriorMeanInteractions(pl.variables.Normal):
         return _scalar_visualize(self, path=path, f=f, section=section)
 
 
+class ClusterInteractionIndicatorProbability(pl.variables.Beta):
+    '''This is the posterior for the probability of a cluster being on
+    '''
+    def __init__(self, prior, **kwargs):
+        '''Parameters
+
+        prior (pl.variables.Beta)
+            - prior probability
+        **kwargs
+            - Other options like graph, value
+        '''
+        kwargs['name'] = STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB
+        pl.variables.Beta.__init__(self, a=prior.a.value, b=prior.b.value,
+            dtype=float, **kwargs)
+        self.add_prior(prior)
+
+    def initialize(self, value_option, hyperparam_option, a=None, b=None, value=None,
+        N='auto', delay=0):
+        '''Initialize the hyperparameters of the beta prior
+
+        Parameters
+        ----------
+        value_option : str
+            - Option to initialize the value by
+            - Options
+                - 'manual'
+                    - Set the values manually, `value` must be specified
+                - 'auto'
+                    - Set to the mean of the prior
+        hyperparam_option : str
+            - If it is a string, then set it by the designated option
+            - Options
+                - 'manual'
+                    - Set the value manually. `a` and `b` must also be specified
+                - 'weak-agnostic'
+                    - a=b=0.5
+                - 'strong-dense'
+                    - a = N(N-1), N are the expected number of clusters
+                    - b = 0.5
+                - 'strong-sparse'
+                    - a = 0.5
+                    - b = N(N-1), N are the expected number of clusters
+                - 'very-strong-sparse'
+                    - a = 0.5
+                    - b = n_taxas * (n_taxas-1)
+        N : str, int
+            This is the number of clusters to set the hyperparam options to 
+            (if they are dependent on the number of cluster). If 'auto', set to the expected number
+            of clusters from a dirichlet process. Else use this number (must be an int).
+        a, b : int, float
+            - User specified values
+            - Only necessary if `hyperparam_option` == 'manual'
+        '''
+        if not pl.isint(delay):
+            raise TypeError('`delay` ({}) must be an int'.format(type(delay)))
+        if delay < 0:
+            raise ValueError('`delay` ({}) must be >= 0'.format(delay))
+        self.delay = delay
+
+        if hyperparam_option == 'manual':
+            if pl.isnumeric(a) and pl.isnumeric(b):
+                self.prior.a.override_value(a)
+                self.prior.b.override_value(b)
+            else:
+                raise ValueError('a ({}) and b ({}) must be numerics (float, int)'.format(
+                    a.__class__, b.__class__))
+        elif hyperparam_option in ['weak-agnostic']:
+            self.prior.a.override_value(0.5)
+            self.prior.b.override_value(0.5)
+        elif hyperparam_option == 'strong-dense':
+            if pl.isstr(N):
+                if N == 'auto':
+                    N = expected_n_clusters(G=self.G)
+                else:
+                    raise ValueError('`N` ({}) nto recognized'.format(N))
+            elif pl.isint(N):
+                if N < 0:
+                    raise ValueError('`N` ({}) must be positive'.format(N))
+            else:
+                raise TypeError('`N` ({}) type not recognized'.format(type(N)))
+            self.prior.a.override_value(N * (N - 1))
+            self.prior.b.override_value(0.5)
+        elif hyperparam_option == 'strong-sparse':
+            if pl.isstr(N):
+                if N == 'auto':
+                    N = expected_n_clusters(G=self.G)
+                else:
+                    raise ValueError('`N` ({}) nto recognized'.format(N))
+            elif pl.isint(N):
+                if N < 0:
+                    raise ValueError('`N` ({}) must be positive'.format(N))
+            else:
+                raise TypeError('`N` ({}) type not recognized'.format(type(N)))
+            self.prior.a.override_value(0.5)
+            self.prior.b.override_value((N * (N - 1)))
+        elif hyperparam_option == 'very-strong-sparse':
+            N = self.G.data.n_taxas
+            self.prior.a.override_value(0.5)
+            self.prior.b.override_value((N * (N - 1)))
+        else:
+            raise ValueError('option `{}` not recognized'.format(hyperparam_option))
+
+        if value_option == 'manual':
+            if pl.isnumeric(value):
+                self.value = value
+            else:
+                raise ValueError('`value` ({}) must be a numeric (float,int)'.format(
+                    value.__class__))
+        elif value_option == 'auto':
+            self.value = self.prior.mean()
+        else:
+            raise ValueError('value option "{}" not recognized for indicator prob'.format(
+                value_option))
+
+        self.a.value = self.prior.a.value
+        self.b.value = self.prior.b.value
+        logging.info('Indicator Probability initialization results:\n' \
+            '\tprior a: {}\n\tprior b: {}\n\tvalue: {}'.format(
+                self.prior.a.value, self.prior.b.value, self.value))
+
+    def update(self):
+        '''Sample the posterior given the data
+        '''
+        if self.sample_iter < self.delay:
+            return
+        self.a.value = self.prior.a.value + \
+            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators
+        self.b.value = self.prior.b.value + \
+            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_neg_indicators
+        self.sample()
+        return self.value
+
+    def visualize(self, path, f, section='posterior'):
+        return _scalar_visualize(self, path=path, f=f, section=section)
+
+
 class ClusterInteractionValue(pl.variables.MVN):
     '''Interactions of Lotka-Voltera
 
@@ -4114,7 +4250,8 @@ class ClusterInteractionValue(pl.variables.MVN):
         self.obj.add_trace()
 
     def visualize(self, basepath, section='posterior', taxa_formatter='%(paperformat)s', 
-        yticklabels='%(paperformat)s %(index)s', xticklabels='%(index)s'):
+        yticklabels='%(paperformat)s %(index)s', xticklabels='%(index)s',
+        fixed_clustering=False):
         '''Render the interaction matrices in the folder `basepath`
 
         Parameters
@@ -4131,15 +4268,44 @@ class ClusterInteractionValue(pl.variables.MVN):
             the taxas name
         yticklabels, xticklabels : str
             These are the formats to plot the y-axis and x0axis, respectively.
+        fixed_clustering : bool
+            If True, plot the variable as if clustering was fixed. Since the
+            cluster assignments never change, all of the taxas within the cluster
+            have identical values, so we can choose any taxa within the cluster to
+            represent it
         '''
         if not self.G.inference.tracer.is_being_traced(self.obj.name):
             logging.info('Interactions are not being learned')
         
         # Get cluster ordering
         taxas = self.G.data.taxas
-        order = _make_cluster_order(graph=self.G, section=section)
-        labels = [taxas[aidx].name for aidx in order]
         summ = pl.summary(self.obj, set_nan_to_0=True, section=section)
+        clustering = self.G[STRNAMES.CLUSTERING_OBJ]
+
+        if fixed_clustering:
+            # Condense each matrix to cluster level. Make the labels clusters
+            order = None
+            labels = ['Cluster {}'.format(iii+1) for iii in range(len(clustering))]
+            yticklabels = ['{cname} {idx}'.format(cname=labels[idx], idx=idx) for idx in range(len(clustering))]
+            xticklabels = ['{}'.format(i) for i in range(len(clustering))]
+
+            for k in summ:
+                M_taxas = summ[k]
+                M_clus = []
+                for cluster1 in clustering:
+                    temp = []
+                    aidx = list(cluster1.members)[0]
+                    for cluster2 in clustering:
+                        if cluster1.id == cluster2.id:
+                            temp.append(np.nan)
+                            continue
+                        bidx = list(cluster2.members)[0]
+                        temp.append(M_taxas[aidx, bidx])
+                    M_clus.append(temp)
+                summ[k] = np.asarray(M_clus)
+        else:
+            order = _make_cluster_order(graph=self.G, section=section)
+            labels = [taxas[aidx].name for aidx in order]
 
         for k,M in summ.items():
 
@@ -4152,147 +4318,13 @@ class ClusterInteractionValue(pl.variables.MVN):
             plt.savefig(os.path.join(basepath, '{}_matrix.pdf'.format(k)))
             plt.close()
 
-            M = M[order, :]
-            M = M[:, order]
+            if not fixed_clustering:
+                M = M[order, :]
+                M = M[:, order]
+            
             df = pd.DataFrame(M, index=labels, columns=labels)
-            df.to_csv(os.path.join(basepath, '{}_matrix.pdf'.format(k)),
+            df.to_csv(os.path.join(basepath, '{}_matrix.tsv'.format(k)),
                 sep='\t', index=True, header=True)
-
-
-class ClusterInteractionIndicatorProbability(pl.variables.Beta):
-    '''This is the posterior for the probability of a cluster being on
-    '''
-    def __init__(self, prior, **kwargs):
-        '''Parameters
-
-        prior (pl.variables.Beta)
-            - prior probability
-        **kwargs
-            - Other options like graph, value
-        '''
-        kwargs['name'] = STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB
-        pl.variables.Beta.__init__(self, a=prior.a.value, b=prior.b.value,
-            dtype=float, **kwargs)
-        self.add_prior(prior)
-
-    def initialize(self, value_option, hyperparam_option, a=None, b=None, value=None,
-        N='auto', delay=0):
-        '''Initialize the hyperparameters of the beta prior
-
-        Parameters
-        ----------
-        value_option : str
-            - Option to initialize the value by
-            - Options
-                - 'manual'
-                    - Set the values manually, `value` must be specified
-                - 'auto'
-                    - Set to the mean of the prior
-        hyperparam_option : str
-            - If it is a string, then set it by the designated option
-            - Options
-                - 'manual'
-                    - Set the value manually. `a` and `b` must also be specified
-                - 'weak-agnostic'
-                    - a=b=0.5
-                - 'strong-dense'
-                    - a = N(N-1), N are the expected number of clusters
-                    - b = 0.5
-                - 'strong-sparse'
-                    - a = 0.5
-                    - b = N(N-1), N are the expected number of clusters
-                - 'very-strong-sparse'
-                    - a = 0.5
-                    - b = n_taxas * (n_taxas-1)
-        N : str, int
-            This is the number of clusters to set the hyperparam options to 
-            (if they are dependent on the number of cluster). If 'auto', set to the expected number
-            of clusters from a dirichlet process. Else use this number (must be an int).
-        a, b : int, float
-            - User specified values
-            - Only necessary if `hyperparam_option` == 'manual'
-        '''
-        if not pl.isint(delay):
-            raise TypeError('`delay` ({}) must be an int'.format(type(delay)))
-        if delay < 0:
-            raise ValueError('`delay` ({}) must be >= 0'.format(delay))
-        self.delay = delay
-
-        if hyperparam_option == 'manual':
-            if pl.isnumeric(a) and pl.isnumeric(b):
-                self.prior.a.override_value(a)
-                self.prior.b.override_value(b)
-            else:
-                raise ValueError('a ({}) and b ({}) must be numerics (float, int)'.format(
-                    a.__class__, b.__class__))
-        elif hyperparam_option in ['weak-agnostic']:
-            self.prior.a.override_value(0.5)
-            self.prior.b.override_value(0.5)
-        elif hyperparam_option == 'strong-dense':
-            if pl.isstr(N):
-                if N == 'auto':
-                    N = expected_n_clusters(G=self.G)
-                else:
-                    raise ValueError('`N` ({}) nto recognized'.format(N))
-            elif pl.isint(N):
-                if N < 0:
-                    raise ValueError('`N` ({}) must be positive'.format(N))
-            else:
-                raise TypeError('`N` ({}) type not recognized'.format(type(N)))
-            self.prior.a.override_value(N * (N - 1))
-            self.prior.b.override_value(0.5)
-        elif hyperparam_option == 'strong-sparse':
-            if pl.isstr(N):
-                if N == 'auto':
-                    N = expected_n_clusters(G=self.G)
-                else:
-                    raise ValueError('`N` ({}) nto recognized'.format(N))
-            elif pl.isint(N):
-                if N < 0:
-                    raise ValueError('`N` ({}) must be positive'.format(N))
-            else:
-                raise TypeError('`N` ({}) type not recognized'.format(type(N)))
-            self.prior.a.override_value(0.5)
-            self.prior.b.override_value((N * (N - 1)))
-        elif hyperparam_option == 'very-strong-sparse':
-            N = self.G.data.n_taxas
-            self.prior.a.override_value(0.5)
-            self.prior.b.override_value((N * (N - 1)))
-        else:
-            raise ValueError('option `{}` not recognized'.format(hyperparam_option))
-
-        if value_option == 'manual':
-            if pl.isnumeric(value):
-                self.value = value
-            else:
-                raise ValueError('`value` ({}) must be a numeric (float,int)'.format(
-                    value.__class__))
-        elif value_option == 'auto':
-            self.value = self.prior.mean()
-        else:
-            raise ValueError('value option "{}" not recognized for indicator prob'.format(
-                value_option))
-
-        self.a.value = self.prior.a.value
-        self.b.value = self.prior.b.value
-        logging.info('Indicator Probability initialization results:\n' \
-            '\tprior a: {}\n\tprior b: {}\n\tvalue: {}'.format(
-                self.prior.a.value, self.prior.b.value, self.value))
-
-    def update(self):
-        '''Sample the posterior given the data
-        '''
-        if self.sample_iter < self.delay:
-            return
-        self.a.value = self.prior.a.value + \
-            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators
-        self.b.value = self.prior.b.value + \
-            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_neg_indicators
-        self.sample()
-        return self.value
-
-    def visualize(self, path, f, section='posterior'):
-        return _scalar_visualize(self, path=path, f=f, section=section)
 
 
 class ClusterInteractionIndicators(pl.variables.Variable):
@@ -4321,7 +4353,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
                 raise ValueError('Multiprocessing is slower for rel. Turn mp off')
             self.update = self.update_relative
         else:
-            self.update = self.update_direct
+            self.update = self.update_slow
 
         if mp is not None:
             if not pl.isstr(mp):
@@ -4411,7 +4443,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         return self._strr
 
     # @profile
-    def update_direct(self):
+    def update_slow(self):
         '''Permute the order that the indices that are updated.
 
         Build the full master interaction matrix that we can then slice
@@ -4869,7 +4901,8 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         pass
 
     def visualize(self, basepath, section='posterior', taxa_formatter='%(paperformat)s', 
-        yticklabels='%(paperformat)s %(index)s', xticklabels='%(index)s', vmax=10):
+        yticklabels='%(paperformat)s %(index)s', xticklabels='%(index)s', vmax=10,
+        fixed_clustering=False):
         '''Render the interaction matrices in the folder `basepath`
 
         Parameters
@@ -4886,6 +4919,11 @@ class ClusterInteractionIndicators(pl.variables.Variable):
             the taxas name
         yticklabels, xticklabels : str
             These are the formats to plot the y-axis and x0axis, respectively.
+        fixed_clustering : bool
+            If True, plot the variable as if clustering was fixed. Since the
+            cluster assignments never change, all of the taxas within the cluster
+            have identical values, so we can choose any taxa within the cluster to
+            represent it
         '''
         from . util import generate_interation_bayes_factors_posthoc
 
@@ -4898,6 +4936,28 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         # Plot the bayes factors
         bfs = generate_interation_bayes_factors_posthoc(mcmc=self.G.inference, section=section)
+
+        if fixed_clustering:
+            yticklabels = ['{cname} {idx}'.format(cname=labels[idx], idx=idx) for idx in range(len(clustering))]
+            xticklabels = ['{}'.format(i) for i in range(len(clustering))]
+            order = None
+            labels = ['Cluster {}'.format(iii+1) for iii in range(len(clustering))]
+
+            bf_cluster = []
+            for cluster1 in clustering:
+                temp = []
+                aidx = list(cluster1.members)[0]
+                for cluster2 in clustering:
+                    if cluster1.id == cluster2.id:
+                        temp.append(np.nan)
+                        continue
+                    bidx = list(cluster2.members)[0]
+                    temp.append(bfs[aidx, bidx])
+                bf_cluster.append(temp)
+            bfs = np.asarray(bf_cluster)
+        else:
+            labels = [taxas[aidx].name for aidx in order]
+
         visualization.render_bayes_factors(bfs, taxas=self.G.data.taxas, 
             order=order, max_value=vmax, xticklabels=xticklabels, yticklabels=yticklabels)
         fig = plt.gcf()
@@ -4905,9 +4965,9 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         plt.savefig(os.path.join(basepath, 'bayes_factors.pdf'))
         plt.close()
 
-        bfs = bfs[order, :]
-        bfs = bfs[:, order]
-        labels = [taxas[aidx].name for aidx in order]
+        if not fixed_clustering:
+            bfs = bfs[order, :]
+            bfs = bfs[:, order]
         df = pd.DataFrame(bfs, index=labels, columns=labels)
         df.to_csv(os.path.join(basepath, 'bayes_factors.tsv'), sep='\t', index=True, header=True)
 
@@ -6856,7 +6916,8 @@ class PerturbationMagnitudes(pl.variables.Normal):
     def toarray(self):
         return self.asarray()
 
-    def visualize(self, basepath, pidx, section='posterior', taxa_formatter='%(name)s'):
+    def visualize(self, basepath, pidx, section='posterior', taxa_formatter='%(name)s',
+        fixed_clustering=False):
         '''Render the traces in the folder `basepath`. Makes a `pandas.DataFrame` table
         where the index is the Taxa name in `taxa_formatter` and the columns are
         `mean`, `median`, `25th percentile`, `75th` percentile`.
@@ -6873,14 +6934,29 @@ class PerturbationMagnitudes(pl.variables.Normal):
         taxa_formatter : str, None
             This is the format of the label to return for each Taxa. If None, it will return
             the taxas name
+        fixed_clustering : bool
+            If True, plot the variable as if clustering was fixed. Since the
+            cluster assignments never change, all of the taxas within the cluster
+            have identical values, so we can choose any taxa within the cluster to
+            represent it
         '''
         perturbation = self.perturbations[pidx]
         taxas = self.G.data.taxas
+        clustering = self.G[STRNAMES.CLUSTERING_OBJ]
 
         summ = pl.summary(perturbation, set_nan_to_0=True, section=section)
         data = np.asarray([arr for _,arr in summ.items()]).T
+        if fixed_clustering:
+            data_clustering = []
+            for cluster in clustering:
+                aidx = list(cluster.members)[0]
+                data_clustering.append(data[aidx, :])
+            index = ['Cluster {}'.format(cidx + 1) for cidx in range(len(clustering))]
+            data = data_clustering
+        else:
+            index = [taxa.name for taxa in self.G.data.taxas]
         df = pd.DataFrame(data, columns=[k for k in summ], 
-            index=[taxa.name for taxa in self.G.data.taxas])
+            index=index)
         df.to_csv(os.path.join(basepath, 'values.tsv'), sep='\t', index=True, header=True)
 
         if section == 'posterior':
@@ -6900,7 +6976,17 @@ class PerturbationMagnitudes(pl.variables.Normal):
         else:
             prior_std_trace = np.ones(len_posterior) + np.sqrt(perturbation.magnitude.prior.scale2.value)
         
-        for oidx in range(len(self.G.data.taxas)):
+        if fixed_clustering:
+            rang = len(clustering)
+        else:
+            rang = len(self.G.data.taxas)
+
+        for iii in range(rang):
+            if fixed_clustering:
+                cluster = clustering[iii]
+                oidx = list(cluster.members)[0]
+            else:
+                oidx = iii
             fig = plt.figure()
             ax_posterior = fig.add_subplot(1,2,1)
             visualization.render_trace(var=perturbation, idx=oidx, plt_type='hist',
@@ -6922,11 +7008,17 @@ class PerturbationMagnitudes(pl.variables.Normal):
             visualization.render_trace(var=perturbation, idx=oidx, plt_type='trace', 
                 ax=ax_trace, section=section, include_burnin=True, rasterized=True)
 
-            fig.suptitle('{}'.format(pl.taxaname_formatter(
-                format=taxa_formatter, taxa=oidx, taxas=self.G.data.taxas)))
+            if fixed_clustering:
+                fig.suptitle('Cluster {}'.format(iii+1))
+            else:
+                fig.suptitle('{}'.format(pl.taxaname_formatter(
+                    format=taxa_formatter, taxa=oidx, taxas=self.G.data.taxas)))
             fig.tight_layout()
             fig.subplots_adjust(top=0.85)
-            plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxas[oidx].name)))
+            if fixed_clustering:
+                plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxas[oidx].name)))
+            else:
+                plt.savefig(os.path.join(basepath, 'cluster{}.pdf'.format(iii+1)))
             plt.close()
 
 
@@ -7699,7 +7791,7 @@ class PerturbationIndicators(pl.Node):
             n += perturbation.indicator.num_on_clusters()
         return n
 
-    def visualize(self, path, pidx, section='posterior'):
+    def visualize(self, path, pidx, section='posterior', fixed_clustering=False):
         '''Make a table of the `pidx`th perturbation bayes factors
 
         Parameters
@@ -7713,14 +7805,29 @@ class PerturbationIndicators(pl.Node):
                 'posterior' : posterior samples
                 'burnin' : burn-in samples
                 'entire' : both burn-in and posterior samples
+        fixed_clustering : bool
+            If True, plot the variable as if clustering was fixed. Since the
+            cluster assignments never change, all of the taxas within the cluster
+            have identical values, so we can choose any taxa within the cluster to
+            represent it
         '''
         from .util import generate_perturbation_bayes_factors_posthoc
 
         perturbation = self.perturbations[pidx]
         bayes_factors = generate_perturbation_bayes_factors_posthoc(
             mcmc=self.G.inference, perturbation=perturbation, section=section)
-        df = pd.DataFrame([bayes_factors], index=[perturbation.name], 
-            columns=[taxa.name for taxa in self.G.data.taxas])
+        if fixed_clustering:
+            # Condense the taxa level bayes factors to cluster level bayes factors
+            clustering = self.G[STRNAMES.CLUSTERING_OBJ]
+            bf_clusters = []
+            for cluster in clustering:
+                aidx = list(cluster.members)[0]
+                bf_clusters.append(bayes_factors[aidx])
+            df = pd.DataFrame([[bf_clusters]], index=[perturbation.name],
+                columns=['Cluster {}'.format(cidx+1) for cidx in range(len(clustering))])
+        else:
+            df = pd.DataFrame([bayes_factors], index=[perturbation.name], 
+                columns=[taxa.name for taxa in self.G.data.taxas])
         df.to_csv(path, sep='\t', index=True, header=True)
 
 
@@ -8157,8 +8264,8 @@ class PriorMeanPerturbationSingle(pl.variables.Normal):
         self.sample()
 
 
-# qPCR variance (NOTE THIS IS NOT USED IN THE MODEL)
-# --------------------------------------------------
+# qPCR variance (NOTE THESE IS NOT LEARNED IN THE MODEL)
+# ------------------------------------------------------
 class _qPCRBase(pl.Variable):
     '''Base class for qPCR measurements
     '''

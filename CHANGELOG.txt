@@ -1,4 +1,14 @@
 --------------------------------------
+Version 4.0.4 (11/30/20)
+--------------------------------------
+Major Changes:
+  - Consensus sequences
+  - "fixed-topology" -> "fixed-clustering" named for intialization
+  - fixed clustering options for visualization of interactions and perturbations
+Minor Changes:
+   - Minor bug fixes
+
+--------------------------------------
 Version 4.0.3 (11/25/20)
 --------------------------------------
 Major Changes:

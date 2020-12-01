@@ -290,7 +290,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'hyperparam_option': 'diffuse',
                 'delay': 0, 'n_iter': 20},
             STRNAMES.CLUSTERING: {
-                'value_option': 'spearman', #'fixed-topology',
+                'value_option': 'spearman', #'fixed-clustering',
                 'delay': 2,
                 'n_clusters': 30,
                 'run_every_n_iterations': 4},
@@ -393,7 +393,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['n_clusters'])
         elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] == 'no-clusters':
             clus_init = 'No clusters, everything in its own cluster'
-        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] == 'fixed-topology':
+        elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] == 'fixed-clustering':
             clus_init = 'Same topology as {}'.format(
                 self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value'])
         elif self.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] == 'manual':
