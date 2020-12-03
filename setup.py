@@ -58,7 +58,7 @@ REQUIREMENTS = [
     'psutil==5.7.3',
     'ete3==3.1.2',
     'networkx==2.3',
-    'numba==0.48.0',
+    'numba==0.51.2',
     'biopython==1.78']
 
 # Custom C distributions

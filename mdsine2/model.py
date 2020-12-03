@@ -67,6 +67,10 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
             for pert in self.perturbations:
                 pert = pert.reshape(-1,1)
                 self._adjust_growth.append(self.growth * (1 + pert))
+        if self.sim_max is not None:
+            self.record = {}
+        else:
+            self.record = None
             
     def integrate_single_timestep(self, x, t, dt):
         '''Integrate over a single step
@@ -104,7 +108,14 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         # Integrate
         logret = np.log(x) + (growth + self.interactions @ x) * dt
         ret = np.exp(logret).ravel()
-        ret[ret >= self.sim_max] = self.sim_max
+        if self.record is not None:
+            oidxs = np.where(ret >= self.sim_max)[0]
+            if len(oidxs) > 0:
+                for oidx in oidxs:
+                    if oidx not in self.record:
+                        self.record[oidx] = []
+                    self.record[oidx].append(ret[oidx])
+            ret[ret >= self.sim_max] = self.sim_max
         return ret
 
     def finish_integration(self):

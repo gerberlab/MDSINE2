@@ -2395,6 +2395,9 @@ class TrajectorySet(pl.graph.Node):
             df.to_csv(os.path.join(basepath, '{}.tsv'.format(k)), 
                 sep='\t', index=True, header=True)
 
+        percentile2_5 = np.nanpercentile(trace, q=2.5, axis=0)
+        percentile97_5 = np.nanpercentile(trace, q=97.5, axis=0)
+        
         acceptance_rates = []
         for oidx in range(len(subjset.taxas)):
             print(oidx)
@@ -2405,12 +2408,12 @@ class TrajectorySet(pl.graph.Node):
             ax = fig.add_subplot(111)
 
             med_traj = summ['median'][oidx, :]
-            low_traj = summ['25th percentile'][oidx, :]
-            high_traj = summ['75th percentile'][oidx, :]
+            low_traj = percentile2_5[oidx, :]
+            high_traj = percentile97_5[oidx, :]
 
             ax.plot(data_times, med_traj, color='blue', marker='.', label='median')
             ax.fill_between(data_times, y1=low_traj, y2=high_traj, color='blue', 
-                alpha=0.15)
+                alpha=0.15, label='95th percentile')
             ax.plot(given_times, given_data[oidx, :], marker='x', color='black', 
                 linestyle=':', label='data')
 
@@ -4288,6 +4291,7 @@ class ClusterInteractionValue(pl.variables.MVN):
             labels = ['Cluster {}'.format(iii+1) for iii in range(len(clustering))]
             yticklabels = ['{cname} {idx}'.format(cname=labels[idx], idx=idx) for idx in range(len(clustering))]
             xticklabels = ['{}'.format(i) for i in range(len(clustering))]
+            taxas = None
 
             for k in summ:
                 M_taxas = summ[k]
@@ -4306,11 +4310,12 @@ class ClusterInteractionValue(pl.variables.MVN):
         else:
             order = _make_cluster_order(graph=self.G, section=section)
             labels = [taxas[aidx].name for aidx in order]
+            taxas = self.G.data.taxas
 
         for k,M in summ.items():
 
             visualization.render_interaction_strength(interaction_matrix=M,
-                log_scale=True, taxas=self.G.data.taxas, yticklabels=yticklabels,
+                log_scale=True, taxas=taxas, yticklabels=yticklabels,
                 xticklabels=xticklabels, order=order, 
                 title='{} Interactions'.format(k.capitalize()))
             fig = plt.gcf()
@@ -4933,15 +4938,18 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         # Get cluster ordering
         taxas = self.G.data.taxas
         order = _make_cluster_order(graph=self.G, section=section)
+        clustering = self.G[STRNAMES.CLUSTERING_OBJ]
 
         # Plot the bayes factors
         bfs = generate_interation_bayes_factors_posthoc(mcmc=self.G.inference, section=section)
 
         if fixed_clustering:
+            labels = ['Cluster {}'.format(iii+1) for iii in range(len(clustering))]
             yticklabels = ['{cname} {idx}'.format(cname=labels[idx], idx=idx) for idx in range(len(clustering))]
             xticklabels = ['{}'.format(i) for i in range(len(clustering))]
             order = None
-            labels = ['Cluster {}'.format(iii+1) for iii in range(len(clustering))]
+            taxas = None
+            title = 'Cluster Interaction Bayes Factors'
 
             bf_cluster = []
             for cluster1 in clustering:
@@ -4957,9 +4965,11 @@ class ClusterInteractionIndicators(pl.variables.Variable):
             bfs = np.asarray(bf_cluster)
         else:
             labels = [taxas[aidx].name for aidx in order]
+            taxas = self.G.data.taxas
+            title = 'Microbe Interaction Bayes Factors'
 
-        visualization.render_bayes_factors(bfs, taxas=self.G.data.taxas, 
-            order=order, max_value=vmax, xticklabels=xticklabels, yticklabels=yticklabels)
+        visualization.render_bayes_factors(bfs, taxas=taxas, order=order, max_value=vmax, 
+            xticklabels=xticklabels, yticklabels=yticklabels, title=title)
         fig = plt.gcf()
         fig.tight_layout()
         plt.savefig(os.path.join(basepath, 'bayes_factors.pdf'))
@@ -7016,9 +7026,9 @@ class PerturbationMagnitudes(pl.variables.Normal):
             fig.tight_layout()
             fig.subplots_adjust(top=0.85)
             if fixed_clustering:
-                plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxas[oidx].name)))
-            else:
                 plt.savefig(os.path.join(basepath, 'cluster{}.pdf'.format(iii+1)))
+            else:
+                plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxas[oidx].name)))
             plt.close()
 
 
@@ -7823,7 +7833,8 @@ class PerturbationIndicators(pl.Node):
             for cluster in clustering:
                 aidx = list(cluster.members)[0]
                 bf_clusters.append(bayes_factors[aidx])
-            df = pd.DataFrame([[bf_clusters]], index=[perturbation.name],
+            bf_clusters = np.asarray(bf_clusters)
+            df = pd.DataFrame([bf_clusters], index=[perturbation.name],
                 columns=['Cluster {}'.format(cidx+1) for cidx in range(len(clustering))])
         else:
             df = pd.DataFrame([bayes_factors], index=[perturbation.name], 

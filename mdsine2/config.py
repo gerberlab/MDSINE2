@@ -87,7 +87,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         negbin_a0, negbin_a1, leave_out=None, max_n_taxas=None, 
         checkpoint=100):
         self.OUTPUT_BASEPATH = os.path.abspath(basepath)
-        self.MODEL_PATH = None
+        self.MODEL_PATH = self.OUTPUT_BASEPATH
         self.DATA_SEED = data_seed
         self.INIT_SEED = init_seed
         self.BURNIN = burnin
@@ -490,7 +490,7 @@ class LoggingConfig(pl.Saveable):
             'threshold': sys.maxsize, 'linewidth': sys.maxsize}
 
         if basepath is not None:
-            path = basepath + 'logging.log'
+            path = os.path.join(basepath, 'logging.log')
             self.PATH = path
             handlers = [
                 logging.FileHandler(self.PATH, mode='w'),
@@ -530,7 +530,7 @@ class NegBinConfig(_BaseModelConfig):
 
         self.SEED = seed
         self.OUTPUT_BASEPATH = os.path.abspath(basepath)
-        self.MODEL_PATH = None
+        self.MODEL_PATH = self.OUTPUT_BASEPATH
         self.BURNIN = burnin
         self.N_SAMPLES = n_samples
         self.CKPT = ckpt
