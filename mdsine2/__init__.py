@@ -7,6 +7,7 @@ from . import config
 from . import posterior
 from . import negbin
 from . import model
+from . import config
 
 # Import key modules from pylab
 from .pylab import random
@@ -44,7 +45,7 @@ from .pylab.dynamics import integrate, BaseDynamics
 from .pylab.errors import UndefinedError, MathError, GraphIDError, InheritanceError, \
     InitializationError
 
-from . import config
+from .config import MDSINE2ModelConfig, NegBinConfig, LoggingConfig
 from .run import initialize_graph, normalize_parameters, denormalize_parameters, \
     calculate_stability_over_gibbs, run_graph
 from .util import is_gram_negative, is_gram_negative_taxa, \

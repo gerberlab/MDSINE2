@@ -1,4 +1,12 @@
 --------------------------------------
+Version 4.0.5 (12/4/20)
+--------------------------------------
+Major changes:
+  - Pass in `dt` ito init clustering for more efficient dynamics caluclation
+  - Don't set the model path from inside `run` - set it as the same as the basepath
+  - Consensus taxonomy function in OTU `MDSINE2.PyLab.base.OTU.consensus_taxonomy`
+
+--------------------------------------
 Version 4.0.4 (11/30/20)
 --------------------------------------
 Major Changes:

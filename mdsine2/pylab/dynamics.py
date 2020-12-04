@@ -262,7 +262,7 @@ def integrate(dynamics, initial_conditions, dt, n_days, processvar=None,
             raise ValueError('`log_every` ({}) must be >= 0'.format(log_every))
 
     # Everything is good - initialize then start integrating
-    dynamics.init_integration()
+    dynamics.init_integration(dt=dt)
     processvar.init_integration()
 
     X = np.zeros(shape=(initial_conditions.shape[0], n_timepoints_to_integrate), dtype=float)

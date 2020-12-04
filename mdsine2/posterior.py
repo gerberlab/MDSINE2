@@ -7088,7 +7088,7 @@ class PerturbationProbabilities(pl.Node):
                     b = N, N are the expected number of clusters
                 'very-strong-sparse'
                     a = 0.5
-                    b = N, N are the expected number of Taxas
+                    b = T, T are the expected number of Taxas
         N : str, int
             This is the number of clusters to set the hyperparam options to 
             (if they are dependent on the number of cluster). If 'auto', set to the expected number

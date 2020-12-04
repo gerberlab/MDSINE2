@@ -54,7 +54,7 @@ DEFAULT_TAXA_NAME = 'NA'
 SEQUENCE_COLUMN_LABEL = 'sequence'
 TAX_IDXS = {'kingdom': 0, 'phylum': 1, 'class': 2,  'order': 3, 'family': 4, 
     'genus': 5, 'species': 6, 'asv': 7}
-_TAX_REV_IDXS = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'asv']
+TAX_LEVELS = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'asv']
 
 
 def isqpcrdata(x):
@@ -879,6 +879,78 @@ class OTU(Taxa):
         # Set the consensus sequence as the OTU's sequence
         self.sequence = consensus_seq
 
+    def generate_consensus_taxonomy(self):
+        '''Set the taxonomy of the OTU to the consensus taxonomy of the.
+
+        If one of the ASVs is defined at a lower level than another ASV, use
+        that taxonomy. If ASVs' taxonomies disagree at the species level, use the 
+        union of all the species. If the ASVs' taxonomies disagree at a level
+        that is not the species level - throw an error (this should not happen).
+
+        Examples
+        --------
+        Input:
+         kingdom          phylum                class        order             family  genus       species      asv
+        Bacteria  Proteobacteria  Alphaproteobacteria  Rhizobiales  Bradyrhizobiaceae  Bosea  massiliensis  ASV_722
+        Bacteria  Proteobacteria  Alphaproteobacteria  Rhizobiales  Bradyrhizobiaceae  Bosea            NA  ASV_991
+        Output:
+         kingdom          phylum                class        order             family  genus       species
+        Bacteria  Proteobacteria  Alphaproteobacteria  Rhizobiales  Bradyrhizobiaceae  Bosea  massiliensis
+
+        Input:
+         kingdom          phylum           class              order              family            genus                 species      asv
+        Bacteria  Actinobacteria  Actinobacteria  Bifidobacteriales  Bifidobacteriaceae  Bifidobacterium                      NA  ASV_283
+        Bacteria  Actinobacteria  Actinobacteria  Bifidobacteriales  Bifidobacteriaceae  Bifidobacterium                      NA  ASV_302
+        Bacteria  Actinobacteria  Actinobacteria  Bifidobacteriales  Bifidobacteriaceae  Bifidobacterium    adolescentis/faecale  ASV_340
+        Bacteria  Actinobacteria  Actinobacteria  Bifidobacteriales  Bifidobacteriaceae  Bifidobacterium  choerinum/pseudolongum  ASV_668
+        Ouput:
+         kingdom          phylum           class              order              family            genus                                      species
+        Bacteria  Actinobacteria  Actinobacteria  Bifidobacteriales  Bifidobacteriaceae  Bifidobacterium  adolescentis/faecale/choerinum/pseudolongum
+
+        Input:
+         kingdom         phylum class order family genus species       asv
+        Bacteria  Bacteroidetes    NA    NA     NA    NA      NA   ASV_232
+        Bacteria     Firmicutes    NA    NA     NA    NA      NA   ASV_762
+        Output:
+        ValueError
+        '''
+        # Check that all the taxonomies have the same lineage
+        for tax in TAX_LEVELS:
+            if tax == 'asv':
+                continue
+            consensus = []
+            for taxaname in self.aggregated_taxas:
+                if tax == 'species':
+                    aaa = self.aggregated_taxonomies[taxaname][tax].split('/')
+                else:
+                    aaa = [self.aggregated_taxonomies[taxaname][tax]]
+                for bbb in aaa:
+                    if bbb in consensus:
+                        continue
+                    else:
+                        consensus.append(bbb)
+            if DEFAULT_TAXA_NAME in consensus:
+                consensus.remove(DEFAULT_TAXA_NAME)
+
+            if len(consensus) == 0:
+                # No taxonomy found at this level
+                self.taxonomy[tax] = DEFAULT_TAXA_NAME
+            elif len(consensus) == 1:
+                # All taxonomies agree
+                self.taxonomy[tax] = consensus[0]
+            else:
+                # All taxonomies do not agree
+                if tax == 'species':
+                    # Take the union of the species
+                    self.taxonomy[tax] = '/'.join(consensus)
+                else:
+                    # This means that the taxonomy is different on a level different than
+                    logging.critical(str(self))
+                    for taxaname in self.aggregated_taxonomies:
+                        logging.critical('{}'.format(list(self.aggregated_taxonomies[taxaname].values())))
+                    raise ValueError('Interior taxonomies have differing taxonomies above the species ' \
+                        'level ({}), {}'.format(tax, consensus))
+
 
 class Clusterable(Saveable):
     '''This is the base class for something to be clusterable (be used to cluster in
@@ -1028,7 +1100,7 @@ class TaxaSet(Clusterable):
             raise ValueError('`"{}"` ({}) not found as a column in `taxonomy_table`'.format(
                 SEQUENCE_COLUMN_LABEL, taxonomy_table.columns))
 
-        for tax in _TAX_REV_IDXS[:-1]:
+        for tax in TAX_LEVELS[:-1]:
             if tax not in taxonomy_table.columns:
                 logging.info('Adding in `{}` column'.format(tax))
                 taxonomy_table = taxonomy_table.insert(-1, tax, 
@@ -1283,6 +1355,17 @@ class TaxaSet(Clusterable):
                     threshold=threshold, 
                     noconsensus_char=noconsensus_char)
 
+    def generate_consensus_taxonomies(self):
+        '''Generates the consensus taxonomies for all of the OTUs within the TaxaSet.
+        For details on the algorithm - see `OTU.generate_consensus_taxonomy`
+
+        See Also
+        --------
+        mdsine2.pylab.base.OTU.generate_consensus_taxonomy
+        '''
+        for taxa in self:
+            if isotu(taxa):
+                taxa.generate_consensus_taxonomy()
 
 class qPCRdata:
     '''Single entry of qpcr data at a timepoint with maybe multiple technical replicates.
@@ -1736,8 +1819,8 @@ class Subject(Saveable):
                     taxlevelidx = TAX_IDXS[taxlevel]
                     ttt = None
                     while taxlevelidx > -1:
-                        if taxa.tax_is_defined(_TAX_REV_IDXS[taxlevelidx]):
-                            ttt = _TAX_REV_IDXS[taxlevelidx]
+                        if taxa.tax_is_defined(TAX_LEVELS[taxlevelidx]):
+                            ttt = TAX_LEVELS[taxlevelidx]
                             break
                         taxlevelidx -= 1
                     if ttt is None:

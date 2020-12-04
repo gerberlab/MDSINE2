@@ -969,7 +969,7 @@ def build_graph(params, graph_name, subjset):
     GRAPH = pl.Graph(name=graph_name, seed=params.SEED)
     GRAPH.as_default()
 
-    basepath = params.OUTPUT_BASEPATH
+    basepath = params.MODEL_PATH
     os.makedirs(basepath, exist_ok=True)
 
     # Initialize the inference objects
