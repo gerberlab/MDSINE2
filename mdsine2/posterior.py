@@ -3964,7 +3964,10 @@ class PriorMeanInteractions(pl.variables.Normal):
 
 
 class ClusterInteractionIndicatorProbability(pl.variables.Beta):
-    '''This is the posterior for the probability of a cluster being on
+    '''This is the posterior for the probability of a cluster being on.
+
+    Note that in the beta prior, `a` is the number of ons, `b` is the 
+    number of offs.
     '''
     def __init__(self, prior, **kwargs):
         '''Parameters
@@ -4005,9 +4008,9 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
                 - 'strong-sparse'
                     - a = 0.5
                     - b = N(N-1), N are the expected number of clusters
-                - 'very-strong-sparse'
+                - 'mult-sparse-M'
                     - a = 0.5
-                    - b = n_taxas * (n_taxas-1)
+                    - b = N*M(N*M-1), N are the expected number of clusters
         N : str, int
             This is the number of clusters to set the hyperparam options to 
             (if they are dependent on the number of cluster). If 'auto', set to the expected number
@@ -4058,8 +4061,13 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
                 raise TypeError('`N` ({}) type not recognized'.format(type(N)))
             self.prior.a.override_value(0.5)
             self.prior.b.override_value((N * (N - 1)))
-        elif hyperparam_option == 'very-strong-sparse':
-            N = self.G.data.n_taxas
+        elif 'mult-sparse' in hyperparam_option:
+            try:
+                M = float(hyperparam_option.replace('mult-sparse-', ''))
+            except:
+                raise ValueError('`mult-sparse` in the wrong format ({})'.format(
+                    hyperparam_option))
+            N = self.G.data.n_taxas * M
             self.prior.a.override_value(0.5)
             self.prior.b.override_value((N * (N - 1)))
         else:
@@ -7101,9 +7109,9 @@ class PerturbationProbabilities(pl.Node):
                 'strong-sparse'
                     a = 0.5
                     b = N, N are the expected number of clusters
-                'very-strong-sparse'
+                'mult-sparse-M'
                     a = 0.5
-                    b = T, T are the expected number of Taxas
+                    b = N*M(N*M-1), N are the expected number of clusters
         N : str, int
             This is the number of clusters to set the hyperparam options to 
             (if they are dependent on the number of cluster). If 'auto', set to the expected number
@@ -7156,8 +7164,13 @@ class PerturbationProbabilities(pl.Node):
                 raise TypeError('`N` ({}) type not recognized'.format(type(N)))
             a = 0.5
             b = N
-        elif hyperparam_option == 'very-strong-sparse':
-            N = self.G.data.n_taxas
+        elif 'mult-sparse' in hyperparam_option:
+            try:
+                M = float(hyperparam_option.replace('mult-sparse-', ''))
+            except:
+                raise ValueError('`mult-sparse` in the wrong format ({})'.format(
+                    hyperparam_option))
+            N = self.G.data.n_taxas * M
             a = 0.5
             b = N
         else:
