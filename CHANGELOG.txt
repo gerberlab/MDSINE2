@@ -5,6 +5,7 @@ Major changes:
   - Pass in `dt` ito init clustering for more efficient dynamics caluclation
   - Don't set the model path from inside `run` - set it as the same as the basepath
   - Consensus taxonomy function in OTU `MDSINE2.PyLab.base.OTU.consensus_taxonomy`
+  - transfer gibson dataset to MDSINE2_paper
 
 --------------------------------------
 Version 4.0.4 (11/30/20)

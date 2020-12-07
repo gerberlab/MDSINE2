@@ -69,15 +69,7 @@ EXTENSIONS = [ext1, ext2]
 # Subpackages
 PACKAGES = [
     'mdsine2',
-    'mdsine2.datasets',
     'mdsine2.pylab']
-
-# Install gibson dataset
-PACKAGE_DIR = {
-    'mdsine2.datasets': 'mdsine2/datasets'}
-PACKAGE_DATA = {
-    'mdsine2.datasets': ['mdsine2/datasets/gibson_dataset/*']
-}
 
 setup(
     name='mdsine2',
@@ -92,6 +84,4 @@ setup(
     zip_safe=False,
     install_requires=REQUIREMENTS,
     ext_modules=EXTENSIONS,
-    # package_dir=PACKAGE_DIR,
-    # package_data=PACKAGE_DATA,
     include_package_data=True)

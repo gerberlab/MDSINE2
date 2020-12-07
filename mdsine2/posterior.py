@@ -6037,6 +6037,10 @@ class Growth(pl.variables.TruncatedNormal):
         else:
             len_posterior = self.G.inference.sample_iter + 1
 
+        print(self.G.inference.sample_iter)
+        print(self.G.inference.burnin)
+        print(len_posterior)
+
         # Plot the prior on top of the posterior
         if self.G.tracer.is_being_traced(STRNAMES.PRIOR_MEAN_GROWTH):
             prior_mean_trace = self.G[STRNAMES.PRIOR_MEAN_GROWTH].get_trace_from_disk(
