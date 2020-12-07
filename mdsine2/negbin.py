@@ -582,20 +582,23 @@ class FilteringMP(pl.graph.Node):
 
         kwargs={'a0': a0, 'a1':a1}
         str_acc = [None]*self.G.data.n_replicates
+        mpstr = None
         if self.mp == 'debug':
             for ridx in range(len(self.value)):
                 _, x, acc_rate = self.pool[ridx].update(**kwargs)
                 self.value[ridx].value = x
                 str_acc[ridx] = '{:.3f}'.format(acc_rate)
+                mpstr = 'no-mp'
         else:
             ret = self.pool.map(func='update', args=kwargs)
             for ridx, x, acc_rate in ret:
                 self.value[ridx].value = x
                 str_acc[ridx] = '{:.3f}'.format(acc_rate)
+            mpstr = 'mp'
 
         t = time.time() - start_time
         try:
-            self._strr = 'Time: {:.4f}, Acc: {}, data/sec: {:.2f}'.format(t,
+            self._strr = '{} : Time: {:.4f}, Acc: {}, data/sec: {:.2f}'.format(mpstr, t,
                 str(str_acc).replace("'",''), self.total_n_datapoints/t)
         except:
             self._strr = 'NA'

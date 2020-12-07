@@ -945,7 +945,15 @@ class ClusterAssignments(pl.graph.Node):
         pl.graph.Node.__init__(self, **kwargs)
 
     def __str__(self):
-        return str(self.clustering) + '\nTotal time: {}'.format(self._strtime)
+        try:
+            if self.mp == 'debug':
+                mpstr = 'no mp'
+            else:
+                mpstr = 'mp'
+        except:
+            mpstr = 'NA'
+        return str(self.clustering) + '\n{} - Total time: {}'.format(mpstr,
+            self._strtime)
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -2929,12 +2937,14 @@ class FilteringLogMP(pl.graph.Node):
             'zero_inflation_data': None, 'qpcr_variances':qpcr_vars}
 
         str_acc = [None]*self.G.data.n_replicates
+        mpstr = None
         if self.mp == 'debug':
 
             for ridx in range(self.G.data.n_replicates):
                 _, x, acc_rate = self.pool[ridx].persistent_run(**kwargs)
                 self.x[ridx].value = x
                 str_acc[ridx] = '{:.3f}'.format(acc_rate)
+                mpstr = 'no-mp'
 
         else:
             # raise NotImplementedError('Multiprocessing for filtering with zero inflation ' \
@@ -2943,12 +2953,13 @@ class FilteringLogMP(pl.graph.Node):
             for ridx, x, acc_rate in ret:
                 self.x[ridx].value = x
                 str_acc[ridx] = '{:.3f}'.format(acc_rate)
+            mpstr = 'mp'
 
         self.set_latent_as_data()
 
         t = time.time() - start_time
         try:
-            self._strr = 'Time: {:.4f}, Acc: {}, data/sec: {:.2f}'.format(t,
+            self._strr = '{} - Time: {:.4f}, Acc: {}, data/sec: {:.2f}'.format(mpstr, t,
                 str(str_acc).replace("'",''), self.total_n_datapoints/t)
         except:
             self._strr = 'NA'
