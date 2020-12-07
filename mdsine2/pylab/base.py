@@ -228,7 +228,7 @@ def condense_matrix_with_taxonomy(M, taxas, fmt):
     is a pandas.DataFrame then we assume the index are the Taxa
     names. If `M` is a numpy.ndarray, then we assume that the 
     order of the matrix mirrors the order of the taxas. `fmt` is
-    passed through `pylab.util.plutil.taxaname_formatter` to get the label.
+    passed through `pylab.util.taxaname_formatter` to get the label.
 
     Parameters
     ----------
@@ -510,7 +510,7 @@ class Perturbations:
         if plutil.isstr(a):
             return self._d[a]
         elif plutil.isint(a):
-            return self._a[self._rev_idx[a]]
+            return self._d[self._rev_idx[a]]
         else:
             raise KeyError('`a` {} ({}) not recognized'.format(a, type(a)))
 
@@ -1366,6 +1366,7 @@ class TaxaSet(Clusterable):
         for taxa in self:
             if isotu(taxa):
                 taxa.generate_consensus_taxonomy()
+
 
 class qPCRdata:
     '''Single entry of qpcr data at a timepoint with maybe multiple technical replicates.
@@ -2537,6 +2538,44 @@ class Study(Saveable):
             subj._split_on_perturbations()
         return self
 
+    def times(self, agg):
+        '''Aggregate the times of all the contained subjects
+
+        These are the types of time aggregations:
+            'union': Take  theunion of the times of the subjects
+            'intersection': Take the intersection of the times of the subjects
+        You can manually specify the times to include with a list of times. If times are not
+        included in any of the subjects then we set them to NAN.
+
+        Parameters
+        ----------
+        agg : str
+            Type of aggregation to do of the times. Options: 'union', 'intersection'
+        '''
+        if agg not in ['union', 'intersection']:
+            raise ValueError('`agg` ({}) not recognized'.format(agg))
+
+        all_times = []
+        for subj in self:
+            all_times = np.append(all_times, subj.times)
+        all_times = np.sort(np.unique(all_times))
+        if agg == 'union':
+            times = all_times
+
+        elif agg == 'intersection':
+            times = []
+            for t in all_times:
+                addin = True
+                for subj in self:
+                    if t not in subj.times:
+                        addin = False
+                        break
+                if addin:
+                    times = np.append(times, t)
+        else:
+            raise ValueError('`times` ({}) not recognized'.format(times))
+        return times
+
     def _matrix(self, dtype, agg, times):
         if dtype not in ['raw', 'rel', 'abs']:
             raise ValueError('`dtype` ({}) not recognized'.format(dtype))
@@ -2555,26 +2594,7 @@ class Study(Saveable):
             raise ValueError('`agg` ({}) not recognized'.format(agg))
 
         if plutil.isstr(times):
-            all_times = []
-            for subj in self:
-                all_times = np.append(all_times, subj.times)
-            all_times = np.sort(np.unique(all_times))
-            if times == 'union':
-                times = all_times
-
-            elif times == 'intersection':
-                times = []
-                for t in all_times:
-                    addin = True
-                    for subj in self:
-                        if t not in subj.times:
-                            addin = False
-                            break
-                    if addin:
-                        times = np.append(times, t)
-
-            else:
-                raise ValueError('`times` ({}) not recognized'.format(times))
+            times = self.times(agg=times)
         elif plutil.isarray(times):
             times = np.array(times)
         else:
@@ -2657,7 +2677,7 @@ class Study(Saveable):
 
         See Also
         --------
-        mdsine2.matrix
+        mdsine2.Study.matrix
         '''
         M, times = self._matrix(*args, **kwargs)
         index = [taxa.name for taxa in self.taxas]

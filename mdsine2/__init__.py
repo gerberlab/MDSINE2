@@ -50,5 +50,5 @@ from .run import initialize_graph, normalize_parameters, denormalize_parameters,
     calculate_stability_over_gibbs, run_graph
 from .util import is_gram_negative, is_gram_negative_taxa, \
     generate_interation_bayes_factors_posthoc, generate_perturbation_bayes_factors_posthoc, \
-    aggregate_items
-from .util import consistency_filtering, conditional_consistency_filtering
+    aggregate_items, consistency_filtering, conditional_consistency_filtering, \
+    generate_cluster_assignments_posthoc
