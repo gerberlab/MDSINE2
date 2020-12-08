@@ -879,13 +879,22 @@ class OTU(Taxa):
         # Set the consensus sequence as the OTU's sequence
         self.sequence = consensus_seq
 
-    def generate_consensus_taxonomy(self):
+    def generate_consensus_taxonomy(self, consensus_table=None):
         '''Set the taxonomy of the OTU to the consensus taxonomy of the.
 
         If one of the ASVs is defined at a lower level than another ASV, use
         that taxonomy. If ASVs' taxonomies disagree at the species level, use the 
-        union of all the species. If the ASVs' taxonomies disagree at a level
-        that is not the species level - throw an error (this should not happen).
+        union of all the species. 
+
+        Disagreeing taxonomy
+        --------------------
+        If the taxonomy of the ASVs differ on a taxonomic level other than species, we use an alternate 
+        way of naming the OTU. The input `consensus_table` is a `pandas.DataFrame` object showing the
+        taxonomic classification of an OTU. You would get this table by running RDP on the consensus
+        sequence.
+        
+        If the consensus table is not given, then we specify the lowest level that they agree. If the 
+        consensus table is given, then we use the taxonomy specified in that table.
 
         Examples
         --------
@@ -912,10 +921,21 @@ class OTU(Taxa):
         Bacteria  Bacteroidetes    NA    NA     NA    NA      NA   ASV_232
         Bacteria     Firmicutes    NA    NA     NA    NA      NA   ASV_762
         Output:
-        ValueError
+
         '''
         # Check that all the taxonomies have the same lineage
+        set_to_na = False
+        set_from_table = False
         for tax in TAX_LEVELS:
+            if set_to_na:
+                self.taxonomy[tax] = DEFAULT_TAXA_NAME
+                continue
+            if set_from_table:
+                if tax not in consensus_table.columns:
+                    self.taxonomy[tax] = DEFAULT_TAXA_NAME
+                else:
+                    self.taxonomy[tax] = consensus_table[tax][self.name]
+                continue
             if tax == 'asv':
                 continue
             consensus = []
@@ -945,11 +965,20 @@ class OTU(Taxa):
                     self.taxonomy[tax] = '/'.join(consensus)
                 else:
                     # This means that the taxonomy is different on a level different than
+                    logging.critical('{} taxonomy does not agree'.format(self.name))
                     logging.critical(str(self))
                     for taxaname in self.aggregated_taxonomies:
-                        logging.critical('{}'.format(list(self.aggregated_taxonomies[taxaname].values())))
-                    raise ValueError('Interior taxonomies have differing taxonomies above the species ' \
-                        'level ({}), {}'.format(tax, consensus))
+                        logging.warning('{}'.format(list(self.aggregated_taxonomies[taxaname].values())))
+
+                    if consensus_table is not None:
+                        # Set from the table
+                        self.taxonomy[tax] = consensus_table[tax][self.name]
+                        set_from_table = True
+
+                    else:
+                        # Set this taxa level and everything below it to NA
+                        self.taxonomy[tax] = DEFAULT_TAXA_NAME
+                        set_to_na = True
 
 
 class Clusterable(Saveable):
@@ -1355,7 +1384,7 @@ class TaxaSet(Clusterable):
                     threshold=threshold, 
                     noconsensus_char=noconsensus_char)
 
-    def generate_consensus_taxonomies(self):
+    def generate_consensus_taxonomies(self, consensus_table=None):
         '''Generates the consensus taxonomies for all of the OTUs within the TaxaSet.
         For details on the algorithm - see `OTU.generate_consensus_taxonomy`
 
@@ -1365,7 +1394,7 @@ class TaxaSet(Clusterable):
         '''
         for taxa in self:
             if isotu(taxa):
-                taxa.generate_consensus_taxonomy()
+                taxa.generate_consensus_taxonomy(consensus_table=consensus_table)
 
 
 class qPCRdata:
