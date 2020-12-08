@@ -8,6 +8,7 @@ import copy
 
 from .names import STRNAMES
 from . import pylab as pl
+
 from .pylab import diversity
 
 def is_gram_negative(taxa):
@@ -181,6 +182,74 @@ def generate_cluster_assignments_posthoc(clustering, n_clusters='mode', linkage=
             for oidx in cluster[1:]:
                 clustering.move_item(idx=oidx, cid=cid)
     return ret
+
+def generate_taxonomic_distribution_over_clusters_posthoc(mcmc, tax_fmt):
+    '''Make a table that shows the abundance of different taxonomies in every cluster
+
+    Output:
+        rows: taxonomic lables
+        columns: clusters
+        value: abundance of those taxonomies
+    
+    Value
+    -----
+    If there are perturbations, then the value is the mean abundance over the taxas
+    before the first perturbation between all of the subjects. If there are no perturbations
+    then this is just the mean abundance of the taxas over all the time points
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        This is the inference object containing the traces
+    tax_fmt : str
+        This is the format to generate the taxonomy names. See `mdsine2.taxaname_formatter`
+
+    Returns
+    -------
+    pandas.DataFrame
+    '''
+    # Get the objects
+    clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
+    study = mcmc.graph.data.subjects
+
+    # Get all the times
+    times = study.times(agg='union')
+
+    # Get the first time of the perturbation between all of the subjects
+    first_time = None
+    if study.perturabtions is not None:
+        for subj in study:
+            if first_time is None:
+                first_time = study.perturbations[0].starts[subj.name]
+            else:
+                curr_time = study.perturbations[0].starts[subj.name]
+                if curr_time < first_time:
+                    first_time = curr_time
+        t_end = np.searchsorted(times, first_time)
+    else:
+        t_end = int(len(times))
+
+    # Get mean abundance over subjects for times preperturbation then take mean
+    times = times[:t_end]
+    M = study.matrix(dtype='abs', agg='mean', times=times)
+    abunds = np.mean(M, axis=1)
+
+    # Get the clustering
+    cidx_assign = generate_cluster_assignments_posthoc(clustering=clustering)
+    clustering.from_array(cidx_assign)
+
+    # Get the average abundances for each OTU in each cluster
+    data = []
+    for cluster in clustering:
+        oidxs = list(cluster.members)
+        temp = np.zeros(len(abunds))
+        temp[oidxs] = abunds[oidxs]
+        data.append(temp.reshape(-1,1))
+    data = np.hstack(data).shape
+
+    # Make the taxonomic heatmap as a dataframe
+    df = pl.base.condense_matrix_with_taxonomy(M, taxas=study.taxas, fmt=tax_fmt)
+    return df
 
 def aggregate_items(subjset, hamming_dist):
     '''Aggregate Taxas that have an average hamming distance of `hamming_dist`

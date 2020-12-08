@@ -19,10 +19,11 @@ import random
 
 from .names import STRNAMES
 from . import pylab as pl
-from .util import generate_cluster_assignments_posthoc
+from .util import generate_cluster_assignments_posthoc, generate_taxonomic_distribution_over_clusters_posthoc
 
 from . import visualization
 import matplotlib.pyplot as plt
+import seaborn as sns
 _LOG_INV_SQRT_2PI = np.log(1/np.sqrt(2*math.pi))
 
 # Helper functions
@@ -1258,7 +1259,7 @@ class ClusterAssignments(pl.graph.Node):
 
     def visualize(self, basepath, f, section='posterior', 
         taxa_formatter='%(paperformat)s', yticklabels='%(paperformat)s %(index)s', 
-        xticklabels='%(index)s'):
+        xticklabels='%(index)s', tax_fmt='%(family)s'):
         '''Render the traces in the folder `basepath` and write the 
         learned values to the file `f`.
 
@@ -1278,12 +1279,14 @@ class ClusterAssignments(pl.graph.Node):
             the taxas name
         yticklabels, xticklabels : str
             These are the formats to plot the y-axis and x0axis, respectively.
+        tax_fmt : str
+            This is the format to render the taxonomic distiribution plot
 
         Returns
         -------
         _io.TextIOWrapper
         '''
-        
+        from matplotlib.colors import LogNorm
         taxas = self.G.data.taxas
         f.write('\n\n###################################\n')
         f.write(self.name)
@@ -1335,6 +1338,21 @@ class ClusterAssignments(pl.graph.Node):
         fig = plt.gcf()
         fig.tight_layout()
         plt.savefig(os.path.join(basepath, 'coclusters.pdf'))
+        plt.close()
+
+        # Make taxonomic distribution plot
+        df = generate_taxonomic_distribution_over_clusters_posthoc(
+            mcmc=self.G.inference, tax_fmt=tax_fmt)
+
+        fig = plt.figure()
+        ax = fig.add_subplot(111)
+        ax = sns.heatmap(df, ax=ax,
+            norm=LogNorm(vmin=np.min(df.tonumpy()), vmax=np.max(df.tonumpy())))
+        ax.set_title('Taxonomic abundance per cluster')
+        ax.set_xlabel('Clusters')
+        ax.set_ylabel('Taxonomy')
+
+        plt.savefig(os.path.join(basepath, 'taxonomic_distribution.pdf'))
         plt.close()
 
         f.write('Mode number of clusters: {}\n'.format(len(self.clustering)))

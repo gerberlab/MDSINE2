@@ -51,4 +51,4 @@ from .run import initialize_graph, normalize_parameters, denormalize_parameters,
 from .util import is_gram_negative, is_gram_negative_taxa, \
     generate_interation_bayes_factors_posthoc, generate_perturbation_bayes_factors_posthoc, \
     aggregate_items, consistency_filtering, conditional_consistency_filtering, \
-    generate_cluster_assignments_posthoc
+    generate_cluster_assignments_posthoc, generate_taxonomic_distribution_over_clusters_posthoc
