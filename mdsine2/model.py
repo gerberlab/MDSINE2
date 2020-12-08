@@ -87,14 +87,15 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         # Initialize pert_intervals
         # float -> int
         # timepoint -> perturbation index
-        self._pert_intervals = {}
-        for pidx in range(len(self.perturbation_ends)):
-            start = self.perturbation_starts[pidx]
-            end = self.perturbation_ends[pidx]
-            rang = np.arange(start, end, step=dt)
+        if self.perturbations is not None:
+            self._pert_intervals = {}
+            for pidx in range(len(self.perturbation_ends)):
+                start = self.perturbation_starts[pidx]
+                end = self.perturbation_ends[pidx]
+                rang = np.arange(start, end, step=dt)
 
-            for t in rang:
-                self._pert_intervals[t] = pidx
+                for t in rang:
+                    self._pert_intervals[t] = pidx
             
     def integrate_single_timestep(self, x, t, dt):
         '''Integrate over a single step
