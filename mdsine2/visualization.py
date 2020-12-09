@@ -1836,7 +1836,8 @@ def aggregate_taxa_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
     M = subj.matrix()[dtype]
 
     # Plot the aggregate
-    ax.plot(subj.times, M[agg.idx, :], label=agg.name, alpha=alpha_agg, linewidth=7, 
+    labelotu = pl.taxaname_for_paper(taxa=agg, taxas=subj.taxas)
+    ax.plot(subj.times, M[agg.idx, :], label=labelotu, alpha=alpha_agg, linewidth=7, 
         marker='x')
 
     individ_trajs = {}

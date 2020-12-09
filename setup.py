@@ -57,9 +57,11 @@ REQUIREMENTS = [
     'h5py==2.9.0',
     'psutil==5.7.3',
     'ete3==3.1.2',
+    'pyqt5==5.15.2',
     'networkx==2.3',
     'numba==0.50',
-    'biopython==1.78']
+    'biopython==1.78',
+    'treeswift==1.1.14']
 
 # Custom C distributions
 ext1 = Extension('_distribution', ['mdsine2/pylab/c_code/distributionmodule.c'])
@@ -79,7 +81,7 @@ setup(
     author='David Kaplan',
     author_email='dkaplan65@gmail.com',
     python_requires='>=3.7',
-    license='MIT',
+    license='GNU',
     packages=PACKAGES,
     zip_safe=False,
     install_requires=REQUIREMENTS,
