@@ -1,9 +1,9 @@
 # MDSINE2
 
-This reposity contains codee used to run the MDSINE2 (Microbial Dynamical Systems INference Engine 2) used to infer microbiome time-series analyses.
+This reposity contains code used to run the MDSINE2 (Microbial Dynamical Systems INference Engine 2) used to infer microbiome time-series analyses.
 
 ## Dependencies (Python 3.7.3)
----
+
 
  * biopython==1.78
  * ete3==3.1.2
@@ -17,15 +17,24 @@ This reposity contains codee used to run the MDSINE2 (Microbial Dynamical System
  * h5py==2.9.0
  * networkx==2.3
 
- ## Installation
- ---
- Clone this directory, `cd` into mdsine and type
- ```bash
- pip install .
- ```
- This installs the package `mdsine2` and all of the dependencies listed above.
+## Installation
 
- ## Tutorials
+If you already have Python 3.7.3 Clone this directory, `cd` into mdsine and type
+```bash
+pip install .
+```
+This installs the package `mdsine2` and all of the dependencies listed above.
+
+For a fresh install of Python 3.7.3 and MDSINE2 with a linked Jupyter kernel all from the command line one can take the followings steps
+```bash
+conda create -n mdsine2 -c conda-forge python=3.7.3 jupyterlab
+conda activate mdsine2
+python -m ipykernel install --user --name mdsine2 --display-name "mdsine2"
+git clone https://github.com/gerberlab/MDSINE2
+pip install MDSINE2/.
+ ``` 
+
+## Tutorials
  ---
  Tutorials on how to use the package can be found in the `tutorials` directory.
 
