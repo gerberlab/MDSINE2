@@ -1691,7 +1691,7 @@ def taxonomic_distribution_over_time(subj, taxlevel=None,
     ax = df.T.plot(ax=ax, kind='bar', stacked=True, **kwargs)
     if shade_perturbations:
         if pl.isstudy(subj):
-            for sss in study:
+            for sss in subj:
                 ax = shade_in_perturbations(ax, subj.perturbations, subj=sss)
         else:
             ax = shade_in_perturbations(ax, subj.parent.perturbations, subj=subj)
