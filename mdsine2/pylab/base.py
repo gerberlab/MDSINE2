@@ -1104,6 +1104,9 @@ class TaxaSet(Clusterable):
             'genus' : genus taxonomy
             'species' : species taxonomy
 
+        Note that if the `name` column is not in the columns, this assumes that the
+        OTU names are the index already.
+
         Parameters
         ----------
         taxonomy_table : pandas.DataFrame, Optional
@@ -1120,11 +1123,9 @@ class TaxaSet(Clusterable):
         self.taxonomy_table = taxonomy_table
         taxonomy_table = taxonomy_table.rename(str.lower, axis='columns')
         if 'name' not in taxonomy_table.columns:
-            if taxonomy_table.index.name == 'name':
-                taxonomy_table = taxonomy_table.reset_index()
-            else:
-                raise ValueError('`"name"` ({}) not found as a column in `taxonomy_table`'.format(
-                    taxonomy_table.columns))
+            logging.info('No `name` found - assuming index is the name')
+        else:
+            taxonomy_table = taxonomy_table.set_index('name')
         if SEQUENCE_COLUMN_LABEL not in taxonomy_table.columns:
             raise ValueError('`"{}"` ({}) not found as a column in `taxonomy_table`'.format(
                 SEQUENCE_COLUMN_LABEL, taxonomy_table.columns))
@@ -1135,18 +1136,17 @@ class TaxaSet(Clusterable):
                 taxonomy_table = taxonomy_table.insert(-1, tax, 
                     [DEFAULT_TAXA_NAME for _ in range(len(taxonomy_table.index))])
 
-        for i in taxonomy_table.index:
-            seq = taxonomy_table[SEQUENCE_COLUMN_LABEL][i]
-            name = taxonomy_table['name'][i]
+        for i, name in enumerate(taxonomy_table.index):
+            seq = taxonomy_table[SEQUENCE_COLUMN_LABEL][name]
             taxa = Taxa(name=name, sequence=seq, idx=self._len)
             taxa.set_taxonomy(
-                tax_kingdom=taxonomy_table.loc[i]['kingdom'],
-                tax_phylum=taxonomy_table.loc[i]['phylum'],
-                tax_class=taxonomy_table.loc[i]['class'],
-                tax_order=taxonomy_table.loc[i]['order'],
-                tax_family=taxonomy_table.loc[i]['family'],
-                tax_genus=taxonomy_table.loc[i]['genus'],
-                tax_species=taxonomy_table.loc[i]['species'])
+                tax_kingdom=taxonomy_table.loc[name]['kingdom'],
+                tax_phylum=taxonomy_table.loc[name]['phylum'],
+                tax_class=taxonomy_table.loc[name]['class'],
+                tax_order=taxonomy_table.loc[name]['order'],
+                tax_family=taxonomy_table.loc[name]['family'],
+                tax_genus=taxonomy_table.loc[name]['genus'],
+                tax_species=taxonomy_table.loc[name]['species'])
 
             self.ids[taxa.id] = taxa
             self.names[taxa.name] = taxa
