@@ -44,6 +44,7 @@ import logging
 import ete3
 import os
 import os.path
+import copy
 
 from . import util as plutil
 from .errors import NeedToImplementError
@@ -2268,7 +2269,7 @@ class Study(Saveable):
             self._subjects[name] = Subject(name=name, parent=self)
         return self
 
-    def pop_subject(self, sid):
+    def pop_subject(self, sid, name='unnamed-study'):
         '''Remove the indicated subject id
 
         Parameters
@@ -2276,6 +2277,8 @@ class Study(Saveable):
         sid : list(str), str, int
             This is the subject name/s or the index/es to pop out.
             Return a new Study with the specified subjects removed.
+        name : str
+            Name of the new study to return
         '''
         if not plutil.isarray(sid):
             sids = [sid]
@@ -2287,8 +2290,7 @@ class Study(Saveable):
                 sids[i] = list(self._subjects.keys())[sids[i]]
             elif not plutil.isstr(sids[i]):
                 raise ValueError('`sid` ({}) must be a str'.format(type(sids[i])))
-        ret = Study(taxas=self.taxas)
-        ret.perturbations = self.perturbations
+        ret = Study(taxas=self.taxas, name=name)
         ret.qpcr_normalization_factor = self.qpcr_normalization_factor
 
         for s in sids:
@@ -2296,6 +2298,21 @@ class Study(Saveable):
                 ret._subjects[s] =  self._subjects.pop(s, None)
             else:
                 raise ValueError('`sid` ({}) not found'.format(sid))
+
+        ret.perturbations = copy.deepcopy(self.perturbations)
+
+        # Remove the names of the subjects in the perturbations
+        for study in [ret, self]:
+            for perturbation in study.perturbations:
+                names = list(perturbation.starts.keys())
+                for subjname in names:
+                    if subjname not in study:
+                        perturbation.starts.pop(subjname, None)
+                names = list(perturbation.ends.keys())
+                for subjname in names:
+                    if subjname not in study:
+                        perturbation.ends.pop(subjname, None)
+
         return ret
 
     def pop_taxas_like(self, study):
