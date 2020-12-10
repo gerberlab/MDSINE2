@@ -57,9 +57,9 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
 
         GRAPH = pl.graph.Graph.load(params.GRAPH_FILENAME)
     else:
-        GRAPH = pl.Graph(name=graph_name)
+        GRAPH = pl.Graph(name=graph_name, seed=params.SEED)
     GRAPH.as_default()
-    pl.seed(params.INIT_SEED)
+    pl.seed(params.SEED)
 
     # Continue inference if necessary
     # -------------------------------
@@ -394,7 +394,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CHECKPOINT)
     mcmc.set_save_location(mcmc_filename)
     params.save(os.path.join(basepath, config.PARAMS_FILENAME))
-    pl.seed(params.DATA_SEED)
+    pl.seed(params.SEED)
 
     return mcmc
 

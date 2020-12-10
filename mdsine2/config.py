@@ -83,13 +83,12 @@ class MDSINE2ModelConfig(_BaseModelConfig):
     Parameters
     ----------
     '''
-    def __init__(self, basepath, data_seed, init_seed, burnin, n_samples,
+    def __init__(self, basepath, seed, burnin, n_samples,
         negbin_a0, negbin_a1, leave_out=None, max_n_taxas=None, 
         checkpoint=100):
         self.OUTPUT_BASEPATH = os.path.abspath(basepath)
         self.MODEL_PATH = self.OUTPUT_BASEPATH
-        self.DATA_SEED = data_seed
-        self.INIT_SEED = init_seed
+        self.SEED = seed
         self.BURNIN = burnin
         self.N_SAMPLES = n_samples
         self.CHECKPOINT = checkpoint
@@ -336,16 +335,16 @@ class MDSINE2ModelConfig(_BaseModelConfig):
     def suffix(self):
         '''Create a suffix with the parameters
         '''
-        s = 'ds{}_is{}_b{}_ns{}_lo{}_mo{}'.format(
-            self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES, self.LEAVE_OUT,
+        s = 's{}_b{}_ns{}_lo{}_mo{}'.format(
+            self.SEED, self.BURNIN, self.N_SAMPLES, self.LEAVE_OUT,
             self.MAX_N_TAXAS)
         return s
 
     def cv_suffix(self):
         '''Create a master suffix with the parameters
         '''
-        s = 'ds{}_is{}_b{}_ns{}_mo{}'.format(
-            self.DATA_SEED, self.INIT_SEED, self.BURNIN, self.N_SAMPLES,
+        s = 's{}_b{}_ns{}_mo{}'.format(
+            self.SEED, self.BURNIN, self.N_SAMPLES,
             self.MAX_N_TAXAS)
         return s
 
@@ -411,7 +410,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
 
         f = open(fname, 'w')
         f.write(mystr.format(
-            seed=self.DATA_SEED, n_samples=self.N_SAMPLES,
+            seed=self.SEED, n_samples=self.N_SAMPLES,
             burnin=self.BURNIN, model_path=self.MODEL_PATH,
             a0=self.NEGBIN_A0, a1=self.NEGBIN_A1,
             params_learned=params_learned,
