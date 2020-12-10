@@ -14,6 +14,7 @@ from .base import Saveable
 from .variables import isVariable
 from .errors import UndefinedError, InheritanceError
 from . import util
+from .random import seed as set_seed
 
 # Constants
 DEFAULT_LOG_EVERY = 5
@@ -366,6 +367,7 @@ class BaseMCMC(BaseModel):
         pylab.inference.BaseMCMC
             Output from the inference, self
         '''
+        set_seed(self.graph.seed)
         if self.start_step is None:
             self.start_step = 0
         try:
