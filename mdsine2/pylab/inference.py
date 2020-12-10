@@ -941,7 +941,8 @@ def r_hat(chains, vname, start, end, idx=None, returnBW=False):
     traces = np.nan_to_num(traces, nan=0.0)
 
     # Calculate r_hat
-    n, m, _ = traces.shape  # Typically, shape is (# chains, # samples, # OTUs)
+    n = traces.shape[0]
+    m = traces.shape[1]
     W = n * np.mean(np.var(traces, axis=1), axis=0)
     B = (n * m / (m - 1)) * np.var(np.mean(traces, axis=1), axis=0)
     rhat = np.sqrt(
