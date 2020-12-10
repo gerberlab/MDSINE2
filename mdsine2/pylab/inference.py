@@ -929,38 +929,24 @@ def r_hat(chains, vname, start, end, idx=None, returnBW=False):
         if not isMCMC(chain):
             raise TypeError('`chain` ({}) must be a pylab.inference.BaseMCMC object'.format(
                 type(chain)))
-    
+
     # Get the variables from each of the chains and check that they are the proper shapes
     if not (util.isstr(vname) or util.isint(vname)):
         raise TypeError('`vname` ({}) must be an int or a str'.format(type(vname)))
     traces = [chain.graph[vname].get_trace_from_disk(section='entire') for chain in chains]
     traces = [trace[start:end] for trace in traces]
     if idx is not None:
-        traces = [trace[:,idx] for trace in traces]
-    # for i,trace in enumerate(traces):
-    #     if len(trace.shape) != 1:
-    #         raise ValueError('The `{}`th trace of {} has a shape of {}, it should be' \
-    #             ' a scalar'.format(i,vname,trace.shape))
-    n = len(traces[0])
-    for i in range(len(traces)):
-        traces[i][np.isnan(traces[i])] = 0
-    m = len(traces)
-    mu_chain = [np.nanmean(trace, axis=0) for trace in traces]
-    mu_total = np.nanmean(mu_chain, axis=0)
+        traces = [trace[:, idx] for trace in traces]
 
-    # Calculate between-sequence variance
-    B = (n / (m-1)) * np.nansum([(mu_chain[j] - mu_total)**2 for j in range(m)], axis=0)
-
-    # Calculate the within-sequence variance
-    W = 0
-    for j in range(m):
-        trace = traces[j]
-        sj2 = (1/(n-1)) * np.nansum((trace - mu_chain[j])**2,axis=0)
-        W += sj2
-    W = W/m
+    traces = np.nan_to_num(traces, nan=0.0)
 
     # Calculate r_hat
-    rhat = np.sqrt(((n-1)*W/n + B/n) / W)
+    n, m, _ = traces.shape  # Typically, shape is (# chains, # samples, # OTUs)
+    W = n * np.mean(np.var(traces, axis=1), axis=0)
+    B = (n * m / (m - 1)) * np.var(np.mean(traces, axis=1), axis=0)
+    rhat = np.sqrt(
+        (n-1) * (1/n) * W + (m+1) * (1 / (m * n)) * B
+    )
 
     if returnBW:
         return {'B': B, 'W': W, 'rhat': rhat}
