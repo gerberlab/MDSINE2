@@ -942,11 +942,16 @@ def r_hat(chains, vname, start, end, idx=None, returnBW=False):
 
     # Calculate r_hat
     n = traces.shape[0]
-    m = traces.shape[1]
-    W = n * np.mean(np.var(traces, axis=1), axis=0)
-    B = (n * m / (m - 1)) * np.var(np.mean(traces, axis=1), axis=0)
+
+    # W: Mean of sample variances
+    W = np.mean(np.var(traces, axis=1, ddof=1), axis=0)
+
+    # B: Sample variance of means (times n)
+    B = n * np.var(np.mean(traces, axis=1), axis=0, ddof=1)
+
+    # R-hat (Empirical conditional variance, divided by W)
     rhat = np.sqrt(
-        (n-1) * (1/n) * W + (m+1) * (1 / (m * n)) * B
+        (n - 1) * (1/n) + (1/n) * B * np.reciprocal(W)
     )
 
     if returnBW:
