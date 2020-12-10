@@ -1397,6 +1397,28 @@ class TaxaSet(Clusterable):
             if isotu(taxa):
                 taxa.generate_consensus_taxonomy(consensus_table=consensus_table)
 
+    def write_taxonomy_to_csv(self, path, sep='\t'):
+        '''Write the taxa names, sequences, and taxonomy to a table
+
+        Parameters
+        ----------
+        path : str
+            This is the location to save the metadata file
+        sep : str
+            This is the separator of the table
+        '''
+        columns = ['name', 'sequence', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species']
+        data = []
+
+        for taxa in self:
+            temp = [taxa.name, taxa.sequence]
+            for taxlevel in TAX_LEVELS[:-1]:
+                temp.append(taxa.taxonomy[taxlevel])
+            data.append(temp)
+        
+        df = pd.DataFrame(data, columns=columns)
+        df.to_csv(path, sep=sep, index=False, header=True)
+
 
 class qPCRdata:
     '''Single entry of qpcr data at a timepoint with maybe multiple technical replicates.
@@ -2109,14 +2131,9 @@ class Study(Saveable):
                 reads = reads.set_index('name')
 
             for sampleid in reads.columns:
-                if sampleid == SEQUENCE_COLUMN_LABEL:
-                    continue
-                try:
-                    sid, t = self._samples[sampleid]
-                except:
-                    raise ValueError('Sample ID `{}` not found in metadata ({}). Make sure ' \
-                        'you set the sample ID as the columns in the `reads` dataframe'.format(
-                            sampleid, list(self._samples.keys())))
+                if sampleid not in self._samples:
+                    raise ValueError('sample {} not contained in metadata. abort'.format(sampleid))
+                sid, t = self._samples[sampleid]
                 self[sid].add_reads(timepoints=t, reads=reads[sampleid].to_numpy())
 
         # Add the qPCR measurements if necessary
@@ -2124,7 +2141,6 @@ class Study(Saveable):
         if qpcr is not None:
             if not plutil.isdataframe(qpcr):
                 raise TypeError('`qpcr` ({}) must be a pandas.DataFrame'.format(type(qpcr)))
-
             if 'sampleID' in qpcr.columns:
                 qpcr = qpcr.set_index('sampleID')
 
@@ -2153,8 +2169,9 @@ class Study(Saveable):
         data = []
         for sampleid in self._samples:
             sid, t = self._samples[sampleid]
+            if t not in self[sid].times:
+                continue
             data.append([sampleid, sid, t])
-
         df = pd.DataFrame(data, columns=columns)
         df.to_csv(path, sep=sep, index=False, header=True)
 
@@ -2171,9 +2188,11 @@ class Study(Saveable):
         data = [[taxa.name for taxa in self.taxas]]
         index = ['name']
         for sampleid in self._samples:
-            index.append(sampleid)
             sid, t = self._samples[sampleid]
+            if t not in self[sid].times:
+                continue
 
+            index.append(sampleid)
             reads = self[sid].reads[t]
             data.append(reads)
 
@@ -2194,6 +2213,8 @@ class Study(Saveable):
         data = []
         for sampleid in self._samples:
             sid, t = self._samples[sampleid]
+            if t not in self[sid].times:
+                continue
             subj = self[sid]
             ms = subj.qpcr[t].data
             if len(ms) > max_n_measurements:
@@ -2207,7 +2228,7 @@ class Study(Saveable):
                     ms, 
                     np.nan * np.ones(max_n_measurements - len(ms)))
         
-        columns = ['sampleid'] + ['measurement{}'.format(i+1) for i in range(max_n_measurements)]
+        columns = ['sampleID'] + ['measurement{}'.format(i+1) for i in range(max_n_measurements)]
 
         df = pd.DataFrame(data, columns=columns)
         df.to_csv(path, sep=sep, index=False, header=True)

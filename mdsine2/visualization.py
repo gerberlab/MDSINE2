@@ -312,7 +312,7 @@ def render_bayes_factors(bayes_factors, taxas, clustering=None, ax=None,
 def render_cocluster_proportions(coclusters, taxas, ax=None,
     n_colors=100, xticklabels='%(index)s', yticklabels='%(name)s %(index)s',
     include_tick_marks=False, linewidths=0.8, linecolor='black', cmap='Blues',
-    include_colorbar=True, title='Microbe Co-cluster Proportions', figure_size=None,
+    include_colorbar=True, title='Microbe Co-cluster Probabilities', figure_size=None,
     order=None):
     '''Render the cocluster proportions. Values in coclusters should be [0,1].
 

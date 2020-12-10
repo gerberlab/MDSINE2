@@ -73,6 +73,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     # Make the basepath
     # -----------------
     basepath = params.OUTPUT_BASEPATH
+    os.makedirs(basepath, exist_ok=True)
 
     # Normalize the qpcr measurements for numerical stability
     # -------------------------------------------------------
