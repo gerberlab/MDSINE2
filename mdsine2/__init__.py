@@ -38,7 +38,7 @@ from .pylab.graph import Graph, Node
 from .pylab.cluster import Clustering
 from .pylab.random import seed
 from .pylab.contrib import Interactions, ClusterPerturbationEffect
-from .pylab.inference import BaseMCMC
+from .pylab.inference import BaseMCMC, r_hat
 from .pylab.dynamics import integrate, BaseDynamics
 
 # Import PyLab errors
