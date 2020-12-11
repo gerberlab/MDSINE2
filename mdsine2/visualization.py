@@ -202,7 +202,7 @@ def shade_in_perturbations(ax, perturbations, subj, textcolor='black', textsize=
 # --------
 # Heatmaps
 # --------
-def render_bayes_factors(bayes_factors, taxas, clustering=None, ax=None,
+def render_bayes_factors(bayes_factors, taxas=None, ax=None,
     n_colors=100, max_value=None, xticklabels='%(index)s', yticklabels='%(name)s %(index)s',
     include_tick_marks=False, linewidths=0.8, linecolor='black',cmap='Blues',
     include_colorbar=True, title='Microbe Interaction Bayes Factors', figure_size=None,
@@ -271,8 +271,8 @@ def render_bayes_factors(bayes_factors, taxas, clustering=None, ax=None,
     include_tick_marks = d['include_tick_marks']
 
     # Type checking and initialization
-    d = _init_parameters_heatmap(matrix=bayes_factors,
-        taxas=taxas, clustering=clustering, xticklabels=xticklabels,
+    d = _init_parameters_heatmap(matrix=bayes_factors, clustering=None,
+        taxas=taxas, xticklabels=xticklabels,
         yticklabels=yticklabels, ax=ax, figure_size=figure_size,
         linewidths=linewidths, order=order)
     ax = d['ax']
@@ -282,8 +282,8 @@ def render_bayes_factors(bayes_factors, taxas, clustering=None, ax=None,
     cbar_kws = d['cbar_kws']
     linewidths = d['linewidths']
 
-    if np.any(bayes_factors < 0):
-        raise ValueError('There should be no negative values in `bayes_factors`')
+    # if np.any(bayes_factors < 0):
+    #     raise ValueError('There should be no negative values in `bayes_factors`')
     for i in range(bayes_factors.shape[0]):
         bayes_factors[i,i] = np.nan
     if cmap is None:
@@ -1705,49 +1705,6 @@ def taxonomic_distribution_over_time(subj, taxlevel=None,
     # ax = _set_xticks(ax)
     return ax
 
-def _tax_is_defined(tax, level):
-    return (type(tax) != float) and (tax != DEFAULT_TAXA_NAME) and (tax != '')
-
-def _agg_taxaname_for_paper(agg, taxaname):
-    '''Makes the name in the format needed for the paper for an aggregate taxa
-    '''
-    if _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'species'):
-        species = agg.aggregated_taxonomies[taxaname]['species']
-        species = species.split('/')
-        if len(species) >= 3:
-            species = species[:2]
-        species = '/'.join(species)
-        label = '{genus} {spec} {name}'.format(
-                genus=agg.aggregated_taxonomies[taxaname]['genus'],
-                spec=species,
-                name=taxaname)
-    elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'genus'):
-        label = '* {genus} {name}'.format(
-                genus=agg.aggregated_taxonomies[taxaname]['genus'],
-                name=taxaname)
-    elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'family'):
-         label = '** {family} {name}'.format(
-                family=agg.aggregated_taxonomies[taxaname]['family'],
-                name=taxaname)
-    elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'order'):
-        label = '*** {order} {name}'.format(
-                order=agg.aggregated_taxonomies[taxaname]['order'],
-                name=taxaname)
-    elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'class'):
-        label = '**** {clas} {name}'.format(
-                clas=agg.aggregated_taxonomies[taxaname]['class'],
-                name=taxaname)
-    elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'phylum'):
-        label = '***** {phylum} {name}'.format(
-                phylum=agg.aggregated_taxonomies[taxaname]['phylum'],
-                name=taxaname)
-    elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'kingdom'):
-        label = '****** {kingdom} {name}'.format(
-                kingdom=agg.aggregated_taxonomies[taxaname]['kingdom'],
-                name=taxaname)
-
-    return label
-
 def aggregate_taxa_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None, 
     title='Subject %(subjectname)s', xlabel='auto', ylabel='auto', vmin=None, vmax=None,
     alpha_agg=0.5, alpha_asv=1., legend=True, fontstyle=None, shade_perturbations=True):
@@ -1804,6 +1761,48 @@ def aggregate_taxa_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
     -------
     matplotlib.pyplot.Axes
     '''
+    def _tax_is_defined(tax, level):
+        return (type(tax) != float) and (tax != DEFAULT_TAXA_NAME) and (tax != '')
+
+    def _agg_taxaname_for_paper(agg, taxaname):
+        '''Makes the name in the format needed for the paper for an aggregate taxa
+        '''
+        if _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'species'):
+            species = agg.aggregated_taxonomies[taxaname]['species']
+            species = species.split('/')
+            if len(species) >= 3:
+                species = species[:2]
+            species = '/'.join(species)
+            label = '{genus} {spec} {name}'.format(
+                    genus=agg.aggregated_taxonomies[taxaname]['genus'],
+                    spec=species,
+                    name=taxaname)
+        elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'genus'):
+            label = '* {genus} {name}'.format(
+                    genus=agg.aggregated_taxonomies[taxaname]['genus'],
+                    name=taxaname)
+        elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'family'):
+            label = '** {family} {name}'.format(
+                    family=agg.aggregated_taxonomies[taxaname]['family'],
+                    name=taxaname)
+        elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'order'):
+            label = '*** {order} {name}'.format(
+                    order=agg.aggregated_taxonomies[taxaname]['order'],
+                    name=taxaname)
+        elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'class'):
+            label = '**** {clas} {name}'.format(
+                    clas=agg.aggregated_taxonomies[taxaname]['class'],
+                    name=taxaname)
+        elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'phylum'):
+            label = '***** {phylum} {name}'.format(
+                    phylum=agg.aggregated_taxonomies[taxaname]['phylum'],
+                    name=taxaname)
+        elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'kingdom'):
+            label = '****** {kingdom} {name}'.format(
+                    kingdom=agg.aggregated_taxonomies[taxaname]['kingdom'],
+                    name=taxaname)
+        return label
+
     if not pl.issubject(subj):
         raise TypeError('`subj` ({}) must be a mdsine2.Subject object'.format(type(subj)))
     if agg not in subj.taxas:
@@ -2114,7 +2113,7 @@ def _init_parameters_heatmap(matrix, taxas, clustering, xticklabels, yticklabels
         fig = plt.gcf()
 
     # Make taxa order based on clusters if necessary
-    if order is not None:
+    if order is not None and matrix.shape[0] == len(taxas):
         temp = []
         for oidx in order:
             temp.append(taxas[oidx].idx)
@@ -2143,9 +2142,18 @@ def _init_parameters_heatmap(matrix, taxas, clustering, xticklabels, yticklabels
     if yticklabels is None:
         yticklabels = False
     if type(xticklabels) == str:
-        xticklabels = _format_ticklabel(format=xticklabels, order=order, taxas=taxas)
+        if taxas is None:
+            logging.warning('Automatically setting xlabels as index because there are no taxas')
+            xticklabels = ['{}'.format(i+1) for i in range(matrix.shape[0])]
+        else:
+            xticklabels = _format_ticklabel(format=xticklabels, order=order, taxas=taxas)
+    
     if type(yticklabels) == str:
-        yticklabels = _format_ticklabel(format=yticklabels, order=order, taxas=taxas)
+        if taxas is None:
+            logging.warning('Automatically setting xlabels as index because there are no taxas')
+            yticklabels = ['{}'.format(i+1) for i in range(matrix.shape[0])]
+        else:
+            yticklabels = _format_ticklabel(format=yticklabels, order=order, taxas=taxas)
     if N > 75:
         linewidths = 0
 

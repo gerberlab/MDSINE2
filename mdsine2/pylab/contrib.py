@@ -10,6 +10,7 @@ import logging
 import scipy.special
 
 from .base import BasePerturbation, Traceable
+from .base import Perturbations as PerturbationSet
 from . import variables
 from .cluster import isclustervalue, ClusterValue, isclustering, \
     ClusterProperty
@@ -99,14 +100,12 @@ class Perturbation(BasePerturbation, variables.Variable):
         probability=None, **kwargs):
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
-            self.G.perturbations = []
+            self.G.perturbations = PerturbationSet()
         BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         
         if not base.istaxaset(taxas):
             raise TypeError('`taxas` ({}) must be pylab.base.TaxaSet'.format(type(taxas)))
 
-        if self.G.perturbations is None:
-            self.G.perturbations = []
         self.G.perturbations.append(self)
         self.taxas = taxas
         n_taxas = len(self.taxas)
@@ -483,7 +482,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
         
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
-            self.G.perturbations = []
+            self.G.perturbations = PerturbationSet()
 
         BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         self.G.perturbations.append(self)

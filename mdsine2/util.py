@@ -251,6 +251,35 @@ def generate_taxonomic_distribution_over_clusters_posthoc(mcmc, tax_fmt):
     df = pl.base.condense_matrix_with_taxonomy(M, taxas=study.taxas, fmt=tax_fmt)
     return df
 
+def condense_fixed_clustering_interaction_matrix(M, clustering):
+    '''Condense the interaction matrix `M` with the cluster assignments 
+    in `clustering`. Assume that the current cluster assignments is what
+    is used. Assumes that the input matrix is run with a fixed clustering.
+
+    Ignores the diagonal entrees
+
+    Parameters
+    ----------
+    M : np.ndarrray(n_taxa, n_taxa)
+        Taxon-Taxon interaction matrix
+    clustering : mdsine2.Clustering
+        Clustering object
+
+    Returns
+    -------
+    np.ndarray(n_clusters, n_clusters)
+        Cluster-cluster interaction matrix
+    '''
+    ret = np.zeros(shape=(len(clustering), len(clustering)))
+    for i1, cl1 in enumerate(clustering):
+        for i2, cl2 in enumerate(clustering):
+            if i1 == i2:
+                continue
+            aidx1 = list(cl1.members)[0]
+            aidx2 = list(cl2.members)[0]
+            ret[i1,i2] = M[aidx1, aidx2]
+    return ret
+
 def aggregate_items(subjset, hamming_dist):
     '''Aggregate Taxas that have an average hamming distance of `hamming_dist`
 

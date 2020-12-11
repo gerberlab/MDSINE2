@@ -2317,6 +2317,7 @@ class Study(Saveable):
         for s in sids:
             if s in self._subjects:
                 ret._subjects[s] =  self._subjects.pop(s, None)
+                ret._subjects[s].parent = ret
             else:
                 raise ValueError('`sid` ({}) not found'.format(sid))
 
