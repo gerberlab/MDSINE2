@@ -2,6 +2,7 @@ import numpy as np
 import logging
 import copy
 import numba
+# from collections import OrderedDict
 
 from . import util
 from .errors import NeedToImplementError
@@ -155,7 +156,7 @@ class Clustering(Node, Traceable):
             temp = _Cluster(members=idxs, parent=self)
             self.clusters[temp.id] = temp
 
-        self.order = list(self.clusters.keys())
+        self.order = list(self.clusters)
         self.properties = _ClusterProperties()
         
         # Maps the item index to the cluster ID it is assigned to
@@ -253,7 +254,7 @@ class Clustering(Node, Traceable):
         self.clusters[temp.id] = temp
         self.idx2cid[idx] = temp.id
         self._cids_added.append(temp.id)
-        self.order = list(self.clusters.keys())
+        self.order = list(self.clusters)
         self.n_clusters.value = len(self.clusters)
 
         self.cid2cidx = {}
@@ -306,7 +307,7 @@ class Clustering(Node, Traceable):
 
         self.clusters[cid].add(idx)
         self.idx2cid[idx] = cid
-        self.order = list(self.clusters.keys())
+        self.order = list(self.clusters)
         self.cid2cidx = {}
         for cidx, cid in enumerate(self.order):
             self.cid2cidx[cid] = cidx

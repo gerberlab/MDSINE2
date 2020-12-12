@@ -8,6 +8,7 @@ from . import posterior
 from . import negbin
 from . import model
 from . import config
+from . import dataset
 
 # Import key modules from pylab
 from .pylab import random
