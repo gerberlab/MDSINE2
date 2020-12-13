@@ -2,7 +2,7 @@ import numpy as np
 import logging
 import copy
 import numba
-# from collections import OrderedDict
+from  orderedset import OrderedSet
 
 from . import util
 from .errors import NeedToImplementError
@@ -149,12 +149,14 @@ class Clustering(Node, Traceable):
                     len(clusters), len(items)))
         
         # Everything is good, make the cluster objects
+        self._CIDX = 100100
         self.items = items
         self.clusters = {}
         for cidx in np.arange(np.max(clusters)+1):
             idxs = np.where(clusters == cidx)[0]
-            temp = _Cluster(members=idxs, parent=self)
+            temp = _Cluster(members=idxs, parent=self, iden=self._CIDX)
             self.clusters[temp.id] = temp
+            self._CIDX += 1
 
         self.order = list(self.clusters)
         self.properties = _ClusterProperties()
@@ -250,7 +252,8 @@ class Clustering(Node, Traceable):
             self.clusters.pop(old_cid, None)
             self._cids_removed.append(old_cid)
         
-        temp = _Cluster(members=[idx], parent=self)
+        temp = _Cluster(members=[idx], parent=self, iden=self._CIDX)
+        self._CIDX += 1
         self.clusters[temp.id] = temp
         self.idx2cid[idx] = temp.id
         self._cids_added.append(temp.id)
@@ -412,17 +415,17 @@ class _Cluster:
     Parameters
     ----------
     members : array_like, set
-        - Individual item indices that are within the cluster
+        Individual item indices that are within the cluster
     parent : pylab.cluster._ClusterMap
-        - pointer to parent _ClusterMap
+        Pointer to parent _ClusterMap
+    iden : int
+        Identifier
     '''
-    def __init__(self, members, parent):
-        if type(members) == np.ndarray:
-            members = np.squeeze(members).flatten().tolist()
-        if type(members) == list:
-            members = set(members)
-        self.members = members
-        self.id = id(self) # Unique id for class
+    def __init__(self, members, parent, iden):
+        self.members = OrderedSet()
+        for mem in members:
+            self.members.add(mem)
+        self.id = iden # Unique id for class
         self.size = len(members)
         self.parent = parent
                 

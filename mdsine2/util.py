@@ -5,6 +5,7 @@ import numpy as np
 import scipy
 import math
 import copy
+from orderedset import OrderedSet
 
 from .names import STRNAMES
 from . import pylab as pl
@@ -430,7 +431,7 @@ def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_nu
     subjset = copy.deepcopy(subjset)      
     
     if union_other_consortia is not None:
-        taxas_to_keep = set()
+        taxas_to_keep = OrderedSet()
         for subjset_temp in [subjset, union_other_consortia]:
             subjset_temp = consistency_filtering(subjset_temp, dtype=dtype,
                 threshold=threshold, min_num_consecutive=min_num_consecutive,

@@ -286,9 +286,7 @@ class ClusterPerturbationIndicator(ClusterValue):
         for cid in cids_removed:
             self.value.pop(cid)
         for cid in cids_added:
-            self.value[cid] = bool(npr.binomial(
-                n=1,
-                p=self.probability.value))
+            self.value[cid] = bool(npr.binomial(n=1, p=self.probability.value))
 
     def item_bool_array(self):
         '''Creates a boolean array expanded so that each item has the same 
@@ -748,6 +746,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                 type(indicator_initializer)))
         self.value_initializer = value_initializer
         self.indicator_initializer = indicator_initializer
+        self._IIDX = 1001001
         
         if not util.isbool(use_indicators):
             raise TypeError('`use_indicators` ({}) must be a bool'.format(type(use_indicators)))
@@ -765,7 +764,9 @@ class Interactions(ClusterProperty, Node, Traceable):
                 self.value[tcid][scid] = _Interaction( 
                     source_cid=scid, target_cid=tcid,
                     value=self.value_initializer(),
-                    indicator=self.indicator_initializer())
+                    indicator=self.indicator_initializer(),
+                    iden=self._IIDX)
+                self._IIDX += 1
 
         self._shape = (len(self.clustering.items), len(self.clustering.items))
         self.dtype = float
@@ -881,7 +882,9 @@ class Interactions(ClusterProperty, Node, Traceable):
                 self.value[tcid][scid] = _Interaction(
                     source_cid=scid, target_cid=tcid,
                     value=self.value_initializer(),
-                    indicator=self.indicator_initializer()>=.5)
+                    indicator=self.indicator_initializer()>=.5, 
+                    iden=self._IIDX)
+                self._IIDX += 1
 
     def iloc(self, idx):
         '''Get the interaction as a function of the index that it occurs at.
@@ -934,13 +937,17 @@ class Interactions(ClusterProperty, Node, Traceable):
             self.value[ocid][cid] = _Interaction(
                 source_cid=cid, target_cid=ocid,
                 value=self.value_initializer(),
-                indicator=self.indicator_initializer() >= 0.5)
+                indicator=self.indicator_initializer() >= 0.5,
+                iden=self._IIDX)
+            self._IIDX += 1
         self.value[cid] = {}
         for ocid in other_cids:
             self.value[cid][ocid] = _Interaction(
                 source_cid=ocid, target_cid=cid,
                 value=self.value_initializer(),
-                indicator=self.indicator_initializer() >= 0.5)
+                indicator=self.indicator_initializer() >= 0.5,
+                iden=self._IIDX)
+            self._IIDX += 1
     
     def key_pairs(self, only_valid=False):
         '''Returns (target,source) cluster ids in order
@@ -1448,15 +1455,15 @@ class _Interaction:
         The value of the interaction
     indicator : bool
         Indicator variable of the interaction
-    id : int
+    iden : int
         Unique identifier of this interaction object
     '''
-    def __init__(self, source_cid, target_cid, value, indicator):
+    def __init__(self, source_cid, target_cid, value, indicator, iden):
         self.source_cid = source_cid
         self.target_cid = target_cid
         self.value = value
         self.indicator = indicator
-        self.id = id(self)
+        self.id = iden
 
     def __str__(self):
         return 'Interaction {}\n' \

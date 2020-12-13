@@ -33,6 +33,7 @@ import numba
 import time
 import itertools
 import scipy.sparse
+from orderedset import OrderedSet
 
 from .pylab.graph import DataNode, Node
 from .names import STRNAMES
@@ -112,7 +113,7 @@ class Data(DataNode):
         self.data = []
         self.dt = []
         self.timepoint2index = []
-        self.toupdate = set()
+        self.toupdate = OrderedSet()
         self.n_replicates = len(self.subjects)
         self.n_taxas = len(self.taxas)
 
@@ -127,8 +128,8 @@ class Data(DataNode):
             self.n_timepoints_for_replicate.append(d['raw'].shape[1])
             self.n_dts_for_replicate.append(d['raw'].shape[1]-1)
             self.given_timepoints.append(np.asarray(s.times))
-            self._given_timepoints_set.append(set())
-            self.given_timeindices.append(set())
+            self._given_timepoints_set.append(OrderedSet())
+            self.given_timeindices.append(OrderedSet())
             self.times.append(np.asarray(s.times))
             for tidx,t in enumerate(self.times[ridx]):
                 self._given_timepoints_set[ridx].add(t)
@@ -393,7 +394,7 @@ class Data(DataNode):
             self.n_dts_for_replicate[ridx] = len(self.times[ridx])-1
 
             # redo `given_timeindices`
-            self.given_timeindices[ridx] = set()
+            self.given_timeindices[ridx] = OrderedSet()
             for tidx in range(len(self.times[ridx])):
                 if self.times[ridx][tidx] in self._given_timepoints_set[ridx]:
                     self.given_timeindices[ridx].add(tidx)
@@ -1315,7 +1316,7 @@ class PerturbationMixingDesignMatrix(DesignMatrix):
             If specified, it will only build for the cids specified.
         '''
         if only_cids is not None:
-            oc = set(list(only_cids))
+            oc = OrderedSet(list(only_cids))
         else:
             oc = None
         keypair2col = self.keypair2col
@@ -1531,8 +1532,8 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
 
         self.parent = parent
         n_taxas = self.G.data.n_taxas
-        self.clustering = self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].clustering
-        self.interactions = self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].obj
+        self.clustering = self.G[STRNAMES.CLUSTERING_OBJ]
+        self.interactions = self.G[STRNAMES.INTERACTIONS_OBJ]
         self.n_rows = int(n_taxas * (n_taxas - 1))
 
         # Build the keypair2col dictionary
@@ -1644,7 +1645,7 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         NOTE - these are the indicies for the on interactions only, that means we skip 
         over the interactions that are false for enumerating them
         '''
-        input_cols = set(list(cols))
+        input_cols = OrderedSet(list(cols))
 
         rows = []
         cols = []
@@ -1667,7 +1668,7 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         '''This does the same as `build` but it only builds for the 
         pair of tcids and scids at the same index passed in
         '''
-        # input_cols = set(list(idxs))
+        # input_cols = OrderedSet(list(idxs))
 
         rows = []
         cols = []
@@ -1697,7 +1698,7 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         d = {}
         c2ciidx = 0
 
-        cids = set(cids)
+        cids = OrderedSet(cids)
         # print('cidxs\n', cidxs)
         # print('from data\n', self.interactions.clustering.order)
 

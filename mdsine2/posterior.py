@@ -16,6 +16,7 @@ import scipy.sparse
 import scipy
 import math
 import random
+from orderedset import OrderedSet
 
 from .names import STRNAMES
 from . import pylab as pl
@@ -1066,7 +1067,7 @@ class ClusterAssignments(pl.graph.Node):
             if len(idxs_to_delete) > 0:
                 clusters = np.delete(clusters, idxs_to_delete).tolist()
 
-            all_oidxs = set()
+            all_oidxs = OrderedSet()
             for cluster in clusters:
                 for oidx in cluster:
                     if not pl.isint(oidx):
@@ -1394,7 +1395,6 @@ class ClusterAssignments(pl.graph.Node):
         if self.clustering.n_clusters.sample_iter % self.run_every_n_iterations != 0:
            return
 
-        print('in clustering')
         start_time = time.time()
         oidxs = npr.permutation(np.arange(len(self.G.data.taxas)))
 
@@ -1555,6 +1555,16 @@ class ClusterAssignments(pl.graph.Node):
         if self.clustering.n_clusters.sample_iter % self.run_every_n_iterations != 0:
            return
 
+        # if self.updated:
+        #     return
+
+        n_perts = self.G[STRNAMES.PERT_INDICATOR].total_on()
+        n_inter = self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators
+
+        if n_inter + n_perts == 0:
+            logging.info('No indicators on, cant update')
+            return
+
         start_time = time.time()
 
         self.process_prec = self.G[STRNAMES.PROCESSVAR].prec.ravel() #.build_matrix(cov=False, sparse=False)
@@ -1563,7 +1573,7 @@ class ClusterAssignments(pl.graph.Node):
         self.y = self.G.data.construct_lhs(lhs, 
             kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations': False}})
 
-        oidxs = npr.permutation(np.arange(len(self.G.data.taxas)))
+        oidxs = npr.permutation(len(self.G.data.taxas))
         iii = 0
         for oidx in oidxs:
             logging.info('{}/{}: {}'.format(iii, len(oidxs), oidx))
@@ -2649,9 +2659,9 @@ class FilteringLogMP(pl.graph.Node):
             logging.info('Setting up the essential timepoints')
             if pl.isstr(essential_timepoints):
                 if essential_timepoints in ['auto', 'union']:
-                    essential_timepoints = set()
+                    essential_timepoints = OrderedSet()
                     for ts in self.G.data.times:
-                        essential_timepoints = essential_timepoints.union(set(list(ts)))
+                        essential_timepoints = essential_timepoints.union(OrderedSet(list(ts)))
                     essential_timepoints = np.sort(list(essential_timepoints))
                 else:
                     raise ValueError('`essential_timepoints` ({}) not recognized'.format(
@@ -6681,8 +6691,7 @@ class GLVParameters(pl.variables.MVN):
             # Update jointly
             rhs = []
             lhs = []
-            if self.interactions.obj.sample_iter >= \
-                self.interactions.delay:
+            if self.interactions.obj.sample_iter >= self.interactions.delay:
                 rhs.append(STRNAMES.CLUSTER_INTERACTION_VALUE)
             else:
                 lhs.append(STRNAMES.CLUSTER_INTERACTION_VALUE)
