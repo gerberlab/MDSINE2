@@ -1,10 +1,12 @@
 import pandas as pd
+import os
 import logging
 from .pylab import TaxaSet, Study
 
 __all__ = ['load_gibson', 'parse']
 
-def load_gibson(dset=None, as_df=False, with_perturbations=True, species_assignment='both'):
+def load_gibson(dset=None, as_df=False, with_perturbations=True, species_assignment='both',
+    load_local=None, max_n_species=2):
     '''Load the Gibson dataset.
     Returns either a `mdsine2.Study` object or the `pandas.DataFrame` objects that
     that comprise the Gibson dataset.
@@ -35,22 +37,31 @@ def load_gibson(dset=None, as_df=False, with_perturbations=True, species_assignm
         If 'rdp', only use RDP 138 assignment
         If 'both', combine both the RDP and Silva species assignment
         If None, have no species assignment and just return the taxonomy provided by DADA2
+    load_local : str, None
+        If specified, this is the local base path with all the files to load from. it will
+        expect the respective file names. One may want to use this if they cannot get access
+        to the internet
+    max_n_species : int
+        This is the maximum number of species assignments allowed before the lowest taxonomic
+        assignment gets bumped up to Genus.
+
     Returns
     -------
     mdsine2.Study OR dict
     '''
     # Load the taxonomy assignment
     logging.debug('Downloading taxonomy')
-    taxonomy = _Gibson.load_taxonomy(species_assignment=species_assignment)
+    taxonomy = _Gibson.load_taxonomy(species_assignment=species_assignment, load_local=load_local,
+        max_n_species=max_n_species)
     logging.debug('Downloading metadata')
-    metadata = _Gibson.load_sampleid(dset=dset)
+    metadata = _Gibson.load_sampleid(dset=dset, load_local=load_local)
     logging.debug('Downloading reads')
-    reads = _Gibson.load_reads(dset=dset)
+    reads = _Gibson.load_reads(dset=dset, load_local=load_local)
     logging.debug('Downloading qpcr')
-    qpcr = _Gibson.load_qpcr_masses(dset=dset)
+    qpcr = _Gibson.load_qpcr_masses(dset=dset, load_local=load_local)
     if with_perturbations:
         logging.debug('Downloading peturbations')
-        perturbations = _Gibson.load_perturbations(dset=dset)
+        perturbations = _Gibson.load_perturbations(dset=dset, load_local=load_local)
     else:
         perturbations = None
 
@@ -123,7 +134,7 @@ class _Gibson:
     _URL_METADATA = 'metadata.tsv'
 
     @staticmethod
-    def load_taxonomy(species_assignment):
+    def load_taxonomy(species_assignment, load_local=None, max_n_species=2):
         '''Load the taxonomy assignment
         Parameters
         ----------
@@ -133,18 +144,45 @@ class _Gibson:
             If 'rdp', only use RDP 138 assignment
             If 'both', combine both the RDP and Silva species assignment
             If None, have no species assignment and just return the taxonomy provided by DADA2
+        load_local : str, None  
+            This is the local path if we need to load it locally. Otherwise we download from
+            github
+        max_n_species : int
+            This is the maximum number of species assignments allowed before the lowest taxonomic
+            assignment gets bumped up to Genus.
+
+        Returns
+        -------
+        pandas.DataFrame
         '''
         if species_assignment == 'silva':
-            path = _Gibson._URL_PATH + _Gibson._URL_SILVA_TAX
+            if load_local is None:
+                path = _Gibson._URL_PATH + _Gibson._URL_SILVA_TAX
+            else:
+                logging.debug('Load local')
+                path = os.path.join(load_local, _Gibson._URL_SILVA_TAX)
             taxonomy = pd.read_csv(path, sep='\t', index_col=0)
         elif species_assignment == 'rdp':
-            path = _Gibson._URL_PATH + _Gibson._URL_RDP_TAX
+            if load_local is None:
+                path = _Gibson._URL_PATH + _Gibson._URL_RDP_TAX
+            else:
+                logging.debug('Load local')
+                path = os.path.join(load_local, _Gibson._URL_RDP_TAX)
             taxonomy = pd.read_csv(path, sep='\t', index_col=0)
         elif species_assignment == 'both':
-            rdp = _Gibson._URL_PATH + _Gibson._URL_RDP_TAX
-            rdp = pd.read_csv(rdp, sep='\t', index_col=0)
-            silva = _Gibson._URL_PATH + _Gibson._URL_SILVA_TAX
-            silva = pd.read_csv(silva, sep='\t', index_col=0)
+            if load_local is None:
+                path = _Gibson._URL_PATH + _Gibson._URL_RDP_TAX
+            else:
+                logging.debug('Load local')
+                path = os.path.join(load_local, _Gibson._URL_RDP_TAX)
+            rdp = pd.read_csv(path, sep='\t', index_col=0)
+            
+            if load_local is None:
+                path = _Gibson._URL_PATH + _Gibson._URL_SILVA_TAX
+            else:
+                logging.debug('Load local')
+                path = os.path.join(load_local, _Gibson._URL_SILVA_TAX)
+            silva = pd.read_csv(path, sep='\t', index_col=0)
 
             rdp.columns = rdp.columns.str.lower()
             silva.columns = silva.columns.str.lower()
@@ -168,7 +206,7 @@ class _Gibson:
                 if 'NA' in both and len(both) > 1:
                     both.remove('NA')
 
-                if len(both) > 2:
+                if len(both) > max_n_species:
                     both = 'NA'
                 else:
                     both = '/'.join(both)
@@ -186,14 +224,26 @@ class _Gibson:
         return taxonomy
     
     @staticmethod
-    def load_perturbations(dset=None):
+    def load_perturbations(dset=None, load_local=None):
         '''Load the perturbations for Gibson dataset as a `pandas.DataFrame`.
+
+        Parameters
+        ----------
+        dset : str
+            This is the dataset to load.
+        load_local : str, None  
+            This is the local path if we need to load it locally. Otherwise we download from
+            github
 
         Returns
         -------
         pandas.DataFrame
         '''
-        path = _Gibson._URL_PATH + _Gibson._URL_PERTS
+        if load_local is None:
+            path = _Gibson._URL_PATH + _Gibson._URL_PERTS
+        else:
+            logging.debug('Load local')
+            path = os.path.join(load_local, _Gibson._URL_PERTS)
         df = pd.read_csv(path, sep='\t')
 
         if dset is None:
@@ -219,13 +269,27 @@ class _Gibson:
         return df
 
     @staticmethod
-    def load_qpcr_masses(dset=None):
+    def load_qpcr_masses(dset=None, load_local=None):
         '''Load qpcr masses table into a `pandas.DataFrame`.
+
+        Parameters
+        ----------
+        dset : str
+            This is the dataset to load.
+        load_local : str, None  
+            This is the local path if we need to load it locally. Otherwise we download from
+            github
+
         Returns
         -------
         pandas.DataFrame
         '''
-        path = _Gibson._URL_PATH + _Gibson._URL_QPCR
+        if load_local is None:
+            path = _Gibson._URL_PATH + _Gibson._URL_QPCR
+        else:
+            logging.debug('Load local')
+            path = os.path.join(load_local, _Gibson._URL_QPCR)
+        
         df = pd.read_csv(path, sep='\t')
         df = df.set_index('sampleID')
 
@@ -235,13 +299,26 @@ class _Gibson:
         return df
 
     @staticmethod
-    def load_reads(dset=None):
+    def load_reads(dset=None, load_local=None):
         '''Load reads table into a `pandas.DataFrame`.
+
+        Parameters
+        ----------
+        dset : str
+            This is the dataset to load.
+        load_local : str, None  
+            This is the local path if we need to load it locally. Otherwise we download from
+            github
+
         Returns
         -------
         pandas.DataFrame
         '''
-        path = _Gibson._URL_PATH + _Gibson._URL_READS
+        if load_local is None:
+            path = _Gibson._URL_PATH + _Gibson._URL_READS
+        else:
+            logging.debug('Load local')
+            path = os.path.join(load_local, _Gibson._URL_READS)
         df = pd.read_csv(path, sep='\t', index_col=0)
 
         if dset is not None:
@@ -250,13 +327,25 @@ class _Gibson:
         return df
 
     @staticmethod
-    def load_sampleid(dset=None):
+    def load_sampleid(dset=None, load_local=None):
         '''Load sample ID table into a `pandas.DataFrame`.
+
+        Parameters
+        ----------
+        dset : str
+            This is the dataset to load.
+        load_local : str, None  
+            This is the local path if we need to load it locally. Otherwise we download from
+            github
+
         Returns
         -------
         pandas.DataFrame
         '''
-        path = path = _Gibson._URL_PATH + _Gibson._URL_METADATA
+        if load_local is None:
+            path = _Gibson._URL_PATH + _Gibson._URL_METADATA
+        else:
+            path = os.path.join(load_local, _Gibson._URL_METADATA)
         df = pd.read_csv(path, sep='\t')
         df = df.set_index('sampleID')
 
@@ -340,23 +429,3 @@ class _Gibson:
         bool
         '''
         return 'inoculum' in sampleid
-
-    @staticmethod
-    def gibson_phylogenetic_tree(with_reference_sequences):
-        '''Load phylogenetic tree into an `ete3.Tree` object.
-        Parameters
-        ----------
-        with_reference_sequences : bool
-            If True, load the phylogenetic tree with the reference sequeunces from
-            placement. If False, only include the s and not the reference 
-            sequences
-        Returns
-        -------
-        ete3.Tree
-        '''
-        if with_reference_sequences:
-            path = join(dirname(__file__),'datasets/gibson_dataset' ,'phylogenetic_tree_with_reference.nhx')
-        else:
-            path = join(dirname(__file__),'datasets/gibson_dataset' ,'phylogenetic_tree_w_branch_len_preserved.nhx')
-
-        return Tree(path)
