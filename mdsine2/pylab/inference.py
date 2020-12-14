@@ -867,8 +867,8 @@ class Tracer(Saveable):
 
 def r_hat(chains, vname, start, end, idx=None, returnBW=False):
     '''Calculate the measure `R^` for the variable called `vname` at the index `idx`.
-    If `idx` is None then we assume that the variable is scalar. 
-    
+    If `idx` is None then we assume that the variable is scalar.
+
     Definition
     ----------
     `R^` is defined in [1] as:
@@ -886,7 +886,7 @@ def r_hat(chains, vname, start, end, idx=None, returnBW=False):
         W = [ \sum^m_{j=1} [ \sum^n_{i=1} ( X_{ij} - \mu_j )^2 ] ] / m
 
         \hat{R} = \sqrt{ [ (n-1)*W/n + B/n ] / W }
-    
+
     It is assumed that these chains were run with different initial conditions
     and that the data is the same. An error will be thrown if the total number of
     burn-in or total samples are different.
@@ -902,16 +902,27 @@ def r_hat(chains, vname, start, end, idx=None, returnBW=False):
         This is the index of the variable we want to calculate `R^` from. This can
         either be the name (str) or the graph ID (int) to identify it.
     idx : int, tuple(int)
-        This is the index of the item you're looking at. This is only necessary if 
+        This is the index of the item you're looking at. This is only necessary if
         this variable is a vector. If it is a scalar then this is ignored.
     returnBW : bool
-        If True, returns B (between sequence variance) and W (within sequence variance) 
+        If True, returns B (between sequence variance) and W (within sequence variance)
         as well as the :math:`\hat{R}` metric. Returns it as a dictionary
+
+    From the R documentation (https://www.rdocumentation.org/packages/asbio/versions/1.6-5/topics/R.hat):
+    Gelman et al. (2003, pg. 296) provides insufficient details to reproduce this function.
+    To get the real function see Gelman and Rubin (1992). The authors list one other change
+    in their Statlab version of this function at http://lib.stat.cmu.edu/S/itsim. They
+    recommend multiplying sqrt(postvar/W) by sqrt((df + 3)/t(df + 1)). The original code
+    and this function can produce estimates below 1.
 
     References
     ----------
-    [1] A. Gelman, H. S. Stern, J. B. Carlin, D. B. Dunson, A. Vehtari, and D. B. Rubin, Bayesian Data
+    [1] Gelman, A. and D. B. Rubin (1992) Inference from iterative simulation using multiple
+        sequences (with discussion). Statistical Science, 7:457-511.
+    [2] Brooks and Gelman (1998). Journal of Computational and Graphical Statistics, 7(4)434-455.
+    [3] A. Gelman, H. S. Stern, J. B. Carlin, D. B. Dunson, A. Vehtari, and D. B. Rubin, Bayesian Data
         Analysis Third Edition. Chapman and Hall/CRC, 2013.
+    [4] https://stats.stackexchange.com/questions/348984/stan-hatr-versus-gelman-rubin-hatr-definition
     '''
     # Check that all of the chains are consistent with each other
     if not util.isarray(chains):
@@ -943,17 +954,39 @@ def r_hat(chains, vname, start, end, idx=None, returnBW=False):
     traces = np.nan_to_num(traces, nan=0.0)
 
     # Calculate r_hat
-    n = traces.shape[0]
+    m = traces.shape[0]  # no. of sequences
+    n = traces.shape[1]  # length of each chain after burn-in
+    num_var = traces.shape[2]  # Number of indexed variables being sampled
+    s_hat_i = np.var(traces, axis=1, ddof=1)
+    x_bar_i = np.mean(traces, axis=1)
+    x_bar = np.mean(x_bar_i, axis=0)
 
     # W: Mean of sample variances
-    W = np.mean(np.var(traces, axis=1, ddof=1), axis=0)
+    W = np.mean(s_hat_i, axis=0)
 
     # B: Sample variance of means (times n)
-    B = n * np.var(np.mean(traces, axis=1), axis=0, ddof=1)
+    B = n * np.var(x_bar_i, axis=0, ddof=1)
+
+    # Sigma-hat and V-hat:
+    sigma_hat = ((n - 1) / n) * W + (1 / n) * B
+    v_hat = sigma_hat + B * (1 / (n * m))
+
+    var_v_hat = (
+            (((n - 1) / n) ** 2) * (1 / m) * np.var(s_hat_i, axis=0)
+            + (((m + 1) / (m * n)) ** 2) * (2 / (m - 1)) * np.power(B, 2)
+            + 2 * (m + 1) * (n - 1) * (1 / m ** 2) * (1 / n) * np.array([
+                np.cov(s_hat_i[:, k], np.power(x_bar_i[:, k], 2))[0, 1]
+                - 2 * x_bar[k] * np.cov(s_hat_i[:, k], x_bar_i[:, k])[0, 1]
+                for k in range(num_var)
+            ])
+    )
+
+    # degrees of freedom
+    dof = 2 * np.power(v_hat, 2) * var_v_hat
 
     # R-hat (Empirical conditional variance, divided by W)
     rhat = np.sqrt(
-        (n - 1) * (1/n) + (1/n) * B * np.reciprocal(W)
+        v_hat * (dof+3) * np.reciprocal(W * (dof + 1))
     )
 
     if returnBW:
