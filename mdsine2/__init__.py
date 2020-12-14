@@ -18,8 +18,8 @@ from .pylab import variables
 from .pylab.util import isnumeric, isbool, isfloat, isint, isarray, issquare, isstr, \
     itercheck, istype, istuple, isdict, istree
 from .pylab.variables import isVariable, isRandomVariable
-from .pylab.base import isqpcrdata, istaxaset, istaxa, issavable, istraceable, \
-    issubject, isstudy, isperturbation, isclusterable, isotu, istaxatype
+from .pylab.base import isqpcrdata, istaxaset, istaxon, issavable, istraceable, \
+    issubject, isstudy, isperturbation, isclusterable, isotu, istaxontype
 from .pylab.random import israndom
 from .pylab.cluster import isclustering, isclusterproperty, isclustervalue
 from .pylab.inference import isMCMC, ismodel
@@ -32,7 +32,7 @@ from .pylab.multiprocessing import ispersistentworker, ispersistentpool, isDASW,
 # Import commonly used Pylab functions and classes
 from .pylab.util import taxaname_formatter, toarray, fast_index, coarsen_phylogenetic_tree, \
     taxaname_for_paper, TAXANAME_PAPER_FORMAT
-from .pylab.base import Taxa, OTU, TaxaSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
+from .pylab.base import Taxon, OTU, TaxaSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
     Subject, Study, condense_matrix_with_taxonomy
 from .pylab.variables import Variable, Constant, summary
 from .pylab.graph import Graph, Node
@@ -49,8 +49,7 @@ from .pylab.errors import UndefinedError, MathError, GraphIDError, InheritanceEr
 from .config import MDSINE2ModelConfig, NegBinConfig, LoggingConfig
 from .run import initialize_graph, normalize_parameters, denormalize_parameters, \
     calculate_stability_over_gibbs, run_graph
-from .util import is_gram_negative, is_gram_negative_taxa, \
-    generate_interation_bayes_factors_posthoc, generate_perturbation_bayes_factors_posthoc, \
-    aggregate_items, consistency_filtering, conditional_consistency_filtering, \
-    generate_cluster_assignments_posthoc, generate_taxonomic_distribution_over_clusters_posthoc, \
-    condense_fixed_clustering_interaction_matrix
+from .util import is_gram_negative, generate_interation_bayes_factors_posthoc, \
+    generate_perturbation_bayes_factors_posthoc, aggregate_items, consistency_filtering, \
+    conditional_consistency_filtering, generate_cluster_assignments_posthoc, \
+    generate_taxonomic_distribution_over_clusters_posthoc, condense_fixed_clustering_interaction_matrix

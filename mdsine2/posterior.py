@@ -119,7 +119,7 @@ def negbin_loglikelihood_MH_condensed_not_fast(k,m,dispersion):
             + r * (math.log(r) - math.log(rm)) + k * (math.log(m) - math.log(rm))
 
 def expected_n_clusters(G):
-    '''Calculate the expected number of clusters given the number of Taxas
+    '''Calculate the expected number of clusters given the number of Taxa
 
     Parameters
     ----------
@@ -132,7 +132,7 @@ def expected_n_clusters(G):
         Expected number of clusters
     '''
     conc = G[STRNAMES.CONCENTRATION].prior.mean()
-    return conc * np.log((G.data.n_taxas + conc) / conc)
+    return conc * np.log((G.data.n_taxa + conc) / conc)
 
 def build_prior_covariance(G, cov, order, sparse=True, diag=False):
     '''Build basic prior covariance or precision for the variables
@@ -158,14 +158,14 @@ def build_prior_covariance(G, cov, order, sparse=True, diag=False):
         Prior covariance or precision matrix in either dense (np.ndarray) or
         sparse (scipy.sparse.dia_matrix) form
     '''
-    n_taxas = G.data.n_taxas
+    n_taxa = G.data.n_taxa
     a = []
     for reprname in order:
         if reprname == STRNAMES.GROWTH_VALUE:
-            a.append(np.full(n_taxas, G[STRNAMES.PRIOR_VAR_GROWTH].value))
+            a.append(np.full(n_taxa, G[STRNAMES.PRIOR_VAR_GROWTH].value))
 
         elif reprname == STRNAMES.SELF_INTERACTION_VALUE:
-            a.append(np.full(n_taxas, G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value))
+            a.append(np.full(n_taxa, G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value))
 
         elif reprname == STRNAMES.CLUSTER_INTERACTION_VALUE:
             n_interactions = G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators
@@ -216,9 +216,9 @@ def build_prior_mean(G, order, shape=None):
     for name in order:
         v = G[name]
         if v.name == STRNAMES.GROWTH_VALUE:
-            a.append(v.prior.loc.value * np.ones(G.data.n_taxas))
+            a.append(v.prior.loc.value * np.ones(G.data.n_taxa))
         elif v.name == STRNAMES.SELF_INTERACTION_VALUE:
-            a.append(v.prior.loc.value * np.ones(G.data.n_taxas))
+            a.append(v.prior.loc.value * np.ones(G.data.n_taxa))
         elif v.name == STRNAMES.CLUSTER_INTERACTION_VALUE:
             a.append(
                 np.full(
@@ -866,8 +866,8 @@ class Concentration(pl.variables.Gamma):
 
         clustering = self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].clustering
         k = len(clustering)
-        n = self.G.data.n_taxas
-        for i in range(self.n_iter):
+        n = self.G.data.n_taxa
+        for _ in range(self.n_iter):
             #first sample eta from a beta distribution
             eta = npr.beta(self.value+1,n)
             #sample alpha from a mixture of gammas
@@ -987,7 +987,7 @@ class ClusterAssignments(pl.graph.Node):
 
         Note - if `n_clusters` is not specified and the cluster initialization
         method requires it - it will be set to the expected number of clusters
-        which = log(n_taxas)/log(2)
+        which = log(n_taxa)/log(2)
 
         Parameters
         ----------
@@ -1001,11 +1001,11 @@ class ClusterAssignments(pl.graph.Node):
                 'random'
                     Every Taxa is randomly assigned to the number of clusters. `n_clusters` required
                 'taxonomy'
-                    Cluster Taxas based on their taxonomic similarity. `n_clusters` required
+                    Cluster Taxa based on their taxonomic similarity. `n_clusters` required
                 'sequence'
-                    Cluster Taxas based on their sequence similarity. `n_clusters` required
+                    Cluster Taxa based on their sequence similarity. `n_clusters` required
                 'phylogeny'
-                    Cluster Taxas based on their phylogenetic similarity. `n_clusters` required
+                    Cluster Taxa based on their phylogenetic similarity. `n_clusters` required
                 'spearman', 'auto'
                     Creates a distance matrix based on the spearman rank similarity
                     between two trajectories. We use the raw data. `n_clusters` required
@@ -1017,18 +1017,18 @@ class ClusterAssignments(pl.graph.Node):
         hyperparam_option : None
             Not used in this function - only here for API consistency
         value : list of list
-            Cluster assingments for each of the Taxas
+            Cluster assingments for each of the Taxa
             Only necessary if `value_option` == 'manual'
         n_clusters : int, str
             Necessary if `value_option` is not 'manual' or 'no-clusters'
             If str, options:
-                'expected', 'auto': log_2(n_taxas)
+                'expected', 'auto': log_2(n_taxa)
         run_every_n_iterations : int
             Only run the update every `run_every_n_iterations` iterations
         '''
         from sklearn.cluster import AgglomerativeClustering
         from .util import generate_cluster_assignments_posthoc
-        taxas = self.G.data.taxas
+        taxa = self.G.data.taxa
 
         self.run_every_n_iterations = run_every_n_iterations
         self.delay = delay
@@ -1043,9 +1043,9 @@ class ClusterAssignments(pl.graph.Node):
                 raise TypeError('`n_clusters` ({}) must be a str or an int'.format(type(n_clusters)))
             if n_clusters <= 0:
                 raise ValueError('`n_clusters` ({}) must be > 0'.format(n_clusters))
-            if n_clusters > self.G.data.n_taxas:
+            if n_clusters > self.G.data.n_taxa:
                 raise ValueError('`n_clusters` ({}) must be <= than the number of s ({})'.format(
-                    n_clusters, self.G.data.n_taxas))
+                    n_clusters, self.G.data.n_taxa))
 
         if value_option == 'manual':
             # Check that all of the s are in the init and that it is in the right structure
@@ -1072,11 +1072,11 @@ class ClusterAssignments(pl.graph.Node):
                 for oidx in cluster:
                     if not pl.isint(oidx):
                         raise ValueError('`oidx` ({}) must be an int'.format(oidx.__class__))
-                    if oidx >= len(taxas):
+                    if oidx >= len(taxa):
                         raise ValueError('oidx `{}` not in our TaxaSet'.format(oidx))
                     all_oidxs.add(oidx)
 
-            for oidx in range(len(taxas)):
+            for oidx in range(len(taxa)):
                 if oidx not in all_oidxs:
                     raise ValueError('oidx `{}` in TaxaSet not in `value` ({})'.format(
                         oidx, value))
@@ -1089,18 +1089,18 @@ class ClusterAssignments(pl.graph.Node):
 
             CHAIN2 = pl.inference.BaseMCMC.load(value)
             CLUSTERING2 = CHAIN2.graph[STRNAMES.CLUSTERING_OBJ]
-            TAXAS2 = CHAIN2.graph.data.taxas
-            taxas_curr = self.G.data.taxas
-            for taxa in TAXAS2:
-                if taxa.name not in taxas_curr:
+            TAXA2 = CHAIN2.graph.data.taxa
+            taxa_curr = self.G.data.taxa
+            for taxon in TAXA2:
+                if taxon.name not in taxa_curr:
                     raise ValueError('Cannot perform fixed topology because the  {} in ' \
                         'the passed in clustering is not in this clustering: {}'.format(
-                            taxa.name, taxas_curr.names.order))
-            for taxa in taxas_curr:
-                if taxa.name not in TAXAS2:
+                            taxon.name, taxa_curr.names.order))
+            for taxon in taxa_curr:
+                if taxon.name not in TAXA2:
                     raise ValueError('Cannot perform fixed topology because the  {} in ' \
                         'the current clustering is not in the passed in clustering: {}'.format(
-                            taxa.name, TAXAS2.names.order))
+                            taxon.name, TAXA2.names.order))
 
             # Get the most likely cluster configuration and set as the value for the passed in cluster
             ret = generate_cluster_assignments_posthoc(CLUSTERING2, n_clusters='mode', set_as_value=False)
@@ -1111,18 +1111,18 @@ class ClusterAssignments(pl.graph.Node):
             # Need to be careful because the indices of the s might not line up
             clusters = []
             for cluster in CLUSTERING2:
-                anames = [taxas_curr[TAXAS2.names.order[aidx]].name for aidx in cluster.members]
-                aidxs = [taxas_curr[aname].idx for aname in anames]
+                anames = [taxa_curr[TAXA2.names.order[aidx]].name for aidx in cluster.members]
+                aidxs = [taxa_curr[aname].idx for aname in anames]
                 clusters.append(aidxs)
 
         elif value_option == 'no-clusters':
             clusters = []
-            for oidx in range(len(taxas)):
+            for oidx in range(len(taxa)):
                 clusters.append([oidx])
 
         elif value_option == 'random':
             clusters = {}
-            for oidx in range(len(taxas)):
+            for oidx in range(len(taxa)):
                 idx = npr.choice(n_clusters)
                 if idx in clusters:
                     clusters[idx].append(oidx)
@@ -1135,12 +1135,12 @@ class ClusterAssignments(pl.graph.Node):
 
         elif value_option == 'taxonomy':
             # Create an affinity matrix, we can precompute the self-similarity to 1
-            M = np.diag(np.ones(len(taxas), dtype=float))
-            for i, oid1 in enumerate(taxas.ids.order):
-                for j, oid2 in enumerate(taxas.ids.order):
+            M = np.diag(np.ones(len(taxa), dtype=float))
+            for i, oid1 in enumerate(taxa.ids.order):
+                for j, oid2 in enumerate(taxa.ids.order):
                     if i == j:
                         continue
-                    M[i,j] = taxas.taxonomic_similarity(oid1=oid1, oid2=oid2)
+                    M[i,j] = taxa.taxonomic_similarity(oid1=oid1, oid2=oid2)
 
             c = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='complete')
             assignments = c.fit_predict(1-M)
@@ -1157,16 +1157,16 @@ class ClusterAssignments(pl.graph.Node):
             from pylab import diversity
 
             logging.info('Making affinity matrix from sequences')
-            evenness = np.diag(np.ones(len(self.G.data.taxas), dtype=float))
+            evenness = np.diag(np.ones(len(self.G.data.taxa), dtype=float))
 
-            for i in range(len(self.G.data.taxas)):
-                for j in range(len(self.G.data.taxas)):
+            for i in range(len(self.G.data.taxa)):
+                for j in range(len(self.G.data.taxa)):
                     if j <= i:
                         continue
                     # Subtract because we want to make a similarity matrix
                     dist = 1-diversity.beta.hamming(
-                        list(self.G.data.taxas[i].sequence),
-                        list(self.G.data.taxas[j].sequence))
+                        list(self.G.data.taxa[i].sequence),
+                        list(self.G.data.taxa[j].sequence))
                     evenness[i,j] = dist
                     evenness[j,i] = dist
 
@@ -1183,12 +1183,12 @@ class ClusterAssignments(pl.graph.Node):
             # Use spearman correlation to create a distance matrix
             # Use agglomerative clustering to make the clusters based
             # on distance matrix (distance = 1 - pearson(x,y))
-            dm = np.zeros(shape=(len(taxas), len(taxas)))
+            dm = np.zeros(shape=(len(taxa), len(taxa)))
             data = []
             for ridx in range(self.G.data.n_replicates):
                 data.append(self.G.data.abs_data[ridx])
             data = np.hstack(data)
-            for i in range(len(taxas)):
+            for i in range(len(taxa)):
                 for j in range(i+1):
                     distance = (1 - scipy.stats.spearmanr(data[i, :], data[j, :])[0])/2
                     dm[i,j] = distance
@@ -1211,7 +1211,7 @@ class ClusterAssignments(pl.graph.Node):
         else:
             raise ValueError('`value_option` "{}" not recognized'.format(value_option))
 
-        # Move all the Taxas into their assigned clusters
+        # Move all the taxa into their assigned clusters
         for cluster in clusters:
             cid = None
             for oidx in cluster:
@@ -1246,17 +1246,17 @@ class ClusterAssignments(pl.graph.Node):
             self.pool = None
 
         self.ndts_bias = []
-        self.n_taxas = len(self.G.data.taxas)
+        self.n_taxa = len(self.G.data.taxa)
         self.n_replicates = self.G.data.n_replicates
         self.n_dts_for_replicate = self.G.data.n_dts_for_replicate
         self.total_dts = np.sum(self.n_dts_for_replicate)
         for ridx in range(self.G.data.n_replicates):
             self.ndts_bias.append(
-                np.arange(0, self.G.data.n_dts_for_replicate[ridx] * self.n_taxas, self.n_taxas))
+                np.arange(0, self.G.data.n_dts_for_replicate[ridx] * self.n_taxa, self.n_taxa))
         self.replicate_bias = np.zeros(self.n_replicates, dtype=int)
         for ridx in range(1, self.n_replicates):
             self.replicate_bias[ridx] = self.replicate_bias[ridx-1] + \
-                self.n_taxas * self.n_dts_for_replicate[ridx - 1]
+                self.n_taxa * self.n_dts_for_replicate[ridx - 1]
 
     def visualize(self, basepath, f, section='posterior', 
         taxa_formatter='%(paperformat)s', yticklabels='%(paperformat)s %(index)s', 
@@ -1277,7 +1277,7 @@ class ClusterAssignments(pl.graph.Node):
                 'entire' : both burn-in and posterior samples
         taxa_formatter : str, None
             This is the format of the label to return for each . If None, it will return
-            the taxas name
+            the taxon's name
         yticklabels, xticklabels : str
             These are the formats to plot the y-axis and x0axis, respectively.
         tax_fmt : str
@@ -1288,7 +1288,7 @@ class ClusterAssignments(pl.graph.Node):
         _io.TextIOWrapper
         '''
         from matplotlib.colors import LogNorm
-        taxas = self.G.data.taxas
+        taxa = self.G.data.taxa
         f.write('\n\n###################################\n')
         f.write(self.name)
         f.write('\n###################################\n')
@@ -1297,7 +1297,7 @@ class ClusterAssignments(pl.graph.Node):
             for cidx, cluster in enumerate(self.clustering):
                 f.write('Cluster {}:\n'.format(cidx+1))
                 for aidx in cluster.members:
-                    label = pl.taxaname_formatter(format=taxa_formatter, taxa=taxas[aidx], taxas=taxas)
+                    label = pl.taxaname_formatter(format=taxa_formatter, taxon=taxa[aidx], taxa=taxa)
                     f.write('\t- {}\n'.format(label))
             return f
 
@@ -1318,21 +1318,21 @@ class ClusterAssignments(pl.graph.Node):
         ret = generate_cluster_assignments_posthoc(clustering=self.clustering, n_clusters='mode', 
             section=section, set_as_value=True)
         data = []
-        for taxa in taxas:
-            data.append([taxa.name, ret[taxa.idx]])
+        for taxon in taxa:
+            data.append([taxon.name, ret[taxon.idx]])
         df = pd.DataFrame(data, columns=['name', 'Cluster Assignment'])
         df.to_csv(os.path.join(basepath, 'clusterassignments.tsv'), sep='\t', index=False, header=True)
         order = _make_cluster_order(graph=self.G, section=section)
 
-        visualization.render_cocluster_proportions(
-            coclusters=coclusters, taxas=self.G.data.taxas, order=order,
+        visualization.render_cocluster_probabilities(
+            coclusters=coclusters, taxa=self.G.data.taxa, order=order,
             yticklabels=yticklabels, include_tick_marks=False, xticklabels=xticklabels,
             title='Cluster Assignments')
 
         # Write out cocluster values
         coclusters = coclusters[order, :]
         coclusters = coclusters[:, order]
-        labels = [taxas[aidx].name for aidx in order]
+        labels = [taxa[aidx].name for aidx in order]
         df = pd.DataFrame(coclusters, index=labels, columns=labels)
         df.to_csv(os.path.join(basepath, 'coclusters.tsv'), index=True, header=True)
 
@@ -1345,14 +1345,15 @@ class ClusterAssignments(pl.graph.Node):
         df = generate_taxonomic_distribution_over_clusters_posthoc(
             mcmc=self.G.inference, tax_fmt=tax_fmt)
 
+        df[df==0] = np.nan
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax = sns.heatmap(df, ax=ax,
-            norm=LogNorm(vmin=np.min(df.tonumpy()), vmax=np.max(df.tonumpy())))
+        ax = sns.heatmap(df, ax=ax, cmap='Blues',
+            norm=LogNorm(vmin=np.nanmin(df.to_numpy()), vmax=np.nanmax(df.to_numpy())))
         ax.set_title('Taxonomic abundance per cluster')
         ax.set_xlabel('Clusters')
-        ax.set_ylabel('Taxonomy')
-
+        ax.set_ylabel(tax_fmt.replace('%(', '').replace(')s', '').capitalize())
+        fig.tight_layout()
         plt.savefig(os.path.join(basepath, 'taxonomic_distribution.pdf'))
         plt.close()
 
@@ -1360,7 +1361,7 @@ class ClusterAssignments(pl.graph.Node):
         for cidx, cluster in enumerate(self.clustering):
             f.write('Cluster {} - Size {}\n'.format(cidx, len(cluster)))
             for oidx in cluster.members:
-                label = pl.taxaname_formatter(format=taxa_formatter, taxa=taxas[oidx], taxas=taxas)
+                label = pl.taxaname_formatter(format=taxa_formatter, taxon=taxa[oidx], taxa=taxa)
                 f.write('\t- {}\n'.format(label))
 
         return f
@@ -1396,18 +1397,18 @@ class ClusterAssignments(pl.graph.Node):
            return
 
         start_time = time.time()
-        oidxs = npr.permutation(np.arange(len(self.G.data.taxas)))
+        oidxs = npr.permutation(np.arange(len(self.G.data.taxa)))
 
         for oidx in oidxs:
-            self.gibbs_update_single_taxa_slow(oidx=oidx)
+            self.gibbs_update_single_taxon_slow(oidx=oidx)
         self._strtime = time.time() - start_time
 
-    def gibbs_update_single_taxa_slow(self, oidx):
+    def gibbs_update_single_taxon_slow(self, oidx):
         '''The update function is based off of Algorithm 8 in 'Markov Chain
         Sampling Methods for Dirichlet Process Mixture Models' by Radford M.
         Neal, 2000.
 
-        Calculate the marginal likelihood of the taxa in every cluster
+        Calculate the marginal likelihood of the taxon in every cluster
         and a new cluster then sample from `self.sample_categorical_log`
         to get the cluster assignment.
 
@@ -1573,21 +1574,21 @@ class ClusterAssignments(pl.graph.Node):
         self.y = self.G.data.construct_lhs(lhs, 
             kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations': False}})
 
-        oidxs = npr.permutation(len(self.G.data.taxas))
+        oidxs = npr.permutation(len(self.G.data.taxa))
         iii = 0
         for oidx in oidxs:
             logging.info('{}/{}: {}'.format(iii, len(oidxs), oidx))
-            self.gibbs_update_single_taxa_slow_fast(oidx=oidx)
+            self.gibbs_update_single_taxon_slow_fast(oidx=oidx)
             iii += 1
         self._strtime = time.time() - start_time
     
     # @profile
-    def gibbs_update_single_taxa_slow_fast(self, oidx):
+    def gibbs_update_single_taxon_slow_fast(self, oidx):
         '''The update function is based off of Algorithm 8 in 'Markov Chain
         Sampling Methods for Dirichlet Process Mixture Models' by Radford M.
         Neal, 2000.
 
-        Calculate the marginal likelihood of the taxa in every cluster
+        Calculate the marginal likelihood of the taxon in every cluster
         and a new cluster then sample from `self.sample_categorical_log`
         to get the cluster assignment.
 
@@ -1793,8 +1794,8 @@ class ClusterAssignments(pl.graph.Node):
         DMP = self.G.data.design_matrices[STRNAMES.PERT_VALUE]
         if self.clustering.n_clusters.sample_iter == 0 or self.pool == []:
             kwargs = {
-                'n_taxas': len(self.G.data.taxas),
-                'total_n_dts_per_taxa': self.G.data.total_n_dts_per_taxa,
+                'n_taxa': len(self.G.data.taxa),
+                'total_n_dts_per_taxon': self.G.data.total_n_dts_per_taxon,
                 'n_replicates': self.G.data.n_replicates,
                 'n_dts_for_replicate': self.G.data.n_dts_for_replicate,
                 'there_are_perturbations': self._there_are_perturbations,
@@ -1855,16 +1856,16 @@ class ClusterAssignments(pl.graph.Node):
         else:
             self.pool.initialize_gibbs(**kwargs)
 
-        oidxs = npr.permutation(np.arange(len(self.G.data.taxas)))
+        oidxs = npr.permutation(np.arange(len(self.G.data.taxa)))
         for iii, oidx in enumerate(oidxs):
-            logging.info('{}/{} - {}'.format(iii, len(self.G.data.taxas), oidx))
+            logging.info('{}/{} - {}'.format(iii, len(self.G.data.taxa), oidx))
             self.oidx = oidx
-            self.gibbs_update_single_taxa_parallel()
+            self.gibbs_update_single_taxon_parallel()
 
         self._strtime = time.time() - start_time
 
-    def gibbs_update_single_taxa_parallel(self):
-        '''Update for a single taxas
+    def gibbs_update_single_taxon_parallel(self):
+        '''Update for a single taxon
         '''
         self.original_cluster = self.clustering.idx2cid[self.oidx]
         self.curr_cluster = self.original_cluster
@@ -1989,9 +1990,9 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
 
     Parameters
     ----------
-    n_taxas : int
+    n_taxa : int
         Total number of OTUs
-    total_n_dts_per_taxa : int
+    total_n_dts_per_taxon : int
         Total number of time changes for each OTU
     n_replicates : int
         Total number of replicates
@@ -2015,12 +2016,12 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         These are the number of rows for the mixing matrix for the interactions and
         perturbations respectively.
     '''
-    def __init__(self, n_taxas, total_n_dts_per_taxa, n_replicates, n_dts_for_replicate,
+    def __init__(self, n_taxa, total_n_dts_per_taxon, n_replicates, n_dts_for_replicate,
         there_are_perturbations, keypair2col_interactions, keypair2col_perturbations,
         n_perturbations, base_Xrows, base_Xcols, base_Xshape, base_Xpertrows, base_Xpertcols,
         base_Xpertshape, n_rowsM, n_rowsMpert):
-        self.n_taxas = n_taxas
-        self.total_n_dts_per_taxa = total_n_dts_per_taxa
+        self.n_taxa = n_taxa
+        self.total_n_dts_per_taxon = total_n_dts_per_taxon
         self.n_replicates = n_replicates
         self.n_dts_for_replicate = n_dts_for_replicate
         self.there_are_perturbations = there_are_perturbations
@@ -2320,7 +2321,7 @@ class CondensedClustering:
     Parameters
     ----------
     oidx2cidx : np.ndarray
-        Maps the cluster assignment to each taxa.
+        Maps the cluster assignment to each taxon.
         index -> Taxa index
         output -> cluster index
 
@@ -2359,15 +2360,15 @@ class TrajectorySet(pl.graph.Node):
         name = STRNAMES.LATENT_TRAJECTORY
         pl.graph.Node.__init__(self, name=name, G=G)
         self.value = []
-        n_taxas = self.G.data.n_taxas
+        n_taxa = self.G.data.n_taxa
 
         for ridx, subj in enumerate(self.G.data.subjects):
             n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
 
             # initialize values to zeros for initialization
             self.value.append(pl.variables.Variable(
-                name=name+'_{}'.format(subj.name), G=G, shape=(n_taxas, n_timepoints),
-                value=np.zeros((n_taxas, n_timepoints), dtype=float), **kwargs))
+                name=name+'_{}'.format(subj.name), G=G, shape=(n_taxa, n_timepoints),
+                value=np.zeros((n_taxa, n_timepoints), dtype=float), **kwargs))
         prior = pl.variables.Normal(
             loc=pl.variables.Constant(name=self.name+'_prior_loc', value=0, G=self.G),
             scale2=pl.variables.Constant(name=self.name+'_prior_scale2', value=1, G=self.G),
@@ -2384,10 +2385,10 @@ class TrajectorySet(pl.graph.Node):
     def reset_value_size(self):
         '''Change the size of the trajectory when we set the intermediate timepoints
         '''
-        n_taxas = self.G.data.n_taxas
+        n_taxa = self.G.data.n_taxa
         for ridx in range(len(self.value)):
             n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
-            self.value[ridx].value = np.zeros((n_taxas, n_timepoints),dtype=float)
+            self.value[ridx].value = np.zeros((n_taxa, n_timepoints),dtype=float)
             self.value[ridx].set_value_shape(self.value[ridx].value.shape)
 
     def _vectorize(self):
@@ -2412,7 +2413,7 @@ class TrajectorySet(pl.graph.Node):
         '''Visualize the replicate at index `ridx`
         '''
         subjset = self.G.data.subjects
-        taxas = subjset.taxas
+        taxa = subjset.taxa
         subj = subjset.iloc(ridx)
         obj = self.value[ridx]
         logging.info('Retrieving trace for subject {}'.format(subj.name))
@@ -2423,7 +2424,7 @@ class TrajectorySet(pl.graph.Node):
         trace = obj.get_trace_from_disk(section=section)
         summ = pl.summary(trace)
         data_times = self.G.data.times[ridx]
-        index = [taxa.name for taxa in taxas]
+        index = [taxon.name for taxon in taxa]
 
         # Make the tables
         for k,arr in summ.items():
@@ -2435,11 +2436,10 @@ class TrajectorySet(pl.graph.Node):
         percentile97_5 = np.nanpercentile(trace, q=97.5, axis=0)
         
         acceptance_rates = []
-        for oidx in range(len(subjset.taxas)):
-            print(oidx)
+        for oidx in range(len(subjset.taxa)):
             fig = plt.figure()
-            title = pl.taxaname_formatter(format=taxa_formatter, taxa=oidx, taxas=taxas)
-            title += '\nSubject {}, {}'.format(subj.name, taxas[oidx].name)
+            title = pl.taxaname_formatter(format=taxa_formatter, taxon=oidx, taxa=taxa)
+            title += '\nSubject {}, {}'.format(subj.name, taxa[oidx].name)
             fig.suptitle(title)
             ax = fig.add_subplot(111)
 
@@ -2460,10 +2460,10 @@ class TrajectorySet(pl.graph.Node):
             ax = visualization.shade_in_perturbations(ax, perturbations=subjset.perturbations, subj=subj)
             ax.legend(bbox_to_anchor=(1.05, 1))
             fig.tight_layout()
-            plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxas[oidx].name)))
+            plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxa[oidx].name)))
             plt.close()
 
-            # Calculate the acceptance rate at every taxa and timepoint
+            # Calculate the acceptance rate at every taxon and timepoint
             temp = []
             for tidx in range(trace.shape[-1]):
                 temp.append(pl.metropolis.acceptance_rate(x=trace[:, oidx, tidx], 
@@ -2884,7 +2884,7 @@ class FilteringLogMP(pl.graph.Node):
                 tidx_high = np.searchsorted(
                     self.G.data.times[ridx], self.G.data.times[ridx][tidx]+self.bandwidth)
 
-                for oidx in range(len(self.G.data.taxas)):
+                for oidx in range(len(self.G.data.taxa)):
                     val = np.mean(self.G.data.data[ridx][oidx, tidx_low: tidx_high])
                     self.x[ridx][oidx,tidx] = pl.random.truncnormal.sample(
                         loc=val, scale=math.sqrt(self.v1 * (val ** 2) + self.v2),
@@ -2897,7 +2897,7 @@ class FilteringLogMP(pl.graph.Node):
         '''
         for ridx in range(self.G.data.n_replicates):
             xx = self.G.data.times[ridx]
-            for oidx in range(len(self.G.data.taxas)):
+            for oidx in range(len(self.G.data.taxa)):
                 yy = self.G.data.data[ridx][oidx, :]
                 loess = _Loess(xx, yy)
 
@@ -3007,7 +3007,7 @@ class FilteringLogMP(pl.graph.Node):
                 'entire' : both burn-in and posterior samples
         taxa_formatter : str, None
             This is the format of the label to return for each . If None, it will return
-            the taxas name
+            the taxon's name
         vmin, vmax : float
             These are the maximum and minimum values to plot the abundance of
         '''
@@ -3086,7 +3086,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         zero_inflation_transition_policy):
         '''Initialize the object at the beginning of the inference
 
-        n_o = Number of Taxas
+        n_o = Number of Taxa
         n_gT = Number of given time points
         n_T = Total number of time points, including intermediate
         n_P = Number of Perturbations
@@ -3099,7 +3099,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             These are the qPCR observations for every timepoint in log space.
         reads : dict (float -> np.ndarray((n_o, )))
             The counts for each of the given timepoints. Each value is an
-            array for the counts for each of the Taxas
+            array for the counts for each of the Taxa
         there_are_intermediate_timepoints : bool
             If True, then there are intermediate timepoints, else there are only
             given timepoints
@@ -3162,7 +3162,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.proposal_init_scale = proposal_init_scale
         self.a0 = a0
         self.a1 = a1
-        self.n_taxas = x.shape[0]
+        self.n_taxa = x.shape[0]
         self.n_timepoints = len(times)
         self.n_timepoints_minus_1 = len(times)-1
         self.logx = np.log(x)
@@ -3303,15 +3303,15 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         Parameters
         ----------
-        growth : np.ndarray((n_taxas, ))
+        growth : np.ndarray((n_taxa, ))
             Growth rates for each Taxa
-        self_interactions : np.ndarray((n_taxas, ))
+        self_interactions : np.ndarray((n_taxa, ))
             Self-interactions for each Taxa
         pv : numeric, np.ndarray
             This is the process variance
-        interactions : np.ndarray((n_taxas, n_taxas))
+        interactions : np.ndarray((n_taxa, n_taxa))
             These are the Taxa-Taxa interactions
-        perturbations : np.ndarray((n_perturbations, n_taxas))
+        perturbations : np.ndarray((n_perturbations, n_taxa))
             Perturbation values in the right perturbation order, per Taxa
         zero_inflation : np.ndarray
             These are the points that are delibertly pushed down to zero
@@ -3349,7 +3349,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             self.growth_rate_on_pert = growth.reshape(-1,1) * (1 + perturbations)
                 
         # Go through each randomly Taxa and go in time order
-        oidxs = npr.permutation(self.n_taxas)
+        oidxs = npr.permutation(self.n_taxa)
         # print('===============================')
         # print('===============================')
         # print('ridx', self.ridx)
@@ -3651,7 +3651,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         Zero-inflation
         --------------
-        When we get here, the current taxa at `tidx` is not a structural zero, but 
+        When we get here, the current taxon at `tidx` is not a structural zero, but 
         there might be other bugs in the system that do have a structural zero there.
         Thus we do nan adds
         '''
@@ -3683,15 +3683,15 @@ class ZeroInflation(pl.graph.Node):
 
         for ridx in range(self.G.data.n_replicates):
             n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
-            self.value.append(np.ones(shape=(len(self.G.data.taxas), n_timepoints), dtype=bool))
+            self.value.append(np.ones(shape=(len(self.G.data.taxa), n_timepoints), dtype=bool))
 
     def reset_value_size(self):
         '''Change the size of the trajectory when we set the intermediate timepoints
         '''
-        n_taxas = self.G.data.n_taxas
+        n_taxa = self.G.data.n_taxa
         for ridx in range(len(self.value)):
             n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
-            self.value[ridx] = np.ones((n_taxas, n_timepoints), dtype=bool)
+            self.value[ridx] = np.ones((n_taxa, n_timepoints), dtype=bool)
 
     def __str__(self):
         return self._strr
@@ -3718,7 +3718,7 @@ class ZeroInflation(pl.graph.Node):
             for ridx in range(self.G.data.n_replicates):
                 n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
                 self.value.append(np.ones(
-                    shape=(len(self.G.data.taxas), n_timepoints), dtype=bool))
+                    shape=(len(self.G.data.taxa), n_timepoints), dtype=bool))
             turn_on = None
             turn_off = None
 
@@ -3728,15 +3728,15 @@ class ZeroInflation(pl.graph.Node):
             for ridx in range(self.G.data.n_replicates):
                 n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
                 self.value.append(np.ones(
-                    shape=(len(self.G.data.taxas), n_timepoints), dtype=bool))
+                    shape=(len(self.G.data.taxa), n_timepoints), dtype=bool))
 
             # Get cdiff
-            cdiff_idx = self.G.data.taxas['Clostridium-difficile'].idx
+            cdiff_idx = self.G.data.taxa['Clostridium-difficile'].idx
             turn_off = []
             turn_on = []
             for ridx in range(self.G.data.n_replicates):
                 for tidx, t in enumerate(self.G.data.times[ridx]):
-                    for oidx in range(len(self.G.data.taxas)):
+                    for oidx in range(len(self.G.data.taxa)):
                         if t < 28 and oidx == cdiff_idx:
                             self.value[ridx][cdiff_idx, tidx] = False
                             turn_off.append((ridx, tidx, cdiff_idx))
@@ -4095,7 +4095,7 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
             except:
                 raise ValueError('`mult-sparse` in the wrong format ({})'.format(
                     hyperparam_option))
-            N = self.G.data.n_taxas * M
+            N = self.G.data.n_taxa * M
             self.prior.a.override_value(0.5)
             self.prior.b.override_value((N * (N - 1)))
         else:
@@ -4146,7 +4146,7 @@ class ClusterInteractionValue(pl.variables.MVN):
     def __init__(self, prior, clustering, **kwargs):
         kwargs['name'] = STRNAMES.CLUSTER_INTERACTION_VALUE
         pl.variables.MVN.__init__(self, dtype=float, **kwargs)
-        self.set_value_shape(shape=(len(self.G.data.taxas),len(self.G.data.taxas)))
+        self.set_value_shape(shape=(len(self.G.data.taxa),len(self.G.data.taxa)))
         self.add_prior(prior)
         self.clustering = clustering
         self.obj = pl.contrib.Interactions(
@@ -4315,20 +4315,20 @@ class ClusterInteractionValue(pl.variables.MVN):
                 'entire' : both burn-in and posterior samples
         taxa_formatter : str, None
             This is the format of the label to return for each Taxa. If None, it will return
-            the taxas name
+            the taxon's name
         yticklabels, xticklabels : str
             These are the formats to plot the y-axis and x0axis, respectively.
         fixed_clustering : bool
             If True, plot the variable as if clustering was fixed. Since the
-            cluster assignments never change, all of the taxas within the cluster
-            have identical values, so we can choose any taxa within the cluster to
+            cluster assignments never change, all of the taxa within the cluster
+            have identical values, so we can choose any taxon within the cluster to
             represent it
         '''
         if not self.G.inference.tracer.is_being_traced(self.obj.name):
             logging.info('Interactions are not being learned')
         
         # Get cluster ordering
-        taxas = self.G.data.taxas
+        taxa = self.G.data.taxa
         summ = pl.summary(self.obj, set_nan_to_0=True, section=section)
         clustering = self.G[STRNAMES.CLUSTERING_OBJ]
 
@@ -4338,10 +4338,10 @@ class ClusterInteractionValue(pl.variables.MVN):
             labels = ['Cluster {}'.format(iii+1) for iii in range(len(clustering))]
             yticklabels = ['{cname} {idx}'.format(cname=labels[idx], idx=idx) for idx in range(len(clustering))]
             xticklabels = ['{}'.format(i) for i in range(len(clustering))]
-            taxas = None
+            taxa = None
 
             for k in summ:
-                M_taxas = summ[k]
+                M_taxa = summ[k]
                 M_clus = []
                 for cluster1 in clustering:
                     temp = []
@@ -4351,18 +4351,18 @@ class ClusterInteractionValue(pl.variables.MVN):
                             temp.append(np.nan)
                             continue
                         bidx = list(cluster2.members)[0]
-                        temp.append(M_taxas[aidx, bidx])
+                        temp.append(M_taxa[aidx, bidx])
                     M_clus.append(temp)
                 summ[k] = np.asarray(M_clus)
         else:
             order = _make_cluster_order(graph=self.G, section=section)
-            labels = [taxas[aidx].name for aidx in order]
-            taxas = self.G.data.taxas
+            labels = [taxa[aidx].name for aidx in order]
+            taxa = self.G.data.taxa
 
         for k,M in summ.items():
 
             visualization.render_interaction_strength(interaction_matrix=M,
-                log_scale=True, taxas=taxas, yticklabels=yticklabels,
+                log_scale=True, taxa=taxa, yticklabels=yticklabels,
                 xticklabels=xticklabels, order=order, 
                 title='{} Interactions'.format(k.capitalize()))
             fig = plt.gcf()
@@ -4415,8 +4415,8 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         kwargs['name'] = STRNAMES.CLUSTER_INTERACTION_INDICATOR
         pl.variables.Variable.__init__(self, dtype=bool, **kwargs)
-        self.n_taxas = len(self.G.data.taxas)
-        self.set_value_shape(shape=(self.n_taxas, self.n_taxas))
+        self.n_taxa = len(self.G.data.taxa)
+        self.set_value_shape(shape=(self.n_taxa, self.n_taxa))
         self.add_prior(prior)
         self.clustering = self.G[STRNAMES.CLUSTERING_OBJ]
         self.mp = mp
@@ -4454,7 +4454,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         self._there_are_perturbations = self.G.perturbations is not None
         self.update_cnt_indicators()
         self.interactions = self.G[STRNAMES.INTERACTIONS_OBJ]
-        self.n_taxas = len(self.G.data.taxas)
+        self.n_taxa = len(self.G.data.taxa)
 
         # These are for the function `self._make_idx_for_clusters`
         self.ndts_bias = []
@@ -4464,18 +4464,18 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         self.replicate_bias = np.zeros(self.n_replicates, dtype=int)
         for ridx in range(1, self.n_replicates):
             self.replicate_bias[ridx] = self.replicate_bias[ridx-1] + \
-                self.n_taxas * self.n_dts_for_replicate[ridx - 1]
+                self.n_taxa * self.n_dts_for_replicate[ridx - 1]
         for ridx in range(self.G.data.n_replicates):
             self.ndts_bias.append(
-                np.arange(0, self.G.data.n_dts_for_replicate[ridx] * self.n_taxas, self.n_taxas))
+                np.arange(0, self.G.data.n_dts_for_replicate[ridx] * self.n_taxa, self.n_taxa))
 
-        # Makes a dictionary that maps the taxa index to the rows that it the  in
+        # Makes a dictionary that maps the taxon index to the rows that it the  in
         self.oidx2rows = {}
-        for oidx in range(self.n_taxas):
+        for oidx in range(self.n_taxa):
             idxs = np.zeros(self.total_dts, dtype=int)
             i = 0
             for ridx in range(self.n_replicates):
-                temp = np.arange(0, self.n_dts_for_replicate[ridx] * self.n_taxas, self.n_taxas)
+                temp = np.arange(0, self.n_dts_for_replicate[ridx] * self.n_taxa, self.n_taxa)
                 temp = temp + oidx
                 temp = temp + self.replicate_bias[ridx]
                 l = len(temp)
@@ -4611,18 +4611,18 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         --------------------------------------------
         ys : dict (int -> np.ndarray)
             Maps the target cluster id to the observation matrix that it
-            corresponds to (only the Taxas in the target cluster). This 
+            corresponds to (only the Taxa in the target cluster). This 
             array already has the growth and self-interactions subtracted
             out:
                 $ \frac{log(x_{k+1}) - log(x_{k})}{dt} - a_{1,k} - a_{2,k}x_{k} $
         process_precs : dict (int -> np.ndarray)
             Maps the target cluster id to the vector of the process precision
-            that corresponds to the target cluster (only the Taxas in the target
+            that corresponds to the target cluster (only the Taxa in the target
             cluster). This is a 1D array that corresponds to the diagonal of what
             would be the precision matrix.
         interactionXs : dict (int -> np.ndarray)
             Maps the target cluster id to the matrix of the design matrix of the
-            interactions. Only includes the rows that correspond to the Taxas in the
+            interactions. Only includes the rows that correspond to the Taxa in the
             target cluster. It includes every single column as if all of the indicators
             are on. We only index out the columns when we are doing the marginalization.
         prior_prec_interaction : float
@@ -4745,7 +4745,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         '''Update the indicators variables by calculating the relative loglikelihoods
         of it being on as supposed to off. Because this is a relative loglikelihood,
         we only need to take into account the following parameters of the model:
-            - Only the Taxas in the target cluster of the interaction
+            - Only the Taxa in the target cluster of the interaction
             - Only the positively indicated interactions going into the
               target cluster.
 
@@ -4968,13 +4968,13 @@ class ClusterInteractionIndicators(pl.variables.Variable):
                 'entire' : both burn-in and posterior samples
         taxa_formatter : str, None
             This is the format of the label to return for each . If None, it will return
-            the taxas name
+            the taxon/s name
         yticklabels, xticklabels : str
             These are the formats to plot the y-axis and x0axis, respectively.
         fixed_clustering : bool
             If True, plot the variable as if clustering was fixed. Since the
-            cluster assignments never change, all of the taxas within the cluster
-            have identical values, so we can choose any taxa within the cluster to
+            cluster assignments never change, all of the taxa within the cluster
+            have identical values, so we can choose any taxon within the cluster to
             represent it
         '''
         from . util import generate_interation_bayes_factors_posthoc
@@ -4983,7 +4983,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
             logging.info('Interactions are not being learned')
         
         # Get cluster ordering
-        taxas = self.G.data.taxas
+        taxa = self.G.data.taxa
         order = _make_cluster_order(graph=self.G, section=section)
         clustering = self.G[STRNAMES.CLUSTERING_OBJ]
 
@@ -4995,7 +4995,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
             yticklabels = ['{cname} {idx}'.format(cname=labels[idx], idx=idx) for idx in range(len(clustering))]
             xticklabels = ['{}'.format(i) for i in range(len(clustering))]
             order = None
-            taxas = None
+            taxa = None
             title = 'Cluster Interaction Bayes Factors'
 
             bf_cluster = []
@@ -5011,11 +5011,11 @@ class ClusterInteractionIndicators(pl.variables.Variable):
                 bf_cluster.append(temp)
             bfs = np.asarray(bf_cluster)
         else:
-            labels = [taxas[aidx].name for aidx in order]
-            taxas = self.G.data.taxas
+            labels = [taxa[aidx].name for aidx in order]
+            taxa = self.G.data.taxa
             title = 'Microbe Interaction Bayes Factors'
 
-        visualization.render_bayes_factors(bfs, taxas=taxas, order=order, max_value=vmax, 
+        visualization.render_bayes_factors(bfs, taxa=taxa, order=order, max_value=vmax, 
             xticklabels=xticklabels, yticklabels=yticklabels, title=title)
         fig = plt.gcf()
         fig.tight_layout()
@@ -5212,9 +5212,9 @@ class PriorVarMH(pl.variables.SICS):
         elif dof_option == 'diffuse':
             dof = 2.5
         elif dof_option in ['weak', 'auto']:
-            dof = len(self.G.data.taxas)/9
+            dof = len(self.G.data.taxa)/9
         elif dof_option == 'strong':
-            dof = len(self.G.data.taxas)/2
+            dof = len(self.G.data.taxa)/2
         else:
             raise ValueError('`dof_option` ({}) not recognized'.format(dof_option))
         if dof < 2:
@@ -5242,9 +5242,9 @@ class PriorVarMH(pl.variables.SICS):
             cov = pinv(prec, self)
             mean = cov @ X.T @ y
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                mean = 1e4*(np.median(mean[:self.G.data.n_taxas]) ** 2)
+                mean = 1e4*(np.median(mean[:self.G.data.n_taxa]) ** 2)
             else:
-                mean = 1e4*(np.median(mean[self.G.data.n_taxas:]) ** 2)
+                mean = 1e4*(np.median(mean[self.G.data.n_taxa:]) ** 2)
 
             # Calculate the scale
             scale = mean * (self.prior.dof.value - 2) / self.prior.dof.value
@@ -5273,9 +5273,9 @@ class PriorVarMH(pl.variables.SICS):
             cov = pinv(prec, self)
             mean = cov @ X.T @ y
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                value = 1e4*(np.median(mean[:self.G.data.n_taxas]) ** 2)
+                value = 1e4*(np.median(mean[:self.G.data.n_taxa]) ** 2)
             else:
-                value = 1e4*(np.median(mean[self.G.data.n_taxas:]) ** 2)
+                value = 1e4*(np.median(mean[self.G.data.n_taxa:]) ** 2)
         elif value_option in ['prior-mean', 'auto']:
             value = self.prior.mean()
         else:
@@ -5610,7 +5610,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             loc = cov @ X.T @ y
 
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                loc = np.median(loc[:self.G.data.n_taxas])
+                loc = np.median(loc[:self.G.data.n_taxa])
             else:
                 loc = np.median(loc)
         else:
@@ -5643,7 +5643,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             mean = cov @ X.T @ y
 
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                mean = np.median(mean[:self.G.data.n_taxas])
+                mean = np.median(mean[:self.G.data.n_taxa])
             else:
                 mean = np.median(mean)
             scale2 = 1e4 * (mean**2)
@@ -5677,7 +5677,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             mean = cov @ X.T @ y
 
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                value = mean[:self.G.data.n_taxas]
+                value = mean[:self.G.data.n_taxa]
             else:
                 value = mean
         elif value_option in ['auto', 'prior-mean']:
@@ -5850,7 +5850,7 @@ class Growth(pl.variables.TruncatedNormal):
         kwargs['name'] = STRNAMES.GROWTH_VALUE
         pl.variables.TruncatedNormal.__init__(self, loc=None, scale2=None, low=0.,
             high=float('inf'), dtype=float, **kwargs)
-        self.set_value_shape(shape=(len(self.G.data.taxas),))
+        self.set_value_shape(shape=(len(self.G.data.taxa),))
         self.add_prior(prior)
         self.delay = 0
         self._initialized = False
@@ -5944,10 +5944,10 @@ class Growth(pl.variables.TruncatedNormal):
             raise TypeError('`value_option` ({}) must be a str'.format(type(value_option)))
         if value_option == 'manual':
             if not pl.isarray(value):
-                value = np.ones(len(self.G.data.taxas))*value
-            if len(value) != self.G.data.n_taxas:
+                value = np.ones(len(self.G.data.taxa))*value
+            if len(value) != self.G.data.n_taxa:
                 raise ValueError('`value` ({}) must be ({}) long'.format(
-                    len(value), len(self.G.data.taxas)))
+                    len(value), len(self.G.data.taxa)))
             self.value = value
         elif value_option == 'linear-regression':
             rhs = [
@@ -5963,11 +5963,11 @@ class Growth(pl.variables.TruncatedNormal):
             prec = X.T @ X
             cov = pinv(prec, self)
             mean = (cov @ X.transpose().dot(y)).ravel()
-            self.value = np.absolute(mean[:len(self.G.data.taxas)])
+            self.value = np.absolute(mean[:len(self.G.data.taxa)])
         elif value_option in ['auto', 'ones']:
-            self.value = np.ones(len(self.G.data.taxas), dtype=float)
+            self.value = np.ones(len(self.G.data.taxa), dtype=float)
         elif value_option == 'prior-mean':
-            self.value = self.prior.mean() * np.ones(self.G.data.n_taxas)
+            self.value = self.prior.mean() * np.ones(self.G.data.n_taxa)
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
 
@@ -6046,7 +6046,7 @@ class Growth(pl.variables.TruncatedNormal):
                 'entire' : both burn-in and posterior samples
         taxa_formatter : str, None
             This is the format of the label to return for each Taxa. If None, it will return
-            the taxas name
+            the taxa name
         true_value : np.ndarray
             Ground truth values of the variable
 
@@ -6058,18 +6058,18 @@ class Growth(pl.variables.TruncatedNormal):
             logging.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
             return pd.DataFrame()
 
-        taxas = self.G.data.subjects.taxas
+        taxa = self.G.data.subjects.taxa
         summ = pl.summary(self, section=section)
         data = []
         index = []
         columns = ['name'] + [k for k in summ]
 
-        for idx in range(len(taxas)):
+        for idx in range(len(taxa)):
             if taxa_formatter is not None:
-                prefix = pl.taxaname_formatter(format=taxa_formatter, taxa=taxas[idx], taxas=taxas)
+                prefix = pl.taxaname_formatter(format=taxa_formatter, taxon=taxa[idx], taxa=taxa)
             else:
-                prefix = taxas[idx].name
-            index.append(taxas[idx].name)
+                prefix = taxa[idx].name
+            index.append(taxa[idx].name)
             temp = [prefix]
             for _,v in summ.items():
                 temp.append(v[idx])
@@ -6100,7 +6100,7 @@ class Growth(pl.variables.TruncatedNormal):
         else:
             prior_std_trace = np.sqrt(self.prior.scale2.value) * np.ones(len_posterior, dtype=float)
 
-        for idx in range(len(taxas)):
+        for idx in range(len(taxa)):
             fig = plt.figure()
             ax_posterior = fig.add_subplot(1,2,1)
             visualization.render_trace(var=self, idx=idx, plt_type='hist',
@@ -6138,7 +6138,7 @@ class Growth(pl.variables.TruncatedNormal):
             fig.suptitle('{}'.format(index[idx]))
             fig.tight_layout()
             fig.subplots_adjust(top=0.85)
-            plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxas[idx].name)))
+            plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxa[idx].name)))
             plt.close()
 
         return df
@@ -6153,7 +6153,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         kwargs['name'] = STRNAMES.SELF_INTERACTION_VALUE
         pl.variables.TruncatedNormal.__init__(self, loc=None, scale2=None, low=0.,
             high=float('inf'), dtype=float, **kwargs)
-        self.set_value_shape(shape=(len(self.G.data.taxas),))
+        self.set_value_shape(shape=(len(self.G.data.taxa),))
         self.add_prior(prior)
 
     def __str__(self):
@@ -6279,10 +6279,10 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             raise TypeError('`value_option` ({}) must be a str'.format(type(value_option)))
         if value_option == 'manual':
             if not pl.isarray(value):
-                value = np.ones(len(self.G.data.taxas))*value
-            if len(value) != self.G.data.n_taxas:
+                value = np.ones(len(self.G.data.taxa))*value
+            if len(value) != self.G.data.n_taxa:
                 raise ValueError('`value` ({}) must be ({}) long'.format(
-                    len(value), len(self.G.data.taxas)))
+                    len(value), len(self.G.data.taxa)))
             self.value = value
         elif value_option == 'fixed-growth':
             X = self.G.data.construct_rhs(keys=[STRNAMES.SELF_INTERACTION_VALUE],
@@ -6310,9 +6310,9 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             prec = X.T @ X
             cov = pinv(prec, self)
             mean = (cov @ X.transpose().dot(y)).ravel()
-            self.value = np.absolute(mean[len(self.G.data.taxas):])
+            self.value = np.absolute(mean[len(self.G.data.taxa):])
         elif value_option == 'prior-mean':
-            self.value = self.prior.loc.value * np.ones(self.G.data.n_taxas)
+            self.value = self.prior.loc.value * np.ones(self.G.data.n_taxa)
         elif value_option in ['steady-state', 'auto']:
             # check quantile
             if not pl.isnumeric(q):
@@ -6400,7 +6400,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         prior_prec = build_prior_covariance(G=self.G, cov=False,
             order=rhs, sparse=True)
 
-        pm = prior_prec @ (self.prior.loc.value * np.ones(self.G.data.n_taxas).reshape(-1,1))
+        pm = prior_prec @ (self.prior.loc.value * np.ones(self.G.data.n_taxa).reshape(-1,1))
 
         prec = X.T @ process_prec @ X + prior_prec
         cov = pinv(prec, self)
@@ -6424,7 +6424,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
                 'entire' : both burn-in and posterior samples
         taxa_formatter : str, None
             This is the format of the label to return for each Taxa. If None, it will return
-            the taxas name
+            the taxon's name
         true_value : np.ndarray
             Ground truth values of the variable
 
@@ -6436,18 +6436,18 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             logging.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
             return pd.DataFrame()
 
-        taxas = self.G.data.subjects.taxas
+        taxa = self.G.data.subjects.taxa
         summ = pl.summary(self, section=section)
         data = []
         index = []
         columns = ['name'] + [k for k in summ]
 
-        for idx in range(len(taxas)):
+        for idx in range(len(taxa)):
             if taxa_formatter is not None:
-                prefix = pl.taxaname_formatter(format=taxa_formatter, taxa=taxas[idx], taxas=taxas)
+                prefix = pl.taxaname_formatter(format=taxa_formatter, taxon=taxa[idx], taxa=taxa)
             else:
-                prefix = taxas[idx].name
-            index.append(taxas[idx].name)
+                prefix = taxa[idx].name
+            index.append(taxa[idx].name)
             temp = [prefix]
             for _,v in summ.items():
                 temp.append(v[idx])
@@ -6474,7 +6474,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         else:
             prior_std_trace = np.sqrt(self.prior.scale2.value) * np.ones(len_posterior, dtype=float)
 
-        for idx in range(len(taxas)):
+        for idx in range(len(taxa)):
             fig = plt.figure()
             ax_posterior = fig.add_subplot(1,2,1)
             visualization.render_trace(var=self, idx=idx, plt_type='hist',
@@ -6512,7 +6512,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             fig.suptitle('{}'.format(index[idx]))
             fig.tight_layout()
             fig.subplots_adjust(top=0.85)
-            plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxas[idx].name)))
+            plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxa[idx].name)))
             plt.close()
 
         return df
@@ -6530,7 +6530,7 @@ class GLVParameters(pl.variables.MVN):
     growth : posterior.Growth
         This is the class that has the growth variables
     self_interactions : posterior.SelfInteractions
-        The self interaction terms for the Taxas
+        The self interaction terms for the Taxa
     interactions : ClusterInteractionValue
         These are the cluster interaction values
     pert_mag : PerturbationMagnitudes, None
@@ -6558,7 +6558,7 @@ class GLVParameters(pl.variables.MVN):
         kwargs['name'] = STRNAMES.GLV_PARAMETERS
         pl.variables.MVN.__init__(self, mean=None, cov=None, dtype=float, **kwargs)
 
-        self.n_taxas = self.G.data.n_taxas
+        self.n_taxa = self.G.data.n_taxa
         self.growth = growth
         self.self_interactions = self_interactions
         self.interactions = interactions
@@ -6636,13 +6636,7 @@ class GLVParameters(pl.variables.MVN):
                 
     # @profile
     def asarray(self):
-        '''
-        Builds the full regression coefficient vector. If `taxa_id` and
-        `cid` are None, build the entire thing. Else build it for
-        the Taxa or cluster specifically.
-
-        Parameters
-        ----------
+        '''Builds the full regression coefficient vector.
         '''
         # build the entire thing
         a = np.append(self.growth.value, self.self_interactions.value)
@@ -6751,13 +6745,13 @@ class GLVParameters(pl.variables.MVN):
 
     def _update_acceptances(self):
         if self.growth.sample_iter == 0:
-            self.temp_acceptances= np.zeros(len(self.G.data.taxas), dtype=int)
+            self.temp_acceptances= np.zeros(len(self.G.data.taxa), dtype=int)
             self.acceptances = np.zeros(shape=(self.G.inference.n_samples, 
-                len(self.G.data.taxas)), dtype=bool)
+                len(self.G.data.taxa)), dtype=bool)
         elif self.growth.sample_iter > self.end_tune:
             return
         elif self.growth.sample_iter % self.tune == 0:
-            self.temp_acceptances = np.zeros(len(self.G.data.taxas), dtype=int)
+            self.temp_acceptances = np.zeros(len(self.G.data.taxa), dtype=int)
 
     def _update_growth_and_self_interactions(self):
         '''Update the growth and self-interactions
@@ -6993,15 +6987,15 @@ class PerturbationMagnitudes(pl.variables.Normal):
                 'entire' : both burn-in and posterior samples
         taxa_formatter : str, None
             This is the format of the label to return for each Taxa. If None, it will return
-            the taxas name
+            the taxon's name
         fixed_clustering : bool
             If True, plot the variable as if clustering was fixed. Since the
-            cluster assignments never change, all of the taxas within the cluster
-            have identical values, so we can choose any taxa within the cluster to
+            cluster assignments never change, all of the taxa within the cluster
+            have identical values, so we can choose any taxon within the cluster to
             represent it
         '''
         perturbation = self.perturbations[pidx]
-        taxas = self.G.data.taxas
+        taxa = self.G.data.taxa
         clustering = self.G[STRNAMES.CLUSTERING_OBJ]
 
         summ = pl.summary(perturbation, set_nan_to_0=True, section=section)
@@ -7014,7 +7008,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
             index = ['Cluster {}'.format(cidx + 1) for cidx in range(len(clustering))]
             data = data_clustering
         else:
-            index = [taxa.name for taxa in self.G.data.taxas]
+            index = [taxon.name for taxon in self.G.data.taxa]
         df = pd.DataFrame(data, columns=[k for k in summ], 
             index=index)
         df.to_csv(os.path.join(basepath, 'values.tsv'), sep='\t', index=True, header=True)
@@ -7039,7 +7033,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
         if fixed_clustering:
             rang = len(clustering)
         else:
-            rang = len(self.G.data.taxas)
+            rang = len(self.G.data.taxa)
 
         for iii in range(rang):
             if fixed_clustering:
@@ -7072,13 +7066,13 @@ class PerturbationMagnitudes(pl.variables.Normal):
                 fig.suptitle('Cluster {}'.format(iii+1))
             else:
                 fig.suptitle('{}'.format(pl.taxaname_formatter(
-                    format=taxa_formatter, taxa=oidx, taxas=self.G.data.taxas)))
+                    format=taxa_formatter, taxon=oidx, taxa=self.G.data.taxa)))
             fig.tight_layout()
             fig.subplots_adjust(top=0.85)
             if fixed_clustering:
                 plt.savefig(os.path.join(basepath, 'cluster{}.pdf'.format(iii+1)))
             else:
-                plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxas[oidx].name)))
+                plt.savefig(os.path.join(basepath, '{}.pdf'.format(taxa[oidx].name)))
             plt.close()
 
 
@@ -7197,7 +7191,7 @@ class PerturbationProbabilities(pl.Node):
             except:
                 raise ValueError('`mult-sparse` in the wrong format ({})'.format(
                     hyperparam_option))
-            N = self.G.data.n_taxas * M
+            N = self.G.data.n_taxa * M
             a = 0.5
             b = N
         else:
@@ -7385,13 +7379,13 @@ class PerturbationIndicators(pl.Node):
         self.n_dts_for_replicate = self.G.data.n_dts_for_replicate
         self.total_dts = np.sum(self.n_dts_for_replicate)
         self.replicate_bias = np.zeros(self.n_replicates, dtype=int)
-        self.n_taxas = len(self.G.data.taxas)
+        self.n_taxa = len(self.G.data.taxa)
         for ridx in range(1, self.n_replicates):
             self.replicate_bias[ridx] = self.replicate_bias[ridx-1] + \
-                self.n_taxas * self.n_dts_for_replicate[ridx - 1]
+                self.n_taxa * self.n_dts_for_replicate[ridx - 1]
         for ridx in range(self.G.data.n_replicates):
             self.ndts_bias.append(
-                np.arange(0, self.G.data.n_dts_for_replicate[ridx] * self.n_taxas, self.n_taxas))
+                np.arange(0, self.G.data.n_dts_for_replicate[ridx] * self.n_taxa, self.n_taxa))
 
         s = 'Perturbation indicator initialization results:\n'
         for i, perturbation in enumerate(self.perturbations):
@@ -7467,13 +7461,13 @@ class PerturbationIndicators(pl.Node):
         --------------------------------------------
         ys : dict (int -> np.ndarray)
             Maps the target cluster id to the observation matrix that it
-            corresponds to (only the Taxas in the target cluster). This 
+            corresponds to (only the Taxa in the target cluster). This 
             array already has the growth and self-interactions subtracted
             out:
                 $ \frac{log(x_{k+1}) - log(x_{k})}{dt} - a_{1,k} - a_{2,k}x_{k} $
         process_precs : dict (int -> np.ndarray)
             Maps the target cluster id to the vector of the process precision
-            that corresponds to the target cluster (only the Taxas in the target
+            that corresponds to the target cluster (only the Taxa in the target
             cluster). This is a 1D array that corresponds to the diagonal of what
             would be the precision matrix.
         interactionXs : dict (int -> np.ndarray)
@@ -7591,7 +7585,7 @@ class PerturbationIndicators(pl.Node):
         supposed to as is. Because this is a relative loglikelihood, we
         only need to take into account the following parameters of the
         model:
-            - Only the Taxas in the cluster in question
+            - Only the Taxa in the cluster in question
             - Only the perturbations for that cluster
             - Only the interactions going into the cluster
 
@@ -7770,10 +7764,10 @@ class PerturbationIndicators(pl.Node):
         ----------
         This is the index of the indicator in vectorized form
         '''
-        cidx = idx % self.G.data.n_taxas
+        cidx = idx % self.G.data.n_taxa
         cid = self.clustering.order[cidx]
         
-        pidx = idx // self.G.data.n_taxas
+        pidx = idx // self.G.data.n_taxa
         perturbation = self.perturbations[pidx]
 
         d_on = self.calculate_marginal_loglikelihood(cid=cid, val=True,
@@ -7872,8 +7866,8 @@ class PerturbationIndicators(pl.Node):
                 'entire' : both burn-in and posterior samples
         fixed_clustering : bool
             If True, plot the variable as if clustering was fixed. Since the
-            cluster assignments never change, all of the taxas within the cluster
-            have identical values, so we can choose any taxa within the cluster to
+            cluster assignments never change, all of the taxa within the cluster
+            have identical values, so we can choose any taxon within the cluster to
             represent it
         '''
         from .util import generate_perturbation_bayes_factors_posthoc
@@ -7893,7 +7887,7 @@ class PerturbationIndicators(pl.Node):
                 columns=['Cluster {}'.format(cidx+1) for cidx in range(len(clustering))])
         else:
             df = pd.DataFrame([bayes_factors], index=[perturbation.name], 
-                columns=[taxa.name for taxa in self.G.data.taxas])
+                columns=[taxon.name for taxon in self.G.data.taxa])
         df.to_csv(path, sep='\t', index=True, header=True)
 
 

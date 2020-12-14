@@ -281,22 +281,22 @@ def itercheck(xs, f):
     '''
     return [f(x) for x in xs]
 
-def taxaname_for_paper(taxa, taxas):
+def taxaname_for_paper(taxon, taxa):
     '''Makes the name in the format needed for the paper
 
     Parameters
     ----------
-    taxa : pylab.base.Taxa
-        This is theTaxa  we are making the name for
-    taxas : pylab.base.TaxaSet
-        This is the TaxaSet object that contains the Taxa
+    taxon : pylab.base.Taxon/pylab.base.OTU
+        This is the taxon we are making the name for
+    taxa : pylab.base.TaxaSet
+        This is the TaxaSet object that contains the taxon objects
 
     Returns
     -------
     '''
-    taxa = taxas[taxa]
-    if taxa.tax_is_defined('species'):
-        species = taxa.taxonomy['species']
+    taxon = taxa[taxon]
+    if taxon.tax_is_defined('species'):
+        species = taxon.taxonomy['species']
         species = species.split('/')
         if len(species) >= 3:
             species = species[:2]
@@ -304,69 +304,69 @@ def taxaname_for_paper(taxa, taxas):
         label = taxaname_formatter(
             format='%(genus)s {spec} %(name)s'.format(
                 spec=species), 
-            taxa=taxa, taxas=taxas)
-    elif taxa.tax_is_defined('genus'):
+            taxon=taxon, taxa=taxa)
+    elif taxon.tax_is_defined('genus'):
         label = taxaname_formatter(
             format='* %(genus)s %(name)s',
-            taxa=taxa, taxas=taxas)
-    elif taxa.tax_is_defined('family'):
+            taxon=taxon, taxa=taxa)
+    elif taxon.tax_is_defined('family'):
         label = taxaname_formatter(
             format='** %(family)s %(name)s',
-            taxa=taxa, taxas=taxas)
-    elif taxa.tax_is_defined('order'):
+            taxon=taxon, taxa=taxa)
+    elif taxon.tax_is_defined('order'):
         label = taxaname_formatter(
             format='*** %(order)s %(name)s',
-            taxa=taxa, taxas=taxas)
-    elif taxa.tax_is_defined('class'):
+            taxon=taxon, taxa=taxa)
+    elif taxon.tax_is_defined('class'):
         label = taxaname_formatter(
             format='**** %(class)s %(name)s',
-            taxa=taxa, taxas=taxas)
-    elif taxa.tax_is_defined('phylum'):
+            taxon=taxon, taxa=taxa)
+    elif taxon.tax_is_defined('phylum'):
         label = taxaname_formatter(
             format='***** %(phylum)s %(name)s',
-            taxa=taxa, taxas=taxas)
-    elif taxa.tax_is_defined('kingdom'):
+            taxon=taxon, taxa=taxa)
+    elif taxon.tax_is_defined('kingdom'):
         label = taxaname_formatter(
             format='****** %(kingdom)s %(name)s',
-            taxa=taxa, taxas=taxas)
+            taxon=taxon, taxa=taxa)
     else:
-        raise ValueError('Something went wrong - no taxnonomy: {}'.format(str(taxa)))
+        raise ValueError('Something went wrong - no taxnonomy: {}'.format(str(taxon)))
 
     return label
 
-def taxaname_formatter(format, taxa, taxas):
-    '''Format the label of an Taxa. Specify the Taxa by its index in the TaxaSet `taxas`.
+def taxaname_formatter(format, taxon, taxa):
+    '''Format the label of a taxon. Specify the taxon by its index in the TaxaSet `taxa`.
 
     If `format == mdsine.TAXANAME_PAPER_FORMAT`, then we call the function
     `taxaname_for_paper`.
 
     Example:
-        taxa is an Taxa object at index 0 where
-        taxa.genus = 'A'
-        taxa.id = 1234532
+        taxon is an Taxon object at index 0 where
+        taxon.genus = 'A'
+        taxon.id = 1234532
 
         taxaname_formatter(
             format='%(genus)s: %(index)s',
-            taxa=1234532,
-            taxas=taxas)
+            taxon=1234532,
+            taxa=taxa)
         >>> 'A: 0'
 
         taxaname_formatter(
             format='%(genus)s: %(genus)s',
-            taxa=1234532,
-            taxas=taxas)
+            taxon=1234532,
+            taxa=taxa)
         >>> 'A: A'
 
         taxaname_formatter(
             format='%(index)s',
-            taxa=1234532,
-            taxas=taxas)
+            taxon=1234532,
+            taxa=taxa)
         >>> '0'
 
         taxaname_formatter(
             format='%(geNus)s: %(genus)s',
-            taxa=1234532,
-            taxas=taxas)
+            taxon=1234532,
+            taxa=taxa)
         >>> '%(geNus)s: A'
 
     Parameters
@@ -377,55 +377,55 @@ def taxaname_formatter(format, taxa, taxas):
             '%(paperformat)s'
                 Return the `taxaname_for_paper`
             '%(name)s'
-                Name of the Taxa (pylab.base..name)
+                Name of the taxon (pylab.base..name)
             '%(id)s'
-                ID of the Taxa (pylab.base..id)
+                ID of the taxon (pylab.base..id)
             '%(index)s'
                 The order that this appears in the TaxaSet
             '%(species)s'
-                `'species'` taxonomic classification of the Taxa
+                `'species'` taxonomic classification of the taxon
             '%(speciesX)s'
-                `'species'` taxonomic classification of the Taxa for only up to the first 
+                `'species'` taxonomic classification of the taxon for only up to the first 
                 `X` spceified
             '%(genus)s'
-                `'genus'` taxonomic classification of the Taxa
+                `'genus'` taxonomic classification of the taxon
             '%(family)s'
-                `'family'` taxonomic classification of the Taxa
+                `'family'` taxonomic classification of the taxon
             '%(class)s'
-                `'class'` taxonomic classification of the Taxa
+                `'class'` taxonomic classification of the taxon
             '%(order)s'
-                `'order'` taxonomic classification of the Taxa
+                `'order'` taxonomic classification of the taxon
             '%(phylum)s'
-                `'phylum'` taxonomic classification of the Taxa
+                `'phylum'` taxonomic classification of the taxon
             '%(kingdom)s'
-                `'kingdom'` taxonomic classification of the Taxa
+                `'kingdom'` taxonomic classification of the taxon
 
-    taxa : str, int, Taxa
-        Either the  or an id for the Taxa
-    taxas : pylab.base.TaxaSet
-        Dataset containing all of the information for the Taxas
+    taxon : str, int, Taxon, OTU
+        Taxon/OTU object or identifier (name, ID, index)
+    taxa : pylab.base.TaxaSet
+        Dataset containing all of the information for the taxa
 
     '''
     if format == TAXANAME_PAPER_FORMAT:
-        return taxaname_for_paper(taxa=taxa, taxas=taxas)
-    taxa = taxas[taxa]
-    index = taxa.idx
+        return taxaname_for_paper(taxon=taxon, taxa=taxa)
+    taxon = taxa[taxon]
+    index = taxon.idx
 
-    label = format.replace(NAME_FORMATTER, str(taxa.name))
-    label = label.replace(ID_FORMATTER, str(taxa.id))
+    label = format.replace(NAME_FORMATTER, str(taxon.name))
+    label = label.replace(ID_FORMATTER, str(taxon.id))
     label = label.replace(INDEX_FORMATTER,  str(index))
 
     if PAPER_FORMATTER in label:
         label = label.replace(PAPER_FORMATTER, '%(temp)s')
-        label = label.replace('%(temp)s', taxaname_for_paper(taxa=taxa, taxas=taxas))
+        label = label.replace('%(temp)s', taxaname_for_paper(taxon=taxon, taxa=taxa))
     
     for i in range(len(_TAXLEVELS)):
         taxlevel = _TAXLEVELS[i]
         fmt = _TAXFORMATTERS[i]
         try:
-            label = label.replace(fmt, str(taxa.get_taxonomy(taxlevel)))
+            label = label.replace(fmt, str(taxon.get_taxonomy(taxlevel)))
         except:
-            logging.critical('taxa: {}'.format(taxa))
+            logging.critical('taxon: {}'.format(taxon))
             logging.critical('fmt: {}'.format(fmt))
             logging.critical('label: {}'.format(label))
             raise
@@ -589,7 +589,7 @@ def coarsen_phylogenetic_tree(tree, depth):
     ete3.Tree, dict
         ete3.Tree : is the coarsened tree
         dict : is a dictionary mapping the name of the new leaves
-            to the Taxas that are contained within it
+            to the taxa that are contained within it
     '''
     if not istree(tree):
         raise TypeError('`tree` ({}) must be of type tree'.format(type(tree)))

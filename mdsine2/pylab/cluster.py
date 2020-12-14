@@ -116,7 +116,7 @@ class Clustering(Node, Traceable):
     
     Parameters
     ----------
-    clusters : np.ndarray(n_taxas), None
+    clusters : np.ndarray(n_taxa), None
         If None, do not set cluster assignments.
         The index of the array corresponds to the item index. The value of the
         index indicates the cluster for it to be assigned to

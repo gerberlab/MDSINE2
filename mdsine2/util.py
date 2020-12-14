@@ -12,34 +12,31 @@ from . import pylab as pl
 
 from .pylab import diversity
 
-def is_gram_negative(taxa):
-    '''Return true if the taxa is gram - or gram positive
+def is_gram_negative(taxon):
+    '''Return true if the taxon is gram - or gram positive
+
+    Parameters
+    ----------
+    taxon : md2.Taxon, md2.OTU
+        Taxon object
+
+    Returns
+    -------
+    bool
     '''
-    if not taxa.tax_is_defined('phylum'):
+    if not taxon.tax_is_defined('phylum'):
         return None
-    elif taxa.taxonomy['phylum'].lower() == 'bacteroidetes':
+    elif taxon.taxonomy['phylum'].lower() == 'bacteroidetes':
         return True
-    elif taxa.taxonomy['phylum'].lower() == 'firmicutes':
+    elif taxon.taxonomy['phylum'].lower() == 'firmicutes':
         return False
-    elif taxa.taxonomy['phylum'].lower() == 'verrucomicrobia':
+    elif taxon.taxonomy['phylum'].lower() == 'verrucomicrobia':
         return True
-    elif taxa.taxonomy['phylum'].lower() == 'proteobacteria':
+    elif taxon.taxonomy['phylum'].lower() == 'proteobacteria':
         return True
     else:
         raise ValueError('{} phylum not specified. If not bacteroidetes, firmicutes, verrucomicrobia, or ' \
-            'proteobacteria, you must add another phylum'.format(str(taxa)))
-
-def is_gram_negative_taxa(taxa, taxalevel, taxas):
-    '''Checks if the taxa `taxa` at the taxonomic level `taxalevel`
-    is a gram negative or gram positive
-    '''
-    for taxa in taxas:
-        if taxa.taxonomy[taxalevel] == taxa:
-            return is_gram_negative(taxa)
-
-    else:
-        raise ValueError('`taxa` ({}) not found at taxonomic level ({})'.format(
-            taxa, taxalevel))
+            'proteobacteria, you must add another phylum'.format(str(taxon)))
 
 def generate_interation_bayes_factors_posthoc(mcmc, section='posterior'):
     '''Generates the bayes factors on an item-item level for the interactions, 
@@ -194,9 +191,9 @@ def generate_taxonomic_distribution_over_clusters_posthoc(mcmc, tax_fmt):
     
     Value
     -----
-    If there are perturbations, then the value is the mean abundance over the taxas
+    If there are perturbations, then the value is the mean abundance over the taxa
     before the first perturbation between all of the subjects. If there are no perturbations
-    then this is just the mean abundance of the taxas over all the time points
+    then this is just the mean abundance of the taxa over all the time points
 
     Parameters
     ----------
@@ -218,7 +215,7 @@ def generate_taxonomic_distribution_over_clusters_posthoc(mcmc, tax_fmt):
 
     # Get the first time of the perturbation between all of the subjects
     first_time = None
-    if study.perturabtions is not None:
+    if study.perturbations is not None:
         for subj in study:
             if first_time is None:
                 first_time = study.perturbations[0].starts[subj.name]
@@ -249,7 +246,7 @@ def generate_taxonomic_distribution_over_clusters_posthoc(mcmc, tax_fmt):
     data = np.hstack(data).shape
 
     # Make the taxonomic heatmap as a dataframe
-    df = pl.base.condense_matrix_with_taxonomy(M, taxas=study.taxas, fmt=tax_fmt)
+    df = pl.base.condense_matrix_with_taxonomy(M, taxa=study.taxa, fmt=tax_fmt)
     return df
 
 def condense_fixed_clustering_interaction_matrix(M, clustering):
@@ -282,14 +279,14 @@ def condense_fixed_clustering_interaction_matrix(M, clustering):
     return ret
 
 def aggregate_items(subjset, hamming_dist):
-    '''Aggregate Taxas that have an average hamming distance of `hamming_dist`
+    '''Aggregate Taxa that have an average hamming distance of `hamming_dist`
 
     Parameters
     ----------
     subjset : mdsine2.Study
         This is the `mdsine2.Study` object that we are aggregating
     hamming_dist : int
-        This is the hamming radius from one Taxa to the next where we
+        This is the hamming radius from one taxon to the next where we
         are aggregating
 
     Returns
@@ -300,22 +297,22 @@ def aggregate_items(subjset, hamming_dist):
     cnt = 0
     found = False
     iii = 0
-    logging.info('Agglomerating taxas')
+    logging.info('Agglomerating taxa')
     while not found:
-        for iii in range(iii, len(subjset.taxas)):
+        for iii in range(iii, len(subjset.taxa)):
             if iii % 200 == 0:
-                logging.info('{}/{}'.format(iii, len(subjset.taxas)))
-            taxa1 = subjset.taxas[iii]
-            for taxa2 in subjset.taxas.names.order[iii:]:
-                taxa2 = subjset.taxas[taxa2]
-                if taxa1.name == taxa2.name:
+                logging.info('{}/{}'.format(iii, len(subjset.taxa)))
+            taxon1 = subjset.taxa[iii]
+            for taxon2 in subjset.taxa.names.order[iii:]:
+                taxon2 = subjset.taxa[taxon2]
+                if taxon1.name == taxon2.name:
                     continue
-                if len(taxa1.sequence) != len(taxa2.sequence):
+                if len(taxon1.sequence) != len(taxon2.sequence):
                     continue
 
-                dist = _avg_dist(taxa1, taxa2)
+                dist = _avg_dist(taxon1, taxon2)
                 if dist <= hamming_dist:
-                    subjset.aggregate_items(taxa1, taxa2)
+                    subjset.aggregate_items(taxon1, taxon2)
                     cnt += 1
                     found = True
                     break
@@ -325,20 +322,20 @@ def aggregate_items(subjset, hamming_dist):
             found = False
         else:
             break
-    logging.info('Aggregated {} taxas'.format(cnt))
+    logging.info('Aggregated {} taxa'.format(cnt))
     return subjset
 
-def _avg_dist(taxa1, taxa2):
+def _avg_dist(taxon1, taxon2):
     dists = []
-    if pl.isotu(taxa1):
-        seqs1 = taxa1.aggregated_seqs.values()
+    if pl.isotu(taxon1):
+        seqs1 = taxon1.aggregated_seqs.values()
     else:
-        seqs1 = [taxa1.sequence]
+        seqs1 = [taxon1.sequence]
 
-    if pl.isotu(taxa2):
-        seqs2 = taxa2.aggregated_seqs.values()
+    if pl.isotu(taxon2):
+        seqs2 = taxon2.aggregated_seqs.values()
     else:
-        seqs2 = [taxa2.sequence]
+        seqs2 = [taxon2.sequence]
 
     for v1 in seqs1:
         for v2 in seqs2:
@@ -354,7 +351,7 @@ def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_nu
 
     There must be at least `threshold` for at least
     `min_num_consecutive` consecutive timepoints for at least
-    `min_num_subjects` subjects for the Taxa to be classified as valid.
+    `min_num_subjects` subjects for the taxon to be classified as valid.
 
     If a colonization time is specified, we only look after that timepoint
 
@@ -378,7 +375,7 @@ def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_nu
         This is the minimum number of subjects this needs to be valid for.
         If str, we accept 'all', which we set that automatically.
     union_other_consortia : mdsine2.Study, None
-        If not None, take the union of the taxas passing the filtering of both
+        If not None, take the union of the taxa passing the filtering of both
         `subjset` and `union_other_consortia`
 
     Returns
@@ -431,21 +428,21 @@ def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_nu
     subjset = copy.deepcopy(subjset)      
     
     if union_other_consortia is not None:
-        taxas_to_keep = OrderedSet()
+        taxa_to_keep = OrderedSet()
         for subjset_temp in [subjset, union_other_consortia]:
             subjset_temp = consistency_filtering(subjset_temp, dtype=dtype,
                 threshold=threshold, min_num_consecutive=min_num_consecutive,
                 colonization_time=colonization_time, min_num_subjects=min_num_subjects,
                 union_other_consortia=None)
-            for taxa_name in subjset_temp.taxas.names:
-                taxas_to_keep.add(taxa_name)
+            for taxon_name in subjset_temp.taxa.names:
+                taxa_to_keep.add(taxon_name)
         to_delete = []
-        for aname in subjset.taxas.names:
-            if aname not in taxas_to_keep:
+        for aname in subjset.taxa.names:
+            if aname not in taxa_to_keep:
                 to_delete.append(aname)
     else:
         # Everything is fine, now we can do the filtering
-        talley = np.zeros(len(subjset.taxas), dtype=int)
+        talley = np.zeros(len(subjset.taxa), dtype=int)
         for i, subj in enumerate(subjset):
             matrix = subj.matrix()[dtype]
             tidx_start = None
@@ -469,17 +466,17 @@ def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_nu
                         break
 
         invalid_oidxs = np.where(talley < min_num_subjects)[0]
-        to_delete = subjset.taxas.ids.order[invalid_oidxs]
-    subjset.pop_taxas(to_delete)
+        to_delete = subjset.taxa.ids.order[invalid_oidxs]
+    subjset.pop_taxa(to_delete)
     return subjset
 
 def conditional_consistency_filtering(subjset, other, dtype, threshold, min_num_consecutive_upper,  
     min_num_consecutive_lower, min_num_subjects, colonization_time):
     '''Filters the cohorts in `subjset` with the `mdsine2.consistency_filtering`
-    filtering method but conditional on another cohort. If an Taxa passes the filter
-    in the cohort `other`, the Taxa can only have `min_num_consecutive_lower` 
+    filtering method but conditional on another cohort. If a taxon passes the filter
+    in the cohort `other`, the taxon can only have `min_num_consecutive_lower` 
     consecutive timepoints instead of `min_num_consecutive_upper`. This potentially
-    increases the overlap of the Taxas between cohorts, which is the reason why
+    increases the overlap of the taxa between cohorts, which is the reason why
     we would do this filtering over just `mdsine2.consistency_filtering`
 
     Algorithm
@@ -488,7 +485,7 @@ def conditional_consistency_filtering(subjset, other, dtype, threshold, min_num_
     `subjset` and `other` with minimum number of consectutive timepoints 
     `min_num_consecutive_upper` and `min_num_consecutive_lower`.
 
-    For each Taxa in cohort `subjset`
+    For each taxon in cohort `subjset`
         If it passes filtering with `min_num_consecutive_upper` in `subjset`, it is included
         If it passes filtering with `min_num_consecutive_upper` in `other` AND it
             passes filtering  `min_num_consecutive_lower` in `subjset`, it is included.
@@ -542,12 +539,12 @@ def conditional_consistency_filtering(subjset, other, dtype, threshold, min_num_
 
     # Conditional consistency filtering
     to_delete = []
-    for taxa in subjset_lower.taxas:
-        if taxa.name in subjset_upper.taxas:
+    for taxon in subjset_lower.taxa:
+        if taxon.name in subjset_upper.taxa:
             continue
-        if taxa.name in other_upper.taxas:
+        if taxon.name in other_upper.taxa:
             continue
-        to_delete.append(taxa.name)
+        to_delete.append(taxon.name)
 
-    subjset_lower.pop_taxas(to_delete)
+    subjset_lower.pop_taxa(to_delete)
     return subjset_lower

@@ -51,7 +51,7 @@ from .errors import NeedToImplementError
 from . import diversity
 
 # Constants
-DEFAULT_TAXA_NAME = 'NA'
+DEFAULT_TAXLEVEL_NAME = 'NA'
 SEQUENCE_COLUMN_LABEL = 'sequence'
 TAX_IDXS = {'kingdom': 0, 'phylum': 1, 'class': 2,  'order': 3, 'family': 4, 
     'genus': 5, 'species': 6, 'asv': 7}
@@ -133,20 +133,20 @@ def istraceable(x):
     '''
     return x is not None and issubclass(x.__class__, Traceable)
 
-def istaxa(x):
-    '''Checks whether the input is a subclass of Taxa
+def istaxon(x):
+    '''Checks whether the input is a subclass of Taxon
 
     Parameters
     ----------
     x : any
-        Input instance to check the type of Taxa
+        Input instance to check the type of Taxon
     
     Returns
     -------
     bool
-        True if `x` is of type Taxa, else False
+        True if `x` is of type Taxon, else False
     '''
-    return x is not None and issubclass(x.__class__, Taxa)
+    return x is not None and issubclass(x.__class__, Taxon)
 
 def isotu(x):
     '''Checks whether the input is a subclass of OTU
@@ -154,29 +154,29 @@ def isotu(x):
     Parameters
     ----------
     x : any
-        Input instance to check the type of Taxa
+        Input instance to check the type of OTU
     
     Returns
     -------
     bool
-        True if `x` is of type Taxa, else False
+        True if `x` is of type OTU, else False
     '''
     return issubclass(x.__class__, OTU)
 
-def istaxatype(x):
-    '''Checks whether the input is a subclass of OTU or Taxa
+def istaxontype(x):
+    '''Checks whether the input is a subclass of OTU or Taxon
 
     Parameters
     ----------
     x : any
-        Input instance to check the type of OTU or Taxa
+        Input instance to check the type of OTU or Taxon
     
     Returns
     -------
     bool
-        True if `x` is of type OTU or Taxa, else False
+        True if `x` is of type OTU or Taxon, else False
     '''
-    return istaxa(x) or isotu(x)
+    return istaxon(x) or isotu(x)
 
 def issubject(x):
     '''Checks whether the input is a subclass of Subject
@@ -223,20 +223,20 @@ def isperturbation(x):
     '''
     return x is not None and issubclass(x.__class__, BasePerturbation)
 
-def condense_matrix_with_taxonomy(M, taxas, fmt):
+def condense_matrix_with_taxonomy(M, taxa, fmt):
     '''Condense the specified matrix M thats on the asv level
     to a taxonomic label specified with `fmt`. If `M` 
-    is a pandas.DataFrame then we assume the index are the Taxa
+    is a pandas.DataFrame then we assume the index are the Taxon
     names. If `M` is a numpy.ndarray, then we assume that the 
-    order of the matrix mirrors the order of the taxas. `fmt` is
+    order of the matrix mirrors the order of the taxa. `fmt` is
     passed through `pylab.util.taxaname_formatter` to get the label.
 
     Parameters
     ----------
     M : numpy.ndarray, pandas.DataFrame
         Matrix to condense
-    taxas : pylab.base.TaxaSet
-        Set of Taxas with the relevant taxonomic information
+    taxa : pylab.base.TaxaSet
+        Set of Taxa with the relevant taxonomic information
     taxlevel : str
         This is the taxonomic level to condense to
 
@@ -248,34 +248,34 @@ def condense_matrix_with_taxonomy(M, taxas, fmt):
         numpy.ndarray, then the order of the columsn correspond and no names
         are sent.
     '''
-    if not istaxaset(taxas):
-        raise TypeError('`taxas` ({}) must be a pylab.base.TaxaSet'.format(type(taxas)))
+    if not istaxaset(taxa):
+        raise TypeError('`taxa` ({}) must be a pylab.base.TaxaSet'.format(type(taxa)))
     if not plutil.isstr(fmt):
         raise TypeError('`fmt` ({}) must be a str'.format(type(fmt)))
 
     if type(M) == pd.DataFrame:
         for idx in M.index:
-            if idx not in taxas:
-                raise ValueError('row `{}` not found in taxas'.format(idx))
+            if idx not in taxa:
+                raise ValueError('row `{}` not found in taxa'.format(idx))
         names = M.index
     elif plutil.isarray(M):
-        if M.shape[0] != len(taxas):
-            raise ValueError('Number of rows in M ({}) not equal to number of taxas ({})'.format(
-                M.shape[0], len(taxas)))
-        names = taxas.names.order
+        if M.shape[0] != len(taxa):
+            raise ValueError('Number of rows in M ({}) not equal to number of taxa ({})'.format(
+                M.shape[0], len(taxa)))
+        names = taxa.names.order
     else:
         raise TypeError('`M` ({}) type not recognized'.format(type(M)))
 
     # Get the rows that correspond to each row
     d = {}
     for row, name in enumerate(names):
-        taxa = taxas[name]
-        tax = plutil.taxaname_formatter(format=fmt, taxa=taxa, taxas=taxas)
+        taxon = taxa[name]
+        tax = plutil.taxaname_formatter(format=fmt, taxon=taxon, taxa=taxa)
         if tax not in d:
             d[tax] = []
         d[tax].append(row)
 
-    # Add all of the rows for each taxa
+    # Add all of the rows for each taxon
     Ms = ()
     index = []
     columns = None
@@ -570,13 +570,13 @@ class ClusterItem:
         return self.name
 
 
-class Taxa(ClusterItem):
-    '''Wrapper class for a single Taxa
+class Taxon(ClusterItem):
+    '''Wrapper class for a single Taxon
 
     Parameters
     ----------
     name : str
-        Name given to the Taxa
+        Name given to the Taxon
     sequence : str
         Base Pair sequence
     idx : int
@@ -588,13 +588,13 @@ class Taxa(ClusterItem):
         self.idx = idx
         # Initialize the taxonomies to nothing
         self.taxonomy = {
-            'kingdom': DEFAULT_TAXA_NAME,
-            'phylum': DEFAULT_TAXA_NAME,
-            'class': DEFAULT_TAXA_NAME,
-            'order': DEFAULT_TAXA_NAME,
-            'family': DEFAULT_TAXA_NAME,
-            'genus': DEFAULT_TAXA_NAME,
-            'species': DEFAULT_TAXA_NAME,
+            'kingdom': DEFAULT_TAXLEVEL_NAME,
+            'phylum': DEFAULT_TAXLEVEL_NAME,
+            'class': DEFAULT_TAXLEVEL_NAME,
+            'order': DEFAULT_TAXLEVEL_NAME,
+            'family': DEFAULT_TAXLEVEL_NAME,
+            'genus': DEFAULT_TAXLEVEL_NAME,
+            'species': DEFAULT_TAXLEVEL_NAME,
             'asv': self.name}
         self.id = id(self)
 
@@ -602,14 +602,14 @@ class Taxa(ClusterItem):
         return self.taxonomy[key.lower()]
 
     def __eq__(self, val):
-        '''Compares different Taxas between each other. Checks all of the attributes but the id
+        '''Compares different taxa between each other. Checks all of the attributes but the id
 
         Parameters
         ----------
         val : any
             This is what we are checking if they are equivalent
         '''
-        if type(val) != Taxa:
+        if not istaxon(val):
             return False
         if self.name != val.name:
             return False
@@ -621,7 +621,7 @@ class Taxa(ClusterItem):
         return True
 
     def __str__(self):
-        return 'Taxa\n\tid: {}\n\tidx: {}\n\tname: {}\n' \
+        return 'Taxon\n\tid: {}\n\tidx: {}\n\tname: {}\n' \
             '\ttaxonomy:\n\t\tkingdom: {}\n\t\tphylum: {}\n' \
             '\t\tclass: {}\n\t\torder: {}\n\t\tfamily: {}\n' \
             '\t\tgenus: {}\n\t\tspecies: {}'.format(
@@ -639,7 +639,7 @@ class Taxa(ClusterItem):
         ----------
         tax_kingdom, tax_phylum, tax_class, tax_order, tax_family, tax_genus : str
             'kingdom', 'phylum', 'class', 'order', 'family', 'genus'
-            Name of the taxa for each respective level
+            Name of the taxon for each respective level
         '''
         if tax_kingdom is not None and tax_kingdom != '' and plutil.isstr(tax_kingdom):
             self.taxonomy['kingdom'] = tax_kingdom
@@ -715,7 +715,7 @@ class Taxa(ClusterItem):
         return self.get_lineage(level=level)[-1]
 
     def tax_is_defined(self, level):
-        '''Whether or not the Taxa is defined at the specified taxonomic level
+        '''Whether or not the taxon is defined at the specified taxonomic level
 
         Parameters
         ----------
@@ -732,55 +732,55 @@ class Taxa(ClusterItem):
         except:
             raise KeyError('`tax` ({}) not defined. Available taxs: {}'.format(level, 
                 list(self.taxonomy.keys())))
-        return (type(tax) != float) and (tax != DEFAULT_TAXA_NAME) and (tax != '')
+        return (type(tax) != float) and (tax != DEFAULT_TAXLEVEL_NAME) and (tax != '')
 
 
-class OTU(Taxa):
-    '''Aggregates of Taxa objects
+class OTU(Taxon):
+    '''Aggregates of Taxon objects
 
     NOTE: For self consistency, let the class TaxaSet initialize this object.
 
     Parameters
     ----------
-    anchor, other : mdsine2.Taxa, mdsine2.OTU
-        These are the Taxas/Aggregates that you're joining together. The anchor is
+    anchor, other : mdsine2.Taxon, mdsine2.OTU
+        These are the taxa/Aggregates that you're joining together. The anchor is
         the one you are setting the sequeunce and taxonomy to
     '''
     def __init__(self, anchor, other):
         name = anchor.name + '_agg'
-        Taxa.__init__(self, name=name, idx=anchor.idx, sequence=anchor.sequence)
+        Taxon.__init__(self, name=name, idx=anchor.idx, sequence=anchor.sequence)
 
-        _agg_taxas = {}
+        _agg_taxa = {}
 
         if isotu(anchor):
-            if other.name in anchor.aggregated_taxas:
+            if other.name in anchor.aggregated_taxa:
                 raise ValueError('`other` ({}) already aggregated with anchor ' \
-                    '({}) ({})'.format(other.name, anchor.name, anchor.aggregated_taxas))
-            agg1 = anchor.aggregated_taxas
+                    '({}) ({})'.format(other.name, anchor.name, anchor.aggregated_taxa))
+            agg1 = anchor.aggregated_taxa
             agg1_seq = anchor.aggregated_seqs
             for k,v in anchor.aggregated_taxonomies.items():
-                _agg_taxas[k] = v
+                _agg_taxa[k] = v
         else:
             agg1 = [anchor.name]
             agg1_seq = {anchor.name: anchor.sequence}
-            _agg_taxas[anchor.name] = anchor.taxonomy
+            _agg_taxa[anchor.name] = anchor.taxonomy
 
         if isotu(other):
-            if anchor.name in other.aggregated_taxas:
+            if anchor.name in other.aggregated_taxa:
                 raise ValueError('`anchor` ({}) already aggregated with other ' \
-                    '({}) ({})'.format(anchor.name, other.name, other.aggregated_taxas))
-            agg2 = other.aggregated_taxas
+                    '({}) ({})'.format(anchor.name, other.name, other.aggregated_taxa))
+            agg2 = other.aggregated_taxa
             agg2_seq = other.aggregated_seqs
             for k,v in other.aggregated_taxonomies.items():
-                _agg_taxas[k] = v
+                _agg_taxa[k] = v
         else:
             agg2 = [other.name]
             agg2_seq = {other.name: other.sequence}
-            _agg_taxas[other.name] = other.taxonomy
+            _agg_taxa[other.name] = other.taxonomy
 
-        self.aggregated_taxas = agg1 + agg2
+        self.aggregated_taxa = agg1 + agg2
         self.aggregated_seqs = agg1_seq
-        self.aggregated_taxonomies = _agg_taxas
+        self.aggregated_taxonomies = _agg_taxa
         for k,v in agg2_seq.items():
             self.aggregated_seqs[k] = v
 
@@ -792,7 +792,7 @@ class OTU(Taxa):
             '\ttaxonomy:\n\t\tkingdom: {}\n\t\tphylum: {}\n' \
             '\t\tclass: {}\n\t\torder: {}\n\t\tfamily: {}\n' \
             '\t\tgenus: {}\n\t\tspecies: {}'.format(
-            self.id, self.idx, self.name, self.aggregated_taxas,
+            self.id, self.idx, self.name, self.aggregated_taxa,
             self.taxonomy['kingdom'], self.taxonomy['phylum'],
             self.taxonomy['class'], self.taxonomy['order'],
             self.taxonomy['family'], self.taxonomy['genus'],
@@ -860,11 +860,11 @@ class OTU(Taxa):
 
                 # Set the consensus base if it passes the threshold
                 if consensus_percent >= threshold:
-                    logging.debug('Consensus found for taxa {} in position {} as {}, found ' \
+                    logging.debug('Consensus found for taxon {} in position {} as {}, found ' \
                         '{}'.format(self.name, i, consensus_base, found))
                     consensus_seq += consensus_base
                 else:
-                    logging.debug('No consensus for taxa {} in position {}. Consensus: {}' \
+                    logging.debug('No consensus for taxon {} in position {}. Consensus: {}' \
                         ', found {}'.format(self.name, i, consensus, found))
                     consensus_seq += noconsensus_char
 
@@ -873,7 +873,7 @@ class OTU(Taxa):
             perc_dist = diversity.beta.hamming(seq, consensus_seq, 
                 ignore_char=noconsensus_char)/l
             if perc_dist > 0.03:
-                logging.warning('Taxa {} has a hamming distance > 3% ({}) to the generated ' \
+                logging.warning('Taxon {} has a hamming distance > 3% ({}) to the generated ' \
                     'consensus sequence {} from individual sequence {}. Check that sequences ' \
                     'make sense'.format(self.name, perc_dist, consensus_seq, seq))
 
@@ -929,33 +929,33 @@ class OTU(Taxa):
         set_from_table = False
         for tax in TAX_LEVELS:
             if set_to_na:
-                self.taxonomy[tax] = DEFAULT_TAXA_NAME
+                self.taxonomy[tax] = DEFAULT_TAXLEVEL_NAME
                 continue
             if set_from_table:
                 if tax not in consensus_table.columns:
-                    self.taxonomy[tax] = DEFAULT_TAXA_NAME
+                    self.taxonomy[tax] = DEFAULT_TAXLEVEL_NAME
                 else:
                     self.taxonomy[tax] = consensus_table[tax][self.name]
                 continue
             if tax == 'asv':
                 continue
             consensus = []
-            for taxaname in self.aggregated_taxas:
+            for taxonname in self.aggregated_taxa:
                 if tax == 'species':
-                    aaa = self.aggregated_taxonomies[taxaname][tax].split('/')
+                    aaa = self.aggregated_taxonomies[taxonname][tax].split('/')
                 else:
-                    aaa = [self.aggregated_taxonomies[taxaname][tax]]
+                    aaa = [self.aggregated_taxonomies[taxonname][tax]]
                 for bbb in aaa:
                     if bbb in consensus:
                         continue
                     else:
                         consensus.append(bbb)
-            if DEFAULT_TAXA_NAME in consensus:
-                consensus.remove(DEFAULT_TAXA_NAME)
+            if DEFAULT_TAXLEVEL_NAME in consensus:
+                consensus.remove(DEFAULT_TAXLEVEL_NAME)
 
             if len(consensus) == 0:
                 # No taxonomy found at this level
-                self.taxonomy[tax] = DEFAULT_TAXA_NAME
+                self.taxonomy[tax] = DEFAULT_TAXLEVEL_NAME
             elif len(consensus) == 1:
                 # All taxonomies agree
                 self.taxonomy[tax] = consensus[0]
@@ -968,8 +968,8 @@ class OTU(Taxa):
                     # This means that the taxonomy is different on a level different than
                     logging.critical('{} taxonomy does not agree'.format(self.name))
                     logging.critical(str(self))
-                    for taxaname in self.aggregated_taxonomies:
-                        logging.warning('{}'.format(list(self.aggregated_taxonomies[taxaname].values())))
+                    for taxonname in self.aggregated_taxonomies:
+                        logging.warning('{}'.format(list(self.aggregated_taxonomies[taxonname].values())))
 
                     if consensus_table is not None:
                         # Set from the table
@@ -977,8 +977,8 @@ class OTU(Taxa):
                         set_from_table = True
 
                     else:
-                        # Set this taxa level and everything below it to NA
-                        self.taxonomy[tax] = DEFAULT_TAXA_NAME
+                        # Set this taxonomic level and everything below it to NA
+                        self.taxonomy[tax] = DEFAULT_TAXLEVEL_NAME
                         set_to_na = True
 
 
@@ -1015,12 +1015,12 @@ class TaxaSet(Clusterable):
     Aggregating/Deaggregating
     -------------------------
     s that are aggregated together to become OTUs are used because sequences are 
-    very close together. This class provides functionality for aggregating Taxas together
+    very close together. This class provides functionality for aggregating taxa together
     (`mdsine2.TaxaSet.aggregate_items`) and to deaggregate a specific name from an aggregation
     (`mdsine2.TaxaSet.deaggregate_item`). If this object is within a `mdsine2.Study` object,
     MAKE SURE TO CALL THE AGGREGATION FUNCTIONS FROM THE `mdsine2.Study` OBJECT 
     (`mdsine2.Study.aggregate_items`, `mdsine2.Study.deaggregate_item`) so that the reads
-    for the agglomerates and individual Taxas can be consistent with the TaxaSet.
+    for the agglomerates and individual taxa can be consistent with the TaxaSet.
 
     Parameters
     ----------
@@ -1040,7 +1040,7 @@ class TaxaSet(Clusterable):
         self.index = []
         self._len = 0
 
-        # Add all of the Taxas from the dataframe if necessary
+        # Add all of the taxa from the dataframe if necessary
         if taxonomy_table is not None:
             self.parse(taxonomy_table=taxonomy_table)
 
@@ -1052,14 +1052,14 @@ class TaxaSet(Clusterable):
             return False
 
     def __getitem__(self,key):
-        '''Get an Taxa by either its sequence, name, index, or id
+        '''Get a Taxon/OTU by either its sequence, name, index, or id
 
         Parameters
         ----------
         key : str, int
-            Key to reference the Taxa
+            Key to reference the Taxon
         '''
-        if istaxatype(key):
+        if istaxontype(key):
             return key
         if key in self.ids:
             return self.ids[key]
@@ -1074,16 +1074,16 @@ class TaxaSet(Clusterable):
     def __iter__(self):
         '''Returns each Taxa obejct in order
         '''
-        for taxa in self.index:
-            yield taxa
+        for taxon in self.index:
+            yield taxon
 
     def __len__(self):
-        '''Return the number of Taxas in the TaxaSet
+        '''Return the number of taxa in the TaxaSet
         '''
         return self._len
 
     @property
-    def n_taxas(self):
+    def n_taxa(self):
         '''Alias for __len__
         '''
         return self._len
@@ -1093,10 +1093,10 @@ class TaxaSet(Clusterable):
 
         `taxonomy_table`
         ----------------
-        This is a dataframe that contains the taxonomic information for each Taxa.
+        This is a dataframe that contains the taxonomic information for each Taxon.
         The columns that must be included are:
-            'name' : name of the taxa
-            'sequence' : sequence of the taxa
+            'name' : name of the taxon
+            'sequence' : sequence of the taxon
         All of the taxonomy specifications are optional:
             'kingdom' : kingdom taxonomy
             'phylum' : phylum taxonomy
@@ -1111,7 +1111,7 @@ class TaxaSet(Clusterable):
         Parameters
         ----------
         taxonomy_table : pandas.DataFrame, Optional
-            DataFrame conttaxaining the required information (Taxonomy, sequence).
+            DataFrame containing the required information (Taxonomy, sequence).
             If nothing is passed in, it will be an empty TaxaSet
         '''
         logging.info('TaxaSet parsng new taxonomy table. Resetting')
@@ -1135,12 +1135,12 @@ class TaxaSet(Clusterable):
             if tax not in taxonomy_table.columns:
                 logging.info('Adding in `{}` column'.format(tax))
                 taxonomy_table = taxonomy_table.insert(-1, tax, 
-                    [DEFAULT_TAXA_NAME for _ in range(len(taxonomy_table.index))])
+                    [DEFAULT_TAXLEVEL_NAME for _ in range(len(taxonomy_table.index))])
 
         for i, name in enumerate(taxonomy_table.index):
             seq = taxonomy_table[SEQUENCE_COLUMN_LABEL][name]
-            taxa = Taxa(name=name, sequence=seq, idx=self._len)
-            taxa.set_taxonomy(
+            taxon = Taxon(name=name, sequence=seq, idx=self._len)
+            taxon.set_taxonomy(
                 tax_kingdom=taxonomy_table.loc[name]['kingdom'],
                 tax_phylum=taxonomy_table.loc[name]['phylum'],
                 tax_class=taxonomy_table.loc[name]['class'],
@@ -1149,119 +1149,119 @@ class TaxaSet(Clusterable):
                 tax_genus=taxonomy_table.loc[name]['genus'],
                 tax_species=taxonomy_table.loc[name]['species'])
 
-            self.ids[taxa.id] = taxa
-            self.names[taxa.name] = taxa
-            self.index.append(taxa)  
+            self.ids[taxon.id] = taxon
+            self.names[taxon.name] = taxon
+            self.index.append(taxon)  
             self._len += 1
 
         self.ids.update_order()
         self.names.update_order()
 
-    def add_taxa(self, name, sequence=None):
-        '''Adds an Taxa to the set
+    def add_taxon(self, name, sequence=None):
+        '''Adds a taxon to the set
 
         Parameters
         ----------
         name : str
-            This is the name of the Taxa
+            This is the name of the taxon
         sequence : str
-            This is the sequence of the Taxa
+            This is the sequence of the taxon
         '''
-        taxa = Taxa(name=name, sequence=sequence, idx=self._len)
-        self.ids[taxa.id] = taxa
-        self.names[taxa.name] = taxa
-        self.index.append(taxa)
+        taxon = Taxon(name=name, sequence=sequence, idx=self._len)
+        self.ids[taxon.id] = taxon
+        self.names[taxon.name] = taxon
+        self.index.append(taxon)
 
-        # update the order of the Taxas
+        # update the order of the taxa
         self.ids.update_order()
         self.names.update_order()
         self._len += 1
 
         return self
 
-    def del_taxa(self, taxa):
-        '''Deletes the Taxa from the set.
+    def del_taxon(self, taxon):
+        '''Deletes the taxon from the set.
 
         Parameters
         ----------
-        taxa : str, int, Taxa
-            Can either be the name, sequence, or the ID of the Taxa
+        taxon : str, int, Taxon
+            Can either be the name, sequence, or the ID of the taxon
         '''
         # Get the ID
-        taxa = self[taxa]
-        oidx = self.ids.index[taxa.id]
+        taxon = self[taxon]
+        oidx = self.ids.index[taxon.id]
 
-        # Delete the Taxa from everything
-        # taxa = self[taxa]
-        self.ids.pop(taxa.id, None)
-        self.names.pop(taxa.name, None)
+        # Delete the taxon from everything
+        # taxon = self[taxon]
+        self.ids.pop(taxon.id, None)
+        self.names.pop(taxon.name, None)
         self.index.pop(oidx)
 
-        # update the order of the Taxas
+        # update the order of the taxa
         self.ids.update_order()
         self.names.update_order()
 
-        # Update the indices of the taxas
+        # Update the indices of the taxa
         # Since everything points to the same object we only need to do it once
-        for aidx, taxa in enumerate(self.index):
-            taxa.idx = aidx
+        for aidx, taxon in enumerate(self.index):
+            taxon.idx = aidx
 
         self._len -= 1
         return self
 
-    def taxonomic_similarity(self,oid1,oid2):
-        '''Calculate the taxonomic similarity between Taxa1 and Taxa2
+    def taxonomic_similarity(self, oid1, oid2):
+        '''Calculate the taxonomic similarity between taxon1 and taxon2
         Iterates through most broad to least broad taxonomic level and
         returns the fraction that are the same.
 
         Example:
-            taxa1.taxonomy = (A,B,C,D)
-            taxa2.taxonomy = (A,B,E,F)
+            taxon1.taxonomy = (A,B,C,D)
+            taxon2.taxonomy = (A,B,E,F)
             similarity = 0.5
 
-            taxa1.taxonomy = (A,B,C,D)
-            taxa2.taxonomy = (A,B,C,F)
+            taxon1.taxonomy = (A,B,C,D)
+            taxon2.taxonomy = (A,B,C,F)
             similarity = 0.75
 
-            taxa1.taxonomy = (A,B,C,D)
-            taxa2.taxonomy = (A,B,C,D)
+            taxon1.taxonomy = (A,B,C,D)
+            taxon2.taxonomy = (A,B,C,D)
             similarity = 1.0
 
-            taxa1.taxonomy = (X,Y,Z,M)
-            taxa2.taxonomy = (A,B,E,F)
+            taxon1.taxonomy = (X,Y,Z,M)
+            taxon2.taxonomy = (A,B,E,F)
             similarity = 0.0
 
         Parameters
         ----------
         oid1, oid2 : str, int
-            The name, id, or sequence for the Taxa
+            The name, id, or sequence for the taxon
         '''
         if oid1 == oid2:
             return 1
-        taxa1 = self[oid1].get_lineage()
-        taxa2 = self[oid2].get_lineage()
+        taxon1 = self[oid1].get_lineage()
+        taxon2 = self[oid2].get_lineage()
         i = 0
-        for a in taxa1:
-            if a == taxa2[i]:
+        for a in taxon1:
+            if a == taxon2[i]:
                 i += 1
             else:
                 break
-        return i/8 # including Taxa
+        return i/8 # including asv
 
     def aggregate_items(self, anchor, other):
-        '''Create an OTU with the anchor `anchor` and other taxa  `other`.
+        '''Create an OTU with the anchor `anchor` and other taxon  `other`.
         The aggregate takes the sequence and the taxonomy from the anchor.
 
         Parameters
         ----------
-        anchor, other : str, int, mdsine2.Taxa, mdsine2.OTU
-            These are the Taxas/Aggregates that you're joining together. The anchor is
+        anchor, other : str, int, mdsine2.Taxon, mdsine2.OTU
+            These are the Taxa/Aggregates that you're joining together. The anchor is
             the one you are setting the sequeunce and taxonomy to
 
         Returns
         -------
         mdsine2.OTU
-            This is the new aggregated Taxa containing anchor and other
+            This is the new aggregated taxon containing anchor and other
         '''
         anchor = self[anchor]
         other = self[other]
@@ -1274,12 +1274,12 @@ class TaxaSet(Clusterable):
         self.ids = CustomOrderedDict()
         self.names = CustomOrderedDict()
 
-        for idx, taxa in enumerate(self.index):
-            taxa.idx = idx
-            self.ids[taxa.id] = taxa
-            self.names[taxa.name] = taxa
+        for idx, taxon in enumerate(self.index):
+            taxon.idx = idx
+            self.ids[taxon.id] = taxon
+            self.names[taxon.name] = taxon
         
-        # update the order of the Taxas
+        # update the order of the taxa
         self.ids.update_order()
         self.names.update_order()
 
@@ -1296,26 +1296,26 @@ class TaxaSet(Clusterable):
             This is an OTU with multiple sequences contained. Must 
             have the name `other` in there
         other : str
-            This is the name of the Taxa that should be taken out of `agg`
+            This is the name of the taxon that should be taken out of `agg`
 
         Returns
         -------
-        mdsine2.Taxa
-            This is the deaggregated Taxa
+        mdsine2.Taxon
+            This is the deaggregated taxon
         '''
         agg = self[agg]
         if not isotu(agg):
-            raise TypeError('`agg` ({}) must be an AggregatedTaxa'.format(type(agg)))
+            raise TypeError('`agg` ({}) must be an OTU'.format(type(agg)))
         if not plutil.isstr(other):
             raise TypeError('`other` ({}) must be a str'.format(type(other)))
-        if other not in agg.aggregated_taxas:
+        if other not in agg.aggregated_taxa:
             raise ValueError('`other` ({}) is not contained in `agg` ({}) ({})'.format(
-                other, agg.name, agg.aggregated_taxas))
+                other, agg.name, agg.aggregated_taxa))
 
-        other = Taxa(name=other, sequence=agg.aggregated_seqs[other], idx=self._len)
+        other = Taxon(name=other, sequence=agg.aggregated_seqs[other], idx=self._len)
         other.taxonomy = agg.aggregated_taxonomies[other.name]
         agg.aggregated_seqs.pop(other.name, None)
-        agg.aggregated_taxas.remove(other.name)
+        agg.aggregated_taxa.remove(other.name)
         agg.aggregated_taxonomies.pop(other.name, None)
 
         self.index.append(other)
@@ -1333,23 +1333,23 @@ class TaxaSet(Clusterable):
         Example
         -------
         Names before in order:
-        [Taxa_22, Taxa_9982, TUDD_8484]
+        [Taxon_22, Taxon_9982, TUDD_8484]
 
-        Calling taxas.rename(prefix='OTU')
+        Calling taxa.rename(prefix='OTU')
         New names:
         [OTU_1, OTU_2, OTU_3]
 
-        Calling taxas.rename(prefix='OTU', zero_based_index=True)
+        Calling taxa.rename(prefix='OTU', zero_based_index=True)
         New names:
         [OTU_0, OTU_1, OTU_2]
 
         Parameters
         ----------
         prefix : str
-            This is the prefix of the new Taxas. The name of the Taxas will change
+            This is the prefix of the new taxon. The name of the taxa will change
             to `'{}_{}'.format(prefix, index)`
         zero_based_index : bool
-            If this is False, then we start the enumeration of the Taxas from 1
+            If this is False, then we start the enumeration of the taxa from 1
             instead of 0. If True, then the enumeration starts at 0
         '''
         if not plutil.isstr(prefix):
@@ -1363,13 +1363,13 @@ class TaxaSet(Clusterable):
             offset = 1
 
         self.names = CustomOrderedDict()
-        for taxa in self.index:
-            newname = prefix + '_{}'.format(int(taxa.idx + offset))
-            taxa.name = newname
-            self.names[taxa.name] = taxa
+        for taxon in self.index:
+            newname = prefix + '_{}'.format(int(taxon.idx + offset))
+            taxon.name = newname
+            self.names[taxon.name] = taxon
 
     def generate_consensus_seqs(self, threshold=0.65, noconsensus_char='N'):
-        '''Generate the consensus sequence for all of the Taxa given the sequences
+        '''Generate the consensus sequence for all of the taxa given the sequences
         of all the contained ASVs of the respective OTUs
 
         Parameters
@@ -1379,9 +1379,9 @@ class TaxaSet(Clusterable):
         noconsensus_char : str
             This is the character to replace
         '''
-        for taxa in self:
-            if isotu(taxa):
-                taxa.generate_consensus_seq(
+        for taxon in self:
+            if isotu(taxon):
+                taxon.generate_consensus_seq(
                     threshold=threshold, 
                     noconsensus_char=noconsensus_char)
 
@@ -1393,12 +1393,12 @@ class TaxaSet(Clusterable):
         --------
         mdsine2.pylab.base.OTU.generate_consensus_taxonomy
         '''
-        for taxa in self:
-            if isotu(taxa):
-                taxa.generate_consensus_taxonomy(consensus_table=consensus_table)
+        for taxon in self:
+            if isotu(taxon):
+                taxon.generate_consensus_taxonomy(consensus_table=consensus_table)
 
     def write_taxonomy_to_csv(self, path, sep='\t'):
-        '''Write the taxa names, sequences, and taxonomy to a table
+        '''Write the taxon names, sequences, and taxonomy to a table
 
         Parameters
         ----------
@@ -1410,10 +1410,10 @@ class TaxaSet(Clusterable):
         columns = ['name', 'sequence', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species']
         data = []
 
-        for taxa in self:
-            temp = [taxa.name, taxa.sequence]
+        for taxon in self:
+            temp = [taxon.name, taxon.sequence]
             for taxlevel in TAX_LEVELS[:-1]:
-                temp.append(taxa.taxonomy[taxlevel])
+                temp.append(taxon.taxonomy[taxlevel])
             data.append(temp)
         
         df = pd.DataFrame(data, columns=columns)
@@ -1555,12 +1555,12 @@ class CustomOrderedDict(dict):
 
     def update_order(self):
         '''This will update the reverse dictionary based on the index. It will 
-        also redo the indexes if an Taxa was deleted
+        also redo the indexes if a taxon was deleted
         '''
         self.order = np.array(list(self.keys()))
         self.index = {}
-        for i, taxa in enumerate(self.order):
-            self.index[taxa] = i
+        for i, taxon in enumerate(self.order):
+            self.index[taxon] = i
 
 
 class Subject(Saveable):
@@ -1580,7 +1580,7 @@ class Subject(Saveable):
         self.qpcr = {}
         self.reads = {}
         self.times = np.asarray([])
-        self._reads_individ = {} # for taking out aggregated taxas
+        self._reads_individ = {} # for taking out aggregated taxa
 
     def add_time(self, timepoint):
         '''Add the timepoint `timepoint`. Set the reads and qpcr at that timepoint
@@ -1600,12 +1600,12 @@ class Subject(Saveable):
         timepoint : numeric, array
             This is the time that the measurement occurs. If it is an array, then
             we are adding for multiple timepoints
-        reads : np.ndarray(NTAXAS, N_TIMEPOINTS)
-            These are the reads for the Taxas in order. Assumed to be in the 
+        reads : np.ndarray(N_TAXA, N_TIMEPOINTS)
+            These are the reads for the taxa in order. Assumed to be in the 
             same order as the TaxaSet. If it is a dataframe then we use the rows
-            to index the Taxa names. If timepoints is an array, then we are adding 
+            to index the taxon names. If timepoints is an array, then we are adding 
             for multiple timepoints. In this case we assume that the rows index  the 
-            Taxa and the columns index the timepoint.
+            taxon and the columns index the timepoint.
         '''
         if not plutil.isarray(timepoints):
             timepoints = [timepoints]
@@ -1619,9 +1619,9 @@ class Subject(Saveable):
             reads = reads.reshape(-1,1)
         if reads.ndim != 2:
             raise ValueError('`reads` {} must be a matrix'.format(reads.shape))
-        if reads.shape[0] != len(self.taxas) or reads.shape[1] != len(timepoints):
-            raise ValueError('`reads` shape {} does not align with the number of taxas ({}) ' \
-                'or timepoints ({})'.format(reads.shape, len(self.taxas), len(timepoints)))
+        if reads.shape[0] != len(self.taxa) or reads.shape[1] != len(timepoints):
+            raise ValueError('`reads` shape {} does not align with the number of taxa ({}) ' \
+                'or timepoints ({})'.format(reads.shape, len(self.taxa), len(timepoints)))
 
         for tidx, timepoint in enumerate(timepoints):
             if timepoint in self.reads:
@@ -1722,8 +1722,8 @@ class Subject(Saveable):
         return self.parent.perturbations
 
     @property
-    def taxas(self):
-        return self.parent.taxas
+    def taxa(self):
+        return self.parent.taxa
 
     @property
     def index(self):
@@ -1741,7 +1741,7 @@ class Subject(Saveable):
         If there is no qPCR data, then the absolute abundance is set to None.
         '''
 
-        shape = (len(self.taxas), len(self.times))
+        shape = (len(self.taxa), len(self.times))
         raw = np.zeros(shape=shape, dtype=int)
         rel = np.zeros(shape=shape, dtype=float)
         abs = np.zeros(shape=shape, dtype=float)
@@ -1768,7 +1768,7 @@ class Subject(Saveable):
         These are the parameters for `matrix`
         '''
         d = self.matrix(**kwargs)
-        index = self.taxas.names.order
+        index = self.taxa.names.order
         times = self.times
         for key in d:
             d[key] = pd.DataFrame(data=d[key], index=index, columns=times)
@@ -1792,7 +1792,7 @@ class Subject(Saveable):
         return np.sum(self.reads[t])
 
     def cluster_by_taxlevel(self, dtype, taxlevel, index_formatter=None, smart_unspec=True):
-        '''Clusters the Taxas into the taxonomic level indicated in `taxlevel`.
+        '''Clusters the taxa into the taxonomic level indicated in `taxlevel`.
 
         Smart Unspecified
         -----------------
@@ -1804,7 +1804,7 @@ class Subject(Saveable):
         subj : pylab.base.Subject
             This is the subject that we are getting the data from
         taxlevel : str, None
-            This is the taxa level to aggregate the data at. If it is 
+            This is the taxonomic level to aggregate the data at. If it is 
             None then we do not do any collapsing (this is the same as 'asv')
         dtype : str
             This is the type of data to cluster. Options are:
@@ -1823,7 +1823,7 @@ class Subject(Saveable):
         pandas.DataFrame
             Dataframe of the data
         dict (str->str)
-            Maps Taxa name to the row it got allocated to
+            Maps taxon name to the row it got allocated to
         '''
         # Type checking
         if not plutil.isstr(dtype):
@@ -1858,37 +1858,37 @@ class Subject(Saveable):
         dfnew = pd.DataFrame(columns = cols).set_index(taxlevel)
 
         # Get the level in the taxonomy, create a new entry if it is not there already
-        taxas = {} # lineage -> label
-        for i, taxa in enumerate(self.taxas):
+        taxa = {} # lineage -> label
+        for i, taxon in enumerate(self.taxa):
             row = df.index[i]
-            tax = taxa.get_lineage(level=taxlevel)
+            tax = taxon.get_lineage(level=taxlevel)
             tax = tuple(tax)
             tax = str(tax).replace("'", '')
-            if tax in taxas:
-                dfnew.loc[taxas[tax]] += df.loc[row]
+            if tax in taxa:
+                dfnew.loc[taxa[tax]] += df.loc[row]
             else:
-                if not taxa.tax_is_defined(taxlevel) and smart_unspec:
+                if not taxon.tax_is_defined(taxlevel) and smart_unspec:
                     # Get the least common ancestor above the taxlevel
                     taxlevelidx = TAX_IDXS[taxlevel]
                     ttt = None
                     while taxlevelidx > -1:
-                        if taxa.tax_is_defined(TAX_LEVELS[taxlevelidx]):
+                        if taxon.tax_is_defined(TAX_LEVELS[taxlevelidx]):
                             ttt = TAX_LEVELS[taxlevelidx]
                             break
                         taxlevelidx -= 1
                     if ttt is None:
-                        raise ValueError('Could not find a single taxlevel: {}'.format(str(taxa)))
-                    taxas[tax] = '{} {}, {} NA'.format(ttt.capitalize(), 
-                        taxa.taxonomy[ttt], taxlevel.capitalize())
+                        raise ValueError('Could not find a single taxlevel: {}'.format(str(taxon)))
+                    taxa[tax] = '{} {}, {} NA'.format(ttt.capitalize(), 
+                        taxon.taxonomy[ttt], taxlevel.capitalize())
                 else:
-                    taxas[tax] = plutil.taxaname_formatter(format=index_formatter, taxa=taxa, taxas=self.taxas)
+                    taxa[tax] = plutil.taxaname_formatter(format=index_formatter, taxon=taxon, taxa=self.taxa)
                 toadd = pd.DataFrame(np.array(list(df.loc[row])).reshape(1,-1),
-                    index=[taxas[tax]], columns=dfnew.columns)
+                    index=[taxa[tax]], columns=dfnew.columns)
                 dfnew = dfnew.append(toadd)
             
-            if taxas[tax] not in taxaname_map:
-                taxaname_map[taxas[tax]] = []
-            taxaname_map[taxas[tax]].append(taxa.name)
+            if taxa[tax] not in taxaname_map:
+                taxaname_map[taxa[tax]] = []
+            taxaname_map[taxa[tax]].append(taxon.name)
         
         return dfnew, taxaname_map
 
@@ -1961,7 +1961,7 @@ class Subject(Saveable):
             This is an OTU with multiple sequences contained. Must 
             have the name `other` in there
         other : str
-            This is the name of the Taxa that should be taken out of `agg`
+            This is the name of the taxon that should be taken out of `agg`
         '''
         # Append the reads of the deaggregated at the bottom and subtract them
         # from the aggregated index
@@ -1976,8 +1976,8 @@ class Subject(Saveable):
                 new_reads = self._reads_individ[other][t]
             except:
                 raise ValueError('Timepoint `{}` added into subject `{}` after ' \
-                    'Taxa `{}` was removed. Study object is not consistent. You ' \
-                    'cannot add in other timepoints after you aggregate taxas. Failing.'.format(
+                    'Taxon `{}` was removed. Study object is not consistent. You ' \
+                    'cannot add in other timepoints after you aggregate taxa. Failing.'.format(
                         t, self.name, other))
             self.reads[t][aggidx] = self.reads[t][aggidx] - new_reads
             self.reads[t] = np.append(self.reads[t], new_reads)
@@ -1985,24 +1985,24 @@ class Subject(Saveable):
         return
 
     def _aggregate_items(self, anchor, other):
-        '''Aggregate the taxa `other` into `anchor`. This is called from 
+        '''Aggregate the taxon `other` into `anchor`. This is called from 
         `mdsine2.Study.aggregate_items`.
 
         Parameters
         ----------
-        anchor, other : OTU, Taxa
+        anchor, other : OTU, Taxon
             These are the s to combine
         '''
-        # If one of them are Taxas, then record their individual reads
+        # If one of them are taxon, then record their individual reads
         # if we want to dissociate them later
-        for taxa in [anchor, other]:
-            if istaxatype(taxa):
-                if taxa.name in self._reads_individ:
-                    raise ValueError('Taxa is already in this dict. This should not happen.')
-                aidx = taxa.idx
-                self._reads_individ[taxa.name] = {}
+        for taxon in [anchor, other]:
+            if istaxontype(taxon):
+                if taxon.name in self._reads_individ:
+                    raise ValueError('Taxon is already in this dict. This should not happen.')
+                aidx = taxon.idx
+                self._reads_individ[taxon.name] = {}
                 for t in self.times:
-                    self._reads_individ[taxa.name][t] = self.reads[t][aidx]
+                    self._reads_individ[taxon.name][t] = self.reads[t][aidx]
         
         for t in self.times:
             self.reads[t][anchor.idx] += self.reads[t][other.idx]
@@ -2015,19 +2015,19 @@ class Study(Saveable):
 
     Paramters
     ---------
-    taxas : TaxaSet, Optional
+    taxa : TaxaSet, Optional
         Contains all of the s
     '''
-    def __init__(self, taxas, name='unnamed-study'):
+    def __init__(self, taxa, name='unnamed-study'):
         self.name = name
         self.id = id(self)
         self._subjects = {}
         self.perturbations = None
         self.qpcr_normalization_factor = None
-        if not istaxaset(taxas):
-            raise ValueError('If `taxas` ({}) is specified, it must be an TaxaSet' \
-                ' type'.format(type(taxas)))
-        self.taxas = taxas
+        if not istaxaset(taxa):
+            raise ValueError('If `taxa` ({}) is specified, it must be an TaxaSet' \
+                ' type'.format(type(taxa)))
+        self.taxa = taxa
 
         self._samples = {}
         
@@ -2059,8 +2059,8 @@ class Study(Saveable):
                 'perturbation:`name`' -> int : This is a perturbation meta data where the
                     name of the perturbation is `name`
         reads : pandas.DataFrame, None
-            Contains the reads for each one of the samples and taxas
-                index (str) : indexes the Taxa name
+            Contains the reads for each one of the samples and taxa
+                index (str) : indexes the taxon name
                 columns (str) : indexes the sample ID
             If nothing is passed in, the reads are set to None
         qpcr : pandas.DataFrame, None
@@ -2185,7 +2185,7 @@ class Study(Saveable):
         sep : str
             This is the separator of the table
         '''
-        data = [[taxa.name for taxa in self.taxas]]
+        data = [[taxon.name for taxon in self.taxa]]
         index = ['name']
         for sampleid in self._samples:
             sid, t = self._samples[sampleid]
@@ -2311,7 +2311,7 @@ class Study(Saveable):
                 sids[i] = list(self._subjects.keys())[sids[i]]
             elif not plutil.isstr(sids[i]):
                 raise ValueError('`sid` ({}) must be a str'.format(type(sids[i])))
-        ret = Study(taxas=self.taxas, name=name)
+        ret = Study(taxa=self.taxa, name=name)
         ret.qpcr_normalization_factor = self.qpcr_normalization_factor
 
         for s in sids:
@@ -2337,37 +2337,37 @@ class Study(Saveable):
 
         return ret
 
-    def pop_taxas_like(self, study):
+    def pop_taxa_like(self, study):
         '''Remove s in the TaxaSet so that it matches the TaxaSet in `study`
 
         Parameters
         ----------
         study : mdsine2.study
-            This is the study object we are mirroring in terms of Taxas
+            This is the study object we are mirroring in terms of taxa
         '''
         to_delete = []
-        for taxa in self.taxas:
-            if taxa.name not in study.taxas:
-                to_delete.append(taxa.name)
-        self.pop_taxas(to_delete)
+        for taxon in self.taxa:
+            if taxon.name not in study.taxa:
+                to_delete.append(taxon.name)
+        self.pop_taxa(to_delete)
 
-    def pop_taxas(self, oids):
-        '''Delete the Taxas indicated in oidxs. Updates the reads table and
+    def pop_taxa(self, oids):
+        '''Delete the taxa indicated in oidxs. Updates the reads table and
         the internal TaxaSet
 
         Parameters
         ----------
         oids : str, int, list(str/int)
-            These are the identifiers for each of the Taxa/s to delete
+            These are the identifiers for each of the taxon/taxa to delete
         '''
         # get indices
         oidxs = []
         for oid in oids:
-            oidxs.append(self.taxas[oid].idx)
+            oidxs.append(self.taxa[oid].idx)
         
         # Delete the s from taxaset
         for oid in oids:
-            self.taxas.del_taxa(oid)
+            self.taxa.del_taxon(oid)
 
         # Delete the reads
         for subj in self:
@@ -2385,25 +2385,25 @@ class Study(Saveable):
             This is an OTU with multiple sequences contained. Must 
             have the name `other` in there
         other : str
-            This is the name of the Taxa that should be taken out of `agg`
+            This is the name of the taxon that should be taken out of `agg`
 
         Returns
         -------
-        mdsine2.Taxa
-            This is the deaggregated Taxa
+        mdsine2.Taxon
+            This is the deaggregated taxon
         '''
-        agg = self.taxas[agg]
+        agg = self.taxa[agg]
         if not isotu(agg):
-            raise TypeError('`agg` ({}) must be an AggregatedTaxa'.format(type(agg)))
+            raise TypeError('`agg` ({}) must be an OTU'.format(type(agg)))
         if not plutil.isstr(other):
             raise TypeError('`other` ({}) must be a str'.format(type(other)))
-        if other not in agg.aggregated_taxas:
+        if other not in agg.aggregated_taxa:
             raise ValueError('`other` ({}) is not contained in `agg` ({}) ({})'.format(
-                other, agg.name, agg.aggregated_taxas))
+                other, agg.name, agg.aggregated_taxa))
 
         for subj in self:
             subj._deaggregate_item(agg=agg, other=other)
-        return self.taxas.deaggregate_item(agg, other)
+        return self.taxa.deaggregate_item(agg, other)
 
     def aggregate_items_like(self, study, prefix=None):
         '''Aggregate s like they are in study `study`
@@ -2415,44 +2415,44 @@ class Study(Saveable):
         prefix : str
             If provided, this is how you rename the Taxas after aggregation
         '''
-        for taxa in study.taxas:
-            if isotu(taxa):
-                aname = taxa.aggregated_taxas[0]
-                for bname in taxa.aggregated_taxas[1:]:
+        for taxon in study.taxa:
+            if isotu(taxon):
+                aname = taxon.aggregated_taxa[0]
+                for bname in taxon.aggregated_taxa[1:]:
                     self.aggregate_items(aname, bname)
         if prefix is not None:
-            self.taxas.rename(prefix=prefix)
+            self.taxa.rename(prefix=prefix)
 
-    def aggregate_items(self, taxa1, taxa2):
-        '''Aggregates the abundances of `taxa1` and `taxa2`. Updates the reads table and
+    def aggregate_items(self, taxon1, taxon2):
+        '''Aggregates the abundances of `taxon1` and `taxon2`. Updates the reads table and
         internal TaxaSet
 
         Parameters
         ----------
-        taxa1, taxa2 : str, int, mdsine2.Taxa, mdsine2.OTU
-            These are the Taxas you are agglomerating together
+        taxon1, taxon2 : str, int, mdsine2.Taxon, mdsine2.OTU
+            These are the taxa you are agglomerating together
 
         Returns
         -------
         mdsine2.OTU
-            This is the new aggregated Taxa containing anchor and other
+            This is the new aggregated taxon containing anchor and other
         '''
         # Find the anchor - use the highest index
-        aidx1 = self.taxas[taxa1].idx
-        aidx2 = self.taxas[taxa2].idx
+        aidx1 = self.taxa[taxon1].idx
+        aidx2 = self.taxa[taxon2].idx
 
         if aidx1 == aidx2:
-            raise ValueError('Cannot aggregate the same taxa: {}'.format(self.taxas[taxa1]))
+            raise ValueError('Cannot aggregate the same taxa: {}'.format(self.taxa[taxon1]))
         elif aidx1 < aidx2:
-            anchor = self.taxas[taxa1]
-            other = self.taxas[taxa2]
+            anchor = self.taxa[taxon1]
+            other = self.taxa[taxon2]
         else:
-            anchor = self.taxas[taxa2]
-            other = self.taxas[taxa1]
+            anchor = self.taxa[taxon2]
+            other = self.taxa[taxon1]
 
         for subj in self:
             subj._aggregate_items(anchor=anchor, other=other)
-        return self.taxas.aggregate_items(anchor=anchor, other=other)
+        return self.taxa.aggregate_items(anchor=anchor, other=other)
 
     def pop_times(self, times, sids='all'):
         '''Discard the times in `times` for the subjects listed in `sids`.
@@ -2581,12 +2581,12 @@ class Study(Saveable):
         if self.perturbations is None:
             self.perturbations = Perturbations()
         if plutil.isdict(a):
-            if not plutil.isdict(end):
-                raise ValueError('If `a` is a dict, then `end` ({}) ' \
-                    'needs to be a dict'.format(type(end)))
+            if not plutil.isdict(ends):
+                raise ValueError('If `a` is a dict, then `ends` ({}) ' \
+                    'needs to be a dict'.format(type(ends)))
             if not plutil.isstr(name):
                 raise ValueError('`name` ({}) must be defined as a str'.format(type(name)))
-            self.perturbations.append(BasePerturbation(starts=a, ends=end, name=name))
+            self.perturbations.append(BasePerturbation(starts=a, ends=ends, name=name))
         elif isperturbation(a):
             self.perturbations.append(a)
         else:
@@ -2668,7 +2668,7 @@ class Study(Saveable):
         else:
             raise TypeError('`times` type ({}) not recognized'.format(type(times)))
 
-        shape = (len(self.taxas), len(times))
+        shape = (len(self.taxa), len(times))
         M = np.zeros(shape, dtype=float)
         for tidx, t in enumerate(times):
             temp = None
@@ -2687,7 +2687,7 @@ class Study(Saveable):
                 else:
                     temp = temp + (a.reshape(-1,1), )
             if temp is None:
-                temp = np.zeros(len(self.taxas)) * np.nan
+                temp = np.zeros(len(self.taxa)) * np.nan
             else:
                 temp = np.hstack(temp)
                 temp = aggfunc(temp, axis=1)
@@ -2700,13 +2700,13 @@ class Study(Saveable):
 
         Aggregation of subjects
         -----------------------
-        What are the values for the Taxas? Set the aggregation type using the parameter `agg`. 
+        What are the values for the taxa? Set the aggregation type using the parameter `agg`. 
         These are the types of aggregations:
-            'mean': Mean abundance of the Taxa at a timepoint over all the subjects
-            'median': Median abundance of the Taxa at a timepoint over all the subjects
-            'sum': Sum of all the abundances of the Taxa at a timepoint over all the subjects
-            'max': Maximum abundance of the Taxa at a timepoint over all the subjects
-            'min': Minimum abundance of the Taxa at a timepoint over all the subjects
+            'mean': Mean abundance of the taxon at a timepoint over all the subjects
+            'median': Median abundance of the taxon at a timepoint over all the subjects
+            'sum': Sum of all the abundances of the taxon at a timepoint over all the subjects
+            'max': Maximum abundance of the taxon at a timepoint over all the subjects
+            'min': Minimum abundance of the taxon at a timepoint over all the subjects
 
         Aggregation of times
         --------------------
@@ -2731,13 +2731,13 @@ class Study(Saveable):
         
         Returns
         -------
-        np.ndarray(n_taxas, n_times)
+        np.ndarray(n_taxa, n_times)
         '''
         M, _ =  self._matrix(dtype=dtype, agg=agg, times=times)
         return M
 
     def df(self, *args, **kwargs):
-        '''Returns a dataframe of the data in matrix. Rows are Taxas, columns are times.
+        '''Returns a dataframe of the data in matrix. Rows are taxa, columns are times.
 
         Returns
         -------
@@ -2748,6 +2748,6 @@ class Study(Saveable):
         mdsine2.Study.matrix
         '''
         M, times = self._matrix(*args, **kwargs)
-        index = [taxa.name for taxa in self.taxas]
+        index = [taxon.name for taxon in self.taxa]
         return pd.DataFrame(data=M, index=index, columns=times)
 

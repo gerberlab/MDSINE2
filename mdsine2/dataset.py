@@ -69,8 +69,8 @@ def load_gibson(dset=None, as_df=False, with_perturbations=True, species_assignm
         return {'metadata': metadata, 'taxonomy': taxonomy, 
             'reads': reads, 'qpcr':qpcr, 'perturbations': perturbations}
     else:
-        taxas = TaxaSet(taxonomy_table=taxonomy)
-        study = Study(taxas=taxas, name=dset)
+        taxa = TaxaSet(taxonomy_table=taxonomy)
+        study = Study(taxa=taxa, name=dset)
         study.parse(
             metadata=metadata,
             reads=reads,
@@ -103,9 +103,9 @@ def parse(name, metadata, taxonomy, reads=None, qpcr=None, perturbations=None, s
     mdsine2.Study
     '''
     taxonomy = pd.read_csv(taxonomy, sep=sep)
-    taxas = TaxaSet()
-    taxas.parse(taxonomy_table=taxonomy)
-    study = Study(taxas, name=name)
+    taxa = TaxaSet()
+    taxa.parse(taxonomy_table=taxonomy)
+    study = Study(taxa, name=name)
 
     metadata = pd.read_csv(metadata, sep=sep)
     if reads is not None:

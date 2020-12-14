@@ -101,9 +101,9 @@ class metrics:
         
         Parameters
         ----------
-        pred : np.array(n_gibbs, n_taxas, n_taxas)
+        pred : np.array(n_gibbs, n_taxa, n_taxa)
             This is the raw interaction matrix over each gibb step
-        truth : np.array(n_taxas, n_taxas)
+        truth : np.array(n_taxa, n_taxa)
             This is the true raw interaction matrix
         signed : bool
             If True, then we take the sign into consideration. Essentially, 0, (+), and (-) are 

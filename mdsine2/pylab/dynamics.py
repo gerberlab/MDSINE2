@@ -85,7 +85,7 @@ class Integratable:
         Parameters
         ----------
         x : np.ndarray((n,1))
-            This is the abundance as a column vector for each Taxa
+            This is the abundance as a column vector for each taxon
         t : numeric
             This is the time point we are integrating to
         dt : numeric
@@ -157,7 +157,7 @@ def integrate(dynamics, initial_conditions, dt, n_days, processvar=None,
     processvar : BaseProcessVariance, None
         This is the process variance we want to inject into the integration.
         If None, we assume there is no process variance and it is a normal ODE
-    initial_conditions : np.ndarray((n_taxas,1), dtype=float)
+    initial_conditions : np.ndarray((n_taxa,1), dtype=float)
         These are the initial conditions to integrate from. This must be a 
         column array.
     dt : float
@@ -193,8 +193,8 @@ def integrate(dynamics, initial_conditions, dt, n_days, processvar=None,
     Returns
     -------
     dict
-        'X': np.ndarray((n_taxas, k), dtype=float)
-            The abundances for each Taxa (row) for each time (column)
+        'X': np.ndarray((n_taxa, k), dtype=float)
+            The abundances for each taxon (row) for each time (column)
         'times': np.ndarray((k, ), dtype=float)
             These are the times, in days, for each column
     '''

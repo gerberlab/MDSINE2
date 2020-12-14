@@ -29,9 +29,9 @@ class SyntheticData(pl.Saveable):
     Dynamics with clustered interactions and perturbations. The 
     dynamical class is specified in the module `model`.
 
-    NOTE: We cannot specify the dynamical class until we have our `taxas` 
+    NOTE: We cannot specify the dynamical class until we have our `taxa` 
     object so we wait to define it then, and it is done automatically 
-    once we call the function `set_taxas`
+    once we call the function `set_taxa`
 
     Parameters
     ----------
@@ -70,38 +70,38 @@ class SyntheticData(pl.Saveable):
             A[i,i] = -self.dynamics.self_interactions[i]
         return A
 
-    def set_taxas(self, n_taxas=None, sequences=None, filename=None, taxas=None):
+    def set_taxa(self, n_taxa=None, sequences=None, filename=None, taxa=None):
         '''Sets the set. If you have a list of sequences you want to read in,
         pass in the list of `sequences` and it will create a new Taxa for every sequence. 
-        If you  just want to specify how many Taxas you want and you dont care about 
-        sequences, then specify the number of Taxas with `n_taxas`. If there is an
+        If you  just want to specify how many Taxa you want and you dont care about 
+        sequences, then specify the number of Taxa with `n_taxa`. If there is an
         TaxaSet saved on file, you can load it with the keyword `filename`.
 
         Defines the dynamics once done.
 
         Example:
-            >>> self.set_taxas(n_taxas=5)
-            5 Taxas with random sequences
+            >>> self.set_taxa(n_taxa=5)
+            5 Taxa with random sequences
 
             >>> seq = ['AAAA', 'TTTT', 'GGGG', 'CCCC']
-            >>> self.set_taxas(sequences=seq)
-            3 Taxas with the sequences specified above
+            >>> self.set_taxa(sequences=seq)
+            3 Taxs with the sequences specified above
             
-            >>> self.set_taxas(filename='pickles/test.pkl')
+            >>> self.set_taxa(filename='pickles/test.pkl')
             Reads in the TaxaSet saved at 'pickles/test.pkl'
 
         Parameters
         ----------
-        n_taxas : int, Optional
-            How many Taxas you want. This is unnecessary if you specify a list of 
+        n_taxa : int, Optional
+            How many Taxa you want. This is unnecessary if you specify a list of 
             sequences.
         sequences : array(str), Optional
             The sequence for each Taxa. If you do not want any, dont specify anything
-            and specify the number of Taxas. If nothing is provided it will create
+            and specify the number of Taxa. If nothing is provided it will create
             a random sequence of sequences for each Taxa
         filename : str, Optional
             The filename to lead the Taxa
-        taxas : pylab.base.TaxaSet
+        taxa : pylab.base.TaxaSet
             This is an TaxaSet object
 
         Returns
@@ -109,24 +109,24 @@ class SyntheticData(pl.Saveable):
         pl.TaxaSet
             This is the TaxaSet that gets created
         '''
-        a = n_taxas is not None
+        a = n_taxa is not None
         b = sequences is not None
         c = filename is not None
-        d = taxas is not None
+        d = taxa is not None
 
         if a + b + c + d != 1:
-            raise TypeError('Only one of `n_taxas` ({}), `sequences` ({}), '\
-                '`filename` ({}), or taxas ({})  can be specified'.format(
-                type(n_taxas), type(sequences), type(filename), type(taxas)))
+            raise TypeError('Only one of `n_taxa` ({}), `sequences` ({}), '\
+                '`filename` ({}), or taxa ({})  can be specified'.format(
+                type(n_taxa), type(sequences), type(filename), type(taxa)))
         
-        if n_taxas is not None:
-            if not pl.isint(n_taxas):
-                raise TypeError('`n_taxas` ({}) must be an int'.format(type(n_taxas)))
-            self.taxas = pl.TaxaSet()
-            for i in range(n_taxas):
+        if n_taxa is not None:
+            if not pl.isint(n_taxa):
+                raise TypeError('`n_taxa` ({}) must be an int'.format(type(n_taxa)))
+            self.taxa = pl.TaxaSet()
+            for i in range(n_taxa):
                 name = 'Taxa_{}'.format(i)
                 seq = ''.join(random.choices(['A','T','G','C','U'], k=50))
-                self.taxas.add_taxa(name=name, sequence=seq)
+                self.taxa.add_taxa(name=name, sequence=seq)
         elif sequences is not None:
             if not pl.isarray(sequences):
                 raise TypeError('`sequences` ({}) must be an array'.format(type(sequences)))
@@ -135,15 +135,15 @@ class SyntheticData(pl.Saveable):
                     pl.itercheck(sequences, pl.isstr)))
             for i, seq in enumerate(sequences):
                 name = 'Taxa_{}'.format(i)
-                self.taxas.add_taxa(name=name, sequence=seq)
+                self.taxa.add_taxa(name=name, sequence=seq)
         elif filename is not None:
             if not pl.isstr(filename):
                 raise TypeError('`filename` ({}) must be a str'.format(type(filename)))
-            self.taxas = pl.TaxaSet.load(filename)
+            self.taxa = pl.TaxaSet.load(filename)
         else:
-            self.taxas = taxas
+            self.taxa = taxa
 
-        self.dynamics = model.gLVDynamicsSingleClustering(taxas=self.taxas, 
+        self.dynamics = model.gLVDynamicsSingleClustering(taxa=self.taxa, 
             perturbations_additive=self.perturbations_additive)
         
     def set_cluster_assignments(self, clusters=None, n_clusters=None, evenness=None):
@@ -154,7 +154,7 @@ class SyntheticData(pl.Saveable):
         Parameters
         ----------
         clusters : list(list(int))
-            These are the cluster assignments of the Taxas
+            These are the cluster assignments of the Taxa
         n_clusters : int
             Number of clusters to create
         evenness : str, 1 or 2-dim array
@@ -181,8 +181,8 @@ class SyntheticData(pl.Saveable):
         --------
         pylab.cluster.Clustering.__init__
         '''
-        if self.taxas is None:
-            raise ValueError('Must specify the TaxaSet before by calling `self.set_taxas`')
+        if self.taxa is None:
+            raise ValueError('Must specify the TaxaSet before by calling `self.set_taxa`')
 
         if clusters is None:
             if not pl.isint(n_clusters):
@@ -192,22 +192,22 @@ class SyntheticData(pl.Saveable):
             start = 0
             if pl.isstr(evenness):
                 if evenness == 'even':
-                    size = int(len(self.taxas)/n_clusters)
+                    size = int(len(self.taxa)/n_clusters)
                     for _ in range(n_clusters-1):
                         clusters.append(np.arange(start,start+size, dtype=int))
                         start += size
-                    clusters.append(np.arange(start, len(self.taxas), dtype=int))
+                    clusters.append(np.arange(start, len(self.taxa), dtype=int))
                 elif evenness == 'sequence':
                     logging.info('Making affinity matrix from sequences')
-                    evenness = np.diag(np.ones(len(self.taxas), dtype=float))
+                    evenness = np.diag(np.ones(len(self.taxa), dtype=float))
 
-                    for i in range(len(self.taxas)):
-                        for j in range(len(self.taxas)):
+                    for i in range(len(self.taxa)):
+                        for j in range(len(self.taxa)):
                             if j <= i:
                                 continue
                             # Subtract because we want to make a similarity matrix
                             dist = 1-diversity.beta.hamming(
-                                list(self.taxas[i].sequence), list(self.taxas[j].sequence))
+                                list(self.taxa[i].sequence), list(self.taxa[j].sequence))
                             evenness[i,j] = dist
                             evenness[j,i] = dist
 
@@ -224,9 +224,9 @@ class SyntheticData(pl.Saveable):
                 elif evenness.ndim == 2:
                     if evenness.shape[0] != evenness.shape[1]:
                         raise ValueError('Must be a square matrix')
-                    if evenness.shape[0] != len(self.taxas):
+                    if evenness.shape[0] != len(self.taxa):
                         raise ValueError('Length of the side ({}) must be the same as the number of s ({})'.format(
-                            evenness.shape[0], len(self.taxas)))
+                            evenness.shape[0], len(self.taxa)))
                     
                     c = AgglomerativeClustering(
                         n_clusters=n_clusters,
@@ -248,21 +248,21 @@ class SyntheticData(pl.Saveable):
 
         # Initialize clustering object
         logging.info('cluster assignments: {}'.format(clusters))
-        self.dynamics.clustering = pl.Clustering(clusters = clusters, items=self.taxas, G=self.G)
+        self.dynamics.clustering = pl.Clustering(clusters = clusters, items=self.taxa, G=self.G)
         return self
 
     def shuffle_cluster_assignments(self, p):
         '''Shuffle the cluster assignments that were specified in `set_cluster_assignments`.
 
-        `p` indicates what proportion of the Taxas to be reassigned. Example: `p=.1` means
-        that you want to shuffle 10% of the Taxas.
+        `p` indicates what proportion of the Taxa to be reassigned. Example: `p=.1` means
+        that you want to shuffle 10% of the Taxa.
 
         NOTE: THIS SHOULD BE CALLED BEFORE YOU CALL THE FUNCTION `sample_dynamics`.
 
         Parameters
         ----------
         p : float
-            Proportion of the Taxas to be shuffled
+            Proportion of the Taxa to be shuffled
         '''
         if self.dynamics.clustering is None:
             raise ValueError('Must specfiy the clusters before you call this function')
@@ -271,8 +271,8 @@ class SyntheticData(pl.Saveable):
         if p < 0 or p > 1:
             raise ValueError('`p` ({}) should be 0 =< p =< 1'.format(p))
 
-        n = int(p*len(self.taxas))
-        oidxs = np.random.randint(len(self.taxas), size=n)
+        n = int(p*len(self.taxa))
+        oidxs = np.random.randint(len(self.taxa), size=n)
 
         logging.info('Taxa indices to shuffle: {}'.format(oidxs))
 
@@ -459,7 +459,7 @@ class SyntheticData(pl.Saveable):
             self.dynamics.perturbations.append(a)
         return a
 
-    def icml_topology(self, n_taxas=13, max_abundance=None):
+    def icml_topology(self, n_taxa=13, max_abundance=None):
         '''Recreate the dynamical system used in the ICML paper [1]. If you use the 
         default parameters you will get the same interaction matrix that was used in [1].
 
@@ -468,21 +468,21 @@ class SyntheticData(pl.Saveable):
 
         Parameters
         ----------
-        n_taxas : int
-            These are how many Taxas to include in the system. We will always have 3 clusters and
-            the proportion of Taxas in each cluster is as follows:
+        n_taxa : int
+            These are how many Taxa to include in the system. We will always have 3 clusters and
+            the proportion of Taxa in each cluster is as follows:
                 cluster 1 - 5/13
                 cluster 2 - 6/13
                 cluster 3 - 2/13
-            We assign each Taxa to each cluster the best we can, any extra Taxas we put into cluster 3
+            We assign each Taxa to each cluster the best we can, any extra Taxa we put into cluster 3
         max_abundance : numeric, None
             This is the abundance to set the maximum. All of the other 
             parameters change proportionally. If `None` then we assume no change.
         '''
-        if not pl.isint(n_taxas):
-            raise TypeError('`n_taxas` ({}) must be an int'.format(type(n_taxas)))
-        if n_taxas < 3:
-            raise ValueError('`n_taxas` ({}) must be >= 3'.format(n_taxas))
+        if not pl.isint(n_taxa):
+            raise TypeError('`n_taxa` ({}) must be an int'.format(type(n_taxa)))
+        if n_taxa < 3:
+            raise ValueError('`n_taxa` ({}) must be >= 3'.format(n_taxa))
         if max_abundance is not None:
             if not pl.isnumeric(max_abundance):
                 raise TypeError('`max_abundance` ({}) must be a numeric'.format(type(max_abundance)))
@@ -490,21 +490,21 @@ class SyntheticData(pl.Saveable):
                 raise ValueError('`max_abundance` ({}) must be > 0'.format(max_abundance))
         
         # Generate s
-        self.set_taxas(n_taxas)
+        self.set_taxa(n_taxa)
 
         # Make cluster assignments with the approximate proportions
-        c0size = int(5*n_taxas/13)
-        c1size = int(6*n_taxas/13)
-        c2size = int(n_taxas - c0size - c1size)
+        c0size = int(5*n_taxa/13)
+        c1size = int(6*n_taxa/13)
+        c2size = int(n_taxa - c0size - c1size)
 
-        frac = 150*n_taxas/13
+        frac = 150*n_taxa/13
 
         clusters = [
             np.arange(0, c0size, dtype=int).tolist(), 
             np.arange(c0size, c0size+c1size, dtype=int).tolist(),
             np.arange(c0size+c1size, c0size+c1size+c2size, dtype=int).tolist()]
 
-        self.dynamics.clustering = pl.Clustering(clusters=clusters, items=self.taxas, G=self.G)
+        self.dynamics.clustering = pl.Clustering(clusters=clusters, items=self.taxa, G=self.G)
         self.dynamics.interactions = pl.Interactions(clustering=self.dynamics.clustering, 
             use_indicators=True, G=self.G)
 
@@ -528,16 +528,16 @@ class SyntheticData(pl.Saveable):
                 interaction.value = 0
                 interaction.indicator = False
         
-        self.dynamics.growth = pl.random.uniform.sample(low=18, high=22, size=n_taxas)/150
-        # self.dynamics.growth = pl.random.uniform.sample(.1, 0.6, size=n_taxas)
-        # self.dynamics.growth = pl.random.uniform.sample(low=.1 + 0.2, high=math.log(10) - 0.2, size=n_taxas)
-        # self.dynamics.growth = pl.random.uniform.sample(low=0.12, high=2, size=n_taxas)
-        self.dynamics.self_interactions = np.ones(n_taxas, dtype=float)*(5)/150
-        # self.dynamics.self_interactions = pl.random.uniform.sample(-.05/150, -50/150, size=n_taxas)
+        self.dynamics.growth = pl.random.uniform.sample(low=18, high=22, size=n_taxa)/150
+        # self.dynamics.growth = pl.random.uniform.sample(.1, 0.6, size=n_taxa)
+        # self.dynamics.growth = pl.random.uniform.sample(low=.1 + 0.2, high=math.log(10) - 0.2, size=n_taxa)
+        # self.dynamics.growth = pl.random.uniform.sample(low=0.12, high=2, size=n_taxa)
+        self.dynamics.self_interactions = np.ones(n_taxa, dtype=float)*(5)/150
+        # self.dynamics.self_interactions = pl.random.uniform.sample(-.05/150, -50/150, size=n_taxa)
 
         if max_abundance is not None:
-            # self.dynamics.growth = pl.random.uniform.sample(low=.1, high=math.log(10), size=n_taxas)
-            # self.dynamics.growth = pl.random.uniform.sample(low=.21, high=.5, size=n_taxas)/2
+            # self.dynamics.growth = pl.random.uniform.sample(low=.1, high=math.log(10), size=n_taxa)
+            # self.dynamics.growth = pl.random.uniform.sample(low=.21, high=.5, size=n_taxa)/2
             # rescale the abundance such that hte max the max is ~max_abundance
             frac = 25/max_abundance
             self.dynamics.self_interactions *= frac
@@ -545,7 +545,7 @@ class SyntheticData(pl.Saveable):
                 if interaction.indicator:
                     interaction.value *= frac
     
-    def icml_topology_real(self, n_taxas=13, max_abundance=None, scale_interaction=None):
+    def icml_topology_real(self, n_taxa=13, max_abundance=None, scale_interaction=None):
         '''Recreate the dynamical system used in the ICML paper [1]. If you use the 
         default parameters you will get the same interaction matrix that was used in [1].
 
@@ -554,21 +554,21 @@ class SyntheticData(pl.Saveable):
 
         Parameters
         ----------
-        n_taxas : int
-            These are how many Taxas to include in the system. We will always have 3 clusters and
-            the proportion of Taxas in each cluster is as follows:
+        n_taxa : int
+            These are how many Taxa to include in the system. We will always have 3 clusters and
+            the proportion of Taxa in each cluster is as follows:
                 cluster 1 - 5/13
                 cluster 2 - 6/13
                 cluster 3 - 2/13
-            We assign each Taxa to each cluster the best we can, any extra Taxas we put into cluster 3
+            We assign each Taxa to each cluster the best we can, any extra Taxa we put into cluster 3
         max_abundance : numeric, None
             This is the abundance to set the maximum. All of the other 
             parameters change proportionally. If `None` then we assume no change.
         '''
-        if not pl.isint(n_taxas):
-            raise TypeError('`n_taxas` ({}) must be an int'.format(type(n_taxas)))
-        if n_taxas < 3:
-            raise ValueError('`n_taxas` ({}) must be >= 3'.format(n_taxas))
+        if not pl.isint(n_taxa):
+            raise TypeError('`n_taxa` ({}) must be an int'.format(type(n_taxa)))
+        if n_taxa < 3:
+            raise ValueError('`n_taxa` ({}) must be >= 3'.format(n_taxa))
         if max_abundance is not None:
             if not pl.isnumeric(max_abundance):
                 raise TypeError('`max_abundance` ({}) must be a numeric'.format(type(max_abundance)))
@@ -576,22 +576,22 @@ class SyntheticData(pl.Saveable):
                 raise ValueError('`max_abundance` ({}) must be > 0'.format(max_abundance))
         if scale_interaction is None:
             scale_interaction = 1
-        # Generate Taxas
-        self.set_taxas(n_taxas)
+        # Generate Taxa
+        self.set_taxa(n_taxa)
 
         # Make cluster assignments with the approximate proportions
-        c0size = int(5*n_taxas/13)
-        c1size = int(6*n_taxas/13)
-        c2size = int(n_taxas - c0size - c1size)
+        c0size = int(5*n_taxa/13)
+        c1size = int(6*n_taxa/13)
+        c2size = int(n_taxa - c0size - c1size)
 
-        frac = 150*n_taxas/13
+        frac = 150*n_taxa/13
 
         clusters = [
             np.arange(0, c0size, dtype=int).tolist(), 
             np.arange(c0size, c0size+c1size, dtype=int).tolist(),
             np.arange(c0size+c1size, c0size+c1size+c2size, dtype=int).tolist()]
 
-        self.dynamics.clustering = pl.Clustering(clusters=clusters, items=self.taxas, G=self.G)
+        self.dynamics.clustering = pl.Clustering(clusters=clusters, items=self.taxa, G=self.G)
         self.dynamics.interactions = pl.Interactions(clustering=self.dynamics.clustering, 
             use_indicators=True, G=self.G)
 
@@ -615,15 +615,15 @@ class SyntheticData(pl.Saveable):
                 interaction.value = 0
                 interaction.indicator = False
         
-        # self.dynamics.growth = pl.random.uniform.sample(low=18, high=22, size=n_taxas)/150
-        self.dynamics.growth = pl.random.uniform.sample(0.5, 1.5, size=n_taxas)
-        # self.dynamics.growth = pl.random.uniform.sample(low=.1 + 0.2, high=math.log(10) - 0.2, size=n_taxas)
-        self.dynamics.self_interactions = np.ones(n_taxas, dtype=float)*(5)/150
-        # self.dynamics.self_interactions = pl.random.uniform.sample(-.05/150, -50/150, size=n_taxas)
+        # self.dynamics.growth = pl.random.uniform.sample(low=18, high=22, size=n_taxa)/150
+        self.dynamics.growth = pl.random.uniform.sample(0.5, 1.5, size=n_taxa)
+        # self.dynamics.growth = pl.random.uniform.sample(low=.1 + 0.2, high=math.log(10) - 0.2, size=n_taxa)
+        self.dynamics.self_interactions = np.ones(n_taxa, dtype=float)*(5)/150
+        # self.dynamics.self_interactions = pl.random.uniform.sample(-.05/150, -50/150, size=n_taxa)
 
         if max_abundance is not None:
-            # self.dynamics.growth = pl.random.uniform.sample(low=.1, high=math.log(10), size=n_taxas)
-            # self.dynamics.growth = pl.random.uniform.sample(low=.21, high=.5, size=n_taxas)/2
+            # self.dynamics.growth = pl.random.uniform.sample(low=.1, high=math.log(10), size=n_taxa)
+            # self.dynamics.growth = pl.random.uniform.sample(low=.21, high=.5, size=n_taxa)/2
             # rescale the abundance such that hte max the max is ~max_abundance
             frac = 25/max_abundance
             self.dynamics.self_interactions *= frac
@@ -997,7 +997,7 @@ class SyntheticData(pl.Saveable):
         n_valid = 1
 
         while n_valid > 0:
-            init_abundance = self.init_dist.sample(size=len(self.taxas)).reshape(-1,1)
+            init_abundance = self.init_dist.sample(size=len(self.taxa)).reshape(-1,1)
             d = self.dynamics.integrate(
                 initial_conditions=init_abundance,
                 dt=self.dt, processvar=processvar, subsample=True, 
@@ -1102,7 +1102,7 @@ class SyntheticData(pl.Saveable):
         readdepth_negbin = scipy.stats.nbinom(n_pred, p_pred)
         
         # Make data, record the data with noise
-        ret_subjset = pl.Study(taxas=self.taxas)
+        ret_subjset = pl.Study(taxa=self.taxa)
         for ridx in range(self.n_replicates):
             mid = str(ridx)
             ret_subjset.add(name=mid)
@@ -1164,7 +1164,7 @@ class SyntheticData(pl.Saveable):
         for times in self.times:
             n_time_points += len(times)
 
-        ret_subjset = pl.Study(taxas=self.taxas)
+        ret_subjset = pl.Study(taxa=self.taxa)
         data = self.data
         times = self.times
         for ridx in np.arange(self.n_replicates):
@@ -1342,7 +1342,7 @@ class SyntheticData(pl.Saveable):
         for times in self.times:
             n_time_points += len(times)
 
-        ret_subjset = pl.Study(taxas=self.taxas)
+        ret_subjset = pl.Study(taxa=self.taxa)
         data = self.data
         times = self.times
         for ridx in replicates:
@@ -1393,7 +1393,7 @@ class SyntheticData(pl.Saveable):
         -------
         pylab.Base.Study
         '''
-        subjset = pl.Study(taxas=self.taxas)
+        subjset = pl.Study(taxa=self.taxa)
         data = self.data
         times = self.times
 
@@ -1836,7 +1836,7 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
     
     How the synthetic system is set
     -------------------------------
-    n_taxas: Set to the number in chain.
+    n_taxa: Set to the number in chain.
     clustering: The clusters assignments are set to the value of the Clustering class
     interactions: Set to the expected value of the posterior. We only include interactions
         whose bayes factor is greater than `min_bayes_factor`.
@@ -1845,7 +1845,7 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
         of the posterior. We only include perturbation effects whose bayes factor is
         greater than `min_bayes_factor`
     growth and self-interactions: These are set to the learned values for each of the 
-        taxas.
+        taxa.
     init_dist: The distirbution of the initial timepoints are set by fitting a log normal
         ditribution to the `init_dist_timepoint`th timepoint
 
@@ -1895,8 +1895,8 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
     GRAPH = chain.graph
     DATA = GRAPH.data
     SUBJSET = DATA.subjects
-    TAXAS = DATA.taxas
-    logging.info('Number of Taxas ({})'.format(len(TAXAS)))
+    TAXA = DATA.taxa
+    logging.info('Number of Taxa ({})'.format(len(TAXA)))
 
     n_days = -1
     for subj in SUBJSET:
@@ -1915,7 +1915,7 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
     synth = SyntheticData(n_days=n_days,
         perturbations_additive=perturbations_additive)
 
-    synth.set_taxas(taxas=DATA.taxas)
+    synth.set_taxa(taxa=DATA.taxa)
     synth.set_cluster_assignments(clusters=CLUSTERING.toarray())
 
     # Set the interactions
@@ -1923,11 +1923,11 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
     synth.dynamics.interactions = pl.Interactions(clustering=synth.dynamics.clustering, 
         use_indicators=True, G=synth.G)
     logging.info('Generating bayes factors')
-    bayes_factors_taxas = INTERACTIONS.generate_bayes_factors_posthoc(
+    bayes_factors_taxa = INTERACTIONS.generate_bayes_factors_posthoc(
         prior=GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR].prior,
         section='posterior')
     logging.info('Getting values')
-    cluster_interactions_taxas = pl.variables.summary(INTERACTIONS, set_nan_to_0=False,
+    cluster_interactions_taxa = pl.variables.summary(INTERACTIONS, set_nan_to_0=False,
         section='posterior', only=['mean'])['mean']
 
     logging.info('Set the interactions')
@@ -1945,8 +1945,8 @@ def make_semisynthetic(chain, min_bayes_factor, init_dist_start, init_dist_end,
         # If the bayes factor of the interaction is greater than the minimum bayes
         # factor, then we set the interaction. If it is less, then we set the 
         # indicator to false
-        if bayes_factors_taxas[taidx, saidx] > min_bayes_factor:
-            interaction.value = cluster_interactions_taxas[taidx, saidx]
+        if bayes_factors_taxa[taidx, saidx] > min_bayes_factor:
+            interaction.value = cluster_interactions_taxa[taidx, saidx]
             interaction.indicator = True
         else:
             interaction.value = 0

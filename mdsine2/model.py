@@ -23,9 +23,9 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
     Parameters
     ----------
     growth : np.ndarray((n,))
-        This is the growth of the dynamics for each Taxa
+        This is the growth of the dynamics for each taxon
     interactions : np.ndarray((n,n)) 
-        Interactions is assumed are the Taxa-Taxa interactions (shape=(n,n)). The diagonal of
+        Interactions is assumed are the Taxon-Taxon interactions (shape=(n,n)). The diagonal of
         the interactions is assumed to be the self interactions.
     perturbations : list(np.ndarray((n,))), None
         These are the perturbation magnitudes for each perturbation.  If `None` then we assume 
@@ -54,7 +54,7 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         val : md2.Subject
             This is the subject we are forward simulating for
         initial_conditions : np.ndarray(n_taxa)
-            Initial conditions for each taxa
+            Initial conditions for each taxon
         times : np.ndarray
             These are the times to forward simulate for
         simulation_dt : float
@@ -75,7 +75,7 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section=section)
 
         si = -np.absolute(self_interactions)
-        for i in range(len(mcmc.graph.data.taxas)):
+        for i in range(len(mcmc.graph.data.taxa)):
             interactions[:, i, i] = si[:, i]
         interactions[np.isnan(interactions)] = 0
 
@@ -185,7 +185,7 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         Parameters
         ----------
         x : np.ndarray((n,1))
-            This is the abundance as a column vector for each Taxa
+            This is the abundance as a column vector for each taxon
         t : numeric
             This is the time point we are integrating to
         dt : numeric

@@ -66,9 +66,9 @@ class Data(pl.graph.DataNode):
             raise ValueError('`subjects` ({}) must be a pylab SubjectSet'.format(
                 type(subjects)))
         
-        self.taxas = subjects.taxas
+        self.taxa = subjects.taxa
         self.subjects = subjects
-        self.n_taxas = len(self.taxas)
+        self.n_taxa = len(self.taxa)
 
         self.data = []
         self.read_depths = []
@@ -326,7 +326,7 @@ class NegBinDispersionParam(pl.variables.Uniform):
     def _data_likelihood(a0, a1, latent, data, read_depth, rel_abund):
         cumm = 0
 
-        # For each taxa
+        # For each taxon
         for oidx in range(data.shape[0]):
             # For each replicate
             for k in range(data.shape[1]):
@@ -395,10 +395,10 @@ class TrajectorySet(pl.variables.Variable):
     def __init__(self, ridx, subjname, **kwargs):
         kwargs['name'] = STRNAMES.LATENT_TRAJECTORY + '_{}'.format(subjname)
         pl.variables.Variable.__init__(self, **kwargs)
-        n_taxas = len(self.G.data.taxas)
-        self.set_value_shape(shape=(n_taxas,))
+        n_taxa = len(self.G.data.taxa)
+        self.set_value_shape(shape=(n_taxa,))
         self.ridx = ridx
-        self.value = np.zeros(n_taxas, dtype=float)
+        self.value = np.zeros(n_taxa, dtype=float)
         self.data = self.G.data.data[self.ridx]
         self.read_depths = self.G.data.read_depths[self.ridx]
         self.qpcr_measurement = self.G.data.qpcr[self.ridx]
@@ -573,7 +573,7 @@ class FilteringMP(pl.graph.Node):
             else:
                 self.pool.append(worker)
 
-        self.total_n_datapoints = len(self.G.data.taxas) * len(self.G.data)
+        self.total_n_datapoints = len(self.G.data.taxa) * len(self.G.data)
 
     def update(self):
         start_time = time.time()
@@ -631,11 +631,11 @@ class FilteringMP(pl.graph.Node):
             This is the format to write taxonomy of the Taxa
         '''
         chain = self.G.inference
-        taxas  = chain.graph.data.taxas
+        taxa  = chain.graph.data.taxa
         os.makedirs(basepath, exist_ok=True)
 
         if chain.is_in_inference_order(STRNAMES.FILTERING):
-            taxanames = taxas.names.order
+            taxanames = taxa.names.order
 
             for ridx, subj in enumerate(self.G.data.subjects):
                 subj_basepath = os.path.join(basepath, subj.name)
@@ -656,7 +656,7 @@ class FilteringMP(pl.graph.Node):
                 for aidx, aname in enumerate(taxanames):
                     f.write('\n\nTaxa {}: {}\n'.format(
                         aidx, pl.taxaname_formatter(taxa_formatter, 
-                        taxa=aname, taxas=taxas)))
+                        taxon=aname, taxa=taxa)))
                     f.write('-------------------\n')
 
                     # Write what the data is
@@ -683,7 +683,7 @@ class FilteringMP(pl.graph.Node):
 
                     fig = plt.gcf()
                     fig.suptitle(pl.taxaname_formatter(format=taxa_formatter,
-                        taxa=aname, taxas=taxas))
+                        taxon=aname, taxa=taxa))
                     plotpath = os.path.join(subj_basepath, '{}.pdf'.format(aname))
                     plt.savefig(plotpath)
                     plt.close()
@@ -701,7 +701,7 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
         ridx):
         '''Initialize the values
 
-        reads : np.ndarray((n_taxas x n_reps))
+        reads : np.ndarray((n_taxa x n_reps))
         qpcr_mean : float
         qpcr_std : float
         prior_mean : float
@@ -710,7 +710,7 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
         tune : int
         end_tune : int
         target_acceptance_rate :float
-        value : np.ndarray((n_taxas,))
+        value : np.ndarray((n_taxa,))
         ridx : int
         '''
         self.reads = reads

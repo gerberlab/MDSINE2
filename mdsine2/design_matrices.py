@@ -45,7 +45,7 @@ class Data(DataNode):
 
     Description of internal objects
     -------------------------------
-    self.data : list(np.ndarray(n_taxas, n_times)) 
+    self.data : list(np.ndarray(n_taxa, n_times)) 
         These are the data matrices that are used to build the design matrices. Index
         the replicate by the index of the list. 
     
@@ -93,7 +93,7 @@ class Data(DataNode):
             raise ValueError('`subjects` ({}) must be a pylab Study'.format(
                 type(subjects)))
 
-        self.taxas = subjects.taxas
+        self.taxa = subjects.taxa
         self.subjects = subjects
         self.zero_inflation_transition_policy = zero_inflation_transition_policy
 
@@ -115,7 +115,7 @@ class Data(DataNode):
         self.timepoint2index = []
         self.toupdate = OrderedSet()
         self.n_replicates = len(self.subjects)
-        self.n_taxas = len(self.taxas)
+        self.n_taxa = len(self.taxa)
 
         for ridx, s in enumerate(self.subjects):
             d = s.matrix()
@@ -159,14 +159,14 @@ class Data(DataNode):
         n = 0
         for ridx in range(self.n_replicates):
             n += len(self.dt[ridx])
-        n *= self.n_taxas
-        n_taxas = self.n_taxas
+        n *= self.n_taxa
+        n_taxa = self.n_taxa
         self.dt_vec = np.zeros(n)
         i = 0
         for ridx in range(self.n_replicates):
             for t in self.dt[ridx]:
-                self.dt_vec[i:i+n_taxas] = t
-                i += n_taxas
+                self.dt_vec[i:i+n_taxa] = t
+                i += n_taxa
         self.sqrt_dt_vec = np.sqrt(self.dt_vec)
 
         self.design_matrices = {}
@@ -215,13 +215,13 @@ class Data(DataNode):
             self._structural_zeros = []
             for ridx in range(self.n_replicates):
                 self._structural_zeros.append(np.zeros(
-                    shape=(len(self.taxas), self.n_timepoints_for_replicate[ridx]), dtype=bool))
+                    shape=(len(self.taxa), self.n_timepoints_for_replicate[ridx]), dtype=bool))
             self._setrows_to_include_zero_inflation()
 
     def iter_for_building(self):
         for ridx in range(self.n_replicates):
             for tidx in range(self.n_dts_for_replicate[ridx]):
-                for oidx in range(len(self.taxas)):
+                for oidx in range(len(self.taxa)):
                     yield oidx, tidx, ridx
 
     def make_delta_t(self, sqrt=False):
@@ -384,11 +384,11 @@ class Data(DataNode):
             if reset_timepoints:
                 self.data[ridx] = np.hstack((
                     self.abs_data[ridx], 
-                    np.zeros(shape=(self.n_taxas, n_added))*np.nan))
+                    np.zeros(shape=(self.n_taxa, n_added))*np.nan))
             else:
                 self.data[ridx] = np.hstack((
                     self.data[ridx],
-                    np.zeros(shape=(self.n_taxas, n_added)) * np.nan))
+                    np.zeros(shape=(self.n_taxa, n_added)) * np.nan))
             self.data[ridx] = self.data[ridx][:,sorted_tidxs]
             self.n_timepoints_for_replicate[ridx] = len(self.times[ridx])
             self.n_dts_for_replicate[ridx] = len(self.times[ridx])-1
@@ -439,14 +439,14 @@ class Data(DataNode):
         n = 0
         for ridx in range(self.n_replicates):
             n += len(self.dt[ridx])
-        n *= self.n_taxas
-        n_taxas = self.n_taxas
+        n *= self.n_taxa
+        n_taxa = self.n_taxa
         self.dt_vec = np.zeros(n)
         i = 0
         for ridx in range(self.n_replicates):
             for t in self.dt[ridx]:
-                self.dt_vec[i:i+n_taxas] = t
-                i += n_taxas
+                self.dt_vec[i:i+n_taxa] = t
+                i += n_taxa
         self.sqrt_dt_vec = np.sqrt(self.dt_vec)
 
         self.total_n_timepoints_per_taxa = 0
@@ -494,7 +494,7 @@ class Data(DataNode):
                         self.tidxs_in_perturbation[ridx].append((start_idx, end_idx))
 
     def set_zero_inflation(self, turn_on=None, turn_off=None):
-        '''Set which timepoints taxas are set to be turned off. Any taxa, timepoints tuple
+        '''Set which timepoints taxa are set to be turned off. Any taxa, timepoints tuple
         not in `d` is assumed to be "present" (a nonn-structural zero). `d` is an array
         of 3-tuples, where:
             (ridx, tidx, aidx)
@@ -522,9 +522,9 @@ class Data(DataNode):
                 if tidx > self.n_timepoints_for_replicate[ridx] or tidx < 0:
                     raise ValueError('tidx ({}) in index `{}` ({}) is out of range. Only {} timepoints in replicate {}'.format(
                         tidx, i, (ridx,tidx,aidx), self.n_timepoints_for_replicate[ridx], ridx))
-                if aidx > len(self.taxas) or aidx < 0:
+                if aidx > len(self.taxa) or aidx < 0:
                     raise ValueError('aidx ({}) in index `{}` ({}) is out of range. Only {} s'.format(
-                        aidx, i, (ridx,tidx,aidx), len(self.taxas)))
+                        aidx, i, (ridx,tidx,aidx), len(self.taxa)))
 
                 self._structural_zeros[ridx][aidx,tidx] = False
 
@@ -536,9 +536,9 @@ class Data(DataNode):
                 if tidx > self.n_timepoints_for_replicate[ridx] or tidx < 0:
                     raise ValueError('tidx ({}) in index `{}` ({}) is out of range. Only {} timepoints in replicate {}'.format(
                         tidx, i, (ridx,tidx,aidx), self.n_timepoints_for_replicate[ridx], ridx))
-                if aidx > len(self.taxas) or aidx < 0:
+                if aidx > len(self.taxa) or aidx < 0:
                     raise ValueError('aidx ({}) in index `{}` ({}) is out of range. Only {} s'.format(
-                        aidx, i, (ridx,tidx,aidx), len(self.taxas)))
+                        aidx, i, (ridx,tidx,aidx), len(self.taxa)))
 
                 self._structural_zeros[ridx][aidx,tidx] = True
         self._setrows_to_include_zero_inflation()
@@ -561,7 +561,7 @@ class Data(DataNode):
 
         iii = 0
 
-        l = len(self.taxas) * self.total_n_dts_per_taxa
+        l = len(self.taxa) * self.total_n_dts_per_taxa
         self.rows_to_include_zero_inflation = np.zeros(l, dtype=bool)
         iii = 0
         for ridx in range(self.n_replicates):
@@ -572,7 +572,7 @@ class Data(DataNode):
                 tidxstart = dtidx
                 tidxend = dtidx
 
-                for aidx in range(len(self.taxas)):
+                for aidx in range(len(self.taxa)):
 
                     structzero_start = curr_structural_zero[aidx, tidxstart]
                     structzero_end = curr_structural_zero[aidx, tidxend]
@@ -616,7 +616,7 @@ class Data(DataNode):
 
         replicate_offset = 0
         ridxs = np.array([], dtype=int)
-        n_taxas = self.n_taxas
+        n_taxa = self.n_taxa
         for ridx in range(self.n_replicates):
             # For each replicate, get the time indices where ther are 
             # perturbations and then index them out
@@ -626,8 +626,8 @@ class Data(DataNode):
                     continue
 
                 ridxs = np.append(ridxs, replicate_offset + np.arange(
-                    start_tidx*n_taxas, (end_tidx-1)*n_taxas, dtype=int))
-            replicate_offset += n_taxas * self.n_dts_for_replicate[ridx]
+                    start_tidx*n_taxa, (end_tidx-1)*n_taxa, dtype=int))
+            replicate_offset += n_taxa * self.n_dts_for_replicate[ridx]
 
         ret = np.ones(len(self.lhs), dtype=bool)
         ret[ridxs] = False
@@ -867,19 +867,19 @@ class LHSVector(ObservationVector):
             n_dts = 0
             for sidx in subjects:
                 n_dts += self.G.dta.n_dts_for_replicate[sidx]
-        self.vector = np.zeros(self.G.data.n_taxas * n_dts, dtype=float)
+        self.vector = np.zeros(self.G.data.n_taxa * n_dts, dtype=float)
         i = 0
         for ridx in range(self.G.data.n_replicates):
             if ridx not in subjects:
                 # skip subject
                 continue
-            l = self.G.data.n_dts_for_replicate[ridx] * self.G.data.n_taxas
+            l = self.G.data.n_dts_for_replicate[ridx] * self.G.data.n_taxa
             LHSVector._fast_build_log(
                 ret=self.vector[i:i+l],
                 data=self.G.data.data[ridx],
                 dt=self.G.data.dt[ridx],
                 n_ts=self.G.data.n_dts_for_replicate[ridx],
-                n_taxas=self.G.data.n_taxas)
+                n_taxa=self.G.data.n_taxa)
             i += l
 
         if self.G.data.zero_inflation_transition_policy is not None:
@@ -891,12 +891,12 @@ class LHSVector(ObservationVector):
 
     @staticmethod
     @numba.jit(nopython=True, cache=True, fastmath=True)
-    def _fast_build_log(ret, data, dt, n_ts, n_taxas):
+    def _fast_build_log(ret, data, dt, n_ts, n_taxa):
         '''About 99.4% faster than regular python looping
         '''
         i = 0
         for tidx in range(n_ts):
-            for oidx in range(n_taxas):
+            for oidx in range(n_taxa):
                 ret[i] = (np.log(data[oidx, tidx+1]) - np.log(data[oidx,tidx]))/dt[tidx]
                 i += 1
 
@@ -906,13 +906,13 @@ class LHSVector(ObservationVector):
     def print_mer(self):
         i = 0
         for ridx in range(self.G.data.n_replicates):
-            l = self.G.data.n_dts_for_replicate[ridx] * self.G.data.n_taxas
+            l = self.G.data.n_dts_for_replicate[ridx] * self.G.data.n_taxa
             data = self.G.data.data[ridx]
             dt = self.G.data.dt[ridx]
             print('\n\n\n\n\n\n ridx', ridx)
             for tidx in range(self.G.data.n_dts_for_replicate[ridx]):
                 print('-------\ntidx',tidx)
-                for oidx in range(self.G.data.n_taxas):
+                for oidx in range(self.G.data.n_taxa):
                     print('oidx', oidx)
                     print('\tnext',np.log(data[oidx, tidx+1]), data[oidx, tidx+1])
                     print('\tcurr', np.log(data[oidx,tidx]), data[oidx, tidx])
@@ -930,13 +930,13 @@ class SelfInteractionDesignMatrix(DesignMatrix):
         DesignMatrix.__init__(self,
             varname=STRNAMES.SELF_INTERACTION_VALUE,
             update=True, **kwargs)
-        self.n_cols_master = self.G.data.n_taxas
+        self.n_cols_master = self.G.data.n_taxa
         total_n_dts = self.G.data.total_n_dts_per_taxa
         self.n_rows_master = self.n_cols_master * total_n_dts
         self.master_rows = np.arange(self.n_rows_master, dtype=int)
         self.master_cols = np.kron(
                 np.ones(total_n_dts, dtype=int),
-                np.arange(self.G.data.n_taxas,dtype=int))
+                np.arange(self.G.data.n_taxa,dtype=int))
         logging.info('Initializing self-interactions design matrix')
 
     def build(self):
@@ -949,7 +949,7 @@ class SelfInteractionDesignMatrix(DesignMatrix):
         data = self.G.data.data
         i = 0
         for ridx in range(self.G.data.n_replicates):
-            l = (self.G.data.n_dts_for_replicate[ridx]) * self.G.data.n_taxas
+            l = (self.G.data.n_dts_for_replicate[ridx]) * self.G.data.n_taxa
             self.data[i:i+l] = -data[ridx][:,:-1].ravel('F')
             i += l
             
@@ -1002,13 +1002,13 @@ class GrowthDesignMatrix(DesignMatrix):
     def __init__(self, **kwargs):
         DesignMatrix.__init__(self,
             varname=STRNAMES.GROWTH_VALUE, update=True, **kwargs)
-        self.n_cols_master = self.G.data.n_taxas
+        self.n_cols_master = self.G.data.n_taxa
         total_n_dts = self.G.data.total_n_dts_per_taxa
         self.n_rows_master = self.n_cols_master * total_n_dts
         self.master_rows = np.arange(self.n_rows_master, dtype=int)
         self.master_cols = np.kron(
                 np.ones(total_n_dts, dtype=int),
-                np.arange(self.G.data.n_taxas,dtype=int))
+                np.arange(self.G.data.n_taxa,dtype=int))
         logging.info('Initializing growth design matrix')
 
     def build(self):
@@ -1086,7 +1086,7 @@ class GrowthDesignMatrix(DesignMatrix):
                     d[ridx][oidxs, start:end] *= val
         i = 0
         for ridx in range(self.G.data.n_replicates):
-            l = (self.G.data.n_dts_for_replicate[ridx]) * self.G.data.n_taxas
+            l = (self.G.data.n_dts_for_replicate[ridx]) * self.G.data.n_taxa
             self.data_w_perts[i:i+l] = d[ridx][:,:-1].ravel('F')
             i += l
 
@@ -1150,7 +1150,7 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
         :math:`b_{ij}` : interactions from :math:`i` to :math:`j`
         :math:`b_{ii}` : self interactions for :math:`i`
         :math:`u_p(k)` : step function for perturbation :math:`p` at time :math:`t_k`
-        :math:`\gamma_{i,p}` : perturbation value for perturbation :math:`p` for taxa :math:`i`
+        :math:`\gamma_{i,p}` : perturbation value for perturbation :math:`p` for taxon :math:`i`
         Here the perturbation has an "effect" on the growth rates
 
     '''
@@ -1163,7 +1163,7 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
         self.perturbations = self.G.perturbations
         self.n_perturbations = len(self.perturbations)
         self.n_replicates = self.G.data.n_replicates
-        self.n_taxas = len(self.G.data.taxas)
+        self.n_taxa = len(self.G.data.taxa)
         self.growths = self.G[STRNAMES.GROWTH_VALUE]
 
         self.starts = []
@@ -1195,7 +1195,7 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
             self.ends[-1] = np.asarray(self.ends[-1], dtype=int)
 
         # Set rows and cols
-        self.total_len = int(total_tidxs * self.n_taxas)
+        self.total_len = int(total_tidxs * self.n_taxa)
         self.tidxs_in_pert_per_replicate = np.asarray(self.tidxs_in_pert_per_replicate, dtype=int)
         self.rows = np.zeros(self.total_len, dtype=int)
         self.cols = np.zeros(self.total_len, dtype=int)
@@ -1205,19 +1205,19 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
             rows=self.rows, 
             cols=self.cols, 
             n_perturbations=self.n_perturbations, 
-            n_taxas=self.n_taxas, 
+            n_taxa=self.n_taxa, 
             n_replicates=self.n_replicates, 
             tidxs_in_perturbation=self.tidxs_in_perturbation, 
             n_dts_for_replicate=self.G.data.n_dts_for_replicate)
 
         # Initialize the rows and cols for the data
-        self.n_rows = self.G.data.total_n_dts_per_taxa * self.G.data.n_taxas
-        self.n_cols = self.n_taxas * self.n_perturbations
+        self.n_rows = self.G.data.total_n_dts_per_taxa * self.G.data.n_taxa
+        self.n_cols = self.n_taxa * self.n_perturbations
         self.shape = (self.n_rows, self.n_cols)
 
     @staticmethod
     @numba.jit(nopython=True, cache=True, fastmath=True)
-    def init(rows, cols, n_perturbations, n_taxas, n_replicates, tidxs_in_perturbation, 
+    def init(rows, cols, n_perturbations, n_taxa, n_replicates, tidxs_in_perturbation, 
         n_dts_for_replicate):
 
         i = 0
@@ -1228,19 +1228,19 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
                 end = tidxs_in_perturbation[ridx,pidx,1]
                 if start == -1:
                     continue
-                base_col_idx = pidx * n_taxas
-                for oidx in range(n_taxas):
+                base_col_idx = pidx * n_taxa
+                for oidx in range(n_taxa):
                     col = oidx + base_col_idx
                     for tidx in range(start, end):
-                        rows[i] = oidx + tidx * n_taxas + base_row_idx
+                        rows[i] = oidx + tidx * n_taxa + base_row_idx
                         cols[i] = col
                         i += 1
 
-            base_row_idx = base_row_idx + n_taxas * n_dts_for_replicate[ridx]
+            base_row_idx = base_row_idx + n_taxa * n_dts_for_replicate[ridx]
 
     @staticmethod
     @numba.jit(nopython=True, cache=True, fastmath=True)
-    def fast_build(ret, n_perturbations, n_taxas, n_replicates, tidxs_in_perturbation, 
+    def fast_build(ret, n_perturbations, n_taxa, n_replicates, tidxs_in_perturbation, 
         growths, data):
 
         i = 0
@@ -1248,7 +1248,7 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
             start, end = tidxs_in_perturbation[pidx]
             if start == -1:
                 continue
-            for oidx in range(n_taxas):
+            for oidx in range(n_taxa):
                 growth = growths[oidx]
                 ret[i:(i+end-start)] = growth
                 i += end-start
@@ -1257,11 +1257,11 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
         growths = self.growths.value
         i = 0
         for ridx in range(self.n_replicates):
-            l = self.tidxs_in_pert_per_replicate[ridx] * self.n_taxas
+            l = self.tidxs_in_pert_per_replicate[ridx] * self.n_taxa
             PerturbationBaseDesignMatrix.fast_build(
                 ret=self.data[i:i+l], 
                 n_perturbations=self.n_perturbations, 
-                n_taxas=self.n_taxas, 
+                n_taxa=self.n_taxa, 
                 n_replicates=self.n_replicates, 
                 tidxs_in_perturbation=self.tidxs_in_perturbation[ridx], 
                 growths=growths, 
@@ -1290,14 +1290,14 @@ class PerturbationMixingDesignMatrix(DesignMatrix):
         self.parent = parent
         self.perturbations = self.G.perturbations
         self.n_perturbations = len(self.perturbations)
-        self.n_taxas = len(self.G.data.taxas)
-        self.n_rows = self.n_perturbations * self.n_taxas
+        self.n_taxa = len(self.G.data.taxa)
+        self.n_rows = self.n_perturbations * self.n_taxa
 
         # Maps an  and a perturbation to the column it corresponds to in `base`
-        self.keypair2col = np.zeros(shape=(self.n_taxas, self.n_perturbations), dtype=int)
+        self.keypair2col = np.zeros(shape=(self.n_taxa, self.n_perturbations), dtype=int)
         i = 0
         for pidx in range(self.n_perturbations):
-            for oidx in range(self.n_taxas):
+            for oidx in range(self.n_taxa):
                 self.keypair2col[oidx, pidx] = i
                 i += 1
         self.build(build=False)
@@ -1374,15 +1374,15 @@ class PerturbationDesignMatrix(DesignMatrix):
                when building the matrix, it is much easier to build this matrix
                with Numba, which is nearly as fast as C.
     `Mixing` : mdsine2.design_matrices.PerturbationMixingDesignMatrix
-        This is the object that selects for indicators and groups taxas together
+        This is the object that selects for indicators and groups taxa together
         into clusters. When we change the indicators of the perturbations or 
-        the cluster assignments of the Taxas, we only need to change this matrix,
+        the cluster assignments of the taxa, we only need to change this matrix,
         which is a lot faster than changing everything.
     '''
     def __init__(self, **kwargs):
         DesignMatrix.__init__(self, varname=STRNAMES.PERT_VALUE, **kwargs)
 
-        self.n_rows = self.G.data.total_n_dts_per_taxa * self.G.data.n_taxas
+        self.n_rows = self.G.data.total_n_dts_per_taxa * self.G.data.n_taxa
         self.n_cols = None
 
         self.base = PerturbationBaseDesignMatrix(add_to_dict=False, **kwargs)
@@ -1421,14 +1421,14 @@ class InteractionsBaseDesignMatrix(DesignMatrix):
         # Initialize and set up rows and cols for base matrix
         total_n_dts = self.G.data.total_n_dts_per_taxa
 
-        n_taxas = self.G.data.n_taxas
-        self.n_rows = int(n_taxas * total_n_dts)
-        self.n_cols = int(n_taxas * (n_taxas - 1))
+        n_taxa = self.G.data.n_taxa
+        self.n_rows = int(n_taxa * total_n_dts)
+        self.n_cols = int(n_taxa * (n_taxa - 1))
         self.shape = (self.n_rows, self.n_cols)
 
         self.master_rows = np.kron(
                 np.arange(self.n_rows, dtype=int),
-                np.ones(n_taxas-1, dtype=int))
+                np.ones(n_taxa-1, dtype=int))
         self.master_cols = np.kron(
             np.ones(total_n_dts, dtype=int),
             np.arange(self.n_cols, dtype=int))
@@ -1440,7 +1440,7 @@ class InteractionsBaseDesignMatrix(DesignMatrix):
     def build(self):
         '''Build the base matrix
         '''
-        n_taxas = self.G.data.n_taxas
+        n_taxa = self.G.data.n_taxa
         data = self.G.data.data
 
         self.rows = self.master_rows
@@ -1450,7 +1450,7 @@ class InteractionsBaseDesignMatrix(DesignMatrix):
         i = 0
         for ridx in range(self.G.data.n_replicates):
             i = InteractionsBaseDesignMatrix._fast_build(
-                ret=self.master_data, data=data[ridx], n_taxas=n_taxas,
+                ret=self.master_data, data=data[ridx], n_taxa=n_taxa,
                 n_dts=self.G.data.n_dts_for_replicate[ridx], i=i)
             
         if self.G.data.zero_inflation_transition_policy is not None:
@@ -1470,12 +1470,12 @@ class InteractionsBaseDesignMatrix(DesignMatrix):
 
     @staticmethod
     @numba.jit(nopython=True, cache=True, fastmath=True)
-    def _fast_build(ret, data, n_dts, n_taxas, i):
+    def _fast_build(ret, data, n_dts, n_taxa, i):
         '''About 99.5% faster than regular python looping
         '''
         for tidx in range(n_dts):
-            for toidx in range(n_taxas):
-                for soidx in range(n_taxas):
+            for toidx in range(n_taxa):
+                for soidx in range(n_taxa):
                     if toidx == soidx:
                         continue
                     ret[i] = data[soidx, tidx]
@@ -1484,15 +1484,15 @@ class InteractionsBaseDesignMatrix(DesignMatrix):
 
     @staticmethod
     @numba.jit(nopython=True, cache=True, fastmath=True)
-    def _fast_build_zi_ignore(ret, data, n_dts, n_taxas, i, zero_inflation, zi_mask):
+    def _fast_build_zi_ignore(ret, data, n_dts, n_taxa, i, zero_inflation, zi_mask):
         '''About 99.5% faster than regular python looping
 
         Only set to include if target taxa current timepoint and future timepoint are there and
         if the source taxa timepoint is there
         '''
         for tidx in range(n_dts):
-            for toidx in range(n_taxas):
-                for soidx in range(n_taxas):
+            for toidx in range(n_taxa):
+                for soidx in range(n_taxa):
                     if toidx == soidx:
                         continue
 
@@ -1531,17 +1531,17 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
             **kwargs)
 
         self.parent = parent
-        n_taxas = self.G.data.n_taxas
+        n_taxa = self.G.data.n_taxa
         self.clustering = self.G[STRNAMES.CLUSTERING_OBJ]
         self.interactions = self.G[STRNAMES.INTERACTIONS_OBJ]
-        self.n_rows = int(n_taxas * (n_taxas - 1))
+        self.n_rows = int(n_taxa * (n_taxa - 1))
 
         # Build the keypair2col dictionary
         self.keypair2col = np.zeros(
-            shape=(len(self.G.data.taxas), len(self.G.data.taxas)), dtype=int)
+            shape=(len(self.G.data.taxa), len(self.G.data.taxa)), dtype=int)
         i = 0
-        for tidx in range(len(self.G.data.taxas)):
-            for sidx in range(len(self.G.data.taxas)):
+        for tidx in range(len(self.G.data.taxa)):
+            for sidx in range(len(self.G.data.taxa)):
                 if tidx == sidx:
                     continue
                 self.keypair2col[tidx, sidx] = i
@@ -1842,7 +1842,7 @@ class InteractionsDesignMatrix(DesignMatrix):
 
     `Base` : mdsine2.design_matrices.InteractionsBaseDesignMatrix
         This is an object that builds the interaction matrix as if there was no
-        clustering or indicators. It builds the data for all the Taxas/OTUs and
+        clustering or indicators. It builds the data for all the Taxa/OTUs and
         as if every interaction indicator was on. This is actually faster than
         just building it for individual indicators for a few different reasons:
             1) We only need to update `Base` when we do filtering or update the 
@@ -1853,9 +1853,9 @@ class InteractionsDesignMatrix(DesignMatrix):
                with Numba, which is nearly as fast as C. This speeds up building
                time by ~97%.
     `Mixing` : mdsine2.design_matrices.InteractionsMixingDesignMatrix
-        This is the object that selects for indicators and groups taxas together
+        This is the object that selects for indicators and groups taxa together
         into clusters. When we change the indicators of the perturbations or 
-        the cluster assignments of the Taxas, we only need to change this matrix,
+        the cluster assignments of the Taxa, we only need to change this matrix,
         which is a lot faster than changing everything. Because both matrices are
         sparse matrices and this matrix is 98% zeros, this is a very fast operation.
     '''
@@ -1866,9 +1866,9 @@ class InteractionsDesignMatrix(DesignMatrix):
 
         # Initialize and set up rows and cols for base matrix
         total_n_dts = self.G.data.total_n_dts_per_taxa
-        n_taxas = self.G.data.n_taxas
+        n_taxa = self.G.data.n_taxa
 
-        self.n_rows = int(n_taxas * total_n_dts)
+        self.n_rows = int(n_taxa * total_n_dts)
         self.clustering = self.G[STRNAMES.CLUSTER_INTERACTION_VALUE].clustering
 
         self.base = InteractionsBaseDesignMatrix(add_to_dict=False, **kwargs)

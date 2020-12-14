@@ -4,7 +4,7 @@ Heatmap Rendering
 -----------------
 These functions render heatmaps of matrix data:
     - render_bayes_factors
-    - render_cocluster_proportions
+    - render_cocluster_probabilities
     - render_interaction_strength
     - render_growth_vector
 
@@ -22,7 +22,7 @@ These functions plot how the value of a variable changes over inference:
     - render_acceptance_rate_trace
     - render_trace
 
-Linewidths are automatically shutoff if the number of Taxas is greater than 75
+Linewidths are automatically shutoff if the number of taxa is greater than 75
 '''
 import numpy as np
 import logging
@@ -41,7 +41,7 @@ from matplotlib.pyplot import arrow
 import matplotlib.ticker as plticker
 
 from . import pylab as pl
-from .pylab.base import DEFAULT_TAXA_NAME
+from .pylab.base import DEFAULT_TAXLEVEL_NAME
 
 warnings.filterwarnings('ignore')
 _plt_labels = ['title', 'xlabel', 'ylabel']
@@ -67,7 +67,7 @@ PLT_YLABEL_LABEL = 'ylabel'
 # Global Functions
 # ----------------
 def set_default_tax_level(level):
-    '''This sets the default taxa level to plot at.
+    '''This sets the default taxonomic level to plot at.
     
     Parameters
     ----------
@@ -202,7 +202,7 @@ def shade_in_perturbations(ax, perturbations, subj, textcolor='black', textsize=
 # --------
 # Heatmaps
 # --------
-def render_bayes_factors(bayes_factors, taxas=None, ax=None,
+def render_bayes_factors(bayes_factors, taxa=None, ax=None,
     n_colors=100, max_value=None, xticklabels='%(index)s', yticklabels='%(name)s %(index)s',
     include_tick_marks=False, linewidths=0.8, linecolor='black',cmap='Blues',
     include_colorbar=True, title='Microbe Interaction Bayes Factors', figure_size=None,
@@ -214,12 +214,12 @@ def render_bayes_factors(bayes_factors, taxas=None, ax=None,
     ----------
     bayes_factors : 2-dim np.ndarray
         - Square matrix indicating the bayes factors of the interaction
-    taxas : pl.base.TaxaSet, None
+    taxa : pl.base.TaxaSet, None
         - This is the object that contains all of the Taxa metadata
         - If this is None, then we do no checking if the size of the `interaction_matrix`
-          corresponds to the size of taxas
+          corresponds to the size of taxa
     clustering : pylab.cluster.ClusteringBase, Optional
-        - Clustering object if you want the Taxas in the same cluster to be grouped
+        - Clustering object if you want the Taxa in the same cluster to be grouped
           together
     ax : matplotlib.pyplot.Axes, Optional
         - The axes to plot on. If nothing is provided a new figure will be created
@@ -230,7 +230,7 @@ def render_bayes_factors(bayes_factors, taxas=None, ax=None,
         - If None, then there is no clipping
     xticklabels, yticklabels : str, list, None, Optional
         - These are the labels for the x and y axis, respectively.
-        - If it is a list then it must have `taxas.n_taxas` elements.
+        - If it is a list then it must have `taxa.n_taxa` elements.
         - If it is a string, it is the formatter for each of the rows/columns.
         - If it is None, then do not make any ticklabels
     include_tick_marks : bool, Optional
@@ -249,7 +249,7 @@ def render_bayes_factors(bayes_factors, taxas=None, ax=None,
     figure_size : 2-tuple, Optional
         - This is the size of the figure (in inches)
         - If nothing is specified it will default to adding 10 inches in each
-          dimension for every 50 Taxas
+          dimension for every 50 Taxa
     
     Returns
     -------
@@ -272,7 +272,7 @@ def render_bayes_factors(bayes_factors, taxas=None, ax=None,
 
     # Type checking and initialization
     d = _init_parameters_heatmap(matrix=bayes_factors, clustering=None,
-        taxas=taxas, xticklabels=xticklabels,
+        taxa=taxa, xticklabels=xticklabels,
         yticklabels=yticklabels, ax=ax, figure_size=figure_size,
         linewidths=linewidths, order=order)
     ax = d['ax']
@@ -309,7 +309,7 @@ def render_bayes_factors(bayes_factors, taxas=None, ax=None,
         ax.set_title(title)
     return ax
 
-def render_cocluster_proportions(coclusters, taxas, ax=None,
+def render_cocluster_probabilities(coclusters, taxa, ax=None,
     n_colors=100, xticklabels='%(index)s', yticklabels='%(name)s %(index)s',
     include_tick_marks=False, linewidths=0.8, linecolor='black', cmap='Blues',
     include_colorbar=True, title='Microbe Co-cluster Probabilities', figure_size=None,
@@ -320,7 +320,7 @@ def render_cocluster_proportions(coclusters, taxas, ax=None,
     ----------
     coclusters : 2-dim np.ndarray
         - Square matrix indicating the cocluster proportions
-    taxas : pylab.base.TaxaSet
+    taxa : pylab.base.TaxaSet
         - This is the object that contains all of the Taxa metadata
     ax : matplotlib.pyplot.Axes, Optional
         - The axes to plot on. If nothing is provided a new figure will be created
@@ -328,7 +328,7 @@ def render_cocluster_proportions(coclusters, taxas, ax=None,
         - The number of colors to generate for the colormap.
     xticklabels, yticklabels : str, list, None, Optional
         - These are the labels for the x and y axis, respectively.
-        - If it is a list then it must have `taxas.n_taxas` elements.
+        - If it is a list then it must have `taxa.n_taxa` elements.
         - If it is a string, it is the formatter for each of the rows/columns.
         - If it is None, then do not make any ticklabels
     include_tick_marks : bool, Optional
@@ -347,7 +347,7 @@ def render_cocluster_proportions(coclusters, taxas, ax=None,
     figure_size : 2-tuple, Optional
         - This is the size of the figure (in inches)
         - If nothing is specified it will default to adding 10 inches in each
-          dimension for every 50 Taxas
+          dimension for every 50 Taxa
 
     Returns
     -------
@@ -368,7 +368,7 @@ def render_cocluster_proportions(coclusters, taxas, ax=None,
 
     # Type checking and initialization
     d = _init_parameters_heatmap(matrix=coclusters,
-        taxas=taxas, xticklabels=xticklabels, clustering=None,
+        taxa=taxa, xticklabels=xticklabels, clustering=None,
         yticklabels=yticklabels, ax=ax, figure_size=figure_size,
         linewidths=linewidths, order=order)
     ax = d['ax']
@@ -401,7 +401,7 @@ def render_cocluster_proportions(coclusters, taxas, ax=None,
         ax.set_title(title)
     return ax
 
-def render_interaction_strength(interaction_matrix, log_scale, taxas, clustering=None,
+def render_interaction_strength(interaction_matrix, log_scale, taxa, clustering=None,
     ax=None, center_colors=False, n_colors=100, xticklabels='%(index)s', 
     vmax=None, vmin=None, yticklabels='%(name)s %(index)s', 
     include_tick_marks=False, linewidths=0.8, linecolor='black',
@@ -409,7 +409,7 @@ def render_interaction_strength(interaction_matrix, log_scale, taxas, clustering
     figure_size=None, order=None):
     '''Render the interaction strength matrix. If you want the values in log scale,
     it will annotate the box with the sign of the interaction and plot the absolute
-    value of the interaction. If you want the Taxas in the same clusters to be grouped
+    value of the interaction. If you want the Taxa in the same clusters to be grouped
     together, specify the clustering object in `cluster`.
 
     Parameters
@@ -419,12 +419,12 @@ def render_interaction_strength(interaction_matrix, log_scale, taxas, clustering
     log_scale : bool
         - If True, plots with log scale. If False it plots with regular
           scale
-    taxas : pylab.base.TaxaSet, None
+    taxa : pylab.base.TaxaSet, None
         - This is the object that contains all of the Taxa metadata
         - If this is None, then we do no checking if the size of the `interaction_matrix`
-          corresponds to the size of taxas
+          corresponds to the size of taxa
     clustering : pylab.cluster.ClusteringBase, Optional
-        - Clustering object if you want the Taxas in the same cluster to be grouped
+        - Clustering object if you want the Taxa in the same cluster to be grouped
           together
     ax : matplotlib.pyplot.Axes, Optional
         - The axes to plot on. If nothing is provided a new figure will be created
@@ -439,7 +439,7 @@ def render_interaction_strength(interaction_matrix, log_scale, taxas, clustering
     xticklabels, yticklabels : str, list, None, Optional
         - These are the labels for the x and y axis, respectively.
         - For details on the format, look at `pylab.taxaname_formatter`
-        - If it is a list then it must have `taxas.n_taxas` elements.
+        - If it is a list then it must have `taxa.n_taxa` elements.
         - If it is a string, it is the formatter for each of the rows/columns.
         - If it is None, then do not make any ticklabels
     include_tick_marks : bool, Optional
@@ -458,7 +458,7 @@ def render_interaction_strength(interaction_matrix, log_scale, taxas, clustering
     figure_size : 2-tuple, Optional
         - This is the size of the figure (in inches)
         - If nothing is specified it will default to adding 10 inches in each
-          dimension for every 50 Taxas
+          dimension for every 50 Taxa
     
     Returns
     -------
@@ -479,7 +479,7 @@ def render_interaction_strength(interaction_matrix, log_scale, taxas, clustering
 
     # Type checking and initialization
     d = _init_parameters_heatmap(matrix=interaction_matrix,
-        taxas=taxas, clustering=clustering, xticklabels=xticklabels,
+        taxa=taxa, clustering=clustering, xticklabels=xticklabels,
         yticklabels=yticklabels, ax=ax, figure_size=figure_size,
         linewidths=linewidths, order=order)
     ax = d['ax']
@@ -1015,7 +1015,7 @@ def alpha_diversity_over_time(subjs, metric, taxlevel=None,
         This is the function we want to calculate the alpha diversity with.
         This function usually comes from `diversity.alpha`
     taxlevel : str, None
-        This is the taxa level to aggregate the data at. If 'default' is specified
+        This is the taxonomic level to aggregate the data at. If 'default' is specified
         then it defaults the DEFAULT_TAX_LEVEL. If None then there will be no aggregation.
     highlight : list(float), None
         These are a list of tuples (subjectname, timepoint) we want to highlight (circle). 
@@ -1140,19 +1140,19 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
     ylim=None, markersize=4, shade_perturbations=True, legend=True, set_0_to_nan=False, 
     color_code_clusters=False, clustering=None, cmap=None, alpha=1.0, linestyle='-', ax=None,
     include_errorbars=False, grid=False, label_formatter=None, label_func=None, **kwargs):
-    '''Plots the abundance over time for the Taxas in `subj`.
+    '''Plots the abundance over time for the Taxa in `subj`.
 
     What you're plotting
     --------------------
     There are several different types of abundances you can plot, which is specified using
     the `dtype` (str) parameter:
     'raw'
-        This plots the counts of the Taxas. `subj` must be a single pl.base.Subject object.
+        This plots the counts of the Taxa. `subj` must be a single pl.base.Subject object.
     'rel'
-        This plots the relative abundance of the Taxas. `subj` must be a single 
+        This plots the relative abundance of the Taxa. `subj` must be a single 
         pl.base.Subject object.
     'abs'
-        This plots the absolute abundance of the Taxas. `subj` must be a single 
+        This plots the absolute abundance of the Taxa. `subj` must be a single 
         pl.base.Subject object.
     'qpcr'
         This plots the qPCR measurements at each time point. `subj` can also be a 
@@ -1163,9 +1163,9 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
     
     Aggregating by taxanomic level
     ------------------------------
-    If the taxonomy of the Taxas are specified, you can aggregate Taxas into specific 
+    If the taxonomy of the Taxa are specified, you can aggregate Taxa into specific 
     taxonomic levels and plot them as a trajectory by using the parameter `taxlevel`.
-    Example: if `taxlevel='phylum'` then we add all of the abundances/reads of the Taxas
+    Example: if `taxlevel='phylum'` then we add all of the abundances/reads of the Taxa
     that are in the same Phylum. If `taxlevel=None` then we do no aggregation. If you 
     set `taxlevel='default'` then it aggregates at the default taxonomic level, which 
     can be set using the function `plotting.set_default_tax_level(level)`. NOTE: these 
@@ -1173,27 +1173,27 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
 
     The `label_formatter` (str) tells the function how to set the index of the dataframe
     it returns using `pylab.taxaname_formatter`. If nothing is specified then it 
-    will return the entire taxonomy as a label for the taxa. NOTE, you cannot specifiy
+    will return the entire taxonomy as a label for the taxon. NOTE, you cannot specifiy
     a taxonomy *below* that youre clustering at. For example, you cannot cluster at the 
     'class' level and then specify `'%(genus)s'` in `label_formatter`.
 
     What to plot?
     -------------
-    You can plot a subset of the Taxas by using the `plot_` arguments. If None of those
+    You can plot a subset of the Taxa by using the `plot_` arguments. If None of those
     parameters are specified, then it will plot everything. NOTE: You can only specify 
     one of the `plot_` at a time. NOTE: these are only necessary if dtype is either 
     'raw', 're', or 'abs'.
 
     plot_abundant : int
-    If you want to only plot the x most abundant Taxas, specify that number 
+    If you want to only plot the x most abundant Taxa, specify that number 
     with `plot_abundant` (`int`) as a positive number. Example: `plot_abundant = 15` will
     only plot the 15 most abundant. If `plot_abundant` is a negative number, it will
     plot the least abundant. Example: `plot_abundant = -15` will only plot the 15 least 
     abundant. 
     
     plot_specific : list
-    If you want to only plot specific Taxas, you can specify them by any identification
-    (index, name, ID, etc.) as a list of Taxas to plot.
+    If you want to only plot specific Taxa, you can specify them by any identification
+    (index, name, ID, etc.) as a list of Taxa to plot.
     NOTE: If you specify `plot_specific` and you are clustering along a taxonomic level, then
     you specify the names at the taxonomic level you clustered at.
     Example::
@@ -1232,21 +1232,21 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
             'qpcr': qPCR measurements
             'read-depth': read depths
     taxlevel : str, None
-        This is the taxa level to aggregate the data at. If 'default' is specified
+        This is the taxonomic level to aggregate the data at. If 'default' is specified
         then it defaults the DEFAULT_TAX_LEVEL. If None then there will be no aggregation.
     yscale : bool, None
         If True, it will plot the y-axis in log scale. If nothing is specified then it 
         will pick it automatically.
     plot_abundant : int, None
-        If specified, it will plot only this number most abundant Taxas
+        If specified, it will plot only this number most abundant Taxa
     plot_specific : array_like, None
-        If specified, it will only plot the Taxas specified indicated in here. Else
+        If specified, it will only plot the Taxa specified indicated in here. Else
         it will plot everything
     plot_clusters : array_like, None
         If specified, only plots the clusters specified. Note that the `clustering` parameter
         must also be specified
     highlight : list(float), None
-        These are a list of tuples (taxa, timepoint) we want to highlight (circle). 
+        These are a list of tuples (taxon, timepoint) we want to highlight (circle). 
         Each element must be a time in `subj.times`. If nothing is specified then we do not
         circle anything
     ylim : 2-tuple, Optional
@@ -1260,9 +1260,9 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
     shade_perturbations : bool
         If True, shade in the perturbations
     color_code_clusters : bool
-        If True, set all of the Taxas in a cluster to the same color. Note that the `clustering` 
+        If True, set all of the Taxa in a cluster to the same color. Note that the `clustering` 
         parameter must also be specified. NOTE: if you are aggregating the data at a taxonomic 
-        level (taxlevel is not None or 'taxa'), then this is automatically overridden to False.
+        level (taxlevel is not None or 'taxon'), then this is automatically overridden to False.
         If specified, it overrides the legend to False.
     clustering : pylab.cluster.Clustering
         Clustering object. Only necessary if `plot_clusters` or `color_code_clusters` are specified
@@ -1366,7 +1366,7 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
                         raise TypeError('Every element in `plot_clusters` ({}) ({}) must ' \
                             'be an int'.format(plot_clusters,
                                 pl.itercheck(plot_clusters, pl.isint)))
-            if taxlevel != 'taxa':
+            if taxlevel != 'taxon':
                 raise ValueError('Cannot plot clusters (`plot_clusters` ({})) and aggregate by a' \
                     ' taxonomic level (`taxlevel` ({}))'.format(plot_clusters, taxlevel))            
             if not pl.isclustering(clustering):
@@ -1376,9 +1376,9 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
             raise TypeError('`color_code_clusters` ({}) must be a bool'.format(
                 type(color_code_clusters)))
         if color_code_clusters:
-            if taxlevel != 'taxa':
+            if taxlevel != 'taxon':
                 logging.warning('Overriding `color_code_clusters` to False because `taxlevel`' \
-                    ' ({}) is not None nor "taxa"'.format(taxlevel))
+                    ' ({}) is not None nor "taxon"'.format(taxlevel))
                 color_code_clusters = False
             if legend:
                 logging.warning('Overriding `legend` to False because `color_code_clusters` is True')
@@ -1418,7 +1418,7 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
         if plot_specific is not None:
             idxs = []
             for a in plot_specific:
-                temp_taxa = subj.taxas[a]
+                temp_taxa = subj.taxa[a]
                 idxs.append(temp_taxa.idx)
         elif plot_abundant is not None:
             matrix = df.values
@@ -1455,7 +1455,7 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
             datapoints = np.asarray(list(df.iloc[idx]))
 
             if label_func is not None:
-                label = label_func(subj.taxas[label], taxas=subj.taxas)
+                label = label_func(subj.taxa[label], taxa=subj.taxa)
             # print(label) 
 
             if set_0_to_nan:
@@ -1574,21 +1574,21 @@ def taxonomic_distribution_over_time(subj, taxlevel=None,
 
     Aggregating by taxanomic level
     ------------------------------
-    If the taxonomy of the Taxas are specified, you can aggregate Taxas into specific 
+    If the taxonomy of the Taxa are specified, you can aggregate Taxa into specific 
     taxonomic levels and plot them using the parameter `taxlevel`.
-    Example: if `taxlevel='phylum'` then we add all of the reads of the Taxas
+    Example: if `taxlevel='phylum'` then we add all of the reads of the Taxa
     that are in the same Phylum. If `taxlevel=None` then we do no aggregation. If you 
     set `taxlevel='default'` then it aggregates at the default taxonomic level, which 
     can be set using the function `plotting.set_default_tax_level(level)`.
 
     The `label_formatter` (str) tells the function how to set the index of the dataframe
     it returns using `pylab.taxaname_formatter`. If nothing is specified then it 
-    will return the entire taxonomy as a label for the taxa. NOTE, you cannot specifiy
+    will return the entire taxonomy as a label for the taxon. NOTE, you cannot specifiy
     a taxonomy *below* that youre clustering at. For example, you cannot cluster at the 
     'class' level and then specify `'%(genus)s'` in `label_formatter`.
 
     plot_abundant : int
-    If you want to only plot the x most abundant Taxas, specify that number 
+    If you want to only plot the x most abundant Taxa, specify that number 
     with `plot_abundant` (`int`) as a positive number. Example: `plot_abundant = 15` will
     only plot the 15 most abundant. If `plot_abundant` is a negative number, it will
     plot the least abundant. Example: `plot_abundant = -15` will only plot the 15 least 
@@ -1600,7 +1600,7 @@ def taxonomic_distribution_over_time(subj, taxlevel=None,
         Subject we are getting the data from. If it is a subjectset then we average over
         all of the subjects
     taxlevel : str, None
-        This is the taxa level to aggregate the data at. If 'default' is specified
+        This is the taxonomic level to aggregate the data at. If 'default' is specified
         then it defaults the DEFAULT_TAX_LEVEL. If None then there will be no aggregation.
     plot_abundant: int, None
         If specified, only plots the top or bottom `plot_abundant` elements.
@@ -1708,7 +1708,7 @@ def taxonomic_distribution_over_time(subj, taxlevel=None,
 def aggregate_taxa_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None, 
     title='Subject %(subjectname)s', xlabel='auto', ylabel='auto', vmin=None, vmax=None,
     alpha_agg=0.5, alpha_asv=1., legend=True, fontstyle=None, shade_perturbations=True):
-    '''Plot the abundances of the aggregated Taxas within the OTU `agg` for the subject `subj`
+    '''Plot the abundances of the aggregated Taxa within the OTU `agg` for the subject `subj`
 
     Each subject within the study has its own axis within the figure. If you want to
     plot only specific subjects, pass them in with the parameter `subjs`
@@ -1716,7 +1716,7 @@ def aggregate_taxa_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
     Parameters
     ----------
     subj : mdsine2.Subject
-        This is the subject oobject that contains all of the data for the subjsets as well as the Taxas
+        This is the subject oobject that contains all of the data for the subjsets as well as the Taxa
     agg : str, mdsine2.OTU, int
         This is the identifier for the aggregate Taxa you want to plot
     dtype : str
@@ -1762,10 +1762,10 @@ def aggregate_taxa_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
     matplotlib.pyplot.Axes
     '''
     def _tax_is_defined(tax, level):
-        return (type(tax) != float) and (tax != DEFAULT_TAXA_NAME) and (tax != '')
+        return (type(tax) != float) and (tax != DEFAULT_TAXLEVEL_NAME) and (tax != '')
 
     def _agg_taxaname_for_paper(agg, taxaname):
-        '''Makes the name in the format needed for the paper for an aggregate taxa
+        '''Makes the name in the format needed for the paper for an OTU
         '''
         if _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'species'):
             species = agg.aggregated_taxonomies[taxaname]['species']
@@ -1805,7 +1805,7 @@ def aggregate_taxa_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
 
     if not pl.issubject(subj):
         raise TypeError('`subj` ({}) must be a mdsine2.Subject object'.format(type(subj)))
-    if agg not in subj.taxas:
+    if agg not in subj.taxa:
         raise ValueError('`agg` ({}) not found in study'.format(agg))
     if dtype not in ['rel', 'abs', 'raw']:
         raise ValueError('`dtype` ({}) not recognized'.format(dtype))
@@ -1831,16 +1831,16 @@ def aggregate_taxa_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
         fig = plt.figure()
         ax = fig.add_subplot(111)
     
-    agg = subj.taxas[agg]
+    agg = subj.taxa[agg]
     M = subj.matrix()[dtype]
 
     # Plot the aggregate
-    labelotu = pl.taxaname_for_paper(taxa=agg, taxas=subj.taxas)
+    labelotu = pl.taxaname_for_paper(taxon=agg, taxa=subj.taxa)
     ax.plot(subj.times, M[agg.idx, :], label=labelotu, alpha=alpha_agg, linewidth=7, 
         marker='x')
 
     individ_trajs = {}
-    for taxaname in agg.aggregated_taxas:
+    for taxaname in agg.aggregated_taxa:
         if taxaname not in subj._reads_individ:
             raise ValueError('This should not happend. Failing.')
         temp = []
@@ -1921,7 +1921,7 @@ def _is_just_zero_or_nan(matrix):
                 return False
     return True
 
-def _format_ticklabel(format, order, taxas):
+def _format_ticklabel(format, order, taxa):
     '''Format the xtick labels witha  slightly different format than that in 
     `pylab.taxaname_formatter`: Overrides the %(index)s to be where it appears 
     in the local order, not the global order
@@ -1933,8 +1933,8 @@ def _format_ticklabel(format, order, taxas):
           seen in `pylab.taxaname_formatter`.
     order : array_like
         - This is the list of the Taxa indices in the order that they should appear.
-    taxas : pylab.base.TaxaSet
-        - This is where all the information is stored for the Taxas
+    taxa : pylab.base.TaxaSet
+        - This is where all the information is stored for the Taxa
 
     Returns
     -------
@@ -1949,7 +1949,7 @@ def _format_ticklabel(format, order, taxas):
 
     for num, idx in enumerate(order):
         fmt = format.replace('%(index)s', str(num))
-        label = pl.taxaname_formatter(format=fmt, taxa=idx, taxas=taxas)
+        label = pl.taxaname_formatter(format=fmt, taxon=idx, taxa=taxa)
         ticklabels.append(label)
     return ticklabels
 
@@ -1998,20 +1998,20 @@ def _set_heatmap_default_args(linewidths=None, linecolor=None, n_colors=None, xt
         'xticklabels': xticklabels, 'yticklabels': yticklabels, 
         'include_colorbar': include_colorbar, 'include_tick_marks': include_tick_marks}
 
-def _init_parameters_heatmap(matrix, taxas, clustering, xticklabels, yticklabels, ax, figure_size,
+def _init_parameters_heatmap(matrix, taxa, clustering, xticklabels, yticklabels, ax, figure_size,
     linewidths, order):
     '''Checks if the parameters are initialized correctly for the standard arguments
-    for `render_interaction_strength`, `render_cocluster_proportions`, and
+    for `render_interaction_strength`, `render_cocluster_probabilities`, and
     `render_bayes_factors`.
 
     Parameters
     ----------
     matrix : array_like (2-dimensional)
         - 2D matrix that can be casted to a numpy ndarray
-    taxas : pylab.Base.TaxaSet
-        - This is the TaxaSet that contains all of the information about the Taxas
+    taxa : pylab.Base.TaxaSet
+        - This is the TaxaSet that contains all of the information about the Taxa
     clustering : pylab.cluster.Clustering
-        - This is the clustering object that tells the assignments for each of the Taxas
+        - This is the clustering object that tells the assignments for each of the Taxa
     xticklables, yticklables : str, array_like
         - These are either the string formats to make each of the labels or they are 
           the actual labels for each of the entries for the horizontal or vertical axis
@@ -2020,13 +2020,13 @@ def _init_parameters_heatmap(matrix, taxas, clustering, xticklabels, yticklabels
           object will be created
     figure_size : 2-tuple(numeric, numeric), None
         - This is the size to create the figure. If nothing is provided it will be
-          automatically set based on the number of Taxas
+          automatically set based on the number of Taxa
     linewidths : numeric
-        - If the number of Taxas exceeds a certain number (75), it will automatically set 
+        - If the number of Taxa exceeds a certain number (75), it will automatically set 
           the linewidths to 0
     order : array_like, None
-        - This is the order to set for the Taxas. The order has the Taxa identifier (name, index, 
-          id, etc.) for each Taxa. If None then it does it by the order of the Taxas or by the 
+        - This is the order to set for the Taxa. The order has the Taxa identifier (name, index, 
+          id, etc.) for each Taxa. If None then it does it by the order of the Taxa or by the 
           clustering object.
     Returns
     -------
@@ -2057,14 +2057,14 @@ def _init_parameters_heatmap(matrix, taxas, clustering, xticklabels, yticklabels
     if matrix.shape[0] != matrix.shape[1]:
         raise ValueError('`matrix` ({}) must be square'.format(
             matrix.shape))
-    if taxas is not None:
-        if not pl.istaxaset(taxas):
-            raise ValueError('`taxas` ({}) must be a subclass of pylab.data.TaxaSet'.format(
-                taxas.__class__))
-        if matrix.shape[0] != taxas.n_taxas:
+    if taxa is not None:
+        if not pl.istaxaset(taxa):
+            raise ValueError('`taxa` ({}) must be a subclass of pylab.data.TaxaSet'.format(
+                taxa.__class__))
+        if matrix.shape[0] != taxa.n_taxa:
             raise ValueError('The size of the interaction matrix ({}) must ' \
-                'equal the number of Taxas in `taxas` ({})'.format(
-                    matrix.shape[0], taxas.n_taxas))
+                'equal the number of Taxa in `taxa` ({})'.format(
+                    matrix.shape[0], taxa.n_taxa))
     if clustering is not None:
         if not pl.isclustering(clustering):
             raise ValueError('`clustering` ({}) must be a subclass of ' \
@@ -2087,14 +2087,14 @@ def _init_parameters_heatmap(matrix, taxas, clustering, xticklabels, yticklabels
     if order is not None:
         if not pl.isarray(order):
             raise TypeError('`order` ({}) if specified must be an array'.format(type(order)))
-        if len(order) != len(taxas):
-            raise TypeError('`order` ({}) must be {} elements'.format(len(order), len(taxas)))
+        if len(order) != len(taxa):
+            raise TypeError('`order` ({}) must be {} elements'.format(len(order), len(taxa)))
         for i in order:
-            if i not in taxas:
+            if i not in taxa:
                 raise IndexError(' identifier ({}) not found in s'.format(i))
 
-    if taxas is not None:
-        N = len(taxas)
+    if taxa is not None:
+        N = len(taxa)
     else:
         N = matrix.shape[0]
 
@@ -2104,7 +2104,7 @@ def _init_parameters_heatmap(matrix, taxas, clustering, xticklabels, yticklabels
 
         # Set figure size
         if figure_size is None:
-            # For each 50 Taxas add 10 inches to each dimension
+            # For each 50 Taxa add 10 inches to each dimension
             x = math.ceil(N/50)
             l = int(10*x)
             figure_size = (l,l)
@@ -2113,10 +2113,10 @@ def _init_parameters_heatmap(matrix, taxas, clustering, xticklabels, yticklabels
         fig = plt.gcf()
 
     # Make taxa order based on clusters if necessary
-    if order is not None and matrix.shape[0] == len(taxas):
+    if order is not None and matrix.shape[0] == len(taxa):
         temp = []
         for oidx in order:
-            temp.append(taxas[oidx].idx)
+            temp.append(taxa[oidx].idx)
         order = temp
     elif clustering is not None:
         # get the index order
@@ -2142,18 +2142,18 @@ def _init_parameters_heatmap(matrix, taxas, clustering, xticklabels, yticklabels
     if yticklabels is None:
         yticklabels = False
     if type(xticklabels) == str:
-        if taxas is None:
-            logging.warning('Automatically setting xlabels as index because there are no taxas')
+        if taxa is None:
+            logging.warning('Automatically setting xlabels as index because there are no taxa')
             xticklabels = ['{}'.format(i+1) for i in range(matrix.shape[0])]
         else:
-            xticklabels = _format_ticklabel(format=xticklabels, order=order, taxas=taxas)
+            xticklabels = _format_ticklabel(format=xticklabels, order=order, taxa=taxa)
     
     if type(yticklabels) == str:
-        if taxas is None:
-            logging.warning('Automatically setting xlabels as index because there are no taxas')
+        if taxa is None:
+            logging.warning('Automatically setting xlabels as index because there are no taxa')
             yticklabels = ['{}'.format(i+1) for i in range(matrix.shape[0])]
         else:
-            yticklabels = _format_ticklabel(format=yticklabels, order=order, taxas=taxas)
+            yticklabels = _format_ticklabel(format=yticklabels, order=order, taxa=taxa)
     if N > 75:
         linewidths = 0
 

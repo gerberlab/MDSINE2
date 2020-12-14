@@ -84,7 +84,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
     ----------
     '''
     def __init__(self, basepath, seed, burnin, n_samples,
-        negbin_a0, negbin_a1, leave_out=None, max_n_taxas=None, 
+        negbin_a0, negbin_a1, leave_out=None, max_n_taxa=None, 
         checkpoint=100):
         self.OUTPUT_BASEPATH = os.path.abspath(basepath)
         self.MODEL_PATH = self.OUTPUT_BASEPATH
@@ -97,7 +97,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
 
         self.QPCR_NORMALIZATION_MAX_VALUE = 100
         self.LEAVE_OUT = leave_out
-        self.MAX_N_TAXAS = max_n_taxas
+        self.MAX_N_TAXA = max_n_taxa
         self.ZERO_INFLATION_TRANSITION_POLICY = None #'ignore'
 
         self.GROWTH_TRUNCATION_SETTINGS = 'positive'
@@ -337,7 +337,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         '''
         s = 's{}_b{}_ns{}_lo{}_mo{}'.format(
             self.SEED, self.BURNIN, self.N_SAMPLES, self.LEAVE_OUT,
-            self.MAX_N_TAXAS)
+            self.MAX_N_TAXA)
         return s
 
     def cv_suffix(self):
@@ -345,7 +345,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         '''
         s = 's{}_b{}_ns{}_mo{}'.format(
             self.SEED, self.BURNIN, self.N_SAMPLES,
-            self.MAX_N_TAXAS)
+            self.MAX_N_TAXA)
         return s
 
     def cv_single_suffix(self):

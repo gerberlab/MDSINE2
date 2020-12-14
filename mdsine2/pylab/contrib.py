@@ -81,52 +81,52 @@ class Perturbation(BasePerturbation, variables.Variable):
     ----------
     starts, ends : dict
         Start and end of the perturbation for each subject
-    taxas : pylab.base.TaxaSet
-        TaxaSet of taxas
+    taxa : pylab.base.TaxaSet
+        Set of taxon/otu objects
     magnitude : pylab.variables.Variable, int/float, array, Optional
         If a pylab.variables.Variable is passed in it will create one
         with the value indicated. Defualt value is None
     indicator : pylab.variables.Variable, array, Optional
         This is the indicator of the perturbation. Default value is False 
-        for every taxa
+        for every taxon
     probability : pylab.variables.Variable, float, Optional
-        This is the probability that the perturbation affects a Taxa, e.g.
+        This is the probability that the perturbation affects a taxon, e.g.
           probability = 0.7, there's a 70% chance that the perturbation afffects 
-          each taxa
+          each taxon
     kwargs : dict
         - Extra arguments for the Node class
     '''
-    def __init__(self, taxas, starts, ends, magnitude=None, indicator=None, 
+    def __init__(self, taxa, starts, ends, magnitude=None, indicator=None, 
         probability=None, **kwargs):
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
             self.G.perturbations = PerturbationSet()
         BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         
-        if not base.istaxaset(taxas):
-            raise TypeError('`taxas` ({}) must be pylab.base.TaxaSet'.format(type(taxas)))
+        if not base.istaxaset(taxa):
+            raise TypeError('`taxa` ({}) must be pylab.base.TaxaSet'.format(type(taxa)))
 
         self.G.perturbations.append(self)
-        self.taxas = taxas
-        n_taxas = len(self.taxas)
-        self.set_value_shape(shape=(n_taxas, ))
+        self.taxa = taxa
+        n_taxa = len(self.taxa)
+        self.set_value_shape(shape=(n_taxa, ))
 
         # Set magnitude
         if magnitude is None:
-            magnitude = np.full(n_taxas, 0)
+            magnitude = np.full(n_taxa, 0)
         if util.isnumeric(magnitude):
-            magnitude = np.full(n_taxas, magnitude)
+            magnitude = np.full(n_taxa, magnitude)
         if util.isarray(magnitude):
-            if len(magnitude) != n_taxas:
+            if len(magnitude) != n_taxa:
                 raise ValueError('`magnitue` ({}) must have length {}'.format(
-                    len(magnitude), n_taxas))
+                    len(magnitude), n_taxa))
             magnitude = variables.Variable(
                 G=self.G, dtype=float, name=self.name+DEFAULT_MAGNITUDE_SUFFIX, 
                 value=magnitude)
-            magnitude.set_value_shape((n_taxas,))
+            magnitude.set_value_shape((n_taxa,))
         elif variables.isVariable(magnitude):
-            if len(magnitude) != n_taxas:
-                raise ValueError('`magnitue` ({}) must have length {}'.format(magnitude, n_taxas))
+            if len(magnitude) != n_taxa:
+                raise ValueError('`magnitue` ({}) must have length {}'.format(magnitude, n_taxa))
         else:
             raise TypeError('`magnitude` ({}) type not recognized'.format(type(magnitude)))
               
@@ -144,20 +144,20 @@ class Perturbation(BasePerturbation, variables.Variable):
 
         # Set indicator
         if indicator is None:
-            indicator = np.full(n_taxas, False, dtype=bool)
+            indicator = np.full(n_taxa, False, dtype=bool)
         if util.isbool(indicator):
-            indicator = np.full(n_taxas, indicator, dtype=bool)
+            indicator = np.full(n_taxa, indicator, dtype=bool)
         if util.isarray(indicator):
-            if len(indicator) != n_taxas:
+            if len(indicator) != n_taxa:
                 raise ValueError('`indicator` ({}) must have length {}'.format(
-                    len(indicator), n_taxas))
+                    len(indicator), n_taxa))
             indicator = variables.Variable(
                 G=self.G, dtype=bool, name=self.name+DEFAULT_INDICATOR_SUFFIX, 
                 value=indicator)
-            indicator.set_value_shape((n_taxas,))
+            indicator.set_value_shape((n_taxa,))
         elif variables.isVariable(indicator):
-            if len(indicator) != n_taxas:
-                raise ValueError('`magnitue` ({}) must have length {}'.format(indicator, n_taxas))
+            if len(indicator) != n_taxa:
+                raise ValueError('`magnitue` ({}) must have length {}'.format(indicator, n_taxa))
         else:
             raise TypeError('`indicator` ({}) type not recognized'.format(type(indicator)))
 
@@ -168,10 +168,10 @@ class Perturbation(BasePerturbation, variables.Variable):
     def __str__(self):
         s = BasePerturbation.__str__(self)
         s += '\nMagnitude:\n'
-        for oidx in range(len(self.taxas)):
+        for oidx in range(len(self.taxa)):
             s += '\t{}: {}\n'.format(oidx, self.magnitude.value[oidx])
         s += 'Indicator:\n'
-        for oidx in range(len(self.taxas)):
+        for oidx in range(len(self.taxa)):
             s += '\t{}: {}\n'.format(oidx, self.indicator.value[oidx])
         s += 'Probability: {}'.format(self.probability.value)
         return s
@@ -179,7 +179,7 @@ class Perturbation(BasePerturbation, variables.Variable):
     def add_trace(self):
         '''Set the negative indicators as np.nan
         '''
-        self.value = np.full(len(self.taxas), np.nan)
+        self.value = np.full(len(self.taxa), np.nan)
         ind = self.indicator.value
         self.value[ind] = self.magnitude.value[ind]
         variables.Variable.add_trace(self)
@@ -206,7 +206,7 @@ class Perturbation(BasePerturbation, variables.Variable):
         if only_pos_ind:
             val = self.magnitude.value[ind]
         else:
-            val = np.zeros(len(self.taxas))
+            val = np.zeros(len(self.taxa))
             val[ind] = self.magnitude.value[ind]
         return val
 
