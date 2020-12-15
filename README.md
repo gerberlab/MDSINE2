@@ -67,3 +67,10 @@ where `taxonomy`, `qpcr`, `reads`, and `metadata` are `pandas.DataFrame` objects
 #### Parsing your own dataset
 ---
 To parse your own data, refer to `tutorials/parsing_data.md`.
+
+## Generating documentation
+To generate the documentation, run the script
+```bash
+pdoc3 mdsine2 --html -o path/to/MDSINE2/docs
+```
+Install `pdoc3` using [this documentation](https://pdoc3.github.io/pdoc/doc/pdoc/#gsc.tab=0).
