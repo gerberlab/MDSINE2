@@ -956,7 +956,13 @@ def r_hat(chains, vname, start, end, idx=None, returnBW=False):
     # Calculate r_hat
     m = traces.shape[0]  # no. of sequences
     n = traces.shape[1]  # length of each chain after burn-in
-    num_var = traces.shape[2]  # Number of indexed variables being sampled
+    try:
+        num_var = traces.shape[2]  # Number of indexed variables being sampled
+    except:
+        # This fails when the variable is a scalar, reshape it so that it 
+        # has a final dimension of 1
+        traces = traces.reshape(n,m,1)
+        num_var = 1
     s_hat_i = np.var(traces, axis=1, ddof=1)
     x_bar_i = np.mean(traces, axis=1)
     x_bar = np.mean(x_bar_i, axis=0)

@@ -307,6 +307,7 @@ def render_bayes_factors(bayes_factors, taxa=None, ax=None,
         ax.tick_params(bottom=False, left=False)
     if title is not None:
         ax.set_title(title)
+    plt.yticks(rotation=0)
     return ax
 
 def render_cocluster_probabilities(coclusters, taxa, ax=None,
@@ -399,6 +400,7 @@ def render_cocluster_probabilities(coclusters, taxa, ax=None,
         ax.tick_params(bottom=False, left=False)
     if title is not None:
         ax.set_title(title)
+    plt.yticks(rotation=0)
     return ax
 
 def render_interaction_strength(interaction_matrix, log_scale, taxa, clustering=None,
@@ -553,6 +555,7 @@ def render_interaction_strength(interaction_matrix, log_scale, taxa, clustering=
             ax.set_title(title)
         if log_scale:
             ax.collections[0].colorbar.ax.set_title("$\\log_{10}$")
+        plt.yticks(rotation=0)
     except Exception as e:
         logging.critical('Could not plot heatmap because of error message: "{}".' \
             ' This is likely because `interaction_matrix` has either only NaNs ' \
@@ -622,6 +625,7 @@ def render_growth_vector(growth, difference=False, ax=None, light_palette='Navy'
     ax.tick_params(which = 'minor',labelbottom = False, labelleft = True,
         labelright = False, labeltop = False)
     ax.grid(color='black', linewidth = 1.5, which='major', axis='y')
+    plt.yticks(rotation=0)
     return im
 
 # ------

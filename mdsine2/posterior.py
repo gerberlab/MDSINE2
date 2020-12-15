@@ -4040,9 +4040,10 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
                     - a = 0.5
                     - b = N*M(N*M-1), N are the expected number of clusters
         N : str, int
-            This is the number of clusters to set the hyperparam options to 
-            (if they are dependent on the number of cluster). If 'auto', set to the expected number
-            of clusters from a dirichlet process. Else use this number (must be an int).
+            This is the number of clusters to set the hyperparam options to.
+            If it is a str:
+                'auto' : set to the expected number of clusters of a dirichlet process.
+                'fixed-clustering' : set to the current number of clusters
         a, b : int, float
             - User specified values
             - Only necessary if `hyperparam_option` == 'manual'
@@ -4063,30 +4064,25 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
         elif hyperparam_option in ['weak-agnostic']:
             self.prior.a.override_value(0.5)
             self.prior.b.override_value(0.5)
-        elif hyperparam_option == 'strong-dense':
-            if pl.isstr(N):
-                if N == 'auto':
-                    N = expected_n_clusters(G=self.G)
-                else:
-                    raise ValueError('`N` ({}) nto recognized'.format(N))
-            elif pl.isint(N):
-                if N < 0:
-                    raise ValueError('`N` ({}) must be positive'.format(N))
+
+        # Set N
+        if pl.isstr(N):
+            if N == 'auto':
+                N = expected_n_clusters(G=self.G)
+            elif N == 'fixed-clustering':
+                N = len(self.G[STRNAMES.CLUSTERING_OBJ])
             else:
-                raise TypeError('`N` ({}) type not recognized'.format(type(N)))
+                raise ValueError('`N` ({}) nto recognized'.format(N))
+        elif pl.isint(N):
+            if N < 0:
+                raise ValueError('`N` ({}) must be positive'.format(N))
+        else:
+            raise TypeError('`N` ({}) type not recognized'.format(type(N)))
+
+        if hyperparam_option == 'strong-dense':
             self.prior.a.override_value(N * (N - 1))
             self.prior.b.override_value(0.5)
         elif hyperparam_option == 'strong-sparse':
-            if pl.isstr(N):
-                if N == 'auto':
-                    N = expected_n_clusters(G=self.G)
-                else:
-                    raise ValueError('`N` ({}) nto recognized'.format(N))
-            elif pl.isint(N):
-                if N < 0:
-                    raise ValueError('`N` ({}) must be positive'.format(N))
-            else:
-                raise TypeError('`N` ({}) type not recognized'.format(type(N)))
             self.prior.a.override_value(0.5)
             self.prior.b.override_value((N * (N - 1)))
         elif 'mult-sparse' in hyperparam_option:
@@ -4095,11 +4091,9 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
             except:
                 raise ValueError('`mult-sparse` in the wrong format ({})'.format(
                     hyperparam_option))
-            N = self.G.data.n_taxa * M
+            N = N * M
             self.prior.a.override_value(0.5)
             self.prior.b.override_value((N * (N - 1)))
-        else:
-            raise ValueError('option `{}` not recognized'.format(hyperparam_option))
 
         if value_option == 'manual':
             if pl.isnumeric(value):
@@ -7159,30 +7153,26 @@ class PerturbationProbabilities(pl.Node):
         elif hyperparam_option in ['auto', 'weak-agnostic']:
             a = 0.5
             b = 0.5
-        elif hyperparam_option == 'strong-dense':
-            if pl.isstr(N):
-                if N == 'auto':
-                    N = expected_n_clusters(G=self.G)
-                else:
-                    raise ValueError('`N` ({}) nto recognized'.format(N))
-            elif pl.isint(N):
-                if N < 0:
-                    raise ValueError('`N` ({}) must be positive'.format(N))
+
+        # Set N
+        if pl.isstr(N):
+            if N == 'auto':
+                N = expected_n_clusters(G=self.G)
+            elif N == 'fixed-clustering':
+                N = len(self.G[STRNAMES.CLUSTERING_OBJ])
             else:
-                raise TypeError('`N` ({}) type not recognized'.format(type(N)))
+                raise ValueError('`N` ({}) nto recognized'.format(N))
+        elif pl.isint(N):
+            if N < 0:
+                raise ValueError('`N` ({}) must be positive'.format(N))
+        else:
+            raise TypeError('`N` ({}) type not recognized'.format(type(N)))
+
+        
+        if hyperparam_option == 'strong-dense':
             a = N
             b = 0.5
         elif hyperparam_option == 'strong-sparse':
-            if pl.isstr(N):
-                if N == 'auto':
-                    N = expected_n_clusters(G=self.G)
-                else:
-                    raise ValueError('`N` ({}) nto recognized'.format(N))
-            elif pl.isint(N):
-                if N < 0:
-                    raise ValueError('`N` ({}) must be positive'.format(N))
-            else:
-                raise TypeError('`N` ({}) type not recognized'.format(type(N)))
             a = 0.5
             b = N
         elif 'mult-sparse' in hyperparam_option:
@@ -7191,11 +7181,10 @@ class PerturbationProbabilities(pl.Node):
             except:
                 raise ValueError('`mult-sparse` in the wrong format ({})'.format(
                     hyperparam_option))
-            N = self.G.data.n_taxa * M
+            N = N * M
             a = 0.5
             b = N
-        else:
-            raise ValueError('`hyperparam_option` ({}) not recognized'.format(hyperparam_option))
+
         for perturbation in self.perturbations:
             perturbation.probability.prior.a.override_value(a)
             perturbation.probability.prior.b.override_value(b)
