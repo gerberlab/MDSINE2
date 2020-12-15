@@ -1,0 +1,1446 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.1" />
+<title>mdsine2.util API documentation</title>
+<meta name="description" content="Utility functions for mdsine2" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>mdsine2.util</code></h1>
+</header>
+<section id="section-intro">
+<p>Utility functions for mdsine2</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#39;&#39;&#39;Utility functions for mdsine2
+&#39;&#39;&#39;
+import logging
+import numpy as np
+import scipy
+import math
+import copy
+from orderedset import OrderedSet
+
+from .names import STRNAMES
+from . import pylab as pl
+
+from .pylab import diversity
+
+def is_gram_negative(taxon):
+    &#39;&#39;&#39;Return true if the taxon is gram - or gram positive
+
+    Parameters
+    ----------
+    taxon : md2.Taxon, md2.OTU
+        Taxon object
+
+    Returns
+    -------
+    bool
+    &#39;&#39;&#39;
+    if not taxon.tax_is_defined(&#39;phylum&#39;):
+        return None
+    elif taxon.taxonomy[&#39;phylum&#39;].lower() == &#39;bacteroidetes&#39;:
+        return True
+    elif taxon.taxonomy[&#39;phylum&#39;].lower() == &#39;firmicutes&#39;:
+        return False
+    elif taxon.taxonomy[&#39;phylum&#39;].lower() == &#39;verrucomicrobia&#39;:
+        return True
+    elif taxon.taxonomy[&#39;phylum&#39;].lower() == &#39;proteobacteria&#39;:
+        return True
+    else:
+        raise ValueError(&#39;{} phylum not specified. If not bacteroidetes, firmicutes, verrucomicrobia, or &#39; \
+            &#39;proteobacteria, you must add another phylum&#39;.format(str(taxon)))
+
+def generate_interation_bayes_factors_posthoc(mcmc, section=&#39;posterior&#39;):
+    &#39;&#39;&#39;Generates the bayes factors on an item-item level for the interactions, 
+    given the passed in prior. All negative indicators are set as `np.nan`s in 
+    the trace, so we do `~np.isnan` to get the indicators.
+
+    Since the prior is conjugate, we can fully integrate out the prior of the 
+    calculation:
+        bf[i,j] = (count_on[i,j] * b) / (count_off[i,j] * a)
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        This is the inference object containing the traces
+    section : str
+        This is the section of the MH samples to take the samples
+
+    Returns
+    -------
+    np.ndarray((n,n), dtpye=float)
+        These are the bayes factors for each of the interactions on an item-item level
+    &#39;&#39;&#39;
+    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ]
+    trace = interactions.get_trace_from_disk(section=section)
+
+    trace = ~ np.isnan(trace)
+    cnts_1 = np.sum(trace, axis=0)
+    cnts_0 = np.sum(1-trace, axis=0)
+
+    # print(cnts_1)
+    # print()
+    # print(cnts_0)
+
+    a = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value
+    b = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.b.value
+
+    return (cnts_1 * b) / (cnts_0 * a)
+
+def generate_perturbation_bayes_factors_posthoc(mcmc, perturbation, section=&#39;posterior&#39;):
+    &#39;&#39;&#39;Generates the bayes factors on an item-item level for the perturbations, 
+    given the passed in prior. All negative indicators are set as `np.nan`s in 
+    the trace, so we do `~np.isnan` to get the indicators.
+
+    Since the prior is conjugate, we can fully integrate out the prior of the 
+    calculation:
+        bf[i,j] = (count_on[i] * b) / (count_off[i] * a)
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        This is the inference object containing the traces
+    perturbation : mdsine2.Perturbation
+        Perturbation object we are calculating from
+    section : str
+        This is the section of the MH samples to take the samples
+
+    Returns
+    -------
+    np.ndarray((n,), dtpye=float)
+        These are the bayes factors for each of the perturbations on an item level
+    &#39;&#39;&#39;
+    trace = ~ np.isnan(perturbation.get_trace_from_disk())
+    cnts_1 = np.sum(trace, axis=0)
+    cnts_0 = np.sum(1-trace, axis=0)
+
+    a = perturbation.probability.prior.a.value
+    b = perturbation.probability.prior.b.value
+
+    return (cnts_1 * b) / (cnts_0 * a)
+
+def generate_cluster_assignments_posthoc(clustering, n_clusters=&#39;mode&#39;, linkage=&#39;average&#39;,
+    set_as_value=False, section=&#39;posterior&#39;):
+    &#39;&#39;&#39;Once the inference is complete, compute the clusters posthoc using
+    sklearn&#39;s AgglomerativeClustering function with distance matrix being
+    1 - cocluster matrix (we subtrace the cocluster matrix from 1 because
+    the cocluster matrix describes similarity, not distance).
+
+    Parameters
+    ----------
+    clustering : mdsine2.Clustering
+        Clustering object
+    n_clusters : str, int, callable, Optional
+        This specifies the number of clusters that are used during
+        Agglomerative clustering.
+        If `n_clusters` is of type int, it will use that number as the number of
+        clusters.
+        If `n_clusters` is of type str, it calculates the number of clusters
+        based on the trace for the number of clusters (clustering.n_clusters.trace).
+        Possible calculation types are:
+            * &#39;median&#39;, &#39;mode&#39;, and &#39;mean&#39;.
+        If `n_clusters` is callable, it will calculate n given the trace of n_clusters
+        Default is &#39;mode&#39;.
+    linkage : str, Optional
+        Which linkage criterion to use. Determines which distance to use
+        between sets of observation. The AgglomerativeClustering algorithm
+        will merge the pairs of cluster that minimize the linkage criterion.
+        Possible types:
+    set_as_value : bool
+        If True then set the result as the value of the clustering object
+    section : str
+        What part of the chain to take the samples from
+    
+    Returns
+    -------
+    np.ndarray(size=(len(items), ), dtype=int)
+        Each value is the cluster assignment for index i
+    &#39;&#39;&#39;
+    from sklearn.cluster import AgglomerativeClustering
+    import scipy.stats
+
+
+    trace = clustering.n_clusters.get_trace_from_disk(section=section)
+    if callable(n_clusters):
+        n = n_clusters(trace)
+    elif type(n_clusters) == int:
+        n = n_clusters
+    elif type(n_clusters) == str:
+        if n_clusters == &#39;mode&#39;:
+            n = scipy.stats.mode(trace)[0][0]
+        else:
+            raise ValueError(&#39;`n_clusters` ({}) not recognized.&#39;.format(n_clusters))
+    else:
+        raise ValueError(&#39;Type `n_clusters` ({}) not recognized. Must be of &#39;\
+            &#39;type `str`, `int`, or callable.&#39;.format(type(n_clusters)))
+    if not pl.isbool(set_as_value):
+        raise TypeError(&#39;`set_as_value` ({}) must be a bool&#39;.format(type(set_as_value)))
+
+    A = pl.summary(clustering.coclusters, section=section)[&#39;mean&#39;]
+    A = 1 - A
+    logging.info(&#39;Number of clusters: {}&#39;.format(int(n)))
+    c = AgglomerativeClustering(
+        n_clusters=int(n),
+        affinity=&#39;precomputed&#39;,
+        linkage=linkage)
+    ret = c.fit_predict(A)
+    logging.info(&#39;Clusters assigned: {}&#39;.format(ret))
+    if set_as_value:
+        for cidx in range(np.max(ret)):
+            cluster = np.where(ret == cidx)[0]
+            cid = clustering.make_new_cluster_with(idx=cluster[0])
+            for oidx in cluster[1:]:
+                clustering.move_item(idx=oidx, cid=cid)
+    return ret
+
+def generate_taxonomic_distribution_over_clusters_posthoc(mcmc, tax_fmt):
+    &#39;&#39;&#39;Make a table that shows the abundance of different taxonomies in every cluster
+
+    Output:
+        rows: taxonomic lables
+        columns: clusters
+        value: abundance of those taxonomies
+    
+    Value
+    -----
+    If there are perturbations, then the value is the mean abundance over the taxa
+    before the first perturbation between all of the subjects. If there are no perturbations
+    then this is just the mean abundance of the taxa over all the time points
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        This is the inference object containing the traces
+    tax_fmt : str
+        This is the format to generate the taxonomy names. See `mdsine2.taxaname_formatter`
+
+    Returns
+    -------
+    pandas.DataFrame
+    &#39;&#39;&#39;
+    # Get the objects
+    clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
+    study = mcmc.graph.data.subjects
+
+    # Get all the times
+    times = study.times(agg=&#39;union&#39;)
+
+    # Get the first time of the perturbation between all of the subjects
+    first_time = None
+    if study.perturbations is not None:
+        for subj in study:
+            if first_time is None:
+                first_time = study.perturbations[0].starts[subj.name]
+            else:
+                curr_time = study.perturbations[0].starts[subj.name]
+                if curr_time &lt; first_time:
+                    first_time = curr_time
+        t_end = np.searchsorted(times, first_time)
+    else:
+        t_end = int(len(times))
+
+    # Get mean abundance over subjects for times preperturbation then take mean
+    times = times[:t_end]
+    M = study.matrix(dtype=&#39;abs&#39;, agg=&#39;mean&#39;, times=times)
+    abunds = np.mean(M, axis=1)
+
+    # Get the clustering
+    cidx_assign = generate_cluster_assignments_posthoc(clustering=clustering)
+    clustering.from_array(cidx_assign)
+
+    # Get the average abundances for each OTU in each cluster
+    data = []
+    for cluster in clustering:
+        oidxs = list(cluster.members)
+        temp = np.zeros(len(abunds))
+        temp[oidxs] = abunds[oidxs]
+        data.append(temp.reshape(-1,1))
+    data = np.hstack(data).shape
+
+    # Make the taxonomic heatmap as a dataframe
+    df = pl.base.condense_matrix_with_taxonomy(M, taxa=study.taxa, fmt=tax_fmt)
+    return df
+
+def condense_fixed_clustering_interaction_matrix(M, clustering):
+    &#39;&#39;&#39;Condense the interaction matrix `M` with the cluster assignments 
+    in `clustering`. Assume that the current cluster assignments is what
+    is used. Assumes that the input matrix is run with a fixed clustering.
+
+    Ignores the diagonal entrees
+
+    Parameters
+    ----------
+    M : np.ndarrray(n_taxa, n_taxa)
+        Taxon-Taxon interaction matrix
+    clustering : mdsine2.Clustering
+        Clustering object
+
+    Returns
+    -------
+    np.ndarray(n_clusters, n_clusters)
+        Cluster-cluster interaction matrix
+    &#39;&#39;&#39;
+    ret = np.zeros(shape=(len(clustering), len(clustering)))
+    for i1, cl1 in enumerate(clustering):
+        for i2, cl2 in enumerate(clustering):
+            if i1 == i2:
+                continue
+            aidx1 = list(cl1.members)[0]
+            aidx2 = list(cl2.members)[0]
+            ret[i1,i2] = M[aidx1, aidx2]
+    return ret
+
+def aggregate_items(subjset, hamming_dist):
+    &#39;&#39;&#39;Aggregate Taxa that have an average hamming distance of `hamming_dist`
+
+    Parameters
+    ----------
+    subjset : mdsine2.Study
+        This is the `mdsine2.Study` object that we are aggregating
+    hamming_dist : int
+        This is the hamming radius from one taxon to the next where we
+        are aggregating
+
+    Returns
+    -------
+    mdsine2.Study
+    &#39;&#39;&#39;
+
+    cnt = 0
+    found = False
+    iii = 0
+    logging.info(&#39;Agglomerating taxa&#39;)
+    while not found:
+        for iii in range(iii, len(subjset.taxa)):
+            if iii % 200 == 0:
+                logging.info(&#39;{}/{}&#39;.format(iii, len(subjset.taxa)))
+            taxon1 = subjset.taxa[iii]
+            for taxon2 in subjset.taxa.names.order[iii:]:
+                taxon2 = subjset.taxa[taxon2]
+                if taxon1.name == taxon2.name:
+                    continue
+                if len(taxon1.sequence) != len(taxon2.sequence):
+                    continue
+
+                dist = _avg_dist(taxon1, taxon2)
+                if dist &lt;= hamming_dist:
+                    subjset.aggregate_items(taxon1, taxon2)
+                    cnt += 1
+                    found = True
+                    break
+            if found:
+                break
+        if found:
+            found = False
+        else:
+            break
+    logging.info(&#39;Aggregated {} taxa&#39;.format(cnt))
+    return subjset
+
+def _avg_dist(taxon1, taxon2):
+    dists = []
+    if pl.isotu(taxon1):
+        seqs1 = taxon1.aggregated_seqs.values()
+    else:
+        seqs1 = [taxon1.sequence]
+
+    if pl.isotu(taxon2):
+        seqs2 = taxon2.aggregated_seqs.values()
+    else:
+        seqs2 = [taxon2.sequence]
+
+    for v1 in seqs1:
+        for v2 in seqs2:
+            dists.append(diversity.beta.hamming(v1, v2))
+    return np.nanmean(dists)
+
+def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_num_subjects, 
+    colonization_time=None, union_other_consortia=None):
+    &#39;&#39;&#39;Filters the subjects by looking at the consistency of the &#39;dtype&#39;, which can
+    be either &#39;raw&#39; where we look for the minimum number of counts, &#39;rel&#39;, where we
+    look for a minimum relative abundance, or &#39;abs&#39; where we look for a minium 
+    absolute abundance.
+
+    There must be at least `threshold` for at least
+    `min_num_consecutive` consecutive timepoints for at least
+    `min_num_subjects` subjects for the taxon to be classified as valid.
+
+    If a colonization time is specified, we only look after that timepoint
+
+    Parameters
+    ----------
+    subjset : str, mdsine2.Study
+        This is the Study object that we are doing the filtering on
+        If it is a str, then it is the location of the saved object.
+    dtype : str
+        This is the string to say what type of data we are thresholding. Options
+        are &#39;raw&#39;, &#39;rel&#39;, or &#39;abs&#39;.
+    threshold : numeric
+        This is the threshold for either counts, relative abundance, or
+        absolute abundance
+    min_num_consecutive : int
+        Number of consecutive timepoints to look for in a row
+    colonization_time : numeric
+        This is the time we are looking after for colonization. If None we assume 
+        there is no colonization time.
+    min_num_subjects : int, str
+        This is the minimum number of subjects this needs to be valid for.
+        If str, we accept &#39;all&#39;, which we set that automatically.
+    union_other_consortia : mdsine2.Study, None
+        If not None, take the union of the taxa passing the filtering of both
+        `subjset` and `union_other_consortia`
+
+    Returns
+    -------
+    mdsine2.Study
+        This is the filtered subject set.
+
+    Raises
+    ------
+    ValueError
+        If types are not valid or values are invalid
+    &#39;&#39;&#39;
+    if not pl.isstr(dtype):
+        raise TypeError(&#39;`dtype` ({}) must be a str&#39;.format(type(dtype)))
+    if dtype not in [&#39;raw&#39;, &#39;rel&#39;, &#39;abs&#39;]:
+        raise ValueError(&#39;`dtype` ({}) not recognized&#39;.format(dtype))
+    if not pl.isstudy(subjset):
+        raise TypeError(&#39;`subjset` ({}) must be a mdsine2.Study&#39;.format(
+            type(subjset)))
+    if not pl.isnumeric(threshold):
+        raise TypeError(&#39;`threshold` ({}) must be a numeric&#39;.format(type(threshold)))
+    if threshold &lt;= 0:
+        raise ValueError(&#39;`threshold` ({}) must be &gt; 0&#39;.format(threshold))
+    if not pl.isint(min_num_consecutive):
+        raise TypeError(&#39;`min_num_consecutive` ({}) must be an int&#39;.format(
+            type(min_num_consecutive)))
+    if min_num_consecutive &lt;= 0:
+        raise ValueError(&#39;`min_num_consecutive` ({}) must be &gt; 0&#39;.format(min_num_consecutive))
+    if colonization_time is None:
+        colonization_time = 0
+    if not pl.isnumeric(colonization_time):
+        raise TypeError(&#39;`colonization_time` ({}) must be a numeric&#39;.format(
+            type(colonization_time)))
+    if colonization_time &lt; 0:
+        raise ValueError(&#39;`colonization_time` ({}) must be &gt;= 0&#39;.format(colonization_time))
+    if min_num_subjects is None:
+        min_num_subjects = 1
+    if min_num_subjects == &#39;all&#39;:
+        min_num_subjects = len(subjset)
+    if not pl.isint(min_num_subjects):
+        raise TypeError(&#39;`min_num_subjects` ({}) must be an int&#39;.format(
+            type(min_num_subjects)))
+    if min_num_subjects &gt; len(subjset) or min_num_subjects &lt;= 0:
+        raise ValueError(&#39;`min_num_subjects` ({}) value not valid&#39;.format(min_num_subjects))
+    if union_other_consortia is not None:
+        if not pl.isstudy(union_other_consortia):
+            raise TypeError(&#39;`union_other_consortia` ({}) must be a mdsine2.Study&#39;.format(
+                type(union_other_consortia)))
+
+    subjset = copy.deepcopy(subjset)      
+    
+    if union_other_consortia is not None:
+        taxa_to_keep = OrderedSet()
+        for subjset_temp in [subjset, union_other_consortia]:
+            subjset_temp = consistency_filtering(subjset_temp, dtype=dtype,
+                threshold=threshold, min_num_consecutive=min_num_consecutive,
+                colonization_time=colonization_time, min_num_subjects=min_num_subjects,
+                union_other_consortia=None)
+            for taxon_name in subjset_temp.taxa.names:
+                taxa_to_keep.add(taxon_name)
+        to_delete = []
+        for aname in subjset.taxa.names:
+            if aname not in taxa_to_keep:
+                to_delete.append(aname)
+    else:
+        # Everything is fine, now we can do the filtering
+        talley = np.zeros(len(subjset.taxa), dtype=int)
+        for i, subj in enumerate(subjset):
+            matrix = subj.matrix()[dtype]
+            tidx_start = None
+            for tidx, t in enumerate(subj.times):
+                if t &gt;= colonization_time:
+                    tidx_start = tidx
+                    break
+            if tidx_start is None:
+                raise ValueError(&#39;Something went wrong&#39;)
+            matrix = matrix[:, tidx_start:]
+
+            for oidx in range(matrix.shape[0]):
+                consecutive = 0
+                for tidx in range(matrix.shape[1]):
+                    if matrix[oidx,tidx] &gt;= threshold:
+                        consecutive += 1
+                    else:
+                        consecutive = 0
+                    if consecutive &gt;= min_num_consecutive:
+                        talley[oidx] += 1
+                        break
+
+        invalid_oidxs = np.where(talley &lt; min_num_subjects)[0]
+        to_delete = subjset.taxa.ids.order[invalid_oidxs]
+    subjset.pop_taxa(to_delete)
+    return subjset
+
+def conditional_consistency_filtering(subjset, other, dtype, threshold, min_num_consecutive_upper,  
+    min_num_consecutive_lower, min_num_subjects, colonization_time):
+    &#39;&#39;&#39;Filters the cohorts in `subjset` with the `mdsine2.consistency_filtering`
+    filtering method but conditional on another cohort. If a taxon passes the filter
+    in the cohort `other`, the taxon can only have `min_num_consecutive_lower` 
+    consecutive timepoints instead of `min_num_consecutive_upper`. This potentially
+    increases the overlap of the taxa between cohorts, which is the reason why
+    we would do this filtering over just `mdsine2.consistency_filtering`
+
+    Algorithm
+    ---------
+    First, we apply the function `mdsine2.consistency_filtering` to the subjects
+    `subjset` and `other` with minimum number of consectutive timepoints 
+    `min_num_consecutive_upper` and `min_num_consecutive_lower`.
+
+    For each taxon in cohort `subjset`
+        If it passes filtering with `min_num_consecutive_upper` in `subjset`, it is included
+        If it passes filtering with `min_num_consecutive_upper` in `other` AND it
+            passes filtering  `min_num_consecutive_lower` in `subjset`, it is included.
+        Otherwise it is excluded
+
+    Parameters
+    ----------
+    subjset : str, mdsine2.Study
+        This is the Study object that we are doing the filtering on
+        If it is a str, then it is the location of the saved object.
+    other : str, mdsine2.Study
+        This is the other Study obejct that we are conditional on.
+    dtype : str
+        This is the string to say what type of data we are thresholding. Options
+        are &#39;raw&#39;, &#39;rel&#39;, or &#39;abs&#39;.
+    threshold : numeric
+        This is the threshold for either counts, relative abundance, or
+        absolute abundance
+    min_num_consecutive_upper, min_num_consecutive_lower : int
+        Number of consecutive timepoints to look for in a row
+    colonization_time : numeric
+        This is the time we are looking after for colonization. If None we assume 
+        there is no colonization time.
+    min_num_subjects : int, str
+        This is the minimum number of subjects this needs to be valid for.
+        If str, we accept &#39;all&#39;, which we set that automatically.
+    
+    Returns
+    -------
+    mdsine2.Study
+        This is the filtered subject set.
+
+    See Also
+    --------
+    mdsine2.consistency_filtering
+    &#39;&#39;&#39;
+    # All of the checks are done within `consistency_filtering` so dont check here
+    subjset_upper = consistency_filtering(subjset=copy.deepcopy(subjset), 
+        dtype=dtype, threshold=threshold,
+        min_num_consecutive=min_num_consecutive_upper, min_num_subjects=min_num_subjects, 
+        colonization_time=colonization_time)
+    subjset_lower = consistency_filtering(subjset=copy.deepcopy(subjset), 
+        dtype=dtype, threshold=threshold,
+        min_num_consecutive=min_num_consecutive_lower, min_num_subjects=min_num_subjects, 
+        colonization_time=colonization_time)
+
+    other_upper = consistency_filtering(subjset=copy.deepcopy(other), 
+        dtype=dtype, threshold=threshold,
+        min_num_consecutive=min_num_consecutive_upper, min_num_subjects=min_num_subjects, 
+        colonization_time=colonization_time)
+
+    # Conditional consistency filtering
+    to_delete = []
+    for taxon in subjset_lower.taxa:
+        if taxon.name in subjset_upper.taxa:
+            continue
+        if taxon.name in other_upper.taxa:
+            continue
+        to_delete.append(taxon.name)
+
+    subjset_lower.pop_taxa(to_delete)
+    return subjset_lower</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="mdsine2.util.aggregate_items"><code class="name flex">
+<span>def <span class="ident">aggregate_items</span></span>(<span>subjset, hamming_dist)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Aggregate Taxa that have an average hamming distance of <code>hamming_dist</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>subjset</code></strong> :&ensp;<code>mdsine2.Study</code></dt>
+<dd>This is the <code>mdsine2.Study</code> object that we are aggregating</dd>
+<dt><strong><code>hamming_dist</code></strong> :&ensp;<code>int</code></dt>
+<dd>This is the hamming radius from one taxon to the next where we
+are aggregating</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>mdsine2.Study</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def aggregate_items(subjset, hamming_dist):
+    &#39;&#39;&#39;Aggregate Taxa that have an average hamming distance of `hamming_dist`
+
+    Parameters
+    ----------
+    subjset : mdsine2.Study
+        This is the `mdsine2.Study` object that we are aggregating
+    hamming_dist : int
+        This is the hamming radius from one taxon to the next where we
+        are aggregating
+
+    Returns
+    -------
+    mdsine2.Study
+    &#39;&#39;&#39;
+
+    cnt = 0
+    found = False
+    iii = 0
+    logging.info(&#39;Agglomerating taxa&#39;)
+    while not found:
+        for iii in range(iii, len(subjset.taxa)):
+            if iii % 200 == 0:
+                logging.info(&#39;{}/{}&#39;.format(iii, len(subjset.taxa)))
+            taxon1 = subjset.taxa[iii]
+            for taxon2 in subjset.taxa.names.order[iii:]:
+                taxon2 = subjset.taxa[taxon2]
+                if taxon1.name == taxon2.name:
+                    continue
+                if len(taxon1.sequence) != len(taxon2.sequence):
+                    continue
+
+                dist = _avg_dist(taxon1, taxon2)
+                if dist &lt;= hamming_dist:
+                    subjset.aggregate_items(taxon1, taxon2)
+                    cnt += 1
+                    found = True
+                    break
+            if found:
+                break
+        if found:
+            found = False
+        else:
+            break
+    logging.info(&#39;Aggregated {} taxa&#39;.format(cnt))
+    return subjset</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.util.condense_fixed_clustering_interaction_matrix"><code class="name flex">
+<span>def <span class="ident">condense_fixed_clustering_interaction_matrix</span></span>(<span>M, clustering)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Condense the interaction matrix <code>M</code> with the cluster assignments
+in <code>clustering</code>. Assume that the current cluster assignments is what
+is used. Assumes that the input matrix is run with a fixed clustering.</p>
+<p>Ignores the diagonal entrees</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>M</code></strong> :&ensp;<code>np.ndarrray(n_taxa, n_taxa)</code></dt>
+<dd>Taxon-Taxon interaction matrix</dd>
+<dt><strong><code>clustering</code></strong> :&ensp;<code>mdsine2.Clustering</code></dt>
+<dd>Clustering object</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray(n_clusters, n_clusters)</code></dt>
+<dd>Cluster-cluster interaction matrix</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def condense_fixed_clustering_interaction_matrix(M, clustering):
+    &#39;&#39;&#39;Condense the interaction matrix `M` with the cluster assignments 
+    in `clustering`. Assume that the current cluster assignments is what
+    is used. Assumes that the input matrix is run with a fixed clustering.
+
+    Ignores the diagonal entrees
+
+    Parameters
+    ----------
+    M : np.ndarrray(n_taxa, n_taxa)
+        Taxon-Taxon interaction matrix
+    clustering : mdsine2.Clustering
+        Clustering object
+
+    Returns
+    -------
+    np.ndarray(n_clusters, n_clusters)
+        Cluster-cluster interaction matrix
+    &#39;&#39;&#39;
+    ret = np.zeros(shape=(len(clustering), len(clustering)))
+    for i1, cl1 in enumerate(clustering):
+        for i2, cl2 in enumerate(clustering):
+            if i1 == i2:
+                continue
+            aidx1 = list(cl1.members)[0]
+            aidx2 = list(cl2.members)[0]
+            ret[i1,i2] = M[aidx1, aidx2]
+    return ret</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.util.conditional_consistency_filtering"><code class="name flex">
+<span>def <span class="ident">conditional_consistency_filtering</span></span>(<span>subjset, other, dtype, threshold, min_num_consecutive_upper, min_num_consecutive_lower, min_num_subjects, colonization_time)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Filters the cohorts in <code>subjset</code> with the <code>mdsine2.consistency_filtering</code>
+filtering method but conditional on another cohort. If a taxon passes the filter
+in the cohort <code>other</code>, the taxon can only have <code>min_num_consecutive_lower</code>
+consecutive timepoints instead of <code>min_num_consecutive_upper</code>. This potentially
+increases the overlap of the taxa between cohorts, which is the reason why
+we would do this filtering over just <code>mdsine2.consistency_filtering</code></p>
+<h2 id="algorithm">Algorithm</h2>
+<p>First, we apply the function <code>mdsine2.consistency_filtering</code> to the subjects
+<code>subjset</code> and <code>other</code> with minimum number of consectutive timepoints
+<code>min_num_consecutive_upper</code> and <code>min_num_consecutive_lower</code>.</p>
+<p>For each taxon in cohort <code>subjset</code>
+If it passes filtering with <code>min_num_consecutive_upper</code> in <code>subjset</code>, it is included
+If it passes filtering with <code>min_num_consecutive_upper</code> in <code>other</code> AND it
+passes filtering
+<code>min_num_consecutive_lower</code> in <code>subjset</code>, it is included.
+Otherwise it is excluded</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>subjset</code></strong> :&ensp;<code>str, mdsine2.Study</code></dt>
+<dd>This is the Study object that we are doing the filtering on
+If it is a str, then it is the location of the saved object.</dd>
+<dt><strong><code>other</code></strong> :&ensp;<code>str, mdsine2.Study</code></dt>
+<dd>This is the other Study obejct that we are conditional on.</dd>
+<dt><strong><code>dtype</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the string to say what type of data we are thresholding. Options
+are 'raw', 'rel', or 'abs'.</dd>
+<dt><strong><code>threshold</code></strong> :&ensp;<code>numeric</code></dt>
+<dd>This is the threshold for either counts, relative abundance, or
+absolute abundance</dd>
+<dt><strong><code>min_num_consecutive_upper</code></strong>, <strong><code>min_num_consecutive_lower</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of consecutive timepoints to look for in a row</dd>
+<dt><strong><code>colonization_time</code></strong> :&ensp;<code>numeric</code></dt>
+<dd>This is the time we are looking after for colonization. If None we assume
+there is no colonization time.</dd>
+<dt><strong><code>min_num_subjects</code></strong> :&ensp;<code>int, str</code></dt>
+<dd>This is the minimum number of subjects this needs to be valid for.
+If str, we accept 'all', which we set that automatically.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>mdsine2.Study</code></dt>
+<dd>This is the filtered subject set.</dd>
+</dl>
+<h2 id="see-also">See Also</h2>
+<p><code>mdsine2.consistency_filtering</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def conditional_consistency_filtering(subjset, other, dtype, threshold, min_num_consecutive_upper,  
+    min_num_consecutive_lower, min_num_subjects, colonization_time):
+    &#39;&#39;&#39;Filters the cohorts in `subjset` with the `mdsine2.consistency_filtering`
+    filtering method but conditional on another cohort. If a taxon passes the filter
+    in the cohort `other`, the taxon can only have `min_num_consecutive_lower` 
+    consecutive timepoints instead of `min_num_consecutive_upper`. This potentially
+    increases the overlap of the taxa between cohorts, which is the reason why
+    we would do this filtering over just `mdsine2.consistency_filtering`
+
+    Algorithm
+    ---------
+    First, we apply the function `mdsine2.consistency_filtering` to the subjects
+    `subjset` and `other` with minimum number of consectutive timepoints 
+    `min_num_consecutive_upper` and `min_num_consecutive_lower`.
+
+    For each taxon in cohort `subjset`
+        If it passes filtering with `min_num_consecutive_upper` in `subjset`, it is included
+        If it passes filtering with `min_num_consecutive_upper` in `other` AND it
+            passes filtering  `min_num_consecutive_lower` in `subjset`, it is included.
+        Otherwise it is excluded
+
+    Parameters
+    ----------
+    subjset : str, mdsine2.Study
+        This is the Study object that we are doing the filtering on
+        If it is a str, then it is the location of the saved object.
+    other : str, mdsine2.Study
+        This is the other Study obejct that we are conditional on.
+    dtype : str
+        This is the string to say what type of data we are thresholding. Options
+        are &#39;raw&#39;, &#39;rel&#39;, or &#39;abs&#39;.
+    threshold : numeric
+        This is the threshold for either counts, relative abundance, or
+        absolute abundance
+    min_num_consecutive_upper, min_num_consecutive_lower : int
+        Number of consecutive timepoints to look for in a row
+    colonization_time : numeric
+        This is the time we are looking after for colonization. If None we assume 
+        there is no colonization time.
+    min_num_subjects : int, str
+        This is the minimum number of subjects this needs to be valid for.
+        If str, we accept &#39;all&#39;, which we set that automatically.
+    
+    Returns
+    -------
+    mdsine2.Study
+        This is the filtered subject set.
+
+    See Also
+    --------
+    mdsine2.consistency_filtering
+    &#39;&#39;&#39;
+    # All of the checks are done within `consistency_filtering` so dont check here
+    subjset_upper = consistency_filtering(subjset=copy.deepcopy(subjset), 
+        dtype=dtype, threshold=threshold,
+        min_num_consecutive=min_num_consecutive_upper, min_num_subjects=min_num_subjects, 
+        colonization_time=colonization_time)
+    subjset_lower = consistency_filtering(subjset=copy.deepcopy(subjset), 
+        dtype=dtype, threshold=threshold,
+        min_num_consecutive=min_num_consecutive_lower, min_num_subjects=min_num_subjects, 
+        colonization_time=colonization_time)
+
+    other_upper = consistency_filtering(subjset=copy.deepcopy(other), 
+        dtype=dtype, threshold=threshold,
+        min_num_consecutive=min_num_consecutive_upper, min_num_subjects=min_num_subjects, 
+        colonization_time=colonization_time)
+
+    # Conditional consistency filtering
+    to_delete = []
+    for taxon in subjset_lower.taxa:
+        if taxon.name in subjset_upper.taxa:
+            continue
+        if taxon.name in other_upper.taxa:
+            continue
+        to_delete.append(taxon.name)
+
+    subjset_lower.pop_taxa(to_delete)
+    return subjset_lower</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.util.consistency_filtering"><code class="name flex">
+<span>def <span class="ident">consistency_filtering</span></span>(<span>subjset, dtype, threshold, min_num_consecutive, min_num_subjects, colonization_time=None, union_other_consortia=None)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Filters the subjects by looking at the consistency of the 'dtype', which can
+be either 'raw' where we look for the minimum number of counts, 'rel', where we
+look for a minimum relative abundance, or 'abs' where we look for a minium
+absolute abundance.</p>
+<p>There must be at least <code>threshold</code> for at least
+<code>min_num_consecutive</code> consecutive timepoints for at least
+<code>min_num_subjects</code> subjects for the taxon to be classified as valid.</p>
+<p>If a colonization time is specified, we only look after that timepoint</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>subjset</code></strong> :&ensp;<code>str, mdsine2.Study</code></dt>
+<dd>This is the Study object that we are doing the filtering on
+If it is a str, then it is the location of the saved object.</dd>
+<dt><strong><code>dtype</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the string to say what type of data we are thresholding. Options
+are 'raw', 'rel', or 'abs'.</dd>
+<dt><strong><code>threshold</code></strong> :&ensp;<code>numeric</code></dt>
+<dd>This is the threshold for either counts, relative abundance, or
+absolute abundance</dd>
+<dt><strong><code>min_num_consecutive</code></strong> :&ensp;<code>int</code></dt>
+<dd>Number of consecutive timepoints to look for in a row</dd>
+<dt><strong><code>colonization_time</code></strong> :&ensp;<code>numeric</code></dt>
+<dd>This is the time we are looking after for colonization. If None we assume
+there is no colonization time.</dd>
+<dt><strong><code>min_num_subjects</code></strong> :&ensp;<code>int, str</code></dt>
+<dd>This is the minimum number of subjects this needs to be valid for.
+If str, we accept 'all', which we set that automatically.</dd>
+<dt><strong><code>union_other_consortia</code></strong> :&ensp;<code>mdsine2.Study, None</code></dt>
+<dd>If not None, take the union of the taxa passing the filtering of both
+<code>subjset</code> and <code>union_other_consortia</code></dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>mdsine2.Study</code></dt>
+<dd>This is the filtered subject set.</dd>
+</dl>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>ValueError</code></dt>
+<dd>If types are not valid or values are invalid</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_num_subjects, 
+    colonization_time=None, union_other_consortia=None):
+    &#39;&#39;&#39;Filters the subjects by looking at the consistency of the &#39;dtype&#39;, which can
+    be either &#39;raw&#39; where we look for the minimum number of counts, &#39;rel&#39;, where we
+    look for a minimum relative abundance, or &#39;abs&#39; where we look for a minium 
+    absolute abundance.
+
+    There must be at least `threshold` for at least
+    `min_num_consecutive` consecutive timepoints for at least
+    `min_num_subjects` subjects for the taxon to be classified as valid.
+
+    If a colonization time is specified, we only look after that timepoint
+
+    Parameters
+    ----------
+    subjset : str, mdsine2.Study
+        This is the Study object that we are doing the filtering on
+        If it is a str, then it is the location of the saved object.
+    dtype : str
+        This is the string to say what type of data we are thresholding. Options
+        are &#39;raw&#39;, &#39;rel&#39;, or &#39;abs&#39;.
+    threshold : numeric
+        This is the threshold for either counts, relative abundance, or
+        absolute abundance
+    min_num_consecutive : int
+        Number of consecutive timepoints to look for in a row
+    colonization_time : numeric
+        This is the time we are looking after for colonization. If None we assume 
+        there is no colonization time.
+    min_num_subjects : int, str
+        This is the minimum number of subjects this needs to be valid for.
+        If str, we accept &#39;all&#39;, which we set that automatically.
+    union_other_consortia : mdsine2.Study, None
+        If not None, take the union of the taxa passing the filtering of both
+        `subjset` and `union_other_consortia`
+
+    Returns
+    -------
+    mdsine2.Study
+        This is the filtered subject set.
+
+    Raises
+    ------
+    ValueError
+        If types are not valid or values are invalid
+    &#39;&#39;&#39;
+    if not pl.isstr(dtype):
+        raise TypeError(&#39;`dtype` ({}) must be a str&#39;.format(type(dtype)))
+    if dtype not in [&#39;raw&#39;, &#39;rel&#39;, &#39;abs&#39;]:
+        raise ValueError(&#39;`dtype` ({}) not recognized&#39;.format(dtype))
+    if not pl.isstudy(subjset):
+        raise TypeError(&#39;`subjset` ({}) must be a mdsine2.Study&#39;.format(
+            type(subjset)))
+    if not pl.isnumeric(threshold):
+        raise TypeError(&#39;`threshold` ({}) must be a numeric&#39;.format(type(threshold)))
+    if threshold &lt;= 0:
+        raise ValueError(&#39;`threshold` ({}) must be &gt; 0&#39;.format(threshold))
+    if not pl.isint(min_num_consecutive):
+        raise TypeError(&#39;`min_num_consecutive` ({}) must be an int&#39;.format(
+            type(min_num_consecutive)))
+    if min_num_consecutive &lt;= 0:
+        raise ValueError(&#39;`min_num_consecutive` ({}) must be &gt; 0&#39;.format(min_num_consecutive))
+    if colonization_time is None:
+        colonization_time = 0
+    if not pl.isnumeric(colonization_time):
+        raise TypeError(&#39;`colonization_time` ({}) must be a numeric&#39;.format(
+            type(colonization_time)))
+    if colonization_time &lt; 0:
+        raise ValueError(&#39;`colonization_time` ({}) must be &gt;= 0&#39;.format(colonization_time))
+    if min_num_subjects is None:
+        min_num_subjects = 1
+    if min_num_subjects == &#39;all&#39;:
+        min_num_subjects = len(subjset)
+    if not pl.isint(min_num_subjects):
+        raise TypeError(&#39;`min_num_subjects` ({}) must be an int&#39;.format(
+            type(min_num_subjects)))
+    if min_num_subjects &gt; len(subjset) or min_num_subjects &lt;= 0:
+        raise ValueError(&#39;`min_num_subjects` ({}) value not valid&#39;.format(min_num_subjects))
+    if union_other_consortia is not None:
+        if not pl.isstudy(union_other_consortia):
+            raise TypeError(&#39;`union_other_consortia` ({}) must be a mdsine2.Study&#39;.format(
+                type(union_other_consortia)))
+
+    subjset = copy.deepcopy(subjset)      
+    
+    if union_other_consortia is not None:
+        taxa_to_keep = OrderedSet()
+        for subjset_temp in [subjset, union_other_consortia]:
+            subjset_temp = consistency_filtering(subjset_temp, dtype=dtype,
+                threshold=threshold, min_num_consecutive=min_num_consecutive,
+                colonization_time=colonization_time, min_num_subjects=min_num_subjects,
+                union_other_consortia=None)
+            for taxon_name in subjset_temp.taxa.names:
+                taxa_to_keep.add(taxon_name)
+        to_delete = []
+        for aname in subjset.taxa.names:
+            if aname not in taxa_to_keep:
+                to_delete.append(aname)
+    else:
+        # Everything is fine, now we can do the filtering
+        talley = np.zeros(len(subjset.taxa), dtype=int)
+        for i, subj in enumerate(subjset):
+            matrix = subj.matrix()[dtype]
+            tidx_start = None
+            for tidx, t in enumerate(subj.times):
+                if t &gt;= colonization_time:
+                    tidx_start = tidx
+                    break
+            if tidx_start is None:
+                raise ValueError(&#39;Something went wrong&#39;)
+            matrix = matrix[:, tidx_start:]
+
+            for oidx in range(matrix.shape[0]):
+                consecutive = 0
+                for tidx in range(matrix.shape[1]):
+                    if matrix[oidx,tidx] &gt;= threshold:
+                        consecutive += 1
+                    else:
+                        consecutive = 0
+                    if consecutive &gt;= min_num_consecutive:
+                        talley[oidx] += 1
+                        break
+
+        invalid_oidxs = np.where(talley &lt; min_num_subjects)[0]
+        to_delete = subjset.taxa.ids.order[invalid_oidxs]
+    subjset.pop_taxa(to_delete)
+    return subjset</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.util.generate_cluster_assignments_posthoc"><code class="name flex">
+<span>def <span class="ident">generate_cluster_assignments_posthoc</span></span>(<span>clustering, n_clusters='mode', linkage='average', set_as_value=False, section='posterior')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Once the inference is complete, compute the clusters posthoc using
+sklearn's AgglomerativeClustering function with distance matrix being
+1 - cocluster matrix (we subtrace the cocluster matrix from 1 because
+the cocluster matrix describes similarity, not distance).</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>clustering</code></strong> :&ensp;<code>mdsine2.Clustering</code></dt>
+<dd>Clustering object</dd>
+<dt><strong><code>n_clusters</code></strong> :&ensp;<code>str, int, callable, Optional</code></dt>
+<dd>This specifies the number of clusters that are used during
+Agglomerative clustering.
+If <code>n_clusters</code> is of type int, it will use that number as the number of
+clusters.
+If <code>n_clusters</code> is of type str, it calculates the number of clusters
+based on the trace for the number of clusters (clustering.n_clusters.trace).
+Possible calculation types are:
+* 'median', 'mode', and 'mean'.
+If <code>n_clusters</code> is callable, it will calculate n given the trace of n_clusters
+Default is 'mode'.</dd>
+<dt><strong><code>linkage</code></strong> :&ensp;<code>str, Optional</code></dt>
+<dd>Which linkage criterion to use. Determines which distance to use
+between sets of observation. The AgglomerativeClustering algorithm
+will merge the pairs of cluster that minimize the linkage criterion.
+Possible types:</dd>
+<dt><strong><code>set_as_value</code></strong> :&ensp;<code>bool</code></dt>
+<dd>If True then set the result as the value of the clustering object</dd>
+<dt><strong><code>section</code></strong> :&ensp;<code>str</code></dt>
+<dd>What part of the chain to take the samples from</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray(size=(len(items), ), dtype=int)</code></dt>
+<dd>Each value is the cluster assignment for index i</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def generate_cluster_assignments_posthoc(clustering, n_clusters=&#39;mode&#39;, linkage=&#39;average&#39;,
+    set_as_value=False, section=&#39;posterior&#39;):
+    &#39;&#39;&#39;Once the inference is complete, compute the clusters posthoc using
+    sklearn&#39;s AgglomerativeClustering function with distance matrix being
+    1 - cocluster matrix (we subtrace the cocluster matrix from 1 because
+    the cocluster matrix describes similarity, not distance).
+
+    Parameters
+    ----------
+    clustering : mdsine2.Clustering
+        Clustering object
+    n_clusters : str, int, callable, Optional
+        This specifies the number of clusters that are used during
+        Agglomerative clustering.
+        If `n_clusters` is of type int, it will use that number as the number of
+        clusters.
+        If `n_clusters` is of type str, it calculates the number of clusters
+        based on the trace for the number of clusters (clustering.n_clusters.trace).
+        Possible calculation types are:
+            * &#39;median&#39;, &#39;mode&#39;, and &#39;mean&#39;.
+        If `n_clusters` is callable, it will calculate n given the trace of n_clusters
+        Default is &#39;mode&#39;.
+    linkage : str, Optional
+        Which linkage criterion to use. Determines which distance to use
+        between sets of observation. The AgglomerativeClustering algorithm
+        will merge the pairs of cluster that minimize the linkage criterion.
+        Possible types:
+    set_as_value : bool
+        If True then set the result as the value of the clustering object
+    section : str
+        What part of the chain to take the samples from
+    
+    Returns
+    -------
+    np.ndarray(size=(len(items), ), dtype=int)
+        Each value is the cluster assignment for index i
+    &#39;&#39;&#39;
+    from sklearn.cluster import AgglomerativeClustering
+    import scipy.stats
+
+
+    trace = clustering.n_clusters.get_trace_from_disk(section=section)
+    if callable(n_clusters):
+        n = n_clusters(trace)
+    elif type(n_clusters) == int:
+        n = n_clusters
+    elif type(n_clusters) == str:
+        if n_clusters == &#39;mode&#39;:
+            n = scipy.stats.mode(trace)[0][0]
+        else:
+            raise ValueError(&#39;`n_clusters` ({}) not recognized.&#39;.format(n_clusters))
+    else:
+        raise ValueError(&#39;Type `n_clusters` ({}) not recognized. Must be of &#39;\
+            &#39;type `str`, `int`, or callable.&#39;.format(type(n_clusters)))
+    if not pl.isbool(set_as_value):
+        raise TypeError(&#39;`set_as_value` ({}) must be a bool&#39;.format(type(set_as_value)))
+
+    A = pl.summary(clustering.coclusters, section=section)[&#39;mean&#39;]
+    A = 1 - A
+    logging.info(&#39;Number of clusters: {}&#39;.format(int(n)))
+    c = AgglomerativeClustering(
+        n_clusters=int(n),
+        affinity=&#39;precomputed&#39;,
+        linkage=linkage)
+    ret = c.fit_predict(A)
+    logging.info(&#39;Clusters assigned: {}&#39;.format(ret))
+    if set_as_value:
+        for cidx in range(np.max(ret)):
+            cluster = np.where(ret == cidx)[0]
+            cid = clustering.make_new_cluster_with(idx=cluster[0])
+            for oidx in cluster[1:]:
+                clustering.move_item(idx=oidx, cid=cid)
+    return ret</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.util.generate_interation_bayes_factors_posthoc"><code class="name flex">
+<span>def <span class="ident">generate_interation_bayes_factors_posthoc</span></span>(<span>mcmc, section='posterior')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates the bayes factors on an item-item level for the interactions,
+given the passed in prior. All negative indicators are set as <code>np.nan</code>s in
+the trace, so we do <code>~np.isnan</code> to get the indicators.</p>
+<p>Since the prior is conjugate, we can fully integrate out the prior of the
+calculation:
+bf[i,j] = (count_on[i,j] * b) / (count_off[i,j] * a)</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>mcmc</code></strong> :&ensp;<code>mdsine2.BaseMCMC</code></dt>
+<dd>This is the inference object containing the traces</dd>
+<dt><strong><code>section</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the section of the MH samples to take the samples</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray((n,n), dtpye=float)</code></dt>
+<dd>These are the bayes factors for each of the interactions on an item-item level</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def generate_interation_bayes_factors_posthoc(mcmc, section=&#39;posterior&#39;):
+    &#39;&#39;&#39;Generates the bayes factors on an item-item level for the interactions, 
+    given the passed in prior. All negative indicators are set as `np.nan`s in 
+    the trace, so we do `~np.isnan` to get the indicators.
+
+    Since the prior is conjugate, we can fully integrate out the prior of the 
+    calculation:
+        bf[i,j] = (count_on[i,j] * b) / (count_off[i,j] * a)
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        This is the inference object containing the traces
+    section : str
+        This is the section of the MH samples to take the samples
+
+    Returns
+    -------
+    np.ndarray((n,n), dtpye=float)
+        These are the bayes factors for each of the interactions on an item-item level
+    &#39;&#39;&#39;
+    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ]
+    trace = interactions.get_trace_from_disk(section=section)
+
+    trace = ~ np.isnan(trace)
+    cnts_1 = np.sum(trace, axis=0)
+    cnts_0 = np.sum(1-trace, axis=0)
+
+    # print(cnts_1)
+    # print()
+    # print(cnts_0)
+
+    a = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value
+    b = mcmc.graph[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.b.value
+
+    return (cnts_1 * b) / (cnts_0 * a)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.util.generate_perturbation_bayes_factors_posthoc"><code class="name flex">
+<span>def <span class="ident">generate_perturbation_bayes_factors_posthoc</span></span>(<span>mcmc, perturbation, section='posterior')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Generates the bayes factors on an item-item level for the perturbations,
+given the passed in prior. All negative indicators are set as <code>np.nan</code>s in
+the trace, so we do <code>~np.isnan</code> to get the indicators.</p>
+<p>Since the prior is conjugate, we can fully integrate out the prior of the
+calculation:
+bf[i,j] = (count_on[i] * b) / (count_off[i] * a)</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>mcmc</code></strong> :&ensp;<code>mdsine2.BaseMCMC</code></dt>
+<dd>This is the inference object containing the traces</dd>
+<dt><strong><code>perturbation</code></strong> :&ensp;<code>mdsine2.Perturbation</code></dt>
+<dd>Perturbation object we are calculating from</dd>
+<dt><strong><code>section</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the section of the MH samples to take the samples</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray((n,), dtpye=float)</code></dt>
+<dd>These are the bayes factors for each of the perturbations on an item level</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def generate_perturbation_bayes_factors_posthoc(mcmc, perturbation, section=&#39;posterior&#39;):
+    &#39;&#39;&#39;Generates the bayes factors on an item-item level for the perturbations, 
+    given the passed in prior. All negative indicators are set as `np.nan`s in 
+    the trace, so we do `~np.isnan` to get the indicators.
+
+    Since the prior is conjugate, we can fully integrate out the prior of the 
+    calculation:
+        bf[i,j] = (count_on[i] * b) / (count_off[i] * a)
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        This is the inference object containing the traces
+    perturbation : mdsine2.Perturbation
+        Perturbation object we are calculating from
+    section : str
+        This is the section of the MH samples to take the samples
+
+    Returns
+    -------
+    np.ndarray((n,), dtpye=float)
+        These are the bayes factors for each of the perturbations on an item level
+    &#39;&#39;&#39;
+    trace = ~ np.isnan(perturbation.get_trace_from_disk())
+    cnts_1 = np.sum(trace, axis=0)
+    cnts_0 = np.sum(1-trace, axis=0)
+
+    a = perturbation.probability.prior.a.value
+    b = perturbation.probability.prior.b.value
+
+    return (cnts_1 * b) / (cnts_0 * a)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.util.generate_taxonomic_distribution_over_clusters_posthoc"><code class="name flex">
+<span>def <span class="ident">generate_taxonomic_distribution_over_clusters_posthoc</span></span>(<span>mcmc, tax_fmt)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Make a table that shows the abundance of different taxonomies in every cluster</p>
+<h2 id="output">Output</h2>
+<p>rows: taxonomic lables
+columns: clusters
+value: abundance of those taxonomies</p>
+<h2 id="value">Value</h2>
+<p>If there are perturbations, then the value is the mean abundance over the taxa
+before the first perturbation between all of the subjects. If there are no perturbations
+then this is just the mean abundance of the taxa over all the time points</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>mcmc</code></strong> :&ensp;<code>mdsine2.BaseMCMC</code></dt>
+<dd>This is the inference object containing the traces</dd>
+<dt><strong><code>tax_fmt</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the format to generate the taxonomy names. See <code>mdsine2.taxaname_formatter</code></dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>pandas.DataFrame</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def generate_taxonomic_distribution_over_clusters_posthoc(mcmc, tax_fmt):
+    &#39;&#39;&#39;Make a table that shows the abundance of different taxonomies in every cluster
+
+    Output:
+        rows: taxonomic lables
+        columns: clusters
+        value: abundance of those taxonomies
+    
+    Value
+    -----
+    If there are perturbations, then the value is the mean abundance over the taxa
+    before the first perturbation between all of the subjects. If there are no perturbations
+    then this is just the mean abundance of the taxa over all the time points
+
+    Parameters
+    ----------
+    mcmc : mdsine2.BaseMCMC
+        This is the inference object containing the traces
+    tax_fmt : str
+        This is the format to generate the taxonomy names. See `mdsine2.taxaname_formatter`
+
+    Returns
+    -------
+    pandas.DataFrame
+    &#39;&#39;&#39;
+    # Get the objects
+    clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
+    study = mcmc.graph.data.subjects
+
+    # Get all the times
+    times = study.times(agg=&#39;union&#39;)
+
+    # Get the first time of the perturbation between all of the subjects
+    first_time = None
+    if study.perturbations is not None:
+        for subj in study:
+            if first_time is None:
+                first_time = study.perturbations[0].starts[subj.name]
+            else:
+                curr_time = study.perturbations[0].starts[subj.name]
+                if curr_time &lt; first_time:
+                    first_time = curr_time
+        t_end = np.searchsorted(times, first_time)
+    else:
+        t_end = int(len(times))
+
+    # Get mean abundance over subjects for times preperturbation then take mean
+    times = times[:t_end]
+    M = study.matrix(dtype=&#39;abs&#39;, agg=&#39;mean&#39;, times=times)
+    abunds = np.mean(M, axis=1)
+
+    # Get the clustering
+    cidx_assign = generate_cluster_assignments_posthoc(clustering=clustering)
+    clustering.from_array(cidx_assign)
+
+    # Get the average abundances for each OTU in each cluster
+    data = []
+    for cluster in clustering:
+        oidxs = list(cluster.members)
+        temp = np.zeros(len(abunds))
+        temp[oidxs] = abunds[oidxs]
+        data.append(temp.reshape(-1,1))
+    data = np.hstack(data).shape
+
+    # Make the taxonomic heatmap as a dataframe
+    df = pl.base.condense_matrix_with_taxonomy(M, taxa=study.taxa, fmt=tax_fmt)
+    return df</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.util.is_gram_negative"><code class="name flex">
+<span>def <span class="ident">is_gram_negative</span></span>(<span>taxon)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Return true if the taxon is gram - or gram positive</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>taxon</code></strong> :&ensp;<code>md2.Taxon, md2.OTU</code></dt>
+<dd>Taxon object</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>bool</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def is_gram_negative(taxon):
+    &#39;&#39;&#39;Return true if the taxon is gram - or gram positive
+
+    Parameters
+    ----------
+    taxon : md2.Taxon, md2.OTU
+        Taxon object
+
+    Returns
+    -------
+    bool
+    &#39;&#39;&#39;
+    if not taxon.tax_is_defined(&#39;phylum&#39;):
+        return None
+    elif taxon.taxonomy[&#39;phylum&#39;].lower() == &#39;bacteroidetes&#39;:
+        return True
+    elif taxon.taxonomy[&#39;phylum&#39;].lower() == &#39;firmicutes&#39;:
+        return False
+    elif taxon.taxonomy[&#39;phylum&#39;].lower() == &#39;verrucomicrobia&#39;:
+        return True
+    elif taxon.taxonomy[&#39;phylum&#39;].lower() == &#39;proteobacteria&#39;:
+        return True
+    else:
+        raise ValueError(&#39;{} phylum not specified. If not bacteroidetes, firmicutes, verrucomicrobia, or &#39; \
+            &#39;proteobacteria, you must add another phylum&#39;.format(str(taxon)))</code></pre>
+</details>
+</dd>
+</dl>
+</section>
+<section>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="mdsine2" href="index.html">mdsine2</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="mdsine2.util.aggregate_items" href="#mdsine2.util.aggregate_items">aggregate_items</a></code></li>
+<li><code><a title="mdsine2.util.condense_fixed_clustering_interaction_matrix" href="#mdsine2.util.condense_fixed_clustering_interaction_matrix">condense_fixed_clustering_interaction_matrix</a></code></li>
+<li><code><a title="mdsine2.util.conditional_consistency_filtering" href="#mdsine2.util.conditional_consistency_filtering">conditional_consistency_filtering</a></code></li>
+<li><code><a title="mdsine2.util.consistency_filtering" href="#mdsine2.util.consistency_filtering">consistency_filtering</a></code></li>
+<li><code><a title="mdsine2.util.generate_cluster_assignments_posthoc" href="#mdsine2.util.generate_cluster_assignments_posthoc">generate_cluster_assignments_posthoc</a></code></li>
+<li><code><a title="mdsine2.util.generate_interation_bayes_factors_posthoc" href="#mdsine2.util.generate_interation_bayes_factors_posthoc">generate_interation_bayes_factors_posthoc</a></code></li>
+<li><code><a title="mdsine2.util.generate_perturbation_bayes_factors_posthoc" href="#mdsine2.util.generate_perturbation_bayes_factors_posthoc">generate_perturbation_bayes_factors_posthoc</a></code></li>
+<li><code><a title="mdsine2.util.generate_taxonomic_distribution_over_clusters_posthoc" href="#mdsine2.util.generate_taxonomic_distribution_over_clusters_posthoc">generate_taxonomic_distribution_over_clusters_posthoc</a></code></li>
+<li><code><a title="mdsine2.util.is_gram_negative" href="#mdsine2.util.is_gram_negative">is_gram_negative</a></code></li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.1</a>.</p>
+</footer>
+</body>
+</html>

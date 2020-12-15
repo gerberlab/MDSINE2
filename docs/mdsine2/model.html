@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
+<meta name="generator" content="pdoc 0.9.1" />
+<title>mdsine2.model API documentation</title>
+<meta name="description" content="Make the Dynamics" />
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
+<link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
+<link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:30px;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:1em 0 .50em 0}h3{font-size:1.4em;margin:25px 0 10px 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .3s ease-in-out}a:hover{color:#e82}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900}pre code{background:#f8f8f8;font-size:.8em;line-height:1.4em}code{background:#f2f2f1;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{background:#f8f8f8;border:0;border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0;padding:1ex}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-weight:bold;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em .5em;margin-bottom:1em}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.item .name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul{padding-left:1.5em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js" integrity="sha256-Uv3H6lx7dJmRfRvH8TH6kJD1TSK1aFcwgx+mdg3epi8=" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => hljs.initHighlighting())</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>mdsine2.model</code></h1>
+</header>
+<section id="section-intro">
+<p>Make the Dynamics</p>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">&#39;&#39;&#39;Make the Dynamics
+&#39;&#39;&#39;
+import numpy as np
+import time
+import logging
+
+from . import pylab as pl
+from .names import STRNAMES
+
+class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
+    &#39;&#39;&#39;Discretized Generalized Lotka-Voltera Dynamics with 
+    clustered interactions and perturbations. This class provides functionality
+    to forward simulate the dynamics:
+
+    log(x_{k+1}) = log(x_k) + \Delta_k * ( 
+            a1*(1 + \gamma) + 
+            x_k * a2 + 
+            sum_{c_i != c_j} b_{c_i, c_j} x_{k,j})
+
+    If you want to forward simulate, then pass this dynamics object into 
+    `mdsine2.integrate`.
+
+    Parameters
+    ----------
+    growth : np.ndarray((n,))
+        This is the growth of the dynamics for each taxon
+    interactions : np.ndarray((n,n)) 
+        Interactions is assumed are the Taxon-Taxon interactions (shape=(n,n)). The diagonal of
+        the interactions is assumed to be the self interactions.
+    perturbations : list(np.ndarray((n,))), None
+        These are the perturbation magnitudes for each perturbation.  If `None` then we assume 
+        there are no perturbations. If this is specified then `perturbation_starts` and 
+        `perturbation_ends` must also be specified
+    perturbation_starts : list(float), None
+        These are the start time points of the perturbations.
+    perturbation_ends : list(float), None
+        These are the end time points of the perturbations.
+
+    See also
+    --------
+    pylab.dynamics.dynamics
+    &#39;&#39;&#39;
+
+    @staticmethod
+    def forward_sim_from_chain(mcmc, val, initial_conditions, times, simulation_dt, 
+        sim_max=None, section=&#39;posterior&#39;):
+        &#39;&#39;&#39;Forward simulate the dynamics from a chain. This assumes that the
+        initial conditions occur at time `times[0]`
+
+        Parameters
+        ----------
+        mcmc : md2.BaseMCMC
+            MCMC chain with all of the traces of the parameters
+        val : md2.Subject
+            This is the subject we are forward simulating for
+        initial_conditions : np.ndarray(n_taxa)
+            Initial conditions for each taxon
+        times : np.ndarray
+            These are the times to forward simulate for
+        simulation_dt : float
+            This is the step size to forward simulate with
+        sim_max : float
+            This is the maximum value for inference that we clip at
+        section : str
+            This is the part of the trace that we are forward simulating from
+
+        Returns
+        -------
+        np.ndarray(n_gibbs, n_taxa, len(times))
+            These are the forward imsualtions for each gibb step
+        &#39;&#39;&#39;
+        # Get the parameters from the chain
+        growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section=section)
+        self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section=section)
+        interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section=section)
+
+        si = -np.absolute(self_interactions)
+        for i in range(len(mcmc.graph.data.taxa)):
+            interactions[:, i, i] = si[:, i]
+        interactions[np.isnan(interactions)] = 0
+
+        if mcmc.graph.perturbations is not None:
+            perturbations = []
+            for pert in mcmc.graph.perturbations:
+                perturbations.append(pert.get_trace_from_disk(section=section))
+                perturbations[-1][np.isnan(perturbations[-1])] = 0
+            
+            perturbation_starts = []
+            perturbation_ends = []
+            for pert in mcmc.graph.perturbations:
+                if pert.name in val.perturbations:
+                    perturbation_starts.append(val.perturbations[pert.name].starts[val.name])
+                    perturbation_ends.append(val.perturbations[pert.name].ends[val.name])  
+
+        else:
+            perturbation_starts = None
+            perturbation_ends = None
+            perturbations = None
+
+        # Forward simulate for every gibb step
+        pred_matrix = np.zeros(shape=(growths.shape[0], growths.shape[1], len(times)))
+
+        dyn = gLVDynamicsSingleClustering(growth=None, interactions=None, sim_max=sim_max,
+            start_day=times[0], perturbation_ends=perturbation_ends, 
+            perturbation_starts=perturbation_starts)
+        start_time = time.time()
+        initial_conditions = initial_conditions.reshape(-1,1)
+        for gibb in range(growths.shape[0]):
+            if gibb % 5 == 0 and gibb &gt; 0:
+                logging.info(&#39;{}/{} - {}&#39;.format(gibb,growths.shape[0],
+                    time.time()-start_time))
+                start_time = time.time()
+            dyn.growth = growths[gibb]
+            dyn.interactions = interactions[gibb]
+            if perturbations is not None:
+                dyn.perturbations = [pert[gibb] for pert in perturbations]
+            
+            X = pl.dynamics.integrate(dynamics=dyn, initial_conditions=initial_conditions, 
+                dt=simulation_dt, n_days=times[-1]+simulation_dt, processvar=None,
+                subsample=True, times=times, log_every=10000)
+            pred_matrix[gibb] = X[&#39;X&#39;]
+        return pred_matrix
+
+    def __init__(self, growth, interactions, perturbations=None, perturbation_starts=None,
+        perturbation_ends=None, sim_max=None, start_day=0):
+
+        self.growth = growth
+        self.interactions = interactions
+        self.perturbations = perturbations
+        self.perturbation_starts = perturbation_starts
+        self.perturbation_ends = perturbation_ends
+        self.sim_max = sim_max
+        self.start_day = start_day
+
+        self._pert_intervals = None
+        self._adjusted_growth = None
+
+    def stability(self):
+        &#39;&#39;&#39;This is the analytical solution for the stability
+        &#39;&#39;&#39;
+        return - np.linalg.pinv(self.interactions) @ (self.growth.reshape(-1,1))
+
+    def init_integration(self, dt):
+        &#39;&#39;&#39;This is called internally from mdsine2.integrate
+
+        Pre-multiply the growth and interactions with dt. Improves
+        efficiency by 25%.
+
+        Parameters
+        ----------
+        dt : numeric
+            This is the amount of time from the previous time point we
+            are integrating from
+        &#39;&#39;&#39;
+        self.growth = self.growth.reshape(-1,1)
+        self._dtgrowth = self.growth * dt
+        if self.perturbations is not None:
+            self._adjust_growth = []
+            for pert in self.perturbations:
+                pert = pert.reshape(-1,1)
+                self._adjust_growth.append(self._dtgrowth * (1 + pert))
+        if self.sim_max is not None:
+            self.record = {}
+        else:
+            self.record = None
+
+        self._dtinteractions = self.interactions * dt
+
+        # Initialize pert_intervals
+        # float -&gt; int
+        # timepoint -&gt; perturbation index
+        if self.perturbations is not None:
+            self._pert_intervals = {}
+            for pidx in range(len(self.perturbation_ends)):
+                start = self.perturbation_starts[pidx]
+                end = self.perturbation_ends[pidx]
+                rang = np.arange(start, end, step=dt)
+
+                for t in rang:
+                    self._pert_intervals[t] = pidx
+            
+    def integrate_single_timestep(self, x, t, dt):
+        &#39;&#39;&#39;Integrate over a single step
+
+        Parameters
+        ----------
+        x : np.ndarray((n,1))
+            This is the abundance as a column vector for each taxon
+        t : numeric
+            This is the time point we are integrating to
+        dt : numeric
+            This is the amount of time from the previous time point we
+            are integrating from
+        &#39;&#39;&#39;
+        growth = self._dtgrowth
+        t = round(t, ndigits=2)
+
+        if self.perturbations is not None:
+            if t-dt in self._pert_intervals:
+                growth = self._adjust_growth[self._pert_intervals[t]]
+
+        # Integrate
+        logret = np.log(x) + growth + self._dtinteractions @ x
+        ret = np.exp(logret).ravel()
+        if self.record is not None:
+            oidxs = np.where(ret &gt;= self.sim_max)[0]
+            if len(oidxs) &gt; 0:
+                for oidx in oidxs:
+                    if oidx not in self.record:
+                        self.record[oidx] = []
+                    self.record[oidx].append(ret[oidx])
+            ret[ret &gt;= self.sim_max] = self.sim_max
+        return ret
+
+    def finish_integration(self):
+        &#39;&#39;&#39;This is the function that
+        &#39;&#39;&#39;
+        self._pert_intervals = None
+        self._adjusted_growth = None
+        self._dtgrowth = None
+        self._dtinteractions = None
+        
+
+class MultiplicativeGlobal(pl.dynamics.BaseProcessVariance):
+    &#39;&#39;&#39;This is multiplicative noise used in a lognormal model
+    &#39;&#39;&#39;
+    def __init__(self, value):
+        self.value = value
+
+    def init_integration(self):
+        if self.value is None:
+            raise ValueError(&#39;`value` needs to be initialized (it is None).&#39;)
+        if not pl.isnumeric(self.value):
+            raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(self.value)))
+        if self.value &lt;= 0:
+            raise ValueError(&#39;`value` ({}) must be &gt; 0&#39;.format(self.value))
+
+    def integrate_single_timestep(self, x, t, dt):
+        std = np.sqrt(dt * self.value)
+        return np.exp(pl.random.normal.sample(loc=np.log(x), scale=std))
+
+    def finish_integration(self):
+        pass</code></pre>
+</details>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="mdsine2.model.MultiplicativeGlobal"><code class="flex name class">
+<span>class <span class="ident">MultiplicativeGlobal</span></span>
+<span>(</span><span>value)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is multiplicative noise used in a lognormal model</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class MultiplicativeGlobal(pl.dynamics.BaseProcessVariance):
+    &#39;&#39;&#39;This is multiplicative noise used in a lognormal model
+    &#39;&#39;&#39;
+    def __init__(self, value):
+        self.value = value
+
+    def init_integration(self):
+        if self.value is None:
+            raise ValueError(&#39;`value` needs to be initialized (it is None).&#39;)
+        if not pl.isnumeric(self.value):
+            raise TypeError(&#39;`value` ({}) must be a numeric&#39;.format(type(self.value)))
+        if self.value &lt;= 0:
+            raise ValueError(&#39;`value` ({}) must be &gt; 0&#39;.format(self.value))
+
+    def integrate_single_timestep(self, x, t, dt):
+        std = np.sqrt(dt * self.value)
+        return np.exp(pl.random.normal.sample(loc=np.log(x), scale=std))
+
+    def finish_integration(self):
+        pass</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.dynamics.BaseProcessVariance" href="pylab/dynamics.html#mdsine2.pylab.dynamics.BaseProcessVariance">BaseProcessVariance</a></li>
+<li><a title="mdsine2.pylab.dynamics.Integratable" href="pylab/dynamics.html#mdsine2.pylab.dynamics.Integratable">Integratable</a></li>
+</ul>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.dynamics.BaseProcessVariance" href="pylab/dynamics.html#mdsine2.pylab.dynamics.BaseProcessVariance">BaseProcessVariance</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.dynamics.BaseProcessVariance.finish_integration" href="pylab/dynamics.html#mdsine2.pylab.dynamics.Integratable.finish_integration">finish_integration</a></code></li>
+<li><code><a title="mdsine2.pylab.dynamics.BaseProcessVariance.init_integration" href="pylab/dynamics.html#mdsine2.pylab.dynamics.Integratable.init_integration">init_integration</a></code></li>
+<li><code><a title="mdsine2.pylab.dynamics.BaseProcessVariance.integrate_single_timestep" href="pylab/dynamics.html#mdsine2.pylab.dynamics.Integratable.integrate_single_timestep">integrate_single_timestep</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+<dt id="mdsine2.model.gLVDynamicsSingleClustering"><code class="flex name class">
+<span>class <span class="ident">gLVDynamicsSingleClustering</span></span>
+<span>(</span><span>growth, interactions, perturbations=None, perturbation_starts=None, perturbation_ends=None, sim_max=None, start_day=0)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Discretized Generalized Lotka-Voltera Dynamics with
+clustered interactions and perturbations. This class provides functionality
+to forward simulate the dynamics:</p>
+<p>log(x_{k+1}) = log(x_k) + \Delta_k * (
+a1*(1 + \gamma) +
+x_k * a2 +
+sum_{c_i != c_j} b_{c_i, c_j} x_{k,j})</p>
+<p>If you want to forward simulate, then pass this dynamics object into
+<code>mdsine2.integrate</code>.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>growth</code></strong> :&ensp;<code>np.ndarray((n,))</code></dt>
+<dd>This is the growth of the dynamics for each taxon</dd>
+<dt><strong><code>interactions</code></strong> :&ensp;<code>np.ndarray((n,n)) </code></dt>
+<dd>Interactions is assumed are the Taxon-Taxon interactions (shape=(n,n)). The diagonal of
+the interactions is assumed to be the self interactions.</dd>
+<dt><strong><code>perturbations</code></strong> :&ensp;<code>list(np.ndarray((n,))), None</code></dt>
+<dd>These are the perturbation magnitudes for each perturbation.
+If <code>None</code> then we assume
+there are no perturbations. If this is specified then <code>perturbation_starts</code> and
+<code>perturbation_ends</code> must also be specified</dd>
+<dt><strong><code>perturbation_starts</code></strong> :&ensp;<code>list(float), None</code></dt>
+<dd>These are the start time points of the perturbations.</dd>
+<dt><strong><code>perturbation_ends</code></strong> :&ensp;<code>list(float), None</code></dt>
+<dd>These are the end time points of the perturbations.</dd>
+</dl>
+<h2 id="see-also">See Also</h2>
+<p><code>pylab.dynamics.dynamics</code></p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
+    &#39;&#39;&#39;Discretized Generalized Lotka-Voltera Dynamics with 
+    clustered interactions and perturbations. This class provides functionality
+    to forward simulate the dynamics:
+
+    log(x_{k+1}) = log(x_k) + \Delta_k * ( 
+            a1*(1 + \gamma) + 
+            x_k * a2 + 
+            sum_{c_i != c_j} b_{c_i, c_j} x_{k,j})
+
+    If you want to forward simulate, then pass this dynamics object into 
+    `mdsine2.integrate`.
+
+    Parameters
+    ----------
+    growth : np.ndarray((n,))
+        This is the growth of the dynamics for each taxon
+    interactions : np.ndarray((n,n)) 
+        Interactions is assumed are the Taxon-Taxon interactions (shape=(n,n)). The diagonal of
+        the interactions is assumed to be the self interactions.
+    perturbations : list(np.ndarray((n,))), None
+        These are the perturbation magnitudes for each perturbation.  If `None` then we assume 
+        there are no perturbations. If this is specified then `perturbation_starts` and 
+        `perturbation_ends` must also be specified
+    perturbation_starts : list(float), None
+        These are the start time points of the perturbations.
+    perturbation_ends : list(float), None
+        These are the end time points of the perturbations.
+
+    See also
+    --------
+    pylab.dynamics.dynamics
+    &#39;&#39;&#39;
+
+    @staticmethod
+    def forward_sim_from_chain(mcmc, val, initial_conditions, times, simulation_dt, 
+        sim_max=None, section=&#39;posterior&#39;):
+        &#39;&#39;&#39;Forward simulate the dynamics from a chain. This assumes that the
+        initial conditions occur at time `times[0]`
+
+        Parameters
+        ----------
+        mcmc : md2.BaseMCMC
+            MCMC chain with all of the traces of the parameters
+        val : md2.Subject
+            This is the subject we are forward simulating for
+        initial_conditions : np.ndarray(n_taxa)
+            Initial conditions for each taxon
+        times : np.ndarray
+            These are the times to forward simulate for
+        simulation_dt : float
+            This is the step size to forward simulate with
+        sim_max : float
+            This is the maximum value for inference that we clip at
+        section : str
+            This is the part of the trace that we are forward simulating from
+
+        Returns
+        -------
+        np.ndarray(n_gibbs, n_taxa, len(times))
+            These are the forward imsualtions for each gibb step
+        &#39;&#39;&#39;
+        # Get the parameters from the chain
+        growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section=section)
+        self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section=section)
+        interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section=section)
+
+        si = -np.absolute(self_interactions)
+        for i in range(len(mcmc.graph.data.taxa)):
+            interactions[:, i, i] = si[:, i]
+        interactions[np.isnan(interactions)] = 0
+
+        if mcmc.graph.perturbations is not None:
+            perturbations = []
+            for pert in mcmc.graph.perturbations:
+                perturbations.append(pert.get_trace_from_disk(section=section))
+                perturbations[-1][np.isnan(perturbations[-1])] = 0
+            
+            perturbation_starts = []
+            perturbation_ends = []
+            for pert in mcmc.graph.perturbations:
+                if pert.name in val.perturbations:
+                    perturbation_starts.append(val.perturbations[pert.name].starts[val.name])
+                    perturbation_ends.append(val.perturbations[pert.name].ends[val.name])  
+
+        else:
+            perturbation_starts = None
+            perturbation_ends = None
+            perturbations = None
+
+        # Forward simulate for every gibb step
+        pred_matrix = np.zeros(shape=(growths.shape[0], growths.shape[1], len(times)))
+
+        dyn = gLVDynamicsSingleClustering(growth=None, interactions=None, sim_max=sim_max,
+            start_day=times[0], perturbation_ends=perturbation_ends, 
+            perturbation_starts=perturbation_starts)
+        start_time = time.time()
+        initial_conditions = initial_conditions.reshape(-1,1)
+        for gibb in range(growths.shape[0]):
+            if gibb % 5 == 0 and gibb &gt; 0:
+                logging.info(&#39;{}/{} - {}&#39;.format(gibb,growths.shape[0],
+                    time.time()-start_time))
+                start_time = time.time()
+            dyn.growth = growths[gibb]
+            dyn.interactions = interactions[gibb]
+            if perturbations is not None:
+                dyn.perturbations = [pert[gibb] for pert in perturbations]
+            
+            X = pl.dynamics.integrate(dynamics=dyn, initial_conditions=initial_conditions, 
+                dt=simulation_dt, n_days=times[-1]+simulation_dt, processvar=None,
+                subsample=True, times=times, log_every=10000)
+            pred_matrix[gibb] = X[&#39;X&#39;]
+        return pred_matrix
+
+    def __init__(self, growth, interactions, perturbations=None, perturbation_starts=None,
+        perturbation_ends=None, sim_max=None, start_day=0):
+
+        self.growth = growth
+        self.interactions = interactions
+        self.perturbations = perturbations
+        self.perturbation_starts = perturbation_starts
+        self.perturbation_ends = perturbation_ends
+        self.sim_max = sim_max
+        self.start_day = start_day
+
+        self._pert_intervals = None
+        self._adjusted_growth = None
+
+    def stability(self):
+        &#39;&#39;&#39;This is the analytical solution for the stability
+        &#39;&#39;&#39;
+        return - np.linalg.pinv(self.interactions) @ (self.growth.reshape(-1,1))
+
+    def init_integration(self, dt):
+        &#39;&#39;&#39;This is called internally from mdsine2.integrate
+
+        Pre-multiply the growth and interactions with dt. Improves
+        efficiency by 25%.
+
+        Parameters
+        ----------
+        dt : numeric
+            This is the amount of time from the previous time point we
+            are integrating from
+        &#39;&#39;&#39;
+        self.growth = self.growth.reshape(-1,1)
+        self._dtgrowth = self.growth * dt
+        if self.perturbations is not None:
+            self._adjust_growth = []
+            for pert in self.perturbations:
+                pert = pert.reshape(-1,1)
+                self._adjust_growth.append(self._dtgrowth * (1 + pert))
+        if self.sim_max is not None:
+            self.record = {}
+        else:
+            self.record = None
+
+        self._dtinteractions = self.interactions * dt
+
+        # Initialize pert_intervals
+        # float -&gt; int
+        # timepoint -&gt; perturbation index
+        if self.perturbations is not None:
+            self._pert_intervals = {}
+            for pidx in range(len(self.perturbation_ends)):
+                start = self.perturbation_starts[pidx]
+                end = self.perturbation_ends[pidx]
+                rang = np.arange(start, end, step=dt)
+
+                for t in rang:
+                    self._pert_intervals[t] = pidx
+            
+    def integrate_single_timestep(self, x, t, dt):
+        &#39;&#39;&#39;Integrate over a single step
+
+        Parameters
+        ----------
+        x : np.ndarray((n,1))
+            This is the abundance as a column vector for each taxon
+        t : numeric
+            This is the time point we are integrating to
+        dt : numeric
+            This is the amount of time from the previous time point we
+            are integrating from
+        &#39;&#39;&#39;
+        growth = self._dtgrowth
+        t = round(t, ndigits=2)
+
+        if self.perturbations is not None:
+            if t-dt in self._pert_intervals:
+                growth = self._adjust_growth[self._pert_intervals[t]]
+
+        # Integrate
+        logret = np.log(x) + growth + self._dtinteractions @ x
+        ret = np.exp(logret).ravel()
+        if self.record is not None:
+            oidxs = np.where(ret &gt;= self.sim_max)[0]
+            if len(oidxs) &gt; 0:
+                for oidx in oidxs:
+                    if oidx not in self.record:
+                        self.record[oidx] = []
+                    self.record[oidx].append(ret[oidx])
+            ret[ret &gt;= self.sim_max] = self.sim_max
+        return ret
+
+    def finish_integration(self):
+        &#39;&#39;&#39;This is the function that
+        &#39;&#39;&#39;
+        self._pert_intervals = None
+        self._adjusted_growth = None
+        self._dtgrowth = None
+        self._dtinteractions = None</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li><a title="mdsine2.pylab.dynamics.BaseDynamics" href="pylab/dynamics.html#mdsine2.pylab.dynamics.BaseDynamics">BaseDynamics</a></li>
+<li><a title="mdsine2.pylab.dynamics.Integratable" href="pylab/dynamics.html#mdsine2.pylab.dynamics.Integratable">Integratable</a></li>
+</ul>
+<h3>Static methods</h3>
+<dl>
+<dt id="mdsine2.model.gLVDynamicsSingleClustering.forward_sim_from_chain"><code class="name flex">
+<span>def <span class="ident">forward_sim_from_chain</span></span>(<span>mcmc, val, initial_conditions, times, simulation_dt, sim_max=None, section='posterior')</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Forward simulate the dynamics from a chain. This assumes that the
+initial conditions occur at time <code>times[0]</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>mcmc</code></strong> :&ensp;<code>md2.BaseMCMC</code></dt>
+<dd>MCMC chain with all of the traces of the parameters</dd>
+<dt><strong><code>val</code></strong> :&ensp;<code>md2.Subject</code></dt>
+<dd>This is the subject we are forward simulating for</dd>
+<dt><strong><code>initial_conditions</code></strong> :&ensp;<code>np.ndarray(n_taxa)</code></dt>
+<dd>Initial conditions for each taxon</dd>
+<dt><strong><code>times</code></strong> :&ensp;<code>np.ndarray</code></dt>
+<dd>These are the times to forward simulate for</dd>
+<dt><strong><code>simulation_dt</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the step size to forward simulate with</dd>
+<dt><strong><code>sim_max</code></strong> :&ensp;<code>float</code></dt>
+<dd>This is the maximum value for inference that we clip at</dd>
+<dt><strong><code>section</code></strong> :&ensp;<code>str</code></dt>
+<dd>This is the part of the trace that we are forward simulating from</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray(n_gibbs, n_taxa, len(times))</code></dt>
+<dd>These are the forward imsualtions for each gibb step</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@staticmethod
+def forward_sim_from_chain(mcmc, val, initial_conditions, times, simulation_dt, 
+    sim_max=None, section=&#39;posterior&#39;):
+    &#39;&#39;&#39;Forward simulate the dynamics from a chain. This assumes that the
+    initial conditions occur at time `times[0]`
+
+    Parameters
+    ----------
+    mcmc : md2.BaseMCMC
+        MCMC chain with all of the traces of the parameters
+    val : md2.Subject
+        This is the subject we are forward simulating for
+    initial_conditions : np.ndarray(n_taxa)
+        Initial conditions for each taxon
+    times : np.ndarray
+        These are the times to forward simulate for
+    simulation_dt : float
+        This is the step size to forward simulate with
+    sim_max : float
+        This is the maximum value for inference that we clip at
+    section : str
+        This is the part of the trace that we are forward simulating from
+
+    Returns
+    -------
+    np.ndarray(n_gibbs, n_taxa, len(times))
+        These are the forward imsualtions for each gibb step
+    &#39;&#39;&#39;
+    # Get the parameters from the chain
+    growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section=section)
+    self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section=section)
+    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section=section)
+
+    si = -np.absolute(self_interactions)
+    for i in range(len(mcmc.graph.data.taxa)):
+        interactions[:, i, i] = si[:, i]
+    interactions[np.isnan(interactions)] = 0
+
+    if mcmc.graph.perturbations is not None:
+        perturbations = []
+        for pert in mcmc.graph.perturbations:
+            perturbations.append(pert.get_trace_from_disk(section=section))
+            perturbations[-1][np.isnan(perturbations[-1])] = 0
+        
+        perturbation_starts = []
+        perturbation_ends = []
+        for pert in mcmc.graph.perturbations:
+            if pert.name in val.perturbations:
+                perturbation_starts.append(val.perturbations[pert.name].starts[val.name])
+                perturbation_ends.append(val.perturbations[pert.name].ends[val.name])  
+
+    else:
+        perturbation_starts = None
+        perturbation_ends = None
+        perturbations = None
+
+    # Forward simulate for every gibb step
+    pred_matrix = np.zeros(shape=(growths.shape[0], growths.shape[1], len(times)))
+
+    dyn = gLVDynamicsSingleClustering(growth=None, interactions=None, sim_max=sim_max,
+        start_day=times[0], perturbation_ends=perturbation_ends, 
+        perturbation_starts=perturbation_starts)
+    start_time = time.time()
+    initial_conditions = initial_conditions.reshape(-1,1)
+    for gibb in range(growths.shape[0]):
+        if gibb % 5 == 0 and gibb &gt; 0:
+            logging.info(&#39;{}/{} - {}&#39;.format(gibb,growths.shape[0],
+                time.time()-start_time))
+            start_time = time.time()
+        dyn.growth = growths[gibb]
+        dyn.interactions = interactions[gibb]
+        if perturbations is not None:
+            dyn.perturbations = [pert[gibb] for pert in perturbations]
+        
+        X = pl.dynamics.integrate(dynamics=dyn, initial_conditions=initial_conditions, 
+            dt=simulation_dt, n_days=times[-1]+simulation_dt, processvar=None,
+            subsample=True, times=times, log_every=10000)
+        pred_matrix[gibb] = X[&#39;X&#39;]
+    return pred_matrix</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Methods</h3>
+<dl>
+<dt id="mdsine2.model.gLVDynamicsSingleClustering.init_integration"><code class="name flex">
+<span>def <span class="ident">init_integration</span></span>(<span>self, dt)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is called internally from mdsine2.integrate</p>
+<p>Pre-multiply the growth and interactions with dt. Improves
+efficiency by 25%.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>dt</code></strong> :&ensp;<code>numeric</code></dt>
+<dd>This is the amount of time from the previous time point we
+are integrating from</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def init_integration(self, dt):
+    &#39;&#39;&#39;This is called internally from mdsine2.integrate
+
+    Pre-multiply the growth and interactions with dt. Improves
+    efficiency by 25%.
+
+    Parameters
+    ----------
+    dt : numeric
+        This is the amount of time from the previous time point we
+        are integrating from
+    &#39;&#39;&#39;
+    self.growth = self.growth.reshape(-1,1)
+    self._dtgrowth = self.growth * dt
+    if self.perturbations is not None:
+        self._adjust_growth = []
+        for pert in self.perturbations:
+            pert = pert.reshape(-1,1)
+            self._adjust_growth.append(self._dtgrowth * (1 + pert))
+    if self.sim_max is not None:
+        self.record = {}
+    else:
+        self.record = None
+
+    self._dtinteractions = self.interactions * dt
+
+    # Initialize pert_intervals
+    # float -&gt; int
+    # timepoint -&gt; perturbation index
+    if self.perturbations is not None:
+        self._pert_intervals = {}
+        for pidx in range(len(self.perturbation_ends)):
+            start = self.perturbation_starts[pidx]
+            end = self.perturbation_ends[pidx]
+            rang = np.arange(start, end, step=dt)
+
+            for t in rang:
+                self._pert_intervals[t] = pidx</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.model.gLVDynamicsSingleClustering.integrate_single_timestep"><code class="name flex">
+<span>def <span class="ident">integrate_single_timestep</span></span>(<span>self, x, t, dt)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Integrate over a single step</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>x</code></strong> :&ensp;<code>np.ndarray((n,1))</code></dt>
+<dd>This is the abundance as a column vector for each taxon</dd>
+<dt><strong><code>t</code></strong> :&ensp;<code>numeric</code></dt>
+<dd>This is the time point we are integrating to</dd>
+<dt><strong><code>dt</code></strong> :&ensp;<code>numeric</code></dt>
+<dd>This is the amount of time from the previous time point we
+are integrating from</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def integrate_single_timestep(self, x, t, dt):
+    &#39;&#39;&#39;Integrate over a single step
+
+    Parameters
+    ----------
+    x : np.ndarray((n,1))
+        This is the abundance as a column vector for each taxon
+    t : numeric
+        This is the time point we are integrating to
+    dt : numeric
+        This is the amount of time from the previous time point we
+        are integrating from
+    &#39;&#39;&#39;
+    growth = self._dtgrowth
+    t = round(t, ndigits=2)
+
+    if self.perturbations is not None:
+        if t-dt in self._pert_intervals:
+            growth = self._adjust_growth[self._pert_intervals[t]]
+
+    # Integrate
+    logret = np.log(x) + growth + self._dtinteractions @ x
+    ret = np.exp(logret).ravel()
+    if self.record is not None:
+        oidxs = np.where(ret &gt;= self.sim_max)[0]
+        if len(oidxs) &gt; 0:
+            for oidx in oidxs:
+                if oidx not in self.record:
+                    self.record[oidx] = []
+                self.record[oidx].append(ret[oidx])
+        ret[ret &gt;= self.sim_max] = self.sim_max
+    return ret</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.model.gLVDynamicsSingleClustering.stability"><code class="name flex">
+<span>def <span class="ident">stability</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>This is the analytical solution for the stability</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def stability(self):
+    &#39;&#39;&#39;This is the analytical solution for the stability
+    &#39;&#39;&#39;
+    return - np.linalg.pinv(self.interactions) @ (self.growth.reshape(-1,1))</code></pre>
+</details>
+</dd>
+</dl>
+<h3>Inherited members</h3>
+<ul class="hlist">
+<li><code><b><a title="mdsine2.pylab.dynamics.BaseDynamics" href="pylab/dynamics.html#mdsine2.pylab.dynamics.BaseDynamics">BaseDynamics</a></b></code>:
+<ul class="hlist">
+<li><code><a title="mdsine2.pylab.dynamics.BaseDynamics.finish_integration" href="pylab/dynamics.html#mdsine2.pylab.dynamics.Integratable.finish_integration">finish_integration</a></code></li>
+</ul>
+</li>
+</ul>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<h1>Index</h1>
+<div class="toc">
+<ul></ul>
+</div>
+<ul id="index">
+<li><h3>Super-module</h3>
+<ul>
+<li><code><a title="mdsine2" href="index.html">mdsine2</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="mdsine2.model.MultiplicativeGlobal" href="#mdsine2.model.MultiplicativeGlobal">MultiplicativeGlobal</a></code></h4>
+</li>
+<li>
+<h4><code><a title="mdsine2.model.gLVDynamicsSingleClustering" href="#mdsine2.model.gLVDynamicsSingleClustering">gLVDynamicsSingleClustering</a></code></h4>
+<ul class="">
+<li><code><a title="mdsine2.model.gLVDynamicsSingleClustering.forward_sim_from_chain" href="#mdsine2.model.gLVDynamicsSingleClustering.forward_sim_from_chain">forward_sim_from_chain</a></code></li>
+<li><code><a title="mdsine2.model.gLVDynamicsSingleClustering.init_integration" href="#mdsine2.model.gLVDynamicsSingleClustering.init_integration">init_integration</a></code></li>
+<li><code><a title="mdsine2.model.gLVDynamicsSingleClustering.integrate_single_timestep" href="#mdsine2.model.gLVDynamicsSingleClustering.integrate_single_timestep">integrate_single_timestep</a></code></li>
+<li><code><a title="mdsine2.model.gLVDynamicsSingleClustering.stability" href="#mdsine2.model.gLVDynamicsSingleClustering.stability">stability</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc"><cite>pdoc</cite> 0.9.1</a>.</p>
+</footer>
+</body>
+</html>
