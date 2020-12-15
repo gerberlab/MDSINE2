@@ -644,7 +644,7 @@ class ProcessVarGlobal(pl.variables.SICS):
             if not pl.isnumeric(dof):
                 raise TypeError('`dof` ({}) must be a numeric'.format(type(dof)))
             if dof <= 0:
-                raise ValueError('`dof` must be > 0'.format(dof))
+                raise ValueError('`dof` ({}) must be > 0'.format(dof))
             if dof <= 2:
                 logging.critical('Process Variance dof ({}) is set unproper'.format(dof))
         elif dof_option == 'half':
