@@ -41,7 +41,6 @@ import pickle
 import scipy.spatial.distance
 import pandas as pd
 import logging
-import ete3
 import os
 import os.path
 import copy
