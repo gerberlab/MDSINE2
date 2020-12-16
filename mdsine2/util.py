@@ -258,24 +258,49 @@ def condense_fixed_clustering_interaction_matrix(M, clustering):
 
     Parameters
     ----------
-    M : np.ndarrray(n_taxa, n_taxa)
+    M : np.ndarrray(..., n_taxa, n_taxa)
         Taxon-Taxon interaction matrix
     clustering : mdsine2.Clustering
         Clustering object
 
     Returns
     -------
-    np.ndarray(n_clusters, n_clusters)
+    np.ndarray(..., n_clusters, n_clusters)
         Cluster-cluster interaction matrix
     '''
-    ret = np.zeros(shape=(len(clustering), len(clustering)))
+    shape = M.shape[:-2]
+
+    ret = np.zeros(shape=shape+(len(clustering), len(clustering)))
     for i1, cl1 in enumerate(clustering):
         for i2, cl2 in enumerate(clustering):
             if i1 == i2:
                 continue
             aidx1 = list(cl1.members)[0]
             aidx2 = list(cl2.members)[0]
-            ret[i1,i2] = M[aidx1, aidx2]
+            ret[..., i1,i2] = M[..., aidx1, aidx2]
+    return ret
+
+def condense_fixed_clustering_perturbation(pert, clustering):
+    '''Condense the perturbation array passed in assuming that it was run with
+    fixed clustering.
+
+    Parameters
+    ----------
+    pert : np.ndarray(..., n_taxa)
+        Perturbation values for each taxon
+    clustering : mdsine2.Clustering
+        Clustering object
+
+    Returns
+    -------
+    np.ndarray(..., n_clusters)
+        Cluster perturbations
+    '''
+    shape = pert.shape[:-1]
+    ret = np.zeros(shape=shape+(len(clustering),))
+    for cidx, cluster in enumerate(clustering):
+        aidx = list(cluster.members)[0]
+        ret[..., cidx] = pert[..., aidx]
     return ret
 
 def aggregate_items(subjset, hamming_dist):
