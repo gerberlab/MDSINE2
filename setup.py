@@ -57,7 +57,7 @@ REQUIREMENTS = [
     'h5py==2.9.0',
     'psutil==5.7.3',
     'ete3==3.1.2',
-    'PySide2==5.15.2',
+    'pyqt5==5.14.0',
     'networkx==2.3',
     'numba==0.50',
     'biopython==1.78',
