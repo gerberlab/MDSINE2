@@ -330,7 +330,8 @@ def taxaname_for_paper(taxon, taxa):
             format='****** %(kingdom)s %(name)s',
             taxon=taxon, taxa=taxa)
     else:
-        raise ValueError('Something went wrong - no taxnonomy: {}'.format(str(taxon)))
+        logging.debug('Something went wrong - no taxnonomy: {}'.format(str(taxon)))
+        label = 'NA {}'.format(taxa[taxon].name)
 
     return label
 

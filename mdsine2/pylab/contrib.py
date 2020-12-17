@@ -37,7 +37,7 @@ def isclusterperturbation(x):
     bool
         True if `x` is of type ClusterPerturbation, else False
     '''
-    return x is not None and issubclass(x.__class__, ClusterPerturbation)
+    return x is not None and issubclass(x.__class__, ClusterPerturbationEffect)
 
 def isclusterperturbationindicator(x):
     '''Checks whether the input is a subclass of ClusterPerturbationIndicator
@@ -448,7 +448,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
     
     Parameters
     ----------
-    starts, ends : int, float
+    starts, ends : dict
         - Start and end of the perturbation
     clustering : pylab.cluster.Clustering
         - This is the clustering object it is being set with

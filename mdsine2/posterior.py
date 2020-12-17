@@ -1559,12 +1559,15 @@ class ClusterAssignments(pl.graph.Node):
         # if self.updated:
         #     return
 
-        n_perts = self.G[STRNAMES.PERT_INDICATOR].total_on()
-        n_inter = self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators
+        # if self._there_are_perturbations:
+        #     n_perts = self.G[STRNAMES.PERT_INDICATOR].total_on()
+        # else:
+        #     n_perts = 0
+        # n_inter = self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].num_pos_indicators
 
-        if n_inter + n_perts == 0:
-            logging.info('No indicators on, cant update')
-            return
+        # if n_inter + n_perts == 0:
+        #     logging.info('No indicators on, cant update')
+        #     return
 
         start_time = time.time()
 
@@ -3169,11 +3172,12 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.x = x
 
         # Get the perturbations for this subject
-        self.pert_starts = []
-        self.pert_ends = []
-        for pidx in range(len(pert_starts)):
-            self.pert_starts.append(pert_starts[pidx][subjname])
-            self.pert_ends.append(pert_ends[pidx][subjname])
+        if self.there_are_perturbations:
+            self.pert_starts = []
+            self.pert_ends = []
+            for pidx in range(len(pert_starts)):
+                self.pert_starts.append(pert_starts[pidx][subjname])
+                self.pert_ends.append(pert_ends[pidx][subjname])
 
         self.total_n_points = self.x.shape[0] * self.x.shape[1]
         self.ridx = ridx

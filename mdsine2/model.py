@@ -177,8 +177,8 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
                 rang = np.arange(start, end, step=dt)
 
                 for t in rang:
-                    self._pert_intervals[t] = pidx
-            
+                    self._pert_intervals[round(t, ndigits=2)] = pidx
+
     def integrate_single_timestep(self, x, t, dt):
         '''Integrate over a single step
 
@@ -196,7 +196,7 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         t = round(t, ndigits=2)
 
         if self.perturbations is not None:
-            if t-dt in self._pert_intervals:
+            if t in self._pert_intervals:
                 growth = self._adjust_growth[self._pert_intervals[t]]
 
         # Integrate
