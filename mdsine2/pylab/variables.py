@@ -27,6 +27,10 @@ import warnings
 import sys
 import scipy.stats
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
+    Type, Callable
+
 from .graph import get_default_graph, Node, isnode
 from .base import Traceable, istraceable
 from .errors import UndefinedError, MathError, InitializationError, \
@@ -53,7 +57,7 @@ DEFAULT_MVN_MEAN_SUFFIX = '_mean'
 DEFAULT_MVN_COV_SUFFIX = '_cov'
 
 
-def isVariable(var):
+def isVariable(var: Any) -> bool:
     '''Checks if `a` is a subclass of a Variable
 
     Parameters
@@ -68,7 +72,7 @@ def isVariable(var):
     '''
     return var is not None and issubclass(var.__class__, Variable)
 
-def isRandomVariable(var):
+def isRandomVariable(var: Any) -> bool:
     '''Checks if `a` is a subclass of a RandomVariable
 
     Parameters
@@ -83,7 +87,8 @@ def isRandomVariable(var):
     '''
     return var is not None and issubclass(var.__class__, _RandomBase)
 
-def summary(var, set_nan_to_0=False, section='posterior', only=None):
+def summary(var: Traceable, set_nan_to_0: bool=False, section: str='posterior', 
+    only: Iterator[str]=None) -> Dict[str, Union[str, np.ndarray]]:
     '''Calculates different metrics about the given trace (mean, 
     median, 25th percentile, 75th percentile)
 
@@ -354,7 +359,7 @@ class _RandomBase:
         '''
         raise NeedToImplementError('User needs to implement this function')
 
-    def pdf(self, value=None):
+    def pdf(self, value: Union[float, Iterator[float]]=None) -> Union[float, Iterator[float]]:
         '''Calculate the pdf with the specified value. If `value` is not
         specified, then use the current value
 
@@ -369,7 +374,7 @@ class _RandomBase:
         '''
         raise NeedToImplementError('User needs to implement this function')
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: Union[float, Iterator[float]]=None) -> Union[float, Iterator[float]]:
         '''Calculate the logpdf with the specified value. If `value` is not
         specified, then use the current value
 
@@ -384,7 +389,7 @@ class _RandomBase:
         '''
         raise NeedToImplementError('User needs to implement this function')
 
-    def cdf(self, value=None):
+    def cdf(self, value: Union[float, Iterator[float]]=None) -> Union[float, Iterator[float]]:
         '''Calculate the cdf with the specified value. If `value` is not
         specified, then use the current value
 
@@ -399,7 +404,7 @@ class _RandomBase:
         '''
         raise NeedToImplementError('User needs to implement this function')
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: Union[float, Iterator[float]]=None) -> Union[float, Iterator[float]]:
         '''Calculate the logcdf with the specified value. If `value` is not
         specified, then use the current value
 
@@ -427,11 +432,11 @@ class Constant(Node, _BaseArithmeticClass):
     kwargs : dict
         These are the extra arguments for the Node class
     '''
-    def __init__(self, value, **kwargs):
+    def __init__(self, value: Any, **kwargs):
         self._value = value
         Node.__init__(self, **kwargs)
 
-    def override_value(self, val):
+    def override_value(self, val: Any) -> Any:
         '''Override the value with `val`
 
         Parameters
@@ -442,7 +447,7 @@ class Constant(Node, _BaseArithmeticClass):
         self._value = val
 
     @property
-    def value(self):
+    def value(self) -> Any:
         return self._value
 
     @value.setter
@@ -462,9 +467,10 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
     dtype : Type
         This is the type of the variable
     kwargs :dict
-        These are the extra parameters for the Node class
+        These are the extra parameters for the Node class ('name', 'G')
     '''
-    def __init__(self, value=None, dtype=None, shape=None, **kwargs):
+    def __init__(self, value: Union[float, Iterator[float]]=None, 
+        dtype: Type=None, shape: Tuple[int]=None, **kwargs):
         Node.__init__(self, **kwargs)
         if dtype is None:
             dtype = DEFAULT_VARIABLE_TYPE
@@ -473,12 +479,13 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
         if shape is not None:
             if not istuple(shape):
                 raise TypeError('`shape` ({}) must be a tuple or None')
-        self.dtype = dtype
-        self.value = value
-        self._shape = shape
+        
+        self.dtype = dtype # Type
+        self.value = value # array or float
+        self._shape = shape # Shape of the .value parameter
         self._init_value = None
 
-    def __len__(self):
+    def __len__(self) -> int:
         if self._shape is None:
             raise ValueError('`No length for scalar`')
         return self._shape[0]
@@ -494,11 +501,13 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
         else:
             checkpoint = self.G.inference.n_samples + self.G.inference.burnin
         
-        self.ckpt_iter = 0
-        self.sample_iter = 0
+        self.ckpt_iter = 0 # This counter for the local trace
+        self.sample_iter = 0 # This is the counter for all of the samples
         shape = (checkpoint, )
         if self._shape is not None:
             shape += self._shape
+
+        # This is the local trace
         self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
 
     def remove_local_trace(self):
@@ -534,7 +543,7 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
             raise ValueError('Iteration {} too long for RAM trace {}'.format(self.ckpt_iter, 
                 len(self.trace)))
 
-    def set_value_shape(self, shape):
+    def set_value_shape(self, shape: Tuple[int]):
         '''Set the shape
         
         Parameters
@@ -546,7 +555,7 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
         self._shape = shape
 
     @property
-    def T(self):
+    def T(self) -> np.ndarray:
         '''Transpose
         '''
         return self.value.T
@@ -558,14 +567,15 @@ class Normal(Variable, _RandomBase):
 
     Parameters
     ----------
-    loc : float, int
+    loc : float, int, Variable
         This is the mean of the distribution
-    scale2 : float, int
+    scale2 : float, int, Variable
         This is the variance of the distribution
     kwargs : dict
         These are extra parameters for the Node class
     '''
-    def __init__(self, loc=None, scale2=None, **kwargs):
+    def __init__(self, loc: Union[float, np.ndarray, Variable]=None, 
+        scale2: Union[float, np.ndarray, Variable]=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -589,26 +599,26 @@ class Normal(Variable, _RandomBase):
         self.add_parent(self._scale2)
 
     @property
-    def loc(self):
+    def loc(self) -> Variable:
         return self._loc
 
     @property
-    def scale2(self):
+    def scale2(self) -> Variable:
         return self._scale2
 
-    def std(self):
+    def std(self) -> Union[float, np.ndarray]:
         return np.sqrt(self._scale2.value)
 
-    def mode(self):
+    def mode(self) -> Union[float, np.ndarray]:
         return self._loc.value
 
-    def mean(self):
+    def mean(self) -> Union[float, np.ndarray]:
         return self._loc.value
 
-    def variance(self):
+    def variance(self) -> Union[float, np.ndarray]:
         return self._scale2.value
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -> Union[float, np.ndarray]:
         '''Sample the distirbution given `self.loc` and `self.sca;e2`
 
         Parameters
@@ -626,7 +636,7 @@ class Normal(Variable, _RandomBase):
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: Union[float, np.ndarray]=None) -> Union[float, np.ndarray]:
         '''Calculate the pdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -644,7 +654,7 @@ class Normal(Variable, _RandomBase):
         return random.normal.pdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value))
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: Union[float, np.ndarray]=None) -> Union[float, np.ndarray]:
         '''Calculate the logpdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -662,7 +672,7 @@ class Normal(Variable, _RandomBase):
         return random.normal.logpdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value))
 
-    def cdf(self, value=None):
+    def cdf(self, value: Union[float, np.ndarray]=None) -> Union[float, np.ndarray]:
         '''Calculate the cdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -680,7 +690,7 @@ class Normal(Variable, _RandomBase):
         return random.normal.cdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value))
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: Union[float, np.ndarray]=None) -> Union[float, np.ndarray]:
         '''Calculate the logcdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -704,13 +714,14 @@ class Lognormal(Variable, _RandomBase):
 
     Parameters
     ----------
-    loc : numeric, array
+    loc : numeric, array, Variable
         This is the loc of the distribution
-    std : numeric array
+    std : numeric array, Variable
         This is the standard deviation of the array
     kwargs
     '''
-    def __init__(self, loc, std, **kwargs):
+    def __init__(self, loc: Union[float, np.ndarray, Variable], 
+        std: Union[float, np.ndarray, Variable], **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -734,17 +745,17 @@ class Lognormal(Variable, _RandomBase):
         self.add_parent(self._scale)
 
     @property
-    def loc(self):
+    def loc(self) -> Variable:
         return self._loc
 
     @property
-    def scale(self):
+    def scale(self) -> Variable:
         return self._scale
 
-    def mode(self):
+    def mode(self) -> Union[float, np.ndarray]:
         return self._loc.value
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -> Union[float, np.ndarray]:
         '''Sample the distirbution
 
         Parameters
@@ -762,7 +773,7 @@ class Lognormal(Variable, _RandomBase):
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: Union[float, np.ndarray]=None) -> Union[float, np.ndarray]:
         '''Calculate the pdf
 
         Parameters
@@ -779,7 +790,7 @@ class Lognormal(Variable, _RandomBase):
         return random.lognormal.pdf(value=value, loc=self._loc.value,
             scale=self._scale.value)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: Union[float, np.ndarray]=None) -> Union[float, np.ndarray]:
         '''Calculate the logpdf
 
         Parameters
@@ -796,7 +807,7 @@ class Lognormal(Variable, _RandomBase):
         return random.lognormal.logpdf(value=value, loc=self._loc.value,
             scale=self._scale.value)
 
-    def cdf(self, value=None):
+    def cdf(self, value: Union[float, np.ndarray]=None) -> Union[float, np.ndarray]:
         '''Calculate the cdf
 
         Parameters
@@ -813,7 +824,7 @@ class Lognormal(Variable, _RandomBase):
         return random.lognormal.cdf(value=value, mean=self._loc.value,
             std=self._scale.value)
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: Union[float, np.ndarray]=None) -> Union[float, np.ndarray]:
         '''Calculate the logcdf
 
         Parameters
@@ -836,14 +847,15 @@ class Uniform(Variable, _RandomBase):
 
     Parameters
     ----------
-    low : float, int
+    low : float, int, Variable
         This is the low of the distribution
-    high : float, int
+    high : float, int, Variable
         This is the high of the distribution
     kwargs : dict
         These are extra parameters for the Node class
     '''
-    def __init__(self, low=None, high=None, **kwargs):
+    def __init__(self, low: Union[float, Variable]=None, 
+        high: Union[float, Variable]=None, **kwargs):
         Variable.__init__(self, **kwargs)
         # Wrap parameters in nodes
         if not isnode(low):
@@ -865,26 +877,26 @@ class Uniform(Variable, _RandomBase):
         self.add_parent(self._high)
 
     @property
-    def low(self):
+    def low(self) -> Variable:
         return self._low
 
     @property
-    def high(self):
+    def high(self) -> Variable:
         return self._high
 
-    def mean(self):
+    def mean(self) -> float:
         return 0.5*(self._low.value + self._high.value)
 
-    def median(self):
+    def median(self) -> float:
         return self.mean()
 
-    def var(self):
+    def var(self) -> float:
         return (1/12)*(self._high.value - self._low.value)**2
 
-    def variance(self):
+    def variance(self) -> float:
         return self.var()
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -> float:
         '''Sample the distirbution given `self.low` and `self.high`
 
         Parameters
@@ -902,7 +914,7 @@ class Uniform(Variable, _RandomBase):
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -> float:
         '''Calculate the pdf given `self.value`, `self.low`, and `self.high`.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -920,7 +932,7 @@ class Uniform(Variable, _RandomBase):
         return random.uniform.pdf(value=value, low=self._low.value,
             high=self._high.value)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: float=None) -> float:
         '''Calculate the logpdf given `self.value`, `self.low`, and `self.high`.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -938,7 +950,7 @@ class Uniform(Variable, _RandomBase):
         return random.uniform.logpdf(value=value, low=self._low.value,
             high=self._high.value)
 
-    def cdf(self, value=None):
+    def cdf(self, value: float=None) -> float:
         '''Calculate the cdf given `self.value`, `self.low`, and `self.high`.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -956,7 +968,7 @@ class Uniform(Variable, _RandomBase):
         return random.uniform.cdf(value=value, low=self._low.value,
             high=self._high.value)
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: float=None) -> float:
         '''Calculate the logcdf given `self.value`, `self.low`, and `self.high`.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -982,9 +994,9 @@ class TruncatedNormal(Variable, _RandomBase):
 
     Parameters
     ----------
-    loc : float, int
+    loc : float, int, Variable
         This is the mean of the distribution
-    scale2 : float, int
+    scale2 : float, int, Variable
         This is the variance of the distribution
     low : float, int
         This is the lowest value that can be sampled
@@ -993,7 +1005,8 @@ class TruncatedNormal(Variable, _RandomBase):
     kwargs : dict
         These are extra parameters for the Node class
     '''
-    def __init__(self, loc, scale2, low=None, high=None, **kwargs):
+    def __init__(self, loc: Union[float, Variable], scale2: Union[float, Variable], 
+        low: float=None, high: float=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         if low is None:
@@ -1028,18 +1041,18 @@ class TruncatedNormal(Variable, _RandomBase):
         self.add_parent(self._scale2)
 
     @property
-    def loc(self):
+    def loc(self) -> Variable:
         return self._loc
 
     @property
-    def scale2(self):
+    def scale2(self) -> Variable:
         return self._scale2
 
     @property
-    def scale(self):
+    def scale(self) -> float:
         return np.sqrt(self._scale2.value)
 
-    def mode(self):
+    def mode(self) -> float:
         if self.low <= self.loc and self.loc <= self.high:
             return self.loc
         elif self.loc < self.low:
@@ -1047,7 +1060,7 @@ class TruncatedNormal(Variable, _RandomBase):
         else:
             return self.high
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -> float:
         '''Sample the distirbution given the current parameters
 
         Parameters
@@ -1068,7 +1081,7 @@ class TruncatedNormal(Variable, _RandomBase):
 
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -> float:
         '''Calculate the pdf given the current parameters.
 
         Parameters
@@ -1085,7 +1098,7 @@ class TruncatedNormal(Variable, _RandomBase):
         return random.truncnormal.pdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: float=None) -> float:
         '''Calculate the logpdf given the current parameters.
 
         Parameters
@@ -1102,7 +1115,7 @@ class TruncatedNormal(Variable, _RandomBase):
         return random.truncnormal.logpdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
-    def cdf(self, value=None):
+    def cdf(self, value: float=None) -> float:
         '''Calculate the cdf given the current parameters.
 
         Parameters
@@ -1119,7 +1132,7 @@ class TruncatedNormal(Variable, _RandomBase):
         return random.truncnormal.cdf(value=value, mean=self._loc.value,
             std=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: float=None) -> float:
         '''Calculate the logcdf given the current parameters.
 
         Parameters
@@ -1143,14 +1156,14 @@ class SICS(Variable, _RandomBase):
     
     Parameters
     ----------
-    dof : float, int
+    dof : float, int, Variable
         This is the dof of the distribution
-    scale : float, int
+    scale : float, int, Variable
         This is the scale of the distribution
     kwargs : dict
         These are extra parameters for the Node class
     '''
-    def __init__(self, dof=None, scale=None, **kwargs):
+    def __init__(self, dof: Union[float, Variable]=None, scale: Union[float, Variable]=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -1174,22 +1187,22 @@ class SICS(Variable, _RandomBase):
         self.add_parent(self._scale)
 
     @property
-    def dof(self):
+    def dof(self) -> Variable:
         return self._dof
 
     @property
-    def scale(self):
+    def scale(self) -> Variable:
         return self._scale
 
-    def mean(self):
+    def mean(self) -> float:
         return self._dof.value * self._scale.value/ \
             (self._dof.value-2)
 
-    def mode(self):
+    def mode(self) -> float:
         return self._dof.value * self._scale.value / \
             (self._dof.value + 2)
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -> float:
         '''Sample from a SICS distribution parameerized by the current
         values of `scale` and `dof`.
 
@@ -1209,7 +1222,7 @@ class SICS(Variable, _RandomBase):
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -> float:
         '''Calculate the pdf given the internal state. If `value` is defined,
         calculate the pdf with the passed in value instead of `self.value`.
 
@@ -1227,7 +1240,7 @@ class SICS(Variable, _RandomBase):
         return random.sics.pdf(value=value,
             dof=self._dof.value, scale=self._scale.value)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: float=None) -> float:
         '''Calculate the logpdf given the internal state. If `value` is defined,
         calculate the logpdf with the passed in value instead of `self.value`.
 
@@ -1251,8 +1264,15 @@ class Gamma(Variable, _RandomBase):
 
     `shape` is a pylab.variables.Variable, `scale` is a
     pylab.variables.Variable
+
+    Parameters
+    ----------
+    shape : float, int, Variable
+        This is the shape of the distribution
+    scale : float, int, Variable
+        This is the scale of the distribution
     '''
-    def __init__(self, shape, scale, **kwargs):
+    def __init__(self, shape: Union[float, Variable], scale: Union[float, Variable], **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -1279,27 +1299,27 @@ class Gamma(Variable, _RandomBase):
         self.add_parent(self._scale)
 
     @property
-    def shape(self):
+    def shape(self) -> Variable:
         return self._shape_var
 
     @property
-    def scale(self):
+    def scale(self) -> Variable:
         return self._scale
 
-    def mean(self):
+    def mean(self) -> float:
         return self._shape_var.value * self._scale.value
 
-    def variance(self):
+    def variance(self) -> float:
         return self._shape_var.value * (self._scale.value) ** 2
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -> float:
         self.value = random.gamma.sample(
             shape=self._shape_var.value,
             scale=self._scale.value,
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -> float:
         '''Calculate the pdf given `self.value`, `self.shape`, and `self.scale`. 
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -1319,7 +1339,7 @@ class Gamma(Variable, _RandomBase):
 
 
 class InvGamma(Variable, _RandomBase):
-    def __init__(self, shape, scale, **kwargs):
+    def __init__(self, shape: Union[Variable, float], scale: Union[Variable, float], **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -1346,44 +1366,44 @@ class InvGamma(Variable, _RandomBase):
         self.add_parent(self._scale)
 
     @property
-    def shape(self):
+    def shape(self) -> Variable:
         return self._shape_var
 
     @property
-    def scale(self):
+    def scale(self) -> Variable:
         return self._scale
 
-    def mean(self):
+    def mean(self) -> float:
         if self._shape_var.value <= 1:
             raise MathError('Mean for InvGamma is undefined for shape <= 1 ' \
                 '({})'.format(self._shape_var.value))
         return self._scale.value/(self._shape_var.value-1)
 
-    def mode(self):
+    def mode(self) -> float:
         return self._scale.value/(self._shape_var.value + 1)
 
-    def variance(self):
+    def variance(self) -> float:
         if self._scale.value <= 2:
             raise MathError('Variance for InvGamma is undefined for ' \
                 'scale <= 2 ({})'.format(self._scale.value))
         return (self._scale.value**2)/ \
             ((self._shape_var.value - 1)**2) * (self._shape_var.value - 2)
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -> float:
         self.value = random.invgamma.sample(
             shape=self._shape_var.value,
             scale=self._scale.value,
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -> float:
         if value is None:
             value = self.value
         return random.invgamma.pdf(value=value, 
             shape=self._shape_var.value,
             scale=self._scale.value)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value:float=None) -> float:
         if value is None:
             value = self.value
         return random.invgamma.logpdf(value=value, 
@@ -1391,64 +1411,9 @@ class InvGamma(Variable, _RandomBase):
             scale=self._scale.value)
 
 
-class NegativeBinomial(Variable, _RandomBase):
-    def __init__(self, n, p, **kwargs):
-        raise NotImplementedError('Need to switch to the mean and variance parameterization')
-        Variable.__init__(self, **kwargs)
-        # Wrap parameters in nodes
-        if not isnode(p):
-            self._p = Variable(
-                value=p,
-                name=self.name + '_p',
-                G=self.G)
-        else:
-            self._p = p
-        self.add_parent(self._p)
-        if not isnode(n):
-            self._r = Variable(
-                value=n,
-                name=self.name + '_n',
-                G=self.G)
-        else:
-            self._n = n
-        self.add_parent(self._n)
-
-    @property
-    def p(self):
-        return self._p
-
-    @property
-    def n(self):
-        return self._n
-
-    def mean(self):
-        return self._p.value * self._r.value / (1 - self._p.value)
-
-    def mode(self):
-        if self._r.value > 1:
-            # cast as int to round down
-            p = self._p.value
-            r = self._r.value
-            return int(p*(r-1)/(1-p))
-        else:
-            return 0
-
-    def variance(self):
-        p = self._p.value
-        r = self._r.value
-        return p*r/((1-p)**2)
-
-    def sample(self, size=None):
-        self.value = npr.negative_binomial(
-            n=self._n.value,
-            p=self._p.value,
-            size=size)
-        return self.value
-
-
 class Bernoulli(Variable, _RandomBase):
 
-    def __init__(self, p, **kwargs):
+    def __init__(self, p: Union[float, Variable], **kwargs):
 
         Variable.__init__(self, **kwargs)
 
@@ -1464,26 +1429,26 @@ class Bernoulli(Variable, _RandomBase):
         self.add_parent(self._p)
 
     @property
-    def p(self):
+    def p(self) -> Variable:
         return self._p
 
 
-    def mean(self):
+    def mean(self) -> float:
         return self._p
 
-    def variance(self):
+    def variance(self) -> float:
         return (1 - self._p.value) * self._p.value
 
-    def mode(self):
+    def mode(self) -> float:
         return int(self._p.value >= 0.5)
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -> float:
         return random.bernoulli(p=self._p.value, size=size)
 
 
 class Beta(Variable, _RandomBase):
 
-    def __init__(self, a, b, **kwargs):
+    def __init__(self, a: Union[float, Variable], b: Union[float, Variable], **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -1506,32 +1471,33 @@ class Beta(Variable, _RandomBase):
         self.add_parent(self._b)
 
     @property
-    def a(self):
+    def a(self) -> Variable:
         return self._a
 
     @property
-    def b(self):
+    def b(self) -> Variable:
         return self._b
 
-    def mean(self):
+    def mean(self) -> float:
         '''E[X] = a/(a+b)
         '''
         return self._a.value / (self._a.value + self._b.value)
 
-    def variance(self):
+    def variance(self) -> float:
         '''var[X] = (a*b)/((a+b)**2 * (a+b+1))
         '''
         return self._a.value * self._b.value / ((self._a.value * \
             self._b.value)**2 * (self._a.value+self._b.value+1))
 
-    def sample(self,size=None):
+    def sample(self, size: int=None) -> float:
         self.value = random.beta.sample(a=self._a.value, b=self._b.value, size=size)
         return self.value
 
 
 class MVN(Variable, _RandomBase):
 
-    def __init__(self, mean=None, cov=None, **kwargs):
+    def __init__(self, mean: Union[np.ndarray, Variable]=None, 
+        cov: Union[np.ndarray, Variable]=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -1554,20 +1520,20 @@ class MVN(Variable, _RandomBase):
         self.add_parent(self._cov)
 
     @property
-    def mean(self):
+    def mean(self) -> Variable:
         return self._mean
 
     @property
-    def cov(self):
+    def cov(self) -> Variable:
         return self._cov
 
-    def mode(self):
+    def mode(self) -> np.ndarray:
         return self._mean.value
 
-    def prec(self):
+    def prec(self) -> np.ndarray:
         return np.linalg.pinv(self._cov.value)
 
-    def sample(self,idxs=None,size=None):
+    def sample(self, idxs: np.ndarray=None, size: int=None) -> np.ndarray:
         '''
         Sample all indices or only sample at the target indices (idxs) and
         set NaN to everything else. You would want to do this if you are

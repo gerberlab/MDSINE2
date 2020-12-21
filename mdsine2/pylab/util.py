@@ -14,29 +14,15 @@ import itertools
 import re
 import ete3
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, Callable
+
 import os
 from pathlib import Path
 
 import scipy.spatial
 
-# Constants
-NAME_FORMATTER = '%(name)s'
-ID_FORMATTER = '%(id)s'
-INDEX_FORMATTER = '%(index)s'
-SPECIES_FORMATTER = '%(species)s'
-GENUS_FORMATTER = '%(genus)s'
-FAMILY_FORMATTER = '%(family)s'
-CLASS_FORMATTER = '%(class)s'
-ORDER_FORMATTER = '%(order)s'
-PHYLUM_FORMATTER = '%(phylum)s'
-KINGDOM_FORMATTER = '%(kingdom)s'
-PAPER_FORMATTER = '%(paperformat)s'
-
-_TAXLEVELS = ['species', 'genus', 'family', 'class', 'order', 'phylum', 'kingdom']
-_TAXFORMATTERS = ['%(species)s', '%(genus)s', '%(family)s', '%(class)s', '%(order)s', '%(phylum)s', '%(kingdom)s']
-TAXANAME_PAPER_FORMAT = float('inf')
-
-def isdataframe(a):
+def isdataframe(a: Any) -> bool:
     '''Checks if `a` is a pandas.DataFrame
 
     Parameters
@@ -51,7 +37,7 @@ def isdataframe(a):
     '''
     return type(a) == pd.DataFrame
 
-def issquare(a):
+def issquare(a: Any) -> bool:
     '''Checks if the input array is a square
 
     Parameters
@@ -69,7 +55,7 @@ def issquare(a):
     except:
         return False
 
-def isbool(a):
+def isbool(a: Any) -> bool:
     '''Checks if `a` is a bool
 
     Parameters
@@ -84,7 +70,7 @@ def isbool(a):
     '''
     return a is not None and np.issubdtype(type(a), np.bool_)
 
-def isint(a):
+def isint(a: Any) -> bool:
     '''Checks if `a` is an int
 
     Parameters
@@ -99,7 +85,7 @@ def isint(a):
     '''
     return a is not None and np.issubdtype(type(a), np.integer)
 
-def isfloat(a):
+def isfloat(a: Any) -> bool:
     '''Checks if `a` is a float
 
     Parameters
@@ -114,7 +100,7 @@ def isfloat(a):
     '''
     return a is not None and np.issubdtype(type(a), np.floating)
 
-def iscomplex(a):
+def iscomplex(a: Any) -> bool:
     '''Checks if `a` is a complex number
 
     Parameters
@@ -129,7 +115,7 @@ def iscomplex(a):
     '''
     return a is not None and np.issubdtype(type(a), np.complexfloating)
 
-def isnumeric(a):
+def isnumeric(a: Any) -> bool:
     '''Checks if `a` is a float or an int - (cannot be a bool)
 
     Parameters
@@ -144,7 +130,7 @@ def isnumeric(a):
     '''
     return a is not None and np.issubdtype(type(a), np.number)
 
-def isarray(a):
+def isarray(a: Any) -> bool:
     '''Checks if `a` is an array
 
     Parameters
@@ -160,7 +146,7 @@ def isarray(a):
     return (type(a) == np.ndarray or type(a) == list or \
         scipy.sparse.issparse(a)) and a is not None
 
-def isstr(a):
+def isstr(a: Any) -> bool:
     '''Checks if `a` is a str
 
     Parameters
@@ -175,7 +161,7 @@ def isstr(a):
     '''
     return a is not None and type(a) == str
 
-def istype(a):
+def istype(a: Any) -> bool:
     '''Checks if `a` is a Type object
 
     Example
@@ -197,7 +183,7 @@ def istype(a):
     '''
     return type(a) == type
 
-def istuple(a):
+def istuple(a: Any) -> bool:
     '''Checks if `a` is a tuple object
 
     Example
@@ -219,7 +205,7 @@ def istuple(a):
     '''
     return type(a) == tuple
 
-def isdict(a):
+def isdict(a: Any) -> bool:
     '''Checks if `a` is a dict object
 
     Example
@@ -241,7 +227,7 @@ def isdict(a):
     '''
     return type(a) == dict
 
-def istree(a):
+def istree(a: Any) -> bool:
     '''Checks if `a` is an ete3 Tree object
 
     Example
@@ -264,7 +250,7 @@ def istree(a):
     '''
     return type(a) == ete3.Tree
 
-def itercheck(xs, f):
+def itercheck(xs: Iterator[Any], f: Callable) -> Iterator[bool]:
     '''Checks every element in xs with f and returns an array
     for each entry
 
@@ -281,160 +267,8 @@ def itercheck(xs, f):
     '''
     return [f(x) for x in xs]
 
-def taxaname_for_paper(taxon, taxa):
-    '''Makes the name in the format needed for the paper
-
-    Parameters
-    ----------
-    taxon : pylab.base.Taxon/pylab.base.OTU
-        This is the taxon we are making the name for
-    taxa : pylab.base.TaxaSet
-        This is the TaxaSet object that contains the taxon objects
-
-    Returns
-    -------
-    '''
-    taxon = taxa[taxon]
-    if taxon.tax_is_defined('species'):
-        species = taxon.taxonomy['species']
-        species = species.split('/')
-        if len(species) >= 3:
-            species = species[:2]
-        species = '/'.join(species)
-        label = taxaname_formatter(
-            format='%(genus)s {spec} %(name)s'.format(
-                spec=species), 
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined('genus'):
-        label = taxaname_formatter(
-            format='* %(genus)s %(name)s',
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined('family'):
-        label = taxaname_formatter(
-            format='** %(family)s %(name)s',
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined('order'):
-        label = taxaname_formatter(
-            format='*** %(order)s %(name)s',
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined('class'):
-        label = taxaname_formatter(
-            format='**** %(class)s %(name)s',
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined('phylum'):
-        label = taxaname_formatter(
-            format='***** %(phylum)s %(name)s',
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined('kingdom'):
-        label = taxaname_formatter(
-            format='****** %(kingdom)s %(name)s',
-            taxon=taxon, taxa=taxa)
-    else:
-        logging.debug('Something went wrong - no taxnonomy: {}'.format(str(taxon)))
-        label = 'NA {}'.format(taxa[taxon].name)
-
-    return label
-
-def taxaname_formatter(format, taxon, taxa):
-    '''Format the label of a taxon. Specify the taxon by its index in the TaxaSet `taxa`.
-
-    If `format == mdsine.TAXANAME_PAPER_FORMAT`, then we call the function
-    `taxaname_for_paper`.
-
-    Example:
-        taxon is an Taxon object at index 0 where
-        taxon.genus = 'A'
-        taxon.id = 1234532
-
-        taxaname_formatter(
-            format='%(genus)s: %(index)s',
-            taxon=1234532,
-            taxa=taxa)
-        >>> 'A: 0'
-
-        taxaname_formatter(
-            format='%(genus)s: %(genus)s',
-            taxon=1234532,
-            taxa=taxa)
-        >>> 'A: A'
-
-        taxaname_formatter(
-            format='%(index)s',
-            taxon=1234532,
-            taxa=taxa)
-        >>> '0'
-
-        taxaname_formatter(
-            format='%(geNus)s: %(genus)s',
-            taxon=1234532,
-            taxa=taxa)
-        >>> '%(geNus)s: A'
-
-    Parameters
-    ----------
-    format : str
-        This is the format for us to do the labels
-        Formatting options:
-            '%(paperformat)s'
-                Return the `taxaname_for_paper`
-            '%(name)s'
-                Name of the taxon (pylab.base..name)
-            '%(id)s'
-                ID of the taxon (pylab.base..id)
-            '%(index)s'
-                The order that this appears in the TaxaSet
-            '%(species)s'
-                `'species'` taxonomic classification of the taxon
-            '%(speciesX)s'
-                `'species'` taxonomic classification of the taxon for only up to the first 
-                `X` spceified
-            '%(genus)s'
-                `'genus'` taxonomic classification of the taxon
-            '%(family)s'
-                `'family'` taxonomic classification of the taxon
-            '%(class)s'
-                `'class'` taxonomic classification of the taxon
-            '%(order)s'
-                `'order'` taxonomic classification of the taxon
-            '%(phylum)s'
-                `'phylum'` taxonomic classification of the taxon
-            '%(kingdom)s'
-                `'kingdom'` taxonomic classification of the taxon
-
-    taxon : str, int, Taxon, OTU
-        Taxon/OTU object or identifier (name, ID, index)
-    taxa : pylab.base.TaxaSet
-        Dataset containing all of the information for the taxa
-
-    '''
-    if format == TAXANAME_PAPER_FORMAT:
-        return taxaname_for_paper(taxon=taxon, taxa=taxa)
-    taxon = taxa[taxon]
-    index = taxon.idx
-
-    label = format.replace(NAME_FORMATTER, str(taxon.name))
-    label = label.replace(ID_FORMATTER, str(taxon.id))
-    label = label.replace(INDEX_FORMATTER,  str(index))
-
-    if PAPER_FORMATTER in label:
-        label = label.replace(PAPER_FORMATTER, '%(temp)s')
-        label = label.replace('%(temp)s', taxaname_for_paper(taxon=taxon, taxa=taxa))
-    
-    for i in range(len(_TAXLEVELS)):
-        taxlevel = _TAXLEVELS[i]
-        fmt = _TAXFORMATTERS[i]
-        try:
-            label = label.replace(fmt, str(taxon.get_taxonomy(taxlevel)))
-        except:
-            logging.critical('taxon: {}'.format(taxon))
-            logging.critical('fmt: {}'.format(fmt))
-            logging.critical('label: {}'.format(label))
-            raise
-
-    return label
-
 @numba.jit(nopython=True, cache=True)
-def fast_index(M, rows, cols):
+def fast_index(M: np.ndarray, rows: np.ndarray, cols: np.ndarray) -> np.ndarray:
     '''Fast index fancy indexing the matrix M. ~98% faster than regular
     fancy indexing
     M MUST BE C_CONTIGUOUS for this to actually help.
@@ -455,7 +289,8 @@ def fast_index(M, rows, cols):
     return (M.ravel()[(cols + (rows * M.shape[1]).reshape(
         (-1,1))).ravel()]).reshape(rows.size, cols.size)
 
-def toarray(x, dest=None, T=False):
+def toarray(x: Union[scipy.sparse.spmatrix, np.ndarray], dest: np.ndarray=None, 
+    T: bool=False) -> np.ndarray:
     '''Converts `x` into a C_CONTIGUOUS numpy matrix if 
     the matrix is sparse. If it is not sparse then it just returns
     the matrix.
@@ -490,86 +325,6 @@ def toarray(x, dest=None, T=False):
             return x.T
         else:
             return x
-
-def subsample_timeseries(T, sizes, approx=True):
-    '''Subsample the time-series `T` into size in `sizes`. Note that
-    this algorithm does not guarentee any timepoints to stay.
-
-    The baseline algorithm calculates:
-    d(R) = \sum_{i \neq j} 1 / (R[i] - R[j])^2
-    for every *COMBINATION* of T of size size. If |T| = 75 and size = 45,
-    then there are 45! * (75 - 45)! = 3.2e88 combinations - this is not 
-    doable.
-
-    Approximation
-    -------------
-    To approximate this, we divide the current size of the of the elements 
-    into `size+1` (approximately) equal intervals
-    Example:
-        T = [0, 0.5, 1, 2, 4, 4.5, 5, 7, 8, 10]
-        len(T) = 10
-        sizes = [8, 6]
-
-        time_indexes for T:
-            0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-
-        Make 8 point interval:
-            Need to delete 2 time points,
-            10 - 8 = 2
-            floor(10 / 3) = 3
-            Delete every 3 elements
-            0 , 1 , 3, 4, 6, 7, 9, 10
-
-            T_8 = []
-
-    Parameters
-    ----------
-    T : array_like
-        These are the times that we want to subsample
-    sizes : int, array(int)
-        These are the sizes we want to subsample to. 
-
-    Returns
-    -------
-    list(np.ndarray(sizes))
-        A list of time series for each size in decreasing size order
-    '''
-    if not isarray(T):
-        raise TypeError('`T` ({}) must be an array'.format(type(T)))
-    if isint(sizes):
-        sizes = [sizes]
-    elif isarray(sizes):
-        for size in sizes:
-            if not isint(size):
-                raise TypeError('Each size in `sizes` ({}) must be an int ({})'.format(
-                    type(size), sizes))
-    else:
-        raise ValueError('`sizes` ({}) must be an int or an array f ints'.format(type(sizes)))
-
-    T = np.asarray(T)
-    sizes = np.unique(np.asarray(sizes, dtype=int))
-    sizes[::-1].sort()
-    ret = []
-    l = len(T)
-
-    prev_tp = np.arange(len(T))
-    for n in sizes:
-        spacings = []
-        subsets = []
-
-        for subset in itertools.combinations(prev_tp, n):
-            subsets.append(subset)
-            subset = list(subset)
-            subset = [-1] + subset + [l+1]
-            subset = np.array(subset)
-            spacings.append((1/np.power(scipy.spatial.distance.pdist(
-                subset[:, np.newaxis]), 2)).sum())
-
-        idxs = np.array(subsets[spacings.index(min(spacings))])
-        ret.append(T[idxs])
-        prev_tp = idxs
-
-    return ret
 
 def coarsen_phylogenetic_tree(tree, depth):
     '''Coarsen the tree to the maximum depth `depth`.

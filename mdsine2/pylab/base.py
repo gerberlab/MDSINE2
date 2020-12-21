@@ -1,38 +1,5 @@
 '''These are base classes that are used throughout the rest of Pylab
 
-Difference between Saveable and Traceable
------------------------------------------
-`Saveable` defines functions (`save` and `load`) to save the class object in 
-memory as a Pickle. Traceable defines functions and attributes that allows the
-trace of the object during inference to be saved on disk DURING inference. An 
-object can both be `Saveable` and `Traceable`.
-
-How perturbations are switched on and off
------------------------------------------
-'The time ahead prediction must be included in the perturbation' - Travis
-
-Example: Pertubtion period (2,5) - this is **3** doses
-
-                   
-perturbation on    |-->|-->|-->
-Days           1   2   3   4   5   6
-
-`d1` indicates the perturbation parameter that gets added for the day that it
-should be included in.
-
-x2 = x1 + ...
-x3 = x2 + ... + d1
-x4 = x3 + ... + d1
-x5 = x4 + ... + d1
-x6 = x5 + ...
-
-The perturbation periods that are given are in the format (start, end).
-For the above example our perturbation period would be (2, 5). Thus, we should do
-inclusion/exclusion brackets such that:
-
-(start, end]
-    - The first day is inclusive
-    - Last day is exclusive
 '''
 
 import numpy as np
@@ -45,6 +12,9 @@ import os
 import os.path
 import copy
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple
+
 from . import util as plutil
 from .errors import NeedToImplementError
 from . import diversity
@@ -56,8 +26,23 @@ TAX_IDXS = {'kingdom': 0, 'phylum': 1, 'class': 2,  'order': 3, 'family': 4,
     'genus': 5, 'species': 6, 'asv': 7}
 TAX_LEVELS = ['kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species', 'asv']
 
+# Constants
+NAME_FORMATTER = '%(name)s'
+ID_FORMATTER = '%(id)s'
+INDEX_FORMATTER = '%(index)s'
+SPECIES_FORMATTER = '%(species)s'
+GENUS_FORMATTER = '%(genus)s'
+FAMILY_FORMATTER = '%(family)s'
+CLASS_FORMATTER = '%(class)s'
+ORDER_FORMATTER = '%(order)s'
+PHYLUM_FORMATTER = '%(phylum)s'
+KINGDOM_FORMATTER = '%(kingdom)s'
+PAPER_FORMATTER = '%(paperformat)s'
 
-def isqpcrdata(x):
+_TAXFORMATTERS = ['%(species)s', '%(genus)s', '%(family)s', '%(class)s', '%(order)s', '%(phylum)s', '%(kingdom)s']
+TAXANAME_PAPER_FORMAT = float('inf')
+
+def isqpcrdata(x: Any) -> bool:
     '''Checks whether the input is a subclass of qPCRData
 
     Parameters
@@ -72,7 +57,7 @@ def isqpcrdata(x):
     '''
     return x is not None and issubclass(x.__class__, qPCRdata)
 
-def istaxaset(x):
+def istaxaset(x: Any) -> bool:
     '''Checks whether the input is a subclass of TaxaSet
 
     Parameters
@@ -87,7 +72,7 @@ def istaxaset(x):
     '''
     return x is not None and issubclass(x.__class__, TaxaSet)
 
-def issavable(x):
+def issavable(x: Any) -> bool:
     '''Checks whether the input is a subclass of Savable
 
     Parameters
@@ -102,7 +87,7 @@ def issavable(x):
     '''
     return x is not None and issubclass(x.__class__, Saveable)
 
-def isclusterable(x):
+def isclusterable(x: Any) -> bool:
     '''Determines whether the input is a subclass of Clusterable
 
     Parameters
@@ -117,7 +102,7 @@ def isclusterable(x):
     '''
     return x is not None and issubclass(x.__class__, Clusterable)
 
-def istraceable(x):
+def istraceable(x: Any) -> bool:
     '''Checks whether the input is a subclass of Traceable
 
     Parameters
@@ -132,7 +117,7 @@ def istraceable(x):
     '''
     return x is not None and issubclass(x.__class__, Traceable)
 
-def istaxon(x):
+def istaxon(x: Any) -> bool:
     '''Checks whether the input is a subclass of Taxon
 
     Parameters
@@ -147,7 +132,7 @@ def istaxon(x):
     '''
     return x is not None and issubclass(x.__class__, Taxon)
 
-def isotu(x):
+def isotu(x: Any) -> bool:
     '''Checks whether the input is a subclass of OTU
 
     Parameters
@@ -162,7 +147,7 @@ def isotu(x):
     '''
     return issubclass(x.__class__, OTU)
 
-def istaxontype(x):
+def istaxontype(x: Any) -> bool:
     '''Checks whether the input is a subclass of OTU or Taxon
 
     Parameters
@@ -177,7 +162,7 @@ def istaxontype(x):
     '''
     return istaxon(x) or isotu(x)
 
-def issubject(x):
+def issubject(x: Any) -> bool:
     '''Checks whether the input is a subclass of Subject
 
     Parameters
@@ -192,7 +177,7 @@ def issubject(x):
     '''
     return x is not None and issubclass(x.__class__, Subject)
 
-def isstudy(x):
+def isstudy(x: Any) -> bool:
     '''Checks whether the input is a subclass of Study
 
     Parameters
@@ -207,7 +192,7 @@ def isstudy(x):
     '''
     return x is not None and issubclass(x.__class__, Study)
 
-def isperturbation(x):
+def isperturbation(x: Any) -> bool:
     '''Checks whether the input is a subclass of BasePerturbation
 
     Parameters
@@ -222,13 +207,13 @@ def isperturbation(x):
     '''
     return x is not None and issubclass(x.__class__, BasePerturbation)
 
-def condense_matrix_with_taxonomy(M, taxa, fmt):
+def condense_matrix_with_taxonomy(M: Union[pd.DataFrame, np.ndarray], taxa: 'TaxaSet', fmt: str) -> pd.DataFrame:
     '''Condense the specified matrix M thats on the asv level
     to a taxonomic label specified with `fmt`. If `M` 
     is a pandas.DataFrame then we assume the index are the Taxon
     names. If `M` is a numpy.ndarray, then we assume that the 
     order of the matrix mirrors the order of the taxa. `fmt` is
-    passed through `pylab.util.taxaname_formatter` to get the label.
+    passed through `pylab.base.taxaname_formatter` to get the label.
 
     Parameters
     ----------
@@ -269,7 +254,7 @@ def condense_matrix_with_taxonomy(M, taxa, fmt):
     d = {}
     for row, name in enumerate(names):
         taxon = taxa[name]
-        tax = plutil.taxaname_formatter(format=fmt, taxon=taxon, taxa=taxa)
+        tax = taxaname_formatter(format=fmt, taxon=taxon, taxa=taxa)
         if tax not in d:
             d[tax] = []
         d[tax].append(row)
@@ -292,11 +277,163 @@ def condense_matrix_with_taxonomy(M, taxa, fmt):
     df = df.sort_index(axis='index')
     return df
 
+def taxaname_for_paper(taxon: Union["Taxon", "OTU"], taxa: "TaxaSet") -> float:
+    '''Makes the name in the format needed for the paper
+
+    Parameters
+    ----------
+    taxon : pylab.base.Taxon/pylab.base.OTU
+        This is the taxon we are making the name for
+    taxa : pylab.base.TaxaSet
+        This is the TaxaSet object that contains the taxon objects
+
+    Returns
+    -------
+    '''
+    taxon = taxa[taxon]
+    if taxon.tax_is_defined('species'):
+        species = taxon.taxonomy['species']
+        species = species.split('/')
+        if len(species) >= 3:
+            species = species[:2]
+        species = '/'.join(species)
+        label = taxaname_formatter(
+            format='%(genus)s {spec} %(name)s'.format(
+                spec=species), 
+            taxon=taxon, taxa=taxa)
+    elif taxon.tax_is_defined('genus'):
+        label = taxaname_formatter(
+            format='* %(genus)s %(name)s',
+            taxon=taxon, taxa=taxa)
+    elif taxon.tax_is_defined('family'):
+        label = taxaname_formatter(
+            format='** %(family)s %(name)s',
+            taxon=taxon, taxa=taxa)
+    elif taxon.tax_is_defined('order'):
+        label = taxaname_formatter(
+            format='*** %(order)s %(name)s',
+            taxon=taxon, taxa=taxa)
+    elif taxon.tax_is_defined('class'):
+        label = taxaname_formatter(
+            format='**** %(class)s %(name)s',
+            taxon=taxon, taxa=taxa)
+    elif taxon.tax_is_defined('phylum'):
+        label = taxaname_formatter(
+            format='***** %(phylum)s %(name)s',
+            taxon=taxon, taxa=taxa)
+    elif taxon.tax_is_defined('kingdom'):
+        label = taxaname_formatter(
+            format='****** %(kingdom)s %(name)s',
+            taxon=taxon, taxa=taxa)
+    else:
+        logging.debug('Something went wrong - no taxnonomy: {}'.format(str(taxon)))
+        label = 'NA {}'.format(taxa[taxon].name)
+
+    return label
+
+def taxaname_formatter(format: str, taxon: Union["Taxon", "OTU"], taxa: "TaxaSet") -> str:
+    '''Format the label of a taxon. Specify the taxon by its index in the TaxaSet `taxa`.
+
+    If `format == mdsine.TAXANAME_PAPER_FORMAT`, then we call the function
+    `taxaname_for_paper`.
+
+    Example:
+        taxon is an Taxon object at index 0 where
+        taxon.genus = 'A'
+        taxon.id = 1234532
+
+        taxaname_formatter(
+            format='%(genus)s: %(index)s',
+            taxon=1234532,
+            taxa=taxa)
+        >>> 'A: 0'
+
+        taxaname_formatter(
+            format='%(genus)s: %(genus)s',
+            taxon=1234532,
+            taxa=taxa)
+        >>> 'A: A'
+
+        taxaname_formatter(
+            format='%(index)s',
+            taxon=1234532,
+            taxa=taxa)
+        >>> '0'
+
+        taxaname_formatter(
+            format='%(geNus)s: %(genus)s',
+            taxon=1234532,
+            taxa=taxa)
+        >>> '%(geNus)s: A'
+
+    Parameters
+    ----------
+    format : str
+        This is the format for us to do the labels
+        Formatting options:
+            '%(paperformat)s'
+                Return the `taxaname_for_paper`
+            '%(name)s'
+                Name of the taxon (pylab.base..name)
+            '%(id)s'
+                ID of the taxon (pylab.base..id)
+            '%(index)s'
+                The order that this appears in the TaxaSet
+            '%(species)s'
+                `'species'` taxonomic classification of the taxon
+            '%(speciesX)s'
+                `'species'` taxonomic classification of the taxon for only up to the first 
+                `X` spceified
+            '%(genus)s'
+                `'genus'` taxonomic classification of the taxon
+            '%(family)s'
+                `'family'` taxonomic classification of the taxon
+            '%(class)s'
+                `'class'` taxonomic classification of the taxon
+            '%(order)s'
+                `'order'` taxonomic classification of the taxon
+            '%(phylum)s'
+                `'phylum'` taxonomic classification of the taxon
+            '%(kingdom)s'
+                `'kingdom'` taxonomic classification of the taxon
+
+    taxon : str, int, Taxon, OTU
+        Taxon/OTU object or identifier (name, ID, index)
+    taxa : pylab.base.TaxaSet
+        Dataset containing all of the information for the taxa
+
+    '''
+    if format == TAXANAME_PAPER_FORMAT:
+        return taxaname_for_paper(taxon=taxon, taxa=taxa)
+    taxon = taxa[taxon]
+    index = taxon.idx
+
+    label = format.replace(NAME_FORMATTER, str(taxon.name))
+    label = label.replace(ID_FORMATTER, str(taxon.id))
+    label = label.replace(INDEX_FORMATTER,  str(index))
+
+    if PAPER_FORMATTER in label:
+        label = label.replace(PAPER_FORMATTER, '%(temp)s')
+        label = label.replace('%(temp)s', taxaname_for_paper(taxon=taxon, taxa=taxa))
+    
+    for i in range(len(TAXLEVELS)):
+        taxlevel = TAXLEVELS[i]
+        fmt = _TAXFORMATTERS[i]
+        try:
+            label = label.replace(fmt, str(taxon.get_taxonomy(taxlevel)))
+        except:
+            logging.critical('taxon: {}'.format(taxon))
+            logging.critical('fmt: {}'.format(fmt))
+            logging.critical('label: {}'.format(label))
+            raise
+
+    return label
+
 
 class Saveable:
     '''Implements baseline saving classes with pickle for classes
     '''
-    def save(self, filename=None):
+    def save(self, filename: str=None):
         '''Pickle the object
 
         Paramters
@@ -322,7 +459,7 @@ class Saveable:
                 pickle.dump(self, output, protocol=pickle.HIGHEST_PROTOCOL)
 
     @classmethod
-    def load(cls, filename):
+    def load(cls, filename: str):
         '''Unpickle the object
 
         Paramters
@@ -340,7 +477,7 @@ class Saveable:
 
         return b
 
-    def set_save_location(self, filename):
+    def set_save_location(self, filename: str):
         '''Set the save location for the object.
 
         Internally converts this to the absolute path
@@ -355,7 +492,7 @@ class Saveable:
         filename = os.path.abspath(filename)
         self._save_loc = filename
 
-    def get_save_location(self):
+    def get_save_location(self) -> str:
         try:
             return self._save_loc
         except:
@@ -365,13 +502,6 @@ class Saveable:
 class Traceable:
     '''Defines the functionality for a Node to interact with the Graph tracer object
     '''
-
-    @property
-    def initialization_value(self):
-        if hasattr(self, '_init_value'):
-            return self._init_value
-        else:
-            return None
 
     def set_trace(self):
         '''Initialize the trace arrays for the variable in the Tracer object. 
@@ -386,17 +516,34 @@ class Traceable:
         '''
         raise NotImplementedError('User needs to define this function')
 
-    def get_trace_from_disk(self, *args, **kwargs):
+    def get_trace_from_disk(self, section: str = 'posterior', slices: slice = None) -> np.ndarray:
         '''Returns the entire trace (after burnin) writen on the disk. NOTE: This may/may not 
         include the samples in the local buffer trace and could be very large
+
+        Parameters
+        ----------
+        section : str
+            Which part of the trace to return - description above
+        slices : list(slice), slice
+            A list of slicing objects or a slice object.
+
+            slice(start, stop, step)
+            Example, single dimension:
+                slice(None) == :
+                slice(5) == :5
+                slice(4, None, None) == 4:
+                slice(9, 22,None) == 9:22
+            Example, multiple dimensions:
+                [slice(None), slice(4, None, None)] == :, 4:
+                [slice(None), 4, 5] == :, 4, 5
 
         Returns
         -------
         np.ndarray
         '''
-        return self.G.tracer.get_trace(name=self.name, *args, **kwargs)
+        return self.G.tracer.get_trace(name=self.name, section=section, slices=slices)
 
-    def overwrite_entire_trace_on_disk(self, data, **kwargs):
+    def overwrite_entire_trace_on_disk(self, data: np.ndarray, **kwargs):
         '''Overwrites the entire trace of the variable with the given data.
 
         Parameters
@@ -407,7 +554,7 @@ class Traceable:
         self.G.tracer.overwrite_entire_trace_on_disk(
             name=self.name, data=data, dtype=self.dtype, **kwargs)
 
-    def get_iter(self):
+    def get_iter(self) -> int:
         '''Get the number of iterations saved to the hdf5 file of the variable
 
         Returns
@@ -431,7 +578,7 @@ class BasePerturbation:
     starts, ends : dict, None
         This is a map to the start and end times for the subject that have this perturbation
     '''
-    def __init__(self, name, starts=None, ends=None):
+    def __init__(self, name: str, starts: Dict[str, float]=None, ends: Dict[str, float]=None):
         if not plutil.isstr(name):
             raise TypeError('`name` ({}) must be a str'.format(type(name)))
         if (starts is not None and ends is None) or (starts is None and ends is not None):
@@ -446,7 +593,7 @@ class BasePerturbation:
         self.ends = ends
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = 'Perturbation {}:\n'.format(self.name)
         if self.starts is not None:
             for subj in self.starts:
@@ -454,14 +601,14 @@ class BasePerturbation:
                     self.ends[subj])
         return s
 
-    def __contains__(self, a):
+    def __contains__(self, a: Union[str]) -> bool:
         '''Checks if subject name `a` is in this perturbation
         '''
         if issubject(a):
             a = a.name
         return a in self.starts
 
-    def isactive(self, time, subj):
+    def isactive(self, time: Union[float, int], subj: str) -> bool:
         '''Returns a `bool` if the perturbation is on at time `time`.
 
         Parameters
@@ -498,10 +645,12 @@ class Perturbations:
         self._d = {}
         self._rev_idx = []
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._d)
 
-    def __getitem__(self, a):
+    def __getitem__(self, a: Union[BasePerturbation, int, str]) -> BasePerturbation:
+        '''Get the perturbation either by index, name, or object
+        '''
         if isperturbation(a):
             if a.name in self:
                 return a
@@ -514,7 +663,7 @@ class Perturbations:
         else:
             raise KeyError('`a` {} ({}) not recognized'.format(a, type(a)))
 
-    def __contains__(self, a):
+    def __contains__(self, a: Union[BasePerturbation, str, int]) -> bool:
         try:
             _ = self[a]
             return True
@@ -525,7 +674,7 @@ class Perturbations:
         for a in self._d:
             yield self._d[a]
 
-    def append(self, a):
+    def append(self, a: BasePerturbation):
         '''Add a perturbation
 
         a : mdsine2.BasePertubration
@@ -536,8 +685,9 @@ class Perturbations:
         self._d[a.name] = a
         self._rev_idx.append(a.name)
 
-    def remove(self, a):
-        '''Remove the perturbation `a`
+    def remove(self, a: Union[BasePerturbation, str, int]):
+        '''Remove the perturbation `a`. Can be either the name, index, or 
+        the object itself.
 
         Parameters
         ----------
@@ -562,10 +712,10 @@ class ClusterItem:
     It must have the parameter
         'name'
     '''
-    def __init__(self, name):
+    def __init__(self, name: str):
         self.name = name
 
-    def cluster_str(self):
+    def cluster_str(self) -> str:
         return self.name
 
 
@@ -581,7 +731,7 @@ class Taxon(ClusterItem):
     idx : int
         The index that the asv occurs
     '''
-    def __init__(self, name, idx, sequence=None):
+    def __init__(self, name: str, idx: int, sequence: Iterator[str]=None):
         ClusterItem.__init__(self, name=name)
         self.sequence = sequence
         self.idx = idx
@@ -597,10 +747,7 @@ class Taxon(ClusterItem):
             'asv': self.name}
         self.id = id(self)
 
-    def __getitem__(self,key):
-        return self.taxonomy[key.lower()]
-
-    def __eq__(self, val):
+    def __eq__(self, val: Any) -> bool:
         '''Compares different taxa between each other. Checks all of the attributes but the id
 
         Parameters
@@ -619,7 +766,7 @@ class Taxon(ClusterItem):
                 return False
         return True
 
-    def __str__(self):
+    def __str__(self) -> str:
         return 'Taxon\n\tid: {}\n\tidx: {}\n\tname: {}\n' \
             '\ttaxonomy:\n\t\tkingdom: {}\n\t\tphylum: {}\n' \
             '\t\tclass: {}\n\t\torder: {}\n\t\tfamily: {}\n' \
@@ -630,8 +777,8 @@ class Taxon(ClusterItem):
             self.taxonomy['family'], self.taxonomy['genus'],
             self.taxonomy['species'])
 
-    def set_taxonomy(self, tax_kingdom=None, tax_phylum=None, tax_class=None,
-        tax_order=None, tax_family=None, tax_genus=None, tax_species=None):
+    def set_taxonomy(self, tax_kingdom: str=None, tax_phylum: str=None, tax_class: str=None,
+        tax_order: str=None, tax_family: str=None, tax_genus: str=None, tax_species: str=None):
         '''Sets the taxonomy of the parts that are specified
 
         Parameters
@@ -656,7 +803,7 @@ class Taxon(ClusterItem):
             self.taxonomy['species'] = tax_species
         return self
 
-    def get_lineage(self, level=None):
+    def get_lineage(self, level: str=None) -> Iterator[str]:
         '''Returns a tuple of the lineage in order from Kingdom to the level
         indicated. Default value for level is `asv`.
         Parameters
@@ -698,7 +845,7 @@ class Taxon(ClusterItem):
 
         return a
     
-    def get_taxonomy(self, level):
+    def get_taxonomy(self, level: str) -> str:
         '''Get the taxonomy at the level specified
 
         Parameters
@@ -713,7 +860,7 @@ class Taxon(ClusterItem):
         '''
         return self.get_lineage(level=level)[-1]
 
-    def tax_is_defined(self, level):
+    def tax_is_defined(self, level: str) -> bool:
         '''Whether or not the taxon is defined at the specified taxonomic level
 
         Parameters
@@ -745,7 +892,7 @@ class OTU(Taxon):
         These are the taxa/Aggregates that you're joining together. The anchor is
         the one you are setting the sequeunce and taxonomy to
     '''
-    def __init__(self, anchor, other):
+    def __init__(self, anchor: Union[Taxon, 'OTU'], other: Union[Taxon, 'OTU']):
         name = anchor.name + '_agg'
         Taxon.__init__(self, name=name, idx=anchor.idx, sequence=anchor.sequence)
 
@@ -777,15 +924,15 @@ class OTU(Taxon):
             agg2_seq = {other.name: other.sequence}
             _agg_taxa[other.name] = other.taxonomy
 
-        self.aggregated_taxa = agg1 + agg2
-        self.aggregated_seqs = agg1_seq
-        self.aggregated_taxonomies = _agg_taxa
+        self.aggregated_taxa = agg1 + agg2 # list
+        self.aggregated_seqs = agg1_seq # dict: taxon.name (str) -> sequence (str)
+        self.aggregated_taxonomies = _agg_taxa # dict: taxon.name (str) -> (dict: tax level (str) -> taxonomy (str))
         for k,v in agg2_seq.items():
             self.aggregated_seqs[k] = v
 
         self.taxonomy = anchor.taxonomy
 
-    def __str__(self):
+    def __str__(self) -> str:
         return 'OTU\n\tid: {}\n\tidx: {}\n\tname: {}\n' \
             '\tAggregates: {}\n' \
             '\ttaxonomy:\n\t\tkingdom: {}\n\t\tphylum: {}\n' \
@@ -797,7 +944,7 @@ class OTU(Taxon):
             self.taxonomy['family'], self.taxonomy['genus'],
             self.taxonomy['species'])
 
-    def generate_consensus_seq(self, threshold=0.65, noconsensus_char='N'):
+    def generate_consensus_seq(self, threshold: float=0.65, noconsensus_char: str='N'):
         '''Generate the consensus sequence for the OTU given the sequences
         of all the contained ASVs
 
@@ -879,7 +1026,7 @@ class OTU(Taxon):
         # Set the consensus sequence as the OTU's sequence
         self.sequence = consensus_seq
 
-    def generate_consensus_taxonomy(self, consensus_table=None):
+    def generate_consensus_taxonomy(self, consensus_table: pd.DataFrame=None):
         '''Set the taxonomy of the OTU to the consensus taxonomy of the.
 
         If one of the ASVs is defined at a lower level than another ASV, use
@@ -1032,25 +1179,25 @@ class TaxaSet(Clusterable):
     mdsine2.TaxaSet.parse
     '''
 
-    def __init__(self, taxonomy_table=None):
-        self.taxonomy_table = taxonomy_table
-        self.ids = CustomOrderedDict()
-        self.names = CustomOrderedDict()
-        self.index = []
+    def __init__(self, taxonomy_table: pd.DataFrame=None):
+        self.taxonomy_table = taxonomy_table 
+        self.ids = CustomOrderedDict() # Effectively a dictionary (id (int) -> OTU or Taxon)
+        self.names = CustomOrderedDict() # Effectively a dictionary (name (int) -> OTU or Taxon)
+        self.index = [] # List (index (int) -> OTU or Taxon)
         self._len = 0
 
         # Add all of the taxa from the dataframe if necessary
         if taxonomy_table is not None:
             self.parse(taxonomy_table=taxonomy_table)
 
-    def __contains__(self,key):
+    def __contains__(self, key: Union[Taxon, OTU, str, int]) -> bool:
         try:
             self[key]
             return True
         except:
             return False
 
-    def __getitem__(self,key):
+    def __getitem__(self, key: Union[Taxon, OTU, str, int]):
         '''Get a Taxon/OTU by either its sequence, name, index, or id
 
         Parameters
@@ -1070,24 +1217,24 @@ class TaxaSet(Clusterable):
             raise IndexError('`{}` ({}) was not found as a name, sequence, index, or id'.format(
                 key, type(key)))
 
-    def __iter__(self):
+    def __iter__(self) -> Union[Taxon, OTU]:
         '''Returns each Taxa obejct in order
         '''
         for taxon in self.index:
             yield taxon
 
-    def __len__(self):
+    def __len__(self) -> int:
         '''Return the number of taxa in the TaxaSet
         '''
         return self._len
 
     @property
-    def n_taxa(self):
+    def n_taxa(self) -> int:
         '''Alias for __len__
         '''
         return self._len
 
-    def parse(self, taxonomy_table):
+    def parse(self, taxonomy_table: pd.DataFrame):
         '''Parse a taxonomy table
 
         `taxonomy_table`
@@ -1156,7 +1303,7 @@ class TaxaSet(Clusterable):
         self.ids.update_order()
         self.names.update_order()
 
-    def add_taxon(self, name, sequence=None):
+    def add_taxon(self, name: str, sequence: Iterator[str]=None):
         '''Adds a taxon to the set
 
         Parameters
@@ -1178,7 +1325,7 @@ class TaxaSet(Clusterable):
 
         return self
 
-    def del_taxon(self, taxon):
+    def del_taxon(self, taxon: Union[Taxon, OTU, str, int]):
         '''Deletes the taxon from the set.
 
         Parameters
@@ -1208,7 +1355,9 @@ class TaxaSet(Clusterable):
         self._len -= 1
         return self
 
-    def taxonomic_similarity(self, oid1, oid2):
+    def taxonomic_similarity(self, 
+        oid1: Union[Taxon, OTU, str, int], 
+        oid2: Union[Taxon, OTU, str, int]) -> float:
         '''Calculate the taxonomic similarity between taxon1 and taxon2
         Iterates through most broad to least broad taxonomic level and
         returns the fraction that are the same.
@@ -1247,7 +1396,7 @@ class TaxaSet(Clusterable):
                 break
         return i/8 # including asv
 
-    def aggregate_items(self, anchor, other):
+    def aggregate_items(self, anchor: Union[Taxon, OTU, str, int], other: Union[Taxon, OTU, str, int]):
         '''Create an OTU with the anchor `anchor` and other taxon  `other`.
         The aggregate takes the sequence and the taxonomy from the anchor.
 
@@ -1285,7 +1434,7 @@ class TaxaSet(Clusterable):
         self._len = len(self.index)
         return agg
 
-    def deaggregate_item(self, agg, other):
+    def deaggregate_item(self, agg: Union[Taxon, OTU, str, int], other: str) -> Taxon:
         '''Deaggregate the sequence `other` from OTU `agg`.
         `other` is then appended to the end 
 
@@ -1326,7 +1475,7 @@ class TaxaSet(Clusterable):
         self._len += 1
         return other
 
-    def rename(self, prefix, zero_based_index=False):
+    def rename(self, prefix: str, zero_based_index: bool=False):
         '''Rename the contents based on their index:
 
         Example
@@ -1367,7 +1516,7 @@ class TaxaSet(Clusterable):
             taxon.name = newname
             self.names[taxon.name] = taxon
 
-    def generate_consensus_seqs(self, threshold=0.65, noconsensus_char='N'):
+    def generate_consensus_seqs(self, threshold: float=0.65, noconsensus_char: str='N'):
         '''Generate the consensus sequence for all of the taxa given the sequences
         of all the contained ASVs of the respective OTUs
 
@@ -1384,7 +1533,7 @@ class TaxaSet(Clusterable):
                     threshold=threshold, 
                     noconsensus_char=noconsensus_char)
 
-    def generate_consensus_taxonomies(self, consensus_table=None):
+    def generate_consensus_taxonomies(self, consensus_table: pd.DataFrame=None):
         '''Generates the consensus taxonomies for all of the OTUs within the TaxaSet.
         For details on the algorithm - see `OTU.generate_consensus_taxonomy`
 
@@ -1396,8 +1545,9 @@ class TaxaSet(Clusterable):
             if isotu(taxon):
                 taxon.generate_consensus_taxonomy(consensus_table=consensus_table)
 
-    def write_taxonomy_to_csv(self, path, sep='\t'):
-        '''Write the taxon names, sequences, and taxonomy to a table
+    def write_taxonomy_to_csv(self, path: str=None, sep:str='\t') -> pd.DataFrame:
+        '''Write the taxon names, sequences, and taxonomy to a table. If a path
+        is passed in, then write to that table
 
         Parameters
         ----------
@@ -1416,7 +1566,9 @@ class TaxaSet(Clusterable):
             data.append(temp)
         
         df = pd.DataFrame(data, columns=columns)
-        df.to_csv(path, sep=sep, index=False, header=True)
+        if path is not None:
+            df.to_csv(path, sep=sep, index=False, header=True)
+        return df
 
 
 class qPCRdata:
@@ -1444,19 +1596,21 @@ class qPCRdata:
             the dilution factor is 100, NOT 1/100.
 
     '''
-    def __init__(self, cfus, mass, dilution_factor):
-        self._raw_data = np.asarray(cfus)
+    def __init__(self, cfus: np.ndarray, mass: float=1., dilution_factor: float=1.):
+        self._raw_data = np.asarray(cfus) # array of raw CFU values
         self.mass = mass
         self.dilution_factor = dilution_factor
         self.scaling_factor = 1 # Initialize with no scaling factor
         self.recalculate_parameters()
 
     def recalculate_parameters(self):
+        '''Generate the normalized abundances and recalculate the statistics
+        '''
         if len(self._raw_data) == 0:
             return
 
-        self.data = (self._raw_data*self.dilution_factor/self.mass)*self.scaling_factor
-        self.log_data = np.log(self.data)
+        self.data = (self._raw_data*self.dilution_factor/self.mass)*self.scaling_factor # array of normalized values
+        self.log_data = np.log(self.data) 
         
         self.loc = np.mean(self.log_data)
         self.scale = np.std(self.log_data - self.loc)
@@ -1468,14 +1622,14 @@ class qPCRdata:
         self._std_dist = np.sqrt(self._var_dist)
         self._gmean = (np.prod(self.data))**(1/len(self.data))
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = 'cfus: {}\nmass: {}\ndilution_factor: {}\n scaling_factor: {}\n' \
             'data: {}\nlog_data: {}\nloc: {}\n scale: {}'.format( 
                 self._raw_data, self.mass, self.dilution_factor, self.scaling_factor, 
                 self.data, self.log_data, self.loc, self.scale)
         return s
 
-    def add(self,raw_data):
+    def add(self, raw_data: Union[np.ndarray, float, int]):
         '''Add a single qPCR measurement to add to the set of observations
 
         Parameters
@@ -1502,7 +1656,7 @@ class qPCRdata:
         self.scale2 = np.nan
         self.scaling_factor = np.nan
 
-    def set_scaling_factor(self, scaling_factor):
+    def set_scaling_factor(self, scaling_factor: float):
         '''Resets the scaling factor
 
         Parameters
@@ -1515,18 +1669,18 @@ class qPCRdata:
         self.scaling_factor = scaling_factor
         self.recalculate_parameters()
 
-    def mean(self):
+    def mean(self) -> float:
         '''Return the geometric mean
         '''
         return self.gmean()
     
-    def var(self):
+    def var(self) -> float:
         return self._var_dist
 
-    def std(self):
+    def std(self) -> float:
         return self._std_dist
 
-    def gmean(self):
+    def gmean(self) -> float:
         return self._gmean
 
 
@@ -1565,6 +1719,7 @@ class CustomOrderedDict(dict):
 class Subject(Saveable):
     '''Data for a single subject
     The TaxaSet order is done with respect to the ordering in the `reads_table`
+
     Parameters
     ----------
     parent : Study
@@ -1572,18 +1727,23 @@ class Subject(Saveable):
     name : str
         This is the name of the subject
     '''
-    def __init__(self, parent, name):
-        self.name = name
+    def __init__(self, parent: 'Study', name: str):
+        self.name = name # str
         self.id = id(self)
         self.parent = parent
-        self.qpcr = {}
-        self.reads = {}
-        self.times = np.asarray([])
+        self.qpcr = {} # dict: time (float) -> qpcr object (qPCRData)
+        self.reads = {} # dict: time (float) -> reads (np.ndarray)
+        self.times = np.asarray([]) # times in order
         self._reads_individ = {} # for taking out aggregated taxa
 
-    def add_time(self, timepoint):
+    def add_time(self, timepoint: Union[float, int]):
         '''Add the timepoint `timepoint`. Set the reads and qpcr at that timepoint
         to None
+
+        Parameters
+        ----------
+        timepoint : float, int
+            Time point to add
         '''
         if timepoint in self.times:
             return
@@ -1591,7 +1751,7 @@ class Subject(Saveable):
         self.reads[timepoint] = None
         self.qpcr[timepoint] = None
 
-    def add_reads(self, timepoints, reads):
+    def add_reads(self, timepoints: Union[np.ndarray, int, float], reads: np.ndarray):
         '''Add the reads for timepoint `timepoint`
 
         Parameters
@@ -1633,7 +1793,8 @@ class Subject(Saveable):
                 self.times = np.sort(np.append(self.times, timepoint))
         return self
 
-    def add_qpcr(self, timepoints, qpcr, masses=None, dilution_factors=None):
+    def add_qpcr(self, timepoints: Union[np.ndarray, int, float], qpcr: np.ndarray, 
+        masses: Union[np.ndarray, int, float]=None, dilution_factors: Union[np.ndarray, int, float]=None):
         '''Add qpcr measurements for timepoints `timepoints`
 
         Parameters
@@ -1717,15 +1878,15 @@ class Subject(Saveable):
         return self
 
     @property
-    def perturbations(self):
+    def perturbations(self) -> Perturbations:
         return self.parent.perturbations
 
     @property
-    def taxa(self):
+    def taxa(self) -> TaxaSet:
         return self.parent.taxa
 
     @property
-    def index(self):
+    def index(self) -> int:
         '''Return the index of this subject in the Study file
         '''
         for iii, subj in enumerate(self.parent):
@@ -1733,7 +1894,7 @@ class Subject(Saveable):
                 return iii
         raise ValueError('Should not get here')
 
-    def matrix(self):
+    def matrix(self) -> Dict[str, np.ndarray]:
         '''Make a numpy matrix out of our data - returns the raw reads,
         the relative abundance, and the absolute abundance.
 
@@ -1759,21 +1920,17 @@ class Subject(Saveable):
 
         return {'raw':raw, 'rel': rel, 'abs':abs}
 
-    def df(self, **kwargs):
+    def df(self) -> Dict[str, pd.DataFrame]:
         '''Returns a dataframe of the data - same as matrix
-
-        Parameters
-        ----------
-        These are the parameters for `matrix`
         '''
-        d = self.matrix(**kwargs)
+        d = self.matrix()
         index = self.taxa.names.order
         times = self.times
         for key in d:
             d[key] = pd.DataFrame(data=d[key], index=index, columns=times)
         return d
 
-    def read_depth(self, t=None):
+    def read_depth(self, t: Union[int, float]=None) -> Union[np.ndarray, int]:
         '''Get the read depth at time `t`. If nothing is given then return all
         of them
 
@@ -1790,7 +1947,8 @@ class Subject(Saveable):
                 t, self.times))
         return np.sum(self.reads[t])
 
-    def cluster_by_taxlevel(self, dtype, taxlevel, index_formatter=None, smart_unspec=True):
+    def cluster_by_taxlevel(self, dtype: str, taxlevel: str, index_formatter: str=None, 
+        smart_unspec: bool=True) -> Tuple[pd.DataFrame, Dict[str,str]]:
         '''Clusters the taxa into the taxonomic level indicated in `taxlevel`.
 
         Smart Unspecified
@@ -1800,22 +1958,23 @@ class Subject(Saveable):
 
         Parameters
         ----------
-        subj : pylab.base.Subject
-            This is the subject that we are getting the data from
-        taxlevel : str, None
-            This is the taxonomic level to aggregate the data at. If it is 
-            None then we do not do any collapsing (this is the same as 'asv')
         dtype : str
             This is the type of data to cluster. Options are:
                 'raw': These are the counts
                 'rel': This is the relative abundances
                 'abs': This is the absolute abundance (qPCR * rel)
+        taxlevel : str, None
+            This is the taxonomic level to aggregate the data at. If it is 
+            None then we do not do any collapsing (this is the same as 'asv')
         index_formatter : str
-            How to make the index using `pylab.util.plutil.taxaname_formatter`. Note that you cannot
+            How to make the index using `taxaname_formatter`. Note that you cannot
             specify anything at a lower taxonomic level than what youre clustering at. For 
             example, you cannot cluster at the 'class' level and then specify '%(genus)s' 
             in the index formatter.
             If nothing is specified then only return the specified taxonomic level
+        smart_unspec : bool
+            If True, if the taxonomic level is not not specified for that OTU/Taxon, then use the
+            lowest taxonomic level instead.
 
         Returns
         -------
@@ -1880,7 +2039,7 @@ class Subject(Saveable):
                     taxa[tax] = '{} {}, {} NA'.format(ttt.capitalize(), 
                         taxon.taxonomy[ttt], taxlevel.capitalize())
                 else:
-                    taxa[tax] = plutil.taxaname_formatter(format=index_formatter, taxon=taxon, taxa=self.taxa)
+                    taxa[tax] = taxaname_formatter(format=index_formatter, taxon=taxon, taxa=self.taxa)
                 toadd = pd.DataFrame(np.array(list(df.loc[row])).reshape(1,-1),
                     index=[taxa[tax]], columns=dfnew.columns)
                 dfnew = dfnew.append(toadd)
@@ -1949,7 +2108,7 @@ class Subject(Saveable):
                 self.parent[mid].reads[t] = self.reads[t]
             self.parent[mid].times = self.times[start:end]
 
-    def _deaggregate_item(self, agg, other):
+    def _deaggregate_item(self, agg: OTU, other: str):
         '''Deaggregate the sequence `other` from OTU `agg`.
         `other` is then appended to the end. This is called from 
         `mdsine2.Study.deaggregate_item`.
@@ -1983,7 +2142,7 @@ class Subject(Saveable):
         self._reads_individ.pop(other)
         return
 
-    def _aggregate_items(self, anchor, other):
+    def _aggregate_items(self, anchor: Union[OTU, Taxon], other: Union[OTU, Taxon]):
         '''Aggregate the taxon `other` into `anchor`. This is called from 
         `mdsine2.Study.aggregate_items`.
 
@@ -2017,7 +2176,7 @@ class Study(Saveable):
     taxa : TaxaSet, Optional
         Contains all of the s
     '''
-    def __init__(self, taxa, name='unnamed-study'):
+    def __init__(self, taxa: TaxaSet, name: str='unnamed-study'):
         self.name = name
         self.id = id(self)
         self._subjects = {}
@@ -2030,20 +2189,21 @@ class Study(Saveable):
 
         self._samples = {}
         
-    def __getitem__(self, key):
+    def __getitem__(self, key: Union[str, int, Subject]) -> Subject:
         return self._subjects[key]
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._subjects)
 
-    def __iter__(self):
+    def __iter__(self) -> Subject:
         for v in self._subjects.values():
             yield v
 
-    def __contains__(self, key):
+    def __contains__(self, key: Union[str, int, Subject]) -> bool:
         return key in self._subjects
 
-    def parse(self, metadata, reads=None, qpcr=None, perturbations=None):
+    def parse(self, metadata: pd.DataFrame, reads: pd.DataFrame=None, qpcr: pd.DataFrame=None, 
+        perturbations: pd.DataFrame=None):
         '''Parse tables of samples and cast in Subject sets. Automatically creates
         the subject classes with the respective names.
 
@@ -2154,13 +2314,15 @@ class Study(Saveable):
                 self[sid].add_qpcr(timepoints=t, qpcr=cfuspergram)
         return self
             
-    def write_metadata_to_csv(self, path, sep='\t'):
-        '''Write the internal metadata to a table
+    def write_metadata_to_csv(self, path: str=None, sep:str='\t') -> pd.DataFrame:
+        '''Write the internal metadata to a table. If a path is provided
+        then write it to that path.
 
         Parameters
         ----------
-        path : str
+        path : str, None
             This is the location to save the metadata file
+            If this is not provided then just return the dataframe
         sep : str
             This is the separator of the table
         '''
@@ -2172,15 +2334,19 @@ class Study(Saveable):
                 continue
             data.append([sampleid, sid, t])
         df = pd.DataFrame(data, columns=columns)
-        df.to_csv(path, sep=sep, index=False, header=True)
+        if path is not None:
+            df.to_csv(path, sep=sep, index=False, header=True)
+        return df
 
-    def write_reads_to_csv(self, path, sep='\t'):
-        '''Write the reads to a table
+    def write_reads_to_csv(self, path: str=None, sep:str='\t') -> pd.DataFrame:
+        '''Write the reads to a table. If a path is provided then
+        we write to that path
 
         Parameters
         ----------
         path : str
             This is the location to save the reads file
+            If this is not provided then just return the dataframe
         sep : str
             This is the separator of the table
         '''
@@ -2196,15 +2362,19 @@ class Study(Saveable):
             data.append(reads)
 
         df = pd.DataFrame(data, index=index).T
-        df.to_csv(path, sep=sep, index=False, header=True)
+        if path is not None:
+            df.to_csv(path, sep=sep, index=False, header=True)
+        return df
 
-    def write_qpcr_to_csv(self, path, sep='\t'):
-        '''Write the qPCR measurements to a table
+    def write_qpcr_to_csv(self, path: str=None, sep:str='\t') -> pd.DataFrame:
+        '''Write the qPCR measurements to a table. If a path is provided then
+        we write to that path
 
         Parameters
         ----------
         path : str
             This is the location to save the qPCR file
+            If this is not provided then we do not save
         sep : str
             This is the separator of the table
         '''
@@ -2230,15 +2400,19 @@ class Study(Saveable):
         columns = ['sampleID'] + ['measurement{}'.format(i+1) for i in range(max_n_measurements)]
 
         df = pd.DataFrame(data, columns=columns)
-        df.to_csv(path, sep=sep, index=False, header=True)
+        if path is not None:
+            df.to_csv(path, sep=sep, index=False, header=True)
+        return df
 
-    def write_perturbations_to_csv(self, path, sep='\t'):
-        '''Write the perturbations to a table
+    def write_perturbations_to_csv(self, path: str=None, sep:str='\t') -> pd.DataFrame:
+        '''Write the perturbations to a table. If a path is provided then
+        we write to that path
 
         Parameters
         ----------
         path : str
             This is the location to save the perturbations file
+            If this is not provided then we do not save
         sep : str
             This is the separator of the table
         '''
@@ -2253,14 +2427,21 @@ class Study(Saveable):
                     subjname])
 
         df = pd.DataFrame(data, columns=columns)
-        df.to_csv(path, sep=sep, index=False, header=True)
+        if path is not None:
+            df.to_csv(path, sep=sep, index=False, header=True)
+        return df
 
-    def names(self):
+    def names(self) -> Iterator[str]:
         '''List the names of the contained subjects
+
+        Returns
+        -------
+        list(str)
+            List of names of the subjects in order
         '''
         return [subj.name for subj in self]
 
-    def iloc(self, idx):
+    def iloc(self, idx: int) -> Subject:
         '''Get the subject as an index
 
         Parameters
@@ -2277,7 +2458,7 @@ class Study(Saveable):
                 return self._subjects[sid]
         raise IndexError('Index ({}) not found'.format(idx))
 
-    def add_subject(self, name):
+    def add_subject(self, name: str):
         '''Create a subject with the name `name`
 
         Parameters
@@ -2289,7 +2470,8 @@ class Study(Saveable):
             self._subjects[name] = Subject(name=name, parent=self)
         return self
 
-    def pop_subject(self, sid, name='unnamed-study'):
+    def pop_subject(self, sid: Union[int, str, Iterator[str]], 
+        name: str='unnamed-study') -> 'Study':
         '''Remove the indicated subject id
 
         Parameters
@@ -2336,7 +2518,7 @@ class Study(Saveable):
 
         return ret
 
-    def pop_taxa_like(self, study):
+    def pop_taxa_like(self, study: 'Study'):
         '''Remove s in the TaxaSet so that it matches the TaxaSet in `study`
 
         Parameters
@@ -2350,7 +2532,7 @@ class Study(Saveable):
                 to_delete.append(taxon.name)
         self.pop_taxa(to_delete)
 
-    def pop_taxa(self, oids):
+    def pop_taxa(self, oids: Union[str, int, Iterator[str], Iterator[int]]):
         '''Delete the taxa indicated in oidxs. Updates the reads table and
         the internal TaxaSet
 
@@ -2374,13 +2556,13 @@ class Study(Saveable):
                 subj.reads[t] = np.delete(subj.reads[t], oidxs)
         return self
 
-    def deaggregate_item(self, agg, other):
+    def deaggregate_item(self, agg: OTU, other: str) -> Taxon:
         '''Deaggregate the sequence `other` from OTU `agg`.
         `other` is then appended to the end 
 
         Parameters
         ----------
-        agg : Aggregate, str
+        agg : OTU, str
             This is an OTU with multiple sequences contained. Must 
             have the name `other` in there
         other : str
@@ -2404,7 +2586,7 @@ class Study(Saveable):
             subj._deaggregate_item(agg=agg, other=other)
         return self.taxa.deaggregate_item(agg, other)
 
-    def aggregate_items_like(self, study, prefix=None):
+    def aggregate_items_like(self, study: 'Study', prefix: str=None):
         '''Aggregate s like they are in study `study`
 
         Parameters
@@ -2422,7 +2604,8 @@ class Study(Saveable):
         if prefix is not None:
             self.taxa.rename(prefix=prefix)
 
-    def aggregate_items(self, taxon1, taxon2):
+    def aggregate_items(self, taxon1: Union[str, int, Taxon, OTU], 
+        taxon2: Union[str, int, Taxon, OTU]) -> OTU:
         '''Aggregates the abundances of `taxon1` and `taxon2`. Updates the reads table and
         internal TaxaSet
 
@@ -2453,7 +2636,7 @@ class Study(Saveable):
             subj._aggregate_items(anchor=anchor, other=other)
         return self.taxa.aggregate_items(anchor=anchor, other=other)
 
-    def pop_times(self, times, sids='all'):
+    def pop_times(self, times: Union[int, float, np.ndarray], sids: Union[str, int, Iterator[int]]='all'):
         '''Discard the times in `times` for the subjects listed in `sids`.
         If a timepoint is not found in a subject, no error is thrown.
 
@@ -2502,7 +2685,7 @@ class Study(Saveable):
                     subj.reads.pop(t,None)
                     subj.times = np.sort(list(subj.reads.keys()))
 
-    def normalize_qpcr(self, max_value):
+    def normalize_qpcr(self, max_value: float):
         '''Normalize the qPCR values such that the largest value is the max value
         over all the subjects
 
@@ -2554,18 +2737,25 @@ class Study(Saveable):
         self.qpcr_normalization_factor = None
         return self
 
-    def add_perturbation(self, a, ends=None, name=None, subjs=None):
+    def add_perturbation(self, a: Union[Dict[str, float], BasePerturbation], ends: Dict[str, float]=None, 
+        name: str=None):
         '''Add a perturbation. 
         
         We can either do this by passing a perturbation object 
-        (if we do this then we do not need to specify `end`) or we can 
+        (if we do this then we do not need to specify `ends`) or we can 
         specify the start and stop times (if we do this them we need to
-        specify `end`).
+        specify `ends`).
+
+        `starts` and `ends`
+        -------------------
+        If `a` is a dict, this corresponds to the start times for each subject in the
+        perturbation. Each dict maps the name of the subject to the timepoint that it
+        either starts or ends, respectively.
 
         Parameters
         ----------
         a : dict, BasePerturbation
-            If this is a dict, then this corresponds to the start
+            If this is a dict, then this corresponds to the starts
             times of the perturbation for each subject. If this is a Pertubration object
             then we just add this.
         ends : dict
@@ -2605,7 +2795,7 @@ class Study(Saveable):
             subj._split_on_perturbations()
         return self
 
-    def times(self, agg):
+    def times(self, agg: str) -> np.ndarray:
         '''Aggregate the times of all the contained subjects
 
         These are the types of time aggregations:
@@ -2643,7 +2833,7 @@ class Study(Saveable):
             raise ValueError('`times` ({}) not recognized'.format(times))
         return times
 
-    def _matrix(self, dtype, agg, times):
+    def _matrix(self, dtype: str, agg: str, times: Union[str, np.ndarray]) -> Tuple[np.ndarray, np.ndarray]:
         if dtype not in ['raw', 'rel', 'abs']:
             raise ValueError('`dtype` ({}) not recognized'.format(dtype))
         
@@ -2694,7 +2884,7 @@ class Study(Saveable):
 
         return M, times
 
-    def matrix(self, dtype, agg, times):
+    def matrix(self, dtype: str, agg: str, times: Union[str, np.ndarray]) -> np.ndarray:
         '''Make a matrix of the aggregation of all the subjects in the subjectset
 
         Aggregation of subjects
@@ -2735,8 +2925,20 @@ class Study(Saveable):
         M, _ =  self._matrix(dtype=dtype, agg=agg, times=times)
         return M
 
-    def df(self, *args, **kwargs):
+    def df(self, dtype: str, agg: str, times: Union[str, np.ndarray]) -> pd.DataFrame:
         '''Returns a dataframe of the data in matrix. Rows are taxa, columns are times.
+
+        Parameters
+        ----------
+        dtype : str
+            What kind of data to return. Options:
+                'raw': Count data
+                'rel': Relative abundance
+                'abs': Abundance data
+        agg : str
+            Type of aggregation of the values. Options specified above.
+        times : str, array
+            The times to include
 
         Returns
         -------
@@ -2746,7 +2948,6 @@ class Study(Saveable):
         --------
         mdsine2.Study.matrix
         '''
-        M, times = self._matrix(*args, **kwargs)
+        M, times = self._matrix(dtype=dtype, agg=agg, times=times)
         index = [taxon.name for taxon in self.taxa]
         return pd.DataFrame(data=M, index=index, columns=times)
-

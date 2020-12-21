@@ -4,17 +4,20 @@ import copy
 import numba
 from  orderedset import OrderedSet
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, Type
+
 from . import util
 from .errors import NeedToImplementError
 from .graph import Node
-from .base import isclusterable, Traceable
+from .base import isclusterable, Traceable, TaxaSet
 from .graph import Node
 from .variables import Variable, summary
 
 # Constants
 DEFAULT_CLUSTERVALUE_DTYPE = float
 
-def isclustering(x):
+def isclustering(x: Any) -> bool:
     '''Type check if `x` is a subclass of Clustering
 
     Parameters
@@ -29,7 +32,7 @@ def isclustering(x):
     '''
     return x is not None and issubclass(x.__class__, Clustering)
 
-def isclusterproperty(x):
+def isclusterproperty(x: Any) -> bool:
     '''Type check if `x` is a subclass of ClusterProperty
 
     Parameters
@@ -44,7 +47,7 @@ def isclusterproperty(x):
     '''
     return x is not None and issubclass(x.__class__, ClusterProperty)
 
-def isclustervalue(x):
+def isclustervalue(x: Any) -> bool:
     '''Type check if `x` is a subclass of ClusterValue
 
     Parameters
@@ -127,7 +130,7 @@ class Clustering(Node, Traceable):
     kwargs : dict
         These are the additional arguments for the Node class (name, Graph, etc.)
     '''
-    def __init__(self, clusters, items, **kwargs):
+    def __init__(self, clusters: np.ndarray, items: TaxaSet, **kwargs):
         Node.__init__(self, **kwargs)
         if not isclusterable(items):
             raise TypeError('`items` ({}) must be a pylab.base.Clusterable object'.format( 
@@ -149,17 +152,17 @@ class Clustering(Node, Traceable):
                     len(clusters), len(items)))
         
         # Everything is good, make the cluster objects
-        self._CIDX = 100100
-        self.items = items
-        self.clusters = {}
+        self._CIDX = 100100 # Start of the cluster index
+        self.items = items # This is usually a TaxaSet object
+        self.clusters = {} # dict: cluster id (int) -> _Cluster
         for cidx in np.arange(np.max(clusters)+1):
             idxs = np.where(clusters == cidx)[0]
             temp = _Cluster(members=idxs, parent=self, iden=self._CIDX)
             self.clusters[temp.id] = temp
             self._CIDX += 1
 
-        self.order = list(self.clusters)
-        self.properties = _ClusterProperties()
+        self.order = list(self.clusters) # list of ids
+        self.properties = _ClusterProperties() # properties of the clustering
         
         # Maps the item index to the cluster ID it is assigned to
         self.idx2cid = np.zeros(len(self.items), dtype=np.int64)
@@ -186,19 +189,19 @@ class Clustering(Node, Traceable):
         self._cids_added = []
         self._cids_removed = []
 
-    def __iter__(self):
+    def __iter__(self) -> "_Cluster":
         '''Return each cluster
         '''
         for key in self.order:
             yield self.clusters[key]
     
-    def __str__(self):
+    def __str__(self) -> str:
         s = self.name + ', n_clusters: {}'.format(len(self))
         for cluster in self:
             s += '\n{}'.format(str(cluster))
         return s
 
-    def __len__(self):
+    def __len__(self) -> int:
         '''How many clusters
 
         Returns
@@ -207,7 +210,7 @@ class Clustering(Node, Traceable):
         '''
         return len(self.order)
 
-    def __contains__(self, cid):
+    def __contains__(self, cid: int) -> bool:
         return (cid in self.clusters) or (cid < len(self.clusters))
 
     def __getitem__(self, cid):
@@ -218,7 +221,7 @@ class Clustering(Node, Traceable):
         else:
             raise KeyError('`{}` not recognized as an ID or index'.format(cid))
 
-    def keys(self):
+    def keys(self) -> Iterator[int]:
         '''Alias for `self.order`
 
         Returns
@@ -227,7 +230,7 @@ class Clustering(Node, Traceable):
         '''
         return self.order
 
-    def make_new_cluster_with(self, idx):
+    def make_new_cluster_with(self, idx: int) -> int:
         '''Create a new cluster with the item index `idx`.
         Removes `idx` from the previous cluster.
 
@@ -274,7 +277,7 @@ class Clustering(Node, Traceable):
 
         return temp.id
 
-    def move_item(self, idx, cid):
+    def move_item(self, idx: int, cid: int) -> int:
         '''Move `idx` to cluster id `cid`. If `cid` does not exist, then we 
         will create a new cluster.
 
@@ -337,10 +340,12 @@ class Clustering(Node, Traceable):
     def split_cluster(self, cid, members1, members2):
         raise NotImplementedError('Not Implemented')
 
-    def generate_coclusters(self):
+    def generate_coclusters(self) -> np.ndarray:
+        '''Make the cocluster matrix of the current cluster configuration
+        '''
         return _generate_coclusters_fast(idx2cid=self.idx2cid)
     
-    def tolistoflists(self):
+    def tolistoflists(self) -> Iterator[Iterator[int]]:
         '''Converts clusters into array format:
         clusters = [clus1, ..., clusN],
             clusters{i} = [idx1, ..., idxM]
@@ -358,7 +363,7 @@ class Clustering(Node, Traceable):
             ret.append(list(cluster.members))
         return ret
 
-    def toarray(self):
+    def toarray(self) -> np.ndarray:
         '''Converts clusters into array format:
         Each index is the index of an element that is being clustered. The value
         is the cluster index. This is the same format was the input parameter for 
@@ -374,7 +379,7 @@ class Clustering(Node, Traceable):
                 ret[idx] = cidx
         return ret
 
-    def from_array(self, a):
+    def from_array(self, a: np.ndarray):
         '''Set the clustering from a numpy array - note that this resets
         all of the properties of these clusterings
 
@@ -400,10 +405,14 @@ class Clustering(Node, Traceable):
                 self.move_item(idx, cid=cid)
 
     def set_trace(self, *args, **kwargs):
+        '''Set the trace of the cocluster and n_clusters
+        '''
         self.coclusters.set_trace(*args, **kwargs)
         self.n_clusters.set_trace(*args, **kwargs)
 
     def add_trace(self):
+        '''Add a trace of the cocluster and n_clusters
+        '''
         self.coclusters.value = self.generate_coclusters()
         self.coclusters.add_trace()
         self.n_clusters.add_trace()
@@ -416,12 +425,12 @@ class _Cluster:
     ----------
     members : array_like, set
         Individual item indices that are within the cluster
-    parent : pylab.cluster._ClusterMap
-        Pointer to parent _ClusterMap
+    parent : pylab.Clustering
+        Pointer to parent 
     iden : int
         Identifier
     '''
-    def __init__(self, members, parent, iden):
+    def __init__(self, members: Iterator[int], parent: Clustering, iden: int):
         self.members = OrderedSet()
         for mem in members:
             self.members.add(mem)
@@ -429,7 +438,7 @@ class _Cluster:
         self.size = len(members)
         self.parent = parent
                 
-    def __str__(self):
+    def __str__(self) -> str:
         return 'Cluster {}\n' \
             '\tmembers: {}\n' \
             '\tsize: {}'.format(
@@ -437,15 +446,15 @@ class _Cluster:
                 [self.parent.items[idx].cluster_str() for idx in self.members],
                 self.size)
 
-    def __contains__(self, item):
+    def __contains__(self, item: Any) -> bool:
         '''For the `in` operator
         '''
         return item in self.members
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.size
 
-    def __iter__(self):
+    def __iter__(self) -> int:
         '''Let c = ClusterBase object.
         Let c[i] (c.clusters[i]) be this object.
         This method is useful for doing the command:
@@ -455,13 +464,18 @@ class _Cluster:
         for item in self.members:
             yield item
 
-    def add(self, item):
+    def add(self, item: int) -> bool:
         '''Add the item `item` to the cluster
 
         Paramters
         ---------
         item : int
             This is the index of the item that we want to add
+
+        Returns
+        -------
+        bool
+            True if successful
         '''
         if item in self.members:
             return True
@@ -469,7 +483,7 @@ class _Cluster:
         self.size += 1
         return True
 
-    def remove(self, item):
+    def remove(self, item: int) -> bool:
         '''Returns True if `item` was deleted from the cluster. Returns False
         if `item` was not in the cluster so it could not be deleted.
 
@@ -477,6 +491,12 @@ class _Cluster:
         ---------
         item : int
             This is the index of the item that we want to remove
+
+        Returns
+        -------
+        bool
+            True if the item is contained in the cluster
+            False if the item is not contained
         '''
         if item in self.members:
             self.members.remove(item)
@@ -489,22 +509,30 @@ class _ClusterProperties:
     '''Manages the properties associated with the clusters
     '''
     def __init__(self):
-        self._d = {}
-        self.signal_when_clusters_change = []
+        self._d = {} # ID of object (int) -> ClusterProperty
+
+        # A list of cluster properties to update when a cluster
+        # is added or removed
+        self.signal_when_clusters_change = [] 
+
+        # A list of cluster properties to update when the assignment
+        # of a cluster changes
         self.signal_when_item_assignment_changes = []
+
+        # Local pointer of the keys
         self._keys = []
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self._keys)
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: int) -> 'ClusterProperty':
         return self._d[key]
 
-    def __iter__(self):
+    def __iter__(self) -> 'ClusterProperty':
         for a in self._keys:
             yield self._d[a]
 
-    def add(self, prop):
+    def add(self, prop: 'ClusterProperty'):
         '''Add a property to the list of cluster properties. Additionally, add the property
         to any of the required lists
 
@@ -520,12 +548,12 @@ class _ClusterProperties:
             self.signal_when_item_assignment_changes.append(prop)
         self._keys = list(self._d.keys())
 
-    def toarray(self):
+    def toarray(self) -> Iterator['ClusterProperty']:
         '''Make a list of the ClusterProperty's.
         '''
         return [self._d[key] for key in self._keys]
 
-    def keys(self):
+    def keys(self) -> Iterator[int]:
         return self._keys
 
 
@@ -552,8 +580,8 @@ class ClusterProperty:
         assignment changes but there is not necessarily a change in the number 
         of clusters/cluster ids
     '''
-    def __init__(self, clustering, signal_when_clusters_change,
-        signal_when_item_assignment_changes):
+    def __init__(self, clustering: Clustering, signal_when_clusters_change: bool,
+        signal_when_item_assignment_changes: bool):
         if not isclustering(clustering):
             raise ValueError('`clustering` ({}) must be a Clustering object'.format(
                 type(clustering)))
@@ -569,12 +597,16 @@ class ClusterProperty:
         self.clustering.properties.add(self)
 
     def assignments_changed(self):
+        '''Each object inheriting this class needs to implement this function
+        '''
         raise NeedToImplementError('User needs to implement this function')
 
     def clusters_changed(self, cids_added, cids_removed):
+        '''Each object inheriting this class needs to implement this function
+        '''
         raise NeedToImplementError('User needs to implement this function')
 
-    def set_signal_when_clusters_change(self, value):
+    def set_signal_when_clusters_change(self, value: bool):
         '''Switch the signal `signal_when_clusters_change` to `value`
 
         Paramters
@@ -595,7 +627,7 @@ class ClusterProperty:
         self.signal_when_clusters_change = value
         self.reset()
 
-    def set_signal_when_item_assignment_changes(self, value):
+    def set_signal_when_item_assignment_changes(self, value: bool):
         '''Switch the signal `signal_when_item_assignment_changes` to `value`
 
         Paramters
@@ -644,8 +676,8 @@ class ClusterValue(ClusterProperty, Node, Traceable):
     kwargs : dict
         These are the extra arguements for Node
     '''
-    def __init__(self, clustering, signal_when_clusters_change,
-        signal_when_item_assignment_changes, dtype=None, **kwargs):
+    def __init__(self, clustering: Clustering, signal_when_clusters_change: bool,
+        signal_when_item_assignment_changes: bool, dtype: Type=None, **kwargs):
         if dtype is None:
             dtype = DEFAULT_CLUSTERVALUE_DTYPE
         Node.__init__(self, **kwargs)
@@ -657,7 +689,7 @@ class ClusterValue(ClusterProperty, Node, Traceable):
         for cid in self.clustering.order:
             self.value[cid] = np.nan
 
-    def item_array(self):
+    def item_array(self) -> np.ndarray:
         '''Converts these values per item
 
         Returns
@@ -672,7 +704,7 @@ class ClusterValue(ClusterProperty, Node, Traceable):
             ret[idxs] = self.value[cluster.id]
         return ret
 
-    def cluster_array(self):
+    def cluster_array(self) -> np.ndarray:
         '''Converts the dictionary into a cluster array in the order of the clusters
 
         Returns
@@ -682,7 +714,7 @@ class ClusterValue(ClusterProperty, Node, Traceable):
         '''
         return np.asarray([self.value[cid] for cid in self.clustering.order], dtype=self.dtype)
 
-    def set_values_from_array(self, values):
+    def set_values_from_array(self, values: Iterator[Any]):
         '''Set the values from an array of the same order as the clusters
 
         Paramters
@@ -701,6 +733,8 @@ class ClusterValue(ClusterProperty, Node, Traceable):
             self.value[cid] = values[cidx]
 
     def set_trace(self):
+        '''Set up the trace of the object
+        '''
         tracer = self.G.tracer
         tracer.set_trace(
             self.name, 
@@ -733,7 +767,7 @@ class ClusterValue(ClusterProperty, Node, Traceable):
 
 
 @numba.jit(nopython=True) #, fastmath=True, cache=True)
-def _generate_coclusters_fast(idx2cid):
+def _generate_coclusters_fast(idx2cid: np.ndarray) -> np.ndarray:
     '''Generates a cocluster matrix for the current cluster assignment.
     If two elements are in the same cluster, then the assignment is 1
     If two elements are in different clusters, then the assignment is 0
@@ -763,7 +797,7 @@ def _generate_coclusters_fast(idx2cid):
     return ret
 
 @numba.jit(nopython=True, cache=True)
-def toarray_from_cocluster(coclusters):
+def toarray_from_cocluster(coclusters: np.ndarray) -> np.ndarray:
     '''Generate the output that would be given from 
     `clustering.toarray` from the cocluster matrix.
 

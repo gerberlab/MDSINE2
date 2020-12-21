@@ -17,6 +17,10 @@ import time
 import logging
 import math
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple
+
+
 from . import util as plu
 from .errors import NeedToImplementError
 
@@ -24,7 +28,7 @@ _ADDITIVE = 0
 _MULTIPLICATIVE = 1
 
 
-def isdynamics(x):
+def isdynamics(x: Any) -> bool:
     '''Checks if `a` is a (subclass of) BaseDynamics
 
     Parameters
@@ -39,7 +43,7 @@ def isdynamics(x):
     '''
     return x is not None and issubclass(x.__class__, BaseDynamics)
 
-def isprocessvariance(x):
+def isprocessvariance(x: Any) -> bool:
     '''Checks if `a` is a (subclass of) ProcessVariance
 
     Parameters
@@ -54,7 +58,7 @@ def isprocessvariance(x):
     '''
     return x is not None and issubclass(x.__class__, BaseProcessVariance)
 
-def isintegratable(x):
+def isintegratable(x: Any) -> bool:
     '''Checks if `a` is a (subclass of) Integratable
 
     Parameters
@@ -77,7 +81,7 @@ class Integratable:
         '''
         pass
 
-    def integrate_single_timestep(self, x, t, dt):
+    def integrate_single_timestep(self, x: np.ndarray, t: float, dt: float):
         '''This is the function that `integrate` calls to propagate the underlying
         dynamics a single time step. There is no type checking for computational
         efficiency
@@ -127,14 +131,15 @@ class _NoProcessVariance(Integratable):
     def __init__(self, *args, **kwargs):
         Integratable.__init__(self, *args, **kwargs)
 
-    def integrate_single_timestep(self, x, *args, **kwargs):
-        '''Just return x
+    def integrate_single_timestep(self, x: np.ndarray, *args, **kwargs):
+        '''Do nothing
         '''
         return x
 
 
-def integrate(dynamics, initial_conditions, dt, n_days, processvar=None,
-    subsample=False, times=None, log_every=10000):
+def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float, n_days: float, 
+    processvar: BaseProcessVariance=None, subsample: bool=False, times: np.ndarray=None, 
+    log_every: int=10000) -> Dict[str, np.ndarray]:
     '''Numerically integrates the ODE given the dynamics and the initial 
     conditions. If the process variance is not None, then this integrates
     a stochastic ODE.

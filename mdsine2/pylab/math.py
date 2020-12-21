@@ -12,6 +12,9 @@ import os
 import matplotlib.pyplot as plt
 import math
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple
+
 from .cluster import isclustering
 from .util import count_calls, issquare, inspect_trace, isarray
 from .errors import MathError
@@ -20,7 +23,7 @@ from .variables import summary as variable_summary
 # Constants
 ERROR_TOLERANCE_FORCE_SYMMETRY = 1e-20
 
-def log_det(M):
+def log_det(M: np.ndarray) -> float:
     '''Computes the log determinant using the cholesky decomposition trick
 
     Parameters
@@ -40,7 +43,7 @@ def log_det(M):
     return 2*np.sum(np.log(np.diag(L)))
 
 # @inspect_trace(max_trace=None)
-def safe_cholesky(M, jitter=False, save_if_crash=False):
+def safe_cholesky(M: np.ndarray, jitter: bool=False, save_if_crash: bool=False) -> np.ndarray:
     '''First try numpy, then do scipy
 
     Parameters
@@ -89,7 +92,8 @@ class metrics:
     '''A class defining different metrics
     '''
     @staticmethod
-    def rocauc_posterior_interactions(pred, truth, signed=False, average='weighted', per_gibb=False):
+    def rocauc_posterior_interactions(pred: np.ndarray, truth: np.ndarray, signed: bool=False, 
+        average: str='weighted', per_gibb: bool=False) -> Union[float, np.ndarray]:
         '''Calculate the Area Under Curve (AUC) between `pred` and `truth` between 
         interaction matrices. If `signed` is True, then we distinguish betwen possitive
         and negative interactions. Else we just check if the interaction is there. This
@@ -170,7 +174,7 @@ class metrics:
             return sklearn.metrics.roc_auc_score(y_true=truth_, y_score=pred_, average=average)
 
     @staticmethod
-    def RMSE(arr1, arr2, axis=None):
+    def RMSE(arr1: np.ndarray, arr2: np.ndarray, axis: int=None) -> float:
         '''Root Mean Square Error between `arr1` and `arr2`
 
         Parameters
@@ -200,7 +204,7 @@ class metrics:
         return np.sqrt(np.nanmean((arr1 - arr2) ** 2, axis=axis))
 
     @staticmethod
-    def variation_of_information(X, Y, n):
+    def variation_of_information(X: Iterator[Iterator[int]], Y: Iterator[Iterator[int]], n: int) -> float:
         '''Variation of information:
 
         .. math::
@@ -277,7 +281,7 @@ class metrics:
         return abs(sigma)
 
     @staticmethod
-    def PE(truth, predicted, axis=None, fillvalue=None):
+    def PE(truth: np.ndarray, predicted: np.ndarray, axis: int=None, fillvalue: float=None) -> float:
         '''Percent error between the truth and predicted. If 
         `truth=0`, then we substitute it with `fillvalue`
 
@@ -308,7 +312,7 @@ class metrics:
         return np.mean(np.absolute((truth-predicted)/truth), axis=axis)
 
     @staticmethod
-    def logPE(truth, predicted, axis=None, fillvalue=None):
+    def logPE(truth: np.ndarray, predicted: np.ndarray, axis: int=None, fillvalue: float=None) -> float:
         '''Percent error between the truth and predicted in log space.
 
         If any of the values in truth or predicted are 0 or negative, we
@@ -347,7 +351,7 @@ class metrics:
         return np.mean(np.absolute((logtruth-np.log(predicted))/logtruth), axis=axis)
 
 @count_calls(max_calls=None)
-def force_symmetry(M, check=True):
+def force_symmetry(M: np.ndarray, check: bool=True) -> np.ndarray:
     '''Forces symmetry for the input square matrix
 
     Parameters

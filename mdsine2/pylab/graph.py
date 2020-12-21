@@ -8,10 +8,13 @@ The Node class is also defined here.
 import numpy as np
 import networkx as nx
 import logging
-import matplotlib.pyplot as plt
 import copy
 import random
 import h5py
+import matplotlib
+
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple
 
 from .base import Saveable
 from .random import seed as set_seed
@@ -24,7 +27,7 @@ DEFAULT_PRIOR_SUFFIX = '_prior'
 _graph_dict = {}
 _PH_COUNT = 0
 
-def get_default_graph():
+def get_default_graph() -> "Graph":
     '''Returns the default graph object
 
     Returns
@@ -33,7 +36,7 @@ def get_default_graph():
     '''
     return _graph_dict[_default_graph_id]
 
-def clear_default_graph():
+def clear_default_graph() -> "Graph":
     '''Delete the old default graph. Make a new one
 
     Returns
@@ -48,7 +51,7 @@ def clear_default_graph():
     _graph_dict[a.id] = a
     return _graph_dict[_default_graph_id]
 
-def _get_graph(id):
+def _get_graph(id: int) -> "Graph":
     '''Gets the graph by the ID. Only internal use
 
     Returns
@@ -60,7 +63,7 @@ def _get_graph(id):
             ' {}'.format(id, list(_graph_dict.keys())))
     return _graph_dict[id]
 
-def isgraph(x):
+def isgraph(x: Any) -> bool:
     '''Checks if the type (or subtype) of `x` is a Graph
 
     Parameters
@@ -75,7 +78,7 @@ def isgraph(x):
     '''
     return x is not None and issubclass(x.__class__, Graph)
 
-def isnode(x):
+def isnode(x: Any) -> bool:
     '''Checks if the type (or subtype) of `x` is a Node
 
     Parameters
@@ -90,7 +93,7 @@ def isnode(x):
     '''
     return x is not None and issubclass(x.__class__, BaseNode)
 
-def hasprior(x):
+def hasprior(x: Any) -> bool:
     '''Checks whether `x` has a prior defined. It must be a subclass of 
     `pylab.graph.BaseNode` for it to be True.
 
@@ -118,7 +121,7 @@ class Graph(Saveable):
         This is how we should seed the graph
     '''
 
-    def __init__(self, name=None, seed=None):
+    def __init__(self, name: str=None, seed: int=None):
         global _graph_dict
         global _PH_COUNT
 
@@ -134,11 +137,12 @@ class Graph(Saveable):
         self.name = name
         self.nodes = {} # dict id -> Node or Node subclass
         self.name2id = {} # dict name -> id
-        self.perturbations = None
-        self.data = None
-        self.inference = None
+        self.perturbations = None # If this is set, it is set to a pylab.base.Perturbations object
+        self.data = None # This is a pointer to the data object
+        self.inference = None # This is a pointer to the pylab.inference.BaseMCMC object
         self.id = id(self)
-        self.tracer = None
+        self.tracer = None # This is a pointer to the pylab.inference.Tracer
+
         # Add a persistent object to the graph so it knows 
         # what variables have persistent workers. This is optional
         # for the persistent Pool
@@ -147,7 +151,7 @@ class Graph(Saveable):
         # Add to the graph dict
         _graph_dict[self.id] = self
 
-    def set_seed(self, seed):
+    def set_seed(self, seed: int):
         '''Sets the seed of the graph
 
         Parameters
@@ -159,7 +163,7 @@ class Graph(Saveable):
         set_seed(x=seed)
 
     @property
-    def size(self):
+    def size(self) -> int:
         '''Alias for `__len__`
 
         Returns
@@ -169,10 +173,10 @@ class Graph(Saveable):
         '''
         return len(self.nodes)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.nodes)
 
-    def __getitem__(self, nid):
+    def __getitem__(self, nid: Union[str, int]) -> "Node":
         '''Get a node either using the name or the id. First 
         check if it is an id, then a str. If neither work to 
         index the node then an error is thrown
@@ -192,10 +196,10 @@ class Graph(Saveable):
                     type(nid), nid, self.name))
         return ret
 
-    def __contains__(self, nid):
+    def __contains__(self, nid: Union[str, int]) -> bool:
         return nid in self.name2id or nid in self.nodes
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = ''
         for node in self.nodes.values():
             s += node.name + ' ({})\n'.format(node.id)
@@ -209,28 +213,20 @@ class Graph(Saveable):
                     s += '\t\t{} ({})\n'.format(parent.name,parent.id)
         return s
 
-    def __iter__(self):
+    def __iter__(self) -> "Node":
         for _id in self.nodes:
             yield self.nodes[_id]
 
-    def render(self, filename, ax=None):
-        '''We save the graph in Cytoscape format so that we can
-        open it in Cytoscape.
+    def to_networkx(self) -> nx.DiGraph:
+        '''Make a networkx graph
 
-        Parameters
-        ----------
-        filename : str
-            - Place to save the figure
+        Returns
+        -------
+        networkx.DiGraph
         '''
-        from py2cytoscape.util import from_networkx
-        import json
 
         G = nx.DiGraph()
-        cmap = []
         labels = {}
-
-        if filename[-5:] != '.cyjs':
-            filename += '.cyjs'
 
         # Add nodes
         for id,node in self.nodes.items():
@@ -247,11 +243,9 @@ class Graph(Saveable):
             except:
                 pass
 
-        cyjs = from_networkx(G)
-        with open(filename, 'w') as outfile:
-            json.dump(cyjs, outfile)
+        return G
 
-    def as_default(self):
+    def as_default(self) -> "Graph":
         '''Sets the current graph as the default graph
 
         Returns
@@ -263,7 +257,7 @@ class Graph(Saveable):
         _default_graph = self
         return self
 
-    def get_descendants(self, name):
+    def get_descendants(self, name: str) -> Iterator[int]:
         '''Returns a list of ids of variables that are dependent on
         the input name(recursively returns all of the child ids).
         The name can either be the name of the variable or the id. Right now
@@ -309,7 +303,7 @@ class BaseNode(Saveable):
         - If not specified it adds it to the default graph
     '''
 
-    def __init__(self, name=None, name_prefix=None, G=None):
+    def __init__(self, name: str=None, name_prefix: str=None, G: Graph=None):
         global _PH_COUNT
         if name is None:
             if name_prefix is None:
@@ -319,9 +313,11 @@ class BaseNode(Saveable):
         
         if G is None:
             G = get_default_graph()
-        self.G = G
+        self.G = G # This is a pointer to the graph it is contained in
         self.name = name
         self.id = id(self)
+
+        # Add itself into the graph
         self.G.nodes[self.id] = self
         self.G.name2id[self.name] = self.id
         self.prior = None
@@ -335,15 +331,25 @@ class BaseNode(Saveable):
 
 class DataNode:
     '''Base class for an object that wants to be used as the data class in inference.
+    This sets the `.data` pointer in `Graph`
 
+    Parameters
+    ----------
+    name : str, Optional
+        - name of the node. If one is not provided, a unique one will be generated
+    name_prefix : str, Optional
+        - name prefix if `name` is not passed in
+    G : Graph, Optional
+        - Graph object to add the node to.
+        - If not specified it adds it to the default graph
     '''
-    def __init__(self, name=None, name_prefix=None, G=None):
+    def __init__(self, name: str=None, name_prefix: str=None, G: Graph=None):
         self.G = G
         self.name = name
         self.id = id(self)
         if self.G.data is not None:
             logging.info('Overriding old data object in graph {}'.format(self))
-        self.G.data = self
+        self.G.data = self # Set itself as the .data pointer
 
     def delete(self):
         '''Deletes this data object from the graph it belogns to
@@ -353,12 +359,6 @@ class DataNode:
 
 class Node(BaseNode):
     '''Variable that can be in the graph
-
-    ####################################
-    self.metropolis
-
-    This is the metropolis object that gets instantiated by the metropolis class
-    ####################################
 
     Parameters
     ----------
@@ -370,16 +370,20 @@ class Node(BaseNode):
         - Graph object or graph id to add the node to.
         - If not specified it adds it to the default graph
     '''
-    def __init__(self, name=None, name_prefix=None, G=None):
+    def __init__(self, name: str=None, name_prefix: str=None, G: Graph=None):
         BaseNode.__init__(self, name=name, name_prefix=name_prefix, G=G)
-        self.parents = {}
-        self.children = {}
+        self.parents = {} # maps the ID of the node to the Node objects
+        self.children = {} # maps the ID of the node to the Node objects
         self.undirected = {}
+
+        # Depreciated
         self._metropolis = None
 
     @property
     def metropolis(self):
-        '''Get the metropolis object
+        '''DEPRECIATED
+        
+        Get the metropolis object
         '''
         return self._metropolis
 
@@ -398,7 +402,7 @@ class Node(BaseNode):
         BaseNode.delete(self)
 
     @property
-    def degree(self):
+    def degree(self) -> int:
         '''Get the degree of the node
 
         Returns
@@ -408,7 +412,7 @@ class Node(BaseNode):
         # return the degree of the node
         return len(self.parents) + len(self.children) + len(self.undirected)
 
-    def get_adjacent_keys(self):
+    def get_adjacent_keys(self) -> Iterator[int]:
         '''Get the adjacent nodes
 
         Returns
@@ -418,7 +422,7 @@ class Node(BaseNode):
         '''
         return list(self.parents.keys()) + list(self.children.keys())
 
-    def add_parent(self, parent):
+    def add_parent(self, parent: "Node"):
         '''Adds `parent` as a parent to the node
         Also adds self as a child to `parent`
 
@@ -438,7 +442,7 @@ class Node(BaseNode):
         self.parents[parent.id] = parent
         parent.children[self.id] = self
 
-    def add_child(self, child):
+    def add_child(self, child: "Node"):
         '''Adds `child` as a child to the node
         Also adds self as a parent to `child`
 
@@ -458,7 +462,7 @@ class Node(BaseNode):
         self.children[child.id] = child
         child.parents[self.id] = self
 
-    def add_undirected(self, node):
+    def add_undirected(self, node: "Node"):
         '''Adds `node` as an undirected neighbor to the node
         Does the same for `node`
 
@@ -477,7 +481,7 @@ class Node(BaseNode):
         self.undirected[node.id] = node
         node.undirected[self.id] = self
 
-    def add_prior(self, prior):
+    def add_prior(self, prior: "Node"):
         '''Override the name of the passed in distribution `prior`.
 
         Parameters
@@ -505,7 +509,7 @@ class Data(DataNode):
     **kwargs
         See `pylab.graph.DataNode`
     '''
-    def __init__(self, X, y, **kwargs):
+    def __init__(self, X: np.ndarray, y: np.ndarray, **kwargs):
         DataNode.__init__(self, **kwargs)
         self.X = X
         self.y = y

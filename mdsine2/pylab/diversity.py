@@ -15,7 +15,7 @@ from scipy.spatial import distance
 
 class alpha:
     @staticmethod
-    def entropy(counts):
+    def entropy(counts: np.ndarray) -> float:
         '''Calculate the entropy
         
         Entropy is defined as
@@ -41,7 +41,7 @@ class alpha:
         return a
 
     @staticmethod
-    def normalized_entropy(counts):
+    def normalized_entropy(counts: np.ndarray) -> float:
         '''Calculate the normailized entropy
         
         Entropy is defined as
@@ -67,7 +67,7 @@ class alpha:
         return a
 
     @staticmethod
-    def shannon_entropy(counts, base=2):
+    def shannon_entropy(counts: np.ndarray, base: int=2) -> float:
         '''Calculates the Shannon entropy
 
         Based on the description given in the SDR-IV online manual [1] except that
@@ -92,15 +92,15 @@ class alpha:
 
 class beta:
     @staticmethod
-    def braycurtis(u,v):
+    def braycurtis(u: np.ndarray, v: np.ndarray) -> float:
         return distance.braycurtis(u,v)
 
     @staticmethod
-    def jaccard(u,v):
+    def jaccard(u: np.ndarray, v: np.ndarray) -> float:
         return distance.jaccard(u,v)
 
     @staticmethod
-    def hamming(u, v, ignore_char='N'):
+    def hamming(u: np.ndarray, v: np.ndarray, ignore_char: str='N') -> int:
         '''Calculate the hamming distance between `u` and `v`
 
         Parameters
@@ -132,7 +132,7 @@ class beta:
 
 
 # Utility functions
-def _validate_counts(counts, cast_as_ints=True):
+def _validate_counts(counts: np.ndarray, cast_as_ints: bool=True) -> np.ndarray:
     '''Checks dimensions, wraps as np array, and casts values as ints
     if necessary
 

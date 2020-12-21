@@ -31,10 +31,10 @@ from .pylab.contrib import isclusterperturbationindicator, isclusterperturbation
 from .pylab.multiprocessing import ispersistentworker, ispersistentpool, isDASW, isSADW
 
 # Import commonly used Pylab functions and classes
-from .pylab.util import taxaname_formatter, toarray, fast_index, coarsen_phylogenetic_tree, \
-    taxaname_for_paper, TAXANAME_PAPER_FORMAT
+from .pylab.util import toarray, fast_index, coarsen_phylogenetic_tree
 from .pylab.base import Taxon, OTU, TaxaSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
-    Subject, Study, condense_matrix_with_taxonomy
+    Subject, Study, condense_matrix_with_taxonomy, taxaname_for_paper, TAXANAME_PAPER_FORMAT, \
+    taxaname_formatter
 from .pylab.variables import Variable, Constant, summary
 from .pylab.graph import Graph, Node
 from .pylab.cluster import Clustering

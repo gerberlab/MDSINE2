@@ -9,11 +9,15 @@ import sys
 import logging
 import scipy.special
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
+    Callable
+
 from .base import BasePerturbation, Traceable
 from .base import Perturbations as PerturbationSet
 from . import variables
 from .cluster import isclustervalue, ClusterValue, isclustering, \
-    ClusterProperty
+    ClusterProperty, Clustering
 from .graph import Node
 from . import util, base
 
@@ -24,7 +28,7 @@ DEFAULT_MAGNITUDE_SUFFIX = '_magnitude'
 DEFAULT_PROBABILITY_SUFFIX = '_probability'
 DEFAULT_INDICATOR_SUFFIX = '_indicator'
 
-def isclusterperturbation(x):
+def isclusterperturbation(x: Any) -> bool:
     '''Checks whether the input is a subclass of ClusterPerturbation
 
     Parameters
@@ -39,7 +43,7 @@ def isclusterperturbation(x):
     '''
     return x is not None and issubclass(x.__class__, ClusterPerturbationEffect)
 
-def isclusterperturbationindicator(x):
+def isclusterperturbationindicator(x: Any) -> bool:
     '''Checks whether the input is a subclass of ClusterPerturbationIndicator
 
     Parameters
@@ -54,7 +58,7 @@ def isclusterperturbationindicator(x):
     '''
     return x is not None and issubclass(x.__class__, ClusterPerturbationIndicator)
 
-def isinteractions(x):
+def isinteractions(x: Any) -> bool:
     '''Type check if `x` is a subclass of Interactions
 
     Parameters
@@ -96,8 +100,11 @@ class Perturbation(BasePerturbation, variables.Variable):
     kwargs : dict
         - Extra arguments for the Node class
     '''
-    def __init__(self, taxa, starts, ends, magnitude=None, indicator=None, 
-        probability=None, **kwargs):
+    def __init__(self, taxa: base.TaxaSet, starts: Dict[str, float], ends: Dict[str, float], 
+        magnitude: Union[variables.Variable, np.ndarray, int, float]=None, 
+        indicator: Union[variables.Variable, np.ndarray]=None, 
+        probability: Union[variables.Variable, float]=None, **kwargs):
+        
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
             self.G.perturbations = PerturbationSet()
@@ -109,7 +116,7 @@ class Perturbation(BasePerturbation, variables.Variable):
         self.G.perturbations.append(self)
         self.taxa = taxa
         n_taxa = len(self.taxa)
-        self.set_value_shape(shape=(n_taxa, ))
+        self.set_value_shape(shape=(n_taxa, )) # Set the shape of the internal array
 
         # Set magnitude
         if magnitude is None:
@@ -161,11 +168,11 @@ class Perturbation(BasePerturbation, variables.Variable):
         else:
             raise TypeError('`indicator` ({}) type not recognized'.format(type(indicator)))
 
-        self.magnitude = magnitude
-        self.indicator = indicator
-        self.probability = probability
+        self.magnitude = magnitude # Variable
+        self.indicator = indicator # Variable
+        self.probability = probability # Variable
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = BasePerturbation.__str__(self)
         s += '\nMagnitude:\n'
         for oidx in range(len(self.taxa)):
@@ -189,7 +196,7 @@ class Perturbation(BasePerturbation, variables.Variable):
         '''
         self.trace = None
 
-    def array(self, only_pos_ind=False):
+    def array(self, only_pos_ind: bool=False) -> np.ndarray:
         '''Return the magnitudes with the indicatrs indexed out
 
         Parameters
@@ -216,11 +223,13 @@ class ClusterPerturbationValue(ClusterValue):
     changed
     '''
     def reset(self):
+        '''Reset all of the values
+        '''
         self.value = {}
         for cid in self.clustering.order:
             self.value[cid] = 0
 
-    def clusters_changed(self, cids_added, cids_removed):
+    def clusters_changed(self, cids_added: Iterator[int], cids_removed: Iterator[int]):
         '''Delete old clusters, sample from `prior` for the
         new clusters. We do not need to type check because it
         is self contained within pylab
@@ -257,11 +266,13 @@ class ClusterPerturbationIndicator(ClusterValue):
     kwargs : dict
         These are additional arguments for ClusterValue
     '''
-    def __init__(self, probability, **kwargs):
+    def __init__(self, probability: variables.Variable, **kwargs):
         ClusterValue.__init__(self, dtype=bool, **kwargs)
         self.probability = probability
 
     def reset(self):
+        '''Reset all of the values
+        '''
         self.value = {}
         for cid in self.clustering.order:
             self.value[cid] = False
@@ -271,7 +282,7 @@ class ClusterPerturbationIndicator(ClusterValue):
         '''
         self.trace = None
 
-    def clusters_changed(self, cids_added, cids_removed):
+    def clusters_changed(self, cids_added: Iterator[int], cids_removed: Iterator[int]):
         '''Delete old clusters, sample from `probability` for the
         new clusters. We do not need to type check because it
         is self contained within pylab
@@ -288,7 +299,7 @@ class ClusterPerturbationIndicator(ClusterValue):
         for cid in cids_added:
             self.value[cid] = bool(npr.binomial(n=1, p=self.probability.value))
 
-    def item_bool_array(self):
+    def item_bool_array(self) -> np.ndarray:
         '''Creates a boolean array expanded so that each item has the same 
         value that the cluster that contains it has. This is the same as 
         calling ClusterValue.item_array
@@ -307,7 +318,7 @@ class ClusterPerturbationIndicator(ClusterValue):
         '''
         return ClusterValue.item_array(self)
 
-    def cluster_bool_array(self):
+    def cluster_bool_array(self) -> np.ndarray:
         '''Creates a boolean array for each item in cluster order. This 
         is the same as calling ClusterValue.cluster_array()
 
@@ -326,7 +337,7 @@ class ClusterPerturbationIndicator(ClusterValue):
         '''
         return ClusterValue.cluster_array(self)
 
-    def item_arg_array(self):
+    def item_arg_array(self) -> np.ndarray:
         '''Creates an ordered index array of items that are positive.
         Example:
             cluster1 = {0,2,4}
@@ -346,7 +357,7 @@ class ClusterPerturbationIndicator(ClusterValue):
                 val += list(cluster.members)
         return np.asarray(val, dtype=int)
 
-    def cluster_arg_array(self):
+    def cluster_arg_array(self) -> np.ndarray:
         '''Creates an ordered index array of clusters that are positive.
         Example:
             cluster1 = {0,2,4}
@@ -364,7 +375,7 @@ class ClusterPerturbationIndicator(ClusterValue):
         return np.asarray([idx for idx,cid in enumerate(self.clustering.order) \
             if self.value[cid]], dtype=int)
 
-    def num_on_items(self):
+    def num_on_items(self) -> int:
         '''These are the number of on items for this perturbation
         Example:
             cluster1 = {0,2,4}
@@ -390,7 +401,7 @@ class ClusterPerturbationIndicator(ClusterValue):
             logging.critical('Clustering cluster ids:\n{}'.format(self.clustering.order))
             raise
 
-    def num_on_clusters(self):
+    def num_on_clusters(self) -> int:
         '''These are the number of on clusters for this perturbation
         Example:
             cluster1 = {0,2,4}
@@ -410,24 +421,24 @@ class ClusterPerturbationIndicator(ClusterValue):
             cumm += self.value[cid]
         return cumm
 
-    def get_clusters_on(self):
+    def get_clusters_on(self) -> Iterator[int]:
         '''Return the cluster IDs that have a positive indicator for this
         perturbation.
 
         Returns
         -------
-        list
+        list(int)
         '''
         ret = [cid for cid in self.clustering.order if self.value[cid]]
         return ret
 
-    def get_items_on(self):
+    def get_items_on(self) -> Iterator[int]:
         '''Get the item indecies that have a positive indicator for this
         perturbation.
 
         Returns
         -------
-        list
+        list(int)
         '''
         ret = []
         for cid in self.clustering.order:
@@ -465,10 +476,11 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
     kwargs : dict
         - Extra arguments for the Node class
     '''
-    def __init__(self, clustering, starts, ends,
-        magnitude=None, indicator=None, probability=None,
-        signal_when_clusters_change=False,
-        signal_when_item_assignment_changes=False, **kwargs):
+    def __init__(self, clustering: Clustering, starts: Dict[str, float], 
+        ends: Dict[str, float], magnitude: Union[variables.Variable, ClusterValue, np.ndarray]=None, 
+        indicator: Union[variables.Variable, ClusterValue, np.ndarray]=None, 
+        probability: Union[variables.Variable, float]=None, signal_when_clusters_change: bool=False,
+        signal_when_item_assignment_changes: bool=False, **kwargs):
 
         if signal_when_clusters_change is None:
             signal_when_clusters_change = DEFAULT_SIGNAL_WHEN_CLUSTERS_CHANGE
@@ -536,11 +548,11 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
                     ind.value[cid] = False
             indicator = ind
 
-        self.magnitude = magnitude
-        self.indicator = indicator
-        self.probability = probability
+        self.magnitude = magnitude # ClusterPerturbationValue
+        self.indicator = indicator # ClusterPerturbationIndicator
+        self.probability = probability # variables.Variable
 
-    def __str__(self):
+    def __str__(self) -> str:
         s = BasePerturbation.__str__(self)
         s += '\nMagnitude:\n'
         for cid in self.clustering.order:
@@ -551,7 +563,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
         s += 'Probability: {}'.format(self.probability.value)
         return s
 
-    def item_array(self, only_pos_ind=False):
+    def item_array(self, only_pos_ind: bool=False) -> np.ndarray:
         '''Expands the condensed form into a variable for each item
         in the data.
 
@@ -586,7 +598,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
             val[ind] = self.magnitude.item_array()[ind]
         return val
 
-    def cluster_array(self, only_pos_ind=False):
+    def cluster_array(self, only_pos_ind: bool=False) -> np.ndarray:
         '''Make an array for each cluster with the magnitude
 
         Example
@@ -633,7 +645,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
         '''
         self.trace = None
 
-    def set_values_from_array(self, values, use_indicators=True):
+    def set_values_from_array(self, values: np.ndarray, use_indicators: bool=True):
         '''Sets the values from an array of the same order as the clusters.
 
         Paramters
@@ -727,9 +739,9 @@ class Interactions(ClusterProperty, Node, Traceable):
         During MCMC you could set this to the sample method of the prior.         
         Defaults to always returning True
     '''
-    def __init__(self, clustering, use_indicators, 
-        value_initializer=None, indicator_initializer=None, 
-        signal_when_clusters_change=True, **kwargs):
+    def __init__(self, clustering: Clustering, use_indicators: bool, 
+        value_initializer: Callable=None, indicator_initializer: Callable=None, 
+        signal_when_clusters_change: bool=True, **kwargs):
 
         Node.__init__(self, **kwargs)
         ClusterProperty.__init__(self, clustering=clustering, 
@@ -744,17 +756,21 @@ class Interactions(ClusterProperty, Node, Traceable):
             raise TypeError('`value_initializer` ({}) and `indicator_initializer` ({}) ' \
                 'must be callable'.format(type(value_initializer), 
                 type(indicator_initializer)))
-        self.value_initializer = value_initializer
-        self.indicator_initializer = indicator_initializer
-        self._IIDX = 1001001
+
+        self.value_initializer = value_initializer # function (callable)
+        self.indicator_initializer = indicator_initializer # function (callable)
+        self._IIDX = 1001001 # Index of the interactions
         
         if not util.isbool(use_indicators):
             raise TypeError('`use_indicators` ({}) must be a bool'.format(type(use_indicators)))
-        self.use_indicators = use_indicators
+        self.use_indicators = use_indicators # bool
         if not self.use_indicators:
             self.indicator_initializer = _always_return_true
 
         order = self.clustering.order
+
+        # dict of a dict mapping to _Interaction objects
+        # (target cluster, source cluster) -> interaction
         self.value = {}
         for tcid in order:
             self.value[tcid] = {}
@@ -771,13 +787,13 @@ class Interactions(ClusterProperty, Node, Traceable):
         self._shape = (len(self.clustering.items), len(self.clustering.items))
         self.dtype = float
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -> '_Interaction':
         return self.value[key]
 
     def __setitem__(self, key, val):
         self.value[key] = val
 
-    def __iter__(self):
+    def __iter__(self) -> "_Interaction":
         '''Iterates over the interactions in order
         '''
         order = self.clustering.order
@@ -787,14 +803,14 @@ class Interactions(ClusterProperty, Node, Traceable):
                 if tcid != scid:
                     yield temp[scid]
 
-    def __str__(self):
+    def __str__(self) -> str:
         s=''
         for interaction in self:
             s += str(interaction) + '\n'
         return s
     
     @property
-    def size(self):
+    def size(self) -> int:
         '''Return how many interactions there are possible according to the number of clusters.
         THIS IS NOT HOW MANY POSITIVE INTERACTIONS THERE ARE - USE `num_pos_interactions`
 
@@ -805,7 +821,7 @@ class Interactions(ClusterProperty, Node, Traceable):
         n_clusters = len(self.clustering)
         return n_clusters * (n_clusters - 1)
 
-    def iter_valid(self):
+    def iter_valid(self) -> "_Interaction":
         '''Iterate only over the positive indicators
         '''
         order = self.clustering.order
@@ -816,7 +832,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                     if temp[scid].indicator:
                         yield temp[scid]
 
-    def iter_valid_pairs(self):
+    def iter_valid_pairs(self) -> Tuple[int, int]:
         '''Iterate only over the positive indicators
         '''
         order = self.clustering.order
@@ -827,7 +843,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                     if temp[scid].indicator:
                         yield tcid, scid
 
-    def iter_to_target(self, cid, only_valid=False):
+    def iter_to_target(self, cid: int, only_valid: bool=False) -> "_Interaction":
         '''Iterates over interactions to the target cluster from all
         source clusters in the order specified by clusters
 
@@ -850,7 +866,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                 if scid != cid:
                     yield temp[scid]
 
-    def iter_from_source(self, cid, only_valid=False):
+    def iter_from_source(self, cid: int, only_valid: bool=False) -> "_Interaction":
         '''Iterates over interactions from the source cluster to all
         target clusters in the order specified by clusters
 
@@ -873,6 +889,8 @@ class Interactions(ClusterProperty, Node, Traceable):
                     yield self.value[tcid][cid]
 
     def reset(self):
+        '''Reset all of the interactions
+        '''
         self.value = {}
         for tcid in self.clustering.order:
             self.value[tcid] = {}
@@ -886,7 +904,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                     iden=self._IIDX)
                 self._IIDX += 1
 
-    def iloc(self, idx):
+    def iloc(self, idx: int) -> "_Interaction":
         '''Get the interaction as a function of the index that it occurs at.
         Reverse indexing is allowed.
 
@@ -914,9 +932,16 @@ class Interactions(ClusterProperty, Node, Traceable):
             self.clustering.order[tcidx]][
             self.clustering.order[scidx]]
 
-    def clusters_changed(self, cids_added, cids_removed):
+    def clusters_changed(self, cids_added: Iterator[int], cids_removed: Iterator[int]):
         '''Remove all of the interactions to and from the clusters
         in `cids_removed` and make interactions for the `cid_added`
+
+        Parameters
+        ----------
+        cids_removed : list(int)
+            IDs of the clusters removed
+        cids_added : list(int)
+            IDs of the clusters added
         '''
         # Remove interactions from clusters deleted
         if len(cids_removed) > 0:
@@ -929,7 +954,7 @@ class Interactions(ClusterProperty, Node, Traceable):
             for cid in cids_added:
                 self._add_single_cluster(cid)
         
-    def _add_single_cluster(self, cid):
+    def _add_single_cluster(self, cid: int):
         other_cids = self.value.keys()
         # Add the interaction from clusters already there and 
         # the new cluster
@@ -949,7 +974,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                 iden=self._IIDX)
             self._IIDX += 1
     
-    def key_pairs(self, only_valid=False):
+    def key_pairs(self, only_valid: bool=False) -> Iterator[Tuple[int, int]]:
         '''Returns (target,source) cluster ids in order
 
         Parameters
@@ -976,7 +1001,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                         l.append((tcid,scid))
         return l
 
-    def num_neg_indicators(self, target_cid=None):
+    def num_neg_indicators(self, target_cid: int=None) -> int:
         '''Return the number of indicator variables that are 0
 
         If target_cid is not None, calculate them for only the interactions going into
@@ -997,7 +1022,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                 cumm += not interaction.indicator
         return cumm
 
-    def num_pos_indicators(self, target_cid=None):
+    def num_pos_indicators(self, target_cid: int=None) -> int:
         '''Return the number of indicator variables that are 1
 
         If target_cid is not None, calculate them for only the interactions going into
@@ -1018,7 +1043,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                 cumm += interaction.indicator
         return cumm
 
-    def get_arg_indicators(self, target_cid=None, source_cid=None):
+    def get_arg_indicators(self, target_cid: int=None, source_cid: int=None) -> Iterator[int]:
         '''Get the positive indicators as indices, in order -> same convention
         as `get_indicators`.
 
@@ -1088,7 +1113,8 @@ class Interactions(ClusterProperty, Node, Traceable):
                         ' be the same'.format(target_cid, source_cid))
             raise
 
-    def get_indicators(self, target_cid=None, source_cid=None, return_idxs=False):
+    def get_indicators(self, target_cid: int=None, source_cid: int=None,
+        return_idxs: bool=False) -> Iterator[bool]:
         '''Return a the indicator variables as a vector in the order specified
         by the clusters.
 
@@ -1181,7 +1207,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                         ' be the same'.format(target_cid, source_cid))
             raise
 
-    def set_indicators(self, arr):
+    def set_indicators(self, arr: np.ndarray):
         '''Sets the values of the indicators of the interactions from a vector.
 
         If `include_self_interactions` is True, assumes that `arr` contains the
@@ -1201,7 +1227,7 @@ class Interactions(ClusterProperty, Node, Traceable):
             if interaction.indicator == 0:
                 interaction.value = 0
 
-    def set_values(self, arr, use_indicators=True):
+    def set_values(self, arr: np.ndarray, use_indicators: bool=True):
         '''Sets the values of the interactions from a vector.
 
         If `use_indicators` is True, assumes that the values in the vector only contain
@@ -1232,7 +1258,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                 interaction.value = arr[idx]
                 idx += 1
 
-    def get_values(self, use_indicators=True):
+    def get_values(self, use_indicators: bool=True) -> np.ndarray:
         '''Makes a vector of the interaction variables in the order of the
         clustering
 
@@ -1263,7 +1289,7 @@ class Interactions(ClusterProperty, Node, Traceable):
         # Trim if necessary
         return ret[:idx]
 
-    def get_value_matrix(self, set_neg_indicators_to_nan=False):
+    def get_value_matrix(self, set_neg_indicators_to_nan: bool=False) -> np.ndarray:
         '''Get the interaction matrix at the clustert level (item-item). 
         The ordering of the clusters is the same as it is in clustering
 
@@ -1295,7 +1321,7 @@ class Interactions(ClusterProperty, Node, Traceable):
             ret[tcidx, scidx] = interaction.value
         return ret
 
-    def get_datalevel_value_matrix(self, set_neg_indicators_to_nan=False):
+    def get_datalevel_value_matrix(self, set_neg_indicators_to_nan: bool=False) -> np.ndarray:
         '''Get the interaction matrix at the data level (item-item), not
         at the cluster level. The ordering of the items is the same as 
         it is in the items in clustering (self.clustering.times).
@@ -1329,7 +1355,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                     ret[tidx, sidx] = val
         return ret
     
-    def get_datalevel_indicator_matrix(self):
+    def get_datalevel_indicator_matrix(self) -> np.ndarray:
         '''Get the item-item indicator matrix.
 
         The ordering of the items are the same as the order in
@@ -1350,7 +1376,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                     ret[tidx, sidx] = True
         return ret
 
-    def generate_in_out_degree_posthoc(self, section='posterior'):
+    def generate_in_out_degree_posthoc(self, section: str='posterior') -> Dict[str, np.ndarray]:
         '''Returns a dictionary of arrays
         "in"
             For each index in the array, corresponding to the index of the items, returns
@@ -1407,7 +1433,8 @@ class Interactions(ClusterProperty, Node, Traceable):
             self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
             self.ckpt_iter = 0
 
-    def get_adjacent(self, cid, incoming, outgoing, use_indicators=True):
+    def get_adjacent(self, cid: int, incoming: bool, outgoing: bool, 
+        use_indicators: bool=True) -> Iterator[int]:
         '''Get all of the cluster IDs that have a positive interaction going into
         or from the cluster `cid`.
 
@@ -1458,14 +1485,15 @@ class _Interaction:
     iden : int
         Unique identifier of this interaction object
     '''
-    def __init__(self, source_cid, target_cid, value, indicator, iden):
+    def __init__(self, source_cid: int, target_cid: int, value: Union[int, float], 
+        indicator: bool, iden: int):
         self.source_cid = source_cid
         self.target_cid = target_cid
         self.value = value
         self.indicator = indicator
         self.id = iden
 
-    def __str__(self):
+    def __str__(self) -> str:
         return 'Interaction {}\n' \
             '\tTarget cluster: {}\n' \
             '\tSource cluster: {}\n' \
@@ -1478,9 +1506,9 @@ class _Interaction:
                 self.indicator)
 
 
-def _always_return_true(*args, **kwargs):
+def _always_return_true(*args, **kwargs) -> bool:
     return True
 
-def _always_return_nan(*args, **kwargs):
+def _always_return_nan(*args, **kwargs) -> float:
     return np.nan
 

@@ -10,6 +10,9 @@ import numpy as np
 import sys
 import logging
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple
+
 from . import util
 from . import variables
 from .errors import MathError
@@ -18,7 +21,7 @@ from .errors import MathError
 DEFAULT_TARGET_ACCEPTANCE_RATE = 'auto'
 DEFAULT_END_TUNING = 'auto'
 
-def isMetropKernel(a):
+def isMetropKernel(a: Any) -> bool:
     '''Checks if `a` is a MetropolisKernel
 
     Parameters
@@ -33,7 +36,7 @@ def isMetropKernel(a):
     '''
     return a is not None and issubclass(a.__class__, _BaseKernel)
 
-def _sum_look_back(trace):
+def _sum_look_back(trace: np.ndarray) -> int:
     '''Inner function
     
     Makes a boolean array for the accept/reject based on the values in the
@@ -54,7 +57,7 @@ def _sum_look_back(trace):
         ret += trace[i]!=trace[i-1]
     return ret
 
-def acceptance_rate(x, start, end):
+def acceptance_rate(x: np.ndarray, start: int, end: int) -> Iterator[float]:
     '''Calculate the acceptance rate from `start` to `end`
 
     Parameters
@@ -81,7 +84,9 @@ def acceptance_rate(x, start, end):
             type(x)))
 
 class _BaseKernel:
-    '''This is the base Kernel jumping class for both symmetric and nonsymmetric
+    '''DEPRECIATED - THIS IS NOT USED IN THE CODE
+    
+    This is the base Kernel jumping class for both symmetric and nonsymmetric
     jumping kernels.
 
     ###########################################################################
@@ -103,7 +108,7 @@ class _BaseKernel:
      x : pylab.variables.Variable
             - Variable we are doing the Metropolis-Hasting steps on
     '''
-    def __init__(self, x):
+    def __init__(self, x: variables.Variable):
         if not variables.isVariable(x):
             raise ValueError('`x` ({}) must be a pylab Variable'.format(type(x)))
 
@@ -119,10 +124,10 @@ class _BaseKernel:
         x._metropolis = self
 
     @property
-    def value(self):
+    def value(self) -> np.ndarray:
         return self._value
 
-    def acceptance_rate(self, prev=None):
+    def acceptance_rate(self, prev: int=None) -> np.ndarray:
         '''Calculate the acceptance rate over the previous iterations.
 
         It does this by looking at the previous time step and seeing if the
@@ -153,7 +158,7 @@ class _BaseKernel:
         self.x.value = self._propose()
         self._value = None
 
-    def proposal_norm(self, log=True):
+    def proposal_norm(self, log: bool=True) -> float:
         '''Calculate the proposal normalization factor to multiply (or add) the
         acceptance ratio r
 
@@ -205,7 +210,9 @@ class _BaseKernel:
 
 
 class _TunableKernel(_BaseKernel):
-    '''Class for tuning the variance of the distribution
+    '''DEPRECIATED - THIS CLASS IS NOT USED IN THE CODE
+    
+    Class for tuning the variance of the distribution
     
     Parameters
     ----------
@@ -271,8 +278,8 @@ class _TunableKernel(_BaseKernel):
     [1] A. Gelman, H. S. Stern, J. B. Carlin, D. B. Dunson, A. Vehtari, and D. B. Rubin,
     Bayesian Data Analysis Third Edition. Chapman and Hall/CRC, 2013.
     '''
-    def __init__(self, x, tune=None, target_acceptance_rate='default', end_tuning='default', 
-        start_tuning=0):
+    def __init__(self, x: variables.Variable, tune: int=None, target_acceptance_rate: Union[str, float]='default', 
+        end_tuning: Union[str, int]='default', start_tuning: int=0):
         _BaseKernel.__init__(self, x=x)
 
         self._scaling = 1
@@ -418,7 +425,8 @@ class NormalKernel(_TunableKernel):
     low, high : numeric, Optional
         - If specified makes the jumping distribution a truncated distribution
     '''
-    def __init__(self, x, var, low=None, high=None, **kwargs):
+    def __init__(self, x: variables.Variable, var: Union[float, int], low: Union[float, int]=None, 
+        high: Union[float, int]=None, **kwargs):
         _TunableKernel.__init__(self, x=x, **kwargs)
 
         if not util.isnumeric(var):
@@ -446,7 +454,7 @@ class NormalKernel(_TunableKernel):
             self.proposal = variables.TruncatedNormal(loc=0, scale2=var, low=low, high=high,
                 G=self.x.G, name=name)
 
-    def _propose(self):
+    def _propose(self) -> float:
         '''propose a new value. Sets the mean to the value of x
         '''
         self.proposal.mean.value = self.x.value

@@ -7,6 +7,10 @@ types of problems. These classes are not better than the standard Python
 
 These classes are built off of the standard Python `multiprocessing` library
 so it is portable to any system that can run Python.
+
+NOTE: These classes are not used during inference. Need to pass the random state
+for each computation orelse the results are not reproducable. To do this, either
+pass the random state or do no sampling in the multiprocessed object.
 '''
 import sys
 import multiprocessing
@@ -16,11 +20,15 @@ import os
 import signal
 import time
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
+    Callable
+
 from .errors import NeedToImplementError
-from .graph import isgraph
+from .graph import isgraph, Graph
 from . import util
 
-def ispersistentworker(x):
+def ispersistentworker(x: Any) -> bool:
     '''Checks whether the input is a subclass of PersistentWorker
 
     Parameters
@@ -35,7 +43,7 @@ def ispersistentworker(x):
     '''
     return x is not None and issubclass(x.__class__, PersistentWorker)
 
-def ispersistentpool(x):
+def ispersistentpool(x: Any) -> bool:
     '''Checks whether the input is a subclass of PersistentPool
 
     Parameters
@@ -50,7 +58,7 @@ def ispersistentpool(x):
     '''
     return x is not None and issubclass(x.__class__, PersistentPool)
 
-def isDASW(x):
+def isDASW(x: Any) -> bool:
     '''Checks whether the PersistentPool is Different Argument
     Single Worker
 
@@ -68,7 +76,7 @@ def isDASW(x):
         return False
     return x.ptype == 'dasw'
 
-def isSADW(x):
+def isSADW(x: Any) -> bool:
     '''Checks whether the PersistentPool is Same Argument
     Different Worker
 
@@ -88,7 +96,8 @@ def isSADW(x):
 
 
 class PersistentWorker:
-    '''
+    '''Base class of the persistent worker. If you want to add functionality to
+    each worker that gets passed in, then do it here.
     '''
     pass
 
@@ -178,19 +187,19 @@ class PersistentPool:
     G : pylab.graph.Graph, None
         Optional graph to pass in
     '''
-    def __init__(self, ptype, G=None):
+    def __init__(self, ptype: str, G: Graph=None):
         if not util.isstr(ptype):
             raise TypeError('`ptype` ({}) must be a str'.format(type(ptype)))
         if ptype not in ['sadw', 'dasw']:
             raise ValueError('`ptype` ({}) not recognized'.format(ptype))
 
-        self.ptype = ptype
-        self.tasks = multiprocessing.JoinableQueue()
-        self.results = multiprocessing.Queue()
+        self.ptype = ptype # This is the type of multiprocessing to do
+        self.tasks = multiprocessing.JoinableQueue() # This is a queue for the jobs to do
+        self.results = multiprocessing.Queue() # This is a queue of the results
         self.num_workers = 0
         self.busy = False
-        self.workers = []
-        self._worker_pids = set([])
+        self.workers = [] # A list of the persistent objects
+        self._worker_pids = set([]) # pids of the workers
         self._staged_running = False
 
         if G is not None:
@@ -198,7 +207,7 @@ class PersistentPool:
                 raise TypeError('`G` ({}) must be a graph'.format(type(G)))
             G._persistent_pntr.append(self)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.workers)
 
     def reset(self):
@@ -212,13 +221,17 @@ class PersistentPool:
         self.busy = False
         self.workers = []
 
-    def add_worker(self, obj):
+    def add_worker(self, obj: Any) -> int:
         '''Add a persistent worker
 
         Parameter
         ---------
         args : dict
             These are the persistent arguments for the process
+
+        Returns
+        -------
+        int
         '''
         try:
             if not ispersistentworker(obj):
@@ -241,7 +254,7 @@ class PersistentPool:
         self._worker_pids.add(pid)
         return pid
 
-    def change_ptype(self, ptype):
+    def change_ptype(self, ptype: str):
         '''Change the default ptype
 
         Parameters
@@ -255,7 +268,8 @@ class PersistentPool:
             raise ValueError('`ptype` ({}) not recognized'.format(ptype))
         self.ptype = ptype
 
-    def map(self, func, args, ptype=None):
+    def map(self, func: Callable, args: Union[Dict[int, Dict[str, Any]], Iterator[Dict[str, Any]]], 
+        ptype: str=None) -> Iterator[Any]:
         '''Maps the function `func` over the list of arguments `lst`
 
         Parameters
@@ -386,7 +400,7 @@ class PersistentPool:
             else:
                 raise
 
-    def staged_map_start(self, func):
+    def staged_map_start(self, func: Callable):
         '''Staged mapping for DASW mappings
 
         Parameters
@@ -405,7 +419,7 @@ class PersistentPool:
         self.n = 0
         self._staged_running = True
 
-    def staged_map_put(self, args):
+    def staged_map_put(self, args: Union[Dict[str, Any], Iterator[Dict[str, Any]]]):
         '''Add arguemnts to the queue
 
         Parameters
@@ -440,7 +454,7 @@ class PersistentPool:
                 logging.critical('Error: {}'.format(sys.exc_info()[0]))
                 raise
 
-    def staged_map_get(self, timeout=None):
+    def staged_map_get(self, timeout: float=None) -> Iterator[Any]:
         '''Get the results of a staged mapping
 
         Returns
@@ -479,7 +493,7 @@ class PersistentPool:
             else:
                 raise
 
-    def __getstate__(self):
+    def __getstate__(self) -> Dict[str, Any]:
         '''Do not include the multiprocessed objects during serialization
         '''
         state = self.__dict__.copy()
@@ -488,7 +502,7 @@ class PersistentPool:
         state.pop('workers')
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: Dict[str, Any]):
         '''Set the multiprocessed objects as destroyed from serialization
         '''
         self.__dict__.update(state)
@@ -517,7 +531,8 @@ class _PersistentWorker(multiprocessing.Process):
     obj : PersistentWorker
         Object to keep here and call `persistent_run`
     '''
-    def __init__(self, task_queue, result_queue, obj):
+    def __init__(self, task_queue: multiprocessing.JoinableQueue, 
+        result_queue: multiprocessing.Queue, obj: PersistentWorker):
         multiprocessing.Process.__init__(self)
         self.task_queue = task_queue
         self.result_queue = result_queue

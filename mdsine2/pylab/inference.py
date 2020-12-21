@@ -7,12 +7,15 @@ import shutil
 import inspect
 import pickle
 from orderedset import OrderedSet
-
 import numpy as np
 
-from .graph import get_default_graph, isgraph, isnode
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
+    Callable, Type
+
+from .graph import get_default_graph, isgraph, isnode, Graph, Node
 from .base import Saveable
-from .variables import isVariable
+from .variables import isVariable, Variable
 from .errors import UndefinedError, InheritanceError
 from . import util
 from .random import seed as set_seed
@@ -22,13 +25,7 @@ DEFAULT_LOG_EVERY = 5
 REQUIRED_ATTRS = ['update', 'initialize', 'set_trace', 'add_trace']
 GLOBAL_PARAMETER = -1
 
-def OLS(covariates, observations):
-    '''observations = covariates @ beta
-    Moore-Penrose pseudoinverse
-    '''
-    return np.linalg.inv(covariates.T @ covariates) @ covariates.T @ observations
-
-def isMCMC(x):
+def isMCMC(x: Any) -> bool:
     '''Checks if the input array is an MCMC inference object
 
     Parameters
@@ -43,7 +40,7 @@ def isMCMC(x):
     '''
     return x is not None and issubclass(x.__class__, BaseMCMC)
 
-def ismodel(x):
+def ismodel(x: Any) -> bool:
     '''Checks if the input array is a model object
 
     Parameters
@@ -68,7 +65,7 @@ class BaseModel(Saveable):
         The graph we want to do the inference over
         If nothing is provided, it grabs the default graph
     '''
-    def __init__(self, graph):
+    def __init__(self, graph: Graph=None):
         if graph is None:
             graph = get_default_graph()
         if not isgraph(graph):
@@ -124,7 +121,7 @@ class BaseMCMC(BaseModel):
         Number of posterior samples = n_samples-burnin
     '''
 
-    def __init__(self, burnin, n_samples, * args, **kwargs):
+    def __init__(self, burnin: int, n_samples: int, * args, **kwargs):
         BaseModel.__init__(self, *args, **kwargs)
         if not util.isint(burnin):
             raise TypeError('`burnin` ({}) must be an int'.format(type(burnin)))
@@ -136,18 +133,22 @@ class BaseMCMC(BaseModel):
 
         self.burnin = burnin
         self.n_samples = n_samples
-        self.sample_iter = 0
-        self.inf_order = None
-        self.diagnostic_variables = None
-        self.tracer = None
-        self.start_step = None
+        self.sample_iter = 0 # This holds the current sample we are at
+        self.inf_order = None # This is a list of the inference order
+        self.diagnostic_variables = None # DEPRECIATED
+        self.tracer = None # This is a pointer to the pylab.inference.Tracer object
 
-        self._intermediate_func = None
-        self._intermediate_t = None
-        self._intermediate_kwargs = None
+        # This is the sample iteration to start on. Unless we are loading from a 
+        # saved MCMC object, then this will be 0
+        self.start_step = None 
+
+        # Functions to save intermediately, this is used for semisynthetic
+        self._intermediate_func = None # callable
+        self._intermediate_t = None # float
+        self._intermediate_kwargs = None # dict
 
     @classmethod
-    def load(cls, filename):
+    def load(cls, filename: str):
         '''Override base Saveable to redo the filename of the
         tracer object if it has one
         
@@ -183,18 +184,18 @@ class BaseMCMC(BaseModel):
         return b
 
     @property
-    def ckpt(self):
+    def ckpt(self) -> int:
         '''For backwards compatibility
         '''
         return self.checkpoint
 
     @ckpt.setter
-    def ckpt(self, a):
+    def ckpt(self, a: int):
         '''Set ckpt
         '''
         self.ckpt = a
 
-    def names(self):
+    def names(self) -> Iterator[str]:
         '''Get the names of the nodes in the inference object
 
         Returns
@@ -203,7 +204,7 @@ class BaseMCMC(BaseModel):
         '''
         return list(self.graph.name2id.keys())
 
-    def ids(self):
+    def ids(self) -> Iterator[int]:
         '''Get the IDs of the nodes in the inference object
 
         Returns
@@ -212,7 +213,7 @@ class BaseMCMC(BaseModel):
         '''
         return list(self.graph.nodes.keys())
 
-    def set_inference_order(self, order):
+    def set_inference_order(self, order: Iterator[Union[str, int]]):
         '''`order` is an array of nodes we want to sample in the order
         that we want. Check that they are all in the graph. Can put in the 
         ID or the name
@@ -244,7 +245,7 @@ class BaseMCMC(BaseModel):
             ret.append(node.id)
         self.inf_order = ret
 
-    def is_in_inference_order(self, var):
+    def is_in_inference_order(self, var: Union[int, str, Variable]) -> bool:
         '''Checks if the variable is in the inference order
 
         Parameters
@@ -265,7 +266,9 @@ class BaseMCMC(BaseModel):
         return var in self.inf_order
 
     def set_diagnostic_variables(self, vars):
-        '''A list of variables that you want to track over time. These variables
+        '''DEPRECIATED
+        
+        A list of variables that you want to track over time. These variables
         do not necessarily have to be variables that we are tracing, rather they
         can be any variable that changes over time in the inference. However,
         the variables that we are tracing need to be a subclass of
@@ -301,7 +304,7 @@ class BaseMCMC(BaseModel):
                     'the same name.')
             self.diagnostic_variables[var.name] = var
 
-    def set_tracer(self, filename, checkpoint=100):
+    def set_tracer(self, filename: str, checkpoint: int=100):
         '''Sets up the tracing object
 
         Parameters
@@ -318,7 +321,7 @@ class BaseMCMC(BaseModel):
         self.checkpoint = checkpoint
         self.tracer = Tracer(mcmc=self, filename=filename)
 
-    def set_intermediate_validation(self, t, func, kwargs=None):
+    def set_intermediate_validation(self, t: float, func: Callable, kwargs: Dict[str, Any]=None):
         '''Every `t`, run the function `func` during validation in a new process during inference.
 
         Parameters
@@ -366,7 +369,7 @@ class BaseMCMC(BaseModel):
         self._intermediate_func = func
         self._intermediate_kwargs = kwargs
 
-    def run(self, log_every=1):
+    def run(self, log_every: int=1) -> "BaseMCMC":
         '''Run the inference.
 
         Parameters
@@ -496,7 +499,7 @@ class BaseMCMC(BaseModel):
                 a.kill()
             raise
 
-    def continue_inference(self, gibb_step_start):
+    def continue_inference(self, gibb_step_start: int):
         '''Resume inference at the gibb step number `gibb_step_start`. Note that
         we do not resume the random seed where it was at that point of the inference.
 
@@ -528,19 +531,19 @@ class Tracer(Saveable):
     filename : str
         This is where to save it
     '''
-    def __init__(self, mcmc, filename):
+    def __init__(self, mcmc: BaseMCMC, filename: str):
         # Check parameters and set up the attributes
-        self.mcmc = mcmc
-        self.graph = self.mcmc.graph
-        self.graph.tracer = self
-        self.mcmc.tracer = self
+        self.mcmc = mcmc # This is a pointer to the BaseMCMC object
+        self.graph = self.mcmc.graph # This is a pointer to the pylab.graph.Graph object
+        self.graph.tracer = self # Sets up internal pointers
+        self.mcmc.tracer = self # Sets up internal pointers
 
         self.filename  = filename
         if self.filename is not None:
             if not util.isstr(filename):
                 raise TypeError('filename ({}) must be a str'.format(type(filename)))
             self.filename = os.path.abspath(filename)
-            self.f = h5py.File(self.filename, 'w', libver='latest')
+            self.f = h5py.File(self.filename, 'w', libver='latest') #This is the h5py file
             self.being_traced = OrderedSet()
 
             self.f.attrs['burnin'] = self.mcmc.burnin
@@ -586,32 +589,36 @@ class Tracer(Saveable):
     #     self.close()
 
     @property
-    def ckpt(self):
+    def ckpt(self) -> int:
         '''For backwards compatitbility
         '''
         return self.ckpt
 
     @ckpt.setter
-    def ckpt(self, a):
+    def ckpt(self, a: int):
         '''Set ckpt
         '''
         self.ckpt = a
 
     def close(self):
+        '''Close the file
+        '''
         self.f.close()
         self.f = None
 
     def open(self):
+        '''Open the file
+        '''
         self.f = h5py.File(self.filename, 'r+', libver='latest')
 
-    def copy(self):
+    def copy(self) -> "Tracer":
         '''Return a copy of the object but do not copy the underlying hdf5 object
         '''
         new_obj = type(self)(mcmc=self.mcmc, filename=self.filename)
         new_obj.__dict__.update(self.__dict__)
         return new_obj
 
-    def deepcopy(self, hdf5_dst=None):
+    def deepcopy(self, hdf5_dst: str=None) -> "Tracer":
         '''Return a deepcopy of the object and copy the underlying hdf5 object as well
 
         Parameters
@@ -633,7 +640,7 @@ class Tracer(Saveable):
         shutil.copyfile(src=self.filename, dst=new_obj.filename)
         return new_obj
 
-    def is_being_traced(self, var):
+    def is_being_traced(self, var: Union[int, str, Node]) -> bool:
         '''Checks if the variable is being traced
 
         Parameters
@@ -655,7 +662,7 @@ class Tracer(Saveable):
                 return False
         return var in self.being_traced
 
-    def set_trace(self, name, shape, dtype):
+    def set_trace(self, name: str, shape: Tuple[int], dtype: Type):
         '''Set up a dataset for the variable. If a group is specified, it will 
         add it to the group
 
@@ -693,7 +700,7 @@ class Tracer(Saveable):
         self.being_traced.add(name)
         self.close()
 
-    def write_to_disk(self, name):
+    def write_to_disk(self, name: str):
         '''Append the RAM trace of the variable `name` into disk. Copies the data
         from RAM (self.graph[name]/trace) into disk memory.
 
@@ -719,7 +726,7 @@ class Tracer(Saveable):
         dset.attrs['end_iter'] = i + l
         self.close()
 
-    def overwrite_entire_trace_on_disk(self, name, data, dtype=None):
+    def overwrite_entire_trace_on_disk(self, name: str, data: np.ndarray, dtype: Type=None):
         '''Overwrite all the data we have on disk for the variable 
         with name `name` and data `data`. Blanks everything out and 
         sets the end variable to the end of data
@@ -771,7 +778,7 @@ class Tracer(Saveable):
             self.graph[name].trace = None
         self.close()
 
-    def get_disk_trace_iteration(self):
+    def get_disk_trace_iteration(self) -> int:
         '''Returns the last iteration the disk is saved to
 
         Returns
@@ -785,7 +792,7 @@ class Tracer(Saveable):
         self.close()
         return n
 
-    def get_trace(self, name, section='posterior', slices=None):
+    def get_trace(self, name: str, section: str='posterior', slices: slice=None) -> np.ndarray:
         '''Return the trace that corresponds with the name.
 
         Depdending on the parameter `section`, it will return different parts of
@@ -855,7 +862,7 @@ class Tracer(Saveable):
         self.close()
         return ret
 
-    def get_iter(self, name):
+    def get_iter(self, name: str) -> int:
         '''Return the end index that has been saved so far for variable with
         name `name`
 
@@ -874,7 +881,7 @@ class Tracer(Saveable):
         self.close()
         return i
 
-    def continue_inference(self, gibb_step_start):
+    def continue_inference(self, gibb_step_start: int):
         '''Restart the inference at the gibbs step provided
 
         Parameters
@@ -889,7 +896,8 @@ class Tracer(Saveable):
         self.close()
 
 
-def r_hat(chains, vname, start, end, idx=None, returnBW=False):
+def r_hat(chains: Iterator[BaseMCMC], vname: str, start: int, end: int, idx: Union[int, slice]=None, 
+    returnBW: bool=False) -> Union[float, Dict[str, float]]:
     '''Calculate the measure `R^` for the variable called `vname` at the index `idx`.
     If `idx` is None then we assume that the variable is scalar.
 
