@@ -42,6 +42,7 @@ from .pylab.random import seed
 from .pylab.contrib import Interactions, ClusterPerturbationEffect
 from .pylab.inference import BaseMCMC, r_hat
 from .pylab.dynamics import integrate, BaseDynamics
+from .synthetic import Synthetic
 
 # Import PyLab errors
 from .pylab.errors import UndefinedError, MathError, GraphIDError, InheritanceError, \

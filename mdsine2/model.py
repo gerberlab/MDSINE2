@@ -42,7 +42,7 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
     '''
 
     @staticmethod
-    def forward_sim_from_chain(mcmc, val, initial_conditions, times, simulation_dt, 
+    def forward_sim_from_chain(mcmc, subj, initial_conditions, times, simulation_dt, 
         sim_max=None, section='posterior'):
         '''Forward simulate the dynamics from a chain. This assumes that the
         initial conditions occur at time `times[0]`
@@ -51,8 +51,9 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         ----------
         mcmc : md2.BaseMCMC
             MCMC chain with all of the traces of the parameters
-        val : md2.Subject
-            This is the subject we are forward simulating for
+        subj : md2.Subject
+            This is the subject we are forward simulating for. We need this
+            to get the start and end times for each perturbation
         initial_conditions : np.ndarray(n_taxa)
             Initial conditions for each taxon
         times : np.ndarray
@@ -88,9 +89,9 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
             perturbation_starts = []
             perturbation_ends = []
             for pert in mcmc.graph.perturbations:
-                if pert.name in val.perturbations:
-                    perturbation_starts.append(val.perturbations[pert.name].starts[val.name])
-                    perturbation_ends.append(val.perturbations[pert.name].ends[val.name])  
+                if pert.name in subj.perturbations:
+                    perturbation_starts.append(subj.perturbations[pert.name].starts[subj.name])
+                    perturbation_ends.append(subj.perturbations[pert.name].ends[subj.name])  
 
         else:
             perturbation_starts = None

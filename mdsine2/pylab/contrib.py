@@ -1385,7 +1385,7 @@ class Interactions(ClusterProperty, Node, Traceable):
 
         self.ckpt_iter = 0
         self.sample_iter = 0
-        shape = (tracer.ckpt, ) + self._shape
+        shape = (tracer.checkpoint, ) + self._shape
         self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
 
     def remove_local_trace(self):
@@ -1403,7 +1403,7 @@ class Interactions(ClusterProperty, Node, Traceable):
         if self.ckpt_iter == len(self.trace):
             # We have gotten the largest we can in the local buffer, write to disk
             self.G.tracer.write_to_disk(name=self.name)
-            shape = (self.G.tracer.ckpt, ) + self._shape
+            shape = (self.G.tracer.checkpoint, ) + self._shape
             self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
             self.ckpt_iter = 0
 

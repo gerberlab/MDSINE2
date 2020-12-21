@@ -708,7 +708,7 @@ class ClusterValue(ClusterProperty, Node, Traceable):
             dtype=self.dtype)
         self.ckpt_iter = 0
         self.sample_iter = 0
-        self.trace = np.full(shape=(tracer.ckpt, len(self.clustering.items)),
+        self.trace = np.full(shape=(tracer.checkpoint, len(self.clustering.items)),
             dtype=self.dtype, fill_value=np.nan)
     
     def remove_local_trace(self):
@@ -727,7 +727,7 @@ class ClusterValue(ClusterProperty, Node, Traceable):
         if self.ckpt_iter == len(self.trace):
             # We have gotten the largest we can in the local buffer, write to disk
             self.G.tracer.write_to_disk(name=self.name)
-            self.trace = np.full(shape=(self.G.tracer.ckpt, len(self.clustering.items)),
+            self.trace = np.full(shape=(self.G.tracer.checkpoint, len(self.clustering.items)),
                 dtype=self.dtype, fill_value=np.nan)
             self.ckpt_iter = 0
 

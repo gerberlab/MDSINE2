@@ -20,14 +20,6 @@ python main_negbin.py \
     --param-filename tmp/negbin_params.tsv
 ```
 
-## Fit the qPCR measurements
-```python
-python main_qpcr.py \
-    --data-filename pickles/real_subjectset.pkl \
-    --output-basepath output_qpcr/
-    --param-filename tmp/qpcr_param.tsv
-```
-
 ## Run the Model
 
 These commands run and save the model, plots the posteriors, and runs validation (if possible)

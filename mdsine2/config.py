@@ -515,6 +515,9 @@ class NegBinConfig(_BaseModelConfig):
         Seed to start the inderence
     burnin, n_samples : int
         How many iterations for burn-in and total samples, respectively.
+    checkpoint : int
+        How often to write the trace in RAM to disk. Note that this must be
+        a multiple of both `burnin` and `n_samples`
     basepath : str
         This is the basepath to save the graph. A separate folder within
         `basepath` will be created for the specific graph.
@@ -523,7 +526,7 @@ class NegBinConfig(_BaseModelConfig):
         to learn are `SYNTHETIC_A0` AND `SYNTHETIC_A1`.
     '''
 
-    def __init__(self, seed, burnin, n_samples, ckpt, basepath):
+    def __init__(self, seed, burnin, n_samples, checkpoint, basepath):
         if basepath[-1] != '/':
             basepath += '/'
 
@@ -532,7 +535,7 @@ class NegBinConfig(_BaseModelConfig):
         self.MODEL_PATH = self.OUTPUT_BASEPATH
         self.BURNIN = burnin
         self.N_SAMPLES = n_samples
-        self.CKPT = ckpt
+        self.CHECKPOINT = checkpoint
         self.MP_FILTERING = 'debug'
 
         self.INFERENCE_ORDER = [

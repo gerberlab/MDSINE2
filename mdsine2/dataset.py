@@ -11,7 +11,8 @@ def load_gibson(dset=None, as_df=False, with_perturbations=True, species_assignm
     Returns either a `mdsine2.Study` object or the `pandas.DataFrame` objects that
     that comprise the Gibson dataset.
 
-    Reads in the dataset from Github
+    Tries to load the dataset from Github. If there is no internet connection, then we
+    can read it from a local path specfied with the parameter `load_local`.
 
     Parameters
     ----------

@@ -102,7 +102,8 @@ class Synthetic(pl.Saveable):
         A = interactions.get_datalevel_value_matrix()
         for i in range(A.shape[0]):
             A[i,i] = -self_interactions.value[i]
-        self.model.interactions = A
+        
+        self.model.interactions = A #
 
         # Generate growth
         self.model.growth = pl.random.uniform.sample(low=0.1, high=0.12, size=n_taxa)

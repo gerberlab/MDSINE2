@@ -391,7 +391,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     # ---------------
     hdf5_filename = os.path.join(basepath, config.HDF5_FILENAME)
     mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
-    mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CHECKPOINT)
+    mcmc.set_tracer(filename=hdf5_filename, checkpoint=params.CHECKPOINT)
     mcmc.set_save_location(mcmc_filename)
     params.save(os.path.join(basepath, config.PARAMS_FILENAME))
     pl.seed(params.SEED)
@@ -446,7 +446,7 @@ def normalize_parameters(mcmc, subjset):
     GRAPH = mcmc.graph
     if subjset.qpcr_normalization_factor is None:
         f = h5py.File(GRAPH.tracer.filename, 'r+', libver='latest')
-        ckpt = GRAPH.tracer.ckpt
+        checkpoint = GRAPH.tracer.checkpoint
 
         try:
             GRAPH[STRNAMES.FILTERING].v2 *= subjset.qpcr_normalization_factor
@@ -483,9 +483,9 @@ def normalize_parameters(mcmc, subjset):
             dset = f[STRNAMES.INTERACTIONS_OBJ]
             total_samples = dset.attrs['end_iter']
             i = 0
-            while (i * ckpt) < total_samples:
-                start_idx = int(i * ckpt)
-                end_idx = int((i+1) * ckpt)
+            while (i * checkpoint) < total_samples:
+                start_idx = int(i * checkpoint)
+                end_idx = int((i+1) * checkpoint)
 
                 if end_idx > total_samples:
                     end_idx = total_samples
@@ -508,9 +508,9 @@ def normalize_parameters(mcmc, subjset):
                 dset = f[name]
                 total_samples = dset.attrs['end_iter']
                 i = 0
-                while (i * ckpt) < total_samples:
-                    start_idx = int(i * ckpt)
-                    end_idx = int((i+1) * ckpt)
+                while (i * checkpoint) < total_samples:
+                    start_idx = int(i * checkpoint)
+                    end_idx = int((i+1) * checkpoint)
 
                     if end_idx > total_samples:
                         end_idx = total_samples
@@ -544,7 +544,7 @@ def denormalize_parameters(mcmc):
         logging.info('Denormalizing the parameters')
 
         f = h5py.File(GRAPH.tracer.filename, 'r+', libver='latest')
-        ckpt = GRAPH.tracer.ckpt
+        checkpoint = GRAPH.tracer.checkpoint
 
         try:
             GRAPH[STRNAMES.FILTERING].v2 /= subjset.qpcr_normalization_factor
@@ -581,9 +581,9 @@ def denormalize_parameters(mcmc):
             dset = f[STRNAMES.INTERACTIONS_OBJ]
             total_samples = dset.attrs['end_iter']
             i = 0
-            while (i * ckpt) < total_samples:
-                start_idx = int(i * ckpt)
-                end_idx = int((i+1) * ckpt)
+            while (i * checkpoint) < total_samples:
+                start_idx = int(i * checkpoint)
+                end_idx = int((i+1) * checkpoint)
 
                 if end_idx > total_samples:
                     end_idx = total_samples
@@ -606,9 +606,9 @@ def denormalize_parameters(mcmc):
                 dset = f[name]
                 total_samples = dset.attrs['end_iter']
                 i = 0
-                while (i * ckpt) < total_samples:
-                    start_idx = int(i * ckpt)
-                    end_idx = int((i+1) * ckpt)
+                while (i * checkpoint) < total_samples:
+                    start_idx = int(i * checkpoint)
+                    end_idx = int((i+1) * checkpoint)
 
                     if end_idx > total_samples:
                         end_idx = total_samples

@@ -91,7 +91,7 @@ class BaseMCMC(BaseModel):
     Then set some diagnostic variables (Optional)
     >>> inf.set_diagnostic_variables(['e'])
     Then we can run the inference
-    >>> inf.run(log_every=5, ckpt=100, tracer_filename='./output/tracer.hdf5')
+    >>> inf.run(log_every=5, checkpoint=100, tracer_filename='./output/tracer.hdf5')
 
     Inference order
     ---------------
@@ -289,21 +289,21 @@ class BaseMCMC(BaseModel):
                     'the same name.')
             self.diagnostic_variables[var.name] = var
 
-    def set_tracer(self, filename, ckpt=100):
+    def set_tracer(self, filename, checkpoint=100):
         '''Sets up the tracing object
 
         Parameters
         ----------
         filename : str, None
             File location to save the hdf5 object
-        ckpt : int, None
-            Saves the current progress of the inference chain every `ckpt` iterations
+        checkpoint : int, None
+            Saves the current progress of the inference chain every `checkpoint` iterations
             If None then there is no intermediate checkpointing
         '''
-        if ckpt is None:
-            ckpt = self.n_samples
+        if checkpoint is None:
+            checkpoint = self.n_samples
         self.tracer_filename = filename
-        self.ckpt = ckpt
+        self.checkpoint = checkpoint
         self.tracer = Tracer(mcmc=self, filename=filename)
 
     def set_intermediate_validation(self, t, func, kwargs=None):
@@ -379,7 +379,7 @@ class BaseMCMC(BaseModel):
                 logging.warning('No tracer set - assume you do not want to write to disk')
                 self.tracer_filename = None
                 self.tracer = Tracer(mcmc=self, filename=None)
-                self.ckpt = None
+                self.checkpoint = None
 
                 logging.info('Setting the trace of learned parameters')
                 logging.info('#######################################')
@@ -455,7 +455,7 @@ class BaseMCMC(BaseModel):
                             self.diagnostic_variables[name].add_trace()
 
                 # If we just saved the traces to disk, save the MCMC object
-                if self.sample_iter % self.ckpt == 0 and self.sample_iter > 0:
+                if self.sample_iter % self.checkpoint == 0 and self.sample_iter > 0:
                     try:
                         self.save()
                     except:
@@ -533,11 +533,11 @@ class Tracer(Saveable):
 
             self.f.attrs['burnin'] = self.mcmc.burnin
             self.f.attrs['n_samples'] = self.mcmc.n_samples
-            self.f.attrs['ckpt'] = self.mcmc.ckpt
+            self.f.attrs['checkpoint'] = self.mcmc.checkpoint
 
             self.burnin = self.mcmc.burnin
             self.n_samples = self.mcmc.n_samples
-            self.ckpt = self.mcmc.ckpt
+            self.checkpoint = self.mcmc.checkpoint
 
             # Get the inference order and diagnostic variables
             ret = []

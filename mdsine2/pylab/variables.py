@@ -107,7 +107,7 @@ def summary(var, set_nan_to_0=False, section='posterior', only=None):
         ('25th percentile'), and 75th percentile ('75th percentile'), 
     '''
     if istraceable(var):
-        if var.G.inference.ckpt is None:
+        if var.G.inference.checkpoint is None:
             if section == 'burnin':
                 var = var.trace[:var.G.inference.burnin, ...]
             elif section == 'posterior':
@@ -490,13 +490,13 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
         '''
         if self.G.inference.tracer_filename is not None:
             self.G.tracer.set_trace(self.name, shape=self._shape, dtype=self.dtype)
-            ckpt = self.G.tracer.ckpt
+            checkpoint = self.G.tracer.checkpoint
         else:
-            ckpt = self.G.inference.n_samples + self.G.inference.burnin
+            checkpoint = self.G.inference.n_samples + self.G.inference.burnin
         
         self.ckpt_iter = 0
         self.sample_iter = 0
-        shape = (ckpt, )
+        shape = (checkpoint, )
         if self._shape is not None:
             shape += self._shape
         self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
@@ -519,12 +519,12 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
         self.ckpt_iter += 1
         self.sample_iter += 1
         if self.ckpt_iter == len(self.trace):
-            if self.G.inference.ckpt is None:
+            if self.G.inference.checkpoint is None:
                 # No writing to disk
                 return
             # We have gotten the largest we can in the local buffer, write to disk
             self.G.tracer.write_to_disk(name=self.name)
-            shape = (self.G.tracer.ckpt, )
+            shape = (self.G.tracer.checkpoint, )
             if self._shape is not None:
                 shape += self._shape
             self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)

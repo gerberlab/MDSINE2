@@ -1007,7 +1007,7 @@ def build_graph(params, graph_name, subjset):
     hdf5_filename = os.path.join(basepath, config.HDF5_FILENAME)
     mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
     param_filename = os.path.join(basepath, config.PARAMS_FILENAME)
-    mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CKPT)
+    mcmc.set_tracer(filename=hdf5_filename, checkpoint=params.CHECKPOINT)
     mcmc.set_save_location(mcmc_filename)
     params.save(param_filename)
 
