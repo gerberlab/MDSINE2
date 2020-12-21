@@ -182,6 +182,18 @@ class BaseMCMC(BaseModel):
 
         return b
 
+    @property
+    def ckpt(self):
+        '''For backwards compatibility
+        '''
+        return self.checkpoint
+
+    @ckpt.setter
+    def ckpt(self, a):
+        '''Set ckpt
+        '''
+        self.ckpt = a
+
     def names(self):
         '''Get the names of the nodes in the inference object
 
@@ -533,7 +545,7 @@ class Tracer(Saveable):
 
             self.f.attrs['burnin'] = self.mcmc.burnin
             self.f.attrs['n_samples'] = self.mcmc.n_samples
-            self.f.attrs['checkpoint'] = self.mcmc.checkpoint
+            self.f.attrs['ckpt'] = self.mcmc.checkpoint
 
             self.burnin = self.mcmc.burnin
             self.n_samples = self.mcmc.n_samples
@@ -572,6 +584,18 @@ class Tracer(Saveable):
 
     # def __exit__(self, type, value, traceback):
     #     self.close()
+
+    @property
+    def ckpt(self):
+        '''For backwards compatitbility
+        '''
+        return self.ckpt
+
+    @ckpt.setter
+    def ckpt(self, a):
+        '''Set ckpt
+        '''
+        self.ckpt = a
 
     def close(self):
         self.f.close()
