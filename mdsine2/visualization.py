@@ -1956,7 +1956,7 @@ def _set_heatmap_default_args(linewidths: float=None, linecolor: str=None, n_col
         'xticklabels': xticklabels, 'yticklabels': yticklabels, 
         'include_colorbar': include_colorbar, 'include_tick_marks': include_tick_marks}
 
-def _init_parameters_heatmap(matrix: np.mdarray, taxa: TaxaSet, clustering: Clustering, 
+def _init_parameters_heatmap(matrix: np.ndarray, taxa: TaxaSet, clustering: Clustering, 
     xticklabels: str, yticklabels: str, ax: matplotlib.pyplot.Axes, figure_size: Tuple[float, float],
     linewidths: Union[float, int], order: Iterator[int]) -> Dict[str, Any]:
     '''Checks if the parameters are initialized correctly for the standard arguments

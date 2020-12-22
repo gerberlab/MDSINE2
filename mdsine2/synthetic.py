@@ -136,7 +136,7 @@ class Synthetic(pl.Saveable):
         self.subjs = subjs
 
     def generate_trajectories(self, dt: float, init_dist: variables.Variable, 
-        processvar: plmodel.ProcessVarGlobal=None, seed: int=None):
+        processvar: plmodel.MultiplicativeGlobal=None, seed: int=None):
         '''Forward simulate trajectories given the dynamics
 
         Parameters

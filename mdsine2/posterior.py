@@ -6661,9 +6661,6 @@ class GLVParameters(pl.variables.MVN):
 
         self.update_jointly_pert_inter = update_jointly_pert_inter
         self.sample_iter = 0
-
-        if self.update_jointly_growth_si:
-            raise NotImplementedError('Not Implemented')
                 
     # @profile
     def asarray(self) -> np.ndarray:

@@ -341,9 +341,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'n_clusters': 30,
                 'run_every_n_iterations': 4},
             STRNAMES.GLV_PARAMETERS: {
-                'update_jointly_pert_inter': True,
-                'tune': 50,
-                'end_tune': 'half-burnin'},
+                'update_jointly_pert_inter': True},
             STRNAMES.PROCESSVAR: {
                 'dof_option': 'diffuse', # 'half', 
                 'scale_option': 'med',
