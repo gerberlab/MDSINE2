@@ -56,7 +56,7 @@ REQUIREMENTS = [
     'seaborn==0.11.0',
     'h5py==2.9.0',
     'psutil==5.7.3',
-    # 'ete3==3.1.2',
+    'ete3==3.1.2',
     # 'PySide2==5.15.2',
     'networkx==2.3',
     'numba==0.50',
