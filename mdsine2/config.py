@@ -597,8 +597,7 @@ class NegBinConfig(_BaseModelConfig):
         to learn are `SYNTHETIC_A0` AND `SYNTHETIC_A1`.
     '''
 
-    def __init__(self, seed: int, burnin: int, n_samples: int, checkpoint: int, 
-        basepath: str):
+    def __init__(self, seed: int, burnin: int, n_samples: int, checkpoint: int, basepath: str):
         if basepath[-1] != '/':
             basepath += '/'
 
