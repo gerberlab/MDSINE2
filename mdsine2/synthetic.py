@@ -180,14 +180,15 @@ class Synthetic(pl.Saveable):
             pert_eff = None
 
             if self.perturbations is not None:
+                # Set it to the first subj in the list
                 pert_start = []
                 pert_end = []
                 pert_eff = []
                 for perturbation in self.perturbations:
-                    if subj in perturbation.starts:
-                        pert_start.append(perturbation.starts[subj])
-                        pert_end.append(perturbation.ends[subj])
-                        pert_eff.append(perturbation.item_array())
+                    sss = list(perturbation.starts.keys())[0]
+                    pert_start.append(perturbation.starts[sss])
+                    pert_end.append(perturbation.ends[sss])
+                    pert_eff.append(perturbation.item_array())
 
             self.model.perturbation_ends = pert_end
             self.model.perturbation_starts = pert_start
@@ -355,7 +356,7 @@ def make_semisynthetic(chain: BaseMCMC, min_bayes_factor: Union[float, int], nam
     # Set the interactions
     # --------------------
     self_interactions = pl.summary(chain.graph[STRNAMES.SELF_INTERACTION_VALUE])['mean']
-    A = chain.graph[STRNAMES.INTERACTIONS_OBJ].get_datalevel_value_matrix()
+    A = pl.summary(chain.graph[STRNAMES.INTERACTIONS_OBJ], set_nan_to_0=True)['mean']
     A_cluster = condense_fixed_clustering_interaction_matrix(A, 
         clustering=chain.graph[STRNAMES.CLUSTERING_OBJ])
 

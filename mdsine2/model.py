@@ -43,89 +43,6 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
     --------
     pylab.dynamics.dynamics
     '''
-
-    @staticmethod
-    def forward_sim_from_chain(mcmc: BaseMCMC, initial_conditions: np.ndarray, times: np.ndarray, simulation_dt: float,
-        subj: Subject=None, sim_max: float=None, section: str='posterior') -> np.ndarray:
-        '''Forward simulate the dynamics from a chain. This assumes that the
-        initial conditions occur at time `times[0]`
-
-        Parameters
-        ----------
-        mcmc : md2.BaseMCMC
-            MCMC chain with all of the traces of the parameters
-        subj : md2.Subject
-            This is the subject we are forward simulating for. We need this
-            to get the start and end times for each perturbation. If this is None,
-            then we assume there are no perturbations
-        initial_conditions : np.ndarray(n_taxa)
-            Initial conditions for each taxon
-        times : np.ndarray
-            These are the times to forward simulate for
-        simulation_dt : float
-            This is the step size to forward simulate with
-        sim_max : float
-            This is the maximum value for inference that we clip at
-        section : str
-            This is the part of the trace that we are forward simulating from
-
-        Returns
-        -------
-        np.ndarray(n_gibbs, n_taxa, len(times))
-            These are the forward imsualtions for each gibb step
-        '''
-        # Get the parameters from the chain
-        growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section=section)
-        self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section=section)
-        interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section=section)
-
-        si = -np.absolute(self_interactions)
-        for i in range(len(mcmc.graph.data.taxa)):
-            interactions[:, i, i] = si[:, i]
-        interactions[np.isnan(interactions)] = 0
-
-        if mcmc.graph.perturbations is not None and subj is not None:
-            perturbations = []
-            for pert in mcmc.graph.perturbations:
-                perturbations.append(pert.get_trace_from_disk(section=section))
-                perturbations[-1][np.isnan(perturbations[-1])] = 0
-            
-            perturbation_starts = []
-            perturbation_ends = []
-            for pert in mcmc.graph.perturbations:
-                if pert.name in subj.perturbations:
-                    perturbation_starts.append(subj.perturbations[pert.name].starts[subj.name])
-                    perturbation_ends.append(subj.perturbations[pert.name].ends[subj.name])  
-
-        else:
-            perturbation_starts = None
-            perturbation_ends = None
-            perturbations = None
-
-        # Forward simulate for every gibb step
-        pred_matrix = np.zeros(shape=(growths.shape[0], growths.shape[1], len(times)))
-
-        dyn = gLVDynamicsSingleClustering(growth=None, interactions=None, sim_max=sim_max,
-            start_day=times[0], perturbation_ends=perturbation_ends, 
-            perturbation_starts=perturbation_starts)
-        start_time = time.time()
-        initial_conditions = initial_conditions.reshape(-1,1)
-        for gibb in range(growths.shape[0]):
-            if gibb % 5 == 0 and gibb > 0:
-                logging.info('{}/{} - {}'.format(gibb,growths.shape[0],
-                    time.time()-start_time))
-                start_time = time.time()
-            dyn.growth = growths[gibb]
-            dyn.interactions = interactions[gibb]
-            if perturbations is not None:
-                dyn.perturbations = [pert[gibb] for pert in perturbations]
-            
-            X = pl.dynamics.integrate(dynamics=dyn, initial_conditions=initial_conditions, 
-                dt=simulation_dt, n_days=times[-1]+simulation_dt, processvar=None,
-                subsample=True, times=times, log_every=10000)
-            pred_matrix[gibb] = X['X']
-        return pred_matrix
-
     def __init__(self, growth: Union[np.ndarray, type(None)], interactions: Union[np.ndarray, type(None)], 
         perturbations: Iterator[np.ndarray]=None, perturbation_starts: Iterator[float]=None,
         perturbation_ends: Iterator[float]=None, sim_max: float=None, start_day: float=0):
@@ -225,6 +142,89 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         self._adjusted_growth = None
         self._dtgrowth = None
         self._dtinteractions = None
+
+    @staticmethod
+    def forward_sim_from_chain(mcmc: BaseMCMC, initial_conditions: np.ndarray, times: np.ndarray, simulation_dt: float,
+        subj: Subject=None, sim_max: float=None, section: str='posterior') -> np.ndarray:
+        '''Forward simulate the dynamics from a chain. This assumes that the
+        initial conditions occur at time `times[0]`
+
+        Parameters
+        ----------
+        mcmc : md2.BaseMCMC
+            MCMC chain with all of the traces of the parameters
+        subj : md2.Subject
+            This is the subject we are forward simulating for. We need this
+            to get the start and end times for each perturbation. If this is None,
+            then we assume there are no perturbations
+        initial_conditions : np.ndarray(n_taxa)
+            Initial conditions for each taxon
+        times : np.ndarray
+            These are the times to forward simulate for
+        simulation_dt : float
+            This is the step size to forward simulate with
+        sim_max : float
+            This is the maximum value for inference that we clip at
+        section : str
+            This is the part of the trace that we are forward simulating from
+
+        Returns
+        -------
+        np.ndarray(n_gibbs, n_taxa, len(times))
+            These are the forward imsualtions for each gibb step
+        '''
+        # Get the parameters from the chain
+        growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section=section)
+        self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section=section)
+        interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section=section)
+
+        si = -np.absolute(self_interactions)
+        for i in range(len(mcmc.graph.data.taxa)):
+            interactions[:, i, i] = si[:, i]
+        interactions[np.isnan(interactions)] = 0
+
+        if mcmc.graph.perturbations is not None and subj is not None:
+            perturbations = []
+            for pert in mcmc.graph.perturbations:
+                perturbations.append(pert.get_trace_from_disk(section=section))
+                perturbations[-1][np.isnan(perturbations[-1])] = 0
+            
+            perturbation_starts = []
+            perturbation_ends = []
+            for pert in mcmc.graph.perturbations:
+                if pert.name in subj.perturbations:
+                    perturbation_starts.append(subj.perturbations[pert.name].starts[subj.name])
+                    perturbation_ends.append(subj.perturbations[pert.name].ends[subj.name])  
+
+        else:
+            perturbation_starts = None
+            perturbation_ends = None
+            perturbations = None
+
+        # Forward simulate for every gibb step
+        pred_matrix = np.zeros(shape=(growths.shape[0], growths.shape[1], len(times)))
+
+        dyn = gLVDynamicsSingleClustering(growth=None, interactions=None, sim_max=sim_max,
+            start_day=times[0], perturbation_ends=perturbation_ends, 
+            perturbation_starts=perturbation_starts)
+        start_time = time.time()
+        initial_conditions = initial_conditions.reshape(-1,1)
+        for gibb in range(growths.shape[0]):
+            if gibb % 5 == 0 and gibb > 0:
+                logging.info('{}/{} - {}'.format(gibb,growths.shape[0],
+                    time.time()-start_time))
+                start_time = time.time()
+            dyn.growth = growths[gibb]
+            dyn.interactions = interactions[gibb]
+            if perturbations is not None:
+                dyn.perturbations = [pert[gibb] for pert in perturbations]
+            
+            X = pl.dynamics.integrate(dynamics=dyn, initial_conditions=initial_conditions, 
+                dt=simulation_dt, n_days=times[-1]+simulation_dt, processvar=None,
+                subsample=True, times=times, log_every=10000)
+            pred_matrix[gibb] = X['X']
+        return pred_matrix
+
         
 
 class MultiplicativeGlobal(pl.dynamics.BaseProcessVariance):
