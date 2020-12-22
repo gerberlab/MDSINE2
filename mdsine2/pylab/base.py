@@ -407,7 +407,6 @@ def taxaname_formatter(format: str, taxon: Union["Taxon", "OTU"], taxa: "TaxaSet
         return taxaname_for_paper(taxon=taxon, taxa=taxa)
     taxon = taxa[taxon]
     index = taxon.idx
-
     label = format.replace(NAME_FORMATTER, str(taxon.name))
     label = label.replace(ID_FORMATTER, str(taxon.id))
     label = label.replace(INDEX_FORMATTER,  str(index))
@@ -416,8 +415,8 @@ def taxaname_formatter(format: str, taxon: Union["Taxon", "OTU"], taxa: "TaxaSet
         label = label.replace(PAPER_FORMATTER, '%(temp)s')
         label = label.replace('%(temp)s', taxaname_for_paper(taxon=taxon, taxa=taxa))
     
-    for i in range(len(TAXLEVELS)):
-        taxlevel = TAXLEVELS[i]
+    for i in range(len(TAX_LEVELS)-1):
+        taxlevel = TAX_LEVELS[i]
         fmt = _TAXFORMATTERS[i]
         try:
             label = label.replace(fmt, str(taxon.get_taxonomy(taxlevel)))
