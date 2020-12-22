@@ -186,9 +186,18 @@ class Synthetic(pl.Saveable):
                 pert_eff = []
                 for perturbation in self.perturbations:
                     sss = list(perturbation.starts.keys())[0]
-                    pert_start.append(perturbation.starts[sss])
-                    pert_end.append(perturbation.ends[sss])
+                    start = perturbation.starts[sss]
+                    end = perturbation.ends[sss]
+                    
+                    # add name to the perturbations
+                    perturbation.starts[subj] = start
+                    perturbation.ends[subj] = end
+
+                    pert_start.append(start)
+                    pert_end.append(end)
                     pert_eff.append(perturbation.item_array())
+
+                    
 
             self.model.perturbation_ends = pert_end
             self.model.perturbation_starts = pert_start
