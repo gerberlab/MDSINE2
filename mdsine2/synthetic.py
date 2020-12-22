@@ -28,8 +28,8 @@ class Synthetic(pl.Saveable):
         self.G = pl.Graph(name=name, seed=seed)
         self.model = plmodel.gLVDynamicsSingleClustering(growth=None, interactions=None)
         self.taxa = None # mdsine2.pylab.base.TaxaSet
-        self.subjs = None # list[str]
-        self._data = None # list[np.ndarray]
+        self.subjs = [] # list[str]
+        self._data = {} # list[np.ndarray]
 
     @property
     def perturbations(self):
@@ -135,6 +135,21 @@ class Synthetic(pl.Saveable):
         '''
         self.subjs = subjs
 
+    def add_subject(self, name: str):
+        '''Add another subject
+
+        Parameters
+        ----------
+        name : str
+            Subject to add
+        '''
+        if name in self.subjs:
+            logging.warning('Subject {} already in synthetic. Skipping'.format(name))
+            return
+        if not pl.isstr(name):
+            raise TypeError('`name` ({}) must be a str'.format(type(name)))
+        self.subjs.append(name)
+
     def generate_trajectories(self, dt: float, init_dist: variables.Variable, 
         processvar: plmodel.MultiplicativeGlobal=None, seed: int=None):
         '''Forward simulate trajectories given the dynamics
@@ -154,9 +169,10 @@ class Synthetic(pl.Saveable):
         if seed is not None:
             pl.random.seed(seed)
         
-        self._data = {}
-        for iii, subj in enumerate(self.subjs):
-            logging.info('Forward simulating {}/{}'.format(iii, len(self.subjs)))
+        for subj in self.subjs:
+            if subj in self._data:
+                continue
+            logging.info('Forward simulating {}'.format(subj))
             init_abund = init_dist.sample(size=len(self.taxa)).reshape(-1,1)
 
             pert_start = None

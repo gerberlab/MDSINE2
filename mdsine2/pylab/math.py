@@ -350,6 +350,29 @@ class metrics:
         logtruth = np.log(truth)
         return np.mean(np.absolute((logtruth-np.log(predicted))/logtruth), axis=axis)
 
+    @staticmethod
+    def relRMSE(pred: np.ndarray, truth: np.ndarray) -> Union[float, np.ndarray]:
+        '''Relative Root Mean Square Error
+
+        Parameters
+        ----------
+        pred : np.ndarray 2-dim
+            Predicted trajectory.
+            N_O : number of taxa
+            N_T : number of timepoints
+            2-dimensional
+                If the array is 2-dim, then we assume the shape is (N_O, N_T)
+        truth : np.ndarray 2-dim
+            Ground truth array (N_O, N_T)
+
+        Returns
+        -------
+        float, np.ndarray
+        '''
+        reltruth = truth/np.sum(truth, axis=0)
+        relpred = pred/np.sum(pred, axis=0)
+        return np.sqrt(np.mean(np.square(relpred-reltruth)))
+
 @count_calls(max_calls=None)
 def force_symmetry(M: np.ndarray, check: bool=True) -> np.ndarray:
     '''Forces symmetry for the input square matrix
