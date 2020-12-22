@@ -35,10 +35,13 @@ import itertools
 import scipy.sparse
 from orderedset import OrderedSet
 
-from .pylab.graph import DataNode, Node
+from typing import Union, Dict, Iterator, Tuple, List, Any
+
+from .pylab.graph import DataNode, Node, Graph
 from .names import STRNAMES
 
 from . import pylab as pl
+from .pylab.base import Study
 
 class Data(DataNode):
     '''Acts as a collection for the Observation object and a collection of Covariate objects.
@@ -69,7 +72,7 @@ class Data(DataNode):
 
     Parameters
     ----------
-    subjects : pl.base.Study
+    subjects : pylab.base.Study
         These are a list of the subjects that we are going to get data from
     zero_inflation_transition_policy : str
         How we handle the transitions from a structural zero to a non-structural zero.
@@ -85,7 +88,7 @@ class Data(DataNode):
     **kwargs
         - These are the extra arguments for DataNode
     '''
-    def __init__(self, subjects, zero_inflation_transition_policy=None, **kwargs):
+    def __init__(self, subjects: Study, zero_inflation_transition_policy: str=None, **kwargs):
         if 'name' not in kwargs:
             kwargs['name'] = 'data matrix'
         DataNode.__init__(self, **kwargs)
@@ -93,27 +96,27 @@ class Data(DataNode):
             raise ValueError('`subjects` ({}) must be a pylab Study'.format(
                 type(subjects)))
 
-        self.taxa = subjects.taxa
-        self.subjects = subjects
+        self.taxa = subjects.taxa # This is the TaxaSet object in pylab.base.TaxaSet
+        self.subjects = subjects # This is the Study object in pylab.base.Study
         self.zero_inflation_transition_policy = zero_inflation_transition_policy
 
-        self.raw_data = []
-        self.rel_data = []
-        self.abs_data = []
-        self.qpcr = []
+        self.raw_data = [] # list(np.ndarray) data matrices in count abundance for each subject in order
+        self.rel_data = [] # list(np.ndarray) data matrices in relative abundance for each subject in order
+        self.abs_data = [] # list(np.ndarray) data matrices in absolute abundance for each subject in order
+        self.qpcr = [] # list(dict(float -> qPCRData)) of qPCR objects for the subjects in time order
         self.qpcr_variances = None
-        self.read_depths = []
-        self.given_timepoints = []
-        self._given_timepoints_set = []
-        self.given_timeindices = []
-        self.data_timeindex2given_timeindex = {}
-        self.n_timepoints_for_replicate = []
-        self.n_dts_for_replicate = []
-        self.times = []
-        self.data = []
-        self.dt = []
-        self.timepoint2index = []
-        self.toupdate = OrderedSet()
+        self.read_depths = [] # read depths for each subject in time order
+        self.given_timepoints = [] # These are the timepoints that are included with the subject
+        self._given_timepoints_set = [] # this is a set object of `given_timepoints`
+        self.given_timeindices = [] # These are the indicies for the given timepoints
+        self.data_timeindex2given_timeindex = {} # maps the index for all of the times to the index in the original subject
+        self.n_timepoints_for_replicate = [] # np.ndarray, number of timepoints for each subject
+        self.n_dts_for_replicate = [] # np.ndarray, how many dts there are for each subject (n_timespoints - 1)
+        self.times = [] # list(np.ndarray) This is the array of times for each subject
+        self.data = [] # list(np.ndarray) This is the where we keep the filtered data
+        self.dt = [] # list(np.ndarray) Has each dt between each timepoint for each subject
+        self.timepoint2index = [] # list(dict(float, int)) for each subject, maps the time (float) to the index it occurs in (int)
+        self.toupdate = OrderedSet() # Which design matrices we change once we filter the data
         self.n_replicates = len(self.subjects)
         self.n_taxa = len(self.taxa)
 
@@ -218,13 +221,13 @@ class Data(DataNode):
                     shape=(len(self.taxa), self.n_timepoints_for_replicate[ridx]), dtype=bool))
             self._setrows_to_include_zero_inflation()
 
-    def iter_for_building(self):
+    def iter_for_building(self) -> Tuple[int, int, int]:
         for ridx in range(self.n_replicates):
             for tidx in range(self.n_dts_for_replicate[ridx]):
                 for oidx in range(len(self.taxa)):
                     yield oidx, tidx, ridx
 
-    def make_delta_t(self, sqrt=False):
+    def make_delta_t(self, sqrt: bool=False) -> np.ndarray:
         '''Returns the whole delta_t vector for each time point.
 
         Parameters
@@ -237,7 +240,7 @@ class Data(DataNode):
         else:
             return self.dt_vec
 
-    def is_intermediate_timepoint(self, ridx, t):
+    def is_intermediate_timepoint(self, ridx: int, t: float) -> bool:
         '''Checks if the given time `t` for subject index `ridx` is
         an intermediate time point or not
 
@@ -254,7 +257,7 @@ class Data(DataNode):
         '''
         return t not in self._given_timepoints_set[ridx]
 
-    def is_intermediate_timeindex(self, ridx, tidx):
+    def is_intermediate_timeindex(self, ridx: int, tidx: int) -> bool:
         '''Checks if the given time index `tidx` for subject index `ridx` is
         an intermediate time point or not
 
@@ -271,8 +274,8 @@ class Data(DataNode):
         '''
         return tidx not in self.given_timeindices[ridx]
 
-    def set_timepoints(self, times=None, timestep=None, ridx=None, eps=None,
-        reset_timepoints=False):
+    def set_timepoints(self, times: np.ndarray=None, timestep: float=None, ridx: int=None, 
+        eps: float=None, reset_timepoints: bool=False):
         '''Set times if you want intermediate timepoints.
         
         These are the time points that you want to generate the latent state at.
@@ -493,7 +496,8 @@ class Data(DataNode):
                     else:
                         self.tidxs_in_perturbation[ridx].append((start_idx, end_idx))
 
-    def set_zero_inflation(self, turn_on=None, turn_off=None):
+    def set_zero_inflation(self, turn_on: Iterator[Tuple[int, int, int]]=None, 
+        turn_off: Iterator[Tuple[int, int, int]]=None):
         '''Set which timepoints taxa are set to be turned off. Any taxa, timepoints tuple
         not in `d` is assumed to be "present" (a nonn-structural zero). `d` is an array
         of 3-tuples, where:
@@ -543,7 +547,7 @@ class Data(DataNode):
                 self._structural_zeros[ridx][aidx,tidx] = True
         self._setrows_to_include_zero_inflation()
 
-    def is_timepoint_structural_zero(self, ridx, tidx, aidx):
+    def is_timepoint_structural_zero(self, ridx: int, tidx: int, aidx: int) -> bool:
         '''Returns True if the replicate index `ridx`, timepoint index `tidx`, and
         Taxa index `aidx` is a structural zero or not
         '''
@@ -607,7 +611,7 @@ class Data(DataNode):
                 n_off_prev += 1
             self.off_previously_arr_zero_inflation[i] = n_off_prev
 
-    def _get_non_pert_rows_of_regress_matrices(self):
+    def _get_non_pert_rows_of_regress_matrices(self) -> np.ndarray:
         '''This will get the rows where there are no perturbations in the
         regressor matrices
         '''
@@ -637,7 +641,8 @@ class Data(DataNode):
 
         return ret
 
-    def construct_lhs(self, keys=[], kwargs_dict={}, index_out_perturbations=False):
+    def construct_lhs(self, keys: List[str]=[], kwargs_dict: Dict[str, Dict[str, Any]]={}, 
+        index_out_perturbations: bool=False) -> np.ndarray:
         '''Does the stacking and subtracting necessary to make the observation vector
 
         Parameters
@@ -685,8 +690,8 @@ class Data(DataNode):
         return y.reshape(-1,1)
 
     # @profile
-    def construct_rhs(self, keys, kwargs_dict={}, index_out_perturbations=False, 
-        toarray=False):
+    def construct_rhs(self, keys: List[str], kwargs_dict: Dict[str, Dict[str, Any]]={}, 
+        index_out_perturbations: bool=False, toarray: bool=False) -> Union[scipy.sparse.spmatrix, np.ndarray]:
         '''Does the stacking and subtracting necessary to make the covariate matrix.
         Default setting for this matrix is a `scipy.sparse` matrix unless you
         explicitly convert it with `toarray`.
@@ -760,7 +765,7 @@ class Data(DataNode):
 class ObservationVector(Node):
     '''This is the left hand side (lhs) vector
     '''
-    def __init__(self, name, G):
+    def __init__(self, name: str, G: Graph):
         self.G = G
         self.name = name
         self.G.data.lhs = self
@@ -778,7 +783,7 @@ class ObservationVector(Node):
 class DesignMatrix:
     '''This is a covariate class
     '''
-    def __init__(self, varname, G, update=False, add_to_dict=True):
+    def __init__(self, varname: str, G: Graph, update: bool=False, add_to_dict: bool=True):
         '''Parameters
 
         varname (str)
@@ -814,7 +819,7 @@ class DesignMatrix:
         '''
         raise NotImplementedError('You must implement this function')
 
-    def toarray(self, dest=None, T=False):
+    def toarray(self, dest: np.ndarray=None, T: bool=False) -> np.ndarray:
         '''Converts `self.matrix` into a C_CONTIGUOUS numpy matrix if 
         the matrix is sparse. If it is not sparse then it just returns
         the matrix.
@@ -846,7 +851,7 @@ class LHSVector(ObservationVector):
         ObservationVector.__init__(self, **kwargs)
         logging.info('Initializing LHS vector')
 
-    def build(self, subjects='all'):
+    def build(self, subjects: Union[List[int], int, str]='all'):
         '''Build the observation vector
 
         (log(x_{k+1}) - log(x_{k}))/dt
@@ -886,12 +891,13 @@ class LHSVector(ObservationVector):
             self.vector = self.vector[self.G.data.rows_to_include_zero_inflation]
         self.vector = self.vector.reshape(-1,1)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.vector)
 
     @staticmethod
     @numba.jit(nopython=True, cache=True, fastmath=True)
-    def _fast_build_log(ret, data, dt, n_ts, n_taxa):
+    def _fast_build_log(ret: np.ndarray, data: np.ndarray, dt: np.ndarray, n_ts: int, 
+        n_taxa: int):
         '''About 99.4% faster than regular python looping
         '''
         i = 0
@@ -902,35 +908,22 @@ class LHSVector(ObservationVector):
 
     def update_value(self):
         self.build()
-
-    def print_mer(self):
-        i = 0
-        for ridx in range(self.G.data.n_replicates):
-            l = self.G.data.n_dts_for_replicate[ridx] * self.G.data.n_taxa
-            data = self.G.data.data[ridx]
-            dt = self.G.data.dt[ridx]
-            print('\n\n\n\n\n\n ridx', ridx)
-            for tidx in range(self.G.data.n_dts_for_replicate[ridx]):
-                print('-------\ntidx',tidx)
-                for oidx in range(self.G.data.n_taxa):
-                    print('oidx', oidx)
-                    print('\tnext',np.log(data[oidx, tidx+1]), data[oidx, tidx+1])
-                    print('\tcurr', np.log(data[oidx,tidx]), data[oidx, tidx])
-                    print('\tdt', dt[tidx])
-                    print('\tvector', self.vector[i])
-                    i += 1
             
 
 class SelfInteractionDesignMatrix(DesignMatrix):
     '''Base matrix class for growth and self interactions
     Since the dynamics subtract the self-interaction parameter, we set the
     parameter to positive, which means our data is negative.
+
+    We build this matrix as a scipy sparse matrix, then convert it to a 
+    numpy array if necessary. Since the shape of the sparse matrix does
+    not change during inference, we can premake the rows and columns during initialization,
+    which is done below.
     '''
     def __init__(self, **kwargs):
-        DesignMatrix.__init__(self,
-            varname=STRNAMES.SELF_INTERACTION_VALUE,
+        DesignMatrix.__init__(self, varname=STRNAMES.SELF_INTERACTION_VALUE,
             update=True, **kwargs)
-        self.n_cols_master = self.G.data.n_taxa
+        self.n_cols_master = self.G.data.n_taxa # 
         total_n_dts = self.G.data.total_n_dts_per_taxa
         self.n_rows_master = self.n_cols_master * total_n_dts
         self.master_rows = np.arange(self.n_rows_master, dtype=int)
@@ -960,20 +953,17 @@ class SelfInteractionDesignMatrix(DesignMatrix):
             self.matrix = self.matrix[self.G.data.rows_to_include_zero_inflation, :]
 
 
-    def set_to_lhs(self):
+    def set_to_lhs(self) -> np.ndarray:
         '''Multiply self.matrix by the current value of
         growth/self interaction
         '''
         b = self.G[self.varname].value.reshape(-1,1)
         return self.matrix.dot(b)
 
-    def set_to_rhs(self):
+    def set_to_rhs(self) -> scipy.sparse.spmatrix:
         '''Add in perturbations
         '''
         return self.matrix
-
-    def _fast_build(self, ret, data):
-        ret = np.square(data.ravel('F'))
 
     def update_value(self):
         self.build()
@@ -998,14 +988,19 @@ class GrowthDesignMatrix(DesignMatrix):
 
     If there are no perturbations, the rhs and the lhs are equal and are set to
     the parameterization of the LHS
+
+    We build this matrix as a scipy sparse matrix, then convert it to a 
+    numpy array if necessary. Since the shape of the sparse matrix does
+    not change during inference, we can premake the rows and columns during initialization,
+    which is done below.
     '''
     def __init__(self, **kwargs):
         DesignMatrix.__init__(self,
             varname=STRNAMES.GROWTH_VALUE, update=True, **kwargs)
-        self.n_cols_master = self.G.data.n_taxa
-        total_n_dts = self.G.data.total_n_dts_per_taxa
-        self.n_rows_master = self.n_cols_master * total_n_dts
-        self.master_rows = np.arange(self.n_rows_master, dtype=int)
+        self.n_cols_master = self.G.data.n_taxa # int
+        total_n_dts = self.G.data.total_n_dts_per_taxa # int
+        self.n_rows_master = self.n_cols_master * total_n_dts # int
+        self.master_rows = np.arange(self.n_rows_master, dtype=int) 
         self.master_cols = np.kron(
                 np.ones(total_n_dts, dtype=int),
                 np.arange(self.G.data.n_taxa,dtype=int))
@@ -1043,7 +1038,7 @@ class GrowthDesignMatrix(DesignMatrix):
 
         Example: Pertubtion period (2,5) - this is **3** doses
 
-                           |-->|-->|-->
+                           |-->|-->|-->|
         perturbation on    #############
         Days           1   2   3   4   5   6
 
@@ -1059,10 +1054,6 @@ class GrowthDesignMatrix(DesignMatrix):
         The perturbation periods that are given are in the format (start, end).
         For the above example our perturbation period would be (2, 5). Thus, we should do
         inclusion/exclusion brackets such that:
-
-        (start, end]
-            - The first day is inclusive
-            - Last day is exclusive
         '''
         self.cols = self.master_cols
         self.rows = self.master_rows
@@ -1098,7 +1089,7 @@ class GrowthDesignMatrix(DesignMatrix):
                 self.matrix_with_perturbations[self.G.data.rows_to_include_zero_inflation, :]
             self.matrix_with_perturbations = self.matrix_with_perturbations.tocsc()
 
-    def set_to_lhs(self, with_perturbations):
+    def set_to_lhs(self, with_perturbations: bool) -> np.ndarray:
         '''Multiply the design matrix by the current value of
         growth
         '''
@@ -1112,7 +1103,7 @@ class GrowthDesignMatrix(DesignMatrix):
         b = self.G[self.varname].value.reshape(-1,1)
         return matrix.dot(b)
 
-    def set_to_rhs(self, with_perturbations=None):
+    def set_to_rhs(self, with_perturbations: bool) -> scipy.sparse.spmatrix:
         '''If `with_perturbations` is True, we return the matrix with the
         perturbation factors incorporated. If False we return the matrix
         without perturbations
@@ -1133,15 +1124,18 @@ class GrowthDesignMatrix(DesignMatrix):
 class PerturbationBaseDesignMatrix(DesignMatrix):
     '''This is the base data for the perturbations.
 
-    This creates the baseline perturbation effects for each Taxa, for every indicator.
+    This creates the baseline perturbation effects for each __Taxa__, for every indicator.
     This class used in conjungtion with `PerturbationMixingDesignMatrix` and should
     be accessed through `PerturbationDesignMatrix`.
+
+    Note that this is not what is used during inference - we multiply this matrix by the
+    mixing matrix
 
     Parameterization
     ----------------
     We parameterize the MDSINE2 model with multiplicative perturbations
     .. math::
-        \frac {log(x_{i,k+1}) - log(x_{i,k})} {t_{k+1} - t_{k}} =
+        \\frac {log(x_{i,k+1}) - log(x_{i,k})} {t_{k+1} - t_{k}} =
             a_{1,i} (1 + \sum_{p=1}^P u_p(k) \gamma_{i,p} ) + \sum_{j} b_{ij} x{j,k} 
     where:
         :math:`x_{i,k}` : abundance for Taxa :math:`i` at time :math:`t_k`
@@ -1153,6 +1147,10 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
         :math:`\gamma_{i,p}` : perturbation value for perturbation :math:`p` for taxon :math:`i`
         Here the perturbation has an "effect" on the growth rates
 
+    See Also
+    --------
+    mdsine2.data_matrices.PerturbationMixingDesignMatrix
+    mdsine2.data_matrices.PerturbationDesignMatrix
     '''
     def __init__(self, **kwargs):
         name = STRNAMES.PERT_VALUE+'_base_data'
@@ -1160,14 +1158,14 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
         if self.G.data.zero_inflation_transition_policy is not None:
             raise NotImplementedError('Not Implemented')
 
-        self.perturbations = self.G.perturbations
-        self.n_perturbations = len(self.perturbations)
-        self.n_replicates = self.G.data.n_replicates
-        self.n_taxa = len(self.G.data.taxa)
-        self.growths = self.G[STRNAMES.GROWTH_VALUE]
+        self.perturbations = self.G.perturbations # pylab.base.Perturbations object
+        self.n_perturbations = len(self.perturbations) # int
+        self.n_replicates = self.G.data.n_replicates # int
+        self.n_taxa = len(self.G.data.taxa) # int
+        self.growths = self.G[STRNAMES.GROWTH_VALUE] # This is the pointer to the growth variable learned in inference
 
-        self.starts = []
-        self.ends = []
+        self.starts = [] # list[list[int]] top index indexes the subject, bottom index indexes the perturbation
+        self.ends = [] # list[list[int]] top index indexes the subject, bottom index indexes the perturbation
         self.tidxs_in_pert_per_replicate = []
 
         self.tidxs_in_perturbation = np.zeros(shape=(self.n_replicates,
@@ -1176,8 +1174,8 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
         # Get the total number of timepoints in perturbations
         total_tidxs = 0
         for ridx, subj in enumerate(self.G.data.subjects):
-            self.starts.append([])
-            self.ends.append([])
+            self.starts.append([]) # indices where the perturbation starts
+            self.ends.append([]) # indices where the perturbation ends
             i = 0
             for pidx in range(self.n_perturbations):
                 start, end = self.G.data.tidxs_in_perturbation[ridx][pidx]
@@ -1201,6 +1199,7 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
         self.cols = np.zeros(self.total_len, dtype=int)
         self.data = np.zeros(self.total_len)
 
+        # Make the rows and columns for the data matrix
         PerturbationBaseDesignMatrix.init(
             rows=self.rows, 
             cols=self.cols, 
@@ -1217,8 +1216,8 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
 
     @staticmethod
     @numba.jit(nopython=True, cache=True, fastmath=True)
-    def init(rows, cols, n_perturbations, n_taxa, n_replicates, tidxs_in_perturbation, 
-        n_dts_for_replicate):
+    def init(rows: np.ndarray, cols: np.ndarray, n_perturbations: int, n_taxa: int, 
+        n_replicates: int, tidxs_in_perturbation: np.ndarray, n_dts_for_replicate: np.ndarray):
 
         i = 0
         base_row_idx = 0
@@ -1240,8 +1239,8 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
 
     @staticmethod
     @numba.jit(nopython=True, cache=True, fastmath=True)
-    def fast_build(ret, n_perturbations, n_taxa, n_replicates, tidxs_in_perturbation, 
-        growths, data):
+    def fast_build(ret: np.ndarray, n_perturbations: int, n_taxa: int, n_replicates: int, 
+        tidxs_in_perturbation: np.ndarray, growths: np.ndarray, data: np.ndarray):
 
         i = 0
         for pidx in range(n_perturbations):
@@ -1254,7 +1253,7 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
                 i += end-start
 
     def build(self):
-        growths = self.growths.value
+        growths = self.growths.value # these are the current values of the growth parameters for each taxa
         i = 0
         for ridx in range(self.n_replicates):
             l = self.tidxs_in_pert_per_replicate[ridx] * self.n_taxa
@@ -1274,26 +1273,31 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
     def update_value(self):
         self.build()
 
-    def set_to_rhs(self):
+    def set_to_rhs(self) -> scipy.sparse.spmatrix:
         return self.matrix
 
 
 class PerturbationMixingDesignMatrix(DesignMatrix):
     '''This class creates the permutation matrix required for mixing the base matrix into
     cluster effects
+
+    See Also
+    --------
+    mdsine2.data_matrices.PerturbationBaseDesignMatrix
+    mdsine2.data_matrices.PerturbationDesignMatrix
     '''
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent: "PerturbationDesignMatrix", **kwargs):
         DesignMatrix.__init__(self,
             varname=STRNAMES.PERT_VALUE+'mixing_matrix',
             **kwargs)
 
-        self.parent = parent
-        self.perturbations = self.G.perturbations
-        self.n_perturbations = len(self.perturbations)
-        self.n_taxa = len(self.G.data.taxa)
-        self.n_rows = self.n_perturbations * self.n_taxa
+        self.parent = parent # This is the PerturbationDesignMatrix object
+        self.perturbations = self.G.perturbations # pylab.base.Perturbations
+        self.n_perturbations = len(self.perturbations) # int
+        self.n_taxa = len(self.G.data.taxa) # int
+        self.n_rows = self.n_perturbations * self.n_taxa # int
 
-        # Maps an  and a perturbation to the column it corresponds to in `base`
+        # Maps a taxa and a perturbation to the column it corresponds to in `base`
         self.keypair2col = np.zeros(shape=(self.n_taxa, self.n_perturbations), dtype=int)
         i = 0
         for pidx in range(self.n_perturbations):
@@ -1303,7 +1307,7 @@ class PerturbationMixingDesignMatrix(DesignMatrix):
         self.build(build=False)
 
     # @profile
-    def build(self, build=True, build_for_neg_ind=False, only_cids=None):
+    def build(self, build: bool=True, build_for_neg_ind: bool=False, only_cids: List[int]=None):
         '''Build the matrix
 
         Parameters
@@ -1338,7 +1342,7 @@ class PerturbationMixingDesignMatrix(DesignMatrix):
         self._make_matrix(rows=rows, cols=cols, n_cols=col, build=build)
 
     # @profile
-    def _make_matrix(self, rows, cols, n_cols, build):
+    def _make_matrix(self, rows: np.ndarray, cols: np.ndarray, n_cols: int, build: bool):
         '''Builds the mixing matrix from the specified rows and columns
         (data is always going to be 1 because it is a mixing matrix)
 
@@ -1378,6 +1382,11 @@ class PerturbationDesignMatrix(DesignMatrix):
         into clusters. When we change the indicators of the perturbations or 
         the cluster assignments of the taxa, we only need to change this matrix,
         which is a lot faster than changing everything.
+
+    See Also
+    --------
+    mdsine2.data_matrices.PerturbationBaseDesignMatrix
+    mdsine2.data_matrices.PerturbationBaseDesignMatrix
     '''
     def __init__(self, **kwargs):
         DesignMatrix.__init__(self, varname=STRNAMES.PERT_VALUE, **kwargs)
@@ -1388,13 +1397,13 @@ class PerturbationDesignMatrix(DesignMatrix):
         self.base = PerturbationBaseDesignMatrix(add_to_dict=False, **kwargs)
         self.M = PerturbationMixingDesignMatrix(add_to_dict=False, parent=self, **kwargs)
 
-    def set_to_lhs(self):
+    def set_to_lhs(self) -> np.ndarray:
         # Make the perturbation vector
         b = self.G[STRNAMES.PERT_VALUE].toarray().reshape(-1,1)
 
         return self.matrix.dot(b)
 
-    def set_to_rhs(self):
+    def set_to_rhs(self) -> scipy.sparse.spmatrix:
         return self.matrix
 
     def update_values(self):
@@ -1411,19 +1420,25 @@ class PerturbationDesignMatrix(DesignMatrix):
 class InteractionsBaseDesignMatrix(DesignMatrix):
     '''This is the base data for the design matrix of the interactions.
 
-    This builds the interaction matrix for each Taxa-Taxa interaction as if there
-    were no indicators.
+    This builds the interaction matrix for each __Taxa-Taxa__ interaction as if there
+    were no indicators. Note that this is not what is used during inference - we multiply 
+    this matrix by the mixing matrix.
+
+    See Also
+    --------
+    mdsine2.design_matrices.InteractionsMixingDesignMatrix
+    mdsine2.design_matrices.InteractionsDesignMatrix
     '''
     def __init__(self, **kwargs):
         name = STRNAMES.CLUSTER_INTERACTION_VALUE+'_base_data'
         DesignMatrix.__init__(self,varname=name, **kwargs)
 
         # Initialize and set up rows and cols for base matrix
-        total_n_dts = self.G.data.total_n_dts_per_taxa
+        total_n_dts = self.G.data.total_n_dts_per_taxa # int
 
-        n_taxa = self.G.data.n_taxa
-        self.n_rows = int(n_taxa * total_n_dts)
-        self.n_cols = int(n_taxa * (n_taxa - 1))
+        n_taxa = self.G.data.n_taxa # int
+        self.n_rows = int(n_taxa * total_n_dts) # int
+        self.n_cols = int(n_taxa * (n_taxa - 1)) # int
         self.shape = (self.n_rows, self.n_cols)
 
         self.master_rows = np.kron(
@@ -1470,7 +1485,7 @@ class InteractionsBaseDesignMatrix(DesignMatrix):
 
     @staticmethod
     @numba.jit(nopython=True, cache=True, fastmath=True)
-    def _fast_build(ret, data, n_dts, n_taxa, i):
+    def _fast_build(ret: np.ndarray, data: np.ndarray, n_dts: int, n_taxa: int, i: int):
         '''About 99.5% faster than regular python looping
         '''
         for tidx in range(n_dts):
@@ -1484,7 +1499,8 @@ class InteractionsBaseDesignMatrix(DesignMatrix):
 
     @staticmethod
     @numba.jit(nopython=True, cache=True, fastmath=True)
-    def _fast_build_zi_ignore(ret, data, n_dts, n_taxa, i, zero_inflation, zi_mask):
+    def _fast_build_zi_ignore(ret: np.ndarray, data: np.ndarray, n_dts: int, n_taxa: int, i: int, 
+        zero_inflation: np.ndarray, zi_mask: np.ndarray):
         '''About 99.5% faster than regular python looping
 
         Only set to include if target taxa current timepoint and future timepoint are there and
@@ -1509,7 +1525,7 @@ class InteractionsBaseDesignMatrix(DesignMatrix):
     def update_value(self):
         self.build()
 
-    def set_to_rhs(self):
+    def set_to_rhs(self) -> scipy.sparse.spmatrix:
         return self.matrix
 
 
@@ -1518,23 +1534,37 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
     `InteractionsBaseDesignMatrix` for the  `InteractionsDesignMatrix`
     class
 
+
+
     The `keypair2col` dictionary maps a tuple of (target_taxa_idx,source_taxa_idx)
     to the column they belong to in the full, non-clustered matrix.
 
     This class has a few different options on how to build M, dependiing on where
     it is being called in inference, some are faster than others, or build very
     specific parts, or build the matrix given some specific data. 
+
+    See Also
+    --------
+    mdsine2.design_matrices.InteractionsBaseDesignMatrix
+    mdsine2.design_matrices.InteractionsDesignMatrix
     '''
-    def __init__(self, parent, **kwargs):
+    def __init__(self, parent: "InteractionsDesignMatrix", **kwargs):
         DesignMatrix.__init__(self,
             varname=STRNAMES.CLUSTER_INTERACTION_VALUE+'mixing_matrix',
             **kwargs)
 
-        self.parent = parent
+        self.parent = parent # InteractionsDesignMatrix
         n_taxa = self.G.data.n_taxa
+
+        # mdsine2.pylab.cluster.Clustering object
+        # This tells the design matrix which taxon is in which cluster
         self.clustering = self.G[STRNAMES.CLUSTERING_OBJ]
+
+        # mdsine2.pylab.contrib.Interactions object
+        # This tells the design matrix what interactions have positive indicators
         self.interactions = self.G[STRNAMES.INTERACTIONS_OBJ]
-        self.n_rows = int(n_taxa * (n_taxa - 1))
+
+        self.n_rows = int(n_taxa * (n_taxa - 1)) # int
 
         # Build the keypair2col dictionary
         self.keypair2col = np.zeros(
@@ -1550,14 +1580,15 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         self.build(build=False)
         logging.info('Initialized interactions mixing design matrix')
 
-        # get _get_rows in cache
+        # Compile and set `_get_rows` in cache - these values are dummy values that are
+        # not used in inference
         a = np.zeros(1, int)
         tmems = np.asarray([1], dtype=int)
         smems = np.asarray([2], dtype=int)
         InteractionsMixingDesignMatrix.get_indices(a, self.keypair2col, tmems, smems)
 
     # @profile
-    def build(self, build=True, build_for_neg_ind=False):
+    def build(self, build: bool=True, build_for_neg_ind: bool=False):
         '''This makes the rows, cols, and data vectors for the mixing matrix
         from scratch slowly - it does not take advantage of the clus2clus dictionary.
 
@@ -1601,7 +1632,7 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         self.cols = cols
 
     # @profile
-    def build_clustering(self, build=True):
+    def build_clustering(self, build: bool=True):
         '''This makes the rows, cols, and data vectors for the mixing matrix
         from scratch slowly - it does not take advantage of the clus2clus dictionary.
 
@@ -1638,7 +1669,7 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         self._make_matrix(rows=self.rows, cols=self.cols, n_cols=c2ciidx, build=build)
 
     # @profile
-    def build_for_cols(self, build, cols):
+    def build_for_cols(self, build: bool, cols: np.ndarray):
         '''This does the same as `build` but it only builds for the 
         column indices specified, in order
 
@@ -1664,7 +1695,7 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         self._make_matrix(rows=rows, cols=cols, n_cols=len(input_cols), build=build)
 
     # @profile
-    def build_for_specified(self, build, idxs, tcids, scids):
+    def build_for_specified(self, build: bool, idxs: np.ndarray, tcids: np.ndarray, scids: np.ndarray):
         '''This does the same as `build` but it only builds for the 
         pair of tcids and scids at the same index passed in
         '''
@@ -1683,7 +1714,7 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         self._make_matrix(rows=rows, cols=cols, n_cols=len(idxs), build=build)
 
     # @profile
-    def build_to_and_from(self, cids, build):
+    def build_to_and_from(self, cids: List[int], build: bool):
         '''This makes the rows, cols, and data vectors for the mixing matrix
         from scratch for only positive interactions going to an from each 
         of the clusters in `cids`.
@@ -1718,7 +1749,8 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         self._make_matrix(rows=rows, cols=cols, n_cols=c2ciidx, build=build)
 
     # @profile
-    def inner(self, rows, cols, d, interaction, c2ciidx):
+    def inner(self, rows: List, cols: List, d: Dict[int, Any], interaction: pl.contrib._Interaction, 
+        c2ciidx: int) -> Tuple[Dict[int, Any], List, List]:
         tcid = interaction.target_cid
         scid = interaction.source_cid
 
@@ -1742,7 +1774,8 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         return d, rows, cols
 
     # @profile
-    def inner_faster(self, rows, cols, d, tcid, scid, c2ciidx):
+    def inner_faster(self, rows: List, cols: List, d: Dict[int, Any], tcid: int, scid: int, 
+        c2ciidx: int) -> Tuple[Dict[int, Any], List, List]:
         if tcid not in d:
             tmems = np.asarray(list(self.clustering.clusters[tcid].members))
             d[tcid] = tmems
@@ -1763,7 +1796,7 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         return d, rows, cols
 
     # @profile
-    def inner_faster_faster(self, tcid, scid, c2ciidx):
+    def inner_faster_faster(self, tcid: int, scid: int, c2ciidx: int):
         if tcid not in self.d:
             tmems = np.asarray(list(self.clustering.clusters[tcid].members))
             self.d[tcid] = tmems
@@ -1805,7 +1838,8 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
 
     @staticmethod
     @numba.jit(nopython=True, cache=True)
-    def get_indices(a, keypair2col, tmems, smems):
+    def get_indices(a: np.ndarray, keypair2col: np.ndarray, tmems: np.ndarray, 
+        smems: np.ndarray) -> np.ndarray:
         '''Use Just in Time compilation to reduce the 'getting' time
         by about 95%
 
@@ -1819,6 +1853,10 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         tmems, smems : np.ndarray
             These are the Taxa indices in the target cluster and the source cluster
             respectively
+
+        Returns
+        -------
+        np.ndarray
         '''
         i = 0
         for tidx in tmems:
@@ -1858,6 +1896,11 @@ class InteractionsDesignMatrix(DesignMatrix):
         the cluster assignments of the Taxa, we only need to change this matrix,
         which is a lot faster than changing everything. Because both matrices are
         sparse matrices and this matrix is 98% zeros, this is a very fast operation.
+
+    See Also
+    --------
+    mdsine2.design_matrices.InteractionsBaseDesignMatrix
+    mdsine2.design_matrices.InteractionsMixingDesignMatrix
     '''
     def __init__(self, **kwargs):
         DesignMatrix.__init__(self,
@@ -1883,15 +1926,15 @@ class InteractionsDesignMatrix(DesignMatrix):
         self.n_cols = self.shape[1]
 
     @property
-    def shape(self):
+    def shape(self) -> Tuple[int, int]:
         return self.matrix.shape
 
-    def set_to_lhs(self):
+    def set_to_lhs(self) -> np.ndarray:
         b_cicj = self.interactions.get_values(
             use_indicators=True).reshape(-1,1)
         return self.matrix.dot(b_cicj)
 
-    def set_to_rhs(self):
+    def set_to_rhs(self)-> scipy.sparse.spmatrix:
         return self.matrix
 
     def update_value(self):

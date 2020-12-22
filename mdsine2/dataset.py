@@ -1,12 +1,13 @@
 import pandas as pd
 import os
 import logging
+from typing import Dict, Union
 from .pylab import TaxaSet, Study
 
 __all__ = ['load_gibson', 'parse']
 
-def load_gibson(dset=None, as_df=False, with_perturbations=True, species_assignment='both',
-    load_local=None, max_n_species=2):
+def load_gibson(dset: str=None, as_df: bool=False, with_perturbations: bool=True, species_assignment: str='both',
+    load_local: str=None, max_n_species: int=2) -> Union[Dict[str, pd.DataFrame], Study]:
     '''Load the Gibson dataset.
     Returns either a `mdsine2.Study` object or the `pandas.DataFrame` objects that
     that comprise the Gibson dataset.
@@ -79,7 +80,8 @@ def load_gibson(dset=None, as_df=False, with_perturbations=True, species_assignm
             perturbations=perturbations)
         return study
 
-def parse(name, metadata, taxonomy, reads=None, qpcr=None, perturbations=None, sep='\t'):
+def parse(name: str, metadata: str, taxonomy: str, reads: str=None, qpcr: str=None, 
+    perturbations: str=None, sep: str='\t') -> Study:
     '''Parse a dataset. Acts as a wrapper for `mdsine2.Study.parse`
 
     Parameters

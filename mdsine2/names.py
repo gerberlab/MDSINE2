@@ -21,6 +21,99 @@ class _BaseNameClass:
 
 class StrNamesClass(_BaseNameClass):
     '''String representation of each of the variables
+
+    Parmaters
+    ---------
+    self.CLUSTERING_OBJ: str
+        This is the name for the `mdsine2.pylab.cluster.Clustering` object.
+        Value: 'Clustering object (contains ability to change the cluster assignments)'
+    self.CLUSTERING: str
+        This is the name for the `mdsine2.posterior.ClusterAssignments` object.
+        Value: 'Clustering parameter'
+    self.CONCENTRATION: str
+        This is the name for the `mdsine2.posterior.Concentration` object.
+        Value: 'Clustering concentration parameter'
+    self.LATENT_TRAJECTORY: str
+        This is the name for the `mdsine2.posterior.TrajectorySet` object.
+        Value: 'Latent trajectory parameter'
+    self.FILTERING: str
+        This is the name for the `mdsine2.posterior.FilteringLogMP` object.
+        Value: 'Filtering'
+    self.ZERO_INFLATION: str
+        This is the name for the `mdsine2.posterior.ZeroInflation` object.
+        Value: 'Zero inflation'
+    self.PROCESSVAR: str
+        This is the name for the `mdsine2.posterior.ProcessVarGlobal` object.
+        Value: 'Process Variance parameter'
+    self.NEGBIN_A0: str
+        This is the name for the `mdsine2.negbin.NegBinDispersionParam` object.
+        Value: 'Negative binomial dispersion a0'
+    self.NEGBIN_A1: str
+        This is the name for the `mdsine2.negbin.NegBinDispersionParam` object.
+        Value: 'Negative binomial dispersion a1'
+    self.GLV_PARAMETERS: str
+        This is the name for the `mdsine2.posterior.GLVParameters` object.
+        Value: 'Logistic growth parameters (growth, self-interactions, interactions/perturbations)'
+    self.GROWTH_VALUE: str
+        This is the name for the `mdsine2.posterior.Growth` object.
+        Value: 'Growth parameter'
+    self.PRIOR_VAR_GROWTH: str
+        This is the name for one of the `mdsine2.posterior.PriorVarMH` object instantiations.
+        Value: 'Variance parameter for the truncated normal prior of the growth parameter'
+    self.PRIOR_MEAN_GROWTH: str
+        This is the name for one of the `mdsine2.posterior.PriorMeanMH` object instantiations.
+        Value: 'Mean parameter for the truncated normal prior of the growth parameter'
+    self.SELF_INTERACTION_VALUE: str
+        This is the name for the `mdsine2.posterior.SelfInteractions` object.
+        Value: 'Self interaction parameter'
+    self.PRIOR_VAR_SELF_INTERACTIONS: str
+        This is the name for one of the `mdsine2.posterior.PriorVarMH` object instantiations.
+        Value: 'Variance parameter for the truncated normal prior of the self-interaction parameter'
+    self.PRIOR_MEAN_SELF_INTERACTIONS: str
+        This is the name for one of the `mdsine2.posterior.PriorMeanMH` object instantiations.
+        Value: 'Mean parameter for the truncated normal prior of the self-interaction parameter'
+    self.INTERACTIONS_OBJ: str
+        This is the name for the `mdsine2.pylab.contrib.Interactions` object.
+        Value: 'Interactions object'
+    self.CLUSTER_INTERACTION_VALUE: str
+        This is the name for the `mdsine2.posterior.ClusterInteractionValue` object.
+        Value: 'Cluster interaction value parameter'
+    self.CLUSTER_INTERACTION_INDICATOR: str
+        This is the name for the `mdsine2.posterior.ClusterInteractionIndicators` object.
+        Value: 'Cluster interaction indicator parameter'
+    self.CLUSTER_INTERACTION_INDICATOR_PROB: str
+        This is the name for the `mdsine2.posterior.ClusterInteractionProbability` object.
+        Value: 'Cluster interaction probability'
+    self.PRIOR_VAR_INTERACTIONS: str
+        This is the name for the `mdsine2.posterior.PriorVarInteractions` object.
+        Value: 'Variance parameter for the normal prior of the interaction parameter'
+    self.PRIOR_MEAN_INTERACTIONS: str
+        This is the name for the `mdsine2.posterior.PriorMeanInteractions` object.
+        Value: 'Mean parameter for the normal prior of the interaction parameter'
+    self.PERT_VALUE: str
+        This is the name for the `mdsine2.posterior.PerturbationMagnitudes` object.
+        Value: 'Perturbation value parameter'
+    self.PERT_INDICATOR: str
+        This is the name for the `mdsine2.posterior.PerturbationIndicators` object.
+        Value: 'Perturbation indicator parameter'
+    self.PERT_INDICATOR_PROB: str
+        This is the name for the `mdsine2.posterior.PerturbationProbabilities` object.
+        Value: 'Probability parameter for the beta prior of the perturbation indicator parameter'
+    self.PRIOR_VAR_PERT: str
+        This is the name for the `mdsine2.posterior.PriorVarPerturbations` object.
+        Value: 'Variance parameter for the normal prior of the perturbation parameter'
+    self.PRIOR_MEAN_PERT: str
+        This is the name for the `mdsine2.posterior.PriorMeanPerturbations` object.
+        Value: 'Mean parameter for the normal prior of the perturbation parameter'
+    self.QPCR_VARIANCES: str
+        This is the name for the `mdsine2.posterior.qPCRVariances` object.
+        Value: 'qPCR variances'
+    self.QPCR_DOFS: str
+        This is the name for the `mdsine2.posterior.qPCRDegreesOfFreedoms` object.
+        Value: 'qPCR hyperprior degrees of freedom'
+    self.QPCR_SCALES: str
+        This is the name for the `mdsine2.posterior.qPCRScales` object.
+        Value: 'qPCR hyperprior scales'
     '''
     def __init__(self):
         self.CLUSTERING_OBJ = 'Clustering object (contains ability to change the cluster assignments)'

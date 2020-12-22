@@ -1,22 +1,6 @@
 '''This module holds classes for the logging and model configuration
 parameters that are set manually in here. There are also the filtering
 functions used to preprocess the data
-
-Learned negative binomial dispersion parameters
------------------------------------------------
-a0
-	median: 3.021173158076349e-05
-	mean: 3.039336514482573e-05
-	25th percentile: 2.8907661553542307e-05
-	75th percentile: 3.1848563862236224e-05
-	acceptance rate: 0.3636
-a1
-	median: 0.03610445832385458
-	mean: 0.036163868481381596
-	25th percentile: 0.034369620675005035
-	75th percentile: 0.0378392670993046
-	acceptance rate: 0.5324
-
 '''
 import logging
 import numpy as np
@@ -79,13 +63,77 @@ class MDSINE2ModelConfig(_BaseModelConfig):
 
     System initialization
     ---------------------
+    OUTPUT_BASEPATH, MODEL_PATH : str
+        Path to save the model
+    SEED : int
+        Seed to initialize inference with
+    BURNIN : int
+        Number of initial Gibb steps to throw away
+    N_SAMPLES : int
+        Total number of Gibb steps
+    CHECKPOINT : int
+        How often to write to disk
+    PROCESS_VARIANCE_TYPE : str
+        What type of process variance to do
+        NOTE: There is only one option, do not change
+    DATA_DTYPE : str
+        What kind of data to do inference we
+        NOTE: Model assume you are using absolute abundance, do not change
+    QPCR_NORMALIZATION_MAX_VALUE : float
+        This is value to set the largest qPCR value to. Normalize
+        all other qPCR measurements directly to this
+    LEAVE_OUT : str
+        Which subject to leave out, if necessary
+    ZERO_INFLATION_TRANSITION_POLICY : str
+        What type of zero inflation to do. Do not change
+    GROWTH_TRUNCATION_SETTINGS : str
+        How to initialize the truncation settings for the growth parameters
+    SELF_INTERACTIONS_TRUNCATION_SETTINGS : str
+        How to initialize the truncation settings for the self-interaction parameters
+    MP_FILTERING : str
+        How to do multiprocessing for filtering
+    MP_CLUSTERING : str
+        How to do multiprocessing for clustering
+    NEGBINB_A0, NEGBIN_A1 : float
+        Negative binomial dispersion parameters
+    N_QPCR_BUCKETS : int
+        Number of qPCR buckets. This is not learned in the model, do not change.
+    INTERMEDIATE_VALIDATION_T : float
+        How often to do the intermediate validation
+    INTERMEDIATE_VALIDATION_KWARGS : dict
+        Arguemnts for the intermediate valudation
+    LEARN : Dict[str, bool]
+        These are the dictionary of parameters which we are learning in the model.
+        If the name maps to True, then we learn it during inference. If it maps to 
+        false, then we do not update its value duting inference.
+    INFERENCE_ORDER : list
+        This is the order to update the parameters during MCMC inference
+    INITIALIZATION_KWARGS : Dict[str, Dict[str, Any]]
+        These are the parameters to send into the `initialize` function for each variable
+        that we are learning
+    INITIALIZATION_ORDER : list
+        This is the order to initialize the variables
 
     Parameters
     ----------
+    basepath : str
+        This is the base path to save the inference
+    seed : int
+        This is the seed to start the inference with
+    burnin : int
+        This is how many gibb steps to throw away originally
+    n_samples : int
+        This is the total number of Gibb steps to do for inference
+    negbin_a0, negbin_a1 : float
+        This is the negative binomial dispersion parameters
+    leave_out : str
+        This is the subject to leave out, if necesssary
+    checkpoint : int
+        This is how often we should write to disk
     '''
-    def __init__(self, basepath, seed, burnin, n_samples,
-        negbin_a0, negbin_a1, leave_out=None, max_n_taxa=None, 
-        checkpoint=100):
+    def __init__(self, basepath: str, seed: int, burnin: int, n_samples: int,
+        negbin_a0: float, negbin_a1: float, leave_out: str=None,
+        checkpoint: int=100):
         self.OUTPUT_BASEPATH = os.path.abspath(basepath)
         self.MODEL_PATH = self.OUTPUT_BASEPATH
         self.SEED = seed
@@ -97,7 +145,6 @@ class MDSINE2ModelConfig(_BaseModelConfig):
 
         self.QPCR_NORMALIZATION_MAX_VALUE = 100
         self.LEAVE_OUT = leave_out
-        self.MAX_N_TAXA = max_n_taxa
         self.ZERO_INFLATION_TRANSITION_POLICY = None #'ignore'
 
         self.GROWTH_TRUNCATION_SETTINGS = 'positive'
@@ -295,7 +342,6 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'run_every_n_iterations': 4},
             STRNAMES.GLV_PARAMETERS: {
                 'update_jointly_pert_inter': True,
-                'update_jointly_growth_si': False,
                 'tune': 50,
                 'end_tune': 'half-burnin'},
             STRNAMES.PROCESSVAR: {
@@ -442,10 +488,11 @@ class FilteringConfig(pl.Saveable):
     min_num_subjects : int, None
         This is how many subjects this must be true for for the Taxa to be
         valid. If it is None then it only requires one subject.
-    colonization_time : int
+    colonization_time : float
         How many days we consider colonization (ignore during filtering)
     '''
-    def __init__(self, colonization_time, threshold, min_num_subj, min_num_consec):
+    def __init__(self, colonization_time: float, threshold: float, 
+        min_num_subj: int, min_num_consec: int):
 
         self.COLONIZATION_TIME = colonization_time
         self.THRESHOLD = threshold
@@ -481,8 +528,8 @@ class LoggingConfig(pl.Saveable):
     level : int
         This is the level of logging to log
     '''
-    def __init__(self, basepath=None, level=logging.INFO, 
-        fmt='%(levelname)s:%(module)s.%(lineno)s: %(message)s'):
+    def __init__(self, basepath: str=None, level: int=logging.INFO, 
+        fmt: str='%(levelname)s:%(module)s.%(lineno)s: %(message)s'):
         self.FORMAT = fmt
         self.LEVEL = level
         self.NUMPY_PRINTOPTIONS = {
@@ -509,6 +556,32 @@ class NegBinConfig(_BaseModelConfig):
     '''Configuration class for learning the negative binomial dispersion
     parameters. Note that these parameters are learned offline.
 
+        System initialization
+    ---------------------
+    OUTPUT_BASEPATH : str
+        Path to save the model
+    SEED : int
+        Seed to initialize inference with
+    BURNIN : int
+        Number of initial Gibb steps to throw away
+    N_SAMPLES : int
+        Total number of Gibb steps
+    CHECKPOINT : int
+        How often to write to disk
+    MP_FILTERING : str
+        How to do multiprocessing for filtering
+    LEARN : Dict[str, bool]
+        These are the dictionary of parameters which we are learning in the model.
+        If the name maps to True, then we learn it during inference. If it maps to 
+        false, then we do not update its value duting inference.
+    INFERENCE_ORDER : list
+        This is the order to update the parameters during MCMC inference
+    INITIALIZATION_KWARGS : Dict[str, Dict[str, Any]]
+        These are the parameters to send into the `initialize` function for each variable
+        that we are learning
+    INITIALIZATION_ORDER : list
+        This is the order to initialize the variables
+
     Parameters
     ----------
     seed : int
@@ -526,7 +599,8 @@ class NegBinConfig(_BaseModelConfig):
         to learn are `SYNTHETIC_A0` AND `SYNTHETIC_A1`.
     '''
 
-    def __init__(self, seed, burnin, n_samples, checkpoint, basepath):
+    def __init__(self, seed: int, burnin: int, n_samples: int, checkpoint: int, 
+        basepath: str):
         if basepath[-1] != '/':
             basepath += '/'
 

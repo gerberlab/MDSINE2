@@ -34,14 +34,18 @@ import pandas
 import sys
 import numba
 
+from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Callable
+
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
 from matplotlib.pyplot import arrow
 import matplotlib.ticker as plticker
+import matplotlib
 
 from . import pylab as pl
-from .pylab.base import DEFAULT_TAXLEVEL_NAME
+from .pylab.base import DEFAULT_TAXLEVEL_NAME, Perturbations, Subject, TaxaSet, Study, OTU
+from .pylab import Clustering, variables
 
 warnings.filterwarnings('ignore')
 _plt_labels = ['title', 'xlabel', 'ylabel']
@@ -66,7 +70,7 @@ PLT_YLABEL_LABEL = 'ylabel'
 # ----------------
 # Global Functions
 # ----------------
-def set_default_tax_level(level):
+def set_default_tax_level(level: str):
     '''This sets the default taxonomic level to plot at.
     
     Parameters
@@ -82,7 +86,7 @@ def set_default_tax_level(level):
         raise ValueError('`level` ({}) not valid'.format(level))
     DEFAULT_TAX_LEVEL = level
 
-def set_perturbation_color(color):
+def set_perturbation_color(color: Any):
     '''Set the color for the perturbation shading. Must be matplotlib compatible.
 
     Parameters
@@ -97,7 +101,7 @@ def set_perturbation_color(color):
     global PERTURBATION_COLOR
     PERTURBATION_COLOR = color
 
-def set_xtick_frequency(x):
+def set_xtick_frequency(x: Union[float, int]):
     '''Sets the xtick frequency (how often a label on the x axis should occur)
 
     Parameters
@@ -112,7 +116,7 @@ def set_xtick_frequency(x):
         raise ValueError('x ({}) must be >= 0'.format(x))
     XTICK_FREQUENCY = x
 
-def set_default_trace_color(color):
+def set_default_trace_color(color: Any):
     '''Sets defalt color of the trace. Must be matplotlib compatible.
 
     Parameters
@@ -127,7 +131,9 @@ def set_default_trace_color(color):
     global DEFAULT_TRACE_COLOR
     DEFAULT_TRACE_COLOR = color
 
-def shade_in_perturbations(ax, perturbations, subj, textcolor='black', textsize=None, alpha=0.25, label=True):
+def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbations, 
+    subj: Subject, textcolor: str='black', textsize: Union[float, int]=None, 
+    alpha: float=0.25, label: bool=True) -> matplotlib.pyplot.Axes:
     '''Shade in the axis where there are perturbations and adds the label of
     the perturbation above it.
 
@@ -135,7 +141,7 @@ def shade_in_perturbations(ax, perturbations, subj, textcolor='black', textsize=
     ----------
     ax : matplotlib.pyplot.Axes
         Axis we are plotting on
-    perturbations : list(mdsine2.BasePerturbations)
+    perturbations : mdsine2.Perturbations
         List of perturbations we are coloring in
     subj : mdsine2.Subject, str
 
@@ -202,11 +208,12 @@ def shade_in_perturbations(ax, perturbations, subj, textcolor='black', textsize=
 # --------
 # Heatmaps
 # --------
-def render_bayes_factors(bayes_factors, taxa=None, ax=None,
-    n_colors=100, max_value=None, xticklabels='%(index)s', yticklabels='%(name)s %(index)s',
-    include_tick_marks=False, linewidths=0.8, linecolor='black',cmap='Blues',
-    include_colorbar=True, title='Microbe Interaction Bayes Factors', figure_size=None,
-    order=None):
+def render_bayes_factors(bayes_factors: np.ndarray, taxa: TaxaSet=None, ax:matplotlib.pyplot.Axes=None,
+    n_colors: int=100, max_value: Union[float, int]=None, xticklabels: str='%(index)s', 
+    yticklabels: str='%(name)s %(index)s', include_tick_marks: bool=False, linewidths: float=0.8, 
+    linecolor: str='black', cmap: str='Blues',
+    include_colorbar: bool=True, title: str='Microbe Interaction Bayes Factors', figure_size: Tuple[float, float]=None,
+    order: Union[Iterator[int], np.ndarray]=None) -> matplotlib.pyplot.Axes:
     '''Renders the bayes factors for each of the interactions. Self interactions
     are automatically set to np.nan.
 
@@ -310,11 +317,12 @@ def render_bayes_factors(bayes_factors, taxa=None, ax=None,
     plt.yticks(rotation=0)
     return ax
 
-def render_cocluster_probabilities(coclusters, taxa, ax=None,
-    n_colors=100, xticklabels='%(index)s', yticklabels='%(name)s %(index)s',
-    include_tick_marks=False, linewidths=0.8, linecolor='black', cmap='Blues',
-    include_colorbar=True, title='Microbe Co-cluster Probabilities', figure_size=None,
-    order=None):
+def render_cocluster_probabilities(coclusters: np.ndarray, taxa: TaxaSet, ax: matplotlib.pyplot.Axes=None,
+    n_colors: int=100, max_value: Union[float, int]=None, xticklabels: str='%(index)s', 
+    yticklabels: str='%(name)s %(index)s', include_tick_marks: bool=False, linewidths: float=0.8, 
+    linecolor: str='black', cmap: str='Blues',
+    include_colorbar: bool=True, title: str='Microbe Co-cluster Probabilities', figure_size: Tuple[float, float]=None,
+    order: Union[Iterator[int], np.ndarray]=None) -> matplotlib.pyplot.Axes:
     '''Render the cocluster proportions. Values in coclusters should be [0,1].
 
     Parameters
@@ -403,12 +411,12 @@ def render_cocluster_probabilities(coclusters, taxa, ax=None,
     plt.yticks(rotation=0)
     return ax
 
-def render_interaction_strength(interaction_matrix, log_scale, taxa, clustering=None,
-    ax=None, center_colors=False, n_colors=100, xticklabels='%(index)s', 
-    vmax=None, vmin=None, yticklabels='%(name)s %(index)s', 
-    include_tick_marks=False, linewidths=0.8, linecolor='black',
-    cmap=None, include_colorbar=True, title='Microbe Interaction Strength',
-    figure_size=None, order=None):
+def render_interaction_strength(interaction_matrix: np.ndarray, log_scale: bool, taxa: TaxaSet, 
+    clustering: Clustering=None, ax: matplotlib.pyplot.Axes=None, center_colors: bool=False, 
+    n_colors: int=100, xticklabels: str='%(index)s', vmax: Union[float, int]=None, vmin: Union[float, int]=None, 
+    yticklabels: str='%(name)s %(index)s', include_tick_marks: bool=False, linewidths: float=0.8, linecolor: str='black',
+    cmap: Any=None, include_colorbar: bool=True, title: str='Microbe Interaction Strength',
+    figure_size: Tuple[float, float]=None, order: Union[Iterator[int], np.ndarray]=None) -> matplotlib.pyplot.Axes:
     '''Render the interaction strength matrix. If you want the values in log scale,
     it will annotate the box with the sign of the interaction and plot the absolute
     value of the interaction. If you want the Taxa in the same clusters to be grouped
@@ -563,76 +571,13 @@ def render_interaction_strength(interaction_matrix, log_scale, taxa, clustering=
             'plotting this axis.'.format(str(e), _is_just_zero_or_nan(interaction_matrix)))
     return ax
 
-def render_growth_vector(growth, difference=False, ax=None, light_palette='Navy', **kwargs):
-    '''Renders the growth terms of the regression coefficients as an image. Pass
-    in the raw regression coefficients and
-
-    Parameters
-    ----------
-    growth : np.ndarray
-        - growth terms from the interaction matrix
-    ax : matplotlib.pyplot.Axes, Optional
-        - Axis to plot on.
-        - If nothing is provided, a new figure is created with a subplot
-          that takes up the entire figure.
-    difference : bool, Optional
-        - If True, Resets the colormap so that a 0 difference is white and
-          it is diverging.
-    light_palette : str, Optional
-        - Palette to use for the colormap
-    kwargs : dict
-        - optional arguments for plt.imshow
-        - Default values:
-            'vmin' = - max(abs(max(raw_regress_coeff)), abs(min(raw_regress_coeff)))
-            'vmin' = + max(abs(max(raw_regress_coeff)), abs(min(raw_regress_coeff)))
-
-    Returns
-    -------
-    matplotlib.pyplot.Axes
-        - Axis object that has the rendering of the growth values
-    '''
-
-    growth = growth.reshape(-1,1)
-    if ax is None:
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-
-    # Set labels if necessary
-    ax, kwargs = _set_plt_labels(kwargs, ax)
-
-    # Set default values if necessary
-    if difference:
-        kwargs['cmap'] = sns.diverging_palette(240,10,n=DEFAULT_N_COLORS, as_cmap=True)
-    else:
-        kwargs['cmap'] = sns.light_palette(light_palette, as_cmap=True)
-
-    _max = np.max(np.absolute(growth))
-    if 'vmin' not in kwargs and difference:
-        kwargs['vmin'] = -_max
-    if 'vmax' not in kwargs and difference:
-        kwargs['vmax'] = _max
-
-    im = ax.imshow(growth, **kwargs)
-
-    # Set ticks so that you can discern between pixels
-    ax.set_yticks(np.arange(-.5, growth.shape[0], 1), minor = False)
-    ax.set_yticks(np.arange(0, growth.shape[0], 1), minor = True)
-
-    ax.set_xticklabels([])
-    ax.set_yticklabels(labels = np.arange(0, growth.shape[0], dtype=int), minor = True)
-    ax.tick_params(which = 'major',labelbottom = False, labelleft = False,
-        labelright = False, labeltop = False)
-    ax.tick_params(which = 'minor',labelbottom = False, labelleft = True,
-        labelright = False, labeltop = False)
-    ax.grid(color='black', linewidth = 1.5, which='major', axis='y')
-    plt.yticks(rotation=0)
-    return im
-
 # ------
 # Traces
 # ------
-def render_acceptance_rate_trace(var, idx=None, prev='default', ax=None, include_burnin=True, 
-    scatter=True, n_burnin=None, section='posterior', **kwargs):
+def render_acceptance_rate_trace(var: variables.Variable, idx: Union[int, Tuple[int, int]]=None, 
+    prev: Union[int, str]='default', ax: matplotlib.pyplot.Axes=None, include_burnin: bool=True, 
+    scatter: bool=True, n_burnin: int=None, section: str='posterior', 
+    **kwargs) -> matplotlib.pyplot.Axes:
     '''Visualize the acceptance rate over time for a
     metropolis._BaseKernel object.
 
@@ -776,8 +721,10 @@ def render_acceptance_rate_trace(var, idx=None, prev='default', ax=None, include
         logging.info('`ax.plot` failed. No points to plot')
     return ax
 
-def render_trace(var, idx=None, ax=None, plt_type=None, include_burnin=True, 
-    scatter=True, log_scale=False, n_burnin=None, section='posterior', **kwargs):
+def render_trace(var: variables.Variable, idx: Union[int, Tuple[int, int]]=None, 
+    ax: matplotlib.pyplot.Axes=None, plt_type: str=None, include_burnin: bool=True, 
+    scatter: bool=True, log_scale: bool=False, n_burnin: int=None, section:str='posterior', 
+    **kwargs) -> matplotlib.pyplot.Axes:
     '''
     Visualizes the Trace of a random variable.
     Produces a historgram of the values and a plot of the sample
@@ -1004,10 +951,10 @@ def render_trace(var, idx=None, ax=None, plt_type=None, include_burnin=True,
 # ----------
 # Abundances
 # ----------
-def alpha_diversity_over_time(subjs, metric, taxlevel=None,
-    highlight=None, marker='o', markersize=4, shade_perturbations=True, 
-    legend=True, cmap=None, alpha=1.0, linestyle='-', ax=None, grid=False,
-    colors=None, **kwargs):
+def alpha_diversity_over_time(subjs: Union[Subject, List[Subject]], metric: Callable, taxlevel: str=None,
+    highlight: List[float]=None, marker: str='o', markersize: Union[float, int]=4, shade_perturbations: bool=True, 
+    legend: bool=True, cmap: Any=None, alpha: float=1.0, linestyle: str='-', ax: matplotlib.pyplot.Axes=None, 
+    grid: bool=False, colors: Any=None, **kwargs) -> matplotlib.pyplot.Axes:
     '''Plots the alpha diversity over time for the subject
 
     Parameters
@@ -1139,11 +1086,14 @@ def alpha_diversity_over_time(subjs, metric, taxlevel=None,
         ax.grid()
     return ax
 
-def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
-    plot_abundant=None, plot_specific=None, plot_clusters=None, highlight=None, marker='o',
-    ylim=None, markersize=4, shade_perturbations=True, legend=True, set_0_to_nan=False, 
-    color_code_clusters=False, clustering=None, cmap=None, alpha=1.0, linestyle='-', ax=None,
-    include_errorbars=False, grid=False, label_formatter=None, label_func=None, **kwargs):
+def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, taxlevel: str=None, 
+    yscale_log: bool=None, plot_abundant: int=None, plot_specific: Iterator[str]=None, 
+    plot_clusters: Iterator[int]=None, highlight: List[float]=None, marker: str='o',
+    ylim: Tuple[float, float]=None, markersize: Union[float, int]=4, shade_perturbations: bool=True, 
+    legend: bool=True, set_0_to_nan: bool=False, color_code_clusters: bool=False, clustering: Clustering=None, 
+    cmap: Any=None, alpha: float=1.0, linestyle: str='-', ax: matplotlib.pyplot.Axes=None,
+    include_errorbars: bool=False, grid: bool=False, label_formatter: str=None, 
+    label_func: Callable=None, **kwargs) -> matplotlib.pyplot.Axes:
     '''Plots the abundance over time for the Taxa in `subj`.
 
     What you're plotting
@@ -1571,9 +1521,10 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
         ax.grid()
     return ax
 
-def taxonomic_distribution_over_time(subj, taxlevel=None,
-    legend=True, ax=None, plot_abundant=None, label_formatter=None, 
-    dtype='rel', shade_perturbations=True, **kwargs):
+def taxonomic_distribution_over_time(subj: Union[Subject, Study], taxlevel: str=None,
+    legend: bool=True, ax: matplotlib.pyplot.Axes=None, plot_abundant: int=None, 
+    label_formatter: str=None, dtype: str='rel', shade_perturbations: bool=True, 
+    **kwargs) -> matplotlib.pyplot.Axes:
     '''Produces a taxonomic bar graph for each datapoint
 
     Aggregating by taxanomic level
@@ -1709,9 +1660,11 @@ def taxonomic_distribution_over_time(subj, taxlevel=None,
     # ax = _set_xticks(ax)
     return ax
 
-def aggregate_taxa_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None, 
-    title='Subject %(subjectname)s', xlabel='auto', ylabel='auto', vmin=None, vmax=None,
-    alpha_agg=0.5, alpha_asv=1., legend=True, fontstyle=None, shade_perturbations=True):
+def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: str='rel', 
+    yscale_log: bool=True, ax: matplotlib.pyplot.Axes=None, title: str='Subject %(subjectname)s', 
+    xlabel: str='auto', ylabel: str='auto', vmin: Union[float, int]=None, vmax: Union[float, int]=None,
+    alpha_agg: float=0.5, alpha_asv: float=1., legend: bool=True, fontstyle: str=None, 
+    shade_perturbations: bool=True) -> matplotlib.pyplot.Axes:
     '''Plot the abundances of the aggregated Taxa within the OTU `agg` for the subject `subj`
 
     Each subject within the study has its own axis within the figure. If you want to
@@ -1905,7 +1858,7 @@ def aggregate_taxa_abundances(subj, agg, dtype='rel', yscale_log=True, ax=None,
 # ---------------
 # INNER FUNCTIONS
 # ---------------
-def _is_just_zero_or_nan(matrix):
+def _is_just_zero_or_nan(matrix: np.ndarray) -> bool:
     '''Returns True if the input matrix has only zero or only NaNs
 
     Parameters
@@ -1925,7 +1878,7 @@ def _is_just_zero_or_nan(matrix):
                 return False
     return True
 
-def _format_ticklabel(format, order, taxa):
+def _format_ticklabel(format: str, order: Union[List[int], np.ndarray], taxa: TaxaSet) -> List[str]:
     '''Format the xtick labels witha  slightly different format than that in 
     `pylab.taxaname_formatter`: Overrides the %(index)s to be where it appears 
     in the local order, not the global order
@@ -1957,8 +1910,9 @@ def _format_ticklabel(format, order, taxa):
         ticklabels.append(label)
     return ticklabels
 
-def _set_heatmap_default_args(linewidths=None, linecolor=None, n_colors=None, xticklabels=None,
-    yticklabels=None, include_colorbar=None, include_tick_marks=None):
+def _set_heatmap_default_args(linewidths: float=None, linecolor: str=None, n_colors: int=None, 
+    xticklabels: str=None, yticklabels: str=None, include_colorbar: bool=None, 
+    include_tick_marks: str=None) -> Dict[str, Any]:
     '''Sets the defaults of the above parameters if they are None.
 
     Parameters
@@ -1986,24 +1940,25 @@ def _set_heatmap_default_args(linewidths=None, linecolor=None, n_colors=None, xt
     if linewidths is None:
         linewidths = DEFAULT_LINEWIDTHS
     if linecolor is None:
-        linecolor = DEFAULT_LINECOLOR
+        linecolor = 'blue'
     if n_colors is None:
-        n_colors = DEFAULT_N_COLORS
+        n_colors = 100
     if xticklabels is None:
-        xticklabels = DEFAULT_XTICKLABELS
+        xticklabels = '%(index)s'
     if yticklabels is None:
-        yticklabels = DEFAULT_YTICKLABELS
+        yticklabels = '%(name)s %(index)s'
     if include_colorbar is None:
-        include_colorbar = DEFAULT_INCLUDE_COLORBAR
+        include_colorbar = True
     if include_tick_marks is None:
-        include_tick_marks = DEFAULT_INCLUDE_TICK_MARKS
+        include_tick_marks = False
 
     return {'linewidths': linewidths, 'linecolor': linecolor, 'n_colors': n_colors, 
         'xticklabels': xticklabels, 'yticklabels': yticklabels, 
         'include_colorbar': include_colorbar, 'include_tick_marks': include_tick_marks}
 
-def _init_parameters_heatmap(matrix, taxa, clustering, xticklabels, yticklabels, ax, figure_size,
-    linewidths, order):
+def _init_parameters_heatmap(matrix: np.mdarray, taxa: TaxaSet, clustering: Clustering, 
+    xticklabels: str, yticklabels: str, ax: matplotlib.pyplot.Axes, figure_size: Tuple[float, float],
+    linewidths: Union[float, int], order: Iterator[int]) -> Dict[str, Any]:
     '''Checks if the parameters are initialized correctly for the standard arguments
     for `render_interaction_strength`, `render_cocluster_probabilities`, and
     `render_bayes_factors`.
@@ -2164,7 +2119,7 @@ def _init_parameters_heatmap(matrix, taxa, clustering, xticklabels, yticklabels,
     return {'matrix':matrix, 'xticklabels':xticklabels, 'yticklabels':yticklabels,
         'ax':ax, 'fig':fig, 'cbar_kws': None, 'linewidths':linewidths}
 
-def _set_plt_labels(d, ax=None):
+def _set_plt_labels(d: Dict[str, Any], ax: matplotlib.pyplot.Axes=None) -> Tuple[matplotlib.pyplot.Axes, Dict]:
     '''Removes labels form the dictionay and puts it in
     a new dictionary. This is useful so that we can pass
     **kwargs into matplotlib functions without throwing
@@ -2202,13 +2157,13 @@ def _set_plt_labels(d, ax=None):
         ax.set_ylabel(labels[PLT_YLABEL_LABEL])
     return ax, d
 
-def _set_xticks(ax):
+def _set_xticks(ax: matplotlib.pyplot.Axes) -> matplotlib.pyplot.Axes:
 
     loc = plticker.MultipleLocator(base=XTICK_FREQUENCY)
     ax.xaxis.set_major_locator(loc)
     return ax
 
-def _set_tick_fontsize(ax, fontsize):
+def _set_tick_fontsize(ax: matplotlib.pyplot.Axes, fontsize: Union[int, float]) -> matplotlib.pyplot.Axes:
 
     for tick in ax.xaxis.get_major_ticks():
         tick.label.set_fontsize(fontsize)
@@ -2216,7 +2171,7 @@ def _set_tick_fontsize(ax, fontsize):
         tick.label.set_fontsize(fontsize)
     return ax
 
-def _set_taxlevel(taxlevel):
+def _set_taxlevel(taxlevel: str) -> str:
     if taxlevel == 'default':
         taxlevel = DEFAULT_TAX_LEVEL
     if taxlevel is None:
@@ -2228,7 +2183,8 @@ def _set_taxlevel(taxlevel):
         raise ValueError('taxlevel ({}) not recognized'.format(taxlevel))
     return taxlevel
 
-def _set_default_matplotlib_params(ax=None, title=None, xlabel=None, ylabel=None, figsize=None):
+def _set_default_matplotlib_params(ax: matplotlib.pyplot.Axes=None, title: str=None, 
+    xlabel: str=None, ylabel: str=None, figsize: Tuple[float, float]=None) -> matplotlib.pyplot.Axes:
     '''Sets standard stuff with plotting and matplotlib
 
     Parameters
@@ -2262,7 +2218,7 @@ def _set_default_matplotlib_params(ax=None, title=None, xlabel=None, ylabel=None
     return ax
 
 @numba.jit(nopython=True, parallel=True)
-def _calc_acceptance_rate(ret, trace, prev):
+def _calc_acceptance_rate(ret: np.ndarray, trace: np.ndarray, prev: int):
     '''Calculate the acceptance rate over a scalar trace
 
     Parameters

@@ -4,7 +4,10 @@ import numpy as np
 import time
 import logging
 
+from typing import Union, Dict, Iterator, Tuple, List, Any
+
 from . import pylab as pl
+from .pylab import BaseMCMC, Subject
 from .names import STRNAMES
 
 class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
@@ -22,9 +25,9 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
 
     Parameters
     ----------
-    growth : np.ndarray((n,))
+    growth : np.ndarray((n,)), None
         This is the growth of the dynamics for each taxon
-    interactions : np.ndarray((n,n)) 
+    interactions : np.ndarray((n,n)), None
         Interactions is assumed are the Taxon-Taxon interactions (shape=(n,n)). The diagonal of
         the interactions is assumed to be the self interactions.
     perturbations : list(np.ndarray((n,))), None
@@ -42,8 +45,8 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
     '''
 
     @staticmethod
-    def forward_sim_from_chain(mcmc, subj, initial_conditions, times, simulation_dt, 
-        sim_max=None, section='posterior'):
+    def forward_sim_from_chain(mcmc: BaseMCMC, subj: Subject, initial_conditions: np.ndarray, times: np.ndarray, 
+        simulation_dt: float, sim_max: float=None, section: str='posterior') -> np.ndarray:
         '''Forward simulate the dynamics from a chain. This assumes that the
         initial conditions occur at time `times[0]`
 
@@ -122,8 +125,9 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
             pred_matrix[gibb] = X['X']
         return pred_matrix
 
-    def __init__(self, growth, interactions, perturbations=None, perturbation_starts=None,
-        perturbation_ends=None, sim_max=None, start_day=0):
+    def __init__(self, growth: Union[np.ndarray, type(None)], interactions: Union[np.ndarray, type(None)], 
+        perturbations: Iterator[np.ndarray]=None, perturbation_starts: Iterator[float]=None,
+        perturbation_ends: Iterator[float]=None, sim_max: float=None, start_day: float=0):
 
         self.growth = growth
         self.interactions = interactions
@@ -136,12 +140,12 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         self._pert_intervals = None
         self._adjusted_growth = None
 
-    def stability(self):
+    def stability(self) -> np.ndarray:
         '''This is the analytical solution for the stability
         '''
         return - np.linalg.pinv(self.interactions) @ (self.growth.reshape(-1,1))
 
-    def init_integration(self, dt):
+    def init_integration(self, dt: float):
         '''This is called internally from mdsine2.integrate
 
         Pre-multiply the growth and interactions with dt. Improves
@@ -180,7 +184,7 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
                 for t in rang:
                     self._pert_intervals[round(t, ndigits=2)] = pidx
 
-    def integrate_single_timestep(self, x, t, dt):
+    def integrate_single_timestep(self, x: np.ndarray, t: float, dt: float) -> np.ndarray:
         '''Integrate over a single step
 
         Parameters
@@ -236,7 +240,7 @@ class MultiplicativeGlobal(pl.dynamics.BaseProcessVariance):
         if self.value <= 0:
             raise ValueError('`value` ({}) must be > 0'.format(self.value))
 
-    def integrate_single_timestep(self, x, t, dt):
+    def integrate_single_timestep(self, x: np.ndarray, t: float, dt: float) -> np.ndarray:
         std = np.sqrt(dt * self.value)
         return np.exp(pl.random.normal.sample(loc=np.log(x), scale=std))
 

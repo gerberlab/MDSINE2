@@ -5,14 +5,18 @@ import numpy as np
 import scipy
 import math
 import copy
+import pandas as pd
 from orderedset import OrderedSet
 
 from .names import STRNAMES
 from . import pylab as pl
 
-from .pylab import diversity
+from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Callable
 
-def is_gram_negative(taxon):
+from .pylab import diversity
+from .pylab import Taxon, OTU, BaseMCMC, ClusterPerturbationEffect, Clustering, Study
+
+def is_gram_negative(taxon: Union[OTU, Taxon]) -> bool:
     '''Return true if the taxon is gram - or gram positive
 
     Parameters
@@ -38,7 +42,7 @@ def is_gram_negative(taxon):
         raise ValueError('{} phylum not specified. If not bacteroidetes, firmicutes, verrucomicrobia, or ' \
             'proteobacteria, you must add another phylum'.format(str(taxon)))
 
-def generate_interation_bayes_factors_posthoc(mcmc, section='posterior'):
+def generate_interation_bayes_factors_posthoc(mcmc: BaseMCMC, section: str='posterior') -> np.ndarray:
     '''Generates the bayes factors on an item-item level for the interactions, 
     given the passed in prior. All negative indicators are set as `np.nan`s in 
     the trace, so we do `~np.isnan` to get the indicators.
@@ -56,7 +60,7 @@ def generate_interation_bayes_factors_posthoc(mcmc, section='posterior'):
 
     Returns
     -------
-    np.ndarray((n,n), dtpye=float)
+    np.ndarray((n,n), dtype=float)
         These are the bayes factors for each of the interactions on an item-item level
     '''
     interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ]
@@ -75,7 +79,8 @@ def generate_interation_bayes_factors_posthoc(mcmc, section='posterior'):
 
     return (cnts_1 * b) / (cnts_0 * a)
 
-def generate_perturbation_bayes_factors_posthoc(mcmc, perturbation, section='posterior'):
+def generate_perturbation_bayes_factors_posthoc(mcmc: BaseMCMC, perturbation: ClusterPerturbationEffect, 
+    section: str='posterior') -> np.ndarray:
     '''Generates the bayes factors on an item-item level for the perturbations, 
     given the passed in prior. All negative indicators are set as `np.nan`s in 
     the trace, so we do `~np.isnan` to get the indicators.
@@ -88,14 +93,14 @@ def generate_perturbation_bayes_factors_posthoc(mcmc, perturbation, section='pos
     ----------
     mcmc : mdsine2.BaseMCMC
         This is the inference object containing the traces
-    perturbation : mdsine2.Perturbation
+    perturbation : mdsine2.ClusterPerturbationEffect
         Perturbation object we are calculating from
     section : str
         This is the section of the MH samples to take the samples
 
     Returns
     -------
-    np.ndarray((n,), dtpye=float)
+    np.ndarray((n,), dtype=float)
         These are the bayes factors for each of the perturbations on an item level
     '''
     trace = ~ np.isnan(perturbation.get_trace_from_disk())
@@ -107,8 +112,8 @@ def generate_perturbation_bayes_factors_posthoc(mcmc, perturbation, section='pos
 
     return (cnts_1 * b) / (cnts_0 * a)
 
-def generate_cluster_assignments_posthoc(clustering, n_clusters='mode', linkage='average',
-    set_as_value=False, section='posterior'):
+def generate_cluster_assignments_posthoc(clustering: Clustering, n_clusters: Union[str, int]='mode', linkage: str='average',
+    set_as_value: bool=False, section: str='posterior') -> np.ndarray:
     '''Once the inference is complete, compute the clusters posthoc using
     sklearn's AgglomerativeClustering function with distance matrix being
     1 - cocluster matrix (we subtrace the cocluster matrix from 1 because
@@ -181,7 +186,7 @@ def generate_cluster_assignments_posthoc(clustering, n_clusters='mode', linkage=
                 clustering.move_item(idx=oidx, cid=cid)
     return ret
 
-def generate_taxonomic_distribution_over_clusters_posthoc(mcmc, tax_fmt):
+def generate_taxonomic_distribution_over_clusters_posthoc(mcmc: BaseMCMC, tax_fmt: str) -> pd.DataFrame:
     '''Make a table that shows the abundance of different taxonomies in every cluster
 
     Output:
@@ -249,7 +254,7 @@ def generate_taxonomic_distribution_over_clusters_posthoc(mcmc, tax_fmt):
     df = pl.base.condense_matrix_with_taxonomy(M, taxa=study.taxa, fmt=tax_fmt)
     return df
 
-def condense_fixed_clustering_interaction_matrix(M, clustering):
+def condense_fixed_clustering_interaction_matrix(M: np.ndarray, clustering: Clustering) -> np.ndarray:
     '''Condense the interaction matrix `M` with the cluster assignments 
     in `clustering`. Assume that the current cluster assignments is what
     is used. Assumes that the input matrix is run with a fixed clustering.
@@ -280,7 +285,7 @@ def condense_fixed_clustering_interaction_matrix(M, clustering):
             ret[..., i1,i2] = M[..., aidx1, aidx2]
     return ret
 
-def condense_fixed_clustering_perturbation(pert, clustering):
+def condense_fixed_clustering_perturbation(pert: np.ndarray, clustering: Clustering) -> np.ndarray:
     '''Condense the perturbation array passed in assuming that it was run with
     fixed clustering.
 
@@ -303,7 +308,7 @@ def condense_fixed_clustering_perturbation(pert, clustering):
         ret[..., cidx] = pert[..., aidx]
     return ret
 
-def aggregate_items(subjset, hamming_dist):
+def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     '''Aggregate Taxa that have an average hamming distance of `hamming_dist`
 
     Parameters
@@ -350,7 +355,7 @@ def aggregate_items(subjset, hamming_dist):
     logging.info('Aggregated {} taxa'.format(cnt))
     return subjset
 
-def _avg_dist(taxon1, taxon2):
+def _avg_dist(taxon1: Union[Taxon, OTU], taxon2: Union[Taxon, OTU]) -> float:
     dists = []
     if pl.isotu(taxon1):
         seqs1 = taxon1.aggregated_seqs.values()
@@ -367,8 +372,8 @@ def _avg_dist(taxon1, taxon2):
             dists.append(diversity.beta.hamming(v1, v2))
     return np.nanmean(dists)
 
-def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_num_subjects, 
-    colonization_time=None, union_other_consortia=None):
+def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min_num_consecutive: int, min_num_subjects: int, 
+    colonization_time: Union[float, int]=None, union_other_consortia: Study=None) -> Study:
     '''Filters the subjects by looking at the consistency of the 'dtype', which can
     be either 'raw' where we look for the minimum number of counts, 'rel', where we
     look for a minimum relative abundance, or 'abs' where we look for a minium 
@@ -495,8 +500,9 @@ def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_nu
     subjset.pop_taxa(to_delete)
     return subjset
 
-def conditional_consistency_filtering(subjset, other, dtype, threshold, min_num_consecutive_upper,  
-    min_num_consecutive_lower, min_num_subjects, colonization_time):
+def conditional_consistency_filtering(subjset: Study, other: Study, dtype: str, threshold: Union[float, int], 
+    min_num_consecutive_upper: int, min_num_consecutive_lower: int, min_num_subjects: int, 
+    colonization_time: Union[float, int]) -> Study:
     '''Filters the cohorts in `subjset` with the `mdsine2.consistency_filtering`
     filtering method but conditional on another cohort. If a taxon passes the filter
     in the cohort `other`, the taxon can only have `min_num_consecutive_lower` 

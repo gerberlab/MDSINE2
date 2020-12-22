@@ -15,16 +15,20 @@ import math
 import numpy.random as npr
 import numba
 
+from typing import Union, Dict, Iterator, Tuple, List, Any, IO
+
 import matplotlib.pyplot as plt
+import matplotlib
 import seaborn as sns
 from . import visualization
 
 from . import pylab as pl
+from .pylab import Study, BaseMCMC
 from .names import STRNAMES
 from . import config
 
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def negbin_loglikelihood(k,m,dispersion):
+def negbin_loglikelihood(k: float, m: float, dispersion: float) -> float:
     '''Loglikelihood - with parameterization in [1]
     
     Parameters
@@ -59,20 +63,20 @@ class Data(pl.graph.DataNode):
         These are a list of the subjects that we are going to get data from
     '''
 
-    def __init__(self, subjects, **kwargs):
+    def __init__(self, subjects: Study, **kwargs):
         kwargs['name'] = 'Data'
         pl.graph.DataNode.__init__(self, **kwargs)
         if not pl.isstudy(subjects):
             raise ValueError('`subjects` ({}) must be a pylab SubjectSet'.format(
                 type(subjects)))
         
-        self.taxa = subjects.taxa
-        self.subjects = subjects
-        self.n_taxa = len(self.taxa)
+        self.taxa = subjects.taxa # mdsine2.pylab.base.TaxaSet
+        self.subjects = subjects # mdsine2.pylab.base.Study
+        self.n_taxa = len(self.taxa) # int
 
-        self.data = []
-        self.read_depths = []
-        self.qpcr = []
+        self.data = [] # list(np.ndarray)
+        self.read_depths = [] # list(np.ndarray)
+        self.qpcr = [] # qPCR measurement for each value
         for subject in self.subjects:
             d = subject.matrix()['raw']
             self.data.append(d)
@@ -81,7 +85,7 @@ class Data(pl.graph.DataNode):
 
         self.n_replicates = len(self.data)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.n_replicates
 
 
@@ -100,11 +104,11 @@ class NegBinDispersionParam(pl.variables.Uniform):
         Engine for microbiome time-series analyses." Genome biology 17.1 (2016): 121.
     '''
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name: str, **kwargs):
         pl.variables.Uniform.__init__(
             self, dtype=float, name=name, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -> str:
         try:
             s = 'Value: {}, Acceptance rate: {}'.format(
                 self.value, np.mean(self.acceptances[
@@ -113,8 +117,9 @@ class NegBinDispersionParam(pl.variables.Uniform):
             s = str(self.value)
         return s
 
-    def initialize(self, value, truncation_settings, proposal_option,
-        target_acceptance_rate, tune, end_tune, proposal_var=None, delay=0):
+    def initialize(self, value: Union[float, int], truncation_settings: Union[str, Tuple[float, float]], 
+        proposal_option: str, target_acceptance_rate: Union[str, float], tune: Union[str, int], 
+        end_tune: Union[str, int], proposal_var: float=None, delay: int=0):
         '''Initialize the negative binomial dispersion parameter
 
         Parameters
@@ -300,7 +305,7 @@ class NegBinDispersionParam(pl.variables.Uniform):
         else:
             self.value = prev_value
 
-    def data_likelihood(self):
+    def data_likelihood(self) -> float:
         '''Calculate the current log likelihood
         '''
         a0 = self.G[STRNAMES.NEGBIN_A0].value
@@ -317,13 +322,14 @@ class NegBinDispersionParam(pl.variables.Uniform):
             total_abund = np.sum(latent)
             rel_abund = latent / total_abund
 
-            cumm += NegBinDispersionParam._data_likelihood(a0=a0, a1=a1, latent=latent, 
+            cumm += NegBinDispersionParam._data_likelihood(a0=a0, a1=a1,
                 data=data, read_depth=read_depth, rel_abund=rel_abund)
         return cumm
     
     @staticmethod
     @numba.jit(nopython=True)
-    def _data_likelihood(a0, a1, latent, data, read_depth, rel_abund):
+    def _data_likelihood(a0: float, a1: float, data: np.ndarray, read_depth: np.ndarray, 
+        rel_abund: np.ndarray) -> float:
         cumm = 0
 
         # For each taxon
@@ -343,7 +349,7 @@ class NegBinDispersionParam(pl.variables.Uniform):
                 #     raise
         return cumm
 
-    def visualize(self, path, f, section='posterior'):
+    def visualize(self, path: str, f: IO, section: str='posterior') -> IO:
         '''Visualize the posterior of the negative binomial dispersion parameter
 
         Parameters
@@ -392,16 +398,16 @@ class NegBinDispersionParam(pl.variables.Uniform):
 class TrajectorySet(pl.variables.Variable):
     '''This aggregates a set of trajectories from each Replicate
     '''
-    def __init__(self, ridx, subjname, **kwargs):
+    def __init__(self, ridx: int, subjname: str, **kwargs):
         kwargs['name'] = STRNAMES.LATENT_TRAJECTORY + '_{}'.format(subjname)
         pl.variables.Variable.__init__(self, **kwargs)
         n_taxa = len(self.G.data.taxa)
         self.set_value_shape(shape=(n_taxa,))
         self.ridx = ridx
         self.value = np.zeros(n_taxa, dtype=float)
-        self.data = self.G.data.data[self.ridx]
-        self.read_depths = self.G.data.read_depths[self.ridx]
-        self.qpcr_measurement = self.G.data.qpcr[self.ridx]
+        self.data = self.G.data.data[self.ridx] # np.ndarray
+        self.read_depths = self.G.data.read_depths[self.ridx] # np.ndarray
+        self.qpcr_measurement = self.G.data.qpcr[self.ridx] # mdsine2.pylab.base.qPCRData
     
         prior = pl.variables.Normal(
             loc=pl.variables.Constant(name=self.name+'_prior_loc', value=None, G=self.G),
@@ -409,8 +415,8 @@ class TrajectorySet(pl.variables.Variable):
             name=self.name+'_prior', G=self.G)
         self.add_prior(prior)
 
-    def __getitem__(self, ridx):
-        return self.value[ridx]
+    def __getitem__(self, idx: int) -> float:
+        return self.value[idx]
 
     def initialize(self):
         '''Initialize the value
@@ -443,7 +449,7 @@ class FilteringMP(pl.graph.Node):
 
     This assumes that we are using the log model for the dynamics
     '''
-    def __init__(self, mp, **kwargs):
+    def __init__(self, mp: str, **kwargs):
         kwargs['name'] = STRNAMES.FILTERING
         pl.graph.Node.__init__(self, **kwargs)
         self.value = []
@@ -454,16 +460,16 @@ class FilteringMP(pl.graph.Node):
         self._strr = 'NA'
         self.mp = mp
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self._strr
 
     @property
-    def sample_iter(self):
+    def sample_iter(self) -> int:
         # It doesnt matter if we chose q or x because they are both the same
         return self.value[0].sample_iter
 
-    def initialize(self, tune, end_tune, target_acceptance_rate,  qpcr_variance_inflation, 
-        delay=0):
+    def initialize(self, tune: Union[int, str], end_tune: Union[int, str], target_acceptance_rate: Union[float, str],  
+        qpcr_variance_inflation: Union[float, int], delay: int=0):
         '''Initialize the latent state
 
         Parameters
@@ -576,6 +582,8 @@ class FilteringMP(pl.graph.Node):
         self.total_n_datapoints = len(self.G.data.taxa) * len(self.G.data)
 
     def update(self):
+        '''Gibb step
+        '''
         start_time = time.time()
         a0 = self.G[STRNAMES.NEGBIN_A0].value
         a1 = self.G[STRNAMES.NEGBIN_A1].value
@@ -615,7 +623,7 @@ class FilteringMP(pl.graph.Node):
         if pl.ispersistentpool(self.pool):
             self.pool.kill()
 
-    def visualize(self, basepath, section='posterior', taxa_formatter='%(paperformat)s'):
+    def visualize(self, basepath: str, section: str='posterior', taxa_formatter: str='%(paperformat)s'):
         '''Render the latent trajectories in the base folder and write the statistics.
 
         Parameters
@@ -696,9 +704,9 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
     def __init__(self):
         return
 
-    def initialize(self, reads, qpcr_loc, qpcr_scale, prior_loc, prior_scale,
-        proposal_std, tune, end_tune, target_acceptance_rate, value, delay,
-        ridx):
+    def initialize(self, reads: np.ndarray, qpcr_loc: float, qpcr_scale: float, prior_loc: float, prior_scale: float,
+        proposal_std: float, tune: int, end_tune: int, target_acceptance_rate: float, value: np.ndarray, 
+        delay: int, ridx: int):
         '''Initialize the values
 
         reads : np.ndarray((n_taxa x n_reps))
@@ -752,7 +760,7 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
             self.acceptances = 0
             self.n_props_local = 0
 
-    def update(self, a0, a1):
+    def update(self, a0: float, a1: float):
         '''Update the latent state with the updated negative binomial
         dispersion parameters
         '''
@@ -770,7 +778,7 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
 
         return self.ridx, self.value, self.n_accepted_iter/len(self.value)
 
-    def update_single(self, oidx):
+    def update_single(self, oidx: int):
         '''Update the latent state for the Taxa index `oidx` in this replicate
         '''
         old_log_value = np.log(self.value[oidx])
@@ -812,15 +820,21 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
         self.n_props_local += 1
         self.n_props_total += 1
 
-    def prior_ll(self):
+    def prior_ll(self) -> float:
+        '''Prior loglikelihood
+        '''
         return pl.random.normal.logpdf(value=self.curr_log_val, 
             loc=self.prior_loc[self.oidx], scale=self.prior_scale)
 
-    def qpcr_ll(self):
+    def qpcr_ll(self) -> float:
+        '''qPCR loglikelihood
+        '''
         return pl.random.normal.logpdf(value=self.log_sumq, 
             loc=self.qpcr_loc, scale=self.qpcr_scale)
 
-    def negbin_ll(self):
+    def negbin_ll(self) -> float:
+        '''Negative binomial loglikelihood
+        '''
         cumm = 0
         rel = self.value[self.oidx]/self.sumq
         for k in range(self.reads.shape[1]):
@@ -832,7 +846,8 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
 
 
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def _single_calc_mean_var(means, variances, a0, a1, rels, read_depths):
+def _single_calc_mean_var(means: np.ndarray, variances: np.ndarray, a0: float, a1: float, 
+    rels: np.ndarray, read_depths: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     i = 0
     for col in range(rels.shape[1]):
         for oidx in range(rels.shape[0]):
@@ -844,7 +859,7 @@ def _single_calc_mean_var(means, variances, a0, a1, rels, read_depths):
             i += 1
     return means, variances
 
-def visualize_learned_negative_binomial_model(mcmc, section='posterior'):
+def visualize_learned_negative_binomial_model(mcmc: BaseMCMC, section: str='posterior') -> matplotlib.pyplot.figure:
     '''Visualize the negative binomial dispersion model.
 
     Plot variance on y-axis, mean on x-axis. both in logscale.
@@ -947,7 +962,7 @@ def visualize_learned_negative_binomial_model(mcmc, section='posterior'):
 
     return fig
 
-def build_graph(params, graph_name, subjset):
+def build_graph(params: config.NegBinConfig, graph_name: str, subjset: Study) -> BaseMCMC:
     '''Builds the graph used for posterior inference of the negative binomial
     dispersion parameters
 
@@ -1013,7 +1028,7 @@ def build_graph(params, graph_name, subjset):
 
     return mcmc
 
-def run_graph(mcmc, crash_if_error=True):
+def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True) -> BaseMCMC:
     '''Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
 
     Parameters

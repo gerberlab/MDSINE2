@@ -3,6 +3,8 @@ import numpy as np
 import h5py
 import os
 
+from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Callable
+
 # Custom modules
 from . import config
 from .names import STRNAMES
@@ -10,15 +12,16 @@ from . import design_matrices
 from . import posterior
 
 from . import pylab as pl
+from .pylab import Study, BaseMCMC
 
-def initialize_graph(params, graph_name, subjset, continue_inference=None, 
-    intermediate_validation=None):
+def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset: Study, continue_inference: int=None, 
+    intermediate_validation: Dict[str, Union[float, Callable, Dict[str, Any]]]=None) -> BaseMCMC:
     '''Builds the graph with the posterior classes and creates an
     mdsine2.BaseMCMC inference chain object that you ran run inference with
 
     Parameters
     ----------
-    params : mdsine2.config.ModelConfig
+    params : mdsine2.config.MDSINE2ModelConfig
         This class specifies all of the parameters of the model.
     graph_name : str
         Name of the graph you want to build
@@ -398,7 +401,7 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
 
     return mcmc
 
-def run_graph(mcmc, crash_if_error=True):
+def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True) -> BaseMCMC:
     '''Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
 
     Parameters
@@ -428,7 +431,7 @@ def run_graph(mcmc, crash_if_error=True):
     mcmc.graph.data.design_matrices = None
     return mcmc
 
-def normalize_parameters(mcmc, subjset):
+def normalize_parameters(mcmc: BaseMCMC, subjset: Study) -> Tuple[BaseMCMC, Study]:
     '''Normalize the abundance of the parameters by the normalization factor
     in the subject set
 
@@ -523,7 +526,7 @@ def normalize_parameters(mcmc, subjset):
     
     return mcmc, subjset
 
-def denormalize_parameters(mcmc):
+def denormalize_parameters(mcmc: BaseMCMC) -> Tuple[BaseMCMC, Study]:
     '''Denormalize the abundance of the parameters by the normalization factor
     in the subject set
 
@@ -622,7 +625,7 @@ def denormalize_parameters(mcmc):
         logging.info('Data already denormalized')
     return mcmc, subjset
 
-def calculate_stability_over_gibbs(mcmc, section='auto', log_every=1000):
+def calculate_stability_over_gibbs(mcmc: BaseMCMC, section: str='auto', log_every: int=1000) -> np.ndarray:
     '''Calculate the stability over each of the Gibb steps in the chain `mcmc`
 
     stability = diag(r) @ A, where

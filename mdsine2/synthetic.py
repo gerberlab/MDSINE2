@@ -6,9 +6,12 @@ import logging
 import os
 import random
 
+from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Callable
+
 from . import model as plmodel
 from . import pylab as pl
 from .names import STRNAMES
+from .pylab import variables, Study, BaseMCMC
 
 class Synthetic(pl.Saveable):
     '''Generate synthetic and semi synthetic datasets for testing MDSINE2.
@@ -17,20 +20,22 @@ class Synthetic(pl.Saveable):
     ----------
     name : str
         Name of the dataset and the name of the graph
+    seed : int
+        Seed to initialize the system
     '''
 
-    def __init__(self, name, seed=None):
+    def __init__(self, name: str, seed: int=None):
         self.G = pl.Graph(name=name, seed=seed)
         self.model = plmodel.gLVDynamicsSingleClustering(growth=None, interactions=None)
-        self.taxa = None
-        self.subjs = None
-        self._data = None
+        self.taxa = None # mdsine2.pylab.base.TaxaSet
+        self.subjs = None # list[str]
+        self._data = None # list[np.ndarray]
 
     @property
     def perturbations(self):
         return self.G.perturbations
 
-    def icml_dynamics(self, n_taxa=13):
+    def icml_dynamics(self, n_taxa: int=13):
         '''Recreate the dynamical system used in the ICML paper [1]. If you use the 
         default parameters you will get the same interaction matrix that was used in [1].
 
@@ -108,7 +113,7 @@ class Synthetic(pl.Saveable):
         # Generate growth
         self.model.growth = pl.random.uniform.sample(low=0.1, high=0.12, size=n_taxa)
 
-    def set_timepoints(self, times):
+    def set_timepoints(self, times: np.ndarray):
         '''Set the timepoints of the trajectory
 
         Parameters
@@ -120,7 +125,7 @@ class Synthetic(pl.Saveable):
         times = np.sort(np.array(times))
         self.times = times
 
-    def set_subjects(self, subjs):
+    def set_subjects(self, subjs: List[str]):
         '''Set the names of the subjects
 
         Parameters
@@ -130,16 +135,17 @@ class Synthetic(pl.Saveable):
         '''
         self.subjs = subjs
 
-    def generate_trajectories(self, dt, init_dist, processvar=None, seed=None):
+    def generate_trajectories(self, dt: float, init_dist: variables.Variable, 
+        processvar: plmodel.ProcessVarGlobal=None, seed: int=None):
         '''Forward simulate trajectories given the dynamics
 
         Parameters
         ----------
         dt : float
             Step size of the forward simulation
-        init_dist : md2.variables.RandomVariable
+        init_dist : mdsine2.variables.RandomVariable
             This is the random distribution to intiialize the trajectories at
-        processvar : md2.model.MultiplicativeGlobal
+        processvar : mdsine2.model.MultiplicativeGlobal
             This is the process variance to simulate with.
             If this is not given then there will be no processvariance during simulation
         seed : int
@@ -176,8 +182,8 @@ class Synthetic(pl.Saveable):
                 subsample=True, times=self.times)
             self._data[subj] = d['X']
         
-    def simulateMeasurementNoise(self, a0, a1, qpcr_noise_scale, approx_read_depth,
-        name='unnamed-study'):
+    def simulateMeasurementNoise(self, a0: float, a1: float, qpcr_noise_scale: float, 
+        approx_read_depth: int, name: str='unnamed-study') -> Study:
         '''This function converts the synthetic trajectories into "real" data
         by simulating read counts and qPCR measurements.
 
@@ -258,7 +264,8 @@ class Synthetic(pl.Saveable):
 
         return study
             
-def make_semisynthetic(chain, min_bayes_factor, name=None, set_times=True):
+def make_semisynthetic(chain: BaseMCMC, min_bayes_factor: Union[float, int], name: str=None, 
+    set_times: bool=True) -> Synthetic:
     '''Make a semi synthetic system. We assume that the chain that we pass in was 
     run with FIXED CLUSTERING. We assume this because we need to set the cluster-cluster
     interactions and the cluster perturbations.
@@ -396,7 +403,7 @@ def make_semisynthetic(chain, min_bayes_factor, name=None, set_times=True):
     syn.model.growth = pl.summary(chain.graph[STRNAMES.GROWTH_VALUE])['mean']
     return syn
 
-def subsample_timepoints(times, N, required=None):
+def subsample_timepoints(times: np.ndarray, N: int, required: np.ndarray=None) -> np.ndarray:
     '''Subsample the timepoints `times` so that it has `N` timepoints.
 
     If required is not None, it is a list of timepoints that must be
