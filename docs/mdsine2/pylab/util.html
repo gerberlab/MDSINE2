@@ -43,29 +43,15 @@ import itertools
 import re
 import ete3
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, Callable
+
 import os
 from pathlib import Path
 
 import scipy.spatial
 
-# Constants
-NAME_FORMATTER = &#39;%(name)s&#39;
-ID_FORMATTER = &#39;%(id)s&#39;
-INDEX_FORMATTER = &#39;%(index)s&#39;
-SPECIES_FORMATTER = &#39;%(species)s&#39;
-GENUS_FORMATTER = &#39;%(genus)s&#39;
-FAMILY_FORMATTER = &#39;%(family)s&#39;
-CLASS_FORMATTER = &#39;%(class)s&#39;
-ORDER_FORMATTER = &#39;%(order)s&#39;
-PHYLUM_FORMATTER = &#39;%(phylum)s&#39;
-KINGDOM_FORMATTER = &#39;%(kingdom)s&#39;
-PAPER_FORMATTER = &#39;%(paperformat)s&#39;
-
-_TAXLEVELS = [&#39;species&#39;, &#39;genus&#39;, &#39;family&#39;, &#39;class&#39;, &#39;order&#39;, &#39;phylum&#39;, &#39;kingdom&#39;]
-_TAXFORMATTERS = [&#39;%(species)s&#39;, &#39;%(genus)s&#39;, &#39;%(family)s&#39;, &#39;%(class)s&#39;, &#39;%(order)s&#39;, &#39;%(phylum)s&#39;, &#39;%(kingdom)s&#39;]
-TAXANAME_PAPER_FORMAT = float(&#39;inf&#39;)
-
-def isdataframe(a):
+def isdataframe(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a pandas.DataFrame
 
     Parameters
@@ -80,7 +66,7 @@ def isdataframe(a):
     &#39;&#39;&#39;
     return type(a) == pd.DataFrame
 
-def issquare(a):
+def issquare(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if the input array is a square
 
     Parameters
@@ -98,7 +84,7 @@ def issquare(a):
     except:
         return False
 
-def isbool(a):
+def isbool(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a bool
 
     Parameters
@@ -113,7 +99,7 @@ def isbool(a):
     &#39;&#39;&#39;
     return a is not None and np.issubdtype(type(a), np.bool_)
 
-def isint(a):
+def isint(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is an int
 
     Parameters
@@ -128,7 +114,7 @@ def isint(a):
     &#39;&#39;&#39;
     return a is not None and np.issubdtype(type(a), np.integer)
 
-def isfloat(a):
+def isfloat(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a float
 
     Parameters
@@ -143,7 +129,7 @@ def isfloat(a):
     &#39;&#39;&#39;
     return a is not None and np.issubdtype(type(a), np.floating)
 
-def iscomplex(a):
+def iscomplex(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a complex number
 
     Parameters
@@ -158,7 +144,7 @@ def iscomplex(a):
     &#39;&#39;&#39;
     return a is not None and np.issubdtype(type(a), np.complexfloating)
 
-def isnumeric(a):
+def isnumeric(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a float or an int - (cannot be a bool)
 
     Parameters
@@ -173,7 +159,7 @@ def isnumeric(a):
     &#39;&#39;&#39;
     return a is not None and np.issubdtype(type(a), np.number)
 
-def isarray(a):
+def isarray(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is an array
 
     Parameters
@@ -189,7 +175,7 @@ def isarray(a):
     return (type(a) == np.ndarray or type(a) == list or \
         scipy.sparse.issparse(a)) and a is not None
 
-def isstr(a):
+def isstr(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a str
 
     Parameters
@@ -204,7 +190,7 @@ def isstr(a):
     &#39;&#39;&#39;
     return a is not None and type(a) == str
 
-def istype(a):
+def istype(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a Type object
 
     Example
@@ -226,7 +212,7 @@ def istype(a):
     &#39;&#39;&#39;
     return type(a) == type
 
-def istuple(a):
+def istuple(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a tuple object
 
     Example
@@ -248,7 +234,7 @@ def istuple(a):
     &#39;&#39;&#39;
     return type(a) == tuple
 
-def isdict(a):
+def isdict(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a dict object
 
     Example
@@ -270,7 +256,7 @@ def isdict(a):
     &#39;&#39;&#39;
     return type(a) == dict
 
-def istree(a):
+def istree(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is an ete3 Tree object
 
     Example
@@ -293,7 +279,7 @@ def istree(a):
     &#39;&#39;&#39;
     return type(a) == ete3.Tree
 
-def itercheck(xs, f):
+def itercheck(xs: Iterator[Any], f: Callable) -&gt; Iterator[bool]:
     &#39;&#39;&#39;Checks every element in xs with f and returns an array
     for each entry
 
@@ -310,159 +296,8 @@ def itercheck(xs, f):
     &#39;&#39;&#39;
     return [f(x) for x in xs]
 
-def taxaname_for_paper(taxon, taxa):
-    &#39;&#39;&#39;Makes the name in the format needed for the paper
-
-    Parameters
-    ----------
-    taxon : pylab.base.Taxon/pylab.base.OTU
-        This is the taxon we are making the name for
-    taxa : pylab.base.TaxaSet
-        This is the TaxaSet object that contains the taxon objects
-
-    Returns
-    -------
-    &#39;&#39;&#39;
-    taxon = taxa[taxon]
-    if taxon.tax_is_defined(&#39;species&#39;):
-        species = taxon.taxonomy[&#39;species&#39;]
-        species = species.split(&#39;/&#39;)
-        if len(species) &gt;= 3:
-            species = species[:2]
-        species = &#39;/&#39;.join(species)
-        label = taxaname_formatter(
-            format=&#39;%(genus)s {spec} %(name)s&#39;.format(
-                spec=species), 
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined(&#39;genus&#39;):
-        label = taxaname_formatter(
-            format=&#39;* %(genus)s %(name)s&#39;,
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined(&#39;family&#39;):
-        label = taxaname_formatter(
-            format=&#39;** %(family)s %(name)s&#39;,
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined(&#39;order&#39;):
-        label = taxaname_formatter(
-            format=&#39;*** %(order)s %(name)s&#39;,
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined(&#39;class&#39;):
-        label = taxaname_formatter(
-            format=&#39;**** %(class)s %(name)s&#39;,
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined(&#39;phylum&#39;):
-        label = taxaname_formatter(
-            format=&#39;***** %(phylum)s %(name)s&#39;,
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined(&#39;kingdom&#39;):
-        label = taxaname_formatter(
-            format=&#39;****** %(kingdom)s %(name)s&#39;,
-            taxon=taxon, taxa=taxa)
-    else:
-        raise ValueError(&#39;Something went wrong - no taxnonomy: {}&#39;.format(str(taxon)))
-
-    return label
-
-def taxaname_formatter(format, taxon, taxa):
-    &#39;&#39;&#39;Format the label of a taxon. Specify the taxon by its index in the TaxaSet `taxa`.
-
-    If `format == mdsine.TAXANAME_PAPER_FORMAT`, then we call the function
-    `taxaname_for_paper`.
-
-    Example:
-        taxon is an Taxon object at index 0 where
-        taxon.genus = &#39;A&#39;
-        taxon.id = 1234532
-
-        taxaname_formatter(
-            format=&#39;%(genus)s: %(index)s&#39;,
-            taxon=1234532,
-            taxa=taxa)
-        &gt;&gt;&gt; &#39;A: 0&#39;
-
-        taxaname_formatter(
-            format=&#39;%(genus)s: %(genus)s&#39;,
-            taxon=1234532,
-            taxa=taxa)
-        &gt;&gt;&gt; &#39;A: A&#39;
-
-        taxaname_formatter(
-            format=&#39;%(index)s&#39;,
-            taxon=1234532,
-            taxa=taxa)
-        &gt;&gt;&gt; &#39;0&#39;
-
-        taxaname_formatter(
-            format=&#39;%(geNus)s: %(genus)s&#39;,
-            taxon=1234532,
-            taxa=taxa)
-        &gt;&gt;&gt; &#39;%(geNus)s: A&#39;
-
-    Parameters
-    ----------
-    format : str
-        This is the format for us to do the labels
-        Formatting options:
-            &#39;%(paperformat)s&#39;
-                Return the `taxaname_for_paper`
-            &#39;%(name)s&#39;
-                Name of the taxon (pylab.base..name)
-            &#39;%(id)s&#39;
-                ID of the taxon (pylab.base..id)
-            &#39;%(index)s&#39;
-                The order that this appears in the TaxaSet
-            &#39;%(species)s&#39;
-                `&#39;species&#39;` taxonomic classification of the taxon
-            &#39;%(speciesX)s&#39;
-                `&#39;species&#39;` taxonomic classification of the taxon for only up to the first 
-                `X` spceified
-            &#39;%(genus)s&#39;
-                `&#39;genus&#39;` taxonomic classification of the taxon
-            &#39;%(family)s&#39;
-                `&#39;family&#39;` taxonomic classification of the taxon
-            &#39;%(class)s&#39;
-                `&#39;class&#39;` taxonomic classification of the taxon
-            &#39;%(order)s&#39;
-                `&#39;order&#39;` taxonomic classification of the taxon
-            &#39;%(phylum)s&#39;
-                `&#39;phylum&#39;` taxonomic classification of the taxon
-            &#39;%(kingdom)s&#39;
-                `&#39;kingdom&#39;` taxonomic classification of the taxon
-
-    taxon : str, int, Taxon, OTU
-        Taxon/OTU object or identifier (name, ID, index)
-    taxa : pylab.base.TaxaSet
-        Dataset containing all of the information for the taxa
-
-    &#39;&#39;&#39;
-    if format == TAXANAME_PAPER_FORMAT:
-        return taxaname_for_paper(taxon=taxon, taxa=taxa)
-    taxon = taxa[taxon]
-    index = taxon.idx
-
-    label = format.replace(NAME_FORMATTER, str(taxon.name))
-    label = label.replace(ID_FORMATTER, str(taxon.id))
-    label = label.replace(INDEX_FORMATTER,  str(index))
-
-    if PAPER_FORMATTER in label:
-        label = label.replace(PAPER_FORMATTER, &#39;%(temp)s&#39;)
-        label = label.replace(&#39;%(temp)s&#39;, taxaname_for_paper(taxon=taxon, taxa=taxa))
-    
-    for i in range(len(_TAXLEVELS)):
-        taxlevel = _TAXLEVELS[i]
-        fmt = _TAXFORMATTERS[i]
-        try:
-            label = label.replace(fmt, str(taxon.get_taxonomy(taxlevel)))
-        except:
-            logging.critical(&#39;taxon: {}&#39;.format(taxon))
-            logging.critical(&#39;fmt: {}&#39;.format(fmt))
-            logging.critical(&#39;label: {}&#39;.format(label))
-            raise
-
-    return label
-
 @numba.jit(nopython=True, cache=True)
-def fast_index(M, rows, cols):
+def fast_index(M: np.ndarray, rows: np.ndarray, cols: np.ndarray) -&gt; np.ndarray:
     &#39;&#39;&#39;Fast index fancy indexing the matrix M. ~98% faster than regular
     fancy indexing
     M MUST BE C_CONTIGUOUS for this to actually help.
@@ -483,7 +318,8 @@ def fast_index(M, rows, cols):
     return (M.ravel()[(cols + (rows * M.shape[1]).reshape(
         (-1,1))).ravel()]).reshape(rows.size, cols.size)
 
-def toarray(x, dest=None, T=False):
+def toarray(x: Union[scipy.sparse.spmatrix, np.ndarray], dest: np.ndarray=None, 
+    T: bool=False) -&gt; np.ndarray:
     &#39;&#39;&#39;Converts `x` into a C_CONTIGUOUS numpy matrix if 
     the matrix is sparse. If it is not sparse then it just returns
     the matrix.
@@ -518,86 +354,6 @@ def toarray(x, dest=None, T=False):
             return x.T
         else:
             return x
-
-def subsample_timeseries(T, sizes, approx=True):
-    &#39;&#39;&#39;Subsample the time-series `T` into size in `sizes`. Note that
-    this algorithm does not guarentee any timepoints to stay.
-
-    The baseline algorithm calculates:
-    d(R) = \sum_{i \neq j} 1 / (R[i] - R[j])^2
-    for every *COMBINATION* of T of size size. If |T| = 75 and size = 45,
-    then there are 45! * (75 - 45)! = 3.2e88 combinations - this is not 
-    doable.
-
-    Approximation
-    -------------
-    To approximate this, we divide the current size of the of the elements 
-    into `size+1` (approximately) equal intervals
-    Example:
-        T = [0, 0.5, 1, 2, 4, 4.5, 5, 7, 8, 10]
-        len(T) = 10
-        sizes = [8, 6]
-
-        time_indexes for T:
-            0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-
-        Make 8 point interval:
-            Need to delete 2 time points,
-            10 - 8 = 2
-            floor(10 / 3) = 3
-            Delete every 3 elements
-            0 , 1 , 3, 4, 6, 7, 9, 10
-
-            T_8 = []
-
-    Parameters
-    ----------
-    T : array_like
-        These are the times that we want to subsample
-    sizes : int, array(int)
-        These are the sizes we want to subsample to. 
-
-    Returns
-    -------
-    list(np.ndarray(sizes))
-        A list of time series for each size in decreasing size order
-    &#39;&#39;&#39;
-    if not isarray(T):
-        raise TypeError(&#39;`T` ({}) must be an array&#39;.format(type(T)))
-    if isint(sizes):
-        sizes = [sizes]
-    elif isarray(sizes):
-        for size in sizes:
-            if not isint(size):
-                raise TypeError(&#39;Each size in `sizes` ({}) must be an int ({})&#39;.format(
-                    type(size), sizes))
-    else:
-        raise ValueError(&#39;`sizes` ({}) must be an int or an array f ints&#39;.format(type(sizes)))
-
-    T = np.asarray(T)
-    sizes = np.unique(np.asarray(sizes, dtype=int))
-    sizes[::-1].sort()
-    ret = []
-    l = len(T)
-
-    prev_tp = np.arange(len(T))
-    for n in sizes:
-        spacings = []
-        subsets = []
-
-        for subset in itertools.combinations(prev_tp, n):
-            subsets.append(subset)
-            subset = list(subset)
-            subset = [-1] + subset + [l+1]
-            subset = np.array(subset)
-            spacings.append((1/np.power(scipy.spatial.distance.pdist(
-                subset[:, np.newaxis]), 2)).sum())
-
-        idxs = np.array(subsets[spacings.index(min(spacings))])
-        ret.append(T[idxs])
-        prev_tp = idxs
-
-    return ret
 
 def coarsen_phylogenetic_tree(tree, depth):
     &#39;&#39;&#39;Coarsen the tree to the maximum depth `depth`.
@@ -853,7 +609,7 @@ to the taxa that are contained within it</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.fast_index"><code class="name flex">
-<span>def <span class="ident">fast_index</span></span>(<span>M, rows, cols)</span>
+<span>def <span class="ident">fast_index</span></span>(<span>M: numpy.ndarray, rows: numpy.ndarray, cols: numpy.ndarray) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Fast index fancy indexing the matrix M. ~98% faster than regular
@@ -878,7 +634,7 @@ array before it flattens it. &mdash; super slow</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@numba.jit(nopython=True, cache=True)
-def fast_index(M, rows, cols):
+def fast_index(M: np.ndarray, rows: np.ndarray, cols: np.ndarray) -&gt; np.ndarray:
     &#39;&#39;&#39;Fast index fancy indexing the matrix M. ~98% faster than regular
     fancy indexing
     M MUST BE C_CONTIGUOUS for this to actually help.
@@ -901,7 +657,7 @@ def fast_index(M, rows, cols):
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.isarray"><code class="name flex">
-<span>def <span class="ident">isarray</span></span>(<span>a)</span>
+<span>def <span class="ident">isarray</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is an array</p>
@@ -919,7 +675,7 @@ def fast_index(M, rows, cols):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isarray(a):
+<pre><code class="python">def isarray(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is an array
 
     Parameters
@@ -937,7 +693,7 @@ def fast_index(M, rows, cols):
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.isbool"><code class="name flex">
-<span>def <span class="ident">isbool</span></span>(<span>a)</span>
+<span>def <span class="ident">isbool</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a bool</p>
@@ -955,7 +711,7 @@ def fast_index(M, rows, cols):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isbool(a):
+<pre><code class="python">def isbool(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a bool
 
     Parameters
@@ -972,7 +728,7 @@ def fast_index(M, rows, cols):
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.iscomplex"><code class="name flex">
-<span>def <span class="ident">iscomplex</span></span>(<span>a)</span>
+<span>def <span class="ident">iscomplex</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a complex number</p>
@@ -990,7 +746,7 @@ def fast_index(M, rows, cols):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def iscomplex(a):
+<pre><code class="python">def iscomplex(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a complex number
 
     Parameters
@@ -1007,7 +763,7 @@ def fast_index(M, rows, cols):
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.isdataframe"><code class="name flex">
-<span>def <span class="ident">isdataframe</span></span>(<span>a)</span>
+<span>def <span class="ident">isdataframe</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a pandas.DataFrame</p>
@@ -1025,7 +781,7 @@ def fast_index(M, rows, cols):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isdataframe(a):
+<pre><code class="python">def isdataframe(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a pandas.DataFrame
 
     Parameters
@@ -1042,7 +798,7 @@ def fast_index(M, rows, cols):
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.isdict"><code class="name flex">
-<span>def <span class="ident">isdict</span></span>(<span>a)</span>
+<span>def <span class="ident">isdict</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a dict object</p>
@@ -1066,7 +822,7 @@ True
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isdict(a):
+<pre><code class="python">def isdict(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a dict object
 
     Example
@@ -1090,7 +846,7 @@ True
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.isfloat"><code class="name flex">
-<span>def <span class="ident">isfloat</span></span>(<span>a)</span>
+<span>def <span class="ident">isfloat</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a float</p>
@@ -1108,7 +864,7 @@ True
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isfloat(a):
+<pre><code class="python">def isfloat(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a float
 
     Parameters
@@ -1125,7 +881,7 @@ True
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.isint"><code class="name flex">
-<span>def <span class="ident">isint</span></span>(<span>a)</span>
+<span>def <span class="ident">isint</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is an int</p>
@@ -1143,7 +899,7 @@ True
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isint(a):
+<pre><code class="python">def isint(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is an int
 
     Parameters
@@ -1160,7 +916,7 @@ True
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.isnumeric"><code class="name flex">
-<span>def <span class="ident">isnumeric</span></span>(<span>a)</span>
+<span>def <span class="ident">isnumeric</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a float or an int - (cannot be a bool)</p>
@@ -1178,7 +934,7 @@ True
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isnumeric(a):
+<pre><code class="python">def isnumeric(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a float or an int - (cannot be a bool)
 
     Parameters
@@ -1195,7 +951,7 @@ True
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.issquare"><code class="name flex">
-<span>def <span class="ident">issquare</span></span>(<span>a)</span>
+<span>def <span class="ident">issquare</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if the input array is a square</p>
@@ -1213,7 +969,7 @@ True
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def issquare(a):
+<pre><code class="python">def issquare(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if the input array is a square
 
     Parameters
@@ -1233,7 +989,7 @@ True
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.isstr"><code class="name flex">
-<span>def <span class="ident">isstr</span></span>(<span>a)</span>
+<span>def <span class="ident">isstr</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a str</p>
@@ -1251,7 +1007,7 @@ True
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isstr(a):
+<pre><code class="python">def isstr(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a str
 
     Parameters
@@ -1268,7 +1024,7 @@ True
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.istree"><code class="name flex">
-<span>def <span class="ident">istree</span></span>(<span>a)</span>
+<span>def <span class="ident">istree</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is an ete3 Tree object</p>
@@ -1293,7 +1049,7 @@ True
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def istree(a):
+<pre><code class="python">def istree(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is an ete3 Tree object
 
     Example
@@ -1318,7 +1074,7 @@ True
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.istuple"><code class="name flex">
-<span>def <span class="ident">istuple</span></span>(<span>a)</span>
+<span>def <span class="ident">istuple</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a tuple object</p>
@@ -1342,7 +1098,7 @@ True
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def istuple(a):
+<pre><code class="python">def istuple(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a tuple object
 
     Example
@@ -1366,7 +1122,7 @@ True
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.istype"><code class="name flex">
-<span>def <span class="ident">istype</span></span>(<span>a)</span>
+<span>def <span class="ident">istype</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a Type object</p>
@@ -1390,7 +1146,7 @@ True
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def istype(a):
+<pre><code class="python">def istype(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a Type object
 
     Example
@@ -1414,7 +1170,7 @@ True
 </details>
 </dd>
 <dt id="mdsine2.pylab.util.itercheck"><code class="name flex">
-<span>def <span class="ident">itercheck</span></span>(<span>xs, f)</span>
+<span>def <span class="ident">itercheck</span></span>(<span>xs: Iterator[Any], f: Callable) ‑> Iterator[bool]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks every element in xs with f and returns an array
@@ -1443,7 +1199,7 @@ for each entry</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def itercheck(xs, f):
+<pre><code class="python">def itercheck(xs: Iterator[Any], f: Callable) -&gt; Iterator[bool]:
     &#39;&#39;&#39;Checks every element in xs with f and returns an array
     for each entry
 
@@ -1461,383 +1217,8 @@ for each entry</p>
     return [f(x) for x in xs]</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.util.subsample_timeseries"><code class="name flex">
-<span>def <span class="ident">subsample_timeseries</span></span>(<span>T, sizes, approx=True)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Subsample the time-series <code>T</code> into size in <code>sizes</code>. Note that
-this algorithm does not guarentee any timepoints to stay.</p>
-<pre><code>The baseline algorithm calculates:
-d(R) = \sum_{i
-</code></pre>
-<p>eq j} 1 / (R[i] - R[j])^2
-for every <em>COMBINATION</em> of T of size size. If |T| = 75 and size = 45,
-then there are 45! * (75 - 45)! = 3.2e88 combinations - this is not
-doable.</p>
-<pre><code>Approximation
--------------
-To approximate this, we divide the current size of the of the elements 
-into `size+1` (approximately) equal intervals
-Example:
-    T = [0, 0.5, 1, 2, 4, 4.5, 5, 7, 8, 10]
-    len(T) = 10
-    sizes = [8, 6]
-
-    time_indexes for T:
-        0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-
-    Make 8 point interval:
-        Need to delete 2 time points,
-        10 - 8 = 2
-        floor(10 / 3) = 3
-        Delete every 3 elements
-        0 , 1 , 3, 4, 6, 7, 9, 10
-
-        T_8 = []
-
-Parameters
-----------
-T : array_like
-    These are the times that we want to subsample
-sizes : int, array(int)
-    These are the sizes we want to subsample to.
-
-Returns
--------
-list(np.ndarray(sizes))
-    A list of time series for each size in decreasing size order
-</code></pre></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def subsample_timeseries(T, sizes, approx=True):
-    &#39;&#39;&#39;Subsample the time-series `T` into size in `sizes`. Note that
-    this algorithm does not guarentee any timepoints to stay.
-
-    The baseline algorithm calculates:
-    d(R) = \sum_{i \neq j} 1 / (R[i] - R[j])^2
-    for every *COMBINATION* of T of size size. If |T| = 75 and size = 45,
-    then there are 45! * (75 - 45)! = 3.2e88 combinations - this is not 
-    doable.
-
-    Approximation
-    -------------
-    To approximate this, we divide the current size of the of the elements 
-    into `size+1` (approximately) equal intervals
-    Example:
-        T = [0, 0.5, 1, 2, 4, 4.5, 5, 7, 8, 10]
-        len(T) = 10
-        sizes = [8, 6]
-
-        time_indexes for T:
-            0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-
-        Make 8 point interval:
-            Need to delete 2 time points,
-            10 - 8 = 2
-            floor(10 / 3) = 3
-            Delete every 3 elements
-            0 , 1 , 3, 4, 6, 7, 9, 10
-
-            T_8 = []
-
-    Parameters
-    ----------
-    T : array_like
-        These are the times that we want to subsample
-    sizes : int, array(int)
-        These are the sizes we want to subsample to. 
-
-    Returns
-    -------
-    list(np.ndarray(sizes))
-        A list of time series for each size in decreasing size order
-    &#39;&#39;&#39;
-    if not isarray(T):
-        raise TypeError(&#39;`T` ({}) must be an array&#39;.format(type(T)))
-    if isint(sizes):
-        sizes = [sizes]
-    elif isarray(sizes):
-        for size in sizes:
-            if not isint(size):
-                raise TypeError(&#39;Each size in `sizes` ({}) must be an int ({})&#39;.format(
-                    type(size), sizes))
-    else:
-        raise ValueError(&#39;`sizes` ({}) must be an int or an array f ints&#39;.format(type(sizes)))
-
-    T = np.asarray(T)
-    sizes = np.unique(np.asarray(sizes, dtype=int))
-    sizes[::-1].sort()
-    ret = []
-    l = len(T)
-
-    prev_tp = np.arange(len(T))
-    for n in sizes:
-        spacings = []
-        subsets = []
-
-        for subset in itertools.combinations(prev_tp, n):
-            subsets.append(subset)
-            subset = list(subset)
-            subset = [-1] + subset + [l+1]
-            subset = np.array(subset)
-            spacings.append((1/np.power(scipy.spatial.distance.pdist(
-                subset[:, np.newaxis]), 2)).sum())
-
-        idxs = np.array(subsets[spacings.index(min(spacings))])
-        ret.append(T[idxs])
-        prev_tp = idxs
-
-    return ret</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.util.taxaname_for_paper"><code class="name flex">
-<span>def <span class="ident">taxaname_for_paper</span></span>(<span>taxon, taxa)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Makes the name in the format needed for the paper</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>taxon</code></strong> :&ensp;<code>pylab.base.Taxon/pylab.base.OTU</code></dt>
-<dd>This is the taxon we are making the name for</dd>
-<dt><strong><code>taxa</code></strong> :&ensp;<code>pylab.base.TaxaSet</code></dt>
-<dd>This is the TaxaSet object that contains the taxon objects</dd>
-</dl>
-<h2 id="returns">Returns</h2></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def taxaname_for_paper(taxon, taxa):
-    &#39;&#39;&#39;Makes the name in the format needed for the paper
-
-    Parameters
-    ----------
-    taxon : pylab.base.Taxon/pylab.base.OTU
-        This is the taxon we are making the name for
-    taxa : pylab.base.TaxaSet
-        This is the TaxaSet object that contains the taxon objects
-
-    Returns
-    -------
-    &#39;&#39;&#39;
-    taxon = taxa[taxon]
-    if taxon.tax_is_defined(&#39;species&#39;):
-        species = taxon.taxonomy[&#39;species&#39;]
-        species = species.split(&#39;/&#39;)
-        if len(species) &gt;= 3:
-            species = species[:2]
-        species = &#39;/&#39;.join(species)
-        label = taxaname_formatter(
-            format=&#39;%(genus)s {spec} %(name)s&#39;.format(
-                spec=species), 
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined(&#39;genus&#39;):
-        label = taxaname_formatter(
-            format=&#39;* %(genus)s %(name)s&#39;,
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined(&#39;family&#39;):
-        label = taxaname_formatter(
-            format=&#39;** %(family)s %(name)s&#39;,
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined(&#39;order&#39;):
-        label = taxaname_formatter(
-            format=&#39;*** %(order)s %(name)s&#39;,
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined(&#39;class&#39;):
-        label = taxaname_formatter(
-            format=&#39;**** %(class)s %(name)s&#39;,
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined(&#39;phylum&#39;):
-        label = taxaname_formatter(
-            format=&#39;***** %(phylum)s %(name)s&#39;,
-            taxon=taxon, taxa=taxa)
-    elif taxon.tax_is_defined(&#39;kingdom&#39;):
-        label = taxaname_formatter(
-            format=&#39;****** %(kingdom)s %(name)s&#39;,
-            taxon=taxon, taxa=taxa)
-    else:
-        raise ValueError(&#39;Something went wrong - no taxnonomy: {}&#39;.format(str(taxon)))
-
-    return label</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.util.taxaname_formatter"><code class="name flex">
-<span>def <span class="ident">taxaname_formatter</span></span>(<span>format, taxon, taxa)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Format the label of a taxon. Specify the taxon by its index in the TaxaSet <code>taxa</code>.</p>
-<p>If <code>format == mdsine.TAXANAME_PAPER_FORMAT</code>, then we call the function
-<code><a title="mdsine2.pylab.util.taxaname_for_paper" href="#mdsine2.pylab.util.taxaname_for_paper">taxaname_for_paper()</a></code>.</p>
-<h2 id="example">Example</h2>
-<p>taxon is an Taxon object at index 0 where
-taxon.genus = 'A'
-taxon.id = 1234532</p>
-<p>taxaname_formatter(
-format='%(genus)s: %(index)s',
-taxon=1234532,
-taxa=taxa)</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; 'A: 0'
-</code></pre>
-<p>taxaname_formatter(
-format='%(genus)s: %(genus)s',
-taxon=1234532,
-taxa=taxa)</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; 'A: A'
-</code></pre>
-<p>taxaname_formatter(
-format='%(index)s',
-taxon=1234532,
-taxa=taxa)</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; '0'
-</code></pre>
-<p>taxaname_formatter(
-format='%(geNus)s: %(genus)s',
-taxon=1234532,
-taxa=taxa)</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; '%(geNus)s: A'
-</code></pre>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>format</code></strong> :&ensp;<code>str</code></dt>
-<dd>This is the format for us to do the labels
-Formatting options:
-'%(paperformat)s'
-Return the <code><a title="mdsine2.pylab.util.taxaname_for_paper" href="#mdsine2.pylab.util.taxaname_for_paper">taxaname_for_paper()</a></code>
-'%(name)s'
-Name of the taxon (pylab.base..name)
-'%(id)s'
-ID of the taxon (pylab.base..id)
-'%(index)s'
-The order that this appears in the TaxaSet
-'%(species)s'
-<code>'species'</code> taxonomic classification of the taxon
-'%(speciesX)s'
-<code>'species'</code> taxonomic classification of the taxon for only up to the first
-<code>X</code> spceified
-'%(genus)s'
-<code>'genus'</code> taxonomic classification of the taxon
-'%(family)s'
-<code>'family'</code> taxonomic classification of the taxon
-'%(class)s'
-<code>'class'</code> taxonomic classification of the taxon
-'%(order)s'
-<code>'order'</code> taxonomic classification of the taxon
-'%(phylum)s'
-<code>'phylum'</code> taxonomic classification of the taxon
-'%(kingdom)s'
-<code>'kingdom'</code> taxonomic classification of the taxon</dd>
-<dt><strong><code>taxon</code></strong> :&ensp;<code>str, int, Taxon, OTU</code></dt>
-<dd>Taxon/OTU object or identifier (name, ID, index)</dd>
-<dt><strong><code>taxa</code></strong> :&ensp;<code>pylab.base.TaxaSet</code></dt>
-<dd>Dataset containing all of the information for the taxa</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def taxaname_formatter(format, taxon, taxa):
-    &#39;&#39;&#39;Format the label of a taxon. Specify the taxon by its index in the TaxaSet `taxa`.
-
-    If `format == mdsine.TAXANAME_PAPER_FORMAT`, then we call the function
-    `taxaname_for_paper`.
-
-    Example:
-        taxon is an Taxon object at index 0 where
-        taxon.genus = &#39;A&#39;
-        taxon.id = 1234532
-
-        taxaname_formatter(
-            format=&#39;%(genus)s: %(index)s&#39;,
-            taxon=1234532,
-            taxa=taxa)
-        &gt;&gt;&gt; &#39;A: 0&#39;
-
-        taxaname_formatter(
-            format=&#39;%(genus)s: %(genus)s&#39;,
-            taxon=1234532,
-            taxa=taxa)
-        &gt;&gt;&gt; &#39;A: A&#39;
-
-        taxaname_formatter(
-            format=&#39;%(index)s&#39;,
-            taxon=1234532,
-            taxa=taxa)
-        &gt;&gt;&gt; &#39;0&#39;
-
-        taxaname_formatter(
-            format=&#39;%(geNus)s: %(genus)s&#39;,
-            taxon=1234532,
-            taxa=taxa)
-        &gt;&gt;&gt; &#39;%(geNus)s: A&#39;
-
-    Parameters
-    ----------
-    format : str
-        This is the format for us to do the labels
-        Formatting options:
-            &#39;%(paperformat)s&#39;
-                Return the `taxaname_for_paper`
-            &#39;%(name)s&#39;
-                Name of the taxon (pylab.base..name)
-            &#39;%(id)s&#39;
-                ID of the taxon (pylab.base..id)
-            &#39;%(index)s&#39;
-                The order that this appears in the TaxaSet
-            &#39;%(species)s&#39;
-                `&#39;species&#39;` taxonomic classification of the taxon
-            &#39;%(speciesX)s&#39;
-                `&#39;species&#39;` taxonomic classification of the taxon for only up to the first 
-                `X` spceified
-            &#39;%(genus)s&#39;
-                `&#39;genus&#39;` taxonomic classification of the taxon
-            &#39;%(family)s&#39;
-                `&#39;family&#39;` taxonomic classification of the taxon
-            &#39;%(class)s&#39;
-                `&#39;class&#39;` taxonomic classification of the taxon
-            &#39;%(order)s&#39;
-                `&#39;order&#39;` taxonomic classification of the taxon
-            &#39;%(phylum)s&#39;
-                `&#39;phylum&#39;` taxonomic classification of the taxon
-            &#39;%(kingdom)s&#39;
-                `&#39;kingdom&#39;` taxonomic classification of the taxon
-
-    taxon : str, int, Taxon, OTU
-        Taxon/OTU object or identifier (name, ID, index)
-    taxa : pylab.base.TaxaSet
-        Dataset containing all of the information for the taxa
-
-    &#39;&#39;&#39;
-    if format == TAXANAME_PAPER_FORMAT:
-        return taxaname_for_paper(taxon=taxon, taxa=taxa)
-    taxon = taxa[taxon]
-    index = taxon.idx
-
-    label = format.replace(NAME_FORMATTER, str(taxon.name))
-    label = label.replace(ID_FORMATTER, str(taxon.id))
-    label = label.replace(INDEX_FORMATTER,  str(index))
-
-    if PAPER_FORMATTER in label:
-        label = label.replace(PAPER_FORMATTER, &#39;%(temp)s&#39;)
-        label = label.replace(&#39;%(temp)s&#39;, taxaname_for_paper(taxon=taxon, taxa=taxa))
-    
-    for i in range(len(_TAXLEVELS)):
-        taxlevel = _TAXLEVELS[i]
-        fmt = _TAXFORMATTERS[i]
-        try:
-            label = label.replace(fmt, str(taxon.get_taxonomy(taxlevel)))
-        except:
-            logging.critical(&#39;taxon: {}&#39;.format(taxon))
-            logging.critical(&#39;fmt: {}&#39;.format(fmt))
-            logging.critical(&#39;label: {}&#39;.format(label))
-            raise
-
-    return label</code></pre>
-</details>
-</dd>
 <dt id="mdsine2.pylab.util.toarray"><code class="name flex">
-<span>def <span class="ident">toarray</span></span>(<span>x, dest=None, T=False)</span>
+<span>def <span class="ident">toarray</span></span>(<span>x: Union[scipy.sparse.base.spmatrix, numpy.ndarray], dest: numpy.ndarray = None, T: bool = False) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Converts <code>x</code> into a C_CONTIGUOUS numpy matrix if
@@ -1862,7 +1243,8 @@ the shapes are compatible. Else create a new array</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def toarray(x, dest=None, T=False):
+<pre><code class="python">def toarray(x: Union[scipy.sparse.spmatrix, np.ndarray], dest: np.ndarray=None, 
+    T: bool=False) -&gt; np.ndarray:
     &#39;&#39;&#39;Converts `x` into a C_CONTIGUOUS numpy matrix if 
     the matrix is sparse. If it is not sparse then it just returns
     the matrix.
@@ -2121,9 +1503,6 @@ IndexError</p>
 <li><code><a title="mdsine2.pylab.util.istuple" href="#mdsine2.pylab.util.istuple">istuple</a></code></li>
 <li><code><a title="mdsine2.pylab.util.istype" href="#mdsine2.pylab.util.istype">istype</a></code></li>
 <li><code><a title="mdsine2.pylab.util.itercheck" href="#mdsine2.pylab.util.itercheck">itercheck</a></code></li>
-<li><code><a title="mdsine2.pylab.util.subsample_timeseries" href="#mdsine2.pylab.util.subsample_timeseries">subsample_timeseries</a></code></li>
-<li><code><a title="mdsine2.pylab.util.taxaname_for_paper" href="#mdsine2.pylab.util.taxaname_for_paper">taxaname_for_paper</a></code></li>
-<li><code><a title="mdsine2.pylab.util.taxaname_formatter" href="#mdsine2.pylab.util.taxaname_formatter">taxaname_formatter</a></code></li>
 <li><code><a title="mdsine2.pylab.util.toarray" href="#mdsine2.pylab.util.toarray">toarray</a></code></li>
 </ul>
 </li>

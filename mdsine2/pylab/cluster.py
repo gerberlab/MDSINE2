@@ -98,18 +98,18 @@ class Clustering(Node, Traceable):
     got deleted and/or added. THE PRIORITY OF A CLUSTER BEING DELETED SUPERCEDES
     THE PRIORITY OF AN ITEM BEING MOVED.
     Example:
-        clusters = [1,0,0,0,2,2,2]
-        If we moved oidx `0` to a different cluster using `move_item`:
-        clusters = [0,0,0,0,1,1,1]
-        Our signaling will call the function `clusters_changed`, even though
+    - clusters = [1,0,0,0,2,2,2]
+    - If we moved oidx `0` to a different cluster using `move_item`:
+    - clusters = [0,0,0,0,1,1,1]
+    - Our signaling will call the function `clusters_changed`, even though
         item `0` "effectively" moved and there was a deletion of a cluster.
 
     Example:
-        clusters = [1,0,0,0,2,2,2]
-        If we moved oidx `1` to cluster [0] `move_item`: 
-        clusters = [1,1,0,0,2,2,2]
-        Our signaling will call the function `assignments_changed` because 
-        there was no deletion and/or additions of clusters
+    - clusters = [1,0,0,0,2,2,2]
+    - If we moved oidx `1` to cluster [0] `move_item`: 
+    - clusters = [1,1,0,0,2,2,2]
+    - Our signaling will call the function `assignments_changed` because 
+      there was no deletion and/or additions of clusters
 
     Tracing
     -------
@@ -663,8 +663,8 @@ class ClusterValue(ClusterProperty, Node, Traceable):
 
     User nees to implement the signaling methods and reset if necessary
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     clustering : Clustering
         This is the clustering object you are adding it to
     signal_when_clusters_change : bool
@@ -804,14 +804,15 @@ def toarray_from_cocluster(coclusters: np.ndarray) -> np.ndarray:
     Numba is about 10X faster.
 
     Example:
-        coclusters = 
+        ```
+        >>> coclusters = np.asarray(
             [[1,0,0,1],
              [0,1,0,0],
              [0,0,1,0],
-             [1,0,0,1]]
+             [1,0,0,1]])
         >>> toarray_from_coclusters(coclusters)
-
         [0, 1, 2, 0]
+        ```
 
     Parameters
     ----------

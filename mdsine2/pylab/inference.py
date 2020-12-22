@@ -81,14 +81,16 @@ class BaseMCMC(BaseModel):
 
     Typical use
     -----------
-    You first initialize the object with the graph and parameters you want
+    ```
+    >>> # You first initialize the object with the graph and parameters you want
     >>> inf = BaseMCMC(burnin=1000, n_samples=2000, graph=G)
-    Then you set the inference order
+    >>> # Then you set the inference order
     >>> inf.set_inference_order(['a', 'b', 'c'])
-    Then set some diagnostic variables (Optional)
+    >>> # Then set some diagnostic variables (Optional)
     >>> inf.set_diagnostic_variables(['e'])
-    Then we can run the inference
+    >>> # Then we can run the inference
     >>> inf.run(log_every=5, checkpoint=100, tracer_filename='./output/tracer.hdf5')
+    ```
 
     Inference order
     ---------------
@@ -949,12 +951,12 @@ def r_hat(chains: Iterator[BaseMCMC], vname: str, start: int, end: int, idx: Uni
 
     References
     ----------
-    [1] Gelman, A. and D. B. Rubin (1992) Inference from iterative simulation using multiple
+    - [1] Gelman, A. and D. B. Rubin (1992) Inference from iterative simulation using multiple
         sequences (with discussion). Statistical Science, 7:457-511.
-    [2] Brooks and Gelman (1998). Journal of Computational and Graphical Statistics, 7(4)434-455.
-    [3] A. Gelman, H. S. Stern, J. B. Carlin, D. B. Dunson, A. Vehtari, and D. B. Rubin, Bayesian Data
+    - [2] Brooks and Gelman (1998). Journal of Computational and Graphical Statistics, 7(4)434-455.
+    - [3] A. Gelman, H. S. Stern, J. B. Carlin, D. B. Dunson, A. Vehtari, and D. B. Rubin, Bayesian Data
         Analysis Third Edition. Chapman and Hall/CRC, 2013.
-    [4] https://stats.stackexchange.com/questions/348984/stan-hatr-versus-gelman-rubin-hatr-definition
+    - [4] https://stats.stackexchange.com/questions/348984/stan-hatr-versus-gelman-rubin-hatr-definition
     '''
     # Check that all of the chains are consistent with each other
     if not util.isarray(chains):

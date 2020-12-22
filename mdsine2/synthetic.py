@@ -45,12 +45,12 @@ class Synthetic(pl.Saveable):
         Parameters
         ----------
         n_taxa : int
-            These are how many taxa to include in the system. We will always have 3 clusters and
-            the proportion of taxa in each cluster is as follows:
-                cluster 1 - 5/13
-                cluster 2 - 6/13
-                cluster 3 - 2/13
-            We assign each taxoon to each cluster the best we can, any extra taxa we put into cluster 3
+            - These are how many taxa to include in the system. We will always have 3 clusters and
+              the proportion of taxa in each cluster is as follows:
+                - cluster 1 - 5/13
+                - cluster 2 - 6/13
+                - cluster 3 - 2/13
+            - We assign each taxoon to each cluster the best we can, any extra taxa we put into cluster 3
 
         References
         ----------
@@ -272,17 +272,17 @@ def make_semisynthetic(chain: BaseMCMC, min_bayes_factor: Union[float, int], nam
     
     How the synthetic system is set
     -------------------------------
-    n_taxa: Set to the number in chain.
-    clustering: The clusters assignments are set to the value of the Clustering class
-    interactions: Set to the expected value of the posterior. We only include interactions
-        whose bayes factor is greater than `min_bayes_factor`.
-    perturbations: The number of perturbations is set to be the same as what is in the
-        chain. The topology and values of the perturbations are set to the expected value
-        of the posterior. We only include perturbation effects whose bayes factor is
-        greater than `min_bayes_factor`
-    growth and self-interactions: These are set to the learned values for each of the taxa.
-    init_dist: The distirbution of the initial timepoints are set by fitting a log normal
-        ditribution to the `init_dist_timepoint`th timepoint
+    - n_taxa: Set to the number in chain.
+    - clustering: The clusters assignments are set to the value of the Clustering class
+    - interactions: Set to the expected value of the posterior. We only include interactions
+      whose bayes factor is greater than `min_bayes_factor`.
+    - perturbations: The number of perturbations is set to be the same as what is in the
+      chain. The topology and values of the perturbations are set to the expected value
+      of the posterior. We only include perturbation effects whose bayes factor is
+      greater than `min_bayes_factor`
+    - growth and self-interactions: These are set to the learned values for each of the taxa.
+    - init_dist: The distirbution of the initial timepoints are set by fitting a log normal
+      ditribution to the `init_dist_timepoint`th timepoint
 
     Parameters
     ----------

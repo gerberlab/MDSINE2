@@ -52,6 +52,69 @@ class _BaseNameClass:
 
 class StrNamesClass(_BaseNameClass):
     &#39;&#39;&#39;String representation of each of the variables
+
+    Names
+    -----
+    - CLUSTERING_OBJ: str
+        - This is the name for the `mdsine2.pylab.cluster.Clustering` object.
+    - CLUSTERING: str
+        - This is the name for the `mdsine2.posterior.ClusterAssignments` object.
+    - CONCENTRATION: str
+        - This is the name for the `mdsine2.posterior.Concentration` object.
+    - LATENT_TRAJECTORY: str
+        - This is the name for the `mdsine2.posterior.TrajectorySet` object.
+    - FILTERING: str
+        - This is the name for the `mdsine2.posterior.FilteringLogMP` object.
+    - ZERO_INFLATION: str
+        - This is the name for the `mdsine2.posterior.ZeroInflation` object.
+    - PROCESSVAR: str
+        - This is the name for the `mdsine2.posterior.ProcessVarGlobal` object.
+    - NEGBIN_A0: str
+        - This is the name for the `mdsine2.negbin.NegBinDispersionParam` object.
+    - NEGBIN_A1: str
+        - This is the name for the `mdsine2.negbin.NegBinDispersionParam` object.
+    - GLV_PARAMETERS: str
+        - This is the name for the `mdsine2.posterior.GLVParameters` object.
+    - GROWTH_VALUE: str
+        - This is the name for the `mdsine2.posterior.Growth` object.
+    - PRIOR_VAR_GROWTH: str
+        - This is the name for one of the `mdsine2.posterior.PriorVarMH` object instantiations.
+    - PRIOR_MEAN_GROWTH: str
+        - This is the name for one of the `mdsine2.posterior.PriorMeanMH` object instantiations.
+    - SELF_INTERACTION_VALUE: str
+        - This is the name for the `mdsine2.posterior.SelfInteractions` object.
+    - PRIOR_VAR_SELF_INTERACTIONS: str
+        - This is the name for one of the `mdsine2.posterior.PriorVarMH` object instantiations.
+    - PRIOR_MEAN_SELF_INTERACTIONS: str
+        - This is the name for one of the `mdsine2.posterior.PriorMeanMH` object instantiations.
+    - INTERACTIONS_OBJ: str
+        - This is the name for the `mdsine2.pylab.contrib.Interactions` object.
+    - CLUSTER_INTERACTION_VALUE: str
+        - This is the name for the `mdsine2.posterior.ClusterInteractionValue` object.
+    - CLUSTER_INTERACTION_INDICATOR: str
+        - This is the name for the `mdsine2.posterior.ClusterInteractionIndicators` object.
+    - CLUSTER_INTERACTION_INDICATOR_PROB: str
+        - This is the name for the `mdsine2.posterior.ClusterInteractionProbability` object.
+    - PRIOR_VAR_INTERACTIONS: str
+        - This is the name for the `mdsine2.posterior.PriorVarInteractions` object.
+    - PRIOR_MEAN_INTERACTIONS: str
+        - This is the name for the `mdsine2.posterior.PriorMeanInteractions` object.
+    - PERT_VALUE: str
+        - This is the name for the `mdsine2.posterior.PerturbationMagnitudes` object.
+    - PERT_INDICATOR: str
+        - This is the name for the `mdsine2.posterior.PerturbationIndicators` object.
+    - PERT_INDICATOR_PROB: str
+        - This is the name for the `mdsine2.posterior.PerturbationProbabilities` object.
+    - PRIOR_VAR_PERT: str
+        - This is the name for the `mdsine2.posterior.PriorVarPerturbations` object.
+    - PRIOR_MEAN_PERT: str
+        - This is the name for the `mdsine2.posterior.PriorMeanPerturbations` object.
+    - QPCR_VARIANCES: str
+        - This is the name for the `mdsine2.posterior.qPCRVariances` object.
+    - QPCR_DOFS: str
+        - This is the name for the `mdsine2.posterior.qPCRDegreesOfFreedoms` object.
+    - QPCR_SCALES: str
+        - This is the name for the `mdsine2.posterior.qPCRScales` object.
     &#39;&#39;&#39;
     def __init__(self):
         self.CLUSTERING_OBJ = &#39;Clustering object (contains ability to change the cluster assignments)&#39;
@@ -216,13 +279,199 @@ string parser will throw an error</p></div>
 <span>class <span class="ident">StrNamesClass</span></span>
 </code></dt>
 <dd>
-<div class="desc"><p>String representation of each of the variables</p></div>
+<div class="desc"><p>String representation of each of the variables</p>
+<h2 id="names">Names</h2>
+<ul>
+<li>CLUSTERING_OBJ: str<ul>
+<li>This is the name for the <code><a title="mdsine2.pylab.cluster.Clustering" href="pylab/cluster.html#mdsine2.pylab.cluster.Clustering">Clustering</a></code> object.</li>
+</ul>
+</li>
+<li>CLUSTERING: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.ClusterAssignments" href="posterior.html#mdsine2.posterior.ClusterAssignments">ClusterAssignments</a></code> object.</li>
+</ul>
+</li>
+<li>CONCENTRATION: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.Concentration" href="posterior.html#mdsine2.posterior.Concentration">Concentration</a></code> object.</li>
+</ul>
+</li>
+<li>LATENT_TRAJECTORY: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.TrajectorySet" href="posterior.html#mdsine2.posterior.TrajectorySet">TrajectorySet</a></code> object.</li>
+</ul>
+</li>
+<li>FILTERING: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.FilteringLogMP" href="posterior.html#mdsine2.posterior.FilteringLogMP">FilteringLogMP</a></code> object.</li>
+</ul>
+</li>
+<li>ZERO_INFLATION: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.ZeroInflation" href="posterior.html#mdsine2.posterior.ZeroInflation">ZeroInflation</a></code> object.</li>
+</ul>
+</li>
+<li>PROCESSVAR: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.ProcessVarGlobal" href="posterior.html#mdsine2.posterior.ProcessVarGlobal">ProcessVarGlobal</a></code> object.</li>
+</ul>
+</li>
+<li>NEGBIN_A0: str<ul>
+<li>This is the name for the <code><a title="mdsine2.negbin.NegBinDispersionParam" href="negbin.html#mdsine2.negbin.NegBinDispersionParam">NegBinDispersionParam</a></code> object.</li>
+</ul>
+</li>
+<li>NEGBIN_A1: str<ul>
+<li>This is the name for the <code><a title="mdsine2.negbin.NegBinDispersionParam" href="negbin.html#mdsine2.negbin.NegBinDispersionParam">NegBinDispersionParam</a></code> object.</li>
+</ul>
+</li>
+<li>GLV_PARAMETERS: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.GLVParameters" href="posterior.html#mdsine2.posterior.GLVParameters">GLVParameters</a></code> object.</li>
+</ul>
+</li>
+<li>GROWTH_VALUE: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.Growth" href="posterior.html#mdsine2.posterior.Growth">Growth</a></code> object.</li>
+</ul>
+</li>
+<li>PRIOR_VAR_GROWTH: str<ul>
+<li>This is the name for one of the <code><a title="mdsine2.posterior.PriorVarMH" href="posterior.html#mdsine2.posterior.PriorVarMH">PriorVarMH</a></code> object instantiations.</li>
+</ul>
+</li>
+<li>PRIOR_MEAN_GROWTH: str<ul>
+<li>This is the name for one of the <code><a title="mdsine2.posterior.PriorMeanMH" href="posterior.html#mdsine2.posterior.PriorMeanMH">PriorMeanMH</a></code> object instantiations.</li>
+</ul>
+</li>
+<li>SELF_INTERACTION_VALUE: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.SelfInteractions" href="posterior.html#mdsine2.posterior.SelfInteractions">SelfInteractions</a></code> object.</li>
+</ul>
+</li>
+<li>PRIOR_VAR_SELF_INTERACTIONS: str<ul>
+<li>This is the name for one of the <code><a title="mdsine2.posterior.PriorVarMH" href="posterior.html#mdsine2.posterior.PriorVarMH">PriorVarMH</a></code> object instantiations.</li>
+</ul>
+</li>
+<li>PRIOR_MEAN_SELF_INTERACTIONS: str<ul>
+<li>This is the name for one of the <code><a title="mdsine2.posterior.PriorMeanMH" href="posterior.html#mdsine2.posterior.PriorMeanMH">PriorMeanMH</a></code> object instantiations.</li>
+</ul>
+</li>
+<li>INTERACTIONS_OBJ: str<ul>
+<li>This is the name for the <code><a title="mdsine2.pylab.contrib.Interactions" href="pylab/contrib.html#mdsine2.pylab.contrib.Interactions">Interactions</a></code> object.</li>
+</ul>
+</li>
+<li>CLUSTER_INTERACTION_VALUE: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.ClusterInteractionValue" href="posterior.html#mdsine2.posterior.ClusterInteractionValue">ClusterInteractionValue</a></code> object.</li>
+</ul>
+</li>
+<li>CLUSTER_INTERACTION_INDICATOR: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.ClusterInteractionIndicators" href="posterior.html#mdsine2.posterior.ClusterInteractionIndicators">ClusterInteractionIndicators</a></code> object.</li>
+</ul>
+</li>
+<li>CLUSTER_INTERACTION_INDICATOR_PROB: str<ul>
+<li>This is the name for the <code>mdsine2.posterior.ClusterInteractionProbability</code> object.</li>
+</ul>
+</li>
+<li>PRIOR_VAR_INTERACTIONS: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.PriorVarInteractions" href="posterior.html#mdsine2.posterior.PriorVarInteractions">PriorVarInteractions</a></code> object.</li>
+</ul>
+</li>
+<li>PRIOR_MEAN_INTERACTIONS: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.PriorMeanInteractions" href="posterior.html#mdsine2.posterior.PriorMeanInteractions">PriorMeanInteractions</a></code> object.</li>
+</ul>
+</li>
+<li>PERT_VALUE: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.PerturbationMagnitudes" href="posterior.html#mdsine2.posterior.PerturbationMagnitudes">PerturbationMagnitudes</a></code> object.</li>
+</ul>
+</li>
+<li>PERT_INDICATOR: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.PerturbationIndicators" href="posterior.html#mdsine2.posterior.PerturbationIndicators">PerturbationIndicators</a></code> object.</li>
+</ul>
+</li>
+<li>PERT_INDICATOR_PROB: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.PerturbationProbabilities" href="posterior.html#mdsine2.posterior.PerturbationProbabilities">PerturbationProbabilities</a></code> object.</li>
+</ul>
+</li>
+<li>PRIOR_VAR_PERT: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.PriorVarPerturbations" href="posterior.html#mdsine2.posterior.PriorVarPerturbations">PriorVarPerturbations</a></code> object.</li>
+</ul>
+</li>
+<li>PRIOR_MEAN_PERT: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.PriorMeanPerturbations" href="posterior.html#mdsine2.posterior.PriorMeanPerturbations">PriorMeanPerturbations</a></code> object.</li>
+</ul>
+</li>
+<li>QPCR_VARIANCES: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.qPCRVariances" href="posterior.html#mdsine2.posterior.qPCRVariances">qPCRVariances</a></code> object.</li>
+</ul>
+</li>
+<li>QPCR_DOFS: str<ul>
+<li>This is the name for the <code>mdsine2.posterior.qPCRDegreesOfFreedoms</code> object.</li>
+</ul>
+</li>
+<li>QPCR_SCALES: str<ul>
+<li>This is the name for the <code><a title="mdsine2.posterior.qPCRScales" href="posterior.html#mdsine2.posterior.qPCRScales">qPCRScales</a></code> object.</li>
+</ul>
+</li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class StrNamesClass(_BaseNameClass):
     &#39;&#39;&#39;String representation of each of the variables
+
+    Names
+    -----
+    - CLUSTERING_OBJ: str
+        - This is the name for the `mdsine2.pylab.cluster.Clustering` object.
+    - CLUSTERING: str
+        - This is the name for the `mdsine2.posterior.ClusterAssignments` object.
+    - CONCENTRATION: str
+        - This is the name for the `mdsine2.posterior.Concentration` object.
+    - LATENT_TRAJECTORY: str
+        - This is the name for the `mdsine2.posterior.TrajectorySet` object.
+    - FILTERING: str
+        - This is the name for the `mdsine2.posterior.FilteringLogMP` object.
+    - ZERO_INFLATION: str
+        - This is the name for the `mdsine2.posterior.ZeroInflation` object.
+    - PROCESSVAR: str
+        - This is the name for the `mdsine2.posterior.ProcessVarGlobal` object.
+    - NEGBIN_A0: str
+        - This is the name for the `mdsine2.negbin.NegBinDispersionParam` object.
+    - NEGBIN_A1: str
+        - This is the name for the `mdsine2.negbin.NegBinDispersionParam` object.
+    - GLV_PARAMETERS: str
+        - This is the name for the `mdsine2.posterior.GLVParameters` object.
+    - GROWTH_VALUE: str
+        - This is the name for the `mdsine2.posterior.Growth` object.
+    - PRIOR_VAR_GROWTH: str
+        - This is the name for one of the `mdsine2.posterior.PriorVarMH` object instantiations.
+    - PRIOR_MEAN_GROWTH: str
+        - This is the name for one of the `mdsine2.posterior.PriorMeanMH` object instantiations.
+    - SELF_INTERACTION_VALUE: str
+        - This is the name for the `mdsine2.posterior.SelfInteractions` object.
+    - PRIOR_VAR_SELF_INTERACTIONS: str
+        - This is the name for one of the `mdsine2.posterior.PriorVarMH` object instantiations.
+    - PRIOR_MEAN_SELF_INTERACTIONS: str
+        - This is the name for one of the `mdsine2.posterior.PriorMeanMH` object instantiations.
+    - INTERACTIONS_OBJ: str
+        - This is the name for the `mdsine2.pylab.contrib.Interactions` object.
+    - CLUSTER_INTERACTION_VALUE: str
+        - This is the name for the `mdsine2.posterior.ClusterInteractionValue` object.
+    - CLUSTER_INTERACTION_INDICATOR: str
+        - This is the name for the `mdsine2.posterior.ClusterInteractionIndicators` object.
+    - CLUSTER_INTERACTION_INDICATOR_PROB: str
+        - This is the name for the `mdsine2.posterior.ClusterInteractionProbability` object.
+    - PRIOR_VAR_INTERACTIONS: str
+        - This is the name for the `mdsine2.posterior.PriorVarInteractions` object.
+    - PRIOR_MEAN_INTERACTIONS: str
+        - This is the name for the `mdsine2.posterior.PriorMeanInteractions` object.
+    - PERT_VALUE: str
+        - This is the name for the `mdsine2.posterior.PerturbationMagnitudes` object.
+    - PERT_INDICATOR: str
+        - This is the name for the `mdsine2.posterior.PerturbationIndicators` object.
+    - PERT_INDICATOR_PROB: str
+        - This is the name for the `mdsine2.posterior.PerturbationProbabilities` object.
+    - PRIOR_VAR_PERT: str
+        - This is the name for the `mdsine2.posterior.PriorVarPerturbations` object.
+    - PRIOR_MEAN_PERT: str
+        - This is the name for the `mdsine2.posterior.PriorMeanPerturbations` object.
+    - QPCR_VARIANCES: str
+        - This is the name for the `mdsine2.posterior.qPCRVariances` object.
+    - QPCR_DOFS: str
+        - This is the name for the `mdsine2.posterior.qPCRDegreesOfFreedoms` object.
+    - QPCR_SCALES: str
+        - This is the name for the `mdsine2.posterior.qPCRScales` object.
     &#39;&#39;&#39;
     def __init__(self):
         self.CLUSTERING_OBJ = &#39;Clustering object (contains ability to change the cluster assignments)&#39;

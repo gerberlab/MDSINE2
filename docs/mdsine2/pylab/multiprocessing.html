@@ -29,6 +29,9 @@ types of problems. These classes are not better than the standard Python
 <code>multiprocessing</code> package if the problem requires very little I/O overhead.</p>
 <p>These classes are built off of the standard Python <code>multiprocessing</code> library
 so it is portable to any system that can run Python.</p>
+<p>NOTE: These classes are not used during inference. Need to pass the random state
+for each computation orelse the results are not reproducable. To do this, either
+pass the random state or do no sampling in the multiprocessed object.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -42,6 +45,10 @@ types of problems. These classes are not better than the standard Python
 
 These classes are built off of the standard Python `multiprocessing` library
 so it is portable to any system that can run Python.
+
+NOTE: These classes are not used during inference. Need to pass the random state
+for each computation orelse the results are not reproducable. To do this, either
+pass the random state or do no sampling in the multiprocessed object.
 &#39;&#39;&#39;
 import sys
 import multiprocessing
@@ -51,11 +58,15 @@ import os
 import signal
 import time
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
+    Callable
+
 from .errors import NeedToImplementError
-from .graph import isgraph
+from .graph import isgraph, Graph
 from . import util
 
-def ispersistentworker(x):
+def ispersistentworker(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the input is a subclass of PersistentWorker
 
     Parameters
@@ -70,7 +81,7 @@ def ispersistentworker(x):
     &#39;&#39;&#39;
     return x is not None and issubclass(x.__class__, PersistentWorker)
 
-def ispersistentpool(x):
+def ispersistentpool(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the input is a subclass of PersistentPool
 
     Parameters
@@ -85,7 +96,7 @@ def ispersistentpool(x):
     &#39;&#39;&#39;
     return x is not None and issubclass(x.__class__, PersistentPool)
 
-def isDASW(x):
+def isDASW(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the PersistentPool is Different Argument
     Single Worker
 
@@ -103,7 +114,7 @@ def isDASW(x):
         return False
     return x.ptype == &#39;dasw&#39;
 
-def isSADW(x):
+def isSADW(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the PersistentPool is Same Argument
     Different Worker
 
@@ -123,7 +134,8 @@ def isSADW(x):
 
 
 class PersistentWorker:
-    &#39;&#39;&#39;
+    &#39;&#39;&#39;Base class of the persistent worker. If you want to add functionality to
+    each worker that gets passed in, then do it here.
     &#39;&#39;&#39;
     pass
 
@@ -213,19 +225,19 @@ class PersistentPool:
     G : pylab.graph.Graph, None
         Optional graph to pass in
     &#39;&#39;&#39;
-    def __init__(self, ptype, G=None):
+    def __init__(self, ptype: str, G: Graph=None):
         if not util.isstr(ptype):
             raise TypeError(&#39;`ptype` ({}) must be a str&#39;.format(type(ptype)))
         if ptype not in [&#39;sadw&#39;, &#39;dasw&#39;]:
             raise ValueError(&#39;`ptype` ({}) not recognized&#39;.format(ptype))
 
-        self.ptype = ptype
-        self.tasks = multiprocessing.JoinableQueue()
-        self.results = multiprocessing.Queue()
+        self.ptype = ptype # This is the type of multiprocessing to do
+        self.tasks = multiprocessing.JoinableQueue() # This is a queue for the jobs to do
+        self.results = multiprocessing.Queue() # This is a queue of the results
         self.num_workers = 0
         self.busy = False
-        self.workers = []
-        self._worker_pids = set([])
+        self.workers = [] # A list of the persistent objects
+        self._worker_pids = set([]) # pids of the workers
         self._staged_running = False
 
         if G is not None:
@@ -233,7 +245,7 @@ class PersistentPool:
                 raise TypeError(&#39;`G` ({}) must be a graph&#39;.format(type(G)))
             G._persistent_pntr.append(self)
 
-    def __len__(self):
+    def __len__(self) -&gt; int:
         return len(self.workers)
 
     def reset(self):
@@ -247,13 +259,17 @@ class PersistentPool:
         self.busy = False
         self.workers = []
 
-    def add_worker(self, obj):
+    def add_worker(self, obj: Any) -&gt; int:
         &#39;&#39;&#39;Add a persistent worker
 
         Parameter
         ---------
         args : dict
             These are the persistent arguments for the process
+
+        Returns
+        -------
+        int
         &#39;&#39;&#39;
         try:
             if not ispersistentworker(obj):
@@ -276,7 +292,7 @@ class PersistentPool:
         self._worker_pids.add(pid)
         return pid
 
-    def change_ptype(self, ptype):
+    def change_ptype(self, ptype: str):
         &#39;&#39;&#39;Change the default ptype
 
         Parameters
@@ -290,7 +306,8 @@ class PersistentPool:
             raise ValueError(&#39;`ptype` ({}) not recognized&#39;.format(ptype))
         self.ptype = ptype
 
-    def map(self, func, args, ptype=None):
+    def map(self, func: Callable, args: Union[Dict[int, Dict[str, Any]], Iterator[Dict[str, Any]]], 
+        ptype: str=None) -&gt; Iterator[Any]:
         &#39;&#39;&#39;Maps the function `func` over the list of arguments `lst`
 
         Parameters
@@ -421,7 +438,7 @@ class PersistentPool:
             else:
                 raise
 
-    def staged_map_start(self, func):
+    def staged_map_start(self, func: Callable):
         &#39;&#39;&#39;Staged mapping for DASW mappings
 
         Parameters
@@ -440,7 +457,7 @@ class PersistentPool:
         self.n = 0
         self._staged_running = True
 
-    def staged_map_put(self, args):
+    def staged_map_put(self, args: Union[Dict[str, Any], Iterator[Dict[str, Any]]]):
         &#39;&#39;&#39;Add arguemnts to the queue
 
         Parameters
@@ -475,7 +492,7 @@ class PersistentPool:
                 logging.critical(&#39;Error: {}&#39;.format(sys.exc_info()[0]))
                 raise
 
-    def staged_map_get(self, timeout=None):
+    def staged_map_get(self, timeout: float=None) -&gt; Iterator[Any]:
         &#39;&#39;&#39;Get the results of a staged mapping
 
         Returns
@@ -514,7 +531,7 @@ class PersistentPool:
             else:
                 raise
 
-    def __getstate__(self):
+    def __getstate__(self) -&gt; Dict[str, Any]:
         &#39;&#39;&#39;Do not include the multiprocessed objects during serialization
         &#39;&#39;&#39;
         state = self.__dict__.copy()
@@ -523,7 +540,7 @@ class PersistentPool:
         state.pop(&#39;workers&#39;)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: Dict[str, Any]):
         &#39;&#39;&#39;Set the multiprocessed objects as destroyed from serialization
         &#39;&#39;&#39;
         self.__dict__.update(state)
@@ -552,7 +569,8 @@ class _PersistentWorker(multiprocessing.Process):
     obj : PersistentWorker
         Object to keep here and call `persistent_run`
     &#39;&#39;&#39;
-    def __init__(self, task_queue, result_queue, obj):
+    def __init__(self, task_queue: multiprocessing.JoinableQueue, 
+        result_queue: multiprocessing.Queue, obj: PersistentWorker):
         multiprocessing.Process.__init__(self)
         self.task_queue = task_queue
         self.result_queue = result_queue
@@ -607,7 +625,7 @@ class PoolTypeError(Exception):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.pylab.multiprocessing.isDASW"><code class="name flex">
-<span>def <span class="ident">isDASW</span></span>(<span>x)</span>
+<span>def <span class="ident">isDASW</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks whether the PersistentPool is Different Argument
@@ -627,7 +645,7 @@ If it is not a persistent pool type then it will return False</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isDASW(x):
+<pre><code class="python">def isDASW(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the PersistentPool is Different Argument
     Single Worker
 
@@ -647,7 +665,7 @@ If it is not a persistent pool type then it will return False</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.multiprocessing.isSADW"><code class="name flex">
-<span>def <span class="ident">isSADW</span></span>(<span>x)</span>
+<span>def <span class="ident">isSADW</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks whether the PersistentPool is Same Argument
@@ -667,7 +685,7 @@ If it is not a persistent pool type then it will return False</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isSADW(x):
+<pre><code class="python">def isSADW(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the PersistentPool is Same Argument
     Different Worker
 
@@ -687,7 +705,7 @@ If it is not a persistent pool type then it will return False</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.multiprocessing.ispersistentpool"><code class="name flex">
-<span>def <span class="ident">ispersistentpool</span></span>(<span>x)</span>
+<span>def <span class="ident">ispersistentpool</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks whether the input is a subclass of PersistentPool</p>
@@ -705,7 +723,7 @@ If it is not a persistent pool type then it will return False</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def ispersistentpool(x):
+<pre><code class="python">def ispersistentpool(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the input is a subclass of PersistentPool
 
     Parameters
@@ -722,7 +740,7 @@ If it is not a persistent pool type then it will return False</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.multiprocessing.ispersistentworker"><code class="name flex">
-<span>def <span class="ident">ispersistentworker</span></span>(<span>x)</span>
+<span>def <span class="ident">ispersistentworker</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks whether the input is a subclass of PersistentWorker</p>
@@ -740,7 +758,7 @@ If it is not a persistent pool type then it will return False</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def ispersistentworker(x):
+<pre><code class="python">def ispersistentworker(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the input is a subclass of PersistentWorker
 
     Parameters
@@ -777,7 +795,7 @@ If it is not a persistent pool type then it will return False</dd>
 </dd>
 <dt id="mdsine2.pylab.multiprocessing.PersistentPool"><code class="flex name class">
 <span>class <span class="ident">PersistentPool</span></span>
-<span>(</span><span>ptype, G=None)</span>
+<span>(</span><span>ptype: str, G: <a title="mdsine2.pylab.graph.Graph" href="graph.html#mdsine2.pylab.graph.Graph">Graph</a> = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Manages a set of PersistentWorker objects for a pooling.</p>
@@ -935,19 +953,19 @@ Options:
     G : pylab.graph.Graph, None
         Optional graph to pass in
     &#39;&#39;&#39;
-    def __init__(self, ptype, G=None):
+    def __init__(self, ptype: str, G: Graph=None):
         if not util.isstr(ptype):
             raise TypeError(&#39;`ptype` ({}) must be a str&#39;.format(type(ptype)))
         if ptype not in [&#39;sadw&#39;, &#39;dasw&#39;]:
             raise ValueError(&#39;`ptype` ({}) not recognized&#39;.format(ptype))
 
-        self.ptype = ptype
-        self.tasks = multiprocessing.JoinableQueue()
-        self.results = multiprocessing.Queue()
+        self.ptype = ptype # This is the type of multiprocessing to do
+        self.tasks = multiprocessing.JoinableQueue() # This is a queue for the jobs to do
+        self.results = multiprocessing.Queue() # This is a queue of the results
         self.num_workers = 0
         self.busy = False
-        self.workers = []
-        self._worker_pids = set([])
+        self.workers = [] # A list of the persistent objects
+        self._worker_pids = set([]) # pids of the workers
         self._staged_running = False
 
         if G is not None:
@@ -955,7 +973,7 @@ Options:
                 raise TypeError(&#39;`G` ({}) must be a graph&#39;.format(type(G)))
             G._persistent_pntr.append(self)
 
-    def __len__(self):
+    def __len__(self) -&gt; int:
         return len(self.workers)
 
     def reset(self):
@@ -969,13 +987,17 @@ Options:
         self.busy = False
         self.workers = []
 
-    def add_worker(self, obj):
+    def add_worker(self, obj: Any) -&gt; int:
         &#39;&#39;&#39;Add a persistent worker
 
         Parameter
         ---------
         args : dict
             These are the persistent arguments for the process
+
+        Returns
+        -------
+        int
         &#39;&#39;&#39;
         try:
             if not ispersistentworker(obj):
@@ -998,7 +1020,7 @@ Options:
         self._worker_pids.add(pid)
         return pid
 
-    def change_ptype(self, ptype):
+    def change_ptype(self, ptype: str):
         &#39;&#39;&#39;Change the default ptype
 
         Parameters
@@ -1012,7 +1034,8 @@ Options:
             raise ValueError(&#39;`ptype` ({}) not recognized&#39;.format(ptype))
         self.ptype = ptype
 
-    def map(self, func, args, ptype=None):
+    def map(self, func: Callable, args: Union[Dict[int, Dict[str, Any]], Iterator[Dict[str, Any]]], 
+        ptype: str=None) -&gt; Iterator[Any]:
         &#39;&#39;&#39;Maps the function `func` over the list of arguments `lst`
 
         Parameters
@@ -1143,7 +1166,7 @@ Options:
             else:
                 raise
 
-    def staged_map_start(self, func):
+    def staged_map_start(self, func: Callable):
         &#39;&#39;&#39;Staged mapping for DASW mappings
 
         Parameters
@@ -1162,7 +1185,7 @@ Options:
         self.n = 0
         self._staged_running = True
 
-    def staged_map_put(self, args):
+    def staged_map_put(self, args: Union[Dict[str, Any], Iterator[Dict[str, Any]]]):
         &#39;&#39;&#39;Add arguemnts to the queue
 
         Parameters
@@ -1197,7 +1220,7 @@ Options:
                 logging.critical(&#39;Error: {}&#39;.format(sys.exc_info()[0]))
                 raise
 
-    def staged_map_get(self, timeout=None):
+    def staged_map_get(self, timeout: float=None) -&gt; Iterator[Any]:
         &#39;&#39;&#39;Get the results of a staged mapping
 
         Returns
@@ -1236,7 +1259,7 @@ Options:
             else:
                 raise
 
-    def __getstate__(self):
+    def __getstate__(self) -&gt; Dict[str, Any]:
         &#39;&#39;&#39;Do not include the multiprocessed objects during serialization
         &#39;&#39;&#39;
         state = self.__dict__.copy()
@@ -1245,7 +1268,7 @@ Options:
         state.pop(&#39;workers&#39;)
         return state
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: Dict[str, Any]):
         &#39;&#39;&#39;Set the multiprocessed objects as destroyed from serialization
         &#39;&#39;&#39;
         self.__dict__.update(state)
@@ -1257,24 +1280,33 @@ Options:
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.multiprocessing.PersistentPool.add_worker"><code class="name flex">
-<span>def <span class="ident">add_worker</span></span>(<span>self, obj)</span>
+<span>def <span class="ident">add_worker</span></span>(<span>self, obj: Any) ‑> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Add a persistent worker</p>
 <h2 id="parameter">Parameter</h2>
 <p>args : dict
-These are the persistent arguments for the process</p></div>
+These are the persistent arguments for the process</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>int</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def add_worker(self, obj):
+<pre><code class="python">def add_worker(self, obj: Any) -&gt; int:
     &#39;&#39;&#39;Add a persistent worker
 
     Parameter
     ---------
     args : dict
         These are the persistent arguments for the process
+
+    Returns
+    -------
+    int
     &#39;&#39;&#39;
     try:
         if not ispersistentworker(obj):
@@ -1299,7 +1331,7 @@ These are the persistent arguments for the process</p></div>
 </details>
 </dd>
 <dt id="mdsine2.pylab.multiprocessing.PersistentPool.change_ptype"><code class="name flex">
-<span>def <span class="ident">change_ptype</span></span>(<span>self, ptype)</span>
+<span>def <span class="ident">change_ptype</span></span>(<span>self, ptype: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Change the default ptype</p>
@@ -1312,7 +1344,7 @@ These are the persistent arguments for the process</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def change_ptype(self, ptype):
+<pre><code class="python">def change_ptype(self, ptype: str):
     &#39;&#39;&#39;Change the default ptype
 
     Parameters
@@ -1352,7 +1384,7 @@ These are the persistent arguments for the process</p></div>
 </details>
 </dd>
 <dt id="mdsine2.pylab.multiprocessing.PersistentPool.map"><code class="name flex">
-<span>def <span class="ident">map</span></span>(<span>self, func, args, ptype=None)</span>
+<span>def <span class="ident">map</span></span>(<span>self, func: Callable, args: Union[Dict[int, Dict[str, Any]], Iterator[Dict[str, Any]]], ptype: str = None) ‑> Iterator[Any]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Maps the function <code>func</code> over the list of arguments <code>lst</code></p>
@@ -1383,7 +1415,8 @@ If you do not care where the arguments get sent to</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def map(self, func, args, ptype=None):
+<pre><code class="python">def map(self, func: Callable, args: Union[Dict[int, Dict[str, Any]], Iterator[Dict[str, Any]]], 
+    ptype: str=None) -&gt; Iterator[Any]:
     &#39;&#39;&#39;Maps the function `func` over the list of arguments `lst`
 
     Parameters
@@ -1474,7 +1507,7 @@ If you do not care where the arguments get sent to</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.multiprocessing.PersistentPool.staged_map_get"><code class="name flex">
-<span>def <span class="ident">staged_map_get</span></span>(<span>self, timeout=None)</span>
+<span>def <span class="ident">staged_map_get</span></span>(<span>self, timeout: float = None) ‑> Iterator[Any]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the results of a staged mapping</p>
@@ -1487,7 +1520,7 @@ If you do not care where the arguments get sent to</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def staged_map_get(self, timeout=None):
+<pre><code class="python">def staged_map_get(self, timeout: float=None) -&gt; Iterator[Any]:
     &#39;&#39;&#39;Get the results of a staged mapping
 
     Returns
@@ -1514,7 +1547,7 @@ If you do not care where the arguments get sent to</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.multiprocessing.PersistentPool.staged_map_put"><code class="name flex">
-<span>def <span class="ident">staged_map_put</span></span>(<span>self, args)</span>
+<span>def <span class="ident">staged_map_put</span></span>(<span>self, args: Union[Dict[str, Any], Iterator[Dict[str, Any]]])</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Add arguemnts to the queue</p>
@@ -1527,7 +1560,7 @@ If you do not care where the arguments get sent to</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def staged_map_put(self, args):
+<pre><code class="python">def staged_map_put(self, args: Union[Dict[str, Any], Iterator[Dict[str, Any]]]):
     &#39;&#39;&#39;Add arguemnts to the queue
 
     Parameters
@@ -1564,7 +1597,7 @@ If you do not care where the arguments get sent to</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.multiprocessing.PersistentPool.staged_map_start"><code class="name flex">
-<span>def <span class="ident">staged_map_start</span></span>(<span>self, func)</span>
+<span>def <span class="ident">staged_map_start</span></span>(<span>self, func: Callable)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Staged mapping for DASW mappings</p>
@@ -1577,7 +1610,7 @@ If you do not care where the arguments get sent to</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def staged_map_start(self, func):
+<pre><code class="python">def staged_map_start(self, func: Callable):
     &#39;&#39;&#39;Staged mapping for DASW mappings
 
     Parameters
@@ -1603,13 +1636,15 @@ If you do not care where the arguments get sent to</dd>
 <span>class <span class="ident">PersistentWorker</span></span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Base class of the persistent worker. If you want to add functionality to
+each worker that gets passed in, then do it here.</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class PersistentWorker:
-    &#39;&#39;&#39;
+    &#39;&#39;&#39;Base class of the persistent worker. If you want to add functionality to
+    each worker that gets passed in, then do it here.
     &#39;&#39;&#39;
     pass</code></pre>
 </details>

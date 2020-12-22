@@ -71,6 +71,10 @@ import warnings
 import sys
 import scipy.stats
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
+    Type, Callable
+
 from .graph import get_default_graph, Node, isnode
 from .base import Traceable, istraceable
 from .errors import UndefinedError, MathError, InitializationError, \
@@ -97,7 +101,7 @@ DEFAULT_MVN_MEAN_SUFFIX = &#39;_mean&#39;
 DEFAULT_MVN_COV_SUFFIX = &#39;_cov&#39;
 
 
-def isVariable(var):
+def isVariable(var: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a subclass of a Variable
 
     Parameters
@@ -112,7 +116,7 @@ def isVariable(var):
     &#39;&#39;&#39;
     return var is not None and issubclass(var.__class__, Variable)
 
-def isRandomVariable(var):
+def isRandomVariable(var: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a subclass of a RandomVariable
 
     Parameters
@@ -127,7 +131,8 @@ def isRandomVariable(var):
     &#39;&#39;&#39;
     return var is not None and issubclass(var.__class__, _RandomBase)
 
-def summary(var, set_nan_to_0=False, section=&#39;posterior&#39;, only=None):
+def summary(var: Traceable, set_nan_to_0: bool=False, section: str=&#39;posterior&#39;, 
+    only: Iterator[str]=None) -&gt; Dict[str, Union[str, np.ndarray]]:
     &#39;&#39;&#39;Calculates different metrics about the given trace (mean, 
     median, 25th percentile, 75th percentile)
 
@@ -151,7 +156,7 @@ def summary(var, set_nan_to_0=False, section=&#39;posterior&#39;, only=None):
         (&#39;25th percentile&#39;), and 75th percentile (&#39;75th percentile&#39;), 
     &#39;&#39;&#39;
     if istraceable(var):
-        if var.G.inference.ckpt is None:
+        if var.G.inference.checkpoint is None:
             if section == &#39;burnin&#39;:
                 var = var.trace[:var.G.inference.burnin, ...]
             elif section == &#39;posterior&#39;:
@@ -398,7 +403,7 @@ class _RandomBase:
         &#39;&#39;&#39;
         raise NeedToImplementError(&#39;User needs to implement this function&#39;)
 
-    def pdf(self, value=None):
+    def pdf(self, value: Union[float, Iterator[float]]=None) -&gt; Union[float, Iterator[float]]:
         &#39;&#39;&#39;Calculate the pdf with the specified value. If `value` is not
         specified, then use the current value
 
@@ -413,7 +418,7 @@ class _RandomBase:
         &#39;&#39;&#39;
         raise NeedToImplementError(&#39;User needs to implement this function&#39;)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: Union[float, Iterator[float]]=None) -&gt; Union[float, Iterator[float]]:
         &#39;&#39;&#39;Calculate the logpdf with the specified value. If `value` is not
         specified, then use the current value
 
@@ -428,7 +433,7 @@ class _RandomBase:
         &#39;&#39;&#39;
         raise NeedToImplementError(&#39;User needs to implement this function&#39;)
 
-    def cdf(self, value=None):
+    def cdf(self, value: Union[float, Iterator[float]]=None) -&gt; Union[float, Iterator[float]]:
         &#39;&#39;&#39;Calculate the cdf with the specified value. If `value` is not
         specified, then use the current value
 
@@ -443,7 +448,7 @@ class _RandomBase:
         &#39;&#39;&#39;
         raise NeedToImplementError(&#39;User needs to implement this function&#39;)
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: Union[float, Iterator[float]]=None) -&gt; Union[float, Iterator[float]]:
         &#39;&#39;&#39;Calculate the logcdf with the specified value. If `value` is not
         specified, then use the current value
 
@@ -471,11 +476,11 @@ class Constant(Node, _BaseArithmeticClass):
     kwargs : dict
         These are the extra arguments for the Node class
     &#39;&#39;&#39;
-    def __init__(self, value, **kwargs):
+    def __init__(self, value: Any, **kwargs):
         self._value = value
         Node.__init__(self, **kwargs)
 
-    def override_value(self, val):
+    def override_value(self, val: Any) -&gt; Any:
         &#39;&#39;&#39;Override the value with `val`
 
         Parameters
@@ -486,7 +491,7 @@ class Constant(Node, _BaseArithmeticClass):
         self._value = val
 
     @property
-    def value(self):
+    def value(self) -&gt; Any:
         return self._value
 
     @value.setter
@@ -506,9 +511,10 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
     dtype : Type
         This is the type of the variable
     kwargs :dict
-        These are the extra parameters for the Node class
+        These are the extra parameters for the Node class (&#39;name&#39;, &#39;G&#39;)
     &#39;&#39;&#39;
-    def __init__(self, value=None, dtype=None, shape=None, **kwargs):
+    def __init__(self, value: Union[float, Iterator[float]]=None, 
+        dtype: Type=None, shape: Tuple[int]=None, **kwargs):
         Node.__init__(self, **kwargs)
         if dtype is None:
             dtype = DEFAULT_VARIABLE_TYPE
@@ -517,12 +523,13 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
         if shape is not None:
             if not istuple(shape):
                 raise TypeError(&#39;`shape` ({}) must be a tuple or None&#39;)
-        self.dtype = dtype
-        self.value = value
-        self._shape = shape
+        
+        self.dtype = dtype # Type
+        self.value = value # array or float
+        self._shape = shape # Shape of the .value parameter
         self._init_value = None
 
-    def __len__(self):
+    def __len__(self) -&gt; int:
         if self._shape is None:
             raise ValueError(&#39;`No length for scalar`&#39;)
         return self._shape[0]
@@ -534,15 +541,17 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
         &#39;&#39;&#39;
         if self.G.inference.tracer_filename is not None:
             self.G.tracer.set_trace(self.name, shape=self._shape, dtype=self.dtype)
-            ckpt = self.G.tracer.ckpt
+            checkpoint = self.G.tracer.checkpoint
         else:
-            ckpt = self.G.inference.n_samples + self.G.inference.burnin
+            checkpoint = self.G.inference.n_samples + self.G.inference.burnin
         
-        self.ckpt_iter = 0
-        self.sample_iter = 0
-        shape = (ckpt, )
+        self.ckpt_iter = 0 # This counter for the local trace
+        self.sample_iter = 0 # This is the counter for all of the samples
+        shape = (checkpoint, )
         if self._shape is not None:
             shape += self._shape
+
+        # This is the local trace
         self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
 
     def remove_local_trace(self):
@@ -563,12 +572,12 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
         self.ckpt_iter += 1
         self.sample_iter += 1
         if self.ckpt_iter == len(self.trace):
-            if self.G.inference.ckpt is None:
+            if self.G.inference.checkpoint is None:
                 # No writing to disk
                 return
             # We have gotten the largest we can in the local buffer, write to disk
             self.G.tracer.write_to_disk(name=self.name)
-            shape = (self.G.tracer.ckpt, )
+            shape = (self.G.tracer.checkpoint, )
             if self._shape is not None:
                 shape += self._shape
             self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
@@ -578,7 +587,7 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
             raise ValueError(&#39;Iteration {} too long for RAM trace {}&#39;.format(self.ckpt_iter, 
                 len(self.trace)))
 
-    def set_value_shape(self, shape):
+    def set_value_shape(self, shape: Tuple[int]):
         &#39;&#39;&#39;Set the shape
         
         Parameters
@@ -590,7 +599,7 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
         self._shape = shape
 
     @property
-    def T(self):
+    def T(self) -&gt; np.ndarray:
         &#39;&#39;&#39;Transpose
         &#39;&#39;&#39;
         return self.value.T
@@ -602,14 +611,15 @@ class Normal(Variable, _RandomBase):
 
     Parameters
     ----------
-    loc : float, int
+    loc : float, int, Variable
         This is the mean of the distribution
-    scale2 : float, int
+    scale2 : float, int, Variable
         This is the variance of the distribution
     kwargs : dict
         These are extra parameters for the Node class
     &#39;&#39;&#39;
-    def __init__(self, loc=None, scale2=None, **kwargs):
+    def __init__(self, loc: Union[float, np.ndarray, Variable]=None, 
+        scale2: Union[float, np.ndarray, Variable]=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -633,26 +643,26 @@ class Normal(Variable, _RandomBase):
         self.add_parent(self._scale2)
 
     @property
-    def loc(self):
+    def loc(self) -&gt; Variable:
         return self._loc
 
     @property
-    def scale2(self):
+    def scale2(self) -&gt; Variable:
         return self._scale2
 
-    def std(self):
+    def std(self) -&gt; Union[float, np.ndarray]:
         return np.sqrt(self._scale2.value)
 
-    def mode(self):
+    def mode(self) -&gt; Union[float, np.ndarray]:
         return self._loc.value
 
-    def mean(self):
+    def mean(self) -&gt; Union[float, np.ndarray]:
         return self._loc.value
 
-    def variance(self):
+    def variance(self) -&gt; Union[float, np.ndarray]:
         return self._scale2.value
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample the distirbution given `self.loc` and `self.sca;e2`
 
         Parameters
@@ -670,7 +680,7 @@ class Normal(Variable, _RandomBase):
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the pdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -688,7 +698,7 @@ class Normal(Variable, _RandomBase):
         return random.normal.pdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value))
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the logpdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -706,7 +716,7 @@ class Normal(Variable, _RandomBase):
         return random.normal.logpdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value))
 
-    def cdf(self, value=None):
+    def cdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the cdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -724,7 +734,7 @@ class Normal(Variable, _RandomBase):
         return random.normal.cdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value))
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the logcdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -748,13 +758,14 @@ class Lognormal(Variable, _RandomBase):
 
     Parameters
     ----------
-    loc : numeric, array
+    loc : numeric, array, Variable
         This is the loc of the distribution
-    std : numeric array
+    std : numeric array, Variable
         This is the standard deviation of the array
     kwargs
     &#39;&#39;&#39;
-    def __init__(self, loc, std, **kwargs):
+    def __init__(self, loc: Union[float, np.ndarray, Variable], 
+        std: Union[float, np.ndarray, Variable], **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -778,17 +789,17 @@ class Lognormal(Variable, _RandomBase):
         self.add_parent(self._scale)
 
     @property
-    def loc(self):
+    def loc(self) -&gt; Variable:
         return self._loc
 
     @property
-    def scale(self):
+    def scale(self) -&gt; Variable:
         return self._scale
 
-    def mode(self):
+    def mode(self) -&gt; Union[float, np.ndarray]:
         return self._loc.value
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample the distirbution
 
         Parameters
@@ -806,7 +817,7 @@ class Lognormal(Variable, _RandomBase):
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the pdf
 
         Parameters
@@ -823,7 +834,7 @@ class Lognormal(Variable, _RandomBase):
         return random.lognormal.pdf(value=value, loc=self._loc.value,
             scale=self._scale.value)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the logpdf
 
         Parameters
@@ -840,7 +851,7 @@ class Lognormal(Variable, _RandomBase):
         return random.lognormal.logpdf(value=value, loc=self._loc.value,
             scale=self._scale.value)
 
-    def cdf(self, value=None):
+    def cdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the cdf
 
         Parameters
@@ -857,7 +868,7 @@ class Lognormal(Variable, _RandomBase):
         return random.lognormal.cdf(value=value, mean=self._loc.value,
             std=self._scale.value)
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the logcdf
 
         Parameters
@@ -880,14 +891,15 @@ class Uniform(Variable, _RandomBase):
 
     Parameters
     ----------
-    low : float, int
+    low : float, int, Variable
         This is the low of the distribution
-    high : float, int
+    high : float, int, Variable
         This is the high of the distribution
     kwargs : dict
         These are extra parameters for the Node class
     &#39;&#39;&#39;
-    def __init__(self, low=None, high=None, **kwargs):
+    def __init__(self, low: Union[float, Variable]=None, 
+        high: Union[float, Variable]=None, **kwargs):
         Variable.__init__(self, **kwargs)
         # Wrap parameters in nodes
         if not isnode(low):
@@ -909,26 +921,26 @@ class Uniform(Variable, _RandomBase):
         self.add_parent(self._high)
 
     @property
-    def low(self):
+    def low(self) -&gt; Variable:
         return self._low
 
     @property
-    def high(self):
+    def high(self) -&gt; Variable:
         return self._high
 
-    def mean(self):
+    def mean(self) -&gt; float:
         return 0.5*(self._low.value + self._high.value)
 
-    def median(self):
+    def median(self) -&gt; float:
         return self.mean()
 
-    def var(self):
+    def var(self) -&gt; float:
         return (1/12)*(self._high.value - self._low.value)**2
 
-    def variance(self):
+    def variance(self) -&gt; float:
         return self.var()
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; float:
         &#39;&#39;&#39;Sample the distirbution given `self.low` and `self.high`
 
         Parameters
@@ -946,7 +958,7 @@ class Uniform(Variable, _RandomBase):
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.low`, and `self.high`.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -964,7 +976,7 @@ class Uniform(Variable, _RandomBase):
         return random.uniform.pdf(value=value, low=self._low.value,
             high=self._high.value)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the logpdf given `self.value`, `self.low`, and `self.high`.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -982,7 +994,7 @@ class Uniform(Variable, _RandomBase):
         return random.uniform.logpdf(value=value, low=self._low.value,
             high=self._high.value)
 
-    def cdf(self, value=None):
+    def cdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the cdf given `self.value`, `self.low`, and `self.high`.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -1000,7 +1012,7 @@ class Uniform(Variable, _RandomBase):
         return random.uniform.cdf(value=value, low=self._low.value,
             high=self._high.value)
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the logcdf given `self.value`, `self.low`, and `self.high`.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -1026,9 +1038,9 @@ class TruncatedNormal(Variable, _RandomBase):
 
     Parameters
     ----------
-    loc : float, int
+    loc : float, int, Variable
         This is the mean of the distribution
-    scale2 : float, int
+    scale2 : float, int, Variable
         This is the variance of the distribution
     low : float, int
         This is the lowest value that can be sampled
@@ -1037,7 +1049,8 @@ class TruncatedNormal(Variable, _RandomBase):
     kwargs : dict
         These are extra parameters for the Node class
     &#39;&#39;&#39;
-    def __init__(self, loc, scale2, low=None, high=None, **kwargs):
+    def __init__(self, loc: Union[float, Variable], scale2: Union[float, Variable], 
+        low: float=None, high: float=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         if low is None:
@@ -1072,18 +1085,18 @@ class TruncatedNormal(Variable, _RandomBase):
         self.add_parent(self._scale2)
 
     @property
-    def loc(self):
+    def loc(self) -&gt; Variable:
         return self._loc
 
     @property
-    def scale2(self):
+    def scale2(self) -&gt; Variable:
         return self._scale2
 
     @property
-    def scale(self):
+    def scale(self) -&gt; float:
         return np.sqrt(self._scale2.value)
 
-    def mode(self):
+    def mode(self) -&gt; float:
         if self.low &lt;= self.loc and self.loc &lt;= self.high:
             return self.loc
         elif self.loc &lt; self.low:
@@ -1091,7 +1104,7 @@ class TruncatedNormal(Variable, _RandomBase):
         else:
             return self.high
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; float:
         &#39;&#39;&#39;Sample the distirbution given the current parameters
 
         Parameters
@@ -1112,7 +1125,7 @@ class TruncatedNormal(Variable, _RandomBase):
 
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the pdf given the current parameters.
 
         Parameters
@@ -1129,7 +1142,7 @@ class TruncatedNormal(Variable, _RandomBase):
         return random.truncnormal.pdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the logpdf given the current parameters.
 
         Parameters
@@ -1146,7 +1159,7 @@ class TruncatedNormal(Variable, _RandomBase):
         return random.truncnormal.logpdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
-    def cdf(self, value=None):
+    def cdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the cdf given the current parameters.
 
         Parameters
@@ -1163,7 +1176,7 @@ class TruncatedNormal(Variable, _RandomBase):
         return random.truncnormal.cdf(value=value, mean=self._loc.value,
             std=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the logcdf given the current parameters.
 
         Parameters
@@ -1187,14 +1200,14 @@ class SICS(Variable, _RandomBase):
     
     Parameters
     ----------
-    dof : float, int
+    dof : float, int, Variable
         This is the dof of the distribution
-    scale : float, int
+    scale : float, int, Variable
         This is the scale of the distribution
     kwargs : dict
         These are extra parameters for the Node class
     &#39;&#39;&#39;
-    def __init__(self, dof=None, scale=None, **kwargs):
+    def __init__(self, dof: Union[float, Variable]=None, scale: Union[float, Variable]=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -1218,22 +1231,22 @@ class SICS(Variable, _RandomBase):
         self.add_parent(self._scale)
 
     @property
-    def dof(self):
+    def dof(self) -&gt; Variable:
         return self._dof
 
     @property
-    def scale(self):
+    def scale(self) -&gt; Variable:
         return self._scale
 
-    def mean(self):
+    def mean(self) -&gt; float:
         return self._dof.value * self._scale.value/ \
             (self._dof.value-2)
 
-    def mode(self):
+    def mode(self) -&gt; float:
         return self._dof.value * self._scale.value / \
             (self._dof.value + 2)
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; float:
         &#39;&#39;&#39;Sample from a SICS distribution parameerized by the current
         values of `scale` and `dof`.
 
@@ -1253,7 +1266,7 @@ class SICS(Variable, _RandomBase):
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the pdf given the internal state. If `value` is defined,
         calculate the pdf with the passed in value instead of `self.value`.
 
@@ -1271,7 +1284,7 @@ class SICS(Variable, _RandomBase):
         return random.sics.pdf(value=value,
             dof=self._dof.value, scale=self._scale.value)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the logpdf given the internal state. If `value` is defined,
         calculate the logpdf with the passed in value instead of `self.value`.
 
@@ -1295,8 +1308,15 @@ class Gamma(Variable, _RandomBase):
 
     `shape` is a pylab.variables.Variable, `scale` is a
     pylab.variables.Variable
+
+    Parameters
+    ----------
+    shape : float, int, Variable
+        This is the shape of the distribution
+    scale : float, int, Variable
+        This is the scale of the distribution
     &#39;&#39;&#39;
-    def __init__(self, shape, scale, **kwargs):
+    def __init__(self, shape: Union[float, Variable], scale: Union[float, Variable], **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -1323,27 +1343,27 @@ class Gamma(Variable, _RandomBase):
         self.add_parent(self._scale)
 
     @property
-    def shape(self):
+    def shape(self) -&gt; Variable:
         return self._shape_var
 
     @property
-    def scale(self):
+    def scale(self) -&gt; Variable:
         return self._scale
 
-    def mean(self):
+    def mean(self) -&gt; float:
         return self._shape_var.value * self._scale.value
 
-    def variance(self):
+    def variance(self) -&gt; float:
         return self._shape_var.value * (self._scale.value) ** 2
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; float:
         self.value = random.gamma.sample(
             shape=self._shape_var.value,
             scale=self._scale.value,
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.shape`, and `self.scale`. 
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -1363,7 +1383,7 @@ class Gamma(Variable, _RandomBase):
 
 
 class InvGamma(Variable, _RandomBase):
-    def __init__(self, shape, scale, **kwargs):
+    def __init__(self, shape: Union[Variable, float], scale: Union[Variable, float], **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -1390,44 +1410,44 @@ class InvGamma(Variable, _RandomBase):
         self.add_parent(self._scale)
 
     @property
-    def shape(self):
+    def shape(self) -&gt; Variable:
         return self._shape_var
 
     @property
-    def scale(self):
+    def scale(self) -&gt; Variable:
         return self._scale
 
-    def mean(self):
+    def mean(self) -&gt; float:
         if self._shape_var.value &lt;= 1:
             raise MathError(&#39;Mean for InvGamma is undefined for shape &lt;= 1 &#39; \
                 &#39;({})&#39;.format(self._shape_var.value))
         return self._scale.value/(self._shape_var.value-1)
 
-    def mode(self):
+    def mode(self) -&gt; float:
         return self._scale.value/(self._shape_var.value + 1)
 
-    def variance(self):
+    def variance(self) -&gt; float:
         if self._scale.value &lt;= 2:
             raise MathError(&#39;Variance for InvGamma is undefined for &#39; \
                 &#39;scale &lt;= 2 ({})&#39;.format(self._scale.value))
         return (self._scale.value**2)/ \
             ((self._shape_var.value - 1)**2) * (self._shape_var.value - 2)
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; float:
         self.value = random.invgamma.sample(
             shape=self._shape_var.value,
             scale=self._scale.value,
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -&gt; float:
         if value is None:
             value = self.value
         return random.invgamma.pdf(value=value, 
             shape=self._shape_var.value,
             scale=self._scale.value)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value:float=None) -&gt; float:
         if value is None:
             value = self.value
         return random.invgamma.logpdf(value=value, 
@@ -1435,64 +1455,9 @@ class InvGamma(Variable, _RandomBase):
             scale=self._scale.value)
 
 
-class NegativeBinomial(Variable, _RandomBase):
-    def __init__(self, n, p, **kwargs):
-        raise NotImplementedError(&#39;Need to switch to the mean and variance parameterization&#39;)
-        Variable.__init__(self, **kwargs)
-        # Wrap parameters in nodes
-        if not isnode(p):
-            self._p = Variable(
-                value=p,
-                name=self.name + &#39;_p&#39;,
-                G=self.G)
-        else:
-            self._p = p
-        self.add_parent(self._p)
-        if not isnode(n):
-            self._r = Variable(
-                value=n,
-                name=self.name + &#39;_n&#39;,
-                G=self.G)
-        else:
-            self._n = n
-        self.add_parent(self._n)
-
-    @property
-    def p(self):
-        return self._p
-
-    @property
-    def n(self):
-        return self._n
-
-    def mean(self):
-        return self._p.value * self._r.value / (1 - self._p.value)
-
-    def mode(self):
-        if self._r.value &gt; 1:
-            # cast as int to round down
-            p = self._p.value
-            r = self._r.value
-            return int(p*(r-1)/(1-p))
-        else:
-            return 0
-
-    def variance(self):
-        p = self._p.value
-        r = self._r.value
-        return p*r/((1-p)**2)
-
-    def sample(self, size=None):
-        self.value = npr.negative_binomial(
-            n=self._n.value,
-            p=self._p.value,
-            size=size)
-        return self.value
-
-
 class Bernoulli(Variable, _RandomBase):
 
-    def __init__(self, p, **kwargs):
+    def __init__(self, p: Union[float, Variable], **kwargs):
 
         Variable.__init__(self, **kwargs)
 
@@ -1508,26 +1473,26 @@ class Bernoulli(Variable, _RandomBase):
         self.add_parent(self._p)
 
     @property
-    def p(self):
+    def p(self) -&gt; Variable:
         return self._p
 
 
-    def mean(self):
+    def mean(self) -&gt; float:
         return self._p
 
-    def variance(self):
+    def variance(self) -&gt; float:
         return (1 - self._p.value) * self._p.value
 
-    def mode(self):
+    def mode(self) -&gt; float:
         return int(self._p.value &gt;= 0.5)
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; float:
         return random.bernoulli(p=self._p.value, size=size)
 
 
 class Beta(Variable, _RandomBase):
 
-    def __init__(self, a, b, **kwargs):
+    def __init__(self, a: Union[float, Variable], b: Union[float, Variable], **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -1550,32 +1515,33 @@ class Beta(Variable, _RandomBase):
         self.add_parent(self._b)
 
     @property
-    def a(self):
+    def a(self) -&gt; Variable:
         return self._a
 
     @property
-    def b(self):
+    def b(self) -&gt; Variable:
         return self._b
 
-    def mean(self):
+    def mean(self) -&gt; float:
         &#39;&#39;&#39;E[X] = a/(a+b)
         &#39;&#39;&#39;
         return self._a.value / (self._a.value + self._b.value)
 
-    def variance(self):
+    def variance(self) -&gt; float:
         &#39;&#39;&#39;var[X] = (a*b)/((a+b)**2 * (a+b+1))
         &#39;&#39;&#39;
         return self._a.value * self._b.value / ((self._a.value * \
             self._b.value)**2 * (self._a.value+self._b.value+1))
 
-    def sample(self,size=None):
+    def sample(self, size: int=None) -&gt; float:
         self.value = random.beta.sample(a=self._a.value, b=self._b.value, size=size)
         return self.value
 
 
 class MVN(Variable, _RandomBase):
 
-    def __init__(self, mean=None, cov=None, **kwargs):
+    def __init__(self, mean: Union[np.ndarray, Variable]=None, 
+        cov: Union[np.ndarray, Variable]=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -1598,20 +1564,20 @@ class MVN(Variable, _RandomBase):
         self.add_parent(self._cov)
 
     @property
-    def mean(self):
+    def mean(self) -&gt; Variable:
         return self._mean
 
     @property
-    def cov(self):
+    def cov(self) -&gt; Variable:
         return self._cov
 
-    def mode(self):
+    def mode(self) -&gt; np.ndarray:
         return self._mean.value
 
-    def prec(self):
+    def prec(self) -&gt; np.ndarray:
         return np.linalg.pinv(self._cov.value)
 
-    def sample(self,idxs=None,size=None):
+    def sample(self, idxs: np.ndarray=None, size: int=None) -&gt; np.ndarray:
         &#39;&#39;&#39;
         Sample all indices or only sample at the target indices (idxs) and
         set NaN to everything else. You would want to do this if you are
@@ -1651,7 +1617,7 @@ class MVN(Variable, _RandomBase):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.pylab.variables.isRandomVariable"><code class="name flex">
-<span>def <span class="ident">isRandomVariable</span></span>(<span>var)</span>
+<span>def <span class="ident">isRandomVariable</span></span>(<span>var: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a subclass of a RandomVariable</p>
@@ -1669,7 +1635,7 @@ class MVN(Variable, _RandomBase):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isRandomVariable(var):
+<pre><code class="python">def isRandomVariable(var: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a subclass of a RandomVariable
 
     Parameters
@@ -1686,7 +1652,7 @@ class MVN(Variable, _RandomBase):
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.isVariable"><code class="name flex">
-<span>def <span class="ident">isVariable</span></span>(<span>var)</span>
+<span>def <span class="ident">isVariable</span></span>(<span>var: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a subclass of a Variable</p>
@@ -1704,7 +1670,7 @@ class MVN(Variable, _RandomBase):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isVariable(var):
+<pre><code class="python">def isVariable(var: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a subclass of a Variable
 
     Parameters
@@ -1721,7 +1687,7 @@ class MVN(Variable, _RandomBase):
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.summary"><code class="name flex">
-<span>def <span class="ident">summary</span></span>(<span>var, set_nan_to_0=False, section='posterior', only=None)</span>
+<span>def <span class="ident">summary</span></span>(<span>var: <a title="mdsine2.pylab.base.Traceable" href="base.html#mdsine2.pylab.base.Traceable">Traceable</a>, set_nan_to_0: bool = False, section: str = 'posterior', only: Iterator[str] = None) ‑> Dict[str, Union[str, numpy.ndarray]]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates different metrics about the given trace (mean,
@@ -1749,7 +1715,8 @@ in here. Accepted:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def summary(var, set_nan_to_0=False, section=&#39;posterior&#39;, only=None):
+<pre><code class="python">def summary(var: Traceable, set_nan_to_0: bool=False, section: str=&#39;posterior&#39;, 
+    only: Iterator[str]=None) -&gt; Dict[str, Union[str, np.ndarray]]:
     &#39;&#39;&#39;Calculates different metrics about the given trace (mean, 
     median, 25th percentile, 75th percentile)
 
@@ -1773,7 +1740,7 @@ in here. Accepted:
         (&#39;25th percentile&#39;), and 75th percentile (&#39;75th percentile&#39;), 
     &#39;&#39;&#39;
     if istraceable(var):
-        if var.G.inference.ckpt is None:
+        if var.G.inference.checkpoint is None:
             if section == &#39;burnin&#39;:
                 var = var.trace[:var.G.inference.burnin, ...]
             elif section == &#39;posterior&#39;:
@@ -1840,7 +1807,7 @@ in here. Accepted:
 <dl>
 <dt id="mdsine2.pylab.variables.Bernoulli"><code class="flex name class">
 <span>class <span class="ident">Bernoulli</span></span>
-<span>(</span><span>p, **kwargs)</span>
+<span>(</span><span>p: Union[float, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>], **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Scalar values that can change over time and be traced</p>
@@ -1852,14 +1819,14 @@ in here. Accepted:
 <dd>This is the type of the variable</dd>
 </dl>
 <p>kwargs :dict
-These are the extra parameters for the Node class</p></div>
+These are the extra parameters for the Node class ('name', 'G')</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Bernoulli(Variable, _RandomBase):
 
-    def __init__(self, p, **kwargs):
+    def __init__(self, p: Union[float, Variable], **kwargs):
 
         Variable.__init__(self, **kwargs)
 
@@ -1875,20 +1842,20 @@ These are the extra parameters for the Node class</p></div>
         self.add_parent(self._p)
 
     @property
-    def p(self):
+    def p(self) -&gt; Variable:
         return self._p
 
 
-    def mean(self):
+    def mean(self) -&gt; float:
         return self._p
 
-    def variance(self):
+    def variance(self) -&gt; float:
         return (1 - self._p.value) * self._p.value
 
-    def mode(self):
+    def mode(self) -&gt; float:
         return int(self._p.value &gt;= 0.5)
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; float:
         return random.bernoulli(p=self._p.value, size=size)</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -1903,7 +1870,7 @@ These are the extra parameters for the Node class</p></div>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.Bernoulli.p"><code class="name">var <span class="ident">p</span></code></dt>
+<dt id="mdsine2.pylab.variables.Bernoulli.p"><code class="name">var <span class="ident">p</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -1911,7 +1878,7 @@ These are the extra parameters for the Node class</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def p(self):
+def p(self) -&gt; Variable:
     return self._p</code></pre>
 </details>
 </dd>
@@ -1919,7 +1886,7 @@ def p(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.variables.Bernoulli.mean"><code class="name flex">
-<span>def <span class="ident">mean</span></span>(<span>self)</span>
+<span>def <span class="ident">mean</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -1927,12 +1894,12 @@ def p(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mean(self):
+<pre><code class="python">def mean(self) -&gt; float:
     return self._p</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Bernoulli.mode"><code class="name flex">
-<span>def <span class="ident">mode</span></span>(<span>self)</span>
+<span>def <span class="ident">mode</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -1940,12 +1907,12 @@ def p(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mode(self):
+<pre><code class="python">def mode(self) -&gt; float:
     return int(self._p.value &gt;= 0.5)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Bernoulli.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>self, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>self, size: int = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample with the given parameters</p></div>
@@ -1953,12 +1920,12 @@ def p(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sample(self, size=None):
+<pre><code class="python">def sample(self, size: int=None) -&gt; float:
     return random.bernoulli(p=self._p.value, size=size)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Bernoulli.variance"><code class="name flex">
-<span>def <span class="ident">variance</span></span>(<span>self)</span>
+<span>def <span class="ident">variance</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -1966,7 +1933,7 @@ def p(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def variance(self):
+<pre><code class="python">def variance(self) -&gt; float:
     return (1 - self._p.value) * self._p.value</code></pre>
 </details>
 </dd>
@@ -2000,7 +1967,7 @@ def p(self):
 </dd>
 <dt id="mdsine2.pylab.variables.Beta"><code class="flex name class">
 <span>class <span class="ident">Beta</span></span>
-<span>(</span><span>a, b, **kwargs)</span>
+<span>(</span><span>a: Union[float, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>], b: Union[float, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>], **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Scalar values that can change over time and be traced</p>
@@ -2012,14 +1979,14 @@ def p(self):
 <dd>This is the type of the variable</dd>
 </dl>
 <p>kwargs :dict
-These are the extra parameters for the Node class</p></div>
+These are the extra parameters for the Node class ('name', 'G')</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class Beta(Variable, _RandomBase):
 
-    def __init__(self, a, b, **kwargs):
+    def __init__(self, a: Union[float, Variable], b: Union[float, Variable], **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -2042,25 +2009,25 @@ These are the extra parameters for the Node class</p></div>
         self.add_parent(self._b)
 
     @property
-    def a(self):
+    def a(self) -&gt; Variable:
         return self._a
 
     @property
-    def b(self):
+    def b(self) -&gt; Variable:
         return self._b
 
-    def mean(self):
+    def mean(self) -&gt; float:
         &#39;&#39;&#39;E[X] = a/(a+b)
         &#39;&#39;&#39;
         return self._a.value / (self._a.value + self._b.value)
 
-    def variance(self):
+    def variance(self) -&gt; float:
         &#39;&#39;&#39;var[X] = (a*b)/((a+b)**2 * (a+b+1))
         &#39;&#39;&#39;
         return self._a.value * self._b.value / ((self._a.value * \
             self._b.value)**2 * (self._a.value+self._b.value+1))
 
-    def sample(self,size=None):
+    def sample(self, size: int=None) -&gt; float:
         self.value = random.beta.sample(a=self._a.value, b=self._b.value, size=size)
         return self.value</code></pre>
 </details>
@@ -2080,7 +2047,7 @@ These are the extra parameters for the Node class</p></div>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.Beta.a"><code class="name">var <span class="ident">a</span></code></dt>
+<dt id="mdsine2.pylab.variables.Beta.a"><code class="name">var <span class="ident">a</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -2088,11 +2055,11 @@ These are the extra parameters for the Node class</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def a(self):
+def a(self) -&gt; Variable:
     return self._a</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.Beta.b"><code class="name">var <span class="ident">b</span></code></dt>
+<dt id="mdsine2.pylab.variables.Beta.b"><code class="name">var <span class="ident">b</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -2100,7 +2067,7 @@ def a(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def b(self):
+def b(self) -&gt; Variable:
     return self._b</code></pre>
 </details>
 </dd>
@@ -2108,7 +2075,7 @@ def b(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.variables.Beta.mean"><code class="name flex">
-<span>def <span class="ident">mean</span></span>(<span>self)</span>
+<span>def <span class="ident">mean</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>E[X] = a/(a+b)</p></div>
@@ -2116,14 +2083,14 @@ def b(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mean(self):
+<pre><code class="python">def mean(self) -&gt; float:
     &#39;&#39;&#39;E[X] = a/(a+b)
     &#39;&#39;&#39;
     return self._a.value / (self._a.value + self._b.value)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Beta.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>self, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>self, size: int = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample with the given parameters</p></div>
@@ -2131,13 +2098,13 @@ def b(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sample(self,size=None):
+<pre><code class="python">def sample(self, size: int=None) -&gt; float:
     self.value = random.beta.sample(a=self._a.value, b=self._b.value, size=size)
     return self.value</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Beta.variance"><code class="name flex">
-<span>def <span class="ident">variance</span></span>(<span>self)</span>
+<span>def <span class="ident">variance</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>var[X] = (a<em>b)/((a+b)</em>*2 * (a+b+1))</p></div>
@@ -2145,7 +2112,7 @@ def b(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def variance(self):
+<pre><code class="python">def variance(self) -&gt; float:
     &#39;&#39;&#39;var[X] = (a*b)/((a+b)**2 * (a+b+1))
     &#39;&#39;&#39;
     return self._a.value * self._b.value / ((self._a.value * \
@@ -2182,7 +2149,7 @@ def b(self):
 </dd>
 <dt id="mdsine2.pylab.variables.Constant"><code class="flex name class">
 <span>class <span class="ident">Constant</span></span>
-<span>(</span><span>value, **kwargs)</span>
+<span>(</span><span>value: Any, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>A value in the graph that does not change.
@@ -2211,11 +2178,11 @@ by calling <code>override_value</code>. We do this for model safety.</p>
     kwargs : dict
         These are the extra arguments for the Node class
     &#39;&#39;&#39;
-    def __init__(self, value, **kwargs):
+    def __init__(self, value: Any, **kwargs):
         self._value = value
         Node.__init__(self, **kwargs)
 
-    def override_value(self, val):
+    def override_value(self, val: Any) -&gt; Any:
         &#39;&#39;&#39;Override the value with `val`
 
         Parameters
@@ -2226,7 +2193,7 @@ by calling <code>override_value</code>. We do this for model safety.</p>
         self._value = val
 
     @property
-    def value(self):
+    def value(self) -&gt; Any:
         return self._value
 
     @value.setter
@@ -2244,7 +2211,7 @@ by calling <code>override_value</code>. We do this for model safety.</p>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.Constant.value"><code class="name">var <span class="ident">value</span></code></dt>
+<dt id="mdsine2.pylab.variables.Constant.value"><code class="name">var <span class="ident">value</span> : Any</code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -2252,7 +2219,7 @@ by calling <code>override_value</code>. We do this for model safety.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def value(self):
+def value(self) -&gt; Any:
     return self._value</code></pre>
 </details>
 </dd>
@@ -2260,7 +2227,7 @@ def value(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.variables.Constant.override_value"><code class="name flex">
-<span>def <span class="ident">override_value</span></span>(<span>self, val)</span>
+<span>def <span class="ident">override_value</span></span>(<span>self, val: Any) ‑> Any</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Override the value with <code>val</code></p>
@@ -2273,7 +2240,7 @@ def value(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def override_value(self, val):
+<pre><code class="python">def override_value(self, val: Any) -&gt; Any:
     &#39;&#39;&#39;Override the value with `val`
 
     Parameters
@@ -2306,12 +2273,19 @@ def value(self):
 </dd>
 <dt id="mdsine2.pylab.variables.Gamma"><code class="flex name class">
 <span>class <span class="ident">Gamma</span></span>
-<span>(</span><span>shape, scale, **kwargs)</span>
+<span>(</span><span>shape: Union[float, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>], scale: Union[float, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>], **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Gamma Distribution but for multiple values</p>
 <p><code>shape</code> is a pylab.variables.Variable, <code>scale</code> is a
-pylab.variables.Variable</p></div>
+pylab.variables.Variable</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>shape</code></strong> :&ensp;<code>float, int, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
+<dd>This is the shape of the distribution</dd>
+<dt><strong><code>scale</code></strong> :&ensp;<code>float, int, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
+<dd>This is the scale of the distribution</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -2321,8 +2295,15 @@ pylab.variables.Variable</p></div>
 
     `shape` is a pylab.variables.Variable, `scale` is a
     pylab.variables.Variable
+
+    Parameters
+    ----------
+    shape : float, int, Variable
+        This is the shape of the distribution
+    scale : float, int, Variable
+        This is the scale of the distribution
     &#39;&#39;&#39;
-    def __init__(self, shape, scale, **kwargs):
+    def __init__(self, shape: Union[float, Variable], scale: Union[float, Variable], **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -2349,27 +2330,27 @@ pylab.variables.Variable</p></div>
         self.add_parent(self._scale)
 
     @property
-    def shape(self):
+    def shape(self) -&gt; Variable:
         return self._shape_var
 
     @property
-    def scale(self):
+    def scale(self) -&gt; Variable:
         return self._scale
 
-    def mean(self):
+    def mean(self) -&gt; float:
         return self._shape_var.value * self._scale.value
 
-    def variance(self):
+    def variance(self) -&gt; float:
         return self._shape_var.value * (self._scale.value) ** 2
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; float:
         self.value = random.gamma.sample(
             shape=self._shape_var.value,
             scale=self._scale.value,
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.shape`, and `self.scale`. 
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -2403,7 +2384,7 @@ pylab.variables.Variable</p></div>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.Gamma.scale"><code class="name">var <span class="ident">scale</span></code></dt>
+<dt id="mdsine2.pylab.variables.Gamma.scale"><code class="name">var <span class="ident">scale</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -2411,11 +2392,11 @@ pylab.variables.Variable</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def scale(self):
+def scale(self) -&gt; Variable:
     return self._scale</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.Gamma.shape"><code class="name">var <span class="ident">shape</span></code></dt>
+<dt id="mdsine2.pylab.variables.Gamma.shape"><code class="name">var <span class="ident">shape</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -2423,7 +2404,7 @@ def scale(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def shape(self):
+def shape(self) -&gt; Variable:
     return self._shape_var</code></pre>
 </details>
 </dd>
@@ -2431,7 +2412,7 @@ def shape(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.variables.Gamma.mean"><code class="name flex">
-<span>def <span class="ident">mean</span></span>(<span>self)</span>
+<span>def <span class="ident">mean</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -2439,12 +2420,12 @@ def shape(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mean(self):
+<pre><code class="python">def mean(self) -&gt; float:
     return self._shape_var.value * self._scale.value</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Gamma.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">pdf</span></span>(<span>self, value: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the pdf given <code>self.value</code>, <code>self.shape</code>, and <code>self.scale</code>.
@@ -2463,7 +2444,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pdf(self, value=None):
+<pre><code class="python">def pdf(self, value: float=None) -&gt; float:
     &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.shape`, and `self.scale`. 
     If `value` is provided we use `value` instead of `self.value`.
 
@@ -2483,7 +2464,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Gamma.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>self, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>self, size: int = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample with the given parameters</p></div>
@@ -2491,7 +2472,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sample(self, size=None):
+<pre><code class="python">def sample(self, size: int=None) -&gt; float:
     self.value = random.gamma.sample(
         shape=self._shape_var.value,
         scale=self._scale.value,
@@ -2500,7 +2481,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Gamma.variance"><code class="name flex">
-<span>def <span class="ident">variance</span></span>(<span>self)</span>
+<span>def <span class="ident">variance</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -2508,7 +2489,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def variance(self):
+<pre><code class="python">def variance(self) -&gt; float:
     return self._shape_var.value * (self._scale.value) ** 2</code></pre>
 </details>
 </dd>
@@ -2542,7 +2523,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </dd>
 <dt id="mdsine2.pylab.variables.InvGamma"><code class="flex name class">
 <span>class <span class="ident">InvGamma</span></span>
-<span>(</span><span>shape, scale, **kwargs)</span>
+<span>(</span><span>shape: Union[<a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>, float], scale: Union[<a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>, float], **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Scalar values that can change over time and be traced</p>
@@ -2554,13 +2535,13 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <dd>This is the type of the variable</dd>
 </dl>
 <p>kwargs :dict
-These are the extra parameters for the Node class</p></div>
+These are the extra parameters for the Node class ('name', 'G')</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class InvGamma(Variable, _RandomBase):
-    def __init__(self, shape, scale, **kwargs):
+    def __init__(self, shape: Union[Variable, float], scale: Union[Variable, float], **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -2587,44 +2568,44 @@ These are the extra parameters for the Node class</p></div>
         self.add_parent(self._scale)
 
     @property
-    def shape(self):
+    def shape(self) -&gt; Variable:
         return self._shape_var
 
     @property
-    def scale(self):
+    def scale(self) -&gt; Variable:
         return self._scale
 
-    def mean(self):
+    def mean(self) -&gt; float:
         if self._shape_var.value &lt;= 1:
             raise MathError(&#39;Mean for InvGamma is undefined for shape &lt;= 1 &#39; \
                 &#39;({})&#39;.format(self._shape_var.value))
         return self._scale.value/(self._shape_var.value-1)
 
-    def mode(self):
+    def mode(self) -&gt; float:
         return self._scale.value/(self._shape_var.value + 1)
 
-    def variance(self):
+    def variance(self) -&gt; float:
         if self._scale.value &lt;= 2:
             raise MathError(&#39;Variance for InvGamma is undefined for &#39; \
                 &#39;scale &lt;= 2 ({})&#39;.format(self._scale.value))
         return (self._scale.value**2)/ \
             ((self._shape_var.value - 1)**2) * (self._shape_var.value - 2)
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; float:
         self.value = random.invgamma.sample(
             shape=self._shape_var.value,
             scale=self._scale.value,
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -&gt; float:
         if value is None:
             value = self.value
         return random.invgamma.pdf(value=value, 
             shape=self._shape_var.value,
             scale=self._scale.value)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value:float=None) -&gt; float:
         if value is None:
             value = self.value
         return random.invgamma.logpdf(value=value, 
@@ -2643,7 +2624,7 @@ These are the extra parameters for the Node class</p></div>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.InvGamma.scale"><code class="name">var <span class="ident">scale</span></code></dt>
+<dt id="mdsine2.pylab.variables.InvGamma.scale"><code class="name">var <span class="ident">scale</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -2651,11 +2632,11 @@ These are the extra parameters for the Node class</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def scale(self):
+def scale(self) -&gt; Variable:
     return self._scale</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.InvGamma.shape"><code class="name">var <span class="ident">shape</span></code></dt>
+<dt id="mdsine2.pylab.variables.InvGamma.shape"><code class="name">var <span class="ident">shape</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -2663,7 +2644,7 @@ def scale(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def shape(self):
+def shape(self) -&gt; Variable:
     return self._shape_var</code></pre>
 </details>
 </dd>
@@ -2671,7 +2652,7 @@ def shape(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.variables.InvGamma.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>self, value: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logpdf with the specified value. If <code>value</code> is not
@@ -2690,7 +2671,7 @@ specified, then use the current value</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def logpdf(self, value=None):
+<pre><code class="python">def logpdf(self, value:float=None) -&gt; float:
     if value is None:
         value = self.value
     return random.invgamma.logpdf(value=value, 
@@ -2699,7 +2680,7 @@ specified, then use the current value</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.InvGamma.mean"><code class="name flex">
-<span>def <span class="ident">mean</span></span>(<span>self)</span>
+<span>def <span class="ident">mean</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -2707,7 +2688,7 @@ specified, then use the current value</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mean(self):
+<pre><code class="python">def mean(self) -&gt; float:
     if self._shape_var.value &lt;= 1:
         raise MathError(&#39;Mean for InvGamma is undefined for shape &lt;= 1 &#39; \
             &#39;({})&#39;.format(self._shape_var.value))
@@ -2715,7 +2696,7 @@ specified, then use the current value</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.InvGamma.mode"><code class="name flex">
-<span>def <span class="ident">mode</span></span>(<span>self)</span>
+<span>def <span class="ident">mode</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -2723,12 +2704,12 @@ specified, then use the current value</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mode(self):
+<pre><code class="python">def mode(self) -&gt; float:
     return self._scale.value/(self._shape_var.value + 1)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.InvGamma.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">pdf</span></span>(<span>self, value: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the pdf with the specified value. If <code>value</code> is not
@@ -2747,7 +2728,7 @@ specified, then use the current value</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pdf(self, value=None):
+<pre><code class="python">def pdf(self, value: float=None) -&gt; float:
     if value is None:
         value = self.value
     return random.invgamma.pdf(value=value, 
@@ -2756,7 +2737,7 @@ specified, then use the current value</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.InvGamma.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>self, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>self, size: int = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample with the given parameters</p></div>
@@ -2764,7 +2745,7 @@ specified, then use the current value</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sample(self, size=None):
+<pre><code class="python">def sample(self, size: int=None) -&gt; float:
     self.value = random.invgamma.sample(
         shape=self._shape_var.value,
         scale=self._scale.value,
@@ -2773,7 +2754,7 @@ specified, then use the current value</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.InvGamma.variance"><code class="name flex">
-<span>def <span class="ident">variance</span></span>(<span>self)</span>
+<span>def <span class="ident">variance</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -2781,7 +2762,7 @@ specified, then use the current value</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def variance(self):
+<pre><code class="python">def variance(self) -&gt; float:
     if self._scale.value &lt;= 2:
         raise MathError(&#39;Variance for InvGamma is undefined for &#39; \
             &#39;scale &lt;= 2 ({})&#39;.format(self._scale.value))
@@ -2819,15 +2800,15 @@ specified, then use the current value</p>
 </dd>
 <dt id="mdsine2.pylab.variables.Lognormal"><code class="flex name class">
 <span>class <span class="ident">Lognormal</span></span>
-<span>(</span><span>loc, std, **kwargs)</span>
+<span>(</span><span>loc: Union[float, numpy.ndarray, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>], std: Union[float, numpy.ndarray, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>], **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Lognormal distribution</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>loc</code></strong> :&ensp;<code>numeric, array</code></dt>
+<dt><strong><code>loc</code></strong> :&ensp;<code>numeric, array, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>This is the loc of the distribution</dd>
-<dt><strong><code>std</code></strong> :&ensp;<code>numeric array</code></dt>
+<dt><strong><code>std</code></strong> :&ensp;<code>numeric array, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>This is the standard deviation of the array</dd>
 <dt><strong><code>kwargs</code></strong></dt>
 <dd>&nbsp;</dd>
@@ -2841,13 +2822,14 @@ specified, then use the current value</p>
 
     Parameters
     ----------
-    loc : numeric, array
+    loc : numeric, array, Variable
         This is the loc of the distribution
-    std : numeric array
+    std : numeric array, Variable
         This is the standard deviation of the array
     kwargs
     &#39;&#39;&#39;
-    def __init__(self, loc, std, **kwargs):
+    def __init__(self, loc: Union[float, np.ndarray, Variable], 
+        std: Union[float, np.ndarray, Variable], **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -2871,17 +2853,17 @@ specified, then use the current value</p>
         self.add_parent(self._scale)
 
     @property
-    def loc(self):
+    def loc(self) -&gt; Variable:
         return self._loc
 
     @property
-    def scale(self):
+    def scale(self) -&gt; Variable:
         return self._scale
 
-    def mode(self):
+    def mode(self) -&gt; Union[float, np.ndarray]:
         return self._loc.value
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample the distirbution
 
         Parameters
@@ -2899,7 +2881,7 @@ specified, then use the current value</p>
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the pdf
 
         Parameters
@@ -2916,7 +2898,7 @@ specified, then use the current value</p>
         return random.lognormal.pdf(value=value, loc=self._loc.value,
             scale=self._scale.value)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the logpdf
 
         Parameters
@@ -2933,7 +2915,7 @@ specified, then use the current value</p>
         return random.lognormal.logpdf(value=value, loc=self._loc.value,
             scale=self._scale.value)
 
-    def cdf(self, value=None):
+    def cdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the cdf
 
         Parameters
@@ -2950,7 +2932,7 @@ specified, then use the current value</p>
         return random.lognormal.cdf(value=value, mean=self._loc.value,
             std=self._scale.value)
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the logcdf
 
         Parameters
@@ -2979,7 +2961,7 @@ specified, then use the current value</p>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.Lognormal.loc"><code class="name">var <span class="ident">loc</span></code></dt>
+<dt id="mdsine2.pylab.variables.Lognormal.loc"><code class="name">var <span class="ident">loc</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -2987,11 +2969,11 @@ specified, then use the current value</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def loc(self):
+def loc(self) -&gt; Variable:
     return self._loc</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.Lognormal.scale"><code class="name">var <span class="ident">scale</span></code></dt>
+<dt id="mdsine2.pylab.variables.Lognormal.scale"><code class="name">var <span class="ident">scale</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -2999,7 +2981,7 @@ def loc(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def scale(self):
+def scale(self) -&gt; Variable:
     return self._scale</code></pre>
 </details>
 </dd>
@@ -3007,7 +2989,7 @@ def scale(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.variables.Lognormal.cdf"><code class="name flex">
-<span>def <span class="ident">cdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">cdf</span></span>(<span>self, value: Union[float, numpy.ndarray] = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the cdf</p>
@@ -3025,7 +3007,7 @@ def scale(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cdf(self, value=None):
+<pre><code class="python">def cdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Calculate the cdf
 
     Parameters
@@ -3044,7 +3026,7 @@ def scale(self):
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Lognormal.logcdf"><code class="name flex">
-<span>def <span class="ident">logcdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">logcdf</span></span>(<span>self, value: Union[float, numpy.ndarray] = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logcdf</p>
@@ -3062,7 +3044,7 @@ def scale(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def logcdf(self, value=None):
+<pre><code class="python">def logcdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Calculate the logcdf
 
     Parameters
@@ -3081,7 +3063,7 @@ def scale(self):
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Lognormal.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>self, value: Union[float, numpy.ndarray] = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logpdf</p>
@@ -3099,7 +3081,7 @@ def scale(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def logpdf(self, value=None):
+<pre><code class="python">def logpdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Calculate the logpdf
 
     Parameters
@@ -3118,7 +3100,7 @@ def scale(self):
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Lognormal.mode"><code class="name flex">
-<span>def <span class="ident">mode</span></span>(<span>self)</span>
+<span>def <span class="ident">mode</span></span>(<span>self) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -3126,12 +3108,12 @@ def scale(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mode(self):
+<pre><code class="python">def mode(self) -&gt; Union[float, np.ndarray]:
     return self._loc.value</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Lognormal.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">pdf</span></span>(<span>self, value: Union[float, numpy.ndarray] = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the pdf</p>
@@ -3149,7 +3131,7 @@ def scale(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pdf(self, value=None):
+<pre><code class="python">def pdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Calculate the pdf
 
     Parameters
@@ -3168,7 +3150,7 @@ def scale(self):
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Lognormal.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>self, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>self, size: int = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample the distirbution</p>
@@ -3186,7 +3168,7 @@ def scale(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sample(self, size=None):
+<pre><code class="python">def sample(self, size: int=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Sample the distirbution
 
     Parameters
@@ -3235,7 +3217,7 @@ def scale(self):
 </dd>
 <dt id="mdsine2.pylab.variables.MVN"><code class="flex name class">
 <span>class <span class="ident">MVN</span></span>
-<span>(</span><span>mean=None, cov=None, **kwargs)</span>
+<span>(</span><span>mean: Union[numpy.ndarray, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>] = None, cov: Union[numpy.ndarray, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>] = None, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Scalar values that can change over time and be traced</p>
@@ -3247,14 +3229,15 @@ def scale(self):
 <dd>This is the type of the variable</dd>
 </dl>
 <p>kwargs :dict
-These are the extra parameters for the Node class</p></div>
+These are the extra parameters for the Node class ('name', 'G')</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class MVN(Variable, _RandomBase):
 
-    def __init__(self, mean=None, cov=None, **kwargs):
+    def __init__(self, mean: Union[np.ndarray, Variable]=None, 
+        cov: Union[np.ndarray, Variable]=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -3277,20 +3260,20 @@ These are the extra parameters for the Node class</p></div>
         self.add_parent(self._cov)
 
     @property
-    def mean(self):
+    def mean(self) -&gt; Variable:
         return self._mean
 
     @property
-    def cov(self):
+    def cov(self) -&gt; Variable:
         return self._cov
 
-    def mode(self):
+    def mode(self) -&gt; np.ndarray:
         return self._mean.value
 
-    def prec(self):
+    def prec(self) -&gt; np.ndarray:
         return np.linalg.pinv(self._cov.value)
 
-    def sample(self,idxs=None,size=None):
+    def sample(self, idxs: np.ndarray=None, size: int=None) -&gt; np.ndarray:
         &#39;&#39;&#39;
         Sample all indices or only sample at the target indices (idxs) and
         set NaN to everything else. You would want to do this if you are
@@ -3338,7 +3321,7 @@ These are the extra parameters for the Node class</p></div>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.MVN.cov"><code class="name">var <span class="ident">cov</span></code></dt>
+<dt id="mdsine2.pylab.variables.MVN.cov"><code class="name">var <span class="ident">cov</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -3346,11 +3329,11 @@ These are the extra parameters for the Node class</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def cov(self):
+def cov(self) -&gt; Variable:
     return self._cov</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.MVN.mean"><code class="name">var <span class="ident">mean</span></code></dt>
+<dt id="mdsine2.pylab.variables.MVN.mean"><code class="name">var <span class="ident">mean</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -3358,7 +3341,7 @@ def cov(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def mean(self):
+def mean(self) -&gt; Variable:
     return self._mean</code></pre>
 </details>
 </dd>
@@ -3366,7 +3349,7 @@ def mean(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.variables.MVN.mode"><code class="name flex">
-<span>def <span class="ident">mode</span></span>(<span>self)</span>
+<span>def <span class="ident">mode</span></span>(<span>self) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -3374,12 +3357,12 @@ def mean(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mode(self):
+<pre><code class="python">def mode(self) -&gt; np.ndarray:
     return self._mean.value</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.MVN.prec"><code class="name flex">
-<span>def <span class="ident">prec</span></span>(<span>self)</span>
+<span>def <span class="ident">prec</span></span>(<span>self) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -3387,12 +3370,12 @@ def mean(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def prec(self):
+<pre><code class="python">def prec(self) -&gt; np.ndarray:
     return np.linalg.pinv(self._cov.value)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.MVN.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>self, idxs=None, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>self, idxs: numpy.ndarray = None, size: int = None) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample all indices or only sample at the target indices (idxs) and
@@ -3408,7 +3391,7 @@ values</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sample(self,idxs=None,size=None):
+<pre><code class="python">def sample(self, idxs: np.ndarray=None, size: int=None) -&gt; np.ndarray:
     &#39;&#39;&#39;
     Sample all indices or only sample at the target indices (idxs) and
     set NaN to everything else. You would want to do this if you are
@@ -3468,222 +3451,18 @@ values</p>
 </li>
 </ul>
 </dd>
-<dt id="mdsine2.pylab.variables.NegativeBinomial"><code class="flex name class">
-<span>class <span class="ident">NegativeBinomial</span></span>
-<span>(</span><span>n, p, **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Scalar values that can change over time and be traced</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>value</code></strong> :&ensp;<code>int, float, None</code></dt>
-<dd>This is the value of the scalar</dd>
-<dt><strong><code>dtype</code></strong> :&ensp;<code>Type</code></dt>
-<dd>This is the type of the variable</dd>
-</dl>
-<p>kwargs :dict
-These are the extra parameters for the Node class</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class NegativeBinomial(Variable, _RandomBase):
-    def __init__(self, n, p, **kwargs):
-        raise NotImplementedError(&#39;Need to switch to the mean and variance parameterization&#39;)
-        Variable.__init__(self, **kwargs)
-        # Wrap parameters in nodes
-        if not isnode(p):
-            self._p = Variable(
-                value=p,
-                name=self.name + &#39;_p&#39;,
-                G=self.G)
-        else:
-            self._p = p
-        self.add_parent(self._p)
-        if not isnode(n):
-            self._r = Variable(
-                value=n,
-                name=self.name + &#39;_n&#39;,
-                G=self.G)
-        else:
-            self._n = n
-        self.add_parent(self._n)
-
-    @property
-    def p(self):
-        return self._p
-
-    @property
-    def n(self):
-        return self._n
-
-    def mean(self):
-        return self._p.value * self._r.value / (1 - self._p.value)
-
-    def mode(self):
-        if self._r.value &gt; 1:
-            # cast as int to round down
-            p = self._p.value
-            r = self._r.value
-            return int(p*(r-1)/(1-p))
-        else:
-            return 0
-
-    def variance(self):
-        p = self._p.value
-        r = self._r.value
-        return p*r/((1-p)**2)
-
-    def sample(self, size=None):
-        self.value = npr.negative_binomial(
-            n=self._n.value,
-            p=self._p.value,
-            size=size)
-        return self.value</code></pre>
-</details>
-<h3>Ancestors</h3>
-<ul class="hlist">
-<li><a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></li>
-<li><a title="mdsine2.pylab.graph.Node" href="graph.html#mdsine2.pylab.graph.Node">Node</a></li>
-<li><a title="mdsine2.pylab.graph.BaseNode" href="graph.html#mdsine2.pylab.graph.BaseNode">BaseNode</a></li>
-<li><a title="mdsine2.pylab.base.Saveable" href="base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
-<li>mdsine2.pylab.variables._BaseArithmeticClass</li>
-<li><a title="mdsine2.pylab.base.Traceable" href="base.html#mdsine2.pylab.base.Traceable">Traceable</a></li>
-<li>mdsine2.pylab.variables._RandomBase</li>
-</ul>
-<h3>Instance variables</h3>
-<dl>
-<dt id="mdsine2.pylab.variables.NegativeBinomial.n"><code class="name">var <span class="ident">n</span></code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@property
-def n(self):
-    return self._n</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.variables.NegativeBinomial.p"><code class="name">var <span class="ident">p</span></code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">@property
-def p(self):
-    return self._p</code></pre>
-</details>
-</dd>
-</dl>
-<h3>Methods</h3>
-<dl>
-<dt id="mdsine2.pylab.variables.NegativeBinomial.mean"><code class="name flex">
-<span>def <span class="ident">mean</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def mean(self):
-    return self._p.value * self._r.value / (1 - self._p.value)</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.variables.NegativeBinomial.mode"><code class="name flex">
-<span>def <span class="ident">mode</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def mode(self):
-    if self._r.value &gt; 1:
-        # cast as int to round down
-        p = self._p.value
-        r = self._r.value
-        return int(p*(r-1)/(1-p))
-    else:
-        return 0</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.variables.NegativeBinomial.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>self, size=None)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Sample with the given parameters</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def sample(self, size=None):
-    self.value = npr.negative_binomial(
-        n=self._n.value,
-        p=self._p.value,
-        size=size)
-    return self.value</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.variables.NegativeBinomial.variance"><code class="name flex">
-<span>def <span class="ident">variance</span></span>(<span>self)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def variance(self):
-    p = self._p.value
-    r = self._r.value
-    return p*r/((1-p)**2)</code></pre>
-</details>
-</dd>
-</dl>
-<h3>Inherited members</h3>
-<ul class="hlist">
-<li><code><b><a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></b></code>:
-<ul class="hlist">
-<li><code><a title="mdsine2.pylab.variables.Variable.T" href="#mdsine2.pylab.variables.Variable.T">T</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_child" href="graph.html#mdsine2.pylab.graph.Node.add_child">add_child</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_parent" href="graph.html#mdsine2.pylab.graph.Node.add_parent">add_parent</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_trace" href="base.html#mdsine2.pylab.base.Traceable.add_trace">add_trace</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.add_undirected" href="graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.degree" href="graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.delete" href="graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.get_adjacent_keys" href="graph.html#mdsine2.pylab.graph.Node.get_adjacent_keys">get_adjacent_keys</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.get_iter" href="base.html#mdsine2.pylab.base.Traceable.get_iter">get_iter</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.get_trace_from_disk" href="base.html#mdsine2.pylab.base.Traceable.get_trace_from_disk">get_trace_from_disk</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.load" href="base.html#mdsine2.pylab.base.Saveable.load">load</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.remove_local_trace" href="#mdsine2.pylab.variables.Variable.remove_local_trace">remove_local_trace</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.Variable.set_value_shape" href="#mdsine2.pylab.variables.Variable.set_value_shape">set_value_shape</a></code></li>
-</ul>
-</li>
-</ul>
-</dd>
 <dt id="mdsine2.pylab.variables.Normal"><code class="flex name class">
 <span>class <span class="ident">Normal</span></span>
-<span>(</span><span>loc=None, scale2=None, **kwargs)</span>
+<span>(</span><span>loc: Union[float, numpy.ndarray, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>] = None, scale2: Union[float, numpy.ndarray, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>] = None, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Scalar normal variable parameterized by the loc (mean) and scale2
 (variance)</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>loc</code></strong> :&ensp;<code>float, int</code></dt>
+<dt><strong><code>loc</code></strong> :&ensp;<code>float, int, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>This is the mean of the distribution</dd>
-<dt><strong><code>scale2</code></strong> :&ensp;<code>float, int</code></dt>
+<dt><strong><code>scale2</code></strong> :&ensp;<code>float, int, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>This is the variance of the distribution</dd>
 <dt><strong><code>kwargs</code></strong> :&ensp;<code>dict</code></dt>
 <dd>These are extra parameters for the Node class</dd>
@@ -3698,14 +3477,15 @@ def p(self):
 
     Parameters
     ----------
-    loc : float, int
+    loc : float, int, Variable
         This is the mean of the distribution
-    scale2 : float, int
+    scale2 : float, int, Variable
         This is the variance of the distribution
     kwargs : dict
         These are extra parameters for the Node class
     &#39;&#39;&#39;
-    def __init__(self, loc=None, scale2=None, **kwargs):
+    def __init__(self, loc: Union[float, np.ndarray, Variable]=None, 
+        scale2: Union[float, np.ndarray, Variable]=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -3729,26 +3509,26 @@ def p(self):
         self.add_parent(self._scale2)
 
     @property
-    def loc(self):
+    def loc(self) -&gt; Variable:
         return self._loc
 
     @property
-    def scale2(self):
+    def scale2(self) -&gt; Variable:
         return self._scale2
 
-    def std(self):
+    def std(self) -&gt; Union[float, np.ndarray]:
         return np.sqrt(self._scale2.value)
 
-    def mode(self):
+    def mode(self) -&gt; Union[float, np.ndarray]:
         return self._loc.value
 
-    def mean(self):
+    def mean(self) -&gt; Union[float, np.ndarray]:
         return self._loc.value
 
-    def variance(self):
+    def variance(self) -&gt; Union[float, np.ndarray]:
         return self._scale2.value
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample the distirbution given `self.loc` and `self.sca;e2`
 
         Parameters
@@ -3766,7 +3546,7 @@ def p(self):
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the pdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -3784,7 +3564,7 @@ def p(self):
         return random.normal.pdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value))
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the logpdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -3802,7 +3582,7 @@ def p(self):
         return random.normal.logpdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value))
 
-    def cdf(self, value=None):
+    def cdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the cdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -3820,7 +3600,7 @@ def p(self):
         return random.normal.cdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value))
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the logcdf given the internal parameters.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -3856,7 +3636,7 @@ def p(self):
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.Normal.loc"><code class="name">var <span class="ident">loc</span></code></dt>
+<dt id="mdsine2.pylab.variables.Normal.loc"><code class="name">var <span class="ident">loc</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -3864,11 +3644,11 @@ def p(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def loc(self):
+def loc(self) -&gt; Variable:
     return self._loc</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.Normal.scale2"><code class="name">var <span class="ident">scale2</span></code></dt>
+<dt id="mdsine2.pylab.variables.Normal.scale2"><code class="name">var <span class="ident">scale2</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -3876,7 +3656,7 @@ def loc(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def scale2(self):
+def scale2(self) -&gt; Variable:
     return self._scale2</code></pre>
 </details>
 </dd>
@@ -3884,7 +3664,7 @@ def scale2(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.variables.Normal.cdf"><code class="name flex">
-<span>def <span class="ident">cdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">cdf</span></span>(<span>self, value: Union[float, numpy.ndarray] = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the cdf given the internal parameters.
@@ -3903,7 +3683,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cdf(self, value=None):
+<pre><code class="python">def cdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Calculate the cdf given the internal parameters.
     If `value` is provided we use `value` instead of `self.value`.
 
@@ -3923,7 +3703,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Normal.logcdf"><code class="name flex">
-<span>def <span class="ident">logcdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">logcdf</span></span>(<span>self, value: Union[float, numpy.ndarray] = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logcdf given the internal parameters.
@@ -3942,7 +3722,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def logcdf(self, value=None):
+<pre><code class="python">def logcdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Calculate the logcdf given the internal parameters.
     If `value` is provided we use `value` instead of `self.value`.
 
@@ -3962,7 +3742,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Normal.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>self, value: Union[float, numpy.ndarray] = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logpdf given the internal parameters.
@@ -3981,7 +3761,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def logpdf(self, value=None):
+<pre><code class="python">def logpdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Calculate the logpdf given the internal parameters.
     If `value` is provided we use `value` instead of `self.value`.
 
@@ -4001,7 +3781,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Normal.mean"><code class="name flex">
-<span>def <span class="ident">mean</span></span>(<span>self)</span>
+<span>def <span class="ident">mean</span></span>(<span>self) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -4009,12 +3789,12 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mean(self):
+<pre><code class="python">def mean(self) -&gt; Union[float, np.ndarray]:
     return self._loc.value</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Normal.mode"><code class="name flex">
-<span>def <span class="ident">mode</span></span>(<span>self)</span>
+<span>def <span class="ident">mode</span></span>(<span>self) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -4022,12 +3802,12 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mode(self):
+<pre><code class="python">def mode(self) -&gt; Union[float, np.ndarray]:
     return self._loc.value</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Normal.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">pdf</span></span>(<span>self, value: Union[float, numpy.ndarray] = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the pdf given the internal parameters.
@@ -4046,7 +3826,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pdf(self, value=None):
+<pre><code class="python">def pdf(self, value: Union[float, np.ndarray]=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Calculate the pdf given the internal parameters.
     If `value` is provided we use `value` instead of `self.value`.
 
@@ -4066,7 +3846,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Normal.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>self, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>self, size: int = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample the distirbution given <code>self.loc</code> and <code>self.sca;e2</code></p>
@@ -4084,7 +3864,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sample(self, size=None):
+<pre><code class="python">def sample(self, size: int=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Sample the distirbution given `self.loc` and `self.sca;e2`
 
     Parameters
@@ -4104,7 +3884,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Normal.std"><code class="name flex">
-<span>def <span class="ident">std</span></span>(<span>self)</span>
+<span>def <span class="ident">std</span></span>(<span>self) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -4112,12 +3892,12 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def std(self):
+<pre><code class="python">def std(self) -&gt; Union[float, np.ndarray]:
     return np.sqrt(self._scale2.value)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Normal.variance"><code class="name flex">
-<span>def <span class="ident">variance</span></span>(<span>self)</span>
+<span>def <span class="ident">variance</span></span>(<span>self) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -4125,7 +3905,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def variance(self):
+<pre><code class="python">def variance(self) -&gt; Union[float, np.ndarray]:
     return self._scale2.value</code></pre>
 </details>
 </dd>
@@ -4159,16 +3939,16 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </dd>
 <dt id="mdsine2.pylab.variables.SICS"><code class="flex name class">
 <span>class <span class="ident">SICS</span></span>
-<span>(</span><span>dof=None, scale=None, **kwargs)</span>
+<span>(</span><span>dof: Union[float, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>] = None, scale: Union[float, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>] = None, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Scaled Inverse Chi Square parameterized by degrees of freedom <code>dof</code> and
 scale <code>scale</code>.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>dof</code></strong> :&ensp;<code>float, int</code></dt>
+<dt><strong><code>dof</code></strong> :&ensp;<code>float, int, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>This is the dof of the distribution</dd>
-<dt><strong><code>scale</code></strong> :&ensp;<code>float, int</code></dt>
+<dt><strong><code>scale</code></strong> :&ensp;<code>float, int, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>This is the scale of the distribution</dd>
 <dt><strong><code>kwargs</code></strong> :&ensp;<code>dict</code></dt>
 <dd>These are extra parameters for the Node class</dd>
@@ -4183,14 +3963,14 @@ scale <code>scale</code>.</p>
     
     Parameters
     ----------
-    dof : float, int
+    dof : float, int, Variable
         This is the dof of the distribution
-    scale : float, int
+    scale : float, int, Variable
         This is the scale of the distribution
     kwargs : dict
         These are extra parameters for the Node class
     &#39;&#39;&#39;
-    def __init__(self, dof=None, scale=None, **kwargs):
+    def __init__(self, dof: Union[float, Variable]=None, scale: Union[float, Variable]=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         # Wrap parameters in nodes
@@ -4214,22 +3994,22 @@ scale <code>scale</code>.</p>
         self.add_parent(self._scale)
 
     @property
-    def dof(self):
+    def dof(self) -&gt; Variable:
         return self._dof
 
     @property
-    def scale(self):
+    def scale(self) -&gt; Variable:
         return self._scale
 
-    def mean(self):
+    def mean(self) -&gt; float:
         return self._dof.value * self._scale.value/ \
             (self._dof.value-2)
 
-    def mode(self):
+    def mode(self) -&gt; float:
         return self._dof.value * self._scale.value / \
             (self._dof.value + 2)
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; float:
         &#39;&#39;&#39;Sample from a SICS distribution parameerized by the current
         values of `scale` and `dof`.
 
@@ -4249,7 +4029,7 @@ scale <code>scale</code>.</p>
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the pdf given the internal state. If `value` is defined,
         calculate the pdf with the passed in value instead of `self.value`.
 
@@ -4267,7 +4047,7 @@ scale <code>scale</code>.</p>
         return random.sics.pdf(value=value,
             dof=self._dof.value, scale=self._scale.value)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the logpdf given the internal state. If `value` is defined,
         calculate the logpdf with the passed in value instead of `self.value`.
 
@@ -4306,7 +4086,7 @@ scale <code>scale</code>.</p>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.SICS.dof"><code class="name">var <span class="ident">dof</span></code></dt>
+<dt id="mdsine2.pylab.variables.SICS.dof"><code class="name">var <span class="ident">dof</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -4314,11 +4094,11 @@ scale <code>scale</code>.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def dof(self):
+def dof(self) -&gt; Variable:
     return self._dof</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.SICS.scale"><code class="name">var <span class="ident">scale</span></code></dt>
+<dt id="mdsine2.pylab.variables.SICS.scale"><code class="name">var <span class="ident">scale</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -4326,7 +4106,7 @@ def dof(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def scale(self):
+def scale(self) -&gt; Variable:
     return self._scale</code></pre>
 </details>
 </dd>
@@ -4334,7 +4114,7 @@ def scale(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.variables.SICS.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>self, value: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logpdf given the internal state. If <code>value</code> is defined,
@@ -4353,7 +4133,7 @@ calculate the logpdf with the passed in value instead of <code>self.value</code>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def logpdf(self, value=None):
+<pre><code class="python">def logpdf(self, value: float=None) -&gt; float:
     &#39;&#39;&#39;Calculate the logpdf given the internal state. If `value` is defined,
     calculate the logpdf with the passed in value instead of `self.value`.
 
@@ -4373,7 +4153,7 @@ calculate the logpdf with the passed in value instead of <code>self.value</code>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.SICS.mean"><code class="name flex">
-<span>def <span class="ident">mean</span></span>(<span>self)</span>
+<span>def <span class="ident">mean</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -4381,13 +4161,13 @@ calculate the logpdf with the passed in value instead of <code>self.value</code>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mean(self):
+<pre><code class="python">def mean(self) -&gt; float:
     return self._dof.value * self._scale.value/ \
         (self._dof.value-2)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.SICS.mode"><code class="name flex">
-<span>def <span class="ident">mode</span></span>(<span>self)</span>
+<span>def <span class="ident">mode</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -4395,13 +4175,13 @@ calculate the logpdf with the passed in value instead of <code>self.value</code>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mode(self):
+<pre><code class="python">def mode(self) -&gt; float:
     return self._dof.value * self._scale.value / \
         (self._dof.value + 2)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.SICS.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">pdf</span></span>(<span>self, value: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the pdf given the internal state. If <code>value</code> is defined,
@@ -4420,7 +4200,7 @@ calculate the pdf with the passed in value instead of <code>self.value</code>.</
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pdf(self, value=None):
+<pre><code class="python">def pdf(self, value: float=None) -&gt; float:
     &#39;&#39;&#39;Calculate the pdf given the internal state. If `value` is defined,
     calculate the pdf with the passed in value instead of `self.value`.
 
@@ -4440,7 +4220,7 @@ calculate the pdf with the passed in value instead of <code>self.value</code>.</
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.SICS.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>self, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>self, size: int = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample from a SICS distribution parameerized by the current
@@ -4460,7 +4240,7 @@ single sample.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sample(self, size=None):
+<pre><code class="python">def sample(self, size: int=None) -&gt; float:
     &#39;&#39;&#39;Sample from a SICS distribution parameerized by the current
     values of `scale` and `dof`.
 
@@ -4511,7 +4291,7 @@ single sample.</dd>
 </dd>
 <dt id="mdsine2.pylab.variables.TruncatedNormal"><code class="flex name class">
 <span>class <span class="ident">TruncatedNormal</span></span>
-<span>(</span><span>loc, scale2, low=None, high=None, **kwargs)</span>
+<span>(</span><span>loc: Union[float, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>], scale2: Union[float, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>], low: float = None, high: float = None, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Scalar truncated normal variable parameterized by the mean <code>loc</code>,
@@ -4519,9 +4299,9 @@ variance <code>scale2</code>,
 low, and high</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>loc</code></strong> :&ensp;<code>float, int</code></dt>
+<dt><strong><code>loc</code></strong> :&ensp;<code>float, int, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>This is the mean of the distribution</dd>
-<dt><strong><code>scale2</code></strong> :&ensp;<code>float, int</code></dt>
+<dt><strong><code>scale2</code></strong> :&ensp;<code>float, int, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>This is the variance of the distribution</dd>
 <dt><strong><code>low</code></strong> :&ensp;<code>float, int</code></dt>
 <dd>This is the lowest value that can be sampled</dd>
@@ -4541,9 +4321,9 @@ low, and high</p>
 
     Parameters
     ----------
-    loc : float, int
+    loc : float, int, Variable
         This is the mean of the distribution
-    scale2 : float, int
+    scale2 : float, int, Variable
         This is the variance of the distribution
     low : float, int
         This is the lowest value that can be sampled
@@ -4552,7 +4332,8 @@ low, and high</p>
     kwargs : dict
         These are extra parameters for the Node class
     &#39;&#39;&#39;
-    def __init__(self, loc, scale2, low=None, high=None, **kwargs):
+    def __init__(self, loc: Union[float, Variable], scale2: Union[float, Variable], 
+        low: float=None, high: float=None, **kwargs):
         Variable.__init__(self, **kwargs)
 
         if low is None:
@@ -4587,18 +4368,18 @@ low, and high</p>
         self.add_parent(self._scale2)
 
     @property
-    def loc(self):
+    def loc(self) -&gt; Variable:
         return self._loc
 
     @property
-    def scale2(self):
+    def scale2(self) -&gt; Variable:
         return self._scale2
 
     @property
-    def scale(self):
+    def scale(self) -&gt; float:
         return np.sqrt(self._scale2.value)
 
-    def mode(self):
+    def mode(self) -&gt; float:
         if self.low &lt;= self.loc and self.loc &lt;= self.high:
             return self.loc
         elif self.loc &lt; self.low:
@@ -4606,7 +4387,7 @@ low, and high</p>
         else:
             return self.high
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; float:
         &#39;&#39;&#39;Sample the distirbution given the current parameters
 
         Parameters
@@ -4627,7 +4408,7 @@ low, and high</p>
 
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the pdf given the current parameters.
 
         Parameters
@@ -4644,7 +4425,7 @@ low, and high</p>
         return random.truncnormal.pdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the logpdf given the current parameters.
 
         Parameters
@@ -4661,7 +4442,7 @@ low, and high</p>
         return random.truncnormal.logpdf(value=value, loc=self._loc.value,
             scale=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
-    def cdf(self, value=None):
+    def cdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the cdf given the current parameters.
 
         Parameters
@@ -4678,7 +4459,7 @@ low, and high</p>
         return random.truncnormal.cdf(value=value, mean=self._loc.value,
             std=np.sqrt(self._scale2.value), low=self.low, high=self.high)
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the logcdf given the current parameters.
 
         Parameters
@@ -4713,7 +4494,7 @@ low, and high</p>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.TruncatedNormal.loc"><code class="name">var <span class="ident">loc</span></code></dt>
+<dt id="mdsine2.pylab.variables.TruncatedNormal.loc"><code class="name">var <span class="ident">loc</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -4721,11 +4502,11 @@ low, and high</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def loc(self):
+def loc(self) -&gt; Variable:
     return self._loc</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.TruncatedNormal.scale"><code class="name">var <span class="ident">scale</span></code></dt>
+<dt id="mdsine2.pylab.variables.TruncatedNormal.scale"><code class="name">var <span class="ident">scale</span> : float</code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -4733,11 +4514,11 @@ def loc(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def scale(self):
+def scale(self) -&gt; float:
     return np.sqrt(self._scale2.value)</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.TruncatedNormal.scale2"><code class="name">var <span class="ident">scale2</span></code></dt>
+<dt id="mdsine2.pylab.variables.TruncatedNormal.scale2"><code class="name">var <span class="ident">scale2</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -4745,7 +4526,7 @@ def scale(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def scale2(self):
+def scale2(self) -&gt; Variable:
     return self._scale2</code></pre>
 </details>
 </dd>
@@ -4753,7 +4534,7 @@ def scale2(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.variables.TruncatedNormal.cdf"><code class="name flex">
-<span>def <span class="ident">cdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">cdf</span></span>(<span>self, value: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the cdf given the current parameters.</p>
@@ -4771,7 +4552,7 @@ def scale2(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cdf(self, value=None):
+<pre><code class="python">def cdf(self, value: float=None) -&gt; float:
     &#39;&#39;&#39;Calculate the cdf given the current parameters.
 
     Parameters
@@ -4790,7 +4571,7 @@ def scale2(self):
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.TruncatedNormal.logcdf"><code class="name flex">
-<span>def <span class="ident">logcdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">logcdf</span></span>(<span>self, value: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logcdf given the current parameters.</p>
@@ -4808,7 +4589,7 @@ def scale2(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def logcdf(self, value=None):
+<pre><code class="python">def logcdf(self, value: float=None) -&gt; float:
     &#39;&#39;&#39;Calculate the logcdf given the current parameters.
 
     Parameters
@@ -4827,7 +4608,7 @@ def scale2(self):
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.TruncatedNormal.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>self, value: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logpdf given the current parameters.</p>
@@ -4845,7 +4626,7 @@ def scale2(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def logpdf(self, value=None):
+<pre><code class="python">def logpdf(self, value: float=None) -&gt; float:
     &#39;&#39;&#39;Calculate the logpdf given the current parameters.
 
     Parameters
@@ -4864,7 +4645,7 @@ def scale2(self):
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.TruncatedNormal.mode"><code class="name flex">
-<span>def <span class="ident">mode</span></span>(<span>self)</span>
+<span>def <span class="ident">mode</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -4872,7 +4653,7 @@ def scale2(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mode(self):
+<pre><code class="python">def mode(self) -&gt; float:
     if self.low &lt;= self.loc and self.loc &lt;= self.high:
         return self.loc
     elif self.loc &lt; self.low:
@@ -4882,7 +4663,7 @@ def scale2(self):
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.TruncatedNormal.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">pdf</span></span>(<span>self, value: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the pdf given the current parameters.</p>
@@ -4900,7 +4681,7 @@ def scale2(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pdf(self, value=None):
+<pre><code class="python">def pdf(self, value: float=None) -&gt; float:
     &#39;&#39;&#39;Calculate the pdf given the current parameters.
 
     Parameters
@@ -4919,7 +4700,7 @@ def scale2(self):
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.TruncatedNormal.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>self, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>self, size: int = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample the distirbution given the current parameters</p>
@@ -4937,7 +4718,7 @@ def scale2(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sample(self, size=None):
+<pre><code class="python">def sample(self, size: int=None) -&gt; float:
     &#39;&#39;&#39;Sample the distirbution given the current parameters
 
     Parameters
@@ -4989,15 +4770,15 @@ def scale2(self):
 </dd>
 <dt id="mdsine2.pylab.variables.Uniform"><code class="flex name class">
 <span>class <span class="ident">Uniform</span></span>
-<span>(</span><span>low=None, high=None, **kwargs)</span>
+<span>(</span><span>low: Union[float, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>] = None, high: Union[float, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a>] = None, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Scalar Uniform variable parameterized by the low and high</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>low</code></strong> :&ensp;<code>float, int</code></dt>
+<dt><strong><code>low</code></strong> :&ensp;<code>float, int, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>This is the low of the distribution</dd>
-<dt><strong><code>high</code></strong> :&ensp;<code>float, int</code></dt>
+<dt><strong><code>high</code></strong> :&ensp;<code>float, int, <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>This is the high of the distribution</dd>
 <dt><strong><code>kwargs</code></strong> :&ensp;<code>dict</code></dt>
 <dd>These are extra parameters for the Node class</dd>
@@ -5011,14 +4792,15 @@ def scale2(self):
 
     Parameters
     ----------
-    low : float, int
+    low : float, int, Variable
         This is the low of the distribution
-    high : float, int
+    high : float, int, Variable
         This is the high of the distribution
     kwargs : dict
         These are extra parameters for the Node class
     &#39;&#39;&#39;
-    def __init__(self, low=None, high=None, **kwargs):
+    def __init__(self, low: Union[float, Variable]=None, 
+        high: Union[float, Variable]=None, **kwargs):
         Variable.__init__(self, **kwargs)
         # Wrap parameters in nodes
         if not isnode(low):
@@ -5040,26 +4822,26 @@ def scale2(self):
         self.add_parent(self._high)
 
     @property
-    def low(self):
+    def low(self) -&gt; Variable:
         return self._low
 
     @property
-    def high(self):
+    def high(self) -&gt; Variable:
         return self._high
 
-    def mean(self):
+    def mean(self) -&gt; float:
         return 0.5*(self._low.value + self._high.value)
 
-    def median(self):
+    def median(self) -&gt; float:
         return self.mean()
 
-    def var(self):
+    def var(self) -&gt; float:
         return (1/12)*(self._high.value - self._low.value)**2
 
-    def variance(self):
+    def variance(self) -&gt; float:
         return self.var()
 
-    def sample(self, size=None):
+    def sample(self, size: int=None) -&gt; float:
         &#39;&#39;&#39;Sample the distirbution given `self.low` and `self.high`
 
         Parameters
@@ -5077,7 +4859,7 @@ def scale2(self):
             size=size)
         return self.value
 
-    def pdf(self, value=None):
+    def pdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.low`, and `self.high`.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -5095,7 +4877,7 @@ def scale2(self):
         return random.uniform.pdf(value=value, low=self._low.value,
             high=self._high.value)
 
-    def logpdf(self, value=None):
+    def logpdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the logpdf given `self.value`, `self.low`, and `self.high`.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -5113,7 +4895,7 @@ def scale2(self):
         return random.uniform.logpdf(value=value, low=self._low.value,
             high=self._high.value)
 
-    def cdf(self, value=None):
+    def cdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the cdf given `self.value`, `self.low`, and `self.high`.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -5131,7 +4913,7 @@ def scale2(self):
         return random.uniform.cdf(value=value, low=self._low.value,
             high=self._high.value)
 
-    def logcdf(self, value=None):
+    def logcdf(self, value: float=None) -&gt; float:
         &#39;&#39;&#39;Calculate the logcdf given `self.value`, `self.low`, and `self.high`.
         If `value` is provided we use `value` instead of `self.value`.
 
@@ -5166,7 +4948,7 @@ def scale2(self):
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.Uniform.high"><code class="name">var <span class="ident">high</span></code></dt>
+<dt id="mdsine2.pylab.variables.Uniform.high"><code class="name">var <span class="ident">high</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -5174,11 +4956,11 @@ def scale2(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def high(self):
+def high(self) -&gt; Variable:
     return self._high</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.variables.Uniform.low"><code class="name">var <span class="ident">low</span></code></dt>
+<dt id="mdsine2.pylab.variables.Uniform.low"><code class="name">var <span class="ident">low</span> : <a title="mdsine2.pylab.variables.Variable" href="#mdsine2.pylab.variables.Variable">Variable</a></code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -5186,7 +4968,7 @@ def high(self):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def low(self):
+def low(self) -&gt; Variable:
     return self._low</code></pre>
 </details>
 </dd>
@@ -5194,7 +4976,7 @@ def low(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.variables.Uniform.cdf"><code class="name flex">
-<span>def <span class="ident">cdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">cdf</span></span>(<span>self, value: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the cdf given <code>self.value</code>, <code>self.low</code>, and <code>self.high</code>.
@@ -5213,7 +4995,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cdf(self, value=None):
+<pre><code class="python">def cdf(self, value: float=None) -&gt; float:
     &#39;&#39;&#39;Calculate the cdf given `self.value`, `self.low`, and `self.high`.
     If `value` is provided we use `value` instead of `self.value`.
 
@@ -5233,7 +5015,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Uniform.logcdf"><code class="name flex">
-<span>def <span class="ident">logcdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">logcdf</span></span>(<span>self, value: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logcdf given <code>self.value</code>, <code>self.low</code>, and <code>self.high</code>.
@@ -5252,7 +5034,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def logcdf(self, value=None):
+<pre><code class="python">def logcdf(self, value: float=None) -&gt; float:
     &#39;&#39;&#39;Calculate the logcdf given `self.value`, `self.low`, and `self.high`.
     If `value` is provided we use `value` instead of `self.value`.
 
@@ -5272,7 +5054,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Uniform.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>self, value: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logpdf given <code>self.value</code>, <code>self.low</code>, and <code>self.high</code>.
@@ -5291,7 +5073,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def logpdf(self, value=None):
+<pre><code class="python">def logpdf(self, value: float=None) -&gt; float:
     &#39;&#39;&#39;Calculate the logpdf given `self.value`, `self.low`, and `self.high`.
     If `value` is provided we use `value` instead of `self.value`.
 
@@ -5311,7 +5093,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Uniform.mean"><code class="name flex">
-<span>def <span class="ident">mean</span></span>(<span>self)</span>
+<span>def <span class="ident">mean</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -5319,12 +5101,12 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def mean(self):
+<pre><code class="python">def mean(self) -&gt; float:
     return 0.5*(self._low.value + self._high.value)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Uniform.median"><code class="name flex">
-<span>def <span class="ident">median</span></span>(<span>self)</span>
+<span>def <span class="ident">median</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -5332,12 +5114,12 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def median(self):
+<pre><code class="python">def median(self) -&gt; float:
     return self.mean()</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Uniform.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>self, value=None)</span>
+<span>def <span class="ident">pdf</span></span>(<span>self, value: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the pdf given <code>self.value</code>, <code>self.low</code>, and <code>self.high</code>.
@@ -5356,7 +5138,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def pdf(self, value=None):
+<pre><code class="python">def pdf(self, value: float=None) -&gt; float:
     &#39;&#39;&#39;Calculate the pdf given `self.value`, `self.low`, and `self.high`.
     If `value` is provided we use `value` instead of `self.value`.
 
@@ -5376,7 +5158,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Uniform.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>self, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>self, size: int = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample the distirbution given <code>self.low</code> and <code>self.high</code></p>
@@ -5394,7 +5176,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def sample(self, size=None):
+<pre><code class="python">def sample(self, size: int=None) -&gt; float:
     &#39;&#39;&#39;Sample the distirbution given `self.low` and `self.high`
 
     Parameters
@@ -5414,7 +5196,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Uniform.var"><code class="name flex">
-<span>def <span class="ident">var</span></span>(<span>self)</span>
+<span>def <span class="ident">var</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -5422,12 +5204,12 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def var(self):
+<pre><code class="python">def var(self) -&gt; float:
     return (1/12)*(self._high.value - self._low.value)**2</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Uniform.variance"><code class="name flex">
-<span>def <span class="ident">variance</span></span>(<span>self)</span>
+<span>def <span class="ident">variance</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -5435,7 +5217,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def variance(self):
+<pre><code class="python">def variance(self) -&gt; float:
     return self.var()</code></pre>
 </details>
 </dd>
@@ -5469,7 +5251,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 </dd>
 <dt id="mdsine2.pylab.variables.Variable"><code class="flex name class">
 <span>class <span class="ident">Variable</span></span>
-<span>(</span><span>value=None, dtype=None, shape=None, **kwargs)</span>
+<span>(</span><span>value: Union[float, Iterator[float]] = None, dtype: Type = None, shape: Tuple[int] = None, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Scalar values that can change over time and be traced</p>
@@ -5481,7 +5263,7 @@ If <code>value</code> is provided we use <code>value</code> instead of <code>sel
 <dd>This is the type of the variable</dd>
 </dl>
 <p>kwargs :dict
-These are the extra parameters for the Node class</p></div>
+These are the extra parameters for the Node class ('name', 'G')</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -5496,9 +5278,10 @@ These are the extra parameters for the Node class</p></div>
     dtype : Type
         This is the type of the variable
     kwargs :dict
-        These are the extra parameters for the Node class
+        These are the extra parameters for the Node class (&#39;name&#39;, &#39;G&#39;)
     &#39;&#39;&#39;
-    def __init__(self, value=None, dtype=None, shape=None, **kwargs):
+    def __init__(self, value: Union[float, Iterator[float]]=None, 
+        dtype: Type=None, shape: Tuple[int]=None, **kwargs):
         Node.__init__(self, **kwargs)
         if dtype is None:
             dtype = DEFAULT_VARIABLE_TYPE
@@ -5507,12 +5290,13 @@ These are the extra parameters for the Node class</p></div>
         if shape is not None:
             if not istuple(shape):
                 raise TypeError(&#39;`shape` ({}) must be a tuple or None&#39;)
-        self.dtype = dtype
-        self.value = value
-        self._shape = shape
+        
+        self.dtype = dtype # Type
+        self.value = value # array or float
+        self._shape = shape # Shape of the .value parameter
         self._init_value = None
 
-    def __len__(self):
+    def __len__(self) -&gt; int:
         if self._shape is None:
             raise ValueError(&#39;`No length for scalar`&#39;)
         return self._shape[0]
@@ -5524,15 +5308,17 @@ These are the extra parameters for the Node class</p></div>
         &#39;&#39;&#39;
         if self.G.inference.tracer_filename is not None:
             self.G.tracer.set_trace(self.name, shape=self._shape, dtype=self.dtype)
-            ckpt = self.G.tracer.ckpt
+            checkpoint = self.G.tracer.checkpoint
         else:
-            ckpt = self.G.inference.n_samples + self.G.inference.burnin
+            checkpoint = self.G.inference.n_samples + self.G.inference.burnin
         
-        self.ckpt_iter = 0
-        self.sample_iter = 0
-        shape = (ckpt, )
+        self.ckpt_iter = 0 # This counter for the local trace
+        self.sample_iter = 0 # This is the counter for all of the samples
+        shape = (checkpoint, )
         if self._shape is not None:
             shape += self._shape
+
+        # This is the local trace
         self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
 
     def remove_local_trace(self):
@@ -5553,12 +5339,12 @@ These are the extra parameters for the Node class</p></div>
         self.ckpt_iter += 1
         self.sample_iter += 1
         if self.ckpt_iter == len(self.trace):
-            if self.G.inference.ckpt is None:
+            if self.G.inference.checkpoint is None:
                 # No writing to disk
                 return
             # We have gotten the largest we can in the local buffer, write to disk
             self.G.tracer.write_to_disk(name=self.name)
-            shape = (self.G.tracer.ckpt, )
+            shape = (self.G.tracer.checkpoint, )
             if self._shape is not None:
                 shape += self._shape
             self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
@@ -5568,7 +5354,7 @@ These are the extra parameters for the Node class</p></div>
             raise ValueError(&#39;Iteration {} too long for RAM trace {}&#39;.format(self.ckpt_iter, 
                 len(self.trace)))
 
-    def set_value_shape(self, shape):
+    def set_value_shape(self, shape: Tuple[int]):
         &#39;&#39;&#39;Set the shape
         
         Parameters
@@ -5580,7 +5366,7 @@ These are the extra parameters for the Node class</p></div>
         self._shape = shape
 
     @property
-    def T(self):
+    def T(self) -&gt; np.ndarray:
         &#39;&#39;&#39;Transpose
         &#39;&#39;&#39;
         return self.value.T</code></pre>
@@ -5608,7 +5394,6 @@ These are the extra parameters for the Node class</p></div>
 <li><a title="mdsine2.pylab.variables.InvGamma" href="#mdsine2.pylab.variables.InvGamma">InvGamma</a></li>
 <li><a title="mdsine2.pylab.variables.Lognormal" href="#mdsine2.pylab.variables.Lognormal">Lognormal</a></li>
 <li><a title="mdsine2.pylab.variables.MVN" href="#mdsine2.pylab.variables.MVN">MVN</a></li>
-<li><a title="mdsine2.pylab.variables.NegativeBinomial" href="#mdsine2.pylab.variables.NegativeBinomial">NegativeBinomial</a></li>
 <li><a title="mdsine2.pylab.variables.Normal" href="#mdsine2.pylab.variables.Normal">Normal</a></li>
 <li><a title="mdsine2.pylab.variables.SICS" href="#mdsine2.pylab.variables.SICS">SICS</a></li>
 <li><a title="mdsine2.pylab.variables.TruncatedNormal" href="#mdsine2.pylab.variables.TruncatedNormal">TruncatedNormal</a></li>
@@ -5616,7 +5401,7 @@ These are the extra parameters for the Node class</p></div>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.variables.Variable.T"><code class="name">var <span class="ident">T</span></code></dt>
+<dt id="mdsine2.pylab.variables.Variable.T"><code class="name">var <span class="ident">T</span> : numpy.ndarray</code></dt>
 <dd>
 <div class="desc"><p>Transpose</p></div>
 <details class="source">
@@ -5624,7 +5409,7 @@ These are the extra parameters for the Node class</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def T(self):
+def T(self) -&gt; np.ndarray:
     &#39;&#39;&#39;Transpose
     &#39;&#39;&#39;
     return self.value.T</code></pre>
@@ -5649,7 +5434,7 @@ def T(self):
 </details>
 </dd>
 <dt id="mdsine2.pylab.variables.Variable.set_value_shape"><code class="name flex">
-<span>def <span class="ident">set_value_shape</span></span>(<span>self, shape)</span>
+<span>def <span class="ident">set_value_shape</span></span>(<span>self, shape: Tuple[int])</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Set the shape</p>
@@ -5662,7 +5447,7 @@ def T(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_value_shape(self, shape):
+<pre><code class="python">def set_value_shape(self, shape: Tuple[int]):
     &#39;&#39;&#39;Set the shape
     
     Parameters
@@ -5804,17 +5589,6 @@ def T(self):
 <li><code><a title="mdsine2.pylab.variables.MVN.mode" href="#mdsine2.pylab.variables.MVN.mode">mode</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.MVN.prec" href="#mdsine2.pylab.variables.MVN.prec">prec</a></code></li>
 <li><code><a title="mdsine2.pylab.variables.MVN.sample" href="#mdsine2.pylab.variables.MVN.sample">sample</a></code></li>
-</ul>
-</li>
-<li>
-<h4><code><a title="mdsine2.pylab.variables.NegativeBinomial" href="#mdsine2.pylab.variables.NegativeBinomial">NegativeBinomial</a></code></h4>
-<ul class="two-column">
-<li><code><a title="mdsine2.pylab.variables.NegativeBinomial.mean" href="#mdsine2.pylab.variables.NegativeBinomial.mean">mean</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.NegativeBinomial.mode" href="#mdsine2.pylab.variables.NegativeBinomial.mode">mode</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.NegativeBinomial.n" href="#mdsine2.pylab.variables.NegativeBinomial.n">n</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.NegativeBinomial.p" href="#mdsine2.pylab.variables.NegativeBinomial.p">p</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.NegativeBinomial.sample" href="#mdsine2.pylab.variables.NegativeBinomial.sample">sample</a></code></li>
-<li><code><a title="mdsine2.pylab.variables.NegativeBinomial.variance" href="#mdsine2.pylab.variables.NegativeBinomial.variance">variance</a></code></li>
 </ul>
 </li>
 <li>

@@ -25,12 +25,12 @@ class alpha:
         
         Parameters
         ----------
-        counts (array_like)
-            - Vector of counts
+        counts : array_like
+            Vector of counts
 
         Returns
         -------
-        double
+        float
         '''
         counts = _validate_counts(counts)
         rel = counts[counts>0]
@@ -51,12 +51,12 @@ class alpha:
         
         Parameters
         ----------
-        counts (array_like)
-            - Vector of counts
+        counts : array_like
+            Vector of counts
 
         Returns
         -------
-        double
+        float
         '''
         counts = _validate_counts(counts)
         rel = counts[counts>0]
@@ -77,12 +77,12 @@ class alpha:
 
         Parameters
         ----------
-        counts (array_like)
-            - Vector of counts
+        counts : array_like
+            Vector of counts
 
         Returns
         -------
-        double
+        float
         '''
         counts = _validate_counts(counts)
         freqs = counts/counts.sum()
@@ -138,8 +138,8 @@ def _validate_counts(counts: np.ndarray, cast_as_ints: bool=True) -> np.ndarray:
 
     Parameters
     ----------
-    counts (array_like)
-        - 1D data
+    counts : array_like
+        1D data
     cast_as_ints (bool, Optional)
         - If True, it will cast the counts array as an int
         - If False it will not cast

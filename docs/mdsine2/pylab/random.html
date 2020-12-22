@@ -50,7 +50,9 @@ import logging
 import warnings
 import sys
 import scipy.stats
-import warnings
+
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, Callable, List
 
 from .base import Saveable
 from .errors import MathError, UndefinedError
@@ -86,7 +88,7 @@ _LOG_INV_SQRT_2 = LOG(1/SQRT(2))
 _LOG_ONE_HALF = LOG(0.5)
 _NEGINF = float(&#39;-inf&#39;)
 
-def israndom(x):
+def israndom(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the input is a subclass of BaseRandom (not a
     random variable (isRandomVariable))
 
@@ -102,7 +104,7 @@ def israndom(x):
     &#39;&#39;&#39;
     return x is not None and issubclass(x.__class__, _BaseSample)
 
-def seed(x):
+def seed(x: int):
     &#39;&#39;&#39;Sets all of the seeds with the given seed `x`
 
     Parameters
@@ -115,7 +117,7 @@ def seed(x):
     if CUSTOM_DIST_AVAIL:
         C_SAMPLE.seed(x)
 
-def _safe_cholesky(M, jitter=False, save_if_crash=False):
+def _safe_cholesky(M: np.ndarray, jitter: bool=False, save_if_crash: bool=False):
     # if scipy.sparse.issparse(M):
     #     M = M.toarray()
 
@@ -148,7 +150,7 @@ def _safe_cholesky(M, jitter=False, save_if_crash=False):
     raise MathError(&#39;Cholesky could not be calculated with jitter. Array that &#39; \
         &#39;crashed the system saved as `this_is_what_made_cholesky_crash.npy`&#39;)
 
-def _log_det_func(M):
+def _log_det_func(M: np.ndarray) -&gt; float:
     # if scipy.sparse.issparse(M):
     #     M_ = M.toarray()
     # else:
@@ -160,7 +162,8 @@ class misc:
     &#39;&#39;&#39;These are miscellaneus methods
     &#39;&#39;&#39;
     @staticmethod
-    def multivariate_normal_fast_2d(mean, cov):
+    def multivariate_normal_fast_2d(mean: Union[np.ndarray, List], 
+        cov: np.ndarray) -&gt; Union[np.ndarray, List]:
         &#39;&#39;&#39;Sample from 2d normal.
 
         Parameters
@@ -181,13 +184,13 @@ class misc:
         return mean
 
     @staticmethod
-    def fast_sample_standard_uniform():
+    def fast_sample_standard_uniform() -&gt; float:
         &#39;&#39;&#39;Sample from a uniform distribution on [0,1)
         &#39;&#39;&#39;
         return C_SAMPLE.c_standard_uniform()
 
     @staticmethod
-    def fast_sample_normal(loc, scale):
+    def fast_sample_normal(loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Sample from a c_implementation of a normal distribution.
         Only accepts floats
 
@@ -240,7 +243,8 @@ class normal(_BaseSample):
     &#39;&#39;&#39;Normal distribution parameterized by a mean and standard deviation
     &#39;&#39;&#39;
     @staticmethod
-    def sample(loc=0, scale=1, size=None):
+    def sample(loc: Union[float, np.ndarray]=0, scale: Union[float, np.ndarray]=1,
+        size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample from a normal random distribution. This can be vectorized
 
         NOTE: If you want to sample a single scalar value with a normal distribution,
@@ -267,7 +271,7 @@ class normal(_BaseSample):
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def pdf(value, loc, scale):
+    def pdf(value: float, loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the probability density function of a normal distribution
 
         Parameters
@@ -287,7 +291,7 @@ class normal(_BaseSample):
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def logpdf(value, loc, scale):
+    def logpdf(value: float, loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the log probability density function of a normal distribution
 
         Parameters
@@ -308,7 +312,7 @@ class normal(_BaseSample):
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def cdf(value, loc, scale):
+    def cdf(value: float, loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the cumulative density function of a normal distribution
 
         Parameters
@@ -328,7 +332,7 @@ class normal(_BaseSample):
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def logcdf(value, loc, scale):
+    def logcdf(value: float, loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the log cumulative density function of a normal distribution
 
         Parameters
@@ -352,7 +356,8 @@ class lognormal(_BaseSample):
     X = exp(\mu + \sigma Z), Z ~ Normal(0,1)
     &#39;&#39;&#39; 
     @staticmethod
-    def sample(loc, scale, size=None):
+    def sample(loc: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+        size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample from a log-normal random distribution. This can be vectorized
 
         Parameters
@@ -372,7 +377,7 @@ class lognormal(_BaseSample):
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def pdf(value, loc, scale):
+    def pdf(value: float, loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the probability density function of a log-normal distribution
 
         Parameters
@@ -393,7 +398,7 @@ class lognormal(_BaseSample):
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def logpdf(value, loc, scale):
+    def logpdf(value: float, loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the log probability density function of a log-normal distribution
 
         Parameters
@@ -428,7 +433,8 @@ class truncnormal(_BaseSample):
     NOTE: THIS IS A DIFFERENT PARAMETERIZATION THAN SCIPY
     &#39;&#39;&#39;
     @staticmethod
-    def sample(loc, scale, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), size=None):
+    def sample(loc: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+        low: float=float(&#39;-inf&#39;), high: float=float(&#39;inf&#39;), size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample from a truncated normal random distribution defined on
         [low, high] with mean `loc` and standard deviation `scale`
 
@@ -482,7 +488,7 @@ class truncnormal(_BaseSample):
         return value
 
     @staticmethod
-    def pdf(value, loc, scale, low, high):
+    def pdf(value: float, loc: float, scale: float, low: float, high: float) -&gt; float:
         &#39;&#39;&#39;Returns the probability density function of a truncated normal distribution
 
         Parameters
@@ -503,7 +509,7 @@ class truncnormal(_BaseSample):
         return scipy.stats.truncnorm.pdf(value, (low-loc)/scale, (high-loc)/scale, loc, scale)
 
     @staticmethod
-    def logpdf(value, loc, scale, low, high):
+    def logpdf(value: float, loc: float, scale: float, low: float, high: float) -&gt; float:
         &#39;&#39;&#39;Returns the log probability density function of a truncated normal distribution
 
         Parameters
@@ -529,7 +535,7 @@ class multivariate_normal(_BaseSample):
     &#39;&#39;&#39;
 
     @staticmethod
-    def sample(mean, cov, size=None):
+    def sample(mean: np.ndarray, cov: np.ndarray, size: int=None) -&gt; np.ndarray:
         &#39;&#39;&#39;Sample from a multivariate normal random distribution.
 
         Parameters
@@ -548,7 +554,7 @@ class multivariate_normal(_BaseSample):
         return npr.multivariate_normal(mean=mean, cov=cov, size=size)
 
     @staticmethod
-    def logpdf(value, mean, cov):
+    def logpdf(value: np.ndarray, mean: np.ndarray, cov: np.ndarray) -&gt; np.ndarray:
         &#39;&#39;&#39;Returns the probability density function of a multivariate normal distribution
 
         Parameters
@@ -579,7 +585,8 @@ class gamma(_BaseSample):
     Numpy and scipy
     &#39;&#39;&#39;
     @staticmethod
-    def sample(shape, scale, size=None):
+    def sample(shape: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+        size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample from a gamma random distribution. This can be vectorized
 
         Parameters
@@ -598,7 +605,7 @@ class gamma(_BaseSample):
         return npr.gamma(shape=shape, scale=scale, size=size)
 
     @staticmethod
-    def pdf(value, shape, scale):
+    def pdf(value: float, shape: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the probability density function of a gamma distribution
 
         Parameters
@@ -621,7 +628,8 @@ class beta(_BaseSample):
     &#39;&#39;&#39;Beta random distribution - same parameterization as numpy
     &#39;&#39;&#39;
     @staticmethod
-    def sample(a, b, size=None):
+    def sample(a: Union[float, np.ndarray], b: Union[float, np.ndarray], 
+        size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample from a beta random distribution. This can be vectorized
 
         Parameters
@@ -641,7 +649,8 @@ class sics(_BaseSample):
     &#39;&#39;&#39;
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def pdf(value, dof, scale):
+    def pdf(value: Union[float, np.ndarray], dof: Union[float, np.ndarray], 
+        scale: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         dofdiv2 = dof/2
         a = ((scale * dofdiv2)**(dofdiv2))/(GAMMA(dofdiv2))
         b = EXP(-scale*dofdiv2/(value)) / (value ** (1 + (dofdiv2)))
@@ -649,7 +658,8 @@ class sics(_BaseSample):
         
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def logpdf(value, dof, scale):
+    def logpdf(value: Union[float, np.ndarray], dof: Union[float, np.ndarray], 
+        scale: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         dofdiv2 = dof/2
         a = dofdiv2*LOG(scale*dofdiv2)
         b = -LGAMMA(dofdiv2)
@@ -658,55 +668,61 @@ class sics(_BaseSample):
         return a + b + c + d
 
     @staticmethod
-    def sample(dof, scale, size=None):
+    def sample(dof: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+        size: int=None) -&gt; Union[float, np.ndarray]:
         return invgamma.sample(shape=dof/2, scale=dof*scale/2, size=size)
 
 
 class invchisquared(_BaseSample):
 
     @staticmethod
-    def sample(nu, size=None):
+    def sample(nu: Union[float, np.ndarray], size: int=None) -&gt; Union[float, np.ndarray]:
         return invgamma.sample(shape=nu/2, scale=0.5, size=size)
 
 
 class invgamma(_BaseSample):
 
     @staticmethod
-    def sample(shape, scale, size=None):
+    def sample(shape: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+        size: int=None) -&gt; Union[float, np.ndarray]:
         return 1/npr.gamma(shape=shape, scale=1/scale, size=size)
 
     @staticmethod
-    def pdf(value, shape, scale):
+    def pdf(value: Union[float, np.ndarray], shape: Union[float, np.ndarray], 
+        scale: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         return scipy.stats.invgamma.pdf(value, a=shape, scale=scale)
 
     @staticmethod
-    def logpdf(value, shape, scale):
+    def logpdf(value: Union[float, np.ndarray], shape: Union[float, np.ndarray], 
+        scale: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         return scipy.stats.invgamma.logpdf(value, a=shape, scale=scale)
 
 
 class uniform(_BaseSample):
-
-
     @staticmethod
-    def sample(low=0, high=1, size=None):
+    def sample(low: Union[float, np.ndarray]=0, high: Union[float, np.ndarray]=1, 
+        size: int=None) -&gt; Union[float, np.ndarray]:
         return npr.uniform(low=low, high=high, size=size)
 
     @staticmethod
-    def pdf(value, low, high):
+    def pdf(value: Union[float, np.ndarray], low: Union[float, np.ndarray], 
+        high: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         if value &lt; low or value &gt; high:
             return 0
         else:
             return 1/(high-low)
 
     @staticmethod
-    def logpdf(value, low, high):
+    def logpdf(value: Union[float, np.ndarray], low: Union[float, np.ndarray], 
+        high: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         if value &lt; low or value &gt; high:
             return 0
         else:
             return -LOG(high-low)
 
     @staticmethod
-    def cdf(value, low, high):
+    def cdf(value: Union[float, np.ndarray], low: Union[float, np.ndarray], 
+        high: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         if value &lt; low:
             return 0
         elif value &gt;= high:
@@ -715,7 +731,8 @@ class uniform(_BaseSample):
             return (value-low)/(high-value)
 
     @staticmethod
-    def logcdf(value, low, high):
+    def logcdf(value: Union[float, np.ndarray], low: Union[float, np.ndarray], 
+        high: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         if value &lt; low:
             return float(&#39;-inf&#39;)
         elif value &gt;= high:
@@ -734,23 +751,21 @@ class negative_binomial(_BaseSample):
     We reparameterize the inputs so we can use the scipy implementation
     &#39;&#39;&#39;
     @staticmethod
-    def sample(mean, dispersion, size=None):
+    def sample(mean: float, dispersion: float, size: int=None) -&gt; float:
         &#39;&#39;&#39;Sample
         &#39;&#39;&#39;
         n,p = negative_binomial.convert_params(mean, dispersion)
         return scipy.stats.nbinom(n=n, p=p).rvs(size=size)
 
     @staticmethod
-    # @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def pmf(value, mean, dispersion):
+    def pmf(value: float, mean: float, dispersion: float) -&gt; float:
         &#39;&#39;&#39;Calculate the pmf
         &#39;&#39;&#39;
         n,p = negative_binomial.convert_params(mean, dispersion)
         return scipy.stats.nbinom.pmf(value, n, p)
 
     @staticmethod
-    # @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def logpmf(value, mean, dispersion):
+    def logpmf(value: float, mean: float, dispersion: float) -&gt; float:
         &#39;&#39;&#39;Calculate the logpmf
         &#39;&#39;&#39;
         n,p = negative_binomial.convert_params(mean, dispersion)
@@ -758,7 +773,7 @@ class negative_binomial(_BaseSample):
 
     @staticmethod
     @numba.jit(nopython=True, cache=True)
-    def convert_params(mu, theta):
+    def convert_params(mu: float, theta: float) -&gt; Tuple[float, float]:
         &#34;&#34;&#34;
         Convert mean/dispersion parameterization of a negative binomial to the ones scipy supports
 
@@ -787,7 +802,7 @@ class negative_binomial(_BaseSample):
 class bernoulli:
 
     @staticmethod
-    def sample(p=0.5, size=None):
+    def sample(p: float=0.5, size: int=None) -&gt; float:
         &#39;&#39;&#39;Sample a random variable from the distribution
         &#39;&#39;&#39;
         return npr.binomial(n=1, p=p, size=size)</code></pre>
@@ -801,7 +816,7 @@ class bernoulli:
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.pylab.random.israndom"><code class="name flex">
-<span>def <span class="ident">israndom</span></span>(<span>x)</span>
+<span>def <span class="ident">israndom</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks whether the input is a subclass of BaseRandom (not a
@@ -820,7 +835,7 @@ random variable (isRandomVariable))</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def israndom(x):
+<pre><code class="python">def israndom(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the input is a subclass of BaseRandom (not a
     random variable (isRandomVariable))
 
@@ -838,7 +853,7 @@ random variable (isRandomVariable))</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.seed"><code class="name flex">
-<span>def <span class="ident">seed</span></span>(<span>x)</span>
+<span>def <span class="ident">seed</span></span>(<span>x: int)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sets all of the seeds with the given seed <code>x</code></p>
@@ -849,7 +864,7 @@ Seed to set everything at</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def seed(x):
+<pre><code class="python">def seed(x: int):
     &#39;&#39;&#39;Sets all of the seeds with the given seed `x`
 
     Parameters
@@ -880,7 +895,7 @@ Seed to set everything at</p></div>
 <pre><code class="python">class bernoulli:
 
     @staticmethod
-    def sample(p=0.5, size=None):
+    def sample(p: float=0.5, size: int=None) -&gt; float:
         &#39;&#39;&#39;Sample a random variable from the distribution
         &#39;&#39;&#39;
         return npr.binomial(n=1, p=p, size=size)</code></pre>
@@ -888,7 +903,7 @@ Seed to set everything at</p></div>
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.bernoulli.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>p=0.5, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>p: float = 0.5, size: int = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample a random variable from the distribution</p></div>
@@ -897,7 +912,7 @@ Seed to set everything at</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(p=0.5, size=None):
+def sample(p: float=0.5, size: int=None) -&gt; float:
     &#39;&#39;&#39;Sample a random variable from the distribution
     &#39;&#39;&#39;
     return npr.binomial(n=1, p=p, size=size)</code></pre>
@@ -918,7 +933,8 @@ def sample(p=0.5, size=None):
     &#39;&#39;&#39;Beta random distribution - same parameterization as numpy
     &#39;&#39;&#39;
     @staticmethod
-    def sample(a, b, size=None):
+    def sample(a: Union[float, np.ndarray], b: Union[float, np.ndarray], 
+        size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample from a beta random distribution. This can be vectorized
 
         Parameters
@@ -939,7 +955,7 @@ def sample(p=0.5, size=None):
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.beta.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>a, b, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>a: Union[float, numpy.ndarray], b: Union[float, numpy.ndarray], size: int = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample from a beta random distribution. This can be vectorized</p>
@@ -958,7 +974,8 @@ def sample(p=0.5, size=None):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(a, b, size=None):
+def sample(a: Union[float, np.ndarray], b: Union[float, np.ndarray], 
+    size: int=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Sample from a beta random distribution. This can be vectorized
 
     Parameters
@@ -990,7 +1007,8 @@ Numpy and scipy</p></div>
     Numpy and scipy
     &#39;&#39;&#39;
     @staticmethod
-    def sample(shape, scale, size=None):
+    def sample(shape: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+        size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample from a gamma random distribution. This can be vectorized
 
         Parameters
@@ -1009,7 +1027,7 @@ Numpy and scipy</p></div>
         return npr.gamma(shape=shape, scale=scale, size=size)
 
     @staticmethod
-    def pdf(value, shape, scale):
+    def pdf(value: float, shape: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the probability density function of a gamma distribution
 
         Parameters
@@ -1034,7 +1052,7 @@ Numpy and scipy</p></div>
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.gamma.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>value, shape, scale)</span>
+<span>def <span class="ident">pdf</span></span>(<span>value: float, shape: float, scale: float) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the probability density function of a gamma distribution</p>
@@ -1057,7 +1075,7 @@ Numpy and scipy</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def pdf(value, shape, scale):
+def pdf(value: float, shape: float, scale: float) -&gt; float:
     &#39;&#39;&#39;Returns the probability density function of a gamma distribution
 
     Parameters
@@ -1077,7 +1095,7 @@ def pdf(value, shape, scale):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.gamma.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>shape, scale, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>shape: Union[float, numpy.ndarray], scale: Union[float, numpy.ndarray], size: int = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample from a gamma random distribution. This can be vectorized</p>
@@ -1100,7 +1118,8 @@ def pdf(value, shape, scale):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(shape, scale, size=None):
+def sample(shape: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+    size: int=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Sample from a gamma random distribution. This can be vectorized
 
     Parameters
@@ -1133,7 +1152,7 @@ def sample(shape, scale, size=None):
 <pre><code class="python">class invchisquared(_BaseSample):
 
     @staticmethod
-    def sample(nu, size=None):
+    def sample(nu: Union[float, np.ndarray], size: int=None) -&gt; Union[float, np.ndarray]:
         return invgamma.sample(shape=nu/2, scale=0.5, size=size)</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -1143,7 +1162,7 @@ def sample(shape, scale, size=None):
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.invchisquared.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>nu, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>nu: Union[float, numpy.ndarray], size: int = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample a random variable from the distribution</p></div>
@@ -1152,7 +1171,7 @@ def sample(shape, scale, size=None):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(nu, size=None):
+def sample(nu: Union[float, np.ndarray], size: int=None) -&gt; Union[float, np.ndarray]:
     return invgamma.sample(shape=nu/2, scale=0.5, size=size)</code></pre>
 </details>
 </dd>
@@ -1170,15 +1189,18 @@ def sample(nu, size=None):
 <pre><code class="python">class invgamma(_BaseSample):
 
     @staticmethod
-    def sample(shape, scale, size=None):
+    def sample(shape: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+        size: int=None) -&gt; Union[float, np.ndarray]:
         return 1/npr.gamma(shape=shape, scale=1/scale, size=size)
 
     @staticmethod
-    def pdf(value, shape, scale):
+    def pdf(value: Union[float, np.ndarray], shape: Union[float, np.ndarray], 
+        scale: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         return scipy.stats.invgamma.pdf(value, a=shape, scale=scale)
 
     @staticmethod
-    def logpdf(value, shape, scale):
+    def logpdf(value: Union[float, np.ndarray], shape: Union[float, np.ndarray], 
+        scale: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         return scipy.stats.invgamma.logpdf(value, a=shape, scale=scale)</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -1188,7 +1210,7 @@ def sample(nu, size=None):
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.invgamma.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>value, shape, scale)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>value: Union[float, numpy.ndarray], shape: Union[float, numpy.ndarray], scale: Union[float, numpy.ndarray]) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logpdf</p></div>
@@ -1197,12 +1219,13 @@ def sample(nu, size=None):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def logpdf(value, shape, scale):
+def logpdf(value: Union[float, np.ndarray], shape: Union[float, np.ndarray], 
+    scale: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
     return scipy.stats.invgamma.logpdf(value, a=shape, scale=scale)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.invgamma.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>value, shape, scale)</span>
+<span>def <span class="ident">pdf</span></span>(<span>value: Union[float, numpy.ndarray], shape: Union[float, numpy.ndarray], scale: Union[float, numpy.ndarray]) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the pdf</p></div>
@@ -1211,12 +1234,13 @@ def logpdf(value, shape, scale):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def pdf(value, shape, scale):
+def pdf(value: Union[float, np.ndarray], shape: Union[float, np.ndarray], 
+    scale: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
     return scipy.stats.invgamma.pdf(value, a=shape, scale=scale)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.invgamma.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>shape, scale, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>shape: Union[float, numpy.ndarray], scale: Union[float, numpy.ndarray], size: int = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample a random variable from the distribution</p></div>
@@ -1225,7 +1249,8 @@ def pdf(value, shape, scale):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(shape, scale, size=None):
+def sample(shape: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+    size: int=None) -&gt; Union[float, np.ndarray]:
     return 1/npr.gamma(shape=shape, scale=1/scale, size=size)</code></pre>
 </details>
 </dd>
@@ -1246,7 +1271,8 @@ X = exp(\mu + \sigma Z), Z ~ Normal(0,1)</p></div>
     X = exp(\mu + \sigma Z), Z ~ Normal(0,1)
     &#39;&#39;&#39; 
     @staticmethod
-    def sample(loc, scale, size=None):
+    def sample(loc: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+        size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample from a log-normal random distribution. This can be vectorized
 
         Parameters
@@ -1266,7 +1292,7 @@ X = exp(\mu + \sigma Z), Z ~ Normal(0,1)</p></div>
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def pdf(value, loc, scale):
+    def pdf(value: float, loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the probability density function of a log-normal distribution
 
         Parameters
@@ -1287,7 +1313,7 @@ X = exp(\mu + \sigma Z), Z ~ Normal(0,1)</p></div>
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def logpdf(value, loc, scale):
+    def logpdf(value: float, loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the log probability density function of a log-normal distribution
 
         Parameters
@@ -1313,7 +1339,7 @@ X = exp(\mu + \sigma Z), Z ~ Normal(0,1)</p></div>
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.lognormal.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>value, loc, scale)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>value: float, loc: float, scale: float) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the log probability density function of a log-normal distribution</p>
@@ -1337,7 +1363,7 @@ X = exp(\mu + \sigma Z), Z ~ Normal(0,1)</p></div>
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def logpdf(value, loc, scale):
+def logpdf(value: float, loc: float, scale: float) -&gt; float:
     &#39;&#39;&#39;Returns the log probability density function of a log-normal distribution
 
     Parameters
@@ -1358,7 +1384,7 @@ def logpdf(value, loc, scale):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.lognormal.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>value, loc, scale)</span>
+<span>def <span class="ident">pdf</span></span>(<span>value: float, loc: float, scale: float) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the probability density function of a log-normal distribution</p>
@@ -1382,7 +1408,7 @@ def logpdf(value, loc, scale):
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def pdf(value, loc, scale):
+def pdf(value: float, loc: float, scale: float) -&gt; float:
     &#39;&#39;&#39;Returns the probability density function of a log-normal distribution
 
     Parameters
@@ -1403,7 +1429,7 @@ def pdf(value, loc, scale):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.lognormal.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>loc, scale, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>loc: Union[float, numpy.ndarray], scale: Union[float, numpy.ndarray], size: int = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample from a log-normal random distribution. This can be vectorized</p>
@@ -1426,7 +1452,8 @@ def pdf(value, loc, scale):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(loc, scale, size=None):
+def sample(loc: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+    size: int=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Sample from a log-normal random distribution. This can be vectorized
 
     Parameters
@@ -1460,7 +1487,8 @@ def sample(loc, scale, size=None):
     &#39;&#39;&#39;These are miscellaneus methods
     &#39;&#39;&#39;
     @staticmethod
-    def multivariate_normal_fast_2d(mean, cov):
+    def multivariate_normal_fast_2d(mean: Union[np.ndarray, List], 
+        cov: np.ndarray) -&gt; Union[np.ndarray, List]:
         &#39;&#39;&#39;Sample from 2d normal.
 
         Parameters
@@ -1481,13 +1509,13 @@ def sample(loc, scale, size=None):
         return mean
 
     @staticmethod
-    def fast_sample_standard_uniform():
+    def fast_sample_standard_uniform() -&gt; float:
         &#39;&#39;&#39;Sample from a uniform distribution on [0,1)
         &#39;&#39;&#39;
         return C_SAMPLE.c_standard_uniform()
 
     @staticmethod
-    def fast_sample_normal(loc, scale):
+    def fast_sample_normal(loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Sample from a c_implementation of a normal distribution.
         Only accepts floats
 
@@ -1505,7 +1533,7 @@ def sample(loc, scale, size=None):
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.misc.fast_sample_normal"><code class="name flex">
-<span>def <span class="ident">fast_sample_normal</span></span>(<span>loc, scale)</span>
+<span>def <span class="ident">fast_sample_normal</span></span>(<span>loc: float, scale: float) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample from a c_implementation of a normal distribution.
@@ -1525,7 +1553,7 @@ Only accepts floats</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def fast_sample_normal(loc, scale):
+def fast_sample_normal(loc: float, scale: float) -&gt; float:
     &#39;&#39;&#39;Sample from a c_implementation of a normal distribution.
     Only accepts floats
 
@@ -1542,7 +1570,7 @@ def fast_sample_normal(loc, scale):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.misc.fast_sample_standard_uniform"><code class="name flex">
-<span>def <span class="ident">fast_sample_standard_uniform</span></span>(<span>)</span>
+<span>def <span class="ident">fast_sample_standard_uniform</span></span>(<span>) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample from a uniform distribution on [0,1)</p></div>
@@ -1551,14 +1579,14 @@ def fast_sample_normal(loc, scale):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def fast_sample_standard_uniform():
+def fast_sample_standard_uniform() -&gt; float:
     &#39;&#39;&#39;Sample from a uniform distribution on [0,1)
     &#39;&#39;&#39;
     return C_SAMPLE.c_standard_uniform()</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.misc.multivariate_normal_fast_2d"><code class="name flex">
-<span>def <span class="ident">multivariate_normal_fast_2d</span></span>(<span>mean, cov)</span>
+<span>def <span class="ident">multivariate_normal_fast_2d</span></span>(<span>mean: Union[numpy.ndarray, List], cov: numpy.ndarray) ‑> Union[numpy.ndarray, List]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample from 2d normal.</p>
@@ -1579,7 +1607,8 @@ def fast_sample_standard_uniform():
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def multivariate_normal_fast_2d(mean, cov):
+def multivariate_normal_fast_2d(mean: Union[np.ndarray, List], 
+    cov: np.ndarray) -&gt; Union[np.ndarray, List]:
     &#39;&#39;&#39;Sample from 2d normal.
 
     Parameters
@@ -1616,7 +1645,7 @@ def multivariate_normal_fast_2d(mean, cov):
     &#39;&#39;&#39;
 
     @staticmethod
-    def sample(mean, cov, size=None):
+    def sample(mean: np.ndarray, cov: np.ndarray, size: int=None) -&gt; np.ndarray:
         &#39;&#39;&#39;Sample from a multivariate normal random distribution.
 
         Parameters
@@ -1635,7 +1664,7 @@ def multivariate_normal_fast_2d(mean, cov):
         return npr.multivariate_normal(mean=mean, cov=cov, size=size)
 
     @staticmethod
-    def logpdf(value, mean, cov):
+    def logpdf(value: np.ndarray, mean: np.ndarray, cov: np.ndarray) -&gt; np.ndarray:
         &#39;&#39;&#39;Returns the probability density function of a multivariate normal distribution
 
         Parameters
@@ -1667,7 +1696,7 @@ def multivariate_normal_fast_2d(mean, cov):
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.multivariate_normal.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>value, mean, cov)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>value: numpy.ndarray, mean: numpy.ndarray, cov: numpy.ndarray) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the probability density function of a multivariate normal distribution</p>
@@ -1690,7 +1719,7 @@ def multivariate_normal_fast_2d(mean, cov):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def logpdf(value, mean, cov):
+def logpdf(value: np.ndarray, mean: np.ndarray, cov: np.ndarray) -&gt; np.ndarray:
     &#39;&#39;&#39;Returns the probability density function of a multivariate normal distribution
 
     Parameters
@@ -1717,7 +1746,7 @@ def logpdf(value, mean, cov):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.multivariate_normal.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>mean, cov, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>mean: numpy.ndarray, cov: numpy.ndarray, size: int = None) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample from a multivariate normal random distribution.</p>
@@ -1740,7 +1769,7 @@ def logpdf(value, mean, cov):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(mean, cov, size=None):
+def sample(mean: np.ndarray, cov: np.ndarray, size: int=None) -&gt; np.ndarray:
     &#39;&#39;&#39;Sample from a multivariate normal random distribution.
 
     Parameters
@@ -1786,23 +1815,21 @@ We reparameterize the inputs so we can use the scipy implementation</p></div>
     We reparameterize the inputs so we can use the scipy implementation
     &#39;&#39;&#39;
     @staticmethod
-    def sample(mean, dispersion, size=None):
+    def sample(mean: float, dispersion: float, size: int=None) -&gt; float:
         &#39;&#39;&#39;Sample
         &#39;&#39;&#39;
         n,p = negative_binomial.convert_params(mean, dispersion)
         return scipy.stats.nbinom(n=n, p=p).rvs(size=size)
 
     @staticmethod
-    # @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def pmf(value, mean, dispersion):
+    def pmf(value: float, mean: float, dispersion: float) -&gt; float:
         &#39;&#39;&#39;Calculate the pmf
         &#39;&#39;&#39;
         n,p = negative_binomial.convert_params(mean, dispersion)
         return scipy.stats.nbinom.pmf(value, n, p)
 
     @staticmethod
-    # @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def logpmf(value, mean, dispersion):
+    def logpmf(value: float, mean: float, dispersion: float) -&gt; float:
         &#39;&#39;&#39;Calculate the logpmf
         &#39;&#39;&#39;
         n,p = negative_binomial.convert_params(mean, dispersion)
@@ -1810,7 +1837,7 @@ We reparameterize the inputs so we can use the scipy implementation</p></div>
 
     @staticmethod
     @numba.jit(nopython=True, cache=True)
-    def convert_params(mu, theta):
+    def convert_params(mu: float, theta: float) -&gt; Tuple[float, float]:
         &#34;&#34;&#34;
         Convert mean/dispersion parameterization of a negative binomial to the ones scipy supports
 
@@ -1842,7 +1869,7 @@ We reparameterize the inputs so we can use the scipy implementation</p></div>
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.negative_binomial.convert_params"><code class="name flex">
-<span>def <span class="ident">convert_params</span></span>(<span>mu, theta)</span>
+<span>def <span class="ident">convert_params</span></span>(<span>mu: float, theta: float) ‑> Tuple[float, float]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Convert mean/dispersion parameterization of a negative binomial to the ones scipy supports</p>
@@ -1868,7 +1895,7 @@ We reparameterize the inputs so we can use the scipy implementation</p></div>
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, cache=True)
-def convert_params(mu, theta):
+def convert_params(mu: float, theta: float) -&gt; Tuple[float, float]:
     &#34;&#34;&#34;
     Convert mean/dispersion parameterization of a negative binomial to the ones scipy supports
 
@@ -1895,7 +1922,7 @@ def convert_params(mu, theta):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.negative_binomial.logpmf"><code class="name flex">
-<span>def <span class="ident">logpmf</span></span>(<span>value, mean, dispersion)</span>
+<span>def <span class="ident">logpmf</span></span>(<span>value: float, mean: float, dispersion: float) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logpmf</p></div>
@@ -1904,8 +1931,7 @@ def convert_params(mu, theta):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-# @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-def logpmf(value, mean, dispersion):
+def logpmf(value: float, mean: float, dispersion: float) -&gt; float:
     &#39;&#39;&#39;Calculate the logpmf
     &#39;&#39;&#39;
     n,p = negative_binomial.convert_params(mean, dispersion)
@@ -1913,7 +1939,7 @@ def logpmf(value, mean, dispersion):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.negative_binomial.pmf"><code class="name flex">
-<span>def <span class="ident">pmf</span></span>(<span>value, mean, dispersion)</span>
+<span>def <span class="ident">pmf</span></span>(<span>value: float, mean: float, dispersion: float) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the pmf</p></div>
@@ -1922,8 +1948,7 @@ def logpmf(value, mean, dispersion):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-# @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-def pmf(value, mean, dispersion):
+def pmf(value: float, mean: float, dispersion: float) -&gt; float:
     &#39;&#39;&#39;Calculate the pmf
     &#39;&#39;&#39;
     n,p = negative_binomial.convert_params(mean, dispersion)
@@ -1931,7 +1956,7 @@ def pmf(value, mean, dispersion):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.negative_binomial.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>mean, dispersion, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>mean: float, dispersion: float, size: int = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample</p></div>
@@ -1940,7 +1965,7 @@ def pmf(value, mean, dispersion):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(mean, dispersion, size=None):
+def sample(mean: float, dispersion: float, size: int=None) -&gt; float:
     &#39;&#39;&#39;Sample
     &#39;&#39;&#39;
     n,p = negative_binomial.convert_params(mean, dispersion)
@@ -1962,7 +1987,8 @@ def sample(mean, dispersion, size=None):
     &#39;&#39;&#39;Normal distribution parameterized by a mean and standard deviation
     &#39;&#39;&#39;
     @staticmethod
-    def sample(loc=0, scale=1, size=None):
+    def sample(loc: Union[float, np.ndarray]=0, scale: Union[float, np.ndarray]=1,
+        size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample from a normal random distribution. This can be vectorized
 
         NOTE: If you want to sample a single scalar value with a normal distribution,
@@ -1989,7 +2015,7 @@ def sample(mean, dispersion, size=None):
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def pdf(value, loc, scale):
+    def pdf(value: float, loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the probability density function of a normal distribution
 
         Parameters
@@ -2009,7 +2035,7 @@ def sample(mean, dispersion, size=None):
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def logpdf(value, loc, scale):
+    def logpdf(value: float, loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the log probability density function of a normal distribution
 
         Parameters
@@ -2030,7 +2056,7 @@ def sample(mean, dispersion, size=None):
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def cdf(value, loc, scale):
+    def cdf(value: float, loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the cumulative density function of a normal distribution
 
         Parameters
@@ -2050,7 +2076,7 @@ def sample(mean, dispersion, size=None):
 
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-    def logcdf(value, loc, scale):
+    def logcdf(value: float, loc: float, scale: float) -&gt; float:
         &#39;&#39;&#39;Returns the log cumulative density function of a normal distribution
 
         Parameters
@@ -2075,7 +2101,7 @@ def sample(mean, dispersion, size=None):
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.normal.cdf"><code class="name flex">
-<span>def <span class="ident">cdf</span></span>(<span>value, loc, scale)</span>
+<span>def <span class="ident">cdf</span></span>(<span>value: float, loc: float, scale: float) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the cumulative density function of a normal distribution</p>
@@ -2099,7 +2125,7 @@ def sample(mean, dispersion, size=None):
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-def cdf(value, loc, scale):
+def cdf(value: float, loc: float, scale: float) -&gt; float:
     &#39;&#39;&#39;Returns the cumulative density function of a normal distribution
 
     Parameters
@@ -2119,7 +2145,7 @@ def cdf(value, loc, scale):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.normal.logcdf"><code class="name flex">
-<span>def <span class="ident">logcdf</span></span>(<span>value, loc, scale)</span>
+<span>def <span class="ident">logcdf</span></span>(<span>value: float, loc: float, scale: float) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the log cumulative density function of a normal distribution</p>
@@ -2143,7 +2169,7 @@ def cdf(value, loc, scale):
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, parallel=True, cache=True)
-def logcdf(value, loc, scale):
+def logcdf(value: float, loc: float, scale: float) -&gt; float:
     &#39;&#39;&#39;Returns the log cumulative density function of a normal distribution
 
     Parameters
@@ -2163,7 +2189,7 @@ def logcdf(value, loc, scale):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.normal.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>value, loc, scale)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>value: float, loc: float, scale: float) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the log probability density function of a normal distribution</p>
@@ -2187,7 +2213,7 @@ def logcdf(value, loc, scale):
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def logpdf(value, loc, scale):
+def logpdf(value: float, loc: float, scale: float) -&gt; float:
     &#39;&#39;&#39;Returns the log probability density function of a normal distribution
 
     Parameters
@@ -2207,7 +2233,7 @@ def logpdf(value, loc, scale):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.normal.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>value, loc, scale)</span>
+<span>def <span class="ident">pdf</span></span>(<span>value: float, loc: float, scale: float) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the probability density function of a normal distribution</p>
@@ -2231,7 +2257,7 @@ def logpdf(value, loc, scale):
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def pdf(value, loc, scale):
+def pdf(value: float, loc: float, scale: float) -&gt; float:
     &#39;&#39;&#39;Returns the probability density function of a normal distribution
 
     Parameters
@@ -2251,7 +2277,7 @@ def pdf(value, loc, scale):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.normal.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>loc=0, scale=1, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>loc: Union[float, numpy.ndarray] = 0, scale: Union[float, numpy.ndarray] = 1, size: int = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample from a normal random distribution. This can be vectorized</p>
@@ -2278,7 +2304,8 @@ use the function <code>mdsine2.random.misc.fast_sample_normal</code></p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(loc=0, scale=1, size=None):
+def sample(loc: Union[float, np.ndarray]=0, scale: Union[float, np.ndarray]=1,
+    size: int=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Sample from a normal random distribution. This can be vectorized
 
     NOTE: If you want to sample a single scalar value with a normal distribution,
@@ -2320,7 +2347,8 @@ def sample(loc=0, scale=1, size=None):
     &#39;&#39;&#39;
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def pdf(value, dof, scale):
+    def pdf(value: Union[float, np.ndarray], dof: Union[float, np.ndarray], 
+        scale: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         dofdiv2 = dof/2
         a = ((scale * dofdiv2)**(dofdiv2))/(GAMMA(dofdiv2))
         b = EXP(-scale*dofdiv2/(value)) / (value ** (1 + (dofdiv2)))
@@ -2328,7 +2356,8 @@ def sample(loc=0, scale=1, size=None):
         
     @staticmethod
     @numba.jit(nopython=True, fastmath=True, cache=True)
-    def logpdf(value, dof, scale):
+    def logpdf(value: Union[float, np.ndarray], dof: Union[float, np.ndarray], 
+        scale: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         dofdiv2 = dof/2
         a = dofdiv2*LOG(scale*dofdiv2)
         b = -LGAMMA(dofdiv2)
@@ -2337,7 +2366,8 @@ def sample(loc=0, scale=1, size=None):
         return a + b + c + d
 
     @staticmethod
-    def sample(dof, scale, size=None):
+    def sample(dof: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+        size: int=None) -&gt; Union[float, np.ndarray]:
         return invgamma.sample(shape=dof/2, scale=dof*scale/2, size=size)</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -2347,7 +2377,7 @@ def sample(loc=0, scale=1, size=None):
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.sics.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>value, dof, scale)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>value: Union[float, numpy.ndarray], dof: Union[float, numpy.ndarray], scale: Union[float, numpy.ndarray]) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -2357,7 +2387,8 @@ def sample(loc=0, scale=1, size=None):
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def logpdf(value, dof, scale):
+def logpdf(value: Union[float, np.ndarray], dof: Union[float, np.ndarray], 
+    scale: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
     dofdiv2 = dof/2
     a = dofdiv2*LOG(scale*dofdiv2)
     b = -LGAMMA(dofdiv2)
@@ -2367,7 +2398,7 @@ def logpdf(value, dof, scale):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.sics.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>value, dof, scale)</span>
+<span>def <span class="ident">pdf</span></span>(<span>value: Union[float, numpy.ndarray], dof: Union[float, numpy.ndarray], scale: Union[float, numpy.ndarray]) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -2377,7 +2408,8 @@ def logpdf(value, dof, scale):
 </summary>
 <pre><code class="python">@staticmethod
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def pdf(value, dof, scale):
+def pdf(value: Union[float, np.ndarray], dof: Union[float, np.ndarray], 
+    scale: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
     dofdiv2 = dof/2
     a = ((scale * dofdiv2)**(dofdiv2))/(GAMMA(dofdiv2))
     b = EXP(-scale*dofdiv2/(value)) / (value ** (1 + (dofdiv2)))
@@ -2385,7 +2417,7 @@ def pdf(value, dof, scale):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.sics.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>dof, scale, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>dof: Union[float, numpy.ndarray], scale: Union[float, numpy.ndarray], size: int = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample a random variable from the distribution</p></div>
@@ -2394,7 +2426,8 @@ def pdf(value, dof, scale):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(dof, scale, size=None):
+def sample(dof: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+    size: int=None) -&gt; Union[float, np.ndarray]:
     return invgamma.sample(shape=dof/2, scale=dof*scale/2, size=size)</code></pre>
 </details>
 </dd>
@@ -2433,7 +2466,8 @@ and the high is 10.</p>
     NOTE: THIS IS A DIFFERENT PARAMETERIZATION THAN SCIPY
     &#39;&#39;&#39;
     @staticmethod
-    def sample(loc, scale, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), size=None):
+    def sample(loc: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+        low: float=float(&#39;-inf&#39;), high: float=float(&#39;inf&#39;), size: int=None) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Sample from a truncated normal random distribution defined on
         [low, high] with mean `loc` and standard deviation `scale`
 
@@ -2487,7 +2521,7 @@ and the high is 10.</p>
         return value
 
     @staticmethod
-    def pdf(value, loc, scale, low, high):
+    def pdf(value: float, loc: float, scale: float, low: float, high: float) -&gt; float:
         &#39;&#39;&#39;Returns the probability density function of a truncated normal distribution
 
         Parameters
@@ -2508,7 +2542,7 @@ and the high is 10.</p>
         return scipy.stats.truncnorm.pdf(value, (low-loc)/scale, (high-loc)/scale, loc, scale)
 
     @staticmethod
-    def logpdf(value, loc, scale, low, high):
+    def logpdf(value: float, loc: float, scale: float, low: float, high: float) -&gt; float:
         &#39;&#39;&#39;Returns the log probability density function of a truncated normal distribution
 
         Parameters
@@ -2535,7 +2569,7 @@ and the high is 10.</p>
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.truncnormal.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>value, loc, scale, low, high)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>value: float, loc: float, scale: float, low: float, high: float) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the log probability density function of a truncated normal distribution</p>
@@ -2560,7 +2594,7 @@ and the high is 10.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def logpdf(value, loc, scale, low, high):
+def logpdf(value: float, loc: float, scale: float, low: float, high: float) -&gt; float:
     &#39;&#39;&#39;Returns the log probability density function of a truncated normal distribution
 
     Parameters
@@ -2582,7 +2616,7 @@ def logpdf(value, loc, scale, low, high):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.truncnormal.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>value, loc, scale, low, high)</span>
+<span>def <span class="ident">pdf</span></span>(<span>value: float, loc: float, scale: float, low: float, high: float) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the probability density function of a truncated normal distribution</p>
@@ -2607,7 +2641,7 @@ def logpdf(value, loc, scale, low, high):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def pdf(value, loc, scale, low, high):
+def pdf(value: float, loc: float, scale: float, low: float, high: float) -&gt; float:
     &#39;&#39;&#39;Returns the probability density function of a truncated normal distribution
 
     Parameters
@@ -2629,7 +2663,7 @@ def pdf(value, loc, scale, low, high):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.truncnormal.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>loc, scale, low=-inf, high=inf, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>loc: Union[float, numpy.ndarray], scale: Union[float, numpy.ndarray], low: float = -inf, high: float = inf, size: int = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample from a truncated normal random distribution defined on
@@ -2655,7 +2689,8 @@ def pdf(value, loc, scale, low, high):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(loc, scale, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), size=None):
+def sample(loc: Union[float, np.ndarray], scale: Union[float, np.ndarray], 
+    low: float=float(&#39;-inf&#39;), high: float=float(&#39;inf&#39;), size: int=None) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Sample from a truncated normal random distribution defined on
     [low, high] with mean `loc` and standard deviation `scale`
 
@@ -2721,28 +2756,30 @@ def sample(loc, scale, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), siz
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class uniform(_BaseSample):
-
-
     @staticmethod
-    def sample(low=0, high=1, size=None):
+    def sample(low: Union[float, np.ndarray]=0, high: Union[float, np.ndarray]=1, 
+        size: int=None) -&gt; Union[float, np.ndarray]:
         return npr.uniform(low=low, high=high, size=size)
 
     @staticmethod
-    def pdf(value, low, high):
+    def pdf(value: Union[float, np.ndarray], low: Union[float, np.ndarray], 
+        high: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         if value &lt; low or value &gt; high:
             return 0
         else:
             return 1/(high-low)
 
     @staticmethod
-    def logpdf(value, low, high):
+    def logpdf(value: Union[float, np.ndarray], low: Union[float, np.ndarray], 
+        high: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         if value &lt; low or value &gt; high:
             return 0
         else:
             return -LOG(high-low)
 
     @staticmethod
-    def cdf(value, low, high):
+    def cdf(value: Union[float, np.ndarray], low: Union[float, np.ndarray], 
+        high: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         if value &lt; low:
             return 0
         elif value &gt;= high:
@@ -2751,7 +2788,8 @@ def sample(loc, scale, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), siz
             return (value-low)/(high-value)
 
     @staticmethod
-    def logcdf(value, low, high):
+    def logcdf(value: Union[float, np.ndarray], low: Union[float, np.ndarray], 
+        high: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
         if value &lt; low:
             return float(&#39;-inf&#39;)
         elif value &gt;= high:
@@ -2766,7 +2804,7 @@ def sample(loc, scale, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), siz
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.random.uniform.cdf"><code class="name flex">
-<span>def <span class="ident">cdf</span></span>(<span>value, low, high)</span>
+<span>def <span class="ident">cdf</span></span>(<span>value: Union[float, numpy.ndarray], low: Union[float, numpy.ndarray], high: Union[float, numpy.ndarray]) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the cdf</p></div>
@@ -2775,7 +2813,8 @@ def sample(loc, scale, low=float(&#39;-inf&#39;), high=float(&#39;inf&#39;), siz
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def cdf(value, low, high):
+def cdf(value: Union[float, np.ndarray], low: Union[float, np.ndarray], 
+    high: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
     if value &lt; low:
         return 0
     elif value &gt;= high:
@@ -2785,7 +2824,7 @@ def cdf(value, low, high):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.uniform.logcdf"><code class="name flex">
-<span>def <span class="ident">logcdf</span></span>(<span>value, low, high)</span>
+<span>def <span class="ident">logcdf</span></span>(<span>value: Union[float, numpy.ndarray], low: Union[float, numpy.ndarray], high: Union[float, numpy.ndarray]) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logcdf</p></div>
@@ -2794,7 +2833,8 @@ def cdf(value, low, high):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def logcdf(value, low, high):
+def logcdf(value: Union[float, np.ndarray], low: Union[float, np.ndarray], 
+    high: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
     if value &lt; low:
         return float(&#39;-inf&#39;)
     elif value &gt;= high:
@@ -2804,7 +2844,7 @@ def logcdf(value, low, high):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.uniform.logpdf"><code class="name flex">
-<span>def <span class="ident">logpdf</span></span>(<span>value, low, high)</span>
+<span>def <span class="ident">logpdf</span></span>(<span>value: Union[float, numpy.ndarray], low: Union[float, numpy.ndarray], high: Union[float, numpy.ndarray]) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the logpdf</p></div>
@@ -2813,7 +2853,8 @@ def logcdf(value, low, high):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def logpdf(value, low, high):
+def logpdf(value: Union[float, np.ndarray], low: Union[float, np.ndarray], 
+    high: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
     if value &lt; low or value &gt; high:
         return 0
     else:
@@ -2821,7 +2862,7 @@ def logpdf(value, low, high):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.uniform.pdf"><code class="name flex">
-<span>def <span class="ident">pdf</span></span>(<span>value, low, high)</span>
+<span>def <span class="ident">pdf</span></span>(<span>value: Union[float, numpy.ndarray], low: Union[float, numpy.ndarray], high: Union[float, numpy.ndarray]) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the pdf</p></div>
@@ -2830,7 +2871,8 @@ def logpdf(value, low, high):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def pdf(value, low, high):
+def pdf(value: Union[float, np.ndarray], low: Union[float, np.ndarray], 
+    high: Union[float, np.ndarray]) -&gt; Union[float, np.ndarray]:
     if value &lt; low or value &gt; high:
         return 0
     else:
@@ -2838,7 +2880,7 @@ def pdf(value, low, high):
 </details>
 </dd>
 <dt id="mdsine2.pylab.random.uniform.sample"><code class="name flex">
-<span>def <span class="ident">sample</span></span>(<span>low=0, high=1, size=None)</span>
+<span>def <span class="ident">sample</span></span>(<span>low: Union[float, numpy.ndarray] = 0, high: Union[float, numpy.ndarray] = 1, size: int = None) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sample a random variable from the distribution</p></div>
@@ -2847,7 +2889,8 @@ def pdf(value, low, high):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def sample(low=0, high=1, size=None):
+def sample(low: Union[float, np.ndarray]=0, high: Union[float, np.ndarray]=1, 
+    size: int=None) -&gt; Union[float, np.ndarray]:
     return npr.uniform(low=low, high=high, size=size)</code></pre>
 </details>
 </dd>

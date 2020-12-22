@@ -277,7 +277,7 @@ def condense_matrix_with_taxonomy(M: Union[pd.DataFrame, np.ndarray], taxa: 'Tax
     df = df.sort_index(axis='index')
     return df
 
-def taxaname_for_paper(taxon: Union["Taxon", "OTU"], taxa: "TaxaSet") -> float:
+def taxaname_for_paper(taxon: Union["Taxon", "OTU"], taxa: "TaxaSet") -> str:
     '''Makes the name in the format needed for the paper
 
     Parameters
@@ -289,6 +289,7 @@ def taxaname_for_paper(taxon: Union["Taxon", "OTU"], taxa: "TaxaSet") -> float:
 
     Returns
     -------
+    str
     '''
     taxon = taxa[taxon]
     if taxon.tax_is_defined('species'):
@@ -338,70 +339,78 @@ def taxaname_formatter(format: str, taxon: Union["Taxon", "OTU"], taxa: "TaxaSet
     `taxaname_for_paper`.
 
     Example:
-        taxon is an Taxon object at index 0 where
+        taxon is an Taxon object at index 0 where:
+        ```
         taxon.genus = 'A'
         taxon.id = 1234532
-
-        taxaname_formatter(
+        ```
+        In[1]
+        ```
+        >>> taxaname_formatter(
             format='%(genus)s: %(index)s',
             taxon=1234532,
             taxa=taxa)
-        >>> 'A: 0'
-
-        taxaname_formatter(
+        'A: 0'
+        ```
+        In[2]
+        ```
+        >>> taxaname_formatter(
             format='%(genus)s: %(genus)s',
             taxon=1234532,
             taxa=taxa)
-        >>> 'A: A'
-
-        taxaname_formatter(
+        'A: A'
+        ```
+        In[3]
+        ```
+        >>> taxaname_formatter(
             format='%(index)s',
             taxon=1234532,
             taxa=taxa)
-        >>> '0'
-
-        taxaname_formatter(
+        '0'
+        ```
+        In[4]
+        ```
+        >>> taxaname_formatter(
             format='%(geNus)s: %(genus)s',
             taxon=1234532,
             taxa=taxa)
-        >>> '%(geNus)s: A'
+        '%(geNus)s: A'
+        ```
 
     Parameters
     ----------
     format : str
-        This is the format for us to do the labels
-        Formatting options:
-            '%(paperformat)s'
-                Return the `taxaname_for_paper`
-            '%(name)s'
-                Name of the taxon (pylab.base..name)
-            '%(id)s'
-                ID of the taxon (pylab.base..id)
-            '%(index)s'
-                The order that this appears in the TaxaSet
-            '%(species)s'
-                `'species'` taxonomic classification of the taxon
-            '%(speciesX)s'
-                `'species'` taxonomic classification of the taxon for only up to the first 
-                `X` spceified
-            '%(genus)s'
-                `'genus'` taxonomic classification of the taxon
-            '%(family)s'
-                `'family'` taxonomic classification of the taxon
-            '%(class)s'
-                `'class'` taxonomic classification of the taxon
-            '%(order)s'
-                `'order'` taxonomic classification of the taxon
-            '%(phylum)s'
-                `'phylum'` taxonomic classification of the taxon
-            '%(kingdom)s'
-                `'kingdom'` taxonomic classification of the taxon
-
+        - This is the format for us to do the labels. Options:
+            - '%(paperformat)s'
+                * Return the `taxaname_for_paper`
+            - '%(name)s'
+                * Name of the taxon (pylab.base..name)
+            - '%(id)s'
+                * ID of the taxon (pylab.base..id)
+            - '%(index)s'
+                * The order that this appears in the TaxaSet
+            - '%(species)s'
+                * `'species'` taxonomic classification of the taxon
+            - '%(genus)s'
+                * `'genus'` taxonomic classification of the taxon
+            - '%(family)s'
+                * `'family'` taxonomic classification of the taxon
+            - '%(class)s'
+                * `'class'` taxonomic classification of the taxon
+            - '%(order)s'
+                * `'order'` taxonomic classification of the taxon
+            - '%(phylum)s'
+                * `'phylum'` taxonomic classification of the taxon
+            - '%(kingdom)s'
+                * `'kingdom'` taxonomic classification of the taxon
     taxon : str, int, Taxon, OTU
         Taxon/OTU object or identifier (name, ID, index)
     taxa : pylab.base.TaxaSet
         Dataset containing all of the information for the taxa
 
+    Returns
+    -------
+    str
     '''
     if format == TAXANAME_PAPER_FORMAT:
         return taxaname_for_paper(taxon=taxon, taxa=taxa)
@@ -463,6 +472,8 @@ class Saveable:
 
         Paramters
         ---------
+        cls : type
+            Type
         filename : str
             This is the location of the file to unpickle
         '''
@@ -569,13 +580,13 @@ class BasePerturbation:
     Does not have to be applied to all subjects, and each subject can have a different start and
     end time to each other.
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     name : str, None
-        This is the name of the perturabtion. If nothing is given then the name will be
-        set to the perturbation index
+        - This is the name of the perturabtion. If nothing is given then the name will be
+          set to the perturbation index
     starts, ends : dict, None
-        This is a map to the start and end times for the subject that have this perturbation
+        - This is a map to the start and end times for the subject that have this perturbation
     '''
     def __init__(self, name: str, starts: Dict[str, float]=None, ends: Dict[str, float]=None):
         if not plutil.isstr(name):
@@ -1044,30 +1055,34 @@ class OTU(Taxon):
 
         Examples
         --------
+        ```
         Input:
          kingdom          phylum                class        order             family  genus       species      asv
         Bacteria  Proteobacteria  Alphaproteobacteria  Rhizobiales  Bradyrhizobiaceae  Bosea  massiliensis  ASV_722
         Bacteria  Proteobacteria  Alphaproteobacteria  Rhizobiales  Bradyrhizobiaceae  Bosea            NA  ASV_991
+        
         Output:
          kingdom          phylum                class        order             family  genus       species
         Bacteria  Proteobacteria  Alphaproteobacteria  Rhizobiales  Bradyrhizobiaceae  Bosea  massiliensis
+        ```
 
+        ```
         Input:
          kingdom          phylum           class              order              family            genus                 species      asv
         Bacteria  Actinobacteria  Actinobacteria  Bifidobacteriales  Bifidobacteriaceae  Bifidobacterium                      NA  ASV_283
         Bacteria  Actinobacteria  Actinobacteria  Bifidobacteriales  Bifidobacteriaceae  Bifidobacterium                      NA  ASV_302
         Bacteria  Actinobacteria  Actinobacteria  Bifidobacteriales  Bifidobacteriaceae  Bifidobacterium    adolescentis/faecale  ASV_340
         Bacteria  Actinobacteria  Actinobacteria  Bifidobacteriales  Bifidobacteriaceae  Bifidobacterium  choerinum/pseudolongum  ASV_668
+
         Ouput:
          kingdom          phylum           class              order              family            genus                                      species
         Bacteria  Actinobacteria  Actinobacteria  Bifidobacteriales  Bifidobacteriaceae  Bifidobacterium  adolescentis/faecale/choerinum/pseudolongum
+        ```
 
-        Input:
-         kingdom         phylum class order family genus species       asv
-        Bacteria  Bacteroidetes    NA    NA     NA    NA      NA   ASV_232
-        Bacteria     Firmicutes    NA    NA     NA    NA      NA   ASV_762
-        Output:
-
+        Parameters
+        ----------
+        consensus_table : pd.DataFrame
+            Table for resolving conflicts
         '''
         # Check that all the taxonomies have the same lineage
         set_to_na = False
@@ -1132,9 +1147,7 @@ class Clusterable(Saveable):
     pylab.cluster.Clustering). These are the functions that need to be implemented
     for it to be able to be clustered.
 
-    `stritem`
-    ---------
-    This is the function that we use 
+    `stritem`: This is the function that we use to get the label of the item
     '''
     def __len__(self):
         raise NotImplementedError('You must implement this function')
@@ -1685,11 +1698,10 @@ class qPCRdata:
 
 class CustomOrderedDict(dict):
     '''Order is an initialized version of self.keys() -> much more efficient
-    index maps the key to the index in order
-
-    order (list)
+    index maps the key to the index in order:
+    - order (list)
         - same as a numpy version of the keys in order
-    index (dict)
+    - index (dict)
         - Maps the key to the index that it was inserted in
     '''
 

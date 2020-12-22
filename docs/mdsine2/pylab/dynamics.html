@@ -56,6 +56,10 @@ import time
 import logging
 import math
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple
+
+
 from . import util as plu
 from .errors import NeedToImplementError
 
@@ -63,7 +67,7 @@ _ADDITIVE = 0
 _MULTIPLICATIVE = 1
 
 
-def isdynamics(x):
+def isdynamics(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a (subclass of) BaseDynamics
 
     Parameters
@@ -78,7 +82,7 @@ def isdynamics(x):
     &#39;&#39;&#39;
     return x is not None and issubclass(x.__class__, BaseDynamics)
 
-def isprocessvariance(x):
+def isprocessvariance(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a (subclass of) ProcessVariance
 
     Parameters
@@ -93,7 +97,7 @@ def isprocessvariance(x):
     &#39;&#39;&#39;
     return x is not None and issubclass(x.__class__, BaseProcessVariance)
 
-def isintegratable(x):
+def isintegratable(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a (subclass of) Integratable
 
     Parameters
@@ -116,7 +120,7 @@ class Integratable:
         &#39;&#39;&#39;
         pass
 
-    def integrate_single_timestep(self, x, t, dt):
+    def integrate_single_timestep(self, x: np.ndarray, t: float, dt: float):
         &#39;&#39;&#39;This is the function that `integrate` calls to propagate the underlying
         dynamics a single time step. There is no type checking for computational
         efficiency
@@ -166,14 +170,15 @@ class _NoProcessVariance(Integratable):
     def __init__(self, *args, **kwargs):
         Integratable.__init__(self, *args, **kwargs)
 
-    def integrate_single_timestep(self, x, *args, **kwargs):
-        &#39;&#39;&#39;Just return x
+    def integrate_single_timestep(self, x: np.ndarray, *args, **kwargs):
+        &#39;&#39;&#39;Do nothing
         &#39;&#39;&#39;
         return x
 
 
-def integrate(dynamics, initial_conditions, dt, n_days, processvar=None,
-    subsample=False, times=None, log_every=10000):
+def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float, n_days: float, 
+    processvar: BaseProcessVariance=None, subsample: bool=False, times: np.ndarray=None, 
+    log_every: int=10000) -&gt; Dict[str, np.ndarray]:
     &#39;&#39;&#39;Numerically integrates the ODE given the dynamics and the initial 
     conditions. If the process variance is not None, then this integrates
     a stochastic ODE.
@@ -340,7 +345,7 @@ def integrate(dynamics, initial_conditions, dt, n_days, processvar=None,
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.pylab.dynamics.integrate"><code class="name flex">
-<span>def <span class="ident">integrate</span></span>(<span>dynamics, initial_conditions, dt, n_days, processvar=None, subsample=False, times=None, log_every=10000)</span>
+<span>def <span class="ident">integrate</span></span>(<span>dynamics: <a title="mdsine2.pylab.dynamics.BaseDynamics" href="#mdsine2.pylab.dynamics.BaseDynamics">BaseDynamics</a>, initial_conditions: numpy.ndarray, dt: float, n_days: float, processvar: <a title="mdsine2.pylab.dynamics.BaseProcessVariance" href="#mdsine2.pylab.dynamics.BaseProcessVariance">BaseProcessVariance</a> = None, subsample: bool = False, times: numpy.ndarray = None, log_every: int = 10000) ‑> Dict[str, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Numerically integrates the ODE given the dynamics and the initial
@@ -411,8 +416,9 @@ These are the times, in days, for each column</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def integrate(dynamics, initial_conditions, dt, n_days, processvar=None,
-    subsample=False, times=None, log_every=10000):
+<pre><code class="python">def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float, n_days: float, 
+    processvar: BaseProcessVariance=None, subsample: bool=False, times: np.ndarray=None, 
+    log_every: int=10000) -&gt; Dict[str, np.ndarray]:
     &#39;&#39;&#39;Numerically integrates the ODE given the dynamics and the initial 
     conditions. If the process variance is not None, then this integrates
     a stochastic ODE.
@@ -572,7 +578,7 @@ These are the times, in days, for each column</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.dynamics.isdynamics"><code class="name flex">
-<span>def <span class="ident">isdynamics</span></span>(<span>x)</span>
+<span>def <span class="ident">isdynamics</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a (subclass of) BaseDynamics</p>
@@ -590,7 +596,7 @@ These are the times, in days, for each column</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isdynamics(x):
+<pre><code class="python">def isdynamics(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a (subclass of) BaseDynamics
 
     Parameters
@@ -607,7 +613,7 @@ These are the times, in days, for each column</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.dynamics.isintegratable"><code class="name flex">
-<span>def <span class="ident">isintegratable</span></span>(<span>x)</span>
+<span>def <span class="ident">isintegratable</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a (subclass of) Integratable</p>
@@ -625,7 +631,7 @@ These are the times, in days, for each column</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isintegratable(x):
+<pre><code class="python">def isintegratable(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a (subclass of) Integratable
 
     Parameters
@@ -642,7 +648,7 @@ These are the times, in days, for each column</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.dynamics.isprocessvariance"><code class="name flex">
-<span>def <span class="ident">isprocessvariance</span></span>(<span>x)</span>
+<span>def <span class="ident">isprocessvariance</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a (subclass of) ProcessVariance</p>
@@ -660,7 +666,7 @@ These are the times, in days, for each column</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isprocessvariance(x):
+<pre><code class="python">def isprocessvariance(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a (subclass of) ProcessVariance
 
     Parameters
@@ -803,7 +809,7 @@ These are the times, in days, for each column</dd>
         &#39;&#39;&#39;
         pass
 
-    def integrate_single_timestep(self, x, t, dt):
+    def integrate_single_timestep(self, x: np.ndarray, t: float, dt: float):
         &#39;&#39;&#39;This is the function that `integrate` calls to propagate the underlying
         dynamics a single time step. There is no type checking for computational
         efficiency
@@ -864,7 +870,7 @@ These are the times, in days, for each column</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.dynamics.Integratable.integrate_single_timestep"><code class="name flex">
-<span>def <span class="ident">integrate_single_timestep</span></span>(<span>self, x, t, dt)</span>
+<span>def <span class="ident">integrate_single_timestep</span></span>(<span>self, x: numpy.ndarray, t: float, dt: float)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This is the function that <code><a title="mdsine2.pylab.dynamics.integrate" href="#mdsine2.pylab.dynamics.integrate">integrate()</a></code> calls to propagate the underlying
@@ -884,7 +890,7 @@ are integrating from</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def integrate_single_timestep(self, x, t, dt):
+<pre><code class="python">def integrate_single_timestep(self, x: np.ndarray, t: float, dt: float):
     &#39;&#39;&#39;This is the function that `integrate` calls to propagate the underlying
     dynamics a single time step. There is no type checking for computational
     efficiency

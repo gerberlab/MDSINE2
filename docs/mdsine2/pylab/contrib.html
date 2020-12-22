@@ -43,11 +43,15 @@ import sys
 import logging
 import scipy.special
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
+    Callable
+
 from .base import BasePerturbation, Traceable
 from .base import Perturbations as PerturbationSet
 from . import variables
 from .cluster import isclustervalue, ClusterValue, isclustering, \
-    ClusterProperty
+    ClusterProperty, Clustering
 from .graph import Node
 from . import util, base
 
@@ -58,7 +62,7 @@ DEFAULT_MAGNITUDE_SUFFIX = &#39;_magnitude&#39;
 DEFAULT_PROBABILITY_SUFFIX = &#39;_probability&#39;
 DEFAULT_INDICATOR_SUFFIX = &#39;_indicator&#39;
 
-def isclusterperturbation(x):
+def isclusterperturbation(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the input is a subclass of ClusterPerturbation
 
     Parameters
@@ -71,9 +75,9 @@ def isclusterperturbation(x):
     bool
         True if `x` is of type ClusterPerturbation, else False
     &#39;&#39;&#39;
-    return x is not None and issubclass(x.__class__, ClusterPerturbation)
+    return x is not None and issubclass(x.__class__, ClusterPerturbationEffect)
 
-def isclusterperturbationindicator(x):
+def isclusterperturbationindicator(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the input is a subclass of ClusterPerturbationIndicator
 
     Parameters
@@ -88,7 +92,7 @@ def isclusterperturbationindicator(x):
     &#39;&#39;&#39;
     return x is not None and issubclass(x.__class__, ClusterPerturbationIndicator)
 
-def isinteractions(x):
+def isinteractions(x: Any) -&gt; bool:
     &#39;&#39;&#39;Type check if `x` is a subclass of Interactions
 
     Parameters
@@ -130,8 +134,11 @@ class Perturbation(BasePerturbation, variables.Variable):
     kwargs : dict
         - Extra arguments for the Node class
     &#39;&#39;&#39;
-    def __init__(self, taxa, starts, ends, magnitude=None, indicator=None, 
-        probability=None, **kwargs):
+    def __init__(self, taxa: base.TaxaSet, starts: Dict[str, float], ends: Dict[str, float], 
+        magnitude: Union[variables.Variable, np.ndarray, int, float]=None, 
+        indicator: Union[variables.Variable, np.ndarray]=None, 
+        probability: Union[variables.Variable, float]=None, **kwargs):
+        
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
             self.G.perturbations = PerturbationSet()
@@ -143,7 +150,7 @@ class Perturbation(BasePerturbation, variables.Variable):
         self.G.perturbations.append(self)
         self.taxa = taxa
         n_taxa = len(self.taxa)
-        self.set_value_shape(shape=(n_taxa, ))
+        self.set_value_shape(shape=(n_taxa, )) # Set the shape of the internal array
 
         # Set magnitude
         if magnitude is None:
@@ -195,11 +202,11 @@ class Perturbation(BasePerturbation, variables.Variable):
         else:
             raise TypeError(&#39;`indicator` ({}) type not recognized&#39;.format(type(indicator)))
 
-        self.magnitude = magnitude
-        self.indicator = indicator
-        self.probability = probability
+        self.magnitude = magnitude # Variable
+        self.indicator = indicator # Variable
+        self.probability = probability # Variable
 
-    def __str__(self):
+    def __str__(self) -&gt; str:
         s = BasePerturbation.__str__(self)
         s += &#39;\nMagnitude:\n&#39;
         for oidx in range(len(self.taxa)):
@@ -223,7 +230,7 @@ class Perturbation(BasePerturbation, variables.Variable):
         &#39;&#39;&#39;
         self.trace = None
 
-    def array(self, only_pos_ind=False):
+    def array(self, only_pos_ind: bool=False) -&gt; np.ndarray:
         &#39;&#39;&#39;Return the magnitudes with the indicatrs indexed out
 
         Parameters
@@ -250,11 +257,13 @@ class ClusterPerturbationValue(ClusterValue):
     changed
     &#39;&#39;&#39;
     def reset(self):
+        &#39;&#39;&#39;Reset all of the values
+        &#39;&#39;&#39;
         self.value = {}
         for cid in self.clustering.order:
             self.value[cid] = 0
 
-    def clusters_changed(self, cids_added, cids_removed):
+    def clusters_changed(self, cids_added: Iterator[int], cids_removed: Iterator[int]):
         &#39;&#39;&#39;Delete old clusters, sample from `prior` for the
         new clusters. We do not need to type check because it
         is self contained within pylab
@@ -291,11 +300,13 @@ class ClusterPerturbationIndicator(ClusterValue):
     kwargs : dict
         These are additional arguments for ClusterValue
     &#39;&#39;&#39;
-    def __init__(self, probability, **kwargs):
+    def __init__(self, probability: variables.Variable, **kwargs):
         ClusterValue.__init__(self, dtype=bool, **kwargs)
         self.probability = probability
 
     def reset(self):
+        &#39;&#39;&#39;Reset all of the values
+        &#39;&#39;&#39;
         self.value = {}
         for cid in self.clustering.order:
             self.value[cid] = False
@@ -305,7 +316,7 @@ class ClusterPerturbationIndicator(ClusterValue):
         &#39;&#39;&#39;
         self.trace = None
 
-    def clusters_changed(self, cids_added, cids_removed):
+    def clusters_changed(self, cids_added: Iterator[int], cids_removed: Iterator[int]):
         &#39;&#39;&#39;Delete old clusters, sample from `probability` for the
         new clusters. We do not need to type check because it
         is self contained within pylab
@@ -322,17 +333,18 @@ class ClusterPerturbationIndicator(ClusterValue):
         for cid in cids_added:
             self.value[cid] = bool(npr.binomial(n=1, p=self.probability.value))
 
-    def item_bool_array(self):
+    def item_bool_array(self) -&gt; np.ndarray:
         &#39;&#39;&#39;Creates a boolean array expanded so that each item has the same 
         value that the cluster that contains it has. This is the same as 
         calling ClusterValue.item_array
         Example
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             &gt;&gt;&gt; np.ndarray([True, False, True, False, True])
+            ```
 
         Returns
         -------
@@ -341,17 +353,18 @@ class ClusterPerturbationIndicator(ClusterValue):
         &#39;&#39;&#39;
         return ClusterValue.item_array(self)
 
-    def cluster_bool_array(self):
+    def cluster_bool_array(self) -&gt; np.ndarray:
         &#39;&#39;&#39;Creates a boolean array for each item in cluster order. This 
         is the same as calling ClusterValue.cluster_array()
 
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             &gt;&gt;&gt; np.ndarray([True, False])
+            ```
         
         Returns
         -------
@@ -360,15 +373,17 @@ class ClusterPerturbationIndicator(ClusterValue):
         &#39;&#39;&#39;
         return ClusterValue.cluster_array(self)
 
-    def item_arg_array(self):
+    def item_arg_array(self) -&gt; np.ndarray:
         &#39;&#39;&#39;Creates an ordered index array of items that are positive.
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             &gt;&gt;&gt; np.ndarray([0,2,4])
+            ```
+
         Returns
         -------
         np.ndarray((n_c,), dtype=int)
@@ -380,15 +395,17 @@ class ClusterPerturbationIndicator(ClusterValue):
                 val += list(cluster.members)
         return np.asarray(val, dtype=int)
 
-    def cluster_arg_array(self):
+    def cluster_arg_array(self) -&gt; np.ndarray:
         &#39;&#39;&#39;Creates an ordered index array of clusters that are positive.
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             &gt;&gt;&gt; np.ndarray([0])
+            ```
+
         Returns
         -------
         np.ndarray((n_c,), dtype=int)
@@ -398,15 +415,16 @@ class ClusterPerturbationIndicator(ClusterValue):
         return np.asarray([idx for idx,cid in enumerate(self.clustering.order) \
             if self.value[cid]], dtype=int)
 
-    def num_on_items(self):
+    def num_on_items(self) -&gt; int:
         &#39;&#39;&#39;These are the number of on items for this perturbation
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             &gt;&gt;&gt; 3
+            ```
 
         Returns
         -------
@@ -424,15 +442,16 @@ class ClusterPerturbationIndicator(ClusterValue):
             logging.critical(&#39;Clustering cluster ids:\n{}&#39;.format(self.clustering.order))
             raise
 
-    def num_on_clusters(self):
+    def num_on_clusters(self) -&gt; int:
         &#39;&#39;&#39;These are the number of on clusters for this perturbation
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             &gt;&gt;&gt; 1
+            ```
 
         Returns
         -------
@@ -444,24 +463,24 @@ class ClusterPerturbationIndicator(ClusterValue):
             cumm += self.value[cid]
         return cumm
 
-    def get_clusters_on(self):
+    def get_clusters_on(self) -&gt; Iterator[int]:
         &#39;&#39;&#39;Return the cluster IDs that have a positive indicator for this
         perturbation.
 
         Returns
         -------
-        list
+        list(int)
         &#39;&#39;&#39;
         ret = [cid for cid in self.clustering.order if self.value[cid]]
         return ret
 
-    def get_items_on(self):
+    def get_items_on(self) -&gt; Iterator[int]:
         &#39;&#39;&#39;Get the item indecies that have a positive indicator for this
         perturbation.
 
         Returns
         -------
-        list
+        list(int)
         &#39;&#39;&#39;
         ret = []
         for cid in self.clustering.order:
@@ -482,7 +501,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
     
     Parameters
     ----------
-    starts, ends : int, float
+    starts, ends : dict
         - Start and end of the perturbation
     clustering : pylab.cluster.Clustering
         - This is the clustering object it is being set with
@@ -499,10 +518,11 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
     kwargs : dict
         - Extra arguments for the Node class
     &#39;&#39;&#39;
-    def __init__(self, clustering, starts, ends,
-        magnitude=None, indicator=None, probability=None,
-        signal_when_clusters_change=False,
-        signal_when_item_assignment_changes=False, **kwargs):
+    def __init__(self, clustering: Clustering, starts: Dict[str, float], 
+        ends: Dict[str, float], magnitude: Union[variables.Variable, ClusterValue, np.ndarray]=None, 
+        indicator: Union[variables.Variable, ClusterValue, np.ndarray]=None, 
+        probability: Union[variables.Variable, float]=None, signal_when_clusters_change: bool=False,
+        signal_when_item_assignment_changes: bool=False, **kwargs):
 
         if signal_when_clusters_change is None:
             signal_when_clusters_change = DEFAULT_SIGNAL_WHEN_CLUSTERS_CHANGE
@@ -570,11 +590,11 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
                     ind.value[cid] = False
             indicator = ind
 
-        self.magnitude = magnitude
-        self.indicator = indicator
-        self.probability = probability
+        self.magnitude = magnitude # ClusterPerturbationValue
+        self.indicator = indicator # ClusterPerturbationIndicator
+        self.probability = probability # variables.Variable
 
-    def __str__(self):
+    def __str__(self) -&gt; str:
         s = BasePerturbation.__str__(self)
         s += &#39;\nMagnitude:\n&#39;
         for cid in self.clustering.order:
@@ -585,11 +605,12 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
         s += &#39;Probability: {}&#39;.format(self.probability.value)
         return s
 
-    def item_array(self, only_pos_ind=False):
+    def item_array(self, only_pos_ind: bool=False) -&gt; np.ndarray:
         &#39;&#39;&#39;Expands the condensed form into a variable for each item
         in the data.
 
         Example
+            ```
             ** Cluster assignments **
             cluster1 = {0,2,4}
             cluster2 = {1,3}
@@ -601,6 +622,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
             magnitude.value = -0.5
 
             &gt;&gt;&gt; np.ndarray([-0.5, 0, -0.5, 0, -0.5])
+            ```
         
         Parameters
         ----------
@@ -620,10 +642,11 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
             val[ind] = self.magnitude.item_array()[ind]
         return val
 
-    def cluster_array(self, only_pos_ind=False):
+    def cluster_array(self, only_pos_ind: bool=False) -&gt; np.ndarray:
         &#39;&#39;&#39;Make an array for each cluster with the magnitude
 
         Example
+            ```
             ** Cluster assignments **
             cluster1 = {0,2,4}
             cluster2 = {1,3}
@@ -635,6 +658,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
             magnitude.value = -0.5
 
             &gt;&gt;&gt; np.ndarray([-0.5, 0])
+            ```
         
         Parameters
         ----------
@@ -667,7 +691,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
         &#39;&#39;&#39;
         self.trace = None
 
-    def set_values_from_array(self, values, use_indicators=True):
+    def set_values_from_array(self, values: np.ndarray, use_indicators: bool=True):
         &#39;&#39;&#39;Sets the values from an array of the same order as the clusters.
 
         Paramters
@@ -761,9 +785,9 @@ class Interactions(ClusterProperty, Node, Traceable):
         During MCMC you could set this to the sample method of the prior.         
         Defaults to always returning True
     &#39;&#39;&#39;
-    def __init__(self, clustering, use_indicators, 
-        value_initializer=None, indicator_initializer=None, 
-        signal_when_clusters_change=True, **kwargs):
+    def __init__(self, clustering: Clustering, use_indicators: bool, 
+        value_initializer: Callable=None, indicator_initializer: Callable=None, 
+        signal_when_clusters_change: bool=True, **kwargs):
 
         Node.__init__(self, **kwargs)
         ClusterProperty.__init__(self, clustering=clustering, 
@@ -778,17 +802,21 @@ class Interactions(ClusterProperty, Node, Traceable):
             raise TypeError(&#39;`value_initializer` ({}) and `indicator_initializer` ({}) &#39; \
                 &#39;must be callable&#39;.format(type(value_initializer), 
                 type(indicator_initializer)))
-        self.value_initializer = value_initializer
-        self.indicator_initializer = indicator_initializer
-        self._IIDX = 1001001
+
+        self.value_initializer = value_initializer # function (callable)
+        self.indicator_initializer = indicator_initializer # function (callable)
+        self._IIDX = 1001001 # Index of the interactions
         
         if not util.isbool(use_indicators):
             raise TypeError(&#39;`use_indicators` ({}) must be a bool&#39;.format(type(use_indicators)))
-        self.use_indicators = use_indicators
+        self.use_indicators = use_indicators # bool
         if not self.use_indicators:
             self.indicator_initializer = _always_return_true
 
         order = self.clustering.order
+
+        # dict of a dict mapping to _Interaction objects
+        # (target cluster, source cluster) -&gt; interaction
         self.value = {}
         for tcid in order:
             self.value[tcid] = {}
@@ -805,13 +833,13 @@ class Interactions(ClusterProperty, Node, Traceable):
         self._shape = (len(self.clustering.items), len(self.clustering.items))
         self.dtype = float
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -&gt; &#39;_Interaction&#39;:
         return self.value[key]
 
     def __setitem__(self, key, val):
         self.value[key] = val
 
-    def __iter__(self):
+    def __iter__(self) -&gt; &#34;_Interaction&#34;:
         &#39;&#39;&#39;Iterates over the interactions in order
         &#39;&#39;&#39;
         order = self.clustering.order
@@ -821,14 +849,14 @@ class Interactions(ClusterProperty, Node, Traceable):
                 if tcid != scid:
                     yield temp[scid]
 
-    def __str__(self):
+    def __str__(self) -&gt; str:
         s=&#39;&#39;
         for interaction in self:
             s += str(interaction) + &#39;\n&#39;
         return s
     
     @property
-    def size(self):
+    def size(self) -&gt; int:
         &#39;&#39;&#39;Return how many interactions there are possible according to the number of clusters.
         THIS IS NOT HOW MANY POSITIVE INTERACTIONS THERE ARE - USE `num_pos_interactions`
 
@@ -839,7 +867,7 @@ class Interactions(ClusterProperty, Node, Traceable):
         n_clusters = len(self.clustering)
         return n_clusters * (n_clusters - 1)
 
-    def iter_valid(self):
+    def iter_valid(self) -&gt; &#34;_Interaction&#34;:
         &#39;&#39;&#39;Iterate only over the positive indicators
         &#39;&#39;&#39;
         order = self.clustering.order
@@ -850,7 +878,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                     if temp[scid].indicator:
                         yield temp[scid]
 
-    def iter_valid_pairs(self):
+    def iter_valid_pairs(self) -&gt; Tuple[int, int]:
         &#39;&#39;&#39;Iterate only over the positive indicators
         &#39;&#39;&#39;
         order = self.clustering.order
@@ -861,7 +889,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                     if temp[scid].indicator:
                         yield tcid, scid
 
-    def iter_to_target(self, cid, only_valid=False):
+    def iter_to_target(self, cid: int, only_valid: bool=False) -&gt; &#34;_Interaction&#34;:
         &#39;&#39;&#39;Iterates over interactions to the target cluster from all
         source clusters in the order specified by clusters
 
@@ -884,7 +912,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                 if scid != cid:
                     yield temp[scid]
 
-    def iter_from_source(self, cid, only_valid=False):
+    def iter_from_source(self, cid: int, only_valid: bool=False) -&gt; &#34;_Interaction&#34;:
         &#39;&#39;&#39;Iterates over interactions from the source cluster to all
         target clusters in the order specified by clusters
 
@@ -907,6 +935,8 @@ class Interactions(ClusterProperty, Node, Traceable):
                     yield self.value[tcid][cid]
 
     def reset(self):
+        &#39;&#39;&#39;Reset all of the interactions
+        &#39;&#39;&#39;
         self.value = {}
         for tcid in self.clustering.order:
             self.value[tcid] = {}
@@ -920,7 +950,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                     iden=self._IIDX)
                 self._IIDX += 1
 
-    def iloc(self, idx):
+    def iloc(self, idx: int) -&gt; &#34;_Interaction&#34;:
         &#39;&#39;&#39;Get the interaction as a function of the index that it occurs at.
         Reverse indexing is allowed.
 
@@ -948,9 +978,16 @@ class Interactions(ClusterProperty, Node, Traceable):
             self.clustering.order[tcidx]][
             self.clustering.order[scidx]]
 
-    def clusters_changed(self, cids_added, cids_removed):
+    def clusters_changed(self, cids_added: Iterator[int], cids_removed: Iterator[int]):
         &#39;&#39;&#39;Remove all of the interactions to and from the clusters
         in `cids_removed` and make interactions for the `cid_added`
+
+        Parameters
+        ----------
+        cids_removed : list(int)
+            IDs of the clusters removed
+        cids_added : list(int)
+            IDs of the clusters added
         &#39;&#39;&#39;
         # Remove interactions from clusters deleted
         if len(cids_removed) &gt; 0:
@@ -963,7 +1000,7 @@ class Interactions(ClusterProperty, Node, Traceable):
             for cid in cids_added:
                 self._add_single_cluster(cid)
         
-    def _add_single_cluster(self, cid):
+    def _add_single_cluster(self, cid: int):
         other_cids = self.value.keys()
         # Add the interaction from clusters already there and 
         # the new cluster
@@ -983,7 +1020,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                 iden=self._IIDX)
             self._IIDX += 1
     
-    def key_pairs(self, only_valid=False):
+    def key_pairs(self, only_valid: bool=False) -&gt; Iterator[Tuple[int, int]]:
         &#39;&#39;&#39;Returns (target,source) cluster ids in order
 
         Parameters
@@ -1010,7 +1047,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                         l.append((tcid,scid))
         return l
 
-    def num_neg_indicators(self, target_cid=None):
+    def num_neg_indicators(self, target_cid: int=None) -&gt; int:
         &#39;&#39;&#39;Return the number of indicator variables that are 0
 
         If target_cid is not None, calculate them for only the interactions going into
@@ -1031,7 +1068,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                 cumm += not interaction.indicator
         return cumm
 
-    def num_pos_indicators(self, target_cid=None):
+    def num_pos_indicators(self, target_cid: int=None) -&gt; int:
         &#39;&#39;&#39;Return the number of indicator variables that are 1
 
         If target_cid is not None, calculate them for only the interactions going into
@@ -1052,7 +1089,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                 cumm += interaction.indicator
         return cumm
 
-    def get_arg_indicators(self, target_cid=None, source_cid=None):
+    def get_arg_indicators(self, target_cid: int=None, source_cid: int=None) -&gt; Iterator[int]:
         &#39;&#39;&#39;Get the positive indicators as indices, in order -&gt; same convention
         as `get_indicators`.
 
@@ -1122,7 +1159,8 @@ class Interactions(ClusterProperty, Node, Traceable):
                         &#39; be the same&#39;.format(target_cid, source_cid))
             raise
 
-    def get_indicators(self, target_cid=None, source_cid=None, return_idxs=False):
+    def get_indicators(self, target_cid: int=None, source_cid: int=None,
+        return_idxs: bool=False) -&gt; Iterator[bool]:
         &#39;&#39;&#39;Return a the indicator variables as a vector in the order specified
         by the clusters.
 
@@ -1215,7 +1253,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                         &#39; be the same&#39;.format(target_cid, source_cid))
             raise
 
-    def set_indicators(self, arr):
+    def set_indicators(self, arr: np.ndarray):
         &#39;&#39;&#39;Sets the values of the indicators of the interactions from a vector.
 
         If `include_self_interactions` is True, assumes that `arr` contains the
@@ -1235,7 +1273,7 @@ class Interactions(ClusterProperty, Node, Traceable):
             if interaction.indicator == 0:
                 interaction.value = 0
 
-    def set_values(self, arr, use_indicators=True):
+    def set_values(self, arr: np.ndarray, use_indicators: bool=True):
         &#39;&#39;&#39;Sets the values of the interactions from a vector.
 
         If `use_indicators` is True, assumes that the values in the vector only contain
@@ -1266,7 +1304,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                 interaction.value = arr[idx]
                 idx += 1
 
-    def get_values(self, use_indicators=True):
+    def get_values(self, use_indicators: bool=True) -&gt; np.ndarray:
         &#39;&#39;&#39;Makes a vector of the interaction variables in the order of the
         clustering
 
@@ -1297,7 +1335,7 @@ class Interactions(ClusterProperty, Node, Traceable):
         # Trim if necessary
         return ret[:idx]
 
-    def get_value_matrix(self, set_neg_indicators_to_nan=False):
+    def get_value_matrix(self, set_neg_indicators_to_nan: bool=False) -&gt; np.ndarray:
         &#39;&#39;&#39;Get the interaction matrix at the clustert level (item-item). 
         The ordering of the clusters is the same as it is in clustering
 
@@ -1329,7 +1367,7 @@ class Interactions(ClusterProperty, Node, Traceable):
             ret[tcidx, scidx] = interaction.value
         return ret
 
-    def get_datalevel_value_matrix(self, set_neg_indicators_to_nan=False):
+    def get_datalevel_value_matrix(self, set_neg_indicators_to_nan: bool=False) -&gt; np.ndarray:
         &#39;&#39;&#39;Get the interaction matrix at the data level (item-item), not
         at the cluster level. The ordering of the items is the same as 
         it is in the items in clustering (self.clustering.times).
@@ -1363,7 +1401,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                     ret[tidx, sidx] = val
         return ret
     
-    def get_datalevel_indicator_matrix(self):
+    def get_datalevel_indicator_matrix(self) -&gt; np.ndarray:
         &#39;&#39;&#39;Get the item-item indicator matrix.
 
         The ordering of the items are the same as the order in
@@ -1384,7 +1422,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                     ret[tidx, sidx] = True
         return ret
 
-    def generate_in_out_degree_posthoc(self, section=&#39;posterior&#39;):
+    def generate_in_out_degree_posthoc(self, section: str=&#39;posterior&#39;) -&gt; Dict[str, np.ndarray]:
         &#39;&#39;&#39;Returns a dictionary of arrays
         &#34;in&#34;
             For each index in the array, corresponding to the index of the items, returns
@@ -1419,7 +1457,7 @@ class Interactions(ClusterProperty, Node, Traceable):
 
         self.ckpt_iter = 0
         self.sample_iter = 0
-        shape = (tracer.ckpt, ) + self._shape
+        shape = (tracer.checkpoint, ) + self._shape
         self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
 
     def remove_local_trace(self):
@@ -1437,11 +1475,12 @@ class Interactions(ClusterProperty, Node, Traceable):
         if self.ckpt_iter == len(self.trace):
             # We have gotten the largest we can in the local buffer, write to disk
             self.G.tracer.write_to_disk(name=self.name)
-            shape = (self.G.tracer.ckpt, ) + self._shape
+            shape = (self.G.tracer.checkpoint, ) + self._shape
             self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
             self.ckpt_iter = 0
 
-    def get_adjacent(self, cid, incoming, outgoing, use_indicators=True):
+    def get_adjacent(self, cid: int, incoming: bool, outgoing: bool, 
+        use_indicators: bool=True) -&gt; Iterator[int]:
         &#39;&#39;&#39;Get all of the cluster IDs that have a positive interaction going into
         or from the cluster `cid`.
 
@@ -1492,14 +1531,15 @@ class _Interaction:
     iden : int
         Unique identifier of this interaction object
     &#39;&#39;&#39;
-    def __init__(self, source_cid, target_cid, value, indicator, iden):
+    def __init__(self, source_cid: int, target_cid: int, value: Union[int, float], 
+        indicator: bool, iden: int):
         self.source_cid = source_cid
         self.target_cid = target_cid
         self.value = value
         self.indicator = indicator
         self.id = iden
 
-    def __str__(self):
+    def __str__(self) -&gt; str:
         return &#39;Interaction {}\n&#39; \
             &#39;\tTarget cluster: {}\n&#39; \
             &#39;\tSource cluster: {}\n&#39; \
@@ -1512,10 +1552,10 @@ class _Interaction:
                 self.indicator)
 
 
-def _always_return_true(*args, **kwargs):
+def _always_return_true(*args, **kwargs) -&gt; bool:
     return True
 
-def _always_return_nan(*args, **kwargs):
+def _always_return_nan(*args, **kwargs) -&gt; float:
     return np.nan</code></pre>
 </details>
 </section>
@@ -1527,7 +1567,7 @@ def _always_return_nan(*args, **kwargs):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.pylab.contrib.isclusterperturbation"><code class="name flex">
-<span>def <span class="ident">isclusterperturbation</span></span>(<span>x)</span>
+<span>def <span class="ident">isclusterperturbation</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks whether the input is a subclass of ClusterPerturbation</p>
@@ -1545,7 +1585,7 @@ def _always_return_nan(*args, **kwargs):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isclusterperturbation(x):
+<pre><code class="python">def isclusterperturbation(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the input is a subclass of ClusterPerturbation
 
     Parameters
@@ -1558,11 +1598,11 @@ def _always_return_nan(*args, **kwargs):
     bool
         True if `x` is of type ClusterPerturbation, else False
     &#39;&#39;&#39;
-    return x is not None and issubclass(x.__class__, ClusterPerturbation)</code></pre>
+    return x is not None and issubclass(x.__class__, ClusterPerturbationEffect)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.isclusterperturbationindicator"><code class="name flex">
-<span>def <span class="ident">isclusterperturbationindicator</span></span>(<span>x)</span>
+<span>def <span class="ident">isclusterperturbationindicator</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks whether the input is a subclass of ClusterPerturbationIndicator</p>
@@ -1580,7 +1620,7 @@ def _always_return_nan(*args, **kwargs):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isclusterperturbationindicator(x):
+<pre><code class="python">def isclusterperturbationindicator(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether the input is a subclass of ClusterPerturbationIndicator
 
     Parameters
@@ -1597,7 +1637,7 @@ def _always_return_nan(*args, **kwargs):
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.isinteractions"><code class="name flex">
-<span>def <span class="ident">isinteractions</span></span>(<span>x)</span>
+<span>def <span class="ident">isinteractions</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Type check if <code>x</code> is a subclass of Interactions</p>
@@ -1615,7 +1655,7 @@ def _always_return_nan(*args, **kwargs):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isinteractions(x):
+<pre><code class="python">def isinteractions(x: Any) -&gt; bool:
     &#39;&#39;&#39;Type check if `x` is a subclass of Interactions
 
     Parameters
@@ -1638,7 +1678,7 @@ def _always_return_nan(*args, **kwargs):
 <dl>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationEffect"><code class="flex name class">
 <span>class <span class="ident">ClusterPerturbationEffect</span></span>
-<span>(</span><span>clustering, starts, ends, magnitude=None, indicator=None, probability=None, signal_when_clusters_change=False, signal_when_item_assignment_changes=False, **kwargs)</span>
+<span>(</span><span>clustering: <a title="mdsine2.pylab.cluster.Clustering" href="cluster.html#mdsine2.pylab.cluster.Clustering">Clustering</a>, starts: Dict[str, float], ends: Dict[str, float], magnitude: Union[<a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a>, <a title="mdsine2.pylab.cluster.ClusterValue" href="cluster.html#mdsine2.pylab.cluster.ClusterValue">ClusterValue</a>, numpy.ndarray] = None, indicator: Union[<a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a>, <a title="mdsine2.pylab.cluster.ClusterValue" href="cluster.html#mdsine2.pylab.cluster.ClusterValue">ClusterValue</a>, numpy.ndarray] = None, probability: Union[<a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a>, float] = None, signal_when_clusters_change: bool = False, signal_when_item_assignment_changes: bool = False, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This is an basic implementation for a perturbation where the
@@ -1650,7 +1690,7 @@ calculate ~np.isnan for the trace. This will give an indicator
 array that you can then use to calculate the bayes factor.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>starts</code></strong>, <strong><code>ends</code></strong> :&ensp;<code>int, float</code></dt>
+<dt><strong><code>starts</code></strong>, <strong><code>ends</code></strong> :&ensp;<code>dict</code></dt>
 <dd>
 <ul>
 <li>Start and end of the perturbation</li>
@@ -1707,7 +1747,7 @@ each cluster</li>
     
     Parameters
     ----------
-    starts, ends : int, float
+    starts, ends : dict
         - Start and end of the perturbation
     clustering : pylab.cluster.Clustering
         - This is the clustering object it is being set with
@@ -1724,10 +1764,11 @@ each cluster</li>
     kwargs : dict
         - Extra arguments for the Node class
     &#39;&#39;&#39;
-    def __init__(self, clustering, starts, ends,
-        magnitude=None, indicator=None, probability=None,
-        signal_when_clusters_change=False,
-        signal_when_item_assignment_changes=False, **kwargs):
+    def __init__(self, clustering: Clustering, starts: Dict[str, float], 
+        ends: Dict[str, float], magnitude: Union[variables.Variable, ClusterValue, np.ndarray]=None, 
+        indicator: Union[variables.Variable, ClusterValue, np.ndarray]=None, 
+        probability: Union[variables.Variable, float]=None, signal_when_clusters_change: bool=False,
+        signal_when_item_assignment_changes: bool=False, **kwargs):
 
         if signal_when_clusters_change is None:
             signal_when_clusters_change = DEFAULT_SIGNAL_WHEN_CLUSTERS_CHANGE
@@ -1795,11 +1836,11 @@ each cluster</li>
                     ind.value[cid] = False
             indicator = ind
 
-        self.magnitude = magnitude
-        self.indicator = indicator
-        self.probability = probability
+        self.magnitude = magnitude # ClusterPerturbationValue
+        self.indicator = indicator # ClusterPerturbationIndicator
+        self.probability = probability # variables.Variable
 
-    def __str__(self):
+    def __str__(self) -&gt; str:
         s = BasePerturbation.__str__(self)
         s += &#39;\nMagnitude:\n&#39;
         for cid in self.clustering.order:
@@ -1810,11 +1851,12 @@ each cluster</li>
         s += &#39;Probability: {}&#39;.format(self.probability.value)
         return s
 
-    def item_array(self, only_pos_ind=False):
+    def item_array(self, only_pos_ind: bool=False) -&gt; np.ndarray:
         &#39;&#39;&#39;Expands the condensed form into a variable for each item
         in the data.
 
         Example
+            ```
             ** Cluster assignments **
             cluster1 = {0,2,4}
             cluster2 = {1,3}
@@ -1826,6 +1868,7 @@ each cluster</li>
             magnitude.value = -0.5
 
             &gt;&gt;&gt; np.ndarray([-0.5, 0, -0.5, 0, -0.5])
+            ```
         
         Parameters
         ----------
@@ -1845,10 +1888,11 @@ each cluster</li>
             val[ind] = self.magnitude.item_array()[ind]
         return val
 
-    def cluster_array(self, only_pos_ind=False):
+    def cluster_array(self, only_pos_ind: bool=False) -&gt; np.ndarray:
         &#39;&#39;&#39;Make an array for each cluster with the magnitude
 
         Example
+            ```
             ** Cluster assignments **
             cluster1 = {0,2,4}
             cluster2 = {1,3}
@@ -1860,6 +1904,7 @@ each cluster</li>
             magnitude.value = -0.5
 
             &gt;&gt;&gt; np.ndarray([-0.5, 0])
+            ```
         
         Parameters
         ----------
@@ -1892,7 +1937,7 @@ each cluster</li>
         &#39;&#39;&#39;
         self.trace = None
 
-    def set_values_from_array(self, values, use_indicators=True):
+    def set_values_from_array(self, values: np.ndarray, use_indicators: bool=True):
         &#39;&#39;&#39;Sets the values from an array of the same order as the clusters.
 
         Paramters
@@ -1956,11 +2001,12 @@ each cluster</li>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationEffect.cluster_array"><code class="name flex">
-<span>def <span class="ident">cluster_array</span></span>(<span>self, only_pos_ind=False)</span>
+<span>def <span class="ident">cluster_array</span></span>(<span>self, only_pos_ind: bool = False) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Make an array for each cluster with the magnitude</p>
 <p>Example
+```
 <strong> Cluster assignments </strong>
 cluster1 = {0,2,4}
 cluster2 = {1,3}</p>
@@ -1971,6 +2017,7 @@ value[cluster2] = False
 magnitude.value = -0.5
 
 &gt;&gt;&gt; np.ndarray([-0.5, 0])
+```
 </code></pre>
 <h2 id="parameters">Parameters</h2>
 <dl>
@@ -1986,10 +2033,11 @@ magnitude.value = -0.5
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cluster_array(self, only_pos_ind=False):
+<pre><code class="python">def cluster_array(self, only_pos_ind: bool=False) -&gt; np.ndarray:
     &#39;&#39;&#39;Make an array for each cluster with the magnitude
 
     Example
+        ```
         ** Cluster assignments **
         cluster1 = {0,2,4}
         cluster2 = {1,3}
@@ -2001,6 +2049,7 @@ magnitude.value = -0.5
         magnitude.value = -0.5
 
         &gt;&gt;&gt; np.ndarray([-0.5, 0])
+        ```
     
     Parameters
     ----------
@@ -2022,12 +2071,13 @@ magnitude.value = -0.5
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationEffect.item_array"><code class="name flex">
-<span>def <span class="ident">item_array</span></span>(<span>self, only_pos_ind=False)</span>
+<span>def <span class="ident">item_array</span></span>(<span>self, only_pos_ind: bool = False) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Expands the condensed form into a variable for each item
 in the data.</p>
 <p>Example
+```
 <strong> Cluster assignments </strong>
 cluster1 = {0,2,4}
 cluster2 = {1,3}</p>
@@ -2038,6 +2088,7 @@ value[cluster2] = False
 magnitude.value = -0.5
 
 &gt;&gt;&gt; np.ndarray([-0.5, 0, -0.5, 0, -0.5])
+```
 </code></pre>
 <h2 id="parameters">Parameters</h2>
 <dl>
@@ -2053,11 +2104,12 @@ magnitude.value = -0.5
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def item_array(self, only_pos_ind=False):
+<pre><code class="python">def item_array(self, only_pos_ind: bool=False) -&gt; np.ndarray:
     &#39;&#39;&#39;Expands the condensed form into a variable for each item
     in the data.
 
     Example
+        ```
         ** Cluster assignments **
         cluster1 = {0,2,4}
         cluster2 = {1,3}
@@ -2069,6 +2121,7 @@ magnitude.value = -0.5
         magnitude.value = -0.5
 
         &gt;&gt;&gt; np.ndarray([-0.5, 0, -0.5, 0, -0.5])
+        ```
     
     Parameters
     ----------
@@ -2105,7 +2158,7 @@ magnitude.value = -0.5
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationEffect.set_values_from_array"><code class="name flex">
-<span>def <span class="ident">set_values_from_array</span></span>(<span>self, values, use_indicators=True)</span>
+<span>def <span class="ident">set_values_from_array</span></span>(<span>self, values: numpy.ndarray, use_indicators: bool = True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sets the values from an array of the same order as the clusters.</p>
@@ -2123,7 +2176,7 @@ the values correspond to every cluster</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_values_from_array(self, values, use_indicators=True):
+<pre><code class="python">def set_values_from_array(self, values: np.ndarray, use_indicators: bool=True):
     &#39;&#39;&#39;Sets the values from an array of the same order as the clusters.
 
     Paramters
@@ -2190,7 +2243,7 @@ the values correspond to every cluster</p></div>
 </dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationIndicator"><code class="flex name class">
 <span>class <span class="ident">ClusterPerturbationIndicator</span></span>
-<span>(</span><span>probability, **kwargs)</span>
+<span>(</span><span>probability: <a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a>, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Extends the <code>pylab.cluster.ClusterValue</code> object so that it works for being a
@@ -2222,11 +2275,13 @@ and provides a direct pointer to the probability object</p>
     kwargs : dict
         These are additional arguments for ClusterValue
     &#39;&#39;&#39;
-    def __init__(self, probability, **kwargs):
+    def __init__(self, probability: variables.Variable, **kwargs):
         ClusterValue.__init__(self, dtype=bool, **kwargs)
         self.probability = probability
 
     def reset(self):
+        &#39;&#39;&#39;Reset all of the values
+        &#39;&#39;&#39;
         self.value = {}
         for cid in self.clustering.order:
             self.value[cid] = False
@@ -2236,7 +2291,7 @@ and provides a direct pointer to the probability object</p>
         &#39;&#39;&#39;
         self.trace = None
 
-    def clusters_changed(self, cids_added, cids_removed):
+    def clusters_changed(self, cids_added: Iterator[int], cids_removed: Iterator[int]):
         &#39;&#39;&#39;Delete old clusters, sample from `probability` for the
         new clusters. We do not need to type check because it
         is self contained within pylab
@@ -2253,17 +2308,18 @@ and provides a direct pointer to the probability object</p>
         for cid in cids_added:
             self.value[cid] = bool(npr.binomial(n=1, p=self.probability.value))
 
-    def item_bool_array(self):
+    def item_bool_array(self) -&gt; np.ndarray:
         &#39;&#39;&#39;Creates a boolean array expanded so that each item has the same 
         value that the cluster that contains it has. This is the same as 
         calling ClusterValue.item_array
         Example
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             &gt;&gt;&gt; np.ndarray([True, False, True, False, True])
+            ```
 
         Returns
         -------
@@ -2272,17 +2328,18 @@ and provides a direct pointer to the probability object</p>
         &#39;&#39;&#39;
         return ClusterValue.item_array(self)
 
-    def cluster_bool_array(self):
+    def cluster_bool_array(self) -&gt; np.ndarray:
         &#39;&#39;&#39;Creates a boolean array for each item in cluster order. This 
         is the same as calling ClusterValue.cluster_array()
 
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             &gt;&gt;&gt; np.ndarray([True, False])
+            ```
         
         Returns
         -------
@@ -2291,15 +2348,17 @@ and provides a direct pointer to the probability object</p>
         &#39;&#39;&#39;
         return ClusterValue.cluster_array(self)
 
-    def item_arg_array(self):
+    def item_arg_array(self) -&gt; np.ndarray:
         &#39;&#39;&#39;Creates an ordered index array of items that are positive.
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             &gt;&gt;&gt; np.ndarray([0,2,4])
+            ```
+
         Returns
         -------
         np.ndarray((n_c,), dtype=int)
@@ -2311,15 +2370,17 @@ and provides a direct pointer to the probability object</p>
                 val += list(cluster.members)
         return np.asarray(val, dtype=int)
 
-    def cluster_arg_array(self):
+    def cluster_arg_array(self) -&gt; np.ndarray:
         &#39;&#39;&#39;Creates an ordered index array of clusters that are positive.
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             &gt;&gt;&gt; np.ndarray([0])
+            ```
+
         Returns
         -------
         np.ndarray((n_c,), dtype=int)
@@ -2329,15 +2390,16 @@ and provides a direct pointer to the probability object</p>
         return np.asarray([idx for idx,cid in enumerate(self.clustering.order) \
             if self.value[cid]], dtype=int)
 
-    def num_on_items(self):
+    def num_on_items(self) -&gt; int:
         &#39;&#39;&#39;These are the number of on items for this perturbation
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             &gt;&gt;&gt; 3
+            ```
 
         Returns
         -------
@@ -2355,15 +2417,16 @@ and provides a direct pointer to the probability object</p>
             logging.critical(&#39;Clustering cluster ids:\n{}&#39;.format(self.clustering.order))
             raise
 
-    def num_on_clusters(self):
+    def num_on_clusters(self) -&gt; int:
         &#39;&#39;&#39;These are the number of on clusters for this perturbation
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             &gt;&gt;&gt; 1
+            ```
 
         Returns
         -------
@@ -2375,24 +2438,24 @@ and provides a direct pointer to the probability object</p>
             cumm += self.value[cid]
         return cumm
 
-    def get_clusters_on(self):
+    def get_clusters_on(self) -&gt; Iterator[int]:
         &#39;&#39;&#39;Return the cluster IDs that have a positive indicator for this
         perturbation.
 
         Returns
         -------
-        list
+        list(int)
         &#39;&#39;&#39;
         ret = [cid for cid in self.clustering.order if self.value[cid]]
         return ret
 
-    def get_items_on(self):
+    def get_items_on(self) -&gt; Iterator[int]:
         &#39;&#39;&#39;Get the item indecies that have a positive indicator for this
         perturbation.
 
         Returns
         -------
-        list
+        list(int)
         &#39;&#39;&#39;
         ret = []
         for cid in self.clustering.order:
@@ -2412,36 +2475,39 @@ and provides a direct pointer to the probability object</p>
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationIndicator.cluster_arg_array"><code class="name flex">
-<span>def <span class="ident">cluster_arg_array</span></span>(<span>self)</span>
+<span>def <span class="ident">cluster_arg_array</span></span>(<span>self) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Creates an ordered index array of clusters that are positive.</p>
 <h2 id="example">Example</h2>
-<p>cluster1 = {0,2,4}
+<pre><code>cluster1 = {0,2,4}
 cluster2 = {1,3}
 value[cluster1] = True
-value[cluster2] = False</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; np.ndarray([0])
-Returns
------
-`np.ndarray((n_c,), dtype=int)`
-:   A numpy index array for each cluster
-
-
-</code></pre></div>
+value[cluster2] = False
+```python-repl
+&gt;&gt;&gt; np.ndarray([0])
+</code></pre>
+<p>```</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray((n_c,), dtype=int)</code></dt>
+<dd>A numpy index array for each cluster</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cluster_arg_array(self):
+<pre><code class="python">def cluster_arg_array(self) -&gt; np.ndarray:
     &#39;&#39;&#39;Creates an ordered index array of clusters that are positive.
     Example:
+        ```
         cluster1 = {0,2,4}
         cluster2 = {1,3}
         value[cluster1] = True
         value[cluster2] = False
-
         &gt;&gt;&gt; np.ndarray([0])
+        ```
+
     Returns
     -------
     np.ndarray((n_c,), dtype=int)
@@ -2453,18 +2519,20 @@ Returns
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationIndicator.cluster_bool_array"><code class="name flex">
-<span>def <span class="ident">cluster_bool_array</span></span>(<span>self)</span>
+<span>def <span class="ident">cluster_bool_array</span></span>(<span>self) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Creates a boolean array for each item in cluster order. This
 is the same as calling ClusterValue.cluster_array()</p>
 <h2 id="example">Example</h2>
-<p>cluster1 = {0,2,4}
+<pre><code>cluster1 = {0,2,4}
 cluster2 = {1,3}
 value[cluster1] = True
-value[cluster2] = False</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; np.ndarray([True, False])
+value[cluster2] = False
+```python-repl
+&gt;&gt;&gt; np.ndarray([True, False])
 </code></pre>
+<p>```</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>np.ndarray((n,), dtype=bool)</code></dt>
@@ -2474,17 +2542,18 @@ value[cluster2] = False</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def cluster_bool_array(self):
+<pre><code class="python">def cluster_bool_array(self) -&gt; np.ndarray:
     &#39;&#39;&#39;Creates a boolean array for each item in cluster order. This 
     is the same as calling ClusterValue.cluster_array()
 
     Example:
+        ```
         cluster1 = {0,2,4}
         cluster2 = {1,3}
         value[cluster1] = True
         value[cluster2] = False
-
         &gt;&gt;&gt; np.ndarray([True, False])
+        ```
     
     Returns
     -------
@@ -2495,7 +2564,7 @@ value[cluster2] = False</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationIndicator.clusters_changed"><code class="name flex">
-<span>def <span class="ident">clusters_changed</span></span>(<span>self, cids_added, cids_removed)</span>
+<span>def <span class="ident">clusters_changed</span></span>(<span>self, cids_added: Iterator[int], cids_removed: Iterator[int])</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Delete old clusters, sample from <code>probability</code> for the
@@ -2510,7 +2579,7 @@ cids_removed (list(int))
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def clusters_changed(self, cids_added, cids_removed):
+<pre><code class="python">def clusters_changed(self, cids_added: Iterator[int], cids_removed: Iterator[int]):
     &#39;&#39;&#39;Delete old clusters, sample from `probability` for the
     new clusters. We do not need to type check because it
     is self contained within pylab
@@ -2529,54 +2598,54 @@ cids_removed (list(int))
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationIndicator.get_clusters_on"><code class="name flex">
-<span>def <span class="ident">get_clusters_on</span></span>(<span>self)</span>
+<span>def <span class="ident">get_clusters_on</span></span>(<span>self) ‑> Iterator[int]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Return the cluster IDs that have a positive indicator for this
 perturbation.</p>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>list</code></dt>
+<dt><code>list(int)</code></dt>
 <dd>&nbsp;</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_clusters_on(self):
+<pre><code class="python">def get_clusters_on(self) -&gt; Iterator[int]:
     &#39;&#39;&#39;Return the cluster IDs that have a positive indicator for this
     perturbation.
 
     Returns
     -------
-    list
+    list(int)
     &#39;&#39;&#39;
     ret = [cid for cid in self.clustering.order if self.value[cid]]
     return ret</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationIndicator.get_items_on"><code class="name flex">
-<span>def <span class="ident">get_items_on</span></span>(<span>self)</span>
+<span>def <span class="ident">get_items_on</span></span>(<span>self) ‑> Iterator[int]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the item indecies that have a positive indicator for this
 perturbation.</p>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>list</code></dt>
+<dt><code>list(int)</code></dt>
 <dd>&nbsp;</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_items_on(self):
+<pre><code class="python">def get_items_on(self) -&gt; Iterator[int]:
     &#39;&#39;&#39;Get the item indecies that have a positive indicator for this
     perturbation.
 
     Returns
     -------
-    list
+    list(int)
     &#39;&#39;&#39;
     ret = []
     for cid in self.clustering.order:
@@ -2586,36 +2655,39 @@ perturbation.</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationIndicator.item_arg_array"><code class="name flex">
-<span>def <span class="ident">item_arg_array</span></span>(<span>self)</span>
+<span>def <span class="ident">item_arg_array</span></span>(<span>self) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Creates an ordered index array of items that are positive.</p>
 <h2 id="example">Example</h2>
-<p>cluster1 = {0,2,4}
+<pre><code>cluster1 = {0,2,4}
 cluster2 = {1,3}
 value[cluster1] = True
-value[cluster2] = False</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; np.ndarray([0,2,4])
-Returns
------
-`np.ndarray((n_c,), dtype=int)`
-:   A numpy index array for each item
-
-
-</code></pre></div>
+value[cluster2] = False
+```python-repl
+&gt;&gt;&gt; np.ndarray([0,2,4])
+</code></pre>
+<p>```</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray((n_c,), dtype=int)</code></dt>
+<dd>A numpy index array for each item</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def item_arg_array(self):
+<pre><code class="python">def item_arg_array(self) -&gt; np.ndarray:
     &#39;&#39;&#39;Creates an ordered index array of items that are positive.
     Example:
+        ```
         cluster1 = {0,2,4}
         cluster2 = {1,3}
         value[cluster1] = True
         value[cluster2] = False
-
         &gt;&gt;&gt; np.ndarray([0,2,4])
+        ```
+
     Returns
     -------
     np.ndarray((n_c,), dtype=int)
@@ -2629,19 +2701,18 @@ Returns
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationIndicator.item_bool_array"><code class="name flex">
-<span>def <span class="ident">item_bool_array</span></span>(<span>self)</span>
+<span>def <span class="ident">item_bool_array</span></span>(<span>self) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Creates a boolean array expanded so that each item has the same
 value that the cluster that contains it has. This is the same as
 calling ClusterValue.item_array
 Example
-cluster1 = {0,2,4}
+<code>cluster1 = {0,2,4}
 cluster2 = {1,3}
 value[cluster1] = True
-value[cluster2] = False</p>
-<pre><code>&gt;&gt;&gt; np.ndarray([True, False, True, False, True])
-</code></pre>
+value[cluster2] = False
+&gt;&gt;&gt; np.ndarray([True, False, True, False, True])</code></p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>np.ndarray((n,), dtype=bool)</code></dt>
@@ -2651,17 +2722,18 @@ value[cluster2] = False</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def item_bool_array(self):
+<pre><code class="python">def item_bool_array(self) -&gt; np.ndarray:
     &#39;&#39;&#39;Creates a boolean array expanded so that each item has the same 
     value that the cluster that contains it has. This is the same as 
     calling ClusterValue.item_array
     Example
+        ```
         cluster1 = {0,2,4}
         cluster2 = {1,3}
         value[cluster1] = True
         value[cluster2] = False
-
         &gt;&gt;&gt; np.ndarray([True, False, True, False, True])
+        ```
 
     Returns
     -------
@@ -2672,17 +2744,19 @@ value[cluster2] = False</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationIndicator.num_on_clusters"><code class="name flex">
-<span>def <span class="ident">num_on_clusters</span></span>(<span>self)</span>
+<span>def <span class="ident">num_on_clusters</span></span>(<span>self) ‑> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>These are the number of on clusters for this perturbation</p>
 <h2 id="example">Example</h2>
-<p>cluster1 = {0,2,4}
+<pre><code>cluster1 = {0,2,4}
 cluster2 = {1,3}
 value[cluster1] = True
-value[cluster2] = False</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; 1
+value[cluster2] = False
+```python-repl
+&gt;&gt;&gt; 1
 </code></pre>
+<p>```</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>int</code></dt>
@@ -2692,15 +2766,16 @@ value[cluster2] = False</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def num_on_clusters(self):
+<pre><code class="python">def num_on_clusters(self) -&gt; int:
     &#39;&#39;&#39;These are the number of on clusters for this perturbation
     Example:
+        ```
         cluster1 = {0,2,4}
         cluster2 = {1,3}
         value[cluster1] = True
         value[cluster2] = False
-
         &gt;&gt;&gt; 1
+        ```
 
     Returns
     -------
@@ -2714,17 +2789,19 @@ value[cluster2] = False</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationIndicator.num_on_items"><code class="name flex">
-<span>def <span class="ident">num_on_items</span></span>(<span>self)</span>
+<span>def <span class="ident">num_on_items</span></span>(<span>self) ‑> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>These are the number of on items for this perturbation</p>
 <h2 id="example">Example</h2>
-<p>cluster1 = {0,2,4}
+<pre><code>cluster1 = {0,2,4}
 cluster2 = {1,3}
 value[cluster1] = True
-value[cluster2] = False</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; 3
+value[cluster2] = False
+```python-repl
+&gt;&gt;&gt; 3
 </code></pre>
+<p>```</p>
 <h2 id="returns">Returns</h2>
 <dl>
 <dt><code>int</code></dt>
@@ -2734,15 +2811,16 @@ value[cluster2] = False</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def num_on_items(self):
+<pre><code class="python">def num_on_items(self) -&gt; int:
     &#39;&#39;&#39;These are the number of on items for this perturbation
     Example:
+        ```
         cluster1 = {0,2,4}
         cluster2 = {1,3}
         value[cluster1] = True
         value[cluster2] = False
-
         &gt;&gt;&gt; 3
+        ```
 
     Returns
     -------
@@ -2761,6 +2839,23 @@ value[cluster2] = False</p>
         raise</code></pre>
 </details>
 </dd>
+<dt id="mdsine2.pylab.contrib.ClusterPerturbationIndicator.reset"><code class="name flex">
+<span>def <span class="ident">reset</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Reset all of the values</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reset(self):
+    &#39;&#39;&#39;Reset all of the values
+    &#39;&#39;&#39;
+    self.value = {}
+    for cid in self.clustering.order:
+        self.value[cid] = False</code></pre>
+</details>
+</dd>
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
@@ -2771,6 +2866,7 @@ value[cluster2] = False</p>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_trace" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.add_trace">add_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_undirected" href="graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
+<li><code><a title="mdsine2.pylab.cluster.ClusterValue.assignments_changed" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.assignments_changed">assignments_changed</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.cluster_array" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.cluster_array">cluster_array</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.degree" href="graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.delete" href="graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
@@ -2782,12 +2878,11 @@ value[cluster2] = False</p>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.remove_local_trace" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.remove_local_trace">remove_local_trace</a></code></li>
-<li><code><a title="mdsine2.pylab.cluster.ClusterValue.reset" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.reset">reset</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_signal_when_clusters_change" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.set_signal_when_clusters_change">set_signal_when_clusters_change</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_signal_when_item_assignment_changes" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.set_signal_when_item_assignment_changes">set_signal_when_item_assignment_changes</a></code></li>
-<li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_trace" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.set_trace">set_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_values_from_array" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.set_values_from_array">set_values_from_array</a></code></li>
 </ul>
 </li>
@@ -2795,7 +2890,7 @@ value[cluster2] = False</p>
 </dd>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationValue"><code class="flex name class">
 <span>class <span class="ident">ClusterPerturbationValue</span></span>
-<span>(</span><span>clustering, signal_when_clusters_change, signal_when_item_assignment_changes, dtype=None, **kwargs)</span>
+<span>(</span><span>clustering: <a title="mdsine2.pylab.cluster.Clustering" href="cluster.html#mdsine2.pylab.cluster.Clustering">Clustering</a>, signal_when_clusters_change: bool, signal_when_item_assignment_changes: bool, dtype: Type = None, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Extends <code>pylab.cluster.ClusterValue</code> object so it works for reset and cluster
@@ -2809,11 +2904,13 @@ changed</p></div>
     changed
     &#39;&#39;&#39;
     def reset(self):
+        &#39;&#39;&#39;Reset all of the values
+        &#39;&#39;&#39;
         self.value = {}
         for cid in self.clustering.order:
             self.value[cid] = 0
 
-    def clusters_changed(self, cids_added, cids_removed):
+    def clusters_changed(self, cids_added: Iterator[int], cids_removed: Iterator[int]):
         &#39;&#39;&#39;Delete old clusters, sample from `prior` for the
         new clusters. We do not need to type check because it
         is self contained within pylab
@@ -2847,7 +2944,7 @@ changed</p></div>
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.contrib.ClusterPerturbationValue.clusters_changed"><code class="name flex">
-<span>def <span class="ident">clusters_changed</span></span>(<span>self, cids_added, cids_removed)</span>
+<span>def <span class="ident">clusters_changed</span></span>(<span>self, cids_added: Iterator[int], cids_removed: Iterator[int])</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Delete old clusters, sample from <code>prior</code> for the
@@ -2862,7 +2959,7 @@ cids_removed (list(int))
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def clusters_changed(self, cids_added, cids_removed):
+<pre><code class="python">def clusters_changed(self, cids_added: Iterator[int], cids_removed: Iterator[int]):
     &#39;&#39;&#39;Delete old clusters, sample from `prior` for the
     new clusters. We do not need to type check because it
     is self contained within pylab
@@ -2880,6 +2977,23 @@ cids_removed (list(int))
         self.value[cid] = self.prior.sample()</code></pre>
 </details>
 </dd>
+<dt id="mdsine2.pylab.contrib.ClusterPerturbationValue.reset"><code class="name flex">
+<span>def <span class="ident">reset</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Reset all of the values</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reset(self):
+    &#39;&#39;&#39;Reset all of the values
+    &#39;&#39;&#39;
+    self.value = {}
+    for cid in self.clustering.order:
+        self.value[cid] = 0</code></pre>
+</details>
+</dd>
 </dl>
 <h3>Inherited members</h3>
 <ul class="hlist">
@@ -2890,6 +3004,7 @@ cids_removed (list(int))
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_prior" href="graph.html#mdsine2.pylab.graph.Node.add_prior">add_prior</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_trace" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.add_trace">add_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.add_undirected" href="graph.html#mdsine2.pylab.graph.Node.add_undirected">add_undirected</a></code></li>
+<li><code><a title="mdsine2.pylab.cluster.ClusterValue.assignments_changed" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.assignments_changed">assignments_changed</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.cluster_array" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.cluster_array">cluster_array</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.degree" href="graph.html#mdsine2.pylab.graph.Node.degree">degree</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.delete" href="graph.html#mdsine2.pylab.graph.BaseNode.delete">delete</a></code></li>
@@ -2901,12 +3016,11 @@ cids_removed (list(int))
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.metropolis" href="graph.html#mdsine2.pylab.graph.Node.metropolis">metropolis</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.overwrite_entire_trace_on_disk" href="base.html#mdsine2.pylab.base.Traceable.overwrite_entire_trace_on_disk">overwrite_entire_trace_on_disk</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.remove_local_trace" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.remove_local_trace">remove_local_trace</a></code></li>
-<li><code><a title="mdsine2.pylab.cluster.ClusterValue.reset" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.reset">reset</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.save" href="base.html#mdsine2.pylab.base.Saveable.save">save</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_save_location" href="base.html#mdsine2.pylab.base.Saveable.set_save_location">set_save_location</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_signal_when_clusters_change" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.set_signal_when_clusters_change">set_signal_when_clusters_change</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_signal_when_item_assignment_changes" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.set_signal_when_item_assignment_changes">set_signal_when_item_assignment_changes</a></code></li>
-<li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_trace" href="base.html#mdsine2.pylab.base.Traceable.set_trace">set_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_trace" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.set_trace">set_trace</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterValue.set_values_from_array" href="cluster.html#mdsine2.pylab.cluster.ClusterValue.set_values_from_array">set_values_from_array</a></code></li>
 </ul>
 </li>
@@ -2914,7 +3028,7 @@ cids_removed (list(int))
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions"><code class="flex name class">
 <span>class <span class="ident">Interactions</span></span>
-<span>(</span><span>clustering, use_indicators, value_initializer=None, indicator_initializer=None, signal_when_clusters_change=True, **kwargs)</span>
+<span>(</span><span>clustering: <a title="mdsine2.pylab.cluster.Clustering" href="cluster.html#mdsine2.pylab.cluster.Clustering">Clustering</a>, use_indicators: bool, value_initializer: Callable = None, indicator_initializer: Callable = None, signal_when_clusters_change: bool = True, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This is a basic class for interactions between clusters.</p>
@@ -3031,9 +3145,9 @@ Defaults to always returning True</dd>
         During MCMC you could set this to the sample method of the prior.         
         Defaults to always returning True
     &#39;&#39;&#39;
-    def __init__(self, clustering, use_indicators, 
-        value_initializer=None, indicator_initializer=None, 
-        signal_when_clusters_change=True, **kwargs):
+    def __init__(self, clustering: Clustering, use_indicators: bool, 
+        value_initializer: Callable=None, indicator_initializer: Callable=None, 
+        signal_when_clusters_change: bool=True, **kwargs):
 
         Node.__init__(self, **kwargs)
         ClusterProperty.__init__(self, clustering=clustering, 
@@ -3048,17 +3162,21 @@ Defaults to always returning True</dd>
             raise TypeError(&#39;`value_initializer` ({}) and `indicator_initializer` ({}) &#39; \
                 &#39;must be callable&#39;.format(type(value_initializer), 
                 type(indicator_initializer)))
-        self.value_initializer = value_initializer
-        self.indicator_initializer = indicator_initializer
-        self._IIDX = 1001001
+
+        self.value_initializer = value_initializer # function (callable)
+        self.indicator_initializer = indicator_initializer # function (callable)
+        self._IIDX = 1001001 # Index of the interactions
         
         if not util.isbool(use_indicators):
             raise TypeError(&#39;`use_indicators` ({}) must be a bool&#39;.format(type(use_indicators)))
-        self.use_indicators = use_indicators
+        self.use_indicators = use_indicators # bool
         if not self.use_indicators:
             self.indicator_initializer = _always_return_true
 
         order = self.clustering.order
+
+        # dict of a dict mapping to _Interaction objects
+        # (target cluster, source cluster) -&gt; interaction
         self.value = {}
         for tcid in order:
             self.value[tcid] = {}
@@ -3075,13 +3193,13 @@ Defaults to always returning True</dd>
         self._shape = (len(self.clustering.items), len(self.clustering.items))
         self.dtype = float
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -&gt; &#39;_Interaction&#39;:
         return self.value[key]
 
     def __setitem__(self, key, val):
         self.value[key] = val
 
-    def __iter__(self):
+    def __iter__(self) -&gt; &#34;_Interaction&#34;:
         &#39;&#39;&#39;Iterates over the interactions in order
         &#39;&#39;&#39;
         order = self.clustering.order
@@ -3091,14 +3209,14 @@ Defaults to always returning True</dd>
                 if tcid != scid:
                     yield temp[scid]
 
-    def __str__(self):
+    def __str__(self) -&gt; str:
         s=&#39;&#39;
         for interaction in self:
             s += str(interaction) + &#39;\n&#39;
         return s
     
     @property
-    def size(self):
+    def size(self) -&gt; int:
         &#39;&#39;&#39;Return how many interactions there are possible according to the number of clusters.
         THIS IS NOT HOW MANY POSITIVE INTERACTIONS THERE ARE - USE `num_pos_interactions`
 
@@ -3109,7 +3227,7 @@ Defaults to always returning True</dd>
         n_clusters = len(self.clustering)
         return n_clusters * (n_clusters - 1)
 
-    def iter_valid(self):
+    def iter_valid(self) -&gt; &#34;_Interaction&#34;:
         &#39;&#39;&#39;Iterate only over the positive indicators
         &#39;&#39;&#39;
         order = self.clustering.order
@@ -3120,7 +3238,7 @@ Defaults to always returning True</dd>
                     if temp[scid].indicator:
                         yield temp[scid]
 
-    def iter_valid_pairs(self):
+    def iter_valid_pairs(self) -&gt; Tuple[int, int]:
         &#39;&#39;&#39;Iterate only over the positive indicators
         &#39;&#39;&#39;
         order = self.clustering.order
@@ -3131,7 +3249,7 @@ Defaults to always returning True</dd>
                     if temp[scid].indicator:
                         yield tcid, scid
 
-    def iter_to_target(self, cid, only_valid=False):
+    def iter_to_target(self, cid: int, only_valid: bool=False) -&gt; &#34;_Interaction&#34;:
         &#39;&#39;&#39;Iterates over interactions to the target cluster from all
         source clusters in the order specified by clusters
 
@@ -3154,7 +3272,7 @@ Defaults to always returning True</dd>
                 if scid != cid:
                     yield temp[scid]
 
-    def iter_from_source(self, cid, only_valid=False):
+    def iter_from_source(self, cid: int, only_valid: bool=False) -&gt; &#34;_Interaction&#34;:
         &#39;&#39;&#39;Iterates over interactions from the source cluster to all
         target clusters in the order specified by clusters
 
@@ -3177,6 +3295,8 @@ Defaults to always returning True</dd>
                     yield self.value[tcid][cid]
 
     def reset(self):
+        &#39;&#39;&#39;Reset all of the interactions
+        &#39;&#39;&#39;
         self.value = {}
         for tcid in self.clustering.order:
             self.value[tcid] = {}
@@ -3190,7 +3310,7 @@ Defaults to always returning True</dd>
                     iden=self._IIDX)
                 self._IIDX += 1
 
-    def iloc(self, idx):
+    def iloc(self, idx: int) -&gt; &#34;_Interaction&#34;:
         &#39;&#39;&#39;Get the interaction as a function of the index that it occurs at.
         Reverse indexing is allowed.
 
@@ -3218,9 +3338,16 @@ Defaults to always returning True</dd>
             self.clustering.order[tcidx]][
             self.clustering.order[scidx]]
 
-    def clusters_changed(self, cids_added, cids_removed):
+    def clusters_changed(self, cids_added: Iterator[int], cids_removed: Iterator[int]):
         &#39;&#39;&#39;Remove all of the interactions to and from the clusters
         in `cids_removed` and make interactions for the `cid_added`
+
+        Parameters
+        ----------
+        cids_removed : list(int)
+            IDs of the clusters removed
+        cids_added : list(int)
+            IDs of the clusters added
         &#39;&#39;&#39;
         # Remove interactions from clusters deleted
         if len(cids_removed) &gt; 0:
@@ -3233,7 +3360,7 @@ Defaults to always returning True</dd>
             for cid in cids_added:
                 self._add_single_cluster(cid)
         
-    def _add_single_cluster(self, cid):
+    def _add_single_cluster(self, cid: int):
         other_cids = self.value.keys()
         # Add the interaction from clusters already there and 
         # the new cluster
@@ -3253,7 +3380,7 @@ Defaults to always returning True</dd>
                 iden=self._IIDX)
             self._IIDX += 1
     
-    def key_pairs(self, only_valid=False):
+    def key_pairs(self, only_valid: bool=False) -&gt; Iterator[Tuple[int, int]]:
         &#39;&#39;&#39;Returns (target,source) cluster ids in order
 
         Parameters
@@ -3280,7 +3407,7 @@ Defaults to always returning True</dd>
                         l.append((tcid,scid))
         return l
 
-    def num_neg_indicators(self, target_cid=None):
+    def num_neg_indicators(self, target_cid: int=None) -&gt; int:
         &#39;&#39;&#39;Return the number of indicator variables that are 0
 
         If target_cid is not None, calculate them for only the interactions going into
@@ -3301,7 +3428,7 @@ Defaults to always returning True</dd>
                 cumm += not interaction.indicator
         return cumm
 
-    def num_pos_indicators(self, target_cid=None):
+    def num_pos_indicators(self, target_cid: int=None) -&gt; int:
         &#39;&#39;&#39;Return the number of indicator variables that are 1
 
         If target_cid is not None, calculate them for only the interactions going into
@@ -3322,7 +3449,7 @@ Defaults to always returning True</dd>
                 cumm += interaction.indicator
         return cumm
 
-    def get_arg_indicators(self, target_cid=None, source_cid=None):
+    def get_arg_indicators(self, target_cid: int=None, source_cid: int=None) -&gt; Iterator[int]:
         &#39;&#39;&#39;Get the positive indicators as indices, in order -&gt; same convention
         as `get_indicators`.
 
@@ -3392,7 +3519,8 @@ Defaults to always returning True</dd>
                         &#39; be the same&#39;.format(target_cid, source_cid))
             raise
 
-    def get_indicators(self, target_cid=None, source_cid=None, return_idxs=False):
+    def get_indicators(self, target_cid: int=None, source_cid: int=None,
+        return_idxs: bool=False) -&gt; Iterator[bool]:
         &#39;&#39;&#39;Return a the indicator variables as a vector in the order specified
         by the clusters.
 
@@ -3485,7 +3613,7 @@ Defaults to always returning True</dd>
                         &#39; be the same&#39;.format(target_cid, source_cid))
             raise
 
-    def set_indicators(self, arr):
+    def set_indicators(self, arr: np.ndarray):
         &#39;&#39;&#39;Sets the values of the indicators of the interactions from a vector.
 
         If `include_self_interactions` is True, assumes that `arr` contains the
@@ -3505,7 +3633,7 @@ Defaults to always returning True</dd>
             if interaction.indicator == 0:
                 interaction.value = 0
 
-    def set_values(self, arr, use_indicators=True):
+    def set_values(self, arr: np.ndarray, use_indicators: bool=True):
         &#39;&#39;&#39;Sets the values of the interactions from a vector.
 
         If `use_indicators` is True, assumes that the values in the vector only contain
@@ -3536,7 +3664,7 @@ Defaults to always returning True</dd>
                 interaction.value = arr[idx]
                 idx += 1
 
-    def get_values(self, use_indicators=True):
+    def get_values(self, use_indicators: bool=True) -&gt; np.ndarray:
         &#39;&#39;&#39;Makes a vector of the interaction variables in the order of the
         clustering
 
@@ -3567,7 +3695,7 @@ Defaults to always returning True</dd>
         # Trim if necessary
         return ret[:idx]
 
-    def get_value_matrix(self, set_neg_indicators_to_nan=False):
+    def get_value_matrix(self, set_neg_indicators_to_nan: bool=False) -&gt; np.ndarray:
         &#39;&#39;&#39;Get the interaction matrix at the clustert level (item-item). 
         The ordering of the clusters is the same as it is in clustering
 
@@ -3599,7 +3727,7 @@ Defaults to always returning True</dd>
             ret[tcidx, scidx] = interaction.value
         return ret
 
-    def get_datalevel_value_matrix(self, set_neg_indicators_to_nan=False):
+    def get_datalevel_value_matrix(self, set_neg_indicators_to_nan: bool=False) -&gt; np.ndarray:
         &#39;&#39;&#39;Get the interaction matrix at the data level (item-item), not
         at the cluster level. The ordering of the items is the same as 
         it is in the items in clustering (self.clustering.times).
@@ -3633,7 +3761,7 @@ Defaults to always returning True</dd>
                     ret[tidx, sidx] = val
         return ret
     
-    def get_datalevel_indicator_matrix(self):
+    def get_datalevel_indicator_matrix(self) -&gt; np.ndarray:
         &#39;&#39;&#39;Get the item-item indicator matrix.
 
         The ordering of the items are the same as the order in
@@ -3654,7 +3782,7 @@ Defaults to always returning True</dd>
                     ret[tidx, sidx] = True
         return ret
 
-    def generate_in_out_degree_posthoc(self, section=&#39;posterior&#39;):
+    def generate_in_out_degree_posthoc(self, section: str=&#39;posterior&#39;) -&gt; Dict[str, np.ndarray]:
         &#39;&#39;&#39;Returns a dictionary of arrays
         &#34;in&#34;
             For each index in the array, corresponding to the index of the items, returns
@@ -3689,7 +3817,7 @@ Defaults to always returning True</dd>
 
         self.ckpt_iter = 0
         self.sample_iter = 0
-        shape = (tracer.ckpt, ) + self._shape
+        shape = (tracer.checkpoint, ) + self._shape
         self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
 
     def remove_local_trace(self):
@@ -3707,11 +3835,12 @@ Defaults to always returning True</dd>
         if self.ckpt_iter == len(self.trace):
             # We have gotten the largest we can in the local buffer, write to disk
             self.G.tracer.write_to_disk(name=self.name)
-            shape = (self.G.tracer.ckpt, ) + self._shape
+            shape = (self.G.tracer.checkpoint, ) + self._shape
             self.trace = np.full(shape=shape, fill_value=np.nan, dtype=self.dtype)
             self.ckpt_iter = 0
 
-    def get_adjacent(self, cid, incoming, outgoing, use_indicators=True):
+    def get_adjacent(self, cid: int, incoming: bool, outgoing: bool, 
+        use_indicators: bool=True) -&gt; Iterator[int]:
         &#39;&#39;&#39;Get all of the cluster IDs that have a positive interaction going into
         or from the cluster `cid`.
 
@@ -3755,7 +3884,7 @@ Defaults to always returning True</dd>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.contrib.Interactions.size"><code class="name">var <span class="ident">size</span></code></dt>
+<dt id="mdsine2.pylab.contrib.Interactions.size"><code class="name">var <span class="ident">size</span> : int</code></dt>
 <dd>
 <div class="desc"><p>Return how many interactions there are possible according to the number of clusters.
 THIS IS NOT HOW MANY POSITIVE INTERACTIONS THERE ARE - USE <code>num_pos_interactions</code></p>
@@ -3769,7 +3898,7 @@ THIS IS NOT HOW MANY POSITIVE INTERACTIONS THERE ARE - USE <code>num_pos_interac
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def size(self):
+def size(self) -&gt; int:
     &#39;&#39;&#39;Return how many interactions there are possible according to the number of clusters.
     THIS IS NOT HOW MANY POSITIVE INTERACTIONS THERE ARE - USE `num_pos_interactions`
 
@@ -3785,18 +3914,32 @@ def size(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.contrib.Interactions.clusters_changed"><code class="name flex">
-<span>def <span class="ident">clusters_changed</span></span>(<span>self, cids_added, cids_removed)</span>
+<span>def <span class="ident">clusters_changed</span></span>(<span>self, cids_added: Iterator[int], cids_removed: Iterator[int])</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Remove all of the interactions to and from the clusters
-in <code>cids_removed</code> and make interactions for the <code>cid_added</code></p></div>
+in <code>cids_removed</code> and make interactions for the <code>cid_added</code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>cids_removed</code></strong> :&ensp;<code>list(int)</code></dt>
+<dd>IDs of the clusters removed</dd>
+<dt><strong><code>cids_added</code></strong> :&ensp;<code>list(int)</code></dt>
+<dd>IDs of the clusters added</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def clusters_changed(self, cids_added, cids_removed):
+<pre><code class="python">def clusters_changed(self, cids_added: Iterator[int], cids_removed: Iterator[int]):
     &#39;&#39;&#39;Remove all of the interactions to and from the clusters
     in `cids_removed` and make interactions for the `cid_added`
+
+    Parameters
+    ----------
+    cids_removed : list(int)
+        IDs of the clusters removed
+    cids_added : list(int)
+        IDs of the clusters added
     &#39;&#39;&#39;
     # Remove interactions from clusters deleted
     if len(cids_removed) &gt; 0:
@@ -3811,7 +3954,7 @@ in <code>cids_removed</code> and make interactions for the <code>cid_added</code
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.generate_in_out_degree_posthoc"><code class="name flex">
-<span>def <span class="ident">generate_in_out_degree_posthoc</span></span>(<span>self, section='posterior')</span>
+<span>def <span class="ident">generate_in_out_degree_posthoc</span></span>(<span>self, section: str = 'posterior') ‑> Dict[str, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns a dictionary of arrays
@@ -3837,7 +3980,7 @@ Returns all the samples</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def generate_in_out_degree_posthoc(self, section=&#39;posterior&#39;):
+<pre><code class="python">def generate_in_out_degree_posthoc(self, section: str=&#39;posterior&#39;) -&gt; Dict[str, np.ndarray]:
     &#39;&#39;&#39;Returns a dictionary of arrays
     &#34;in&#34;
         For each index in the array, corresponding to the index of the items, returns
@@ -3864,7 +4007,7 @@ Returns all the samples</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.get_adjacent"><code class="name flex">
-<span>def <span class="ident">get_adjacent</span></span>(<span>self, cid, incoming, outgoing, use_indicators=True)</span>
+<span>def <span class="ident">get_adjacent</span></span>(<span>self, cid: int, incoming: bool, outgoing: bool, use_indicators: bool = True) ‑> Iterator[int]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get all of the cluster IDs that have a positive interaction going into
@@ -3890,7 +4033,8 @@ If this is False then we always include the interaction</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_adjacent(self, cid, incoming, outgoing, use_indicators=True):
+<pre><code class="python">def get_adjacent(self, cid: int, incoming: bool, outgoing: bool, 
+    use_indicators: bool=True) -&gt; Iterator[int]:
     &#39;&#39;&#39;Get all of the cluster IDs that have a positive interaction going into
     or from the cluster `cid`.
 
@@ -3926,7 +4070,7 @@ If this is False then we always include the interaction</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.get_arg_indicators"><code class="name flex">
-<span>def <span class="ident">get_arg_indicators</span></span>(<span>self, target_cid=None, source_cid=None)</span>
+<span>def <span class="ident">get_arg_indicators</span></span>(<span>self, target_cid: int = None, source_cid: int = None) ‑> Iterator[int]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the positive indicators as indices, in order -&gt; same convention
@@ -3952,7 +4096,7 @@ If None then nothing is specified.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_arg_indicators(self, target_cid=None, source_cid=None):
+<pre><code class="python">def get_arg_indicators(self, target_cid: int=None, source_cid: int=None) -&gt; Iterator[int]:
     &#39;&#39;&#39;Get the positive indicators as indices, in order -&gt; same convention
     as `get_indicators`.
 
@@ -4024,7 +4168,7 @@ If None then nothing is specified.</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.get_datalevel_indicator_matrix"><code class="name flex">
-<span>def <span class="ident">get_datalevel_indicator_matrix</span></span>(<span>self)</span>
+<span>def <span class="ident">get_datalevel_indicator_matrix</span></span>(<span>self) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the item-item indicator matrix.</p>
@@ -4039,7 +4183,7 @@ self.clusters.items.ids.order</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_datalevel_indicator_matrix(self):
+<pre><code class="python">def get_datalevel_indicator_matrix(self) -&gt; np.ndarray:
     &#39;&#39;&#39;Get the item-item indicator matrix.
 
     The ordering of the items are the same as the order in
@@ -4062,7 +4206,7 @@ self.clusters.items.ids.order</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.get_datalevel_value_matrix"><code class="name flex">
-<span>def <span class="ident">get_datalevel_value_matrix</span></span>(<span>self, set_neg_indicators_to_nan=False)</span>
+<span>def <span class="ident">get_datalevel_value_matrix</span></span>(<span>self, set_neg_indicators_to_nan: bool = False) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the interaction matrix at the data level (item-item), not
@@ -4085,7 +4229,7 @@ np.nan. Else, it will set them to 0.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_datalevel_value_matrix(self, set_neg_indicators_to_nan=False):
+<pre><code class="python">def get_datalevel_value_matrix(self, set_neg_indicators_to_nan: bool=False) -&gt; np.ndarray:
     &#39;&#39;&#39;Get the interaction matrix at the data level (item-item), not
     at the cluster level. The ordering of the items is the same as 
     it is in the items in clustering (self.clustering.times).
@@ -4121,7 +4265,7 @@ np.nan. Else, it will set them to 0.</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.get_indicators"><code class="name flex">
-<span>def <span class="ident">get_indicators</span></span>(<span>self, target_cid=None, source_cid=None, return_idxs=False)</span>
+<span>def <span class="ident">get_indicators</span></span>(<span>self, target_cid: int = None, source_cid: int = None, return_idxs: bool = False) ‑> Iterator[bool]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Return a the indicator variables as a vector in the order specified
@@ -4149,7 +4293,8 @@ is done if both <code>target_cid</code> and <code>source_cid</code> are specifie
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_indicators(self, target_cid=None, source_cid=None, return_idxs=False):
+<pre><code class="python">def get_indicators(self, target_cid: int=None, source_cid: int=None,
+    return_idxs: bool=False) -&gt; Iterator[bool]:
     &#39;&#39;&#39;Return a the indicator variables as a vector in the order specified
     by the clusters.
 
@@ -4244,7 +4389,7 @@ is done if both <code>target_cid</code> and <code>source_cid</code> are specifie
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.get_value_matrix"><code class="name flex">
-<span>def <span class="ident">get_value_matrix</span></span>(<span>self, set_neg_indicators_to_nan=False)</span>
+<span>def <span class="ident">get_value_matrix</span></span>(<span>self, set_neg_indicators_to_nan: bool = False) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the interaction matrix at the clustert level (item-item).
@@ -4266,7 +4411,7 @@ np.nan. Else, it will set them to 0.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_value_matrix(self, set_neg_indicators_to_nan=False):
+<pre><code class="python">def get_value_matrix(self, set_neg_indicators_to_nan: bool=False) -&gt; np.ndarray:
     &#39;&#39;&#39;Get the interaction matrix at the clustert level (item-item). 
     The ordering of the clusters is the same as it is in clustering
 
@@ -4300,7 +4445,7 @@ np.nan. Else, it will set them to 0.</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.get_values"><code class="name flex">
-<span>def <span class="ident">get_values</span></span>(<span>self, use_indicators=True)</span>
+<span>def <span class="ident">get_values</span></span>(<span>self, use_indicators: bool = True) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Makes a vector of the interaction variables in the order of the
@@ -4320,7 +4465,7 @@ single interaction</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_values(self, use_indicators=True):
+<pre><code class="python">def get_values(self, use_indicators: bool=True) -&gt; np.ndarray:
     &#39;&#39;&#39;Makes a vector of the interaction variables in the order of the
     clustering
 
@@ -4353,7 +4498,7 @@ single interaction</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.iloc"><code class="name flex">
-<span>def <span class="ident">iloc</span></span>(<span>self, idx)</span>
+<span>def <span class="ident">iloc</span></span>(<span>self, idx: int) ‑> mdsine2.pylab.contrib._Interaction</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the interaction as a function of the index that it occurs at.
@@ -4372,7 +4517,7 @@ Reverse indexing is allowed.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def iloc(self, idx):
+<pre><code class="python">def iloc(self, idx: int) -&gt; &#34;_Interaction&#34;:
     &#39;&#39;&#39;Get the interaction as a function of the index that it occurs at.
     Reverse indexing is allowed.
 
@@ -4402,7 +4547,7 @@ Reverse indexing is allowed.</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.iter_from_source"><code class="name flex">
-<span>def <span class="ident">iter_from_source</span></span>(<span>self, cid, only_valid=False)</span>
+<span>def <span class="ident">iter_from_source</span></span>(<span>self, cid: int, only_valid: bool = False) ‑> mdsine2.pylab.contrib._Interaction</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Iterates over interactions from the source cluster to all
@@ -4416,7 +4561,7 @@ If True, only returns the interactions with a positive indicator</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def iter_from_source(self, cid, only_valid=False):
+<pre><code class="python">def iter_from_source(self, cid: int, only_valid: bool=False) -&gt; &#34;_Interaction&#34;:
     &#39;&#39;&#39;Iterates over interactions from the source cluster to all
     target clusters in the order specified by clusters
 
@@ -4440,7 +4585,7 @@ If True, only returns the interactions with a positive indicator</p></div>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.iter_to_target"><code class="name flex">
-<span>def <span class="ident">iter_to_target</span></span>(<span>self, cid, only_valid=False)</span>
+<span>def <span class="ident">iter_to_target</span></span>(<span>self, cid: int, only_valid: bool = False) ‑> mdsine2.pylab.contrib._Interaction</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Iterates over interactions to the target cluster from all
@@ -4454,7 +4599,7 @@ If True, only returns the interactions with a positive indicator</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def iter_to_target(self, cid, only_valid=False):
+<pre><code class="python">def iter_to_target(self, cid: int, only_valid: bool=False) -&gt; &#34;_Interaction&#34;:
     &#39;&#39;&#39;Iterates over interactions to the target cluster from all
     source clusters in the order specified by clusters
 
@@ -4479,7 +4624,7 @@ If True, only returns the interactions with a positive indicator</p></div>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.iter_valid"><code class="name flex">
-<span>def <span class="ident">iter_valid</span></span>(<span>self)</span>
+<span>def <span class="ident">iter_valid</span></span>(<span>self) ‑> mdsine2.pylab.contrib._Interaction</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Iterate only over the positive indicators</p></div>
@@ -4487,7 +4632,7 @@ If True, only returns the interactions with a positive indicator</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def iter_valid(self):
+<pre><code class="python">def iter_valid(self) -&gt; &#34;_Interaction&#34;:
     &#39;&#39;&#39;Iterate only over the positive indicators
     &#39;&#39;&#39;
     order = self.clustering.order
@@ -4500,7 +4645,7 @@ If True, only returns the interactions with a positive indicator</p></div>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.iter_valid_pairs"><code class="name flex">
-<span>def <span class="ident">iter_valid_pairs</span></span>(<span>self)</span>
+<span>def <span class="ident">iter_valid_pairs</span></span>(<span>self) ‑> Tuple[int, int]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Iterate only over the positive indicators</p></div>
@@ -4508,7 +4653,7 @@ If True, only returns the interactions with a positive indicator</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def iter_valid_pairs(self):
+<pre><code class="python">def iter_valid_pairs(self) -&gt; Tuple[int, int]:
     &#39;&#39;&#39;Iterate only over the positive indicators
     &#39;&#39;&#39;
     order = self.clustering.order
@@ -4521,7 +4666,7 @@ If True, only returns the interactions with a positive indicator</p></div>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.key_pairs"><code class="name flex">
-<span>def <span class="ident">key_pairs</span></span>(<span>self, only_valid=False)</span>
+<span>def <span class="ident">key_pairs</span></span>(<span>self, only_valid: bool = False) ‑> Iterator[Tuple[int, int]]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns (target,source) cluster ids in order</p>
@@ -4539,7 +4684,7 @@ in order.</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def key_pairs(self, only_valid=False):
+<pre><code class="python">def key_pairs(self, only_valid: bool=False) -&gt; Iterator[Tuple[int, int]]:
     &#39;&#39;&#39;Returns (target,source) cluster ids in order
 
     Parameters
@@ -4568,7 +4713,7 @@ in order.</p></div>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.num_neg_indicators"><code class="name flex">
-<span>def <span class="ident">num_neg_indicators</span></span>(<span>self, target_cid=None)</span>
+<span>def <span class="ident">num_neg_indicators</span></span>(<span>self, target_cid: int = None) ‑> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Return the number of indicator variables that are 0</p>
@@ -4582,7 +4727,7 @@ If this is specified, get only the negative indicators going into the cluster
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def num_neg_indicators(self, target_cid=None):
+<pre><code class="python">def num_neg_indicators(self, target_cid: int=None) -&gt; int:
     &#39;&#39;&#39;Return the number of indicator variables that are 0
 
     If target_cid is not None, calculate them for only the interactions going into
@@ -4605,7 +4750,7 @@ If this is specified, get only the negative indicators going into the cluster
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.num_pos_indicators"><code class="name flex">
-<span>def <span class="ident">num_pos_indicators</span></span>(<span>self, target_cid=None)</span>
+<span>def <span class="ident">num_pos_indicators</span></span>(<span>self, target_cid: int = None) ‑> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Return the number of indicator variables that are 1</p>
@@ -4619,7 +4764,7 @@ If this is specified, get only the positive indicators going into the cluster
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def num_pos_indicators(self, target_cid=None):
+<pre><code class="python">def num_pos_indicators(self, target_cid: int=None) -&gt; int:
     &#39;&#39;&#39;Return the number of indicator variables that are 1
 
     If target_cid is not None, calculate them for only the interactions going into
@@ -4656,8 +4801,34 @@ If this is specified, get only the positive indicators going into the cluster
     self.trace = None</code></pre>
 </details>
 </dd>
+<dt id="mdsine2.pylab.contrib.Interactions.reset"><code class="name flex">
+<span>def <span class="ident">reset</span></span>(<span>self)</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Reset all of the interactions</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def reset(self):
+    &#39;&#39;&#39;Reset all of the interactions
+    &#39;&#39;&#39;
+    self.value = {}
+    for tcid in self.clustering.order:
+        self.value[tcid] = {}
+        for scid in self.clustering.order:
+            if tcid == scid:
+                continue
+            self.value[tcid][scid] = _Interaction(
+                source_cid=scid, target_cid=tcid,
+                value=self.value_initializer(),
+                indicator=self.indicator_initializer()&gt;=.5, 
+                iden=self._IIDX)
+            self._IIDX += 1</code></pre>
+</details>
+</dd>
 <dt id="mdsine2.pylab.contrib.Interactions.set_indicators"><code class="name flex">
-<span>def <span class="ident">set_indicators</span></span>(<span>self, arr)</span>
+<span>def <span class="ident">set_indicators</span></span>(<span>self, arr: numpy.ndarray)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sets the values of the indicators of the interactions from a vector.</p>
@@ -4671,7 +4842,7 @@ These are the indicator values to set, in order</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_indicators(self, arr):
+<pre><code class="python">def set_indicators(self, arr: np.ndarray):
     &#39;&#39;&#39;Sets the values of the indicators of the interactions from a vector.
 
     If `include_self_interactions` is True, assumes that `arr` contains the
@@ -4693,7 +4864,7 @@ These are the indicator values to set, in order</p></div>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Interactions.set_values"><code class="name flex">
-<span>def <span class="ident">set_values</span></span>(<span>self, arr, use_indicators=True)</span>
+<span>def <span class="ident">set_values</span></span>(<span>self, arr: numpy.ndarray, use_indicators: bool = True)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sets the values of the interactions from a vector.</p>
@@ -4711,7 +4882,7 @@ single interaction</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_values(self, arr, use_indicators=True):
+<pre><code class="python">def set_values(self, arr: np.ndarray, use_indicators: bool=True):
     &#39;&#39;&#39;Sets the values of the interactions from a vector.
 
     If `use_indicators` is True, assumes that the values in the vector only contain
@@ -4748,11 +4919,7 @@ single interaction</p></div>
 <ul class="hlist">
 <li><code><b><a title="mdsine2.pylab.cluster.ClusterProperty" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty">ClusterProperty</a></b></code>:
 <ul class="hlist">
-<li><code><a title="mdsine2.pylab.cluster.ClusterProperty.reset" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.reset">reset</a></code></li>
-</ul>
-</li>
-<li><code><b><a title="mdsine2.pylab.cluster.ClusterProperty" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty">ClusterProperty</a></b></code>:
-<ul class="hlist">
+<li><code><a title="mdsine2.pylab.cluster.ClusterProperty.assignments_changed" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.assignments_changed">assignments_changed</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterProperty.set_signal_when_clusters_change" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.set_signal_when_clusters_change">set_signal_when_clusters_change</a></code></li>
 <li><code><a title="mdsine2.pylab.cluster.ClusterProperty.set_signal_when_item_assignment_changes" href="cluster.html#mdsine2.pylab.cluster.ClusterProperty.set_signal_when_item_assignment_changes">set_signal_when_item_assignment_changes</a></code></li>
 </ul>
@@ -4789,7 +4956,7 @@ single interaction</p></div>
 </dd>
 <dt id="mdsine2.pylab.contrib.Perturbation"><code class="flex name class">
 <span>class <span class="ident">Perturbation</span></span>
-<span>(</span><span>taxa, starts, ends, magnitude=None, indicator=None, probability=None, **kwargs)</span>
+<span>(</span><span>taxa: <a title="mdsine2.pylab.base.TaxaSet" href="base.html#mdsine2.pylab.base.TaxaSet">TaxaSet</a>, starts: Dict[str, float], ends: Dict[str, float], magnitude: Union[<a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a>, numpy.ndarray, int, float] = None, indicator: Union[<a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a>, numpy.ndarray] = None, probability: Union[<a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a>, float] = None, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This is an implementation of a perturbation where the
@@ -4851,8 +5018,11 @@ each taxon</dd>
     kwargs : dict
         - Extra arguments for the Node class
     &#39;&#39;&#39;
-    def __init__(self, taxa, starts, ends, magnitude=None, indicator=None, 
-        probability=None, **kwargs):
+    def __init__(self, taxa: base.TaxaSet, starts: Dict[str, float], ends: Dict[str, float], 
+        magnitude: Union[variables.Variable, np.ndarray, int, float]=None, 
+        indicator: Union[variables.Variable, np.ndarray]=None, 
+        probability: Union[variables.Variable, float]=None, **kwargs):
+        
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
             self.G.perturbations = PerturbationSet()
@@ -4864,7 +5034,7 @@ each taxon</dd>
         self.G.perturbations.append(self)
         self.taxa = taxa
         n_taxa = len(self.taxa)
-        self.set_value_shape(shape=(n_taxa, ))
+        self.set_value_shape(shape=(n_taxa, )) # Set the shape of the internal array
 
         # Set magnitude
         if magnitude is None:
@@ -4916,11 +5086,11 @@ each taxon</dd>
         else:
             raise TypeError(&#39;`indicator` ({}) type not recognized&#39;.format(type(indicator)))
 
-        self.magnitude = magnitude
-        self.indicator = indicator
-        self.probability = probability
+        self.magnitude = magnitude # Variable
+        self.indicator = indicator # Variable
+        self.probability = probability # Variable
 
-    def __str__(self):
+    def __str__(self) -&gt; str:
         s = BasePerturbation.__str__(self)
         s += &#39;\nMagnitude:\n&#39;
         for oidx in range(len(self.taxa)):
@@ -4944,7 +5114,7 @@ each taxon</dd>
         &#39;&#39;&#39;
         self.trace = None
 
-    def array(self, only_pos_ind=False):
+    def array(self, only_pos_ind: bool=False) -&gt; np.ndarray:
         &#39;&#39;&#39;Return the magnitudes with the indicatrs indexed out
 
         Parameters
@@ -4996,7 +5166,7 @@ each taxon</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.contrib.Perturbation.array"><code class="name flex">
-<span>def <span class="ident">array</span></span>(<span>self, only_pos_ind=False)</span>
+<span>def <span class="ident">array</span></span>(<span>self, only_pos_ind: bool = False) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Return the magnitudes with the indicatrs indexed out</p>
@@ -5014,7 +5184,7 @@ each taxon</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def array(self, only_pos_ind=False):
+<pre><code class="python">def array(self, only_pos_ind: bool=False) -&gt; np.ndarray:
     &#39;&#39;&#39;Return the magnitudes with the indicatrs indexed out
 
     Parameters
@@ -5127,12 +5297,14 @@ each taxon</dd>
 <li><code><a title="mdsine2.pylab.contrib.ClusterPerturbationIndicator.item_bool_array" href="#mdsine2.pylab.contrib.ClusterPerturbationIndicator.item_bool_array">item_bool_array</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.ClusterPerturbationIndicator.num_on_clusters" href="#mdsine2.pylab.contrib.ClusterPerturbationIndicator.num_on_clusters">num_on_clusters</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.ClusterPerturbationIndicator.num_on_items" href="#mdsine2.pylab.contrib.ClusterPerturbationIndicator.num_on_items">num_on_items</a></code></li>
+<li><code><a title="mdsine2.pylab.contrib.ClusterPerturbationIndicator.reset" href="#mdsine2.pylab.contrib.ClusterPerturbationIndicator.reset">reset</a></code></li>
 </ul>
 </li>
 <li>
 <h4><code><a title="mdsine2.pylab.contrib.ClusterPerturbationValue" href="#mdsine2.pylab.contrib.ClusterPerturbationValue">ClusterPerturbationValue</a></code></h4>
 <ul class="">
 <li><code><a title="mdsine2.pylab.contrib.ClusterPerturbationValue.clusters_changed" href="#mdsine2.pylab.contrib.ClusterPerturbationValue.clusters_changed">clusters_changed</a></code></li>
+<li><code><a title="mdsine2.pylab.contrib.ClusterPerturbationValue.reset" href="#mdsine2.pylab.contrib.ClusterPerturbationValue.reset">reset</a></code></li>
 </ul>
 </li>
 <li>
@@ -5156,6 +5328,7 @@ each taxon</dd>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.num_neg_indicators" href="#mdsine2.pylab.contrib.Interactions.num_neg_indicators">num_neg_indicators</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.num_pos_indicators" href="#mdsine2.pylab.contrib.Interactions.num_pos_indicators">num_pos_indicators</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.remove_local_trace" href="#mdsine2.pylab.contrib.Interactions.remove_local_trace">remove_local_trace</a></code></li>
+<li><code><a title="mdsine2.pylab.contrib.Interactions.reset" href="#mdsine2.pylab.contrib.Interactions.reset">reset</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.set_indicators" href="#mdsine2.pylab.contrib.Interactions.set_indicators">set_indicators</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.set_values" href="#mdsine2.pylab.contrib.Interactions.set_values">set_values</a></code></li>
 <li><code><a title="mdsine2.pylab.contrib.Interactions.size" href="#mdsine2.pylab.contrib.Interactions.size">size</a></code></li>

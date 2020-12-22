@@ -41,6 +41,9 @@ import numpy as np
 import sys
 import logging
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple
+
 from . import util
 from . import variables
 from .errors import MathError
@@ -49,7 +52,7 @@ from .errors import MathError
 DEFAULT_TARGET_ACCEPTANCE_RATE = &#39;auto&#39;
 DEFAULT_END_TUNING = &#39;auto&#39;
 
-def isMetropKernel(a):
+def isMetropKernel(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a MetropolisKernel
 
     Parameters
@@ -64,7 +67,7 @@ def isMetropKernel(a):
     &#39;&#39;&#39;
     return a is not None and issubclass(a.__class__, _BaseKernel)
 
-def _sum_look_back(trace):
+def _sum_look_back(trace: np.ndarray) -&gt; int:
     &#39;&#39;&#39;Inner function
     
     Makes a boolean array for the accept/reject based on the values in the
@@ -85,7 +88,7 @@ def _sum_look_back(trace):
         ret += trace[i]!=trace[i-1]
     return ret
 
-def acceptance_rate(x, start, end):
+def acceptance_rate(x: np.ndarray, start: int, end: int) -&gt; Iterator[float]:
     &#39;&#39;&#39;Calculate the acceptance rate from `start` to `end`
 
     Parameters
@@ -112,7 +115,9 @@ def acceptance_rate(x, start, end):
             type(x)))
 
 class _BaseKernel:
-    &#39;&#39;&#39;This is the base Kernel jumping class for both symmetric and nonsymmetric
+    &#39;&#39;&#39;DEPRECIATED - THIS IS NOT USED IN THE CODE
+    
+    This is the base Kernel jumping class for both symmetric and nonsymmetric
     jumping kernels.
 
     ###########################################################################
@@ -134,7 +139,7 @@ class _BaseKernel:
      x : pylab.variables.Variable
             - Variable we are doing the Metropolis-Hasting steps on
     &#39;&#39;&#39;
-    def __init__(self, x):
+    def __init__(self, x: variables.Variable):
         if not variables.isVariable(x):
             raise ValueError(&#39;`x` ({}) must be a pylab Variable&#39;.format(type(x)))
 
@@ -150,10 +155,10 @@ class _BaseKernel:
         x._metropolis = self
 
     @property
-    def value(self):
+    def value(self) -&gt; np.ndarray:
         return self._value
 
-    def acceptance_rate(self, prev=None):
+    def acceptance_rate(self, prev: int=None) -&gt; np.ndarray:
         &#39;&#39;&#39;Calculate the acceptance rate over the previous iterations.
 
         It does this by looking at the previous time step and seeing if the
@@ -184,7 +189,7 @@ class _BaseKernel:
         self.x.value = self._propose()
         self._value = None
 
-    def proposal_norm(self, log=True):
+    def proposal_norm(self, log: bool=True) -&gt; float:
         &#39;&#39;&#39;Calculate the proposal normalization factor to multiply (or add) the
         acceptance ratio r
 
@@ -236,7 +241,9 @@ class _BaseKernel:
 
 
 class _TunableKernel(_BaseKernel):
-    &#39;&#39;&#39;Class for tuning the variance of the distribution
+    &#39;&#39;&#39;DEPRECIATED - THIS CLASS IS NOT USED IN THE CODE
+    
+    Class for tuning the variance of the distribution
     
     Parameters
     ----------
@@ -302,8 +309,8 @@ class _TunableKernel(_BaseKernel):
     [1] A. Gelman, H. S. Stern, J. B. Carlin, D. B. Dunson, A. Vehtari, and D. B. Rubin,
     Bayesian Data Analysis Third Edition. Chapman and Hall/CRC, 2013.
     &#39;&#39;&#39;
-    def __init__(self, x, tune=None, target_acceptance_rate=&#39;default&#39;, end_tuning=&#39;default&#39;, 
-        start_tuning=0):
+    def __init__(self, x: variables.Variable, tune: int=None, target_acceptance_rate: Union[str, float]=&#39;default&#39;, 
+        end_tuning: Union[str, int]=&#39;default&#39;, start_tuning: int=0):
         _BaseKernel.__init__(self, x=x)
 
         self._scaling = 1
@@ -449,7 +456,8 @@ class NormalKernel(_TunableKernel):
     low, high : numeric, Optional
         - If specified makes the jumping distribution a truncated distribution
     &#39;&#39;&#39;
-    def __init__(self, x, var, low=None, high=None, **kwargs):
+    def __init__(self, x: variables.Variable, var: Union[float, int], low: Union[float, int]=None, 
+        high: Union[float, int]=None, **kwargs):
         _TunableKernel.__init__(self, x=x, **kwargs)
 
         if not util.isnumeric(var):
@@ -477,7 +485,7 @@ class NormalKernel(_TunableKernel):
             self.proposal = variables.TruncatedNormal(loc=0, scale2=var, low=low, high=high,
                 G=self.x.G, name=name)
 
-    def _propose(self):
+    def _propose(self) -&gt; float:
         &#39;&#39;&#39;propose a new value. Sets the mean to the value of x
         &#39;&#39;&#39;
         self.proposal.mean.value = self.x.value
@@ -492,7 +500,7 @@ class NormalKernel(_TunableKernel):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.pylab.metropolis.acceptance_rate"><code class="name flex">
-<span>def <span class="ident">acceptance_rate</span></span>(<span>x, start, end)</span>
+<span>def <span class="ident">acceptance_rate</span></span>(<span>x: numpy.ndarray, start: int, end: int) ‑> Iterator[float]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the acceptance rate from <code>start</code> to <code>end</code></p>
@@ -520,7 +528,7 @@ class NormalKernel(_TunableKernel):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def acceptance_rate(x, start, end):
+<pre><code class="python">def acceptance_rate(x: np.ndarray, start: int, end: int) -&gt; Iterator[float]:
     &#39;&#39;&#39;Calculate the acceptance rate from `start` to `end`
 
     Parameters
@@ -548,7 +556,7 @@ class NormalKernel(_TunableKernel):
 </details>
 </dd>
 <dt id="mdsine2.pylab.metropolis.isMetropKernel"><code class="name flex">
-<span>def <span class="ident">isMetropKernel</span></span>(<span>a)</span>
+<span>def <span class="ident">isMetropKernel</span></span>(<span>a: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if <code>a</code> is a MetropolisKernel</p>
@@ -566,7 +574,7 @@ class NormalKernel(_TunableKernel):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isMetropKernel(a):
+<pre><code class="python">def isMetropKernel(a: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if `a` is a MetropolisKernel
 
     Parameters
@@ -589,7 +597,7 @@ class NormalKernel(_TunableKernel):
 <dl>
 <dt id="mdsine2.pylab.metropolis.NormalKernel"><code class="flex name class">
 <span>class <span class="ident">NormalKernel</span></span>
-<span>(</span><span>x, var, low=None, high=None, **kwargs)</span>
+<span>(</span><span>x: <a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a>, var: Union[float, int], low: Union[float, int] = None, high: Union[float, int] = None, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This is either a normal or truncated normal proposal to use for the
@@ -634,7 +642,8 @@ distribution. Else it is a truncated distribution</p>
     low, high : numeric, Optional
         - If specified makes the jumping distribution a truncated distribution
     &#39;&#39;&#39;
-    def __init__(self, x, var, low=None, high=None, **kwargs):
+    def __init__(self, x: variables.Variable, var: Union[float, int], low: Union[float, int]=None, 
+        high: Union[float, int]=None, **kwargs):
         _TunableKernel.__init__(self, x=x, **kwargs)
 
         if not util.isnumeric(var):
@@ -662,7 +671,7 @@ distribution. Else it is a truncated distribution</p>
             self.proposal = variables.TruncatedNormal(loc=0, scale2=var, low=low, high=high,
                 G=self.x.G, name=name)
 
-    def _propose(self):
+    def _propose(self) -&gt; float:
         &#39;&#39;&#39;propose a new value. Sets the mean to the value of x
         &#39;&#39;&#39;
         self.proposal.mean.value = self.x.value

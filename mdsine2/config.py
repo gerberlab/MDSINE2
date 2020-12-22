@@ -63,56 +63,56 @@ class MDSINE2ModelConfig(_BaseModelConfig):
 
     System initialization
     ---------------------
-    OUTPUT_BASEPATH, MODEL_PATH : str
-        Path to save the model
-    SEED : int
-        Seed to initialize inference with
-    BURNIN : int
-        Number of initial Gibb steps to throw away
-    N_SAMPLES : int
-        Total number of Gibb steps
-    CHECKPOINT : int
-        How often to write to disk
-    PROCESS_VARIANCE_TYPE : str
-        What type of process variance to do
-        NOTE: There is only one option, do not change
-    DATA_DTYPE : str
-        What kind of data to do inference we
-        NOTE: Model assume you are using absolute abundance, do not change
-    QPCR_NORMALIZATION_MAX_VALUE : float
-        This is value to set the largest qPCR value to. Normalize
+    - OUTPUT_BASEPATH, MODEL_PATH : str
+        - Path to save the model
+    - SEED : int
+        - Seed to initialize inference with
+    - BURNIN : int
+        - Number of initial Gibb steps to throw away
+    - N_SAMPLES : int
+        - Total number of Gibb steps
+    - CHECKPOINT : int
+        - How often to write to disk
+    - PROCESS_VARIANCE_TYPE : str
+        - What type of process variance to do
+        - NOTE: There is only one option, do not change
+    - DATA_DTYPE : str
+        - What kind of data to do inference we
+        - NOTE: Model assume you are using absolute abundance, do not change
+    - QPCR_NORMALIZATION_MAX_VALUE : float
+        - This is value to set the largest qPCR value to. Normalize
         all other qPCR measurements directly to this
-    LEAVE_OUT : str
-        Which subject to leave out, if necessary
-    ZERO_INFLATION_TRANSITION_POLICY : str
-        What type of zero inflation to do. Do not change
-    GROWTH_TRUNCATION_SETTINGS : str
-        How to initialize the truncation settings for the growth parameters
-    SELF_INTERACTIONS_TRUNCATION_SETTINGS : str
-        How to initialize the truncation settings for the self-interaction parameters
-    MP_FILTERING : str
-        How to do multiprocessing for filtering
-    MP_CLUSTERING : str
-        How to do multiprocessing for clustering
-    NEGBINB_A0, NEGBIN_A1 : float
-        Negative binomial dispersion parameters
-    N_QPCR_BUCKETS : int
-        Number of qPCR buckets. This is not learned in the model, do not change.
-    INTERMEDIATE_VALIDATION_T : float
-        How often to do the intermediate validation
-    INTERMEDIATE_VALIDATION_KWARGS : dict
-        Arguemnts for the intermediate valudation
-    LEARN : Dict[str, bool]
-        These are the dictionary of parameters which we are learning in the model.
-        If the name maps to True, then we learn it during inference. If it maps to 
-        false, then we do not update its value duting inference.
-    INFERENCE_ORDER : list
-        This is the order to update the parameters during MCMC inference
-    INITIALIZATION_KWARGS : Dict[str, Dict[str, Any]]
-        These are the parameters to send into the `initialize` function for each variable
-        that we are learning
-    INITIALIZATION_ORDER : list
-        This is the order to initialize the variables
+    - LEAVE_OUT : str
+        - Which subject to leave out, if necessary
+    - ZERO_INFLATION_TRANSITION_POLICY : str
+        - What type of zero inflation to do. Do not change
+    - GROWTH_TRUNCATION_SETTINGS : str
+        - How to initialize the truncation settings for the growth parameters
+    - SELF_INTERACTIONS_TRUNCATION_SETTINGS : str
+        - How to initialize the truncation settings for the self-interaction parameters
+    - MP_FILTERING : str
+        - How to do multiprocessing for filtering
+    - MP_CLUSTERING : str
+        - How to do multiprocessing for clustering
+    - NEGBINB_A0, NEGBIN_A1 : float
+        - Negative binomial dispersion parameters
+    - N_QPCR_BUCKETS : int
+        - Number of qPCR buckets. This is not learned in the model, do not change.
+    - INTERMEDIATE_VALIDATION_T : float
+        - How often to do the intermediate validation
+    - INTERMEDIATE_VALIDATION_KWARGS : dict
+        - Arguemnts for the intermediate valudation
+    - LEARN : Dict[str, bool]
+        - These are the dictionary of parameters which we are learning in the model.
+        - If the name maps to True, then we learn it during inference. If it maps to 
+          false, then we do not update its value duting inference.
+    - INFERENCE_ORDER : list
+        - This is the order to update the parameters during MCMC inference
+    - INITIALIZATION_KWARGS : Dict[str, Dict[str, Any]]
+        - These are the parameters to send into the `initialize` function for each variable
+          that we are learning
+    - INITIALIZATION_ORDER : list
+        - This is the order to initialize the variables
 
     Parameters
     ----------
@@ -554,31 +554,31 @@ class NegBinConfig(_BaseModelConfig):
     '''Configuration class for learning the negative binomial dispersion
     parameters. Note that these parameters are learned offline.
 
-        System initialization
+    System initialization
     ---------------------
-    OUTPUT_BASEPATH : str
-        Path to save the model
-    SEED : int
-        Seed to initialize inference with
-    BURNIN : int
-        Number of initial Gibb steps to throw away
-    N_SAMPLES : int
-        Total number of Gibb steps
-    CHECKPOINT : int
-        How often to write to disk
-    MP_FILTERING : str
-        How to do multiprocessing for filtering
-    LEARN : Dict[str, bool]
-        These are the dictionary of parameters which we are learning in the model.
-        If the name maps to True, then we learn it during inference. If it maps to 
-        false, then we do not update its value duting inference.
-    INFERENCE_ORDER : list
-        This is the order to update the parameters during MCMC inference
-    INITIALIZATION_KWARGS : Dict[str, Dict[str, Any]]
-        These are the parameters to send into the `initialize` function for each variable
-        that we are learning
-    INITIALIZATION_ORDER : list
-        This is the order to initialize the variables
+    - OUTPUT_BASEPATH : str
+        - Path to save the model
+    - SEED : int
+        - Seed to initialize inference with
+    - BURNIN : int
+        - Number of initial Gibb steps to throw away
+    - N_SAMPLES : int
+        - Total number of Gibb steps
+    - CHECKPOINT : int
+        - How often to write to disk
+    - MP_FILTERING : str
+        - How to do multiprocessing for filtering
+    - LEARN : Dict[str, bool]
+        - These are the dictionary of parameters which we are learning in the model.
+        - If the name maps to True, then we learn it during inference. If it maps to 
+          false, then we do not update its value duting inference.
+    - INFERENCE_ORDER : list
+        - This is the order to update the parameters during MCMC inference
+    - INITIALIZATION_KWARGS : Dict[str, Dict[str, Any]]
+        - These are the parameters to send into the `initialize` function for each variable
+          that we are learning
+    - INITIALIZATION_ORDER : list
+        - This is the order to initialize the variables
 
     Parameters
     ----------

@@ -737,20 +737,20 @@ class ProcessVarGlobal(pl.variables.SICS):
     def update(self):
         '''Update the process variance
 
-        y = (log(x_{k+1}) - log(x_k))/dt
-        Xb = a_1 (1 + \gamma) + A x
+        ..math:: y = (log(x_{k+1}) - log(x_k))/dt
+        ..math:: Xb = a_1 (1 + \\gamma) + A x
 
         % These are our dynamics with the process variance
-        y ~ Normal(Xb , \sigma^2_w / dt)
+        ..math:: y ~ Normal(Xb , \\sigma^2_w / dt)
 
         % Subtract the mean
-        y - Xb ~ Normal( 0, \sigma^2_w / dt)
+        ..math:: y - Xb ~ Normal( 0, \sigma^2_w / dt)
         
         % Substitute
-        z = y - Xb 
+        ..math:: z = y - Xb 
 
-        z ~ Normal (0, \sigma^2_w / dt)
-        z * \sqrt{dt} ~ Normal (0, \sigma^2_w)
+        ..math:: z ~ Normal (0, \\sigma^2_w / dt)
+        ..math:: z * \\sqrt{dt} ~ Normal (0, \\sigma^2_w)
 
         This is now in a form we can use to calculate the posterior
         '''
@@ -804,7 +804,7 @@ class Concentration(pl.variables.Gamma):
     ----------
     prior : mdsine2.variables.Gamma
         Prior distribution
-    value (float, int)
+    value : float, int
         - Initial value of the concentration
         - Default value is the mean of the prior
     n_iter : int
@@ -826,20 +826,20 @@ class Concentration(pl.variables.Gamma):
 
         Parameters
         ----------
-        value_option (str)
+        value_option : str
             - Options to initialize the value
             - 'manual'
                 - Set the value manually, `value` must also be specified
             - 'auto', 'prior-mean'
                 - Set to the mean of the prior
-        hyperparam_option (str)
+        hyperparam_option : str
             - Options ot initialize the hyperparameters
             - Options
                 - 'manual'
                     - Set the values manually. `shape` and `scale` must also be specified
                 - 'auto', 'diffuse'
                     - shape = 1e-5, scale= 1e5
-        shape, scale (int, float)
+        shape, scale : int, float
             - User specified values
             - Only necessary if `hyperparam_option` == 'manual'
         '''
@@ -925,29 +925,29 @@ class ClusterAssignments(pl.graph.Node):
     marginalize out the cluster that the Taxa belongs to - this means marginalizing
     out the interactions going in and out of the cluster in question, along with all
     the perturbations associated with it.
+
+    Parameters
+    ----------
+    clustering : pylab.cluster.Clustering
+        - Defines the clusters
+    concentration : pylab.Variable or subclass of pylab.Variable
+        - Defines the concentration parameter for the base distribution
+    m : int, Optional
+        - Number of auxiliary variables defined in the model
+        - Default is 1
+    mp : str, None
+        - This is the type of multiprocessing it is going to be. Options:
+            - None
+                - No multiprocessing
+            - 'full-#'
+                - Send out to the different processors, where '#' is the number of
+                  processors to make
+            - 'debug'
+                - Send out to the different classes but stay on a single core. This
+                  is necessary for benchmarking and easier debugging.
     '''
     def __init__(self, clustering: pl.Clustering, concentration: Concentration,
         m: int=1, mp: str=None, **kwargs):
-        '''Parameters
-
-        clustering (pylab.cluster.Clustering)
-            - Defines the clusters
-        concentration (pylab.Variable or subclass of pylab.Variable)
-            - Defines the concentration parameter for the base distribution
-        m (int, Optional)
-            - Number of auxiliary variables defined in the model
-            - Default is 1
-        mp : str, None
-            This is the type of multiprocessing it is going to be. Options:
-                None
-                    No multiprocessing
-                'full-#'
-                    Send out to the different processors, where '#' is the number of
-                    processors to make
-                'debug'
-                    Send out to the different classes but stay on a single core. This
-                    is necessary for benchmarking and easier debugging.
-        '''
         self.clustering = clustering # mdsine2.pylab.cluster.Clustering object
         self.concentration = concentration # mdsine2.posterior.Concentration
         self.m = m # int
@@ -1009,37 +1009,35 @@ class ClusterAssignments(pl.graph.Node):
         Parameters
         ----------
         value_option : str
-            The different methods to initialize the clusters
-            Options
-                'manual'
-                    Manually set the cluster assignments
-                'no-clusters'
-                    Every Taxa in their own cluster
-                'random'
-                    Every Taxa is randomly assigned to the number of clusters. `n_clusters` required
-                'taxonomy'
-                    Cluster Taxa based on their taxonomic similarity. `n_clusters` required
-                'sequence'
-                    Cluster Taxa based on their sequence similarity. `n_clusters` required
-                'phylogeny'
-                    Cluster Taxa based on their phylogenetic similarity. `n_clusters` required
-                'spearman', 'auto'
-                    Creates a distance matrix based on the spearman rank similarity
-                    between two trajectories. We use the raw data. `n_clusters` required
-                'fixed-clustering'
-                    Sets the clustering assignment to the most likely clustering configuration
-                    specified in the graph at the location `value` (`value` is a str).
-                    We take the mean coclusterings and do agglomerative clustering on that matrix
-                    with the `mode` number of clusters.
+            - The different methods to initialize the clusters. Options:
+                - 'manual'
+                    - Manually set the cluster assignments
+                - 'no-clusters'
+                    - Every Taxa in their own cluster
+                - 'random'
+                    - Every Taxa is randomly assigned to the number of clusters. `n_clusters` required
+                - 'taxonomy'
+                    - Cluster Taxa based on their taxonomic similarity. `n_clusters` required
+                - 'sequence'
+                    - Cluster Taxa based on their sequence similarity. `n_clusters` required
+                - 'phylogeny'
+                    - Cluster Taxa based on their phylogenetic similarity. `n_clusters` required
+                - 'spearman', 'auto'
+                    - Creates a distance matrix based on the spearman rank similarity
+                      between two trajectories. We use the raw data. `n_clusters` required
+                - 'fixed-clustering'
+                    - Sets the clustering assignment to the most likely clustering configuration
+                      specified in the graph at the location `value` (`value` is a str).
+                    - We take the mean coclusterings and do agglomerative clustering on that matrix
+                      with the `mode` number of clusters.
         hyperparam_option : None
             Not used in this function - only here for API consistency
         value : list of list
-            Cluster assingments for each of the Taxa
-            Only necessary if `value_option` == 'manual'
+            - Cluster assingments for each of the Taxa
+            - Only necessary if `value_option` == 'manual'
         n_clusters : int, str
-            Necessary if `value_option` is not 'manual' or 'no-clusters'
-            If str, options:
-                'expected', 'auto': log_2(n_taxa)
+            - Necessary if `value_option` is not 'manual' or 'no-clusters'.
+            - If str, options: 'expected', 'auto': log_2(n_taxa)
         run_every_n_iterations : int
             Only run the update every `run_every_n_iterations` iterations
         '''
@@ -2507,13 +2505,13 @@ class FilteringLogMP(pl.graph.Node):
         Parameters
         ----------
         mp : str
-            'debug'
-                Does not actually parallelize, does it serially - we do this in case we
-                want to debug and/or benchmark
-            'full'
+            - 'debug'
+                * Does not actually parallelize, does it serially - we do this in case we
+                  want to debug and/or benchmark
+            - 'full'
                 Send each replicate to a processor each
         zero_inflation_transition_policy : None, str
-            Type of zero inflation to do. If None then there is no zero inflation
+            - Type of zero inflation to do. If None then there is no zero inflation
         '''
         kwargs['name'] = STRNAMES.FILTERING
         pl.graph.Node.__init__(self, **kwargs)
@@ -2548,23 +2546,23 @@ class FilteringLogMP(pl.graph.Node):
         Parameters
         ----------
         x_value_option : str
-            Option to initialize the value of the latent trajectory.
-            Options
-                'coupling'
-                    Sample the values around the data with extremely low variance.
-                    This also truncates the data so that it stays > 0.
-                'moving-avg'
-                    Initialize the values using a moving average around the points.
-                    The bandwidth of the filter is by number of days, not the order
-                    of timepoints. You must also provide the argument `bandwidth`.
-                'loess', 'auto'
-                    Implements the initialization of the values using LOESS (Locally
-                    Estimated Scatterplot Smoothing) algorithm. You must also provide
-                    the `window` parameter
+            - Option to initialize the value of the latent trajectory.
+            - Options
+                - 'coupling'
+                    - Sample the values around the data with extremely low variance.
+                    - This also truncates the data so that it stays > 0.
+                - 'moving-avg'
+                    - Initialize the values using a moving average around the points.
+                    - The bandwidth of the filter is by number of days, not the order
+                      of timepoints. You must also provide the argument `bandwidth`.
+                - 'loess', 'auto'
+                    - Implements the initialization of the values using LOESS (Locally
+                    - Estimated Scatterplot Smoothing) algorithm. You must also provide
+                      the `window` parameter
         tune : tuple(int, int)
-            This is how often to tune the individual covariances
-            The first element indicates which MCMC sample to stop the tuning
-            The second element is how often to update the proposal covariance
+            - This is how often to tune the individual covariances
+            - The first element indicates which MCMC sample to stop the tuning
+            - The second element is how often to update the proposal covariance
         a0, a1 : float, str
             These are the hyperparameters to calculate the dispersion of the
             negative binomial.
@@ -2572,38 +2570,38 @@ class FilteringLogMP(pl.graph.Node):
             These are the values used to calulcate the coupling variance between
             x and q
         intermediate_step : tuple(str, args), array, None
-            This is the type of interemediate timestep to intialize and the arguments
-            for them. If this is None, then we do no intermediate timesteps.
-            Options:
-                'step'
-                    args: (stride (numeric), eps (numeric))
-                    We simulate at each timepoint every `stride` days.
-                    We do not set an intermediate time point if it is within `eps`
-                    days of a given data point.
-                'preserve-density'
-                    args: (n (int), eps (numeric))
-                    We preserve the denisty of the given data by only simulating data
-                    `n` times between each essential datapoint. If a timepoint is within
-                    `eps` days of a given timepoint then we do not make an intermediate
-                    point there.
-                'manual;
-                    args: np.ndarray
-                    These are the points that we want to set. If these are not given times
-                    then we set them as timepoints
+            - This is the type of interemediate timestep to intialize and the arguments
+              for them. If this is None, then we do no intermediate timesteps.
+            - Options:
+                * 'step'
+                    - args: (stride (numeric), eps (numeric))
+                    - We simulate at each timepoint every `stride` days.
+                    - We do not set an intermediate time point if it is within `eps`
+                      days of a given data point.
+                * 'preserve-density'
+                    - args: (n (int), eps (numeric))
+                    - We preserve the denisty of the given data by only simulating data
+                    - `n` times between each essential datapoint. If a timepoint is within
+                    - `eps` days of a given timepoint then we do not make an intermediate
+                      point there.
+                * 'manual;
+                    - args: np.ndarray
+                    - These are the points that we want to set. If these are not given times
+                      then we set them as timepoints
         intermediate_interpolation : str
-            This is the type of interpolation to perform on the intermediate timepoints.
-            Options:
-                'linear-interpolation', 'auto'
-                    Perform linear interpolation between the two closest given timepoints
+            - This is the type of interpolation to perform on the intermediate timepoints.
+            - Options:
+                - 'linear-interpolation', 'auto'
+                    - Perform linear interpolation between the two closest given timepoints
         essential_timepoints : np.ndarray, str, None
-            These are the timepoints that must be included in each subject. If one of the
-            subjects has a missing timepoint there then we use an intermediate time point
-            that this timepoint. It is initialized with linear interpolation. If all of the
-            timepoints specified in this vector are included in a subject then nothing is
-            done. If it is a str:
-                'union', 'auto'
-                    We take a union of all the timepoints in each subject and make sure
-                    that all of the subjects have all those points.
+            - These are the timepoints that must be included in each subject. If one of the
+              subjects has a missing timepoint there then we use an intermediate time point
+              that this timepoint. It is initialized with linear interpolation. If all of the
+              timepoints specified in this vector are included in a subject then nothing is
+              done. If it is a str:
+                - 'union', 'auto'
+                    * We take a union of all the timepoints in each subject and make sure
+                      that all of the subjects have all those points.
         bandwidth : float
             This is the day bandwidth of the filter if the initialization method is
             done with 'moving-avg'.
@@ -3048,43 +3046,43 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
     General efficiency speedups
     ---------------------------
-    All of these are done relative to a non-optimized filtering implementation
-        - Specialized sampling and logpdf functions. About 95% faster than
-          scipy or numpy functions. All of these add up to a ~35% speed up
-        - Explicit function definitions:
-          instead of doing `self.prior.logpdf(...)`, we do
-          `pl.random.normal.logpdf(...)`, about a ~10% overall speedup
-        - Precomputation of values so that the least amout of computation
-          is done on a data level - All of these add up to a ~25% speed up
+    All of these are done relative to a non-optimized filtering implementation:
+    - Specialized sampling and logpdf functions. About 95% faster than
+      scipy or numpy functions. All of these add up to a ~35% speed up
+    - Explicit function definitions:
+      instead of doing `self.prior.logpdf(...)`, we do
+      `pl.random.normal.logpdf(...)`, about a ~10% overall speedup
+    - Precomputation of values so that the least amout of computation
+      is done on a data level - All of these add up to a ~25% speed up
     Benchmarked on a MacPro
 
     Non/trivial efficiency speedups w.r.t. non-multiprocessed filtering
     -------------------------------------------------------------------
     All of the speed ups are done relative to the current implementation
     in non-multiprocessed filtering.
-        - Whenever possible we replace a 2D variable like `self.x` with a
-          `curr_x`, which is 1D, because indexing a 1D array is 10-20% faster
-          than a 2D array. All of these add up to a ~8% speed up
-        - We only every compute the forward dynamics (not the reverse), because
-          we can use the forward of the previous timepoint as the reverse for
-          the next timepoint. This is about 45% faster and adds up to a ~40%
-          speedup.
-        - Whenever possible, we replace a dictionary like `read_depths`
-          with a float because indexing a dict is 12-20% slower than a 1D
-          array. All these add up to a ~7% speed up
-        - We precompute AS MUCH AS POSSIBLE in `update` and in `initialize`,
-          even simple this as `self.curr_tidx_minus_1`: all of these add up
-          to about ~5% speedup
-        - If an attribute of a class is being referenced more than once in
-          a subroutine, we "get" it by making it a local variable. Example:
-          `tidx = self.tidx`. This has about a 5% speed up PER ADDITIONAL
-          CALL within the subroutine. All of these add up to ~2.5% speed up.
-        - If an indexed value gets indexed more than once within a subroutine,
-          we "get" the value by making it a local variable. All of these
-          add up to ~4% speed up.
-        - We "get" all of the means and stds of the qPCR data-structures so we
-          do not reference an object. This is about 22% faster and adds up
-          to a ~3% speed up.
+    - Whenever possible we replace a 2D variable like `self.x` with a
+      `curr_x`, which is 1D, because indexing a 1D array is 10-20% faster
+      than a 2D array. All of these add up to a ~8% speed up
+    - We only every compute the forward dynamics (not the reverse), because
+      we can use the forward of the previous timepoint as the reverse for
+      the next timepoint. This is about 45% faster and adds up to a ~40%
+      speedup.
+    - Whenever possible, we replace a dictionary like `read_depths`
+      with a float because indexing a dict is 12-20% slower than a 1D
+      array. All these add up to a ~7% speed up
+    - We precompute AS MUCH AS POSSIBLE in `update` and in `initialize`,
+      even simple this as `self.curr_tidx_minus_1`: all of these add up
+      to about ~5% speedup
+    - If an attribute of a class is being referenced more than once in
+      a subroutine, we "get" it by making it a local variable. Example:
+      `tidx = self.tidx`. This has about a 5% speed up PER ADDITIONAL
+      CALL within the subroutine. All of these add up to ~2.5% speed up.
+    - If an indexed value gets indexed more than once within a subroutine,
+      we "get" the value by making it a local variable. All of these
+      add up to ~4% speed up.
+    - We "get" all of the means and stds of the qPCR data-structures so we
+      do not reference an object. This is about 22% faster and adds up
+      to a ~3% speed up.
     Benchmarked on a MacPro
     '''
     def __init__(self):
@@ -4018,15 +4016,15 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
 
     Note that in the beta prior, `a` is the number of ons, `b` is the 
     number of offs.
+
+    Parameters
+    ----------
+    prior : pl.variables.Beta
+        Prior probability
+    kwargs : dict
+        Other options like graph, value
     '''
     def __init__(self, prior: variables.Beta, **kwargs):
-        '''Parameters
-
-        prior (pl.variables.Beta)
-            - prior probability
-        **kwargs
-            - Other options like graph, value
-        '''
         kwargs['name'] = STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB
         pl.variables.Beta.__init__(self, a=prior.a.value, b=prior.b.value,
             dtype=float, **kwargs)
@@ -4199,26 +4197,26 @@ class ClusterInteractionValue(pl.variables.MVN):
         Parameters
         ----------
         value_option : str
-            This is how to initialize the values
-            Options:
-                'manual'
-                    Set the values of the interactions manually. `value` and `indicators`
-                    must also be specified. We assume the values are only set for when
-                    `indicators` is True, and that the order of the `indicators` and `values`
-                    correspond to how we iterate over the interactions
-                    Example
-                        3 Clusters
-                        indicators = [True, False, False, True, False, True]
-                        value = [0.2, 0.8, -0.35]
-                'all-off', 'auto'
-                    Set all of the interactions and the indicators to 0
-                'all-on'
-                    Set all of the indicators to on and all the values to 0
+            - This is how to initialize the values
+            - Options:
+                - 'manual'
+                    - Set the values of the interactions manually. `value` and `indicators`
+                      must also be specified. We assume the values are only set for when
+                      `indicators` is True, and that the order of the `indicators` and `values`
+                      correspond to how we iterate over the interactions
+                    - Example
+                        * 3 Clusters
+                        * indicators = [True, False, False, True, False, True]
+                        * value = [0.2, 0.8, -0.35]
+                - 'all-off', 'auto'
+                    - Set all of the interactions and the indicators to 0
+                - 'all-on'
+                    - Set all of the indicators to on and all the values to 0
         delay : int
             How many MCMC iterations to delay starting to update
         See also
         --------
-        `pylab.cluster.Interactions.set_values`
+        `mdsine2.pylab.cluster.Interactions.set_values`
         '''
         self.obj.set_signal_when_clusters_change(True)
         self.G[STRNAMES.INTERACTIONS_OBJ].value_initializer = self.prior.sample
@@ -4633,57 +4631,57 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         Parameters that we create with this function
         --------------------------------------------
-        ys : dict (int -> np.ndarray)
-            Maps the target cluster id to the observation matrix that it
-            corresponds to (only the Taxa in the target cluster). This 
-            array already has the growth and self-interactions subtracted
-            out:
-                $ \frac{log(x_{k+1}) - log(x_{k})}{dt} - a_{1,k} - a_{2,k}x_{k} $
-        process_precs : dict (int -> np.ndarray)
-            Maps the target cluster id to the vector of the process precision
-            that corresponds to the target cluster (only the Taxa in the target
-            cluster). This is a 1D array that corresponds to the diagonal of what
-            would be the precision matrix.
-        interactionXs : dict (int -> np.ndarray)
-            Maps the target cluster id to the matrix of the design matrix of the
-            interactions. Only includes the rows that correspond to the Taxa in the
-            target cluster. It includes every single column as if all of the indicators
-            are on. We only index out the columns when we are doing the marginalization.
-        prior_prec_interaction : float
-            Prior precision of the interaction value. We then use this
-            value to make the diagonal of the prior precision.
-        prior_var_interaction : float
-            Prior variance of the interaction value.
-        prior_mean_interaction : float
-            Prior mean of the interaction values. We use this value
-            to make the prior mean vector during the marginalization.
-        n_on_master : int
-            How many interactions are on at any one time. We adjust this
-            throughout the update depending on what interactions we turn off and
-            on.
-        prior_ll_on : float
-            Prior log likelihood of a positive interaction
-        prior_ll_off : float
-            Prior log likelihood of the negative interaction
-        priorvar_logdet_diff : float
-            This is the prior variance log determinant that we add when the indicator
-            is positive.
+        - ys : dict (int -> np.ndarray)
+            - Maps the target cluster id to the observation matrix that it
+              corresponds to (only the Taxa in the target cluster). This 
+              array already has the growth and self-interactions subtracted
+              out:
+                * $ \frac{log(x_{k+1}) - log(x_{k})}{dt} - a_{1,k} - a_{2,k}x_{k} $
+        - process_precs : dict (int -> np.ndarray)
+            - Maps the target cluster id to the vector of the process precision
+              that corresponds to the target cluster (only the Taxa in the target
+              cluster). This is a 1D array that corresponds to the diagonal of what
+              would be the precision matrix.
+        - interactionXs : dict (int -> np.ndarray)
+            - Maps the target cluster id to the matrix of the design matrix of the
+              interactions. Only includes the rows that correspond to the Taxa in the
+              target cluster. It includes every single column as if all of the indicators
+              are on. We only index out the columns when we are doing the marginalization.
+        - prior_prec_interaction : float
+            - Prior precision of the interaction value. We then use this
+              value to make the diagonal of the prior precision.
+        - prior_var_interaction : float
+            - Prior variance of the interaction value.
+        - prior_mean_interaction : float
+            - Prior mean of the interaction values. We use this value
+              to make the prior mean vector during the marginalization.
+        - n_on_master : int
+            - How many interactions are on at any one time. We adjust this
+              throughout the update depending on what interactions we turn off and
+              on.
+        - prior_ll_on : float
+            - Prior log likelihood of a positive interaction
+        - prior_ll_off : float
+            - Prior log likelihood of the negative interaction
+        - priorvar_logdet_diff : float
+            - This is the prior variance log determinant that we add when the indicator
+              is positive.
 
         Parameters created if there are perturbations
         ---------------------------------------------
-        perturbationsXs : dict (int -> np.ndarray)
-            Maps the target cluster id to the design matrix that corresponds to 
-            the on perturbations of the target clusters. This is preindexed in
-            both rows and columns
-        prior_prec_perturbations : dict (int -> np.ndarray)
-            Maps the target cluster id to the diagonal of the prior precision
-            of the perturbations
-        prior_var_perturbations : dict (int -> np.ndarray)
-            Maps the target cluster id to the diagonal of the prior variance 
-            of the perturbations
-        prior_mean_perturbations : dict (int -> np.ndarray)
-            Maps the target cluster id to the vector of the prior mean of the
-            perturbations
+        - perturbationsXs : dict (int -> np.ndarray)
+            - Maps the target cluster id to the design matrix that corresponds to 
+              the on perturbations of the target clusters. This is preindexed in
+              both rows and columns
+        - prior_prec_perturbations : dict (int -> np.ndarray)
+            - Maps the target cluster id to the diagonal of the prior precision
+              of the perturbations
+        - prior_var_perturbations : dict (int -> np.ndarray)
+            - Maps the target cluster id to the diagonal of the prior variance 
+              of the perturbations
+        - prior_mean_perturbations : dict (int -> np.ndarray)
+            - Maps the target cluster id to the vector of the prior mean of the
+              perturbations
         '''
         # Get the row indices for each cluster
         row_idxs = self._make_idx_vector_for_clusters()
@@ -5903,37 +5901,35 @@ class Growth(pl.variables.TruncatedNormal):
         Parameters
         ----------
         value_option : str
-            How to initialize the values.
-            Options:
-                'manual'
-                    Set the values manually. `value` must also be specified.
-                'linear regression'
-                    Set the values of the growth using linear regression
-                'ones'
-                    Set all of the values to 1.
-                'auto'
-                    Alias for 'ones'
-                'prior-mean'
-                    Set to the mean of the prior
+            - How to initialize the values. Options:
+                - 'manual'
+                    - Set the values manually. `value` must also be specified.
+                - 'linear regression'
+                    - Set the values of the growth using linear regression
+                - 'ones'
+                    - Set all of the values to 1.
+                - 'auto'
+                    - Alias for 'ones'
+                - 'prior-mean'
+                    - Set to the mean of the prior
         value : array
             Only necessary if `value_option` is 'manual'
         delay : int
             How many MCMC iterations to delay starting to update
         truncation_settings : str, tuple, None
-            These are the settings of how you set the upper and lower limit of the
-            truncated distribution. If it is None, it will default to 'standard'.
-            Options
-                'positive', None
-                    Only constrains the values to being positive
-                    low=0., high=float('inf')
-                'in-vivo', 'auto'
-                    Tighter constraint on the growth values.
-                    low=0.1, high=ln(10)
-                    These values have the following meaning
-                        The slowest growing microbe will grow an order of magnitude in ~10 days
-                        The fastest growing microbe will grow an order of magnitude in 1 day
-                tuple(low, high)
-                    These are manually specified values for the low and high
+            - These are the settings of how you set the upper and lower limit of the
+              truncated distribution. If it is None, it will default to 'standard'. Options:
+                - 'positive', None
+                    - Only constrains the values to being positive
+                    - low=0., high=float('inf')
+                - 'in-vivo', 'auto'
+                    - Tighter constraint on the growth values.
+                    - low=0.1, high=ln(10)
+                    - These values have the following meaning
+                        - The slowest growing microbe will grow an order of magnitude in ~10 days
+                        - The fastest growing microbe will grow an order of magnitude in 1 day
+                - tuple(low, high)
+                    - These are manually specified values for the low and high
         '''
         self._initialized = True
         self._there_are_perturbations = self.G.perturbations is not None
@@ -6209,44 +6205,44 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         Parameters
         ----------
         value_option : str
-            How to initialize the values.
-            Options:
-               'manual'
-                    Set the values manually. `value` must also be specified.
-                'fixed-growth'
-                    Fix the growth values and then sample the self-interactions
-                'strict-enforcement-partial'
-                    Do an unregularized regression then take the absolute value of the numbers.
-                    We assume there are no interactions and we index out the time points that have
-                    perturbations in them. We assume that we do not know the growths (the growths
-                    are being regressed as well).
-                'strict-enforcement-full'
-                    Do an unregularized regression then take the absolute value of the numbers.
-                    We assume there are no interactions and we index out the time points that have
-                    perturbations in them. We assume that we know the growths (the growths are on
-                    the lhs)
-                'steady-state', 'auto'
-                    Set to the steady state values. Must also provide the quantile with the
-                    parameter `q`. In here we assume that the steady state is the `q`th quantile
-                    of the off perturbation data
-                'prior-mean'
-                    Set the value to the mean of the prior
+            - How to initialize the values.
+            - Options:
+               - 'manual'
+                    - Set the values manually. `value` must also be specified.
+                - 'fixed-growth'
+                    - Fix the growth values and then sample the self-interactions
+                - 'strict-enforcement-partial'
+                    - Do an unregularized regression then take the absolute value of the numbers.
+                    - We assume there are no interactions and we index out the time points that have
+                      perturbations in them. We assume that we do not know the growths (the growths
+                      are being regressed as well).
+                - 'strict-enforcement-full'
+                    - Do an unregularized regression then take the absolute value of the numbers.
+                    - We assume there are no interactions and we index out the time points that have
+                      perturbations in them. We assume that we know the growths (the growths are on
+                      the lhs)
+                - 'steady-state', 'auto'
+                    - Set to the steady state values. Must also provide the quantile with the
+                      parameter `q`. In here we assume that the steady state is the `q`th quantile
+                      of the off perturbation data
+                - 'prior-mean'
+                    - Set the value to the mean of the prior
         truncation_settings : str, 2-tuple
-            How to set the truncations for the normal distribution
-            (low,high)
-                These are the low and high values
-            'negative'
-                Truncated (-inf, 0)
-            'positive', 'auto'
-                Truncated (0, inf)
-            'human'
-                This assumes that the range of the steady state abundances of the human gut
-                fluctuate between 1e2 and  1e13. We requie that the growth value be initialized first.
-                We set the vlaues to be (growth.high/1e14, growth.low/1e2)
-            'mouse'
-                This assumes that the range of the steady state abundances of the mouse gut
-                fluctuate between 1e2 and  1e12. We requie that the growth value be initialized first.
-                We set the vlaues to be (growth.high/1e13, growth.low/1e2)
+            - How to set the truncations for the normal distribution
+            - (low,high)
+                - These are the low and high values
+            - 'negative'
+                - Truncated (-inf, 0)
+            - 'positive', 'auto'
+                - Truncated (0, inf)
+            - 'human'
+                - This assumes that the range of the steady state abundances of the human gut
+                  fluctuate between 1e2 and  1e13. We requie that the growth value be initialized first.
+                - We set the vlaues to be (growth.high/1e14, growth.low/1e2)
+            - 'mouse'
+                - This assumes that the range of the steady state abundances of the mouse gut
+                  fluctuate between 1e2 and  1e12. We requie that the growth value be initialized first.
+                - We set the vlaues to be (growth.high/1e13, growth.low/1e2)
         value : array
             Only necessary if `value_option` is 'manual'
         mean : array
@@ -6254,8 +6250,8 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         delay : int
             How many MCMC iterations to delay starting to update
         rescale_value : None, float
-            This is the rescale value of the qPCR. This will rescale the truncation settings.
-            This is only used for either the 'mouse' or 'human' settings
+            - This is the rescale value of the qPCR. This will rescale the truncation settings.
+            - This is only used for either the 'mouse' or 'human' settings
         '''
         self._there_are_perturbations = self.G.perturbations is not None
         if not pl.isint(delay):
@@ -7331,14 +7327,14 @@ class PerturbationIndicators(pl.Node):
 
         Parameters
         ----------
-        value_option (str)
-            Different ways to initialize the values. Options:
-                'auto', 'all-off'
-                    Turn all of the indicators off
-                'all-on'
-                    Turn all the indicators on
-                'random'
-                    Randomly assign the indicator with probability `p`
+        value_option : str
+            - Different ways to initialize the values. Options:
+                - 'auto', 'all-off'
+                    - Turn all of the indicators off
+                - 'all-on'
+                    - Turn all the indicators on
+                - 'random'
+                    - Randomly assign the indicator with probability `p`
         p : float
             Only required if `value_option` == 'random'
         delay : int
@@ -7463,46 +7459,46 @@ class PerturbationIndicators(pl.Node):
 
         Parameters that we create with this function
         --------------------------------------------
-        ys : dict (int -> np.ndarray)
-            Maps the target cluster id to the observation matrix that it
-            corresponds to (only the Taxa in the target cluster). This 
-            array already has the growth and self-interactions subtracted
-            out:
-                $ \frac{log(x_{k+1}) - log(x_{k})}{dt} - a_{1,k} - a_{2,k}x_{k} $
-        process_precs : dict (int -> np.ndarray)
-            Maps the target cluster id to the vector of the process precision
-            that corresponds to the target cluster (only the Taxa in the target
-            cluster). This is a 1D array that corresponds to the diagonal of what
-            would be the precision matrix.
-        interactionXs : dict (int -> np.ndarray)
-            Maps the target cluster id to the design matrix for the interactions
-            going into that cluster. We pre-index it with the rows and columns
-        prior_prec_interaction : dict (int -> np.ndarray)
-            Maps the target cluster id to to the diagonal of the prior precision 
-            for the interaction values.
-        prior_mean_interaction : dict (int -> np.ndarray)
-            Maps the target cluster id to to the diagonal of the prior mean 
-            for the interaction values.
-        prior_ll_ons : np.ndarray
-            Prior log likelihood of a positive indicator. These are separate for each
-            perturbation.
-        prior_ll_offs : np.ndarray
-            Prior log likelihood of the negative indicator. These are separate for each
-            perturbation.
-        priorvar_logdet_diffs : np.ndarray
-            This is the prior variance log determinant that we add when the indicator
-            is positive. This is different for each perturbation.
-        perturbationsXs : dict (int -> np.ndarray)
-            Maps the target cluster id to the design matrix that corresponds to 
-            the on perturbations of the target clusters. This is preindexed by the 
-            rows but not the columns - the columns assume that all of the perturbations
-            are on and we index the ones that we want.
-        prior_prec_perturbations : np.ndarray
-            This is the prior precision of the magnitude for each of the perturbations. Use
-            the perturbation index to get the value
-        prior_mean_perturbations : np.ndarray
-            This is the prior mean of the magnitude for each one of the perturbations. Use
-            the perturbation index to get the value
+        - ys : dict (int -> np.ndarray)
+            - Maps the target cluster id to the observation matrix that it
+              corresponds to (only the Taxa in the target cluster). This 
+              array already has the growth and self-interactions subtracted
+              out:
+                - $ \frac{log(x_{k+1}) - log(x_{k})}{dt} - a_{1,k} - a_{2,k}x_{k} $
+        - process_precs : dict (int -> np.ndarray)
+            - Maps the target cluster id to the vector of the process precision
+              that corresponds to the target cluster (only the Taxa in the target
+              cluster). This is a 1D array that corresponds to the diagonal of what
+              would be the precision matrix.
+        - interactionXs : dict (int -> np.ndarray)
+            - Maps the target cluster id to the design matrix for the interactions
+              going into that cluster. We pre-index it with the rows and columns
+        - prior_prec_interaction : dict (int -> np.ndarray)
+            - Maps the target cluster id to to the diagonal of the prior precision 
+              for the interaction values.
+        - prior_mean_interaction : dict (int -> np.ndarray)
+            - Maps the target cluster id to to the diagonal of the prior mean 
+              for the interaction values.
+        - prior_ll_ons : np.ndarray
+            - Prior log likelihood of a positive indicator. These are separate for each
+              perturbation.
+        - prior_ll_offs : np.ndarray
+            - Prior log likelihood of the negative indicator. These are separate for each
+              perturbation.
+        - priorvar_logdet_diffs : np.ndarray
+            - This is the prior variance log determinant that we add when the indicator
+              is positive. This is different for each perturbation.
+        - perturbationsXs : dict (int -> np.ndarray)
+            - Maps the target cluster id to the design matrix that corresponds to 
+              the on perturbations of the target clusters. This is preindexed by the 
+              rows but not the columns - the columns assume that all of the perturbations
+              are on and we index the ones that we want.
+        - prior_prec_perturbations : np.ndarray
+            - This is the prior precision of the magnitude for each of the perturbations. Use
+              the perturbation index to get the value
+        - prior_mean_perturbations : np.ndarray
+            - This is the prior mean of the magnitude for each one of the perturbations. Use
+              the perturbation index to get the value
         '''
         row_idxs = self._make_idx_for_clusters()
 

@@ -35,12 +35,15 @@ import shutil
 import inspect
 import pickle
 from orderedset import OrderedSet
-
 import numpy as np
 
-from .graph import get_default_graph, isgraph, isnode
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
+    Callable, Type
+
+from .graph import get_default_graph, isgraph, isnode, Graph, Node
 from .base import Saveable
-from .variables import isVariable
+from .variables import isVariable, Variable
 from .errors import UndefinedError, InheritanceError
 from . import util
 from .random import seed as set_seed
@@ -50,13 +53,7 @@ DEFAULT_LOG_EVERY = 5
 REQUIRED_ATTRS = [&#39;update&#39;, &#39;initialize&#39;, &#39;set_trace&#39;, &#39;add_trace&#39;]
 GLOBAL_PARAMETER = -1
 
-def OLS(covariates, observations):
-    &#39;&#39;&#39;observations = covariates @ beta
-    Moore-Penrose pseudoinverse
-    &#39;&#39;&#39;
-    return np.linalg.inv(covariates.T @ covariates) @ covariates.T @ observations
-
-def isMCMC(x):
+def isMCMC(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if the input array is an MCMC inference object
 
     Parameters
@@ -71,7 +68,7 @@ def isMCMC(x):
     &#39;&#39;&#39;
     return x is not None and issubclass(x.__class__, BaseMCMC)
 
-def ismodel(x):
+def ismodel(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if the input array is a model object
 
     Parameters
@@ -96,7 +93,7 @@ class BaseModel(Saveable):
         The graph we want to do the inference over
         If nothing is provided, it grabs the default graph
     &#39;&#39;&#39;
-    def __init__(self, graph):
+    def __init__(self, graph: Graph=None):
         if graph is None:
             graph = get_default_graph()
         if not isgraph(graph):
@@ -112,14 +109,16 @@ class BaseMCMC(BaseModel):
 
     Typical use
     -----------
-    You first initialize the object with the graph and parameters you want
+    ```
+    &gt;&gt;&gt; # You first initialize the object with the graph and parameters you want
     &gt;&gt;&gt; inf = BaseMCMC(burnin=1000, n_samples=2000, graph=G)
-    Then you set the inference order
+    &gt;&gt;&gt; # Then you set the inference order
     &gt;&gt;&gt; inf.set_inference_order([&#39;a&#39;, &#39;b&#39;, &#39;c&#39;])
-    Then set some diagnostic variables (Optional)
+    &gt;&gt;&gt; # Then set some diagnostic variables (Optional)
     &gt;&gt;&gt; inf.set_diagnostic_variables([&#39;e&#39;])
-    Then we can run the inference
-    &gt;&gt;&gt; inf.run(log_every=5, ckpt=100, tracer_filename=&#39;./output/tracer.hdf5&#39;)
+    &gt;&gt;&gt; # Then we can run the inference
+    &gt;&gt;&gt; inf.run(log_every=5, checkpoint=100, tracer_filename=&#39;./output/tracer.hdf5&#39;)
+    ```
 
     Inference order
     ---------------
@@ -152,7 +151,7 @@ class BaseMCMC(BaseModel):
         Number of posterior samples = n_samples-burnin
     &#39;&#39;&#39;
 
-    def __init__(self, burnin, n_samples, * args, **kwargs):
+    def __init__(self, burnin: int, n_samples: int, * args, **kwargs):
         BaseModel.__init__(self, *args, **kwargs)
         if not util.isint(burnin):
             raise TypeError(&#39;`burnin` ({}) must be an int&#39;.format(type(burnin)))
@@ -164,18 +163,22 @@ class BaseMCMC(BaseModel):
 
         self.burnin = burnin
         self.n_samples = n_samples
-        self.sample_iter = 0
-        self.inf_order = None
-        self.diagnostic_variables = None
-        self.tracer = None
-        self.start_step = None
+        self.sample_iter = 0 # This holds the current sample we are at
+        self.inf_order = None # This is a list of the inference order
+        self.diagnostic_variables = None # DEPRECIATED
+        self.tracer = None # This is a pointer to the pylab.inference.Tracer object
 
-        self._intermediate_func = None
-        self._intermediate_t = None
-        self._intermediate_kwargs = None
+        # This is the sample iteration to start on. Unless we are loading from a 
+        # saved MCMC object, then this will be 0
+        self.start_step = None 
+
+        # Functions to save intermediately, this is used for semisynthetic
+        self._intermediate_func = None # callable
+        self._intermediate_t = None # float
+        self._intermediate_kwargs = None # dict
 
     @classmethod
-    def load(cls, filename):
+    def load(cls, filename: str):
         &#39;&#39;&#39;Override base Saveable to redo the filename of the
         tracer object if it has one
         
@@ -210,7 +213,19 @@ class BaseMCMC(BaseModel):
 
         return b
 
-    def names(self):
+    @property
+    def ckpt(self) -&gt; int:
+        &#39;&#39;&#39;For backwards compatibility
+        &#39;&#39;&#39;
+        return self.checkpoint
+
+    @ckpt.setter
+    def ckpt(self, a: int):
+        &#39;&#39;&#39;Set ckpt
+        &#39;&#39;&#39;
+        self.ckpt = a
+
+    def names(self) -&gt; Iterator[str]:
         &#39;&#39;&#39;Get the names of the nodes in the inference object
 
         Returns
@@ -219,7 +234,7 @@ class BaseMCMC(BaseModel):
         &#39;&#39;&#39;
         return list(self.graph.name2id.keys())
 
-    def ids(self):
+    def ids(self) -&gt; Iterator[int]:
         &#39;&#39;&#39;Get the IDs of the nodes in the inference object
 
         Returns
@@ -228,7 +243,7 @@ class BaseMCMC(BaseModel):
         &#39;&#39;&#39;
         return list(self.graph.nodes.keys())
 
-    def set_inference_order(self, order):
+    def set_inference_order(self, order: Iterator[Union[str, int]]):
         &#39;&#39;&#39;`order` is an array of nodes we want to sample in the order
         that we want. Check that they are all in the graph. Can put in the 
         ID or the name
@@ -260,7 +275,7 @@ class BaseMCMC(BaseModel):
             ret.append(node.id)
         self.inf_order = ret
 
-    def is_in_inference_order(self, var):
+    def is_in_inference_order(self, var: Union[int, str, Variable]) -&gt; bool:
         &#39;&#39;&#39;Checks if the variable is in the inference order
 
         Parameters
@@ -281,7 +296,9 @@ class BaseMCMC(BaseModel):
         return var in self.inf_order
 
     def set_diagnostic_variables(self, vars):
-        &#39;&#39;&#39;A list of variables that you want to track over time. These variables
+        &#39;&#39;&#39;DEPRECIATED
+        
+        A list of variables that you want to track over time. These variables
         do not necessarily have to be variables that we are tracing, rather they
         can be any variable that changes over time in the inference. However,
         the variables that we are tracing need to be a subclass of
@@ -317,24 +334,24 @@ class BaseMCMC(BaseModel):
                     &#39;the same name.&#39;)
             self.diagnostic_variables[var.name] = var
 
-    def set_tracer(self, filename, ckpt=100):
+    def set_tracer(self, filename: str, checkpoint: int=100):
         &#39;&#39;&#39;Sets up the tracing object
 
         Parameters
         ----------
         filename : str, None
             File location to save the hdf5 object
-        ckpt : int, None
-            Saves the current progress of the inference chain every `ckpt` iterations
+        checkpoint : int, None
+            Saves the current progress of the inference chain every `checkpoint` iterations
             If None then there is no intermediate checkpointing
         &#39;&#39;&#39;
-        if ckpt is None:
-            ckpt = self.n_samples
+        if checkpoint is None:
+            checkpoint = self.n_samples
         self.tracer_filename = filename
-        self.ckpt = ckpt
+        self.checkpoint = checkpoint
         self.tracer = Tracer(mcmc=self, filename=filename)
 
-    def set_intermediate_validation(self, t, func, kwargs=None):
+    def set_intermediate_validation(self, t: float, func: Callable, kwargs: Dict[str, Any]=None):
         &#39;&#39;&#39;Every `t`, run the function `func` during validation in a new process during inference.
 
         Parameters
@@ -382,7 +399,7 @@ class BaseMCMC(BaseModel):
         self._intermediate_func = func
         self._intermediate_kwargs = kwargs
 
-    def run(self, log_every=1):
+    def run(self, log_every: int=1) -&gt; &#34;BaseMCMC&#34;:
         &#39;&#39;&#39;Run the inference.
 
         Parameters
@@ -407,7 +424,7 @@ class BaseMCMC(BaseModel):
                 logging.warning(&#39;No tracer set - assume you do not want to write to disk&#39;)
                 self.tracer_filename = None
                 self.tracer = Tracer(mcmc=self, filename=None)
-                self.ckpt = None
+                self.checkpoint = None
 
                 logging.info(&#39;Setting the trace of learned parameters&#39;)
                 logging.info(&#39;#######################################&#39;)
@@ -483,7 +500,7 @@ class BaseMCMC(BaseModel):
                             self.diagnostic_variables[name].add_trace()
 
                 # If we just saved the traces to disk, save the MCMC object
-                if self.sample_iter % self.ckpt == 0 and self.sample_iter &gt; 0:
+                if self.sample_iter % self.checkpoint == 0 and self.sample_iter &gt; 0:
                     try:
                         self.save()
                     except:
@@ -512,7 +529,7 @@ class BaseMCMC(BaseModel):
                 a.kill()
             raise
 
-    def continue_inference(self, gibb_step_start):
+    def continue_inference(self, gibb_step_start: int):
         &#39;&#39;&#39;Resume inference at the gibb step number `gibb_step_start`. Note that
         we do not resume the random seed where it was at that point of the inference.
 
@@ -544,28 +561,28 @@ class Tracer(Saveable):
     filename : str
         This is where to save it
     &#39;&#39;&#39;
-    def __init__(self, mcmc, filename):
+    def __init__(self, mcmc: BaseMCMC, filename: str):
         # Check parameters and set up the attributes
-        self.mcmc = mcmc
-        self.graph = self.mcmc.graph
-        self.graph.tracer = self
-        self.mcmc.tracer = self
+        self.mcmc = mcmc # This is a pointer to the BaseMCMC object
+        self.graph = self.mcmc.graph # This is a pointer to the pylab.graph.Graph object
+        self.graph.tracer = self # Sets up internal pointers
+        self.mcmc.tracer = self # Sets up internal pointers
 
         self.filename  = filename
         if self.filename is not None:
             if not util.isstr(filename):
                 raise TypeError(&#39;filename ({}) must be a str&#39;.format(type(filename)))
             self.filename = os.path.abspath(filename)
-            self.f = h5py.File(self.filename, &#39;w&#39;, libver=&#39;latest&#39;)
+            self.f = h5py.File(self.filename, &#39;w&#39;, libver=&#39;latest&#39;) #This is the h5py file
             self.being_traced = OrderedSet()
 
             self.f.attrs[&#39;burnin&#39;] = self.mcmc.burnin
             self.f.attrs[&#39;n_samples&#39;] = self.mcmc.n_samples
-            self.f.attrs[&#39;ckpt&#39;] = self.mcmc.ckpt
+            self.f.attrs[&#39;ckpt&#39;] = self.mcmc.checkpoint
 
             self.burnin = self.mcmc.burnin
             self.n_samples = self.mcmc.n_samples
-            self.ckpt = self.mcmc.ckpt
+            self.checkpoint = self.mcmc.checkpoint
 
             # Get the inference order and diagnostic variables
             ret = []
@@ -601,21 +618,37 @@ class Tracer(Saveable):
     # def __exit__(self, type, value, traceback):
     #     self.close()
 
+    @property
+    def ckpt(self) -&gt; int:
+        &#39;&#39;&#39;For backwards compatitbility
+        &#39;&#39;&#39;
+        return self.ckpt
+
+    @ckpt.setter
+    def ckpt(self, a: int):
+        &#39;&#39;&#39;Set ckpt
+        &#39;&#39;&#39;
+        self.ckpt = a
+
     def close(self):
+        &#39;&#39;&#39;Close the file
+        &#39;&#39;&#39;
         self.f.close()
         self.f = None
 
     def open(self):
+        &#39;&#39;&#39;Open the file
+        &#39;&#39;&#39;
         self.f = h5py.File(self.filename, &#39;r+&#39;, libver=&#39;latest&#39;)
 
-    def copy(self):
+    def copy(self) -&gt; &#34;Tracer&#34;:
         &#39;&#39;&#39;Return a copy of the object but do not copy the underlying hdf5 object
         &#39;&#39;&#39;
         new_obj = type(self)(mcmc=self.mcmc, filename=self.filename)
         new_obj.__dict__.update(self.__dict__)
         return new_obj
 
-    def deepcopy(self, hdf5_dst=None):
+    def deepcopy(self, hdf5_dst: str=None) -&gt; &#34;Tracer&#34;:
         &#39;&#39;&#39;Return a deepcopy of the object and copy the underlying hdf5 object as well
 
         Parameters
@@ -637,7 +670,7 @@ class Tracer(Saveable):
         shutil.copyfile(src=self.filename, dst=new_obj.filename)
         return new_obj
 
-    def is_being_traced(self, var):
+    def is_being_traced(self, var: Union[int, str, Node]) -&gt; bool:
         &#39;&#39;&#39;Checks if the variable is being traced
 
         Parameters
@@ -659,7 +692,7 @@ class Tracer(Saveable):
                 return False
         return var in self.being_traced
 
-    def set_trace(self, name, shape, dtype):
+    def set_trace(self, name: str, shape: Tuple[int], dtype: Type):
         &#39;&#39;&#39;Set up a dataset for the variable. If a group is specified, it will 
         add it to the group
 
@@ -697,7 +730,7 @@ class Tracer(Saveable):
         self.being_traced.add(name)
         self.close()
 
-    def write_to_disk(self, name):
+    def write_to_disk(self, name: str):
         &#39;&#39;&#39;Append the RAM trace of the variable `name` into disk. Copies the data
         from RAM (self.graph[name]/trace) into disk memory.
 
@@ -723,7 +756,7 @@ class Tracer(Saveable):
         dset.attrs[&#39;end_iter&#39;] = i + l
         self.close()
 
-    def overwrite_entire_trace_on_disk(self, name, data, dtype=None):
+    def overwrite_entire_trace_on_disk(self, name: str, data: np.ndarray, dtype: Type=None):
         &#39;&#39;&#39;Overwrite all the data we have on disk for the variable 
         with name `name` and data `data`. Blanks everything out and 
         sets the end variable to the end of data
@@ -775,7 +808,7 @@ class Tracer(Saveable):
             self.graph[name].trace = None
         self.close()
 
-    def get_disk_trace_iteration(self):
+    def get_disk_trace_iteration(self) -&gt; int:
         &#39;&#39;&#39;Returns the last iteration the disk is saved to
 
         Returns
@@ -789,7 +822,7 @@ class Tracer(Saveable):
         self.close()
         return n
 
-    def get_trace(self, name, section=&#39;posterior&#39;, slices=None):
+    def get_trace(self, name: str, section: str=&#39;posterior&#39;, slices: slice=None) -&gt; np.ndarray:
         &#39;&#39;&#39;Return the trace that corresponds with the name.
 
         Depdending on the parameter `section`, it will return different parts of
@@ -859,7 +892,7 @@ class Tracer(Saveable):
         self.close()
         return ret
 
-    def get_iter(self, name):
+    def get_iter(self, name: str) -&gt; int:
         &#39;&#39;&#39;Return the end index that has been saved so far for variable with
         name `name`
 
@@ -878,7 +911,7 @@ class Tracer(Saveable):
         self.close()
         return i
 
-    def continue_inference(self, gibb_step_start):
+    def continue_inference(self, gibb_step_start: int):
         &#39;&#39;&#39;Restart the inference at the gibbs step provided
 
         Parameters
@@ -893,7 +926,8 @@ class Tracer(Saveable):
         self.close()
 
 
-def r_hat(chains, vname, start, end, idx=None, returnBW=False):
+def r_hat(chains: Iterator[BaseMCMC], vname: str, start: int, end: int, idx: Union[int, slice]=None, 
+    returnBW: bool=False) -&gt; Union[float, Dict[str, float]]:
     &#39;&#39;&#39;Calculate the measure `R^` for the variable called `vname` at the index `idx`.
     If `idx` is None then we assume that the variable is scalar.
 
@@ -945,12 +979,12 @@ def r_hat(chains, vname, start, end, idx=None, returnBW=False):
 
     References
     ----------
-    [1] Gelman, A. and D. B. Rubin (1992) Inference from iterative simulation using multiple
+    - [1] Gelman, A. and D. B. Rubin (1992) Inference from iterative simulation using multiple
         sequences (with discussion). Statistical Science, 7:457-511.
-    [2] Brooks and Gelman (1998). Journal of Computational and Graphical Statistics, 7(4)434-455.
-    [3] A. Gelman, H. S. Stern, J. B. Carlin, D. B. Dunson, A. Vehtari, and D. B. Rubin, Bayesian Data
+    - [2] Brooks and Gelman (1998). Journal of Computational and Graphical Statistics, 7(4)434-455.
+    - [3] A. Gelman, H. S. Stern, J. B. Carlin, D. B. Dunson, A. Vehtari, and D. B. Rubin, Bayesian Data
         Analysis Third Edition. Chapman and Hall/CRC, 2013.
-    [4] https://stats.stackexchange.com/questions/348984/stan-hatr-versus-gelman-rubin-hatr-definition
+    - [4] https://stats.stackexchange.com/questions/348984/stan-hatr-versus-gelman-rubin-hatr-definition
     &#39;&#39;&#39;
     # Check that all of the chains are consistent with each other
     if not util.isarray(chains):
@@ -1036,25 +1070,8 @@ def r_hat(chains, vname, start, end, idx=None, returnBW=False):
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="mdsine2.pylab.inference.OLS"><code class="name flex">
-<span>def <span class="ident">OLS</span></span>(<span>covariates, observations)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>observations = covariates @ beta
-Moore-Penrose pseudoinverse</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def OLS(covariates, observations):
-    &#39;&#39;&#39;observations = covariates @ beta
-    Moore-Penrose pseudoinverse
-    &#39;&#39;&#39;
-    return np.linalg.inv(covariates.T @ covariates) @ covariates.T @ observations</code></pre>
-</details>
-</dd>
 <dt id="mdsine2.pylab.inference.isMCMC"><code class="name flex">
-<span>def <span class="ident">isMCMC</span></span>(<span>x)</span>
+<span>def <span class="ident">isMCMC</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if the input array is an MCMC inference object</p>
@@ -1072,7 +1089,7 @@ Moore-Penrose pseudoinverse</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isMCMC(x):
+<pre><code class="python">def isMCMC(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if the input array is an MCMC inference object
 
     Parameters
@@ -1089,7 +1106,7 @@ Moore-Penrose pseudoinverse</p></div>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.ismodel"><code class="name flex">
-<span>def <span class="ident">ismodel</span></span>(<span>x)</span>
+<span>def <span class="ident">ismodel</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if the input array is a model object</p>
@@ -1107,7 +1124,7 @@ Moore-Penrose pseudoinverse</p></div>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def ismodel(x):
+<pre><code class="python">def ismodel(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if the input array is a model object
 
     Parameters
@@ -1124,7 +1141,7 @@ Moore-Penrose pseudoinverse</p></div>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.r_hat"><code class="name flex">
-<span>def <span class="ident">r_hat</span></span>(<span>chains, vname, start, end, idx=None, returnBW=False)</span>
+<span>def <span class="ident">r_hat</span></span>(<span>chains: Iterator[<a title="mdsine2.pylab.inference.BaseMCMC" href="#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a>], vname: str, start: int, end: int, idx: Union[int, slice] = None, returnBW: bool = False) ‑> Union[float, Dict[str, float]]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the measure <code>R^</code> for the variable called <code>vname</code> at the index <code>idx</code>.
@@ -1171,17 +1188,20 @@ in their Statlab version of this function at <a href="http://lib.stat.cmu.edu/S/
 recommend multiplying sqrt(postvar/W) by sqrt((df + 3)/t(df + 1)). The original code
 and this function can produce estimates below 1.</p>
 <h2 id="references">References</h2>
-<p>[1] Gelman, A. and D. B. Rubin (1992) Inference from iterative simulation using multiple
-sequences (with discussion). Statistical Science, 7:457-511.
-[2] Brooks and Gelman (1998). Journal of Computational and Graphical Statistics, 7(4)434-455.
-[3] A. Gelman, H. S. Stern, J. B. Carlin, D. B. Dunson, A. Vehtari, and D. B. Rubin, Bayesian Data
-Analysis Third Edition. Chapman and Hall/CRC, 2013.
-[4] <a href="https://stats.stackexchange.com/questions/348984/stan-hatr-versus-gelman-rubin-hatr-definition">https://stats.stackexchange.com/questions/348984/stan-hatr-versus-gelman-rubin-hatr-definition</a></p></div>
+<ul>
+<li>[1] Gelman, A. and D. B. Rubin (1992) Inference from iterative simulation using multiple
+sequences (with discussion). Statistical Science, 7:457-511.</li>
+<li>[2] Brooks and Gelman (1998). Journal of Computational and Graphical Statistics, 7(4)434-455.</li>
+<li>[3] A. Gelman, H. S. Stern, J. B. Carlin, D. B. Dunson, A. Vehtari, and D. B. Rubin, Bayesian Data
+Analysis Third Edition. Chapman and Hall/CRC, 2013.</li>
+<li>[4] <a href="https://stats.stackexchange.com/questions/348984/stan-hatr-versus-gelman-rubin-hatr-definition">https://stats.stackexchange.com/questions/348984/stan-hatr-versus-gelman-rubin-hatr-definition</a></li>
+</ul></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def r_hat(chains, vname, start, end, idx=None, returnBW=False):
+<pre><code class="python">def r_hat(chains: Iterator[BaseMCMC], vname: str, start: int, end: int, idx: Union[int, slice]=None, 
+    returnBW: bool=False) -&gt; Union[float, Dict[str, float]]:
     &#39;&#39;&#39;Calculate the measure `R^` for the variable called `vname` at the index `idx`.
     If `idx` is None then we assume that the variable is scalar.
 
@@ -1233,12 +1253,12 @@ Analysis Third Edition. Chapman and Hall/CRC, 2013.
 
     References
     ----------
-    [1] Gelman, A. and D. B. Rubin (1992) Inference from iterative simulation using multiple
+    - [1] Gelman, A. and D. B. Rubin (1992) Inference from iterative simulation using multiple
         sequences (with discussion). Statistical Science, 7:457-511.
-    [2] Brooks and Gelman (1998). Journal of Computational and Graphical Statistics, 7(4)434-455.
-    [3] A. Gelman, H. S. Stern, J. B. Carlin, D. B. Dunson, A. Vehtari, and D. B. Rubin, Bayesian Data
+    - [2] Brooks and Gelman (1998). Journal of Computational and Graphical Statistics, 7(4)434-455.
+    - [3] A. Gelman, H. S. Stern, J. B. Carlin, D. B. Dunson, A. Vehtari, and D. B. Rubin, Bayesian Data
         Analysis Third Edition. Chapman and Hall/CRC, 2013.
-    [4] https://stats.stackexchange.com/questions/348984/stan-hatr-versus-gelman-rubin-hatr-definition
+    - [4] https://stats.stackexchange.com/questions/348984/stan-hatr-versus-gelman-rubin-hatr-definition
     &#39;&#39;&#39;
     # Check that all of the chains are consistent with each other
     if not util.isarray(chains):
@@ -1324,19 +1344,19 @@ Analysis Third Edition. Chapman and Hall/CRC, 2013.
 <dl>
 <dt id="mdsine2.pylab.inference.BaseMCMC"><code class="flex name class">
 <span>class <span class="ident">BaseMCMC</span></span>
-<span>(</span><span>burnin, n_samples, *args, **kwargs)</span>
+<span>(</span><span>burnin: int, n_samples: int, *args, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Base MCMC over a graph. This only runs 1 chain.</p>
 <h2 id="typical-use">Typical Use</h2>
-<p>You first initialize the object with the graph and parameters you want</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; inf = BaseMCMC(burnin=1000, n_samples=2000, graph=G)
-Then you set the inference order
+<pre><code>&gt;&gt;&gt; # You first initialize the object with the graph and parameters you want
+&gt;&gt;&gt; inf = BaseMCMC(burnin=1000, n_samples=2000, graph=G)
+&gt;&gt;&gt; # Then you set the inference order
 &gt;&gt;&gt; inf.set_inference_order(['a', 'b', 'c'])
-Then set some diagnostic variables (Optional)
+&gt;&gt;&gt; # Then set some diagnostic variables (Optional)
 &gt;&gt;&gt; inf.set_diagnostic_variables(['e'])
-Then we can run the inference
-&gt;&gt;&gt; inf.run(log_every=5, ckpt=100, tracer_filename='./output/tracer.hdf5')
+&gt;&gt;&gt; # Then we can run the inference
+&gt;&gt;&gt; inf.run(log_every=5, checkpoint=100, tracer_filename='./output/tracer.hdf5')
 </code></pre>
 <h2 id="inference-order">Inference Order</h2>
 <p>This datastructure will perform the inference specified in the inference
@@ -1373,14 +1393,16 @@ Number of posterior samples = n_samples-burnin</dd>
 
     Typical use
     -----------
-    You first initialize the object with the graph and parameters you want
+    ```
+    &gt;&gt;&gt; # You first initialize the object with the graph and parameters you want
     &gt;&gt;&gt; inf = BaseMCMC(burnin=1000, n_samples=2000, graph=G)
-    Then you set the inference order
+    &gt;&gt;&gt; # Then you set the inference order
     &gt;&gt;&gt; inf.set_inference_order([&#39;a&#39;, &#39;b&#39;, &#39;c&#39;])
-    Then set some diagnostic variables (Optional)
+    &gt;&gt;&gt; # Then set some diagnostic variables (Optional)
     &gt;&gt;&gt; inf.set_diagnostic_variables([&#39;e&#39;])
-    Then we can run the inference
-    &gt;&gt;&gt; inf.run(log_every=5, ckpt=100, tracer_filename=&#39;./output/tracer.hdf5&#39;)
+    &gt;&gt;&gt; # Then we can run the inference
+    &gt;&gt;&gt; inf.run(log_every=5, checkpoint=100, tracer_filename=&#39;./output/tracer.hdf5&#39;)
+    ```
 
     Inference order
     ---------------
@@ -1413,7 +1435,7 @@ Number of posterior samples = n_samples-burnin</dd>
         Number of posterior samples = n_samples-burnin
     &#39;&#39;&#39;
 
-    def __init__(self, burnin, n_samples, * args, **kwargs):
+    def __init__(self, burnin: int, n_samples: int, * args, **kwargs):
         BaseModel.__init__(self, *args, **kwargs)
         if not util.isint(burnin):
             raise TypeError(&#39;`burnin` ({}) must be an int&#39;.format(type(burnin)))
@@ -1425,18 +1447,22 @@ Number of posterior samples = n_samples-burnin</dd>
 
         self.burnin = burnin
         self.n_samples = n_samples
-        self.sample_iter = 0
-        self.inf_order = None
-        self.diagnostic_variables = None
-        self.tracer = None
-        self.start_step = None
+        self.sample_iter = 0 # This holds the current sample we are at
+        self.inf_order = None # This is a list of the inference order
+        self.diagnostic_variables = None # DEPRECIATED
+        self.tracer = None # This is a pointer to the pylab.inference.Tracer object
 
-        self._intermediate_func = None
-        self._intermediate_t = None
-        self._intermediate_kwargs = None
+        # This is the sample iteration to start on. Unless we are loading from a 
+        # saved MCMC object, then this will be 0
+        self.start_step = None 
+
+        # Functions to save intermediately, this is used for semisynthetic
+        self._intermediate_func = None # callable
+        self._intermediate_t = None # float
+        self._intermediate_kwargs = None # dict
 
     @classmethod
-    def load(cls, filename):
+    def load(cls, filename: str):
         &#39;&#39;&#39;Override base Saveable to redo the filename of the
         tracer object if it has one
         
@@ -1471,7 +1497,19 @@ Number of posterior samples = n_samples-burnin</dd>
 
         return b
 
-    def names(self):
+    @property
+    def ckpt(self) -&gt; int:
+        &#39;&#39;&#39;For backwards compatibility
+        &#39;&#39;&#39;
+        return self.checkpoint
+
+    @ckpt.setter
+    def ckpt(self, a: int):
+        &#39;&#39;&#39;Set ckpt
+        &#39;&#39;&#39;
+        self.ckpt = a
+
+    def names(self) -&gt; Iterator[str]:
         &#39;&#39;&#39;Get the names of the nodes in the inference object
 
         Returns
@@ -1480,7 +1518,7 @@ Number of posterior samples = n_samples-burnin</dd>
         &#39;&#39;&#39;
         return list(self.graph.name2id.keys())
 
-    def ids(self):
+    def ids(self) -&gt; Iterator[int]:
         &#39;&#39;&#39;Get the IDs of the nodes in the inference object
 
         Returns
@@ -1489,7 +1527,7 @@ Number of posterior samples = n_samples-burnin</dd>
         &#39;&#39;&#39;
         return list(self.graph.nodes.keys())
 
-    def set_inference_order(self, order):
+    def set_inference_order(self, order: Iterator[Union[str, int]]):
         &#39;&#39;&#39;`order` is an array of nodes we want to sample in the order
         that we want. Check that they are all in the graph. Can put in the 
         ID or the name
@@ -1521,7 +1559,7 @@ Number of posterior samples = n_samples-burnin</dd>
             ret.append(node.id)
         self.inf_order = ret
 
-    def is_in_inference_order(self, var):
+    def is_in_inference_order(self, var: Union[int, str, Variable]) -&gt; bool:
         &#39;&#39;&#39;Checks if the variable is in the inference order
 
         Parameters
@@ -1542,7 +1580,9 @@ Number of posterior samples = n_samples-burnin</dd>
         return var in self.inf_order
 
     def set_diagnostic_variables(self, vars):
-        &#39;&#39;&#39;A list of variables that you want to track over time. These variables
+        &#39;&#39;&#39;DEPRECIATED
+        
+        A list of variables that you want to track over time. These variables
         do not necessarily have to be variables that we are tracing, rather they
         can be any variable that changes over time in the inference. However,
         the variables that we are tracing need to be a subclass of
@@ -1578,24 +1618,24 @@ Number of posterior samples = n_samples-burnin</dd>
                     &#39;the same name.&#39;)
             self.diagnostic_variables[var.name] = var
 
-    def set_tracer(self, filename, ckpt=100):
+    def set_tracer(self, filename: str, checkpoint: int=100):
         &#39;&#39;&#39;Sets up the tracing object
 
         Parameters
         ----------
         filename : str, None
             File location to save the hdf5 object
-        ckpt : int, None
-            Saves the current progress of the inference chain every `ckpt` iterations
+        checkpoint : int, None
+            Saves the current progress of the inference chain every `checkpoint` iterations
             If None then there is no intermediate checkpointing
         &#39;&#39;&#39;
-        if ckpt is None:
-            ckpt = self.n_samples
+        if checkpoint is None:
+            checkpoint = self.n_samples
         self.tracer_filename = filename
-        self.ckpt = ckpt
+        self.checkpoint = checkpoint
         self.tracer = Tracer(mcmc=self, filename=filename)
 
-    def set_intermediate_validation(self, t, func, kwargs=None):
+    def set_intermediate_validation(self, t: float, func: Callable, kwargs: Dict[str, Any]=None):
         &#39;&#39;&#39;Every `t`, run the function `func` during validation in a new process during inference.
 
         Parameters
@@ -1643,7 +1683,7 @@ Number of posterior samples = n_samples-burnin</dd>
         self._intermediate_func = func
         self._intermediate_kwargs = kwargs
 
-    def run(self, log_every=1):
+    def run(self, log_every: int=1) -&gt; &#34;BaseMCMC&#34;:
         &#39;&#39;&#39;Run the inference.
 
         Parameters
@@ -1668,7 +1708,7 @@ Number of posterior samples = n_samples-burnin</dd>
                 logging.warning(&#39;No tracer set - assume you do not want to write to disk&#39;)
                 self.tracer_filename = None
                 self.tracer = Tracer(mcmc=self, filename=None)
-                self.ckpt = None
+                self.checkpoint = None
 
                 logging.info(&#39;Setting the trace of learned parameters&#39;)
                 logging.info(&#39;#######################################&#39;)
@@ -1744,7 +1784,7 @@ Number of posterior samples = n_samples-burnin</dd>
                             self.diagnostic_variables[name].add_trace()
 
                 # If we just saved the traces to disk, save the MCMC object
-                if self.sample_iter % self.ckpt == 0 and self.sample_iter &gt; 0:
+                if self.sample_iter % self.checkpoint == 0 and self.sample_iter &gt; 0:
                     try:
                         self.save()
                     except:
@@ -1773,7 +1813,7 @@ Number of posterior samples = n_samples-burnin</dd>
                 a.kill()
             raise
 
-    def continue_inference(self, gibb_step_start):
+    def continue_inference(self, gibb_step_start: int):
         &#39;&#39;&#39;Resume inference at the gibb step number `gibb_step_start`. Note that
         we do not resume the random seed where it was at that point of the inference.
 
@@ -1793,7 +1833,7 @@ Number of posterior samples = n_samples-burnin</dd>
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.inference.BaseMCMC.load"><code class="name flex">
-<span>def <span class="ident">load</span></span>(<span>filename)</span>
+<span>def <span class="ident">load</span></span>(<span>filename: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Override base Saveable to redo the filename of the
@@ -1806,7 +1846,7 @@ This is the location of the file to unpickle</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@classmethod
-def load(cls, filename):
+def load(cls, filename: str):
     &#39;&#39;&#39;Override base Saveable to redo the filename of the
     tracer object if it has one
     
@@ -1843,10 +1883,27 @@ def load(cls, filename):
 </details>
 </dd>
 </dl>
+<h3>Instance variables</h3>
+<dl>
+<dt id="mdsine2.pylab.inference.BaseMCMC.ckpt"><code class="name">var <span class="ident">ckpt</span> : int</code></dt>
+<dd>
+<div class="desc"><p>For backwards compatibility</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def ckpt(self) -&gt; int:
+    &#39;&#39;&#39;For backwards compatibility
+    &#39;&#39;&#39;
+    return self.checkpoint</code></pre>
+</details>
+</dd>
+</dl>
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.inference.BaseMCMC.continue_inference"><code class="name flex">
-<span>def <span class="ident">continue_inference</span></span>(<span>self, gibb_step_start)</span>
+<span>def <span class="ident">continue_inference</span></span>(<span>self, gibb_step_start: int)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Resume inference at the gibb step number <code>gibb_step_start</code>. Note that
@@ -1860,7 +1917,7 @@ we do not resume the random seed where it was at that point of the inference.</p
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def continue_inference(self, gibb_step_start):
+<pre><code class="python">def continue_inference(self, gibb_step_start: int):
     &#39;&#39;&#39;Resume inference at the gibb step number `gibb_step_start`. Note that
     we do not resume the random seed where it was at that point of the inference.
 
@@ -1874,7 +1931,7 @@ we do not resume the random seed where it was at that point of the inference.</p
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.BaseMCMC.ids"><code class="name flex">
-<span>def <span class="ident">ids</span></span>(<span>self)</span>
+<span>def <span class="ident">ids</span></span>(<span>self) ‑> Iterator[int]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the IDs of the nodes in the inference object</p>
@@ -1887,7 +1944,7 @@ we do not resume the random seed where it was at that point of the inference.</p
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def ids(self):
+<pre><code class="python">def ids(self) -&gt; Iterator[int]:
     &#39;&#39;&#39;Get the IDs of the nodes in the inference object
 
     Returns
@@ -1898,7 +1955,7 @@ we do not resume the random seed where it was at that point of the inference.</p
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.BaseMCMC.is_in_inference_order"><code class="name flex">
-<span>def <span class="ident">is_in_inference_order</span></span>(<span>self, var)</span>
+<span>def <span class="ident">is_in_inference_order</span></span>(<span>self, var: Union[int, str, <a title="mdsine2.pylab.variables.Variable" href="variables.html#mdsine2.pylab.variables.Variable">Variable</a>]) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if the variable is in the inference order</p>
@@ -1918,7 +1975,7 @@ If is is a str - it is assumed this is the name of the variable</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_in_inference_order(self, var):
+<pre><code class="python">def is_in_inference_order(self, var: Union[int, str, Variable]) -&gt; bool:
     &#39;&#39;&#39;Checks if the variable is in the inference order
 
     Parameters
@@ -1940,7 +1997,7 @@ If is is a str - it is assumed this is the name of the variable</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.BaseMCMC.names"><code class="name flex">
-<span>def <span class="ident">names</span></span>(<span>self)</span>
+<span>def <span class="ident">names</span></span>(<span>self) ‑> Iterator[str]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the names of the nodes in the inference object</p>
@@ -1953,7 +2010,7 @@ If is is a str - it is assumed this is the name of the variable</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def names(self):
+<pre><code class="python">def names(self) -&gt; Iterator[str]:
     &#39;&#39;&#39;Get the names of the nodes in the inference object
 
     Returns
@@ -1964,7 +2021,7 @@ If is is a str - it is assumed this is the name of the variable</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.BaseMCMC.run"><code class="name flex">
-<span>def <span class="ident">run</span></span>(<span>self, log_every=1)</span>
+<span>def <span class="ident">run</span></span>(<span>self, log_every: int = 1) ‑> <a title="mdsine2.pylab.inference.BaseMCMC" href="#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Run the inference.</p>
@@ -1983,7 +2040,7 @@ If the logger is set to DEBUG then override to log every iteration.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def run(self, log_every=1):
+<pre><code class="python">def run(self, log_every: int=1) -&gt; &#34;BaseMCMC&#34;:
     &#39;&#39;&#39;Run the inference.
 
     Parameters
@@ -2008,7 +2065,7 @@ If the logger is set to DEBUG then override to log every iteration.</dd>
             logging.warning(&#39;No tracer set - assume you do not want to write to disk&#39;)
             self.tracer_filename = None
             self.tracer = Tracer(mcmc=self, filename=None)
-            self.ckpt = None
+            self.checkpoint = None
 
             logging.info(&#39;Setting the trace of learned parameters&#39;)
             logging.info(&#39;#######################################&#39;)
@@ -2084,7 +2141,7 @@ If the logger is set to DEBUG then override to log every iteration.</dd>
                         self.diagnostic_variables[name].add_trace()
 
             # If we just saved the traces to disk, save the MCMC object
-            if self.sample_iter % self.ckpt == 0 and self.sample_iter &gt; 0:
+            if self.sample_iter % self.checkpoint == 0 and self.sample_iter &gt; 0:
                 try:
                     self.save()
                 except:
@@ -2118,7 +2175,8 @@ If the logger is set to DEBUG then override to log every iteration.</dd>
 <span>def <span class="ident">set_diagnostic_variables</span></span>(<span>self, vars)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>A list of variables that you want to track over time. These variables
+<div class="desc"><p>DEPRECIATED</p>
+<p>A list of variables that you want to track over time. These variables
 do not necessarily have to be variables that we are tracing, rather they
 can be any variable that changes over time in the inference. However,
 the variables that we are tracing need to be a subclass of
@@ -2139,7 +2197,9 @@ pylab.variables.Variable</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def set_diagnostic_variables(self, vars):
-    &#39;&#39;&#39;A list of variables that you want to track over time. These variables
+    &#39;&#39;&#39;DEPRECIATED
+    
+    A list of variables that you want to track over time. These variables
     do not necessarily have to be variables that we are tracing, rather they
     can be any variable that changes over time in the inference. However,
     the variables that we are tracing need to be a subclass of
@@ -2177,7 +2237,7 @@ pylab.variables.Variable</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.BaseMCMC.set_inference_order"><code class="name flex">
-<span>def <span class="ident">set_inference_order</span></span>(<span>self, order)</span>
+<span>def <span class="ident">set_inference_order</span></span>(<span>self, order: Iterator[Union[str, int]])</span>
 </code></dt>
 <dd>
 <div class="desc"><p><code>order</code> is an array of nodes we want to sample in the order
@@ -2193,7 +2253,7 @@ be an ID (int) or the name (str)</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_inference_order(self, order):
+<pre><code class="python">def set_inference_order(self, order: Iterator[Union[str, int]]):
     &#39;&#39;&#39;`order` is an array of nodes we want to sample in the order
     that we want. Check that they are all in the graph. Can put in the 
     ID or the name
@@ -2227,7 +2287,7 @@ be an ID (int) or the name (str)</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.BaseMCMC.set_intermediate_validation"><code class="name flex">
-<span>def <span class="ident">set_intermediate_validation</span></span>(<span>self, t, func, kwargs=None)</span>
+<span>def <span class="ident">set_intermediate_validation</span></span>(<span>self, t: float, func: Callable, kwargs: Dict[str, Any] = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Every <code>t</code>, run the function <code>func</code> during validation in a new process during inference.</p>
@@ -2249,7 +2309,7 @@ sample_iter : current iteration number</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_intermediate_validation(self, t, func, kwargs=None):
+<pre><code class="python">def set_intermediate_validation(self, t: float, func: Callable, kwargs: Dict[str, Any]=None):
     &#39;&#39;&#39;Every `t`, run the function `func` during validation in a new process during inference.
 
     Parameters
@@ -2299,7 +2359,7 @@ sample_iter : current iteration number</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.BaseMCMC.set_tracer"><code class="name flex">
-<span>def <span class="ident">set_tracer</span></span>(<span>self, filename, ckpt=100)</span>
+<span>def <span class="ident">set_tracer</span></span>(<span>self, filename: str, checkpoint: int = 100)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sets up the tracing object</p>
@@ -2307,29 +2367,29 @@ sample_iter : current iteration number</dd>
 <dl>
 <dt><strong><code>filename</code></strong> :&ensp;<code>str, None</code></dt>
 <dd>File location to save the hdf5 object</dd>
-<dt><strong><code>ckpt</code></strong> :&ensp;<code>int, None</code></dt>
-<dd>Saves the current progress of the inference chain every <code>ckpt</code> iterations
+<dt><strong><code>checkpoint</code></strong> :&ensp;<code>int, None</code></dt>
+<dd>Saves the current progress of the inference chain every <code>checkpoint</code> iterations
 If None then there is no intermediate checkpointing</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_tracer(self, filename, ckpt=100):
+<pre><code class="python">def set_tracer(self, filename: str, checkpoint: int=100):
     &#39;&#39;&#39;Sets up the tracing object
 
     Parameters
     ----------
     filename : str, None
         File location to save the hdf5 object
-    ckpt : int, None
-        Saves the current progress of the inference chain every `ckpt` iterations
+    checkpoint : int, None
+        Saves the current progress of the inference chain every `checkpoint` iterations
         If None then there is no intermediate checkpointing
     &#39;&#39;&#39;
-    if ckpt is None:
-        ckpt = self.n_samples
+    if checkpoint is None:
+        checkpoint = self.n_samples
     self.tracer_filename = filename
-    self.ckpt = ckpt
+    self.checkpoint = checkpoint
     self.tracer = Tracer(mcmc=self, filename=filename)</code></pre>
 </details>
 </dd>
@@ -2346,7 +2406,7 @@ If None then there is no intermediate checkpointing</dd>
 </dd>
 <dt id="mdsine2.pylab.inference.BaseModel"><code class="flex name class">
 <span>class <span class="ident">BaseModel</span></span>
-<span>(</span><span>graph)</span>
+<span>(</span><span>graph: <a title="mdsine2.pylab.graph.Graph" href="graph.html#mdsine2.pylab.graph.Graph">Graph</a> = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Base class for a model</p>
@@ -2369,7 +2429,7 @@ If nothing is provided, it grabs the default graph</dd>
         The graph we want to do the inference over
         If nothing is provided, it grabs the default graph
     &#39;&#39;&#39;
-    def __init__(self, graph):
+    def __init__(self, graph: Graph=None):
         if graph is None:
             graph = get_default_graph()
         if not isgraph(graph):
@@ -2400,7 +2460,7 @@ If nothing is provided, it grabs the default graph</dd>
 </dd>
 <dt id="mdsine2.pylab.inference.Tracer"><code class="flex name class">
 <span>class <span class="ident">Tracer</span></span>
-<span>(</span><span>mcmc, filename)</span>
+<span>(</span><span>mcmc: <a title="mdsine2.pylab.inference.BaseMCMC" href="#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a>, filename: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This sets up the graph to be traced using h5py.</p>
@@ -2442,28 +2502,28 @@ corrupt state from writing).</p>
     filename : str
         This is where to save it
     &#39;&#39;&#39;
-    def __init__(self, mcmc, filename):
+    def __init__(self, mcmc: BaseMCMC, filename: str):
         # Check parameters and set up the attributes
-        self.mcmc = mcmc
-        self.graph = self.mcmc.graph
-        self.graph.tracer = self
-        self.mcmc.tracer = self
+        self.mcmc = mcmc # This is a pointer to the BaseMCMC object
+        self.graph = self.mcmc.graph # This is a pointer to the pylab.graph.Graph object
+        self.graph.tracer = self # Sets up internal pointers
+        self.mcmc.tracer = self # Sets up internal pointers
 
         self.filename  = filename
         if self.filename is not None:
             if not util.isstr(filename):
                 raise TypeError(&#39;filename ({}) must be a str&#39;.format(type(filename)))
             self.filename = os.path.abspath(filename)
-            self.f = h5py.File(self.filename, &#39;w&#39;, libver=&#39;latest&#39;)
+            self.f = h5py.File(self.filename, &#39;w&#39;, libver=&#39;latest&#39;) #This is the h5py file
             self.being_traced = OrderedSet()
 
             self.f.attrs[&#39;burnin&#39;] = self.mcmc.burnin
             self.f.attrs[&#39;n_samples&#39;] = self.mcmc.n_samples
-            self.f.attrs[&#39;ckpt&#39;] = self.mcmc.ckpt
+            self.f.attrs[&#39;ckpt&#39;] = self.mcmc.checkpoint
 
             self.burnin = self.mcmc.burnin
             self.n_samples = self.mcmc.n_samples
-            self.ckpt = self.mcmc.ckpt
+            self.checkpoint = self.mcmc.checkpoint
 
             # Get the inference order and diagnostic variables
             ret = []
@@ -2499,21 +2559,37 @@ corrupt state from writing).</p>
     # def __exit__(self, type, value, traceback):
     #     self.close()
 
+    @property
+    def ckpt(self) -&gt; int:
+        &#39;&#39;&#39;For backwards compatitbility
+        &#39;&#39;&#39;
+        return self.ckpt
+
+    @ckpt.setter
+    def ckpt(self, a: int):
+        &#39;&#39;&#39;Set ckpt
+        &#39;&#39;&#39;
+        self.ckpt = a
+
     def close(self):
+        &#39;&#39;&#39;Close the file
+        &#39;&#39;&#39;
         self.f.close()
         self.f = None
 
     def open(self):
+        &#39;&#39;&#39;Open the file
+        &#39;&#39;&#39;
         self.f = h5py.File(self.filename, &#39;r+&#39;, libver=&#39;latest&#39;)
 
-    def copy(self):
+    def copy(self) -&gt; &#34;Tracer&#34;:
         &#39;&#39;&#39;Return a copy of the object but do not copy the underlying hdf5 object
         &#39;&#39;&#39;
         new_obj = type(self)(mcmc=self.mcmc, filename=self.filename)
         new_obj.__dict__.update(self.__dict__)
         return new_obj
 
-    def deepcopy(self, hdf5_dst=None):
+    def deepcopy(self, hdf5_dst: str=None) -&gt; &#34;Tracer&#34;:
         &#39;&#39;&#39;Return a deepcopy of the object and copy the underlying hdf5 object as well
 
         Parameters
@@ -2535,7 +2611,7 @@ corrupt state from writing).</p>
         shutil.copyfile(src=self.filename, dst=new_obj.filename)
         return new_obj
 
-    def is_being_traced(self, var):
+    def is_being_traced(self, var: Union[int, str, Node]) -&gt; bool:
         &#39;&#39;&#39;Checks if the variable is being traced
 
         Parameters
@@ -2557,7 +2633,7 @@ corrupt state from writing).</p>
                 return False
         return var in self.being_traced
 
-    def set_trace(self, name, shape, dtype):
+    def set_trace(self, name: str, shape: Tuple[int], dtype: Type):
         &#39;&#39;&#39;Set up a dataset for the variable. If a group is specified, it will 
         add it to the group
 
@@ -2595,7 +2671,7 @@ corrupt state from writing).</p>
         self.being_traced.add(name)
         self.close()
 
-    def write_to_disk(self, name):
+    def write_to_disk(self, name: str):
         &#39;&#39;&#39;Append the RAM trace of the variable `name` into disk. Copies the data
         from RAM (self.graph[name]/trace) into disk memory.
 
@@ -2621,7 +2697,7 @@ corrupt state from writing).</p>
         dset.attrs[&#39;end_iter&#39;] = i + l
         self.close()
 
-    def overwrite_entire_trace_on_disk(self, name, data, dtype=None):
+    def overwrite_entire_trace_on_disk(self, name: str, data: np.ndarray, dtype: Type=None):
         &#39;&#39;&#39;Overwrite all the data we have on disk for the variable 
         with name `name` and data `data`. Blanks everything out and 
         sets the end variable to the end of data
@@ -2673,7 +2749,7 @@ corrupt state from writing).</p>
             self.graph[name].trace = None
         self.close()
 
-    def get_disk_trace_iteration(self):
+    def get_disk_trace_iteration(self) -&gt; int:
         &#39;&#39;&#39;Returns the last iteration the disk is saved to
 
         Returns
@@ -2687,7 +2763,7 @@ corrupt state from writing).</p>
         self.close()
         return n
 
-    def get_trace(self, name, section=&#39;posterior&#39;, slices=None):
+    def get_trace(self, name: str, section: str=&#39;posterior&#39;, slices: slice=None) -&gt; np.ndarray:
         &#39;&#39;&#39;Return the trace that corresponds with the name.
 
         Depdending on the parameter `section`, it will return different parts of
@@ -2757,7 +2833,7 @@ corrupt state from writing).</p>
         self.close()
         return ret
 
-    def get_iter(self, name):
+    def get_iter(self, name: str) -&gt; int:
         &#39;&#39;&#39;Return the end index that has been saved so far for variable with
         name `name`
 
@@ -2776,7 +2852,7 @@ corrupt state from writing).</p>
         self.close()
         return i
 
-    def continue_inference(self, gibb_step_start):
+    def continue_inference(self, gibb_step_start: int):
         &#39;&#39;&#39;Restart the inference at the gibbs step provided
 
         Parameters
@@ -2794,24 +2870,43 @@ corrupt state from writing).</p>
 <ul class="hlist">
 <li><a title="mdsine2.pylab.base.Saveable" href="base.html#mdsine2.pylab.base.Saveable">Saveable</a></li>
 </ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="mdsine2.pylab.inference.Tracer.ckpt"><code class="name">var <span class="ident">ckpt</span> : int</code></dt>
+<dd>
+<div class="desc"><p>For backwards compatitbility</p></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@property
+def ckpt(self) -&gt; int:
+    &#39;&#39;&#39;For backwards compatitbility
+    &#39;&#39;&#39;
+    return self.ckpt</code></pre>
+</details>
+</dd>
+</dl>
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.inference.Tracer.close"><code class="name flex">
 <span>def <span class="ident">close</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Close the file</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def close(self):
+    &#39;&#39;&#39;Close the file
+    &#39;&#39;&#39;
     self.f.close()
     self.f = None</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.Tracer.continue_inference"><code class="name flex">
-<span>def <span class="ident">continue_inference</span></span>(<span>self, gibb_step_start)</span>
+<span>def <span class="ident">continue_inference</span></span>(<span>self, gibb_step_start: int)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Restart the inference at the gibbs step provided</p>
@@ -2824,7 +2919,7 @@ corrupt state from writing).</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def continue_inference(self, gibb_step_start):
+<pre><code class="python">def continue_inference(self, gibb_step_start: int):
     &#39;&#39;&#39;Restart the inference at the gibbs step provided
 
     Parameters
@@ -2840,7 +2935,7 @@ corrupt state from writing).</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.Tracer.copy"><code class="name flex">
-<span>def <span class="ident">copy</span></span>(<span>self)</span>
+<span>def <span class="ident">copy</span></span>(<span>self) ‑> <a title="mdsine2.pylab.inference.Tracer" href="#mdsine2.pylab.inference.Tracer">Tracer</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Return a copy of the object but do not copy the underlying hdf5 object</p></div>
@@ -2848,7 +2943,7 @@ corrupt state from writing).</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def copy(self):
+<pre><code class="python">def copy(self) -&gt; &#34;Tracer&#34;:
     &#39;&#39;&#39;Return a copy of the object but do not copy the underlying hdf5 object
     &#39;&#39;&#39;
     new_obj = type(self)(mcmc=self.mcmc, filename=self.filename)
@@ -2857,7 +2952,7 @@ corrupt state from writing).</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.Tracer.deepcopy"><code class="name flex">
-<span>def <span class="ident">deepcopy</span></span>(<span>self, hdf5_dst=None)</span>
+<span>def <span class="ident">deepcopy</span></span>(<span>self, hdf5_dst: str = None) ‑> <a title="mdsine2.pylab.inference.Tracer" href="#mdsine2.pylab.inference.Tracer">Tracer</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Return a deepcopy of the object and copy the underlying hdf5 object as well</p>
@@ -2871,7 +2966,7 @@ will just append '_copy' to the name of the current filename</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def deepcopy(self, hdf5_dst=None):
+<pre><code class="python">def deepcopy(self, hdf5_dst: str=None) -&gt; &#34;Tracer&#34;:
     &#39;&#39;&#39;Return a deepcopy of the object and copy the underlying hdf5 object as well
 
     Parameters
@@ -2922,7 +3017,7 @@ will just append '_copy' to the name of the current filename</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.Tracer.get_disk_trace_iteration"><code class="name flex">
-<span>def <span class="ident">get_disk_trace_iteration</span></span>(<span>self)</span>
+<span>def <span class="ident">get_disk_trace_iteration</span></span>(<span>self) ‑> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the last iteration the disk is saved to</p>
@@ -2935,7 +3030,7 @@ will just append '_copy' to the name of the current filename</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_disk_trace_iteration(self):
+<pre><code class="python">def get_disk_trace_iteration(self) -&gt; int:
     &#39;&#39;&#39;Returns the last iteration the disk is saved to
 
     Returns
@@ -2951,7 +3046,7 @@ will just append '_copy' to the name of the current filename</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.Tracer.get_iter"><code class="name flex">
-<span>def <span class="ident">get_iter</span></span>(<span>self, name)</span>
+<span>def <span class="ident">get_iter</span></span>(<span>self, name: str) ‑> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Return the end index that has been saved so far for variable with
@@ -2970,7 +3065,7 @@ name <code>name</code></p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_iter(self, name):
+<pre><code class="python">def get_iter(self, name: str) -&gt; int:
     &#39;&#39;&#39;Return the end index that has been saved so far for variable with
     name `name`
 
@@ -2991,7 +3086,7 @@ name <code>name</code></p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.Tracer.get_trace"><code class="name flex">
-<span>def <span class="ident">get_trace</span></span>(<span>self, name, section='posterior', slices=None)</span>
+<span>def <span class="ident">get_trace</span></span>(<span>self, name: str, section: str = 'posterior', slices: slice = None) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Return the trace that corresponds with the name.</p>
@@ -3034,7 +3129,7 @@ Example, multiple dimensions:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_trace(self, name, section=&#39;posterior&#39;, slices=None):
+<pre><code class="python">def get_trace(self, name: str, section: str=&#39;posterior&#39;, slices: slice=None) -&gt; np.ndarray:
     &#39;&#39;&#39;Return the trace that corresponds with the name.
 
     Depdending on the parameter `section`, it will return different parts of
@@ -3106,7 +3201,7 @@ Example, multiple dimensions:
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.Tracer.is_being_traced"><code class="name flex">
-<span>def <span class="ident">is_being_traced</span></span>(<span>self, var)</span>
+<span>def <span class="ident">is_being_traced</span></span>(<span>self, var: Union[int, str, <a title="mdsine2.pylab.graph.Node" href="graph.html#mdsine2.pylab.graph.Node">Node</a>]) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if the variable is being traced</p>
@@ -3124,7 +3219,7 @@ Example, multiple dimensions:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_being_traced(self, var):
+<pre><code class="python">def is_being_traced(self, var: Union[int, str, Node]) -&gt; bool:
     &#39;&#39;&#39;Checks if the variable is being traced
 
     Parameters
@@ -3151,17 +3246,19 @@ Example, multiple dimensions:
 <span>def <span class="ident">open</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Open the file</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def open(self):
+    &#39;&#39;&#39;Open the file
+    &#39;&#39;&#39;
     self.f = h5py.File(self.filename, &#39;r+&#39;, libver=&#39;latest&#39;)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.Tracer.overwrite_entire_trace_on_disk"><code class="name flex">
-<span>def <span class="ident">overwrite_entire_trace_on_disk</span></span>(<span>self, name, data, dtype=None)</span>
+<span>def <span class="ident">overwrite_entire_trace_on_disk</span></span>(<span>self, name: str, data: numpy.ndarray, dtype: Type = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Overwrite all the data we have on disk for the variable
@@ -3178,7 +3275,7 @@ sets the end variable to the end of data</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def overwrite_entire_trace_on_disk(self, name, data, dtype=None):
+<pre><code class="python">def overwrite_entire_trace_on_disk(self, name: str, data: np.ndarray, dtype: Type=None):
     &#39;&#39;&#39;Overwrite all the data we have on disk for the variable 
     with name `name` and data `data`. Blanks everything out and 
     sets the end variable to the end of data
@@ -3215,7 +3312,7 @@ sets the end variable to the end of data</p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.Tracer.set_trace"><code class="name flex">
-<span>def <span class="ident">set_trace</span></span>(<span>self, name, shape, dtype)</span>
+<span>def <span class="ident">set_trace</span></span>(<span>self, name: str, shape: Tuple[int], dtype: Type)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Set up a dataset for the variable. If a group is specified, it will
@@ -3237,7 +3334,7 @@ then the shape is None</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_trace(self, name, shape, dtype):
+<pre><code class="python">def set_trace(self, name: str, shape: Tuple[int], dtype: Type):
     &#39;&#39;&#39;Set up a dataset for the variable. If a group is specified, it will 
     add it to the group
 
@@ -3277,7 +3374,7 @@ then the shape is None</dd>
 </details>
 </dd>
 <dt id="mdsine2.pylab.inference.Tracer.write_to_disk"><code class="name flex">
-<span>def <span class="ident">write_to_disk</span></span>(<span>self, name)</span>
+<span>def <span class="ident">write_to_disk</span></span>(<span>self, name: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Append the RAM trace of the variable <code>name</code> into disk. Copies the data
@@ -3291,7 +3388,7 @@ from RAM (self.graph[name]/trace) into disk memory.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def write_to_disk(self, name):
+<pre><code class="python">def write_to_disk(self, name: str):
     &#39;&#39;&#39;Append the RAM trace of the variable `name` into disk. Copies the data
     from RAM (self.graph[name]/trace) into disk memory.
 
@@ -3346,7 +3443,6 @@ from RAM (self.graph[name]/trace) into disk memory.</p>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="mdsine2.pylab.inference.OLS" href="#mdsine2.pylab.inference.OLS">OLS</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.isMCMC" href="#mdsine2.pylab.inference.isMCMC">isMCMC</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.ismodel" href="#mdsine2.pylab.inference.ismodel">ismodel</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.r_hat" href="#mdsine2.pylab.inference.r_hat">r_hat</a></code></li>
@@ -3357,6 +3453,7 @@ from RAM (self.graph[name]/trace) into disk memory.</p>
 <li>
 <h4><code><a title="mdsine2.pylab.inference.BaseMCMC" href="#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a></code></h4>
 <ul class="">
+<li><code><a title="mdsine2.pylab.inference.BaseMCMC.ckpt" href="#mdsine2.pylab.inference.BaseMCMC.ckpt">ckpt</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.BaseMCMC.continue_inference" href="#mdsine2.pylab.inference.BaseMCMC.continue_inference">continue_inference</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.BaseMCMC.ids" href="#mdsine2.pylab.inference.BaseMCMC.ids">ids</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.BaseMCMC.is_in_inference_order" href="#mdsine2.pylab.inference.BaseMCMC.is_in_inference_order">is_in_inference_order</a></code></li>
@@ -3375,6 +3472,7 @@ from RAM (self.graph[name]/trace) into disk memory.</p>
 <li>
 <h4><code><a title="mdsine2.pylab.inference.Tracer" href="#mdsine2.pylab.inference.Tracer">Tracer</a></code></h4>
 <ul class="">
+<li><code><a title="mdsine2.pylab.inference.Tracer.ckpt" href="#mdsine2.pylab.inference.Tracer.ckpt">ckpt</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.Tracer.close" href="#mdsine2.pylab.inference.Tracer.close">close</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.Tracer.continue_inference" href="#mdsine2.pylab.inference.Tracer.continue_inference">continue_inference</a></code></li>
 <li><code><a title="mdsine2.pylab.inference.Tracer.copy" href="#mdsine2.pylab.inference.Tracer.copy">copy</a></code></li>

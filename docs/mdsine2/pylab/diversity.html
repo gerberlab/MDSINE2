@@ -54,7 +54,7 @@ from scipy.spatial import distance
 
 class alpha:
     @staticmethod
-    def entropy(counts):
+    def entropy(counts: np.ndarray) -&gt; float:
         &#39;&#39;&#39;Calculate the entropy
         
         Entropy is defined as
@@ -64,12 +64,12 @@ class alpha:
         
         Parameters
         ----------
-        counts (array_like)
-            - Vector of counts
+        counts : array_like
+            Vector of counts
 
         Returns
         -------
-        double
+        float
         &#39;&#39;&#39;
         counts = _validate_counts(counts)
         rel = counts[counts&gt;0]
@@ -80,7 +80,7 @@ class alpha:
         return a
 
     @staticmethod
-    def normalized_entropy(counts):
+    def normalized_entropy(counts: np.ndarray) -&gt; float:
         &#39;&#39;&#39;Calculate the normailized entropy
         
         Entropy is defined as
@@ -90,12 +90,12 @@ class alpha:
         
         Parameters
         ----------
-        counts (array_like)
-            - Vector of counts
+        counts : array_like
+            Vector of counts
 
         Returns
         -------
-        double
+        float
         &#39;&#39;&#39;
         counts = _validate_counts(counts)
         rel = counts[counts&gt;0]
@@ -106,7 +106,7 @@ class alpha:
         return a
 
     @staticmethod
-    def shannon_entropy(counts, base=2):
+    def shannon_entropy(counts: np.ndarray, base: int=2) -&gt; float:
         &#39;&#39;&#39;Calculates the Shannon entropy
 
         Based on the description given in the SDR-IV online manual [1] except that
@@ -116,12 +116,12 @@ class alpha:
 
         Parameters
         ----------
-        counts (array_like)
-            - Vector of counts
+        counts : array_like
+            Vector of counts
 
         Returns
         -------
-        double
+        float
         &#39;&#39;&#39;
         counts = _validate_counts(counts)
         freqs = counts/counts.sum()
@@ -131,15 +131,15 @@ class alpha:
 
 class beta:
     @staticmethod
-    def braycurtis(u,v):
+    def braycurtis(u: np.ndarray, v: np.ndarray) -&gt; float:
         return distance.braycurtis(u,v)
 
     @staticmethod
-    def jaccard(u,v):
+    def jaccard(u: np.ndarray, v: np.ndarray) -&gt; float:
         return distance.jaccard(u,v)
 
     @staticmethod
-    def hamming(u, v, ignore_char=&#39;N&#39;):
+    def hamming(u: np.ndarray, v: np.ndarray, ignore_char: str=&#39;N&#39;) -&gt; int:
         &#39;&#39;&#39;Calculate the hamming distance between `u` and `v`
 
         Parameters
@@ -171,14 +171,14 @@ class beta:
 
 
 # Utility functions
-def _validate_counts(counts, cast_as_ints=True):
+def _validate_counts(counts: np.ndarray, cast_as_ints: bool=True) -&gt; np.ndarray:
     &#39;&#39;&#39;Checks dimensions, wraps as np array, and casts values as ints
     if necessary
 
     Parameters
     ----------
-    counts (array_like)
-        - 1D data
+    counts : array_like
+        1D data
     cast_as_ints (bool, Optional)
         - If True, it will cast the counts array as an int
         - If False it will not cast
@@ -220,7 +220,7 @@ def _validate_counts(counts, cast_as_ints=True):
 </summary>
 <pre><code class="python">class alpha:
     @staticmethod
-    def entropy(counts):
+    def entropy(counts: np.ndarray) -&gt; float:
         &#39;&#39;&#39;Calculate the entropy
         
         Entropy is defined as
@@ -230,12 +230,12 @@ def _validate_counts(counts, cast_as_ints=True):
         
         Parameters
         ----------
-        counts (array_like)
-            - Vector of counts
+        counts : array_like
+            Vector of counts
 
         Returns
         -------
-        double
+        float
         &#39;&#39;&#39;
         counts = _validate_counts(counts)
         rel = counts[counts&gt;0]
@@ -246,7 +246,7 @@ def _validate_counts(counts, cast_as_ints=True):
         return a
 
     @staticmethod
-    def normalized_entropy(counts):
+    def normalized_entropy(counts: np.ndarray) -&gt; float:
         &#39;&#39;&#39;Calculate the normailized entropy
         
         Entropy is defined as
@@ -256,12 +256,12 @@ def _validate_counts(counts, cast_as_ints=True):
         
         Parameters
         ----------
-        counts (array_like)
-            - Vector of counts
+        counts : array_like
+            Vector of counts
 
         Returns
         -------
-        double
+        float
         &#39;&#39;&#39;
         counts = _validate_counts(counts)
         rel = counts[counts&gt;0]
@@ -272,7 +272,7 @@ def _validate_counts(counts, cast_as_ints=True):
         return a
 
     @staticmethod
-    def shannon_entropy(counts, base=2):
+    def shannon_entropy(counts: np.ndarray, base: int=2) -&gt; float:
         &#39;&#39;&#39;Calculates the Shannon entropy
 
         Based on the description given in the SDR-IV online manual [1] except that
@@ -282,12 +282,12 @@ def _validate_counts(counts, cast_as_ints=True):
 
         Parameters
         ----------
-        counts (array_like)
-            - Vector of counts
+        counts : array_like
+            Vector of counts
 
         Returns
         -------
-        double
+        float
         &#39;&#39;&#39;
         counts = _validate_counts(counts)
         freqs = counts/counts.sum()
@@ -297,7 +297,7 @@ def _validate_counts(counts, cast_as_ints=True):
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.diversity.alpha.entropy"><code class="name flex">
-<span>def <span class="ident">entropy</span></span>(<span>counts)</span>
+<span>def <span class="ident">entropy</span></span>(<span>counts: numpy.ndarray) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the entropy</p>
@@ -306,11 +306,13 @@ E = - \sum_i (b_i * \log(b_i))
 where
 b_i is the relative abundance of the ith Taxon</p>
 <h2 id="parameters">Parameters</h2>
-<p>counts (array_like)
-- Vector of counts</p>
+<dl>
+<dt><strong><code>counts</code></strong> :&ensp;<code>array_like</code></dt>
+<dd>Vector of counts</dd>
+</dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>double</code></dt>
+<dt><code>float</code></dt>
 <dd>&nbsp;</dd>
 </dl></div>
 <details class="source">
@@ -318,7 +320,7 @@ b_i is the relative abundance of the ith Taxon</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def entropy(counts):
+def entropy(counts: np.ndarray) -&gt; float:
     &#39;&#39;&#39;Calculate the entropy
     
     Entropy is defined as
@@ -328,12 +330,12 @@ def entropy(counts):
     
     Parameters
     ----------
-    counts (array_like)
-        - Vector of counts
+    counts : array_like
+        Vector of counts
 
     Returns
     -------
-    double
+    float
     &#39;&#39;&#39;
     counts = _validate_counts(counts)
     rel = counts[counts&gt;0]
@@ -345,7 +347,7 @@ def entropy(counts):
 </details>
 </dd>
 <dt id="mdsine2.pylab.diversity.alpha.normalized_entropy"><code class="name flex">
-<span>def <span class="ident">normalized_entropy</span></span>(<span>counts)</span>
+<span>def <span class="ident">normalized_entropy</span></span>(<span>counts: numpy.ndarray) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the normailized entropy</p>
@@ -354,11 +356,13 @@ E = - \sum_i (b_i * \log_n(b_i))
 where
 b_i is the relative abundance of the ith Taxon</p>
 <h2 id="parameters">Parameters</h2>
-<p>counts (array_like)
-- Vector of counts</p>
+<dl>
+<dt><strong><code>counts</code></strong> :&ensp;<code>array_like</code></dt>
+<dd>Vector of counts</dd>
+</dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>double</code></dt>
+<dt><code>float</code></dt>
 <dd>&nbsp;</dd>
 </dl></div>
 <details class="source">
@@ -366,7 +370,7 @@ b_i is the relative abundance of the ith Taxon</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def normalized_entropy(counts):
+def normalized_entropy(counts: np.ndarray) -&gt; float:
     &#39;&#39;&#39;Calculate the normailized entropy
     
     Entropy is defined as
@@ -376,12 +380,12 @@ def normalized_entropy(counts):
     
     Parameters
     ----------
-    counts (array_like)
-        - Vector of counts
+    counts : array_like
+        Vector of counts
 
     Returns
     -------
-    double
+    float
     &#39;&#39;&#39;
     counts = _validate_counts(counts)
     rel = counts[counts&gt;0]
@@ -393,7 +397,7 @@ def normalized_entropy(counts):
 </details>
 </dd>
 <dt id="mdsine2.pylab.diversity.alpha.shannon_entropy"><code class="name flex">
-<span>def <span class="ident">shannon_entropy</span></span>(<span>counts, base=2)</span>
+<span>def <span class="ident">shannon_entropy</span></span>(<span>counts: numpy.ndarray, base: int = 2) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculates the Shannon entropy</p>
@@ -401,11 +405,13 @@ def normalized_entropy(counts):
 the default logarithm base used here is 2 instead of <code>e</code>.</p>
 <p>[1] <a href="http://www.pisces-conservation.com/sdrhelp/index.html">http://www.pisces-conservation.com/sdrhelp/index.html</a></p>
 <h2 id="parameters">Parameters</h2>
-<p>counts (array_like)
-- Vector of counts</p>
+<dl>
+<dt><strong><code>counts</code></strong> :&ensp;<code>array_like</code></dt>
+<dd>Vector of counts</dd>
+</dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>double</code></dt>
+<dt><code>float</code></dt>
 <dd>&nbsp;</dd>
 </dl></div>
 <details class="source">
@@ -413,7 +419,7 @@ the default logarithm base used here is 2 instead of <code>e</code>.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def shannon_entropy(counts, base=2):
+def shannon_entropy(counts: np.ndarray, base: int=2) -&gt; float:
     &#39;&#39;&#39;Calculates the Shannon entropy
 
     Based on the description given in the SDR-IV online manual [1] except that
@@ -423,12 +429,12 @@ def shannon_entropy(counts, base=2):
 
     Parameters
     ----------
-    counts (array_like)
-        - Vector of counts
+    counts : array_like
+        Vector of counts
 
     Returns
     -------
-    double
+    float
     &#39;&#39;&#39;
     counts = _validate_counts(counts)
     freqs = counts/counts.sum()
@@ -449,15 +455,15 @@ def shannon_entropy(counts, base=2):
 </summary>
 <pre><code class="python">class beta:
     @staticmethod
-    def braycurtis(u,v):
+    def braycurtis(u: np.ndarray, v: np.ndarray) -&gt; float:
         return distance.braycurtis(u,v)
 
     @staticmethod
-    def jaccard(u,v):
+    def jaccard(u: np.ndarray, v: np.ndarray) -&gt; float:
         return distance.jaccard(u,v)
 
     @staticmethod
-    def hamming(u, v, ignore_char=&#39;N&#39;):
+    def hamming(u: np.ndarray, v: np.ndarray, ignore_char: str=&#39;N&#39;) -&gt; int:
         &#39;&#39;&#39;Calculate the hamming distance between `u` and `v`
 
         Parameters
@@ -490,7 +496,7 @@ def shannon_entropy(counts, base=2):
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.diversity.beta.braycurtis"><code class="name flex">
-<span>def <span class="ident">braycurtis</span></span>(<span>u, v)</span>
+<span>def <span class="ident">braycurtis</span></span>(<span>u: numpy.ndarray, v: numpy.ndarray) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -499,12 +505,12 @@ def shannon_entropy(counts, base=2):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def braycurtis(u,v):
+def braycurtis(u: np.ndarray, v: np.ndarray) -&gt; float:
     return distance.braycurtis(u,v)</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.diversity.beta.hamming"><code class="name flex">
-<span>def <span class="ident">hamming</span></span>(<span>u, v, ignore_char='N')</span>
+<span>def <span class="ident">hamming</span></span>(<span>u: numpy.ndarray, v: numpy.ndarray, ignore_char: str = 'N') ‑> int</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the hamming distance between <code>u</code> and <code>v</code></p>
@@ -526,7 +532,7 @@ This is used if we want to skip over positions that are not a consensus.</dd>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def hamming(u, v, ignore_char=&#39;N&#39;):
+def hamming(u: np.ndarray, v: np.ndarray, ignore_char: str=&#39;N&#39;) -&gt; int:
     &#39;&#39;&#39;Calculate the hamming distance between `u` and `v`
 
     Parameters
@@ -554,7 +560,7 @@ def hamming(u, v, ignore_char=&#39;N&#39;):
 </details>
 </dd>
 <dt id="mdsine2.pylab.diversity.beta.jaccard"><code class="name flex">
-<span>def <span class="ident">jaccard</span></span>(<span>u, v)</span>
+<span>def <span class="ident">jaccard</span></span>(<span>u: numpy.ndarray, v: numpy.ndarray) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
@@ -563,7 +569,7 @@ def hamming(u, v, ignore_char=&#39;N&#39;):
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def jaccard(u,v):
+def jaccard(u: np.ndarray, v: np.ndarray) -&gt; float:
     return distance.jaccard(u,v)</code></pre>
 </details>
 </dd>

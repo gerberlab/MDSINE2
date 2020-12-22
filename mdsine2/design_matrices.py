@@ -2,29 +2,29 @@
 
 Main classes
 ------------
-`Data`
-    This class is what `mdsine2.Graph.data` points to. It keeps all the design matrices for
-    each class consistent as well as provides functionality and core functions that are used
-    in inference. The main job of this class is to act as a pointer to the individual design
-    matrices that are used in inference. You can access these classes with the pointer
-    `Data.design_matrices[name_of_class]`.
-`LHSVector`
-    This is the Left Hand Side (LHS) of the MDSINE2 model:
-        (log(x[k+1]) - log(x[k+1]))/(t[k+1] - t[k])
-    where
-        x is the latent abundance at point k
-        t is the time at point k
-`DesignMatrix` subclasses
-    These build the right hand side of the MDSINE2 model and is broken up into individual
-    classes:
-        Growth : The RHS for the growth parameter is in `GrowthDesignMatrix`
-        Self-interactions : The RHS for the self-interaction parameter is in `SelfInteractionDesignMatrix`
-        Perturbations : The RHS for the perturbation parameter is in `PerturbationDesignMatrix` which is
-                        composed of `PerturbationBaseDesignMatrix` and `PerturbationMixingDesignMatrix`. For
-                        more details, see `PerturbationDesignMatrix`.
-        Interactions : The RHS for the perturbation parameter is in `InteractionsDesignMatrix` which is
-                       composed of `InteractionsBaseDesignMatrix` and `InteractionsMixingDesignMatrix`. For
-                       more details, see `InteractionsDesignMatrix`.
+- `Data`
+    * This class is what `mdsine2.Graph.data` points to. It keeps all the design matrices for
+      each class consistent as well as provides functionality and core functions that are used
+      in inference. The main job of this class is to act as a pointer to the individual design
+      matrices that are used in inference. You can access these classes with the pointer
+      `Data.design_matrices[name_of_class]`.
+- `LHSVector`
+    - This is the Left Hand Side (LHS) of the MDSINE2 model:
+      .. math:: (log(x[k+1]) - log(x[k+1]))/(t[k+1] - t[k])
+      where
+          * x is the latent abundance at point k
+          * t is the time at point k
+- `DesignMatrix` subclasses
+    - These build the right hand side of the MDSINE2 model and is broken up into individual
+      classes:
+          * Growth : The RHS for the growth parameter is in `GrowthDesignMatrix`
+          * Self-interactions : The RHS for the self-interaction parameter is in `SelfInteractionDesignMatrix`
+          * Perturbations : The RHS for the perturbation parameter is in `PerturbationDesignMatrix` which is
+                            composed of `PerturbationBaseDesignMatrix` and `PerturbationMixingDesignMatrix`. For
+                            more details, see `PerturbationDesignMatrix`.
+          * Interactions : The RHS for the perturbation parameter is in `InteractionsDesignMatrix` which is
+                           composed of `InteractionsBaseDesignMatrix` and `InteractionsMixingDesignMatrix`. For
+                           more details, see `InteractionsDesignMatrix`.
 '''
 
 import numpy as np
@@ -48,27 +48,26 @@ class Data(DataNode):
 
     Description of internal objects
     -------------------------------
-    self.data : list(np.ndarray(n_taxa, n_times)) 
-        These are the data matrices that are used to build the design matrices. Index
-        the replicate by the index of the list. 
+    - self.data : list(np.ndarray(n_taxa, n_times)) 
+        - These are the data matrices that are used to build the design matrices. Index
+          the replicate by the index of the list. 
     
-    self.dt[ridx][k] : list(np.ndarray((n_times, ))) 
-        This is the change in time from time index k to time index k+1 for replicate index `ridx`.
-    self.dt_vec : np.ndarray 
-        These have the same values as `self.dt` excpet that the arrays are flattened so that the 
-        index of dt corresponds to the row in the design matrix. IE (x[k+1] - x[k])/self.dt[k] can be thought
-        of as: 
-            (x[ridx][aidx, k+1] - x2[ridx][aidx, k])/(times[ridx][k+1] - times[ridx][k])
-        for each replicate index `ridx` and Taxa index `aidx`
-    Difference between `self.times` and `self.given_timepoints`
-        `self.times` are all the timepoints that we have data for the latent trajectory whereas
-        `self.given_timepoints` are all the timepoints where we actually have data for as specified in 
-        `self.subjects`. These are going to be different if we have intermediate datapoints
+    - self.dt[ridx][k] : list(np.ndarray((n_times, ))) 
+        - This is the change in time from time index k to time index k+1 for replicate index `ridx`.
+    - self.dt_vec : np.ndarray 
+        - These have the same values as `self.dt` excpet that the arrays are flattened so that the 
+          index of dt corresponds to the row in the design matrix. IE (x[k+1] - x[k])/self.dt[k] can be thought
+          of as: 
+          ..math:: (x[ridx][aidx, k+1] - x2[ridx][aidx, k])/(times[ridx][k+1] - times[ridx][k])
+          for each replicate index `ridx` and Taxa index `aidx`
+    - Difference between `self.times` and `self.given_timepoints`
+        - `self.times` are all the timepoints that we have data for the latent trajectory whereas
+        - `self.given_timepoints` are all the timepoints where we actually have data for as specified in 
+        - `self.subjects`. These are going to be different if we have intermediate datapoints
 
     We assume that once this object gets initialized there is not more deletions of
     Taxas or replicates for the inference, i.e. `subjects` needs to stay fixed during inference
     for this object to stay consistent.
-
 
     Parameters
     ----------
@@ -647,18 +646,19 @@ class Data(DataNode):
 
         Parameters
         ----------
-        keys(list(keys))
+        keys : list(str)
             These are the keys of the matrices to go on the left-hand-side (lhs)
-        kwargs_dict (dict(dict))
+        kwargs_dict: dict
             This is a dict of dicts:
                 str -> (str -> val)
             The first level dictionary is one of the names in the keys
             The second level dictionary are the additional arguements that are
             send to that keys `construct_lhs` function.
-        index_out_perturbations (bool, Optional)
+        index_out_perturbations : bool
             If this is True, it will index out the rows that are in the perturbation.
             This would be used for times that you want to initialize the data not
             with any perturbation periods
+
         Returns
         -------
         np.ndarray
@@ -699,17 +699,16 @@ class Data(DataNode):
         Parameters
         ----------
         keys : list(keys)
-            - These are the keys of the matrices to go on the right-hand-side (rhs)
+            These are the keys of the matrices to go on the right-hand-side (rhs)
         kwargs_dict : dict(dict)
-            - This is a dict of dicts:
-                str -> (str -> val)
-            - The first level dictionary is one of the names in the keys
-            - The second level dictionary are the additional arguements that are
-              send to that keys `construct_lhs` function.
+            This is a dict of dicts: str -> (str -> val)
+            The first level dictionary is one of the names in the keys
+            The second level dictionary are the additional arguements that are send to that keys 
+            `construct_lhs` function.
         index_out_perturbations : bool, Optional
-            - If this is True, it will index out the rows that are in the perturbation.
-              This would be used for times that you want to initialize the data not
-              with any perturbation periods
+            If this is True, it will index out the rows that are in the perturbation.
+            This would be used for times that you want to initialize the data not
+            with any perturbation periods
         toarray : bool
             If True, converts the input into a numpy C_CONTIGUOUS array
 
@@ -1038,18 +1037,20 @@ class GrowthDesignMatrix(DesignMatrix):
 
         Example: Pertubtion period (2,5) - this is **3** doses
 
+        ```
                            |-->|-->|-->|
         perturbation on    #############
         Days           1   2   3   4   5   6
+        ```
 
         `d1` indicates the perturbation parameter that gets added for the day that it
         should be included in.
 
-        x2 = x1 + ...
-        x3 = x2 + ... + d1
-        x4 = x3 + ... + d1
-        x5 = x4 + ... + d1
-        x6 = x5 + ...
+        * x2 = x1 + ...
+        * x3 = x2 + ... + d1
+        * x4 = x3 + ... + d1
+        * x5 = x4 + ... + d1
+        * x6 = x5 + ...
 
         The perturbation periods that are given are in the format (start, end).
         For the above example our perturbation period would be (2, 5). Thus, we should do
@@ -1868,34 +1869,34 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
 
 class InteractionsDesignMatrix(DesignMatrix):
     '''Builds the design matrix for the interactions: 
-        A_{i,j} @ M = A_{c_i,c_j}, where
-            A_{i,j} is the Taxa-Taxa interaction matrix (self.base)
-            M is the mixing matrix (self.M)
-            A_{c_i,c_j} is the cluster-cluster interaction matrix
+    - A_{i,j} @ M = A_{c_i,c_j}, where
+        - A_{i,j} is the __Taxa-Taxa__ interaction matrix (self.base)
+        - M is the mixing matrix (self.M)
+        - A_{c_i,c_j} is the cluster-cluster interaction matrix
 
     This matrix is composed of two, individual design matrices, `Base` and `M`.
     To make the matrix that we use during inference, we matrix multiply `Base`@`M`,
     which is what this class is for. It wraps these two base classes so that it
     is more streamlined in the inference code.
 
-    `Base` : mdsine2.design_matrices.InteractionsBaseDesignMatrix
-        This is an object that builds the interaction matrix as if there was no
-        clustering or indicators. It builds the data for all the Taxa/OTUs and
-        as if every interaction indicator was on. This is actually faster than
-        just building it for individual indicators for a few different reasons:
-            1) We only need to update `Base` when we do filtering or update the 
-               values of the growth matrix because these are the only two things
-               that `Base` is dependent on.
-            2) Because we don't have to check indicators or have different shapes
-               when building the matrix, it is much easier to build this matrix
-               with Numba, which is nearly as fast as C. This speeds up building
-               time by ~97%.
-    `Mixing` : mdsine2.design_matrices.InteractionsMixingDesignMatrix
-        This is the object that selects for indicators and groups taxa together
-        into clusters. When we change the indicators of the perturbations or 
-        the cluster assignments of the Taxa, we only need to change this matrix,
-        which is a lot faster than changing everything. Because both matrices are
-        sparse matrices and this matrix is 98% zeros, this is a very fast operation.
+    * `Base` : mdsine2.design_matrices.InteractionsBaseDesignMatrix
+        - This is an object that builds the interaction matrix as if there was no
+          clustering or indicators. It builds the data for all the Taxa/OTUs and
+          as if every interaction indicator was on. This is actually faster than
+          just building it for individual indicators for a few different reasons:
+              1) We only need to update `Base` when we do filtering or update the 
+                 values of the growth matrix because these are the only two things
+                 that `Base` is dependent on.
+              2) Because we don't have to check indicators or have different shapes
+                 when building the matrix, it is much easier to build this matrix
+                 with Numba, which is nearly as fast as C. This speeds up building
+                 time by ~97%.
+    * `Mixing` : mdsine2.design_matrices.InteractionsMixingDesignMatrix
+        - This is the object that selects for indicators and groups taxa together
+          into clusters. When we change the indicators of the perturbations or 
+          the cluster assignments of the Taxa, we only need to change this matrix,
+          which is a lot faster than changing everything. Because both matrices are
+          sparse matrices and this matrix is 98% zeros, this is a very fast operation.
 
     See Also
     --------

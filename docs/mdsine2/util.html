@@ -34,14 +34,18 @@ import numpy as np
 import scipy
 import math
 import copy
+import pandas as pd
 from orderedset import OrderedSet
 
 from .names import STRNAMES
 from . import pylab as pl
 
-from .pylab import diversity
+from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Callable
 
-def is_gram_negative(taxon):
+from .pylab import diversity
+from .pylab import Taxon, OTU, BaseMCMC, ClusterPerturbationEffect, Clustering, Study
+
+def is_gram_negative(taxon: Union[OTU, Taxon]) -&gt; bool:
     &#39;&#39;&#39;Return true if the taxon is gram - or gram positive
 
     Parameters
@@ -67,7 +71,7 @@ def is_gram_negative(taxon):
         raise ValueError(&#39;{} phylum not specified. If not bacteroidetes, firmicutes, verrucomicrobia, or &#39; \
             &#39;proteobacteria, you must add another phylum&#39;.format(str(taxon)))
 
-def generate_interation_bayes_factors_posthoc(mcmc, section=&#39;posterior&#39;):
+def generate_interation_bayes_factors_posthoc(mcmc: BaseMCMC, section: str=&#39;posterior&#39;) -&gt; np.ndarray:
     &#39;&#39;&#39;Generates the bayes factors on an item-item level for the interactions, 
     given the passed in prior. All negative indicators are set as `np.nan`s in 
     the trace, so we do `~np.isnan` to get the indicators.
@@ -85,7 +89,7 @@ def generate_interation_bayes_factors_posthoc(mcmc, section=&#39;posterior&#39;)
 
     Returns
     -------
-    np.ndarray((n,n), dtpye=float)
+    np.ndarray((n,n), dtype=float)
         These are the bayes factors for each of the interactions on an item-item level
     &#39;&#39;&#39;
     interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ]
@@ -104,7 +108,8 @@ def generate_interation_bayes_factors_posthoc(mcmc, section=&#39;posterior&#39;)
 
     return (cnts_1 * b) / (cnts_0 * a)
 
-def generate_perturbation_bayes_factors_posthoc(mcmc, perturbation, section=&#39;posterior&#39;):
+def generate_perturbation_bayes_factors_posthoc(mcmc: BaseMCMC, perturbation: ClusterPerturbationEffect, 
+    section: str=&#39;posterior&#39;) -&gt; np.ndarray:
     &#39;&#39;&#39;Generates the bayes factors on an item-item level for the perturbations, 
     given the passed in prior. All negative indicators are set as `np.nan`s in 
     the trace, so we do `~np.isnan` to get the indicators.
@@ -117,14 +122,14 @@ def generate_perturbation_bayes_factors_posthoc(mcmc, perturbation, section=&#39
     ----------
     mcmc : mdsine2.BaseMCMC
         This is the inference object containing the traces
-    perturbation : mdsine2.Perturbation
+    perturbation : mdsine2.ClusterPerturbationEffect
         Perturbation object we are calculating from
     section : str
         This is the section of the MH samples to take the samples
 
     Returns
     -------
-    np.ndarray((n,), dtpye=float)
+    np.ndarray((n,), dtype=float)
         These are the bayes factors for each of the perturbations on an item level
     &#39;&#39;&#39;
     trace = ~ np.isnan(perturbation.get_trace_from_disk())
@@ -136,8 +141,8 @@ def generate_perturbation_bayes_factors_posthoc(mcmc, perturbation, section=&#39
 
     return (cnts_1 * b) / (cnts_0 * a)
 
-def generate_cluster_assignments_posthoc(clustering, n_clusters=&#39;mode&#39;, linkage=&#39;average&#39;,
-    set_as_value=False, section=&#39;posterior&#39;):
+def generate_cluster_assignments_posthoc(clustering: Clustering, n_clusters: Union[str, int]=&#39;mode&#39;, linkage: str=&#39;average&#39;,
+    set_as_value: bool=False, section: str=&#39;posterior&#39;) -&gt; np.ndarray:
     &#39;&#39;&#39;Once the inference is complete, compute the clusters posthoc using
     sklearn&#39;s AgglomerativeClustering function with distance matrix being
     1 - cocluster matrix (we subtrace the cocluster matrix from 1 because
@@ -210,7 +215,7 @@ def generate_cluster_assignments_posthoc(clustering, n_clusters=&#39;mode&#39;, 
                 clustering.move_item(idx=oidx, cid=cid)
     return ret
 
-def generate_taxonomic_distribution_over_clusters_posthoc(mcmc, tax_fmt):
+def generate_taxonomic_distribution_over_clusters_posthoc(mcmc: BaseMCMC, tax_fmt: str) -&gt; pd.DataFrame:
     &#39;&#39;&#39;Make a table that shows the abundance of different taxonomies in every cluster
 
     Output:
@@ -278,7 +283,7 @@ def generate_taxonomic_distribution_over_clusters_posthoc(mcmc, tax_fmt):
     df = pl.base.condense_matrix_with_taxonomy(M, taxa=study.taxa, fmt=tax_fmt)
     return df
 
-def condense_fixed_clustering_interaction_matrix(M, clustering):
+def condense_fixed_clustering_interaction_matrix(M: np.ndarray, clustering: Clustering) -&gt; np.ndarray:
     &#39;&#39;&#39;Condense the interaction matrix `M` with the cluster assignments 
     in `clustering`. Assume that the current cluster assignments is what
     is used. Assumes that the input matrix is run with a fixed clustering.
@@ -287,27 +292,52 @@ def condense_fixed_clustering_interaction_matrix(M, clustering):
 
     Parameters
     ----------
-    M : np.ndarrray(n_taxa, n_taxa)
+    M : np.ndarrray(..., n_taxa, n_taxa)
         Taxon-Taxon interaction matrix
     clustering : mdsine2.Clustering
         Clustering object
 
     Returns
     -------
-    np.ndarray(n_clusters, n_clusters)
+    np.ndarray(..., n_clusters, n_clusters)
         Cluster-cluster interaction matrix
     &#39;&#39;&#39;
-    ret = np.zeros(shape=(len(clustering), len(clustering)))
+    shape = M.shape[:-2]
+
+    ret = np.zeros(shape=shape+(len(clustering), len(clustering)))
     for i1, cl1 in enumerate(clustering):
         for i2, cl2 in enumerate(clustering):
             if i1 == i2:
                 continue
             aidx1 = list(cl1.members)[0]
             aidx2 = list(cl2.members)[0]
-            ret[i1,i2] = M[aidx1, aidx2]
+            ret[..., i1,i2] = M[..., aidx1, aidx2]
     return ret
 
-def aggregate_items(subjset, hamming_dist):
+def condense_fixed_clustering_perturbation(pert: np.ndarray, clustering: Clustering) -&gt; np.ndarray:
+    &#39;&#39;&#39;Condense the perturbation array passed in assuming that it was run with
+    fixed clustering.
+
+    Parameters
+    ----------
+    pert : np.ndarray(..., n_taxa)
+        Perturbation values for each taxon
+    clustering : mdsine2.Clustering
+        Clustering object
+
+    Returns
+    -------
+    np.ndarray(..., n_clusters)
+        Cluster perturbations
+    &#39;&#39;&#39;
+    shape = pert.shape[:-1]
+    ret = np.zeros(shape=shape+(len(clustering),))
+    for cidx, cluster in enumerate(clustering):
+        aidx = list(cluster.members)[0]
+        ret[..., cidx] = pert[..., aidx]
+    return ret
+
+def aggregate_items(subjset: Study, hamming_dist: int) -&gt; Study:
     &#39;&#39;&#39;Aggregate Taxa that have an average hamming distance of `hamming_dist`
 
     Parameters
@@ -354,7 +384,7 @@ def aggregate_items(subjset, hamming_dist):
     logging.info(&#39;Aggregated {} taxa&#39;.format(cnt))
     return subjset
 
-def _avg_dist(taxon1, taxon2):
+def _avg_dist(taxon1: Union[Taxon, OTU], taxon2: Union[Taxon, OTU]) -&gt; float:
     dists = []
     if pl.isotu(taxon1):
         seqs1 = taxon1.aggregated_seqs.values()
@@ -371,8 +401,8 @@ def _avg_dist(taxon1, taxon2):
             dists.append(diversity.beta.hamming(v1, v2))
     return np.nanmean(dists)
 
-def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_num_subjects, 
-    colonization_time=None, union_other_consortia=None):
+def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min_num_consecutive: int, min_num_subjects: int, 
+    colonization_time: Union[float, int]=None, union_other_consortia: Study=None) -&gt; Study:
     &#39;&#39;&#39;Filters the subjects by looking at the consistency of the &#39;dtype&#39;, which can
     be either &#39;raw&#39; where we look for the minimum number of counts, &#39;rel&#39;, where we
     look for a minimum relative abundance, or &#39;abs&#39; where we look for a minium 
@@ -499,8 +529,9 @@ def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_nu
     subjset.pop_taxa(to_delete)
     return subjset
 
-def conditional_consistency_filtering(subjset, other, dtype, threshold, min_num_consecutive_upper,  
-    min_num_consecutive_lower, min_num_subjects, colonization_time):
+def conditional_consistency_filtering(subjset: Study, other: Study, dtype: str, threshold: Union[float, int], 
+    min_num_consecutive_upper: int, min_num_consecutive_lower: int, min_num_subjects: int, 
+    colonization_time: Union[float, int]) -&gt; Study:
     &#39;&#39;&#39;Filters the cohorts in `subjset` with the `mdsine2.consistency_filtering`
     filtering method but conditional on another cohort. If a taxon passes the filter
     in the cohort `other`, the taxon can only have `min_num_consecutive_lower` 
@@ -587,7 +618,7 @@ def conditional_consistency_filtering(subjset, other, dtype, threshold, min_num_
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.util.aggregate_items"><code class="name flex">
-<span>def <span class="ident">aggregate_items</span></span>(<span>subjset, hamming_dist)</span>
+<span>def <span class="ident">aggregate_items</span></span>(<span>subjset: <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a>, hamming_dist: int) ‑> <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Aggregate Taxa that have an average hamming distance of <code>hamming_dist</code></p>
@@ -608,7 +639,7 @@ are aggregating</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def aggregate_items(subjset, hamming_dist):
+<pre><code class="python">def aggregate_items(subjset: Study, hamming_dist: int) -&gt; Study:
     &#39;&#39;&#39;Aggregate Taxa that have an average hamming distance of `hamming_dist`
 
     Parameters
@@ -657,7 +688,7 @@ are aggregating</dd>
 </details>
 </dd>
 <dt id="mdsine2.util.condense_fixed_clustering_interaction_matrix"><code class="name flex">
-<span>def <span class="ident">condense_fixed_clustering_interaction_matrix</span></span>(<span>M, clustering)</span>
+<span>def <span class="ident">condense_fixed_clustering_interaction_matrix</span></span>(<span>M: numpy.ndarray, clustering: <a title="mdsine2.pylab.cluster.Clustering" href="pylab/cluster.html#mdsine2.pylab.cluster.Clustering">Clustering</a>) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Condense the interaction matrix <code>M</code> with the cluster assignments
@@ -666,21 +697,21 @@ is used. Assumes that the input matrix is run with a fixed clustering.</p>
 <p>Ignores the diagonal entrees</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>M</code></strong> :&ensp;<code>np.ndarrray(n_taxa, n_taxa)</code></dt>
+<dt><strong><code>M</code></strong> :&ensp;<code>np.ndarrray(&hellip;, n_taxa, n_taxa)</code></dt>
 <dd>Taxon-Taxon interaction matrix</dd>
 <dt><strong><code>clustering</code></strong> :&ensp;<code>mdsine2.Clustering</code></dt>
 <dd>Clustering object</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>np.ndarray(n_clusters, n_clusters)</code></dt>
+<dt><code>np.ndarray(&hellip;, n_clusters, n_clusters)</code></dt>
 <dd>Cluster-cluster interaction matrix</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def condense_fixed_clustering_interaction_matrix(M, clustering):
+<pre><code class="python">def condense_fixed_clustering_interaction_matrix(M: np.ndarray, clustering: Clustering) -&gt; np.ndarray:
     &#39;&#39;&#39;Condense the interaction matrix `M` with the cluster assignments 
     in `clustering`. Assume that the current cluster assignments is what
     is used. Assumes that the input matrix is run with a fixed clustering.
@@ -689,29 +720,77 @@ is used. Assumes that the input matrix is run with a fixed clustering.</p>
 
     Parameters
     ----------
-    M : np.ndarrray(n_taxa, n_taxa)
+    M : np.ndarrray(..., n_taxa, n_taxa)
         Taxon-Taxon interaction matrix
     clustering : mdsine2.Clustering
         Clustering object
 
     Returns
     -------
-    np.ndarray(n_clusters, n_clusters)
+    np.ndarray(..., n_clusters, n_clusters)
         Cluster-cluster interaction matrix
     &#39;&#39;&#39;
-    ret = np.zeros(shape=(len(clustering), len(clustering)))
+    shape = M.shape[:-2]
+
+    ret = np.zeros(shape=shape+(len(clustering), len(clustering)))
     for i1, cl1 in enumerate(clustering):
         for i2, cl2 in enumerate(clustering):
             if i1 == i2:
                 continue
             aidx1 = list(cl1.members)[0]
             aidx2 = list(cl2.members)[0]
-            ret[i1,i2] = M[aidx1, aidx2]
+            ret[..., i1,i2] = M[..., aidx1, aidx2]
+    return ret</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.util.condense_fixed_clustering_perturbation"><code class="name flex">
+<span>def <span class="ident">condense_fixed_clustering_perturbation</span></span>(<span>pert: numpy.ndarray, clustering: <a title="mdsine2.pylab.cluster.Clustering" href="pylab/cluster.html#mdsine2.pylab.cluster.Clustering">Clustering</a>) ‑> numpy.ndarray</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Condense the perturbation array passed in assuming that it was run with
+fixed clustering.</p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>pert</code></strong> :&ensp;<code>np.ndarray(&hellip;, n_taxa)</code></dt>
+<dd>Perturbation values for each taxon</dd>
+<dt><strong><code>clustering</code></strong> :&ensp;<code>mdsine2.Clustering</code></dt>
+<dd>Clustering object</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>np.ndarray(&hellip;, n_clusters)</code></dt>
+<dd>Cluster perturbations</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def condense_fixed_clustering_perturbation(pert: np.ndarray, clustering: Clustering) -&gt; np.ndarray:
+    &#39;&#39;&#39;Condense the perturbation array passed in assuming that it was run with
+    fixed clustering.
+
+    Parameters
+    ----------
+    pert : np.ndarray(..., n_taxa)
+        Perturbation values for each taxon
+    clustering : mdsine2.Clustering
+        Clustering object
+
+    Returns
+    -------
+    np.ndarray(..., n_clusters)
+        Cluster perturbations
+    &#39;&#39;&#39;
+    shape = pert.shape[:-1]
+    ret = np.zeros(shape=shape+(len(clustering),))
+    for cidx, cluster in enumerate(clustering):
+        aidx = list(cluster.members)[0]
+        ret[..., cidx] = pert[..., aidx]
     return ret</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.util.conditional_consistency_filtering"><code class="name flex">
-<span>def <span class="ident">conditional_consistency_filtering</span></span>(<span>subjset, other, dtype, threshold, min_num_consecutive_upper, min_num_consecutive_lower, min_num_subjects, colonization_time)</span>
+<span>def <span class="ident">conditional_consistency_filtering</span></span>(<span>subjset: <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a>, other: <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a>, dtype: str, threshold: Union[float, int], min_num_consecutive_upper: int, min_num_consecutive_lower: int, min_num_subjects: int, colonization_time: Union[float, int]) ‑> <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Filters the cohorts in <code>subjset</code> with the <code>mdsine2.consistency_filtering</code>
@@ -763,8 +842,9 @@ If str, we accept 'all', which we set that automatically.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def conditional_consistency_filtering(subjset, other, dtype, threshold, min_num_consecutive_upper,  
-    min_num_consecutive_lower, min_num_subjects, colonization_time):
+<pre><code class="python">def conditional_consistency_filtering(subjset: Study, other: Study, dtype: str, threshold: Union[float, int], 
+    min_num_consecutive_upper: int, min_num_consecutive_lower: int, min_num_subjects: int, 
+    colonization_time: Union[float, int]) -&gt; Study:
     &#39;&#39;&#39;Filters the cohorts in `subjset` with the `mdsine2.consistency_filtering`
     filtering method but conditional on another cohort. If a taxon passes the filter
     in the cohort `other`, the taxon can only have `min_num_consecutive_lower` 
@@ -844,7 +924,7 @@ If str, we accept 'all', which we set that automatically.</dd>
 </details>
 </dd>
 <dt id="mdsine2.util.consistency_filtering"><code class="name flex">
-<span>def <span class="ident">consistency_filtering</span></span>(<span>subjset, dtype, threshold, min_num_consecutive, min_num_subjects, colonization_time=None, union_other_consortia=None)</span>
+<span>def <span class="ident">consistency_filtering</span></span>(<span>subjset, dtype: str, threshold: Union[float, int], min_num_consecutive: int, min_num_subjects: int, colonization_time: Union[float, int] = None, union_other_consortia: <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a> = None) ‑> <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Filters the subjects by looking at the consistency of the 'dtype', which can
@@ -892,8 +972,8 @@ If str, we accept 'all', which we set that automatically.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def consistency_filtering(subjset, dtype, threshold, min_num_consecutive, min_num_subjects, 
-    colonization_time=None, union_other_consortia=None):
+<pre><code class="python">def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min_num_consecutive: int, min_num_subjects: int, 
+    colonization_time: Union[float, int]=None, union_other_consortia: Study=None) -&gt; Study:
     &#39;&#39;&#39;Filters the subjects by looking at the consistency of the &#39;dtype&#39;, which can
     be either &#39;raw&#39; where we look for the minimum number of counts, &#39;rel&#39;, where we
     look for a minimum relative abundance, or &#39;abs&#39; where we look for a minium 
@@ -1022,7 +1102,7 @@ If str, we accept 'all', which we set that automatically.</dd>
 </details>
 </dd>
 <dt id="mdsine2.util.generate_cluster_assignments_posthoc"><code class="name flex">
-<span>def <span class="ident">generate_cluster_assignments_posthoc</span></span>(<span>clustering, n_clusters='mode', linkage='average', set_as_value=False, section='posterior')</span>
+<span>def <span class="ident">generate_cluster_assignments_posthoc</span></span>(<span>clustering: <a title="mdsine2.pylab.cluster.Clustering" href="pylab/cluster.html#mdsine2.pylab.cluster.Clustering">Clustering</a>, n_clusters: Union[str, int] = 'mode', linkage: str = 'average', set_as_value: bool = False, section: str = 'posterior') ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Once the inference is complete, compute the clusters posthoc using
@@ -1063,8 +1143,8 @@ Possible types:</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def generate_cluster_assignments_posthoc(clustering, n_clusters=&#39;mode&#39;, linkage=&#39;average&#39;,
-    set_as_value=False, section=&#39;posterior&#39;):
+<pre><code class="python">def generate_cluster_assignments_posthoc(clustering: Clustering, n_clusters: Union[str, int]=&#39;mode&#39;, linkage: str=&#39;average&#39;,
+    set_as_value: bool=False, section: str=&#39;posterior&#39;) -&gt; np.ndarray:
     &#39;&#39;&#39;Once the inference is complete, compute the clusters posthoc using
     sklearn&#39;s AgglomerativeClustering function with distance matrix being
     1 - cocluster matrix (we subtrace the cocluster matrix from 1 because
@@ -1139,7 +1219,7 @@ Possible types:</dd>
 </details>
 </dd>
 <dt id="mdsine2.util.generate_interation_bayes_factors_posthoc"><code class="name flex">
-<span>def <span class="ident">generate_interation_bayes_factors_posthoc</span></span>(<span>mcmc, section='posterior')</span>
+<span>def <span class="ident">generate_interation_bayes_factors_posthoc</span></span>(<span>mcmc: <a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a>, section: str = 'posterior') ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Generates the bayes factors on an item-item level for the interactions,
@@ -1157,14 +1237,14 @@ bf[i,j] = (count_on[i,j] * b) / (count_off[i,j] * a)</p>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>np.ndarray((n,n), dtpye=float)</code></dt>
+<dt><code>np.ndarray((n,n), dtype=float)</code></dt>
 <dd>These are the bayes factors for each of the interactions on an item-item level</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def generate_interation_bayes_factors_posthoc(mcmc, section=&#39;posterior&#39;):
+<pre><code class="python">def generate_interation_bayes_factors_posthoc(mcmc: BaseMCMC, section: str=&#39;posterior&#39;) -&gt; np.ndarray:
     &#39;&#39;&#39;Generates the bayes factors on an item-item level for the interactions, 
     given the passed in prior. All negative indicators are set as `np.nan`s in 
     the trace, so we do `~np.isnan` to get the indicators.
@@ -1182,7 +1262,7 @@ bf[i,j] = (count_on[i,j] * b) / (count_off[i,j] * a)</p>
 
     Returns
     -------
-    np.ndarray((n,n), dtpye=float)
+    np.ndarray((n,n), dtype=float)
         These are the bayes factors for each of the interactions on an item-item level
     &#39;&#39;&#39;
     interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ]
@@ -1203,7 +1283,7 @@ bf[i,j] = (count_on[i,j] * b) / (count_off[i,j] * a)</p>
 </details>
 </dd>
 <dt id="mdsine2.util.generate_perturbation_bayes_factors_posthoc"><code class="name flex">
-<span>def <span class="ident">generate_perturbation_bayes_factors_posthoc</span></span>(<span>mcmc, perturbation, section='posterior')</span>
+<span>def <span class="ident">generate_perturbation_bayes_factors_posthoc</span></span>(<span>mcmc: <a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a>, perturbation: <a title="mdsine2.pylab.contrib.ClusterPerturbationEffect" href="pylab/contrib.html#mdsine2.pylab.contrib.ClusterPerturbationEffect">ClusterPerturbationEffect</a>, section: str = 'posterior') ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Generates the bayes factors on an item-item level for the perturbations,
@@ -1216,21 +1296,22 @@ bf[i,j] = (count_on[i] * b) / (count_off[i] * a)</p>
 <dl>
 <dt><strong><code>mcmc</code></strong> :&ensp;<code>mdsine2.BaseMCMC</code></dt>
 <dd>This is the inference object containing the traces</dd>
-<dt><strong><code>perturbation</code></strong> :&ensp;<code>mdsine2.Perturbation</code></dt>
+<dt><strong><code>perturbation</code></strong> :&ensp;<code>mdsine2.ClusterPerturbationEffect</code></dt>
 <dd>Perturbation object we are calculating from</dd>
 <dt><strong><code>section</code></strong> :&ensp;<code>str</code></dt>
 <dd>This is the section of the MH samples to take the samples</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <dl>
-<dt><code>np.ndarray((n,), dtpye=float)</code></dt>
+<dt><code>np.ndarray((n,), dtype=float)</code></dt>
 <dd>These are the bayes factors for each of the perturbations on an item level</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def generate_perturbation_bayes_factors_posthoc(mcmc, perturbation, section=&#39;posterior&#39;):
+<pre><code class="python">def generate_perturbation_bayes_factors_posthoc(mcmc: BaseMCMC, perturbation: ClusterPerturbationEffect, 
+    section: str=&#39;posterior&#39;) -&gt; np.ndarray:
     &#39;&#39;&#39;Generates the bayes factors on an item-item level for the perturbations, 
     given the passed in prior. All negative indicators are set as `np.nan`s in 
     the trace, so we do `~np.isnan` to get the indicators.
@@ -1243,14 +1324,14 @@ bf[i,j] = (count_on[i] * b) / (count_off[i] * a)</p>
     ----------
     mcmc : mdsine2.BaseMCMC
         This is the inference object containing the traces
-    perturbation : mdsine2.Perturbation
+    perturbation : mdsine2.ClusterPerturbationEffect
         Perturbation object we are calculating from
     section : str
         This is the section of the MH samples to take the samples
 
     Returns
     -------
-    np.ndarray((n,), dtpye=float)
+    np.ndarray((n,), dtype=float)
         These are the bayes factors for each of the perturbations on an item level
     &#39;&#39;&#39;
     trace = ~ np.isnan(perturbation.get_trace_from_disk())
@@ -1264,7 +1345,7 @@ bf[i,j] = (count_on[i] * b) / (count_off[i] * a)</p>
 </details>
 </dd>
 <dt id="mdsine2.util.generate_taxonomic_distribution_over_clusters_posthoc"><code class="name flex">
-<span>def <span class="ident">generate_taxonomic_distribution_over_clusters_posthoc</span></span>(<span>mcmc, tax_fmt)</span>
+<span>def <span class="ident">generate_taxonomic_distribution_over_clusters_posthoc</span></span>(<span>mcmc: <a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a>, tax_fmt: str) ‑> pandas.core.frame.DataFrame</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Make a table that shows the abundance of different taxonomies in every cluster</p>
@@ -1292,7 +1373,7 @@ then this is just the mean abundance of the taxa over all the time points</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def generate_taxonomic_distribution_over_clusters_posthoc(mcmc, tax_fmt):
+<pre><code class="python">def generate_taxonomic_distribution_over_clusters_posthoc(mcmc: BaseMCMC, tax_fmt: str) -&gt; pd.DataFrame:
     &#39;&#39;&#39;Make a table that shows the abundance of different taxonomies in every cluster
 
     Output:
@@ -1362,7 +1443,7 @@ then this is just the mean abundance of the taxa over all the time points</p>
 </details>
 </dd>
 <dt id="mdsine2.util.is_gram_negative"><code class="name flex">
-<span>def <span class="ident">is_gram_negative</span></span>(<span>taxon)</span>
+<span>def <span class="ident">is_gram_negative</span></span>(<span>taxon: Union[<a title="mdsine2.pylab.base.OTU" href="pylab/base.html#mdsine2.pylab.base.OTU">OTU</a>, <a title="mdsine2.pylab.base.Taxon" href="pylab/base.html#mdsine2.pylab.base.Taxon">Taxon</a>]) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Return true if the taxon is gram - or gram positive</p>
@@ -1380,7 +1461,7 @@ then this is just the mean abundance of the taxa over all the time points</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def is_gram_negative(taxon):
+<pre><code class="python">def is_gram_negative(taxon: Union[OTU, Taxon]) -&gt; bool:
     &#39;&#39;&#39;Return true if the taxon is gram - or gram positive
 
     Parameters
@@ -1427,6 +1508,7 @@ then this is just the mean abundance of the taxa over all the time points</p>
 <ul class="">
 <li><code><a title="mdsine2.util.aggregate_items" href="#mdsine2.util.aggregate_items">aggregate_items</a></code></li>
 <li><code><a title="mdsine2.util.condense_fixed_clustering_interaction_matrix" href="#mdsine2.util.condense_fixed_clustering_interaction_matrix">condense_fixed_clustering_interaction_matrix</a></code></li>
+<li><code><a title="mdsine2.util.condense_fixed_clustering_perturbation" href="#mdsine2.util.condense_fixed_clustering_perturbation">condense_fixed_clustering_perturbation</a></code></li>
 <li><code><a title="mdsine2.util.conditional_consistency_filtering" href="#mdsine2.util.conditional_consistency_filtering">conditional_consistency_filtering</a></code></li>
 <li><code><a title="mdsine2.util.consistency_filtering" href="#mdsine2.util.consistency_filtering">consistency_filtering</a></code></li>
 <li><code><a title="mdsine2.util.generate_cluster_assignments_posthoc" href="#mdsine2.util.generate_cluster_assignments_posthoc">generate_cluster_assignments_posthoc</a></code></li>

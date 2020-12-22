@@ -40,10 +40,13 @@ The Node class is also defined here.
 import numpy as np
 import networkx as nx
 import logging
-import matplotlib.pyplot as plt
 import copy
 import random
 import h5py
+import matplotlib
+
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple
 
 from .base import Saveable
 from .random import seed as set_seed
@@ -56,7 +59,7 @@ DEFAULT_PRIOR_SUFFIX = &#39;_prior&#39;
 _graph_dict = {}
 _PH_COUNT = 0
 
-def get_default_graph():
+def get_default_graph() -&gt; &#34;Graph&#34;:
     &#39;&#39;&#39;Returns the default graph object
 
     Returns
@@ -65,7 +68,7 @@ def get_default_graph():
     &#39;&#39;&#39;
     return _graph_dict[_default_graph_id]
 
-def clear_default_graph():
+def clear_default_graph() -&gt; &#34;Graph&#34;:
     &#39;&#39;&#39;Delete the old default graph. Make a new one
 
     Returns
@@ -80,7 +83,7 @@ def clear_default_graph():
     _graph_dict[a.id] = a
     return _graph_dict[_default_graph_id]
 
-def _get_graph(id):
+def _get_graph(id: int) -&gt; &#34;Graph&#34;:
     &#39;&#39;&#39;Gets the graph by the ID. Only internal use
 
     Returns
@@ -92,7 +95,7 @@ def _get_graph(id):
             &#39; {}&#39;.format(id, list(_graph_dict.keys())))
     return _graph_dict[id]
 
-def isgraph(x):
+def isgraph(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if the type (or subtype) of `x` is a Graph
 
     Parameters
@@ -107,7 +110,7 @@ def isgraph(x):
     &#39;&#39;&#39;
     return x is not None and issubclass(x.__class__, Graph)
 
-def isnode(x):
+def isnode(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if the type (or subtype) of `x` is a Node
 
     Parameters
@@ -122,7 +125,7 @@ def isnode(x):
     &#39;&#39;&#39;
     return x is not None and issubclass(x.__class__, BaseNode)
 
-def hasprior(x):
+def hasprior(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether `x` has a prior defined. It must be a subclass of 
     `pylab.graph.BaseNode` for it to be True.
 
@@ -150,7 +153,7 @@ class Graph(Saveable):
         This is how we should seed the graph
     &#39;&#39;&#39;
 
-    def __init__(self, name=None, seed=None):
+    def __init__(self, name: str=None, seed: int=None):
         global _graph_dict
         global _PH_COUNT
 
@@ -166,11 +169,12 @@ class Graph(Saveable):
         self.name = name
         self.nodes = {} # dict id -&gt; Node or Node subclass
         self.name2id = {} # dict name -&gt; id
-        self.perturbations = None
-        self.data = None
-        self.inference = None
+        self.perturbations = None # If this is set, it is set to a pylab.base.Perturbations object
+        self.data = None # This is a pointer to the data object
+        self.inference = None # This is a pointer to the pylab.inference.BaseMCMC object
         self.id = id(self)
-        self.tracer = None
+        self.tracer = None # This is a pointer to the pylab.inference.Tracer
+
         # Add a persistent object to the graph so it knows 
         # what variables have persistent workers. This is optional
         # for the persistent Pool
@@ -179,7 +183,7 @@ class Graph(Saveable):
         # Add to the graph dict
         _graph_dict[self.id] = self
 
-    def set_seed(self, seed):
+    def set_seed(self, seed: int):
         &#39;&#39;&#39;Sets the seed of the graph
 
         Parameters
@@ -191,7 +195,7 @@ class Graph(Saveable):
         set_seed(x=seed)
 
     @property
-    def size(self):
+    def size(self) -&gt; int:
         &#39;&#39;&#39;Alias for `__len__`
 
         Returns
@@ -201,10 +205,10 @@ class Graph(Saveable):
         &#39;&#39;&#39;
         return len(self.nodes)
 
-    def __len__(self):
+    def __len__(self) -&gt; int:
         return len(self.nodes)
 
-    def __getitem__(self, nid):
+    def __getitem__(self, nid: Union[str, int]) -&gt; &#34;Node&#34;:
         &#39;&#39;&#39;Get a node either using the name or the id. First 
         check if it is an id, then a str. If neither work to 
         index the node then an error is thrown
@@ -224,10 +228,10 @@ class Graph(Saveable):
                     type(nid), nid, self.name))
         return ret
 
-    def __contains__(self, nid):
+    def __contains__(self, nid: Union[str, int]) -&gt; bool:
         return nid in self.name2id or nid in self.nodes
 
-    def __str__(self):
+    def __str__(self) -&gt; str:
         s = &#39;&#39;
         for node in self.nodes.values():
             s += node.name + &#39; ({})\n&#39;.format(node.id)
@@ -241,28 +245,20 @@ class Graph(Saveable):
                     s += &#39;\t\t{} ({})\n&#39;.format(parent.name,parent.id)
         return s
 
-    def __iter__(self):
+    def __iter__(self) -&gt; &#34;Node&#34;:
         for _id in self.nodes:
             yield self.nodes[_id]
 
-    def render(self, filename, ax=None):
-        &#39;&#39;&#39;We save the graph in Cytoscape format so that we can
-        open it in Cytoscape.
+    def to_networkx(self) -&gt; nx.DiGraph:
+        &#39;&#39;&#39;Make a networkx graph
 
-        Parameters
-        ----------
-        filename : str
-            - Place to save the figure
+        Returns
+        -------
+        networkx.DiGraph
         &#39;&#39;&#39;
-        from py2cytoscape.util import from_networkx
-        import json
 
         G = nx.DiGraph()
-        cmap = []
         labels = {}
-
-        if filename[-5:] != &#39;.cyjs&#39;:
-            filename += &#39;.cyjs&#39;
 
         # Add nodes
         for id,node in self.nodes.items():
@@ -279,11 +275,9 @@ class Graph(Saveable):
             except:
                 pass
 
-        cyjs = from_networkx(G)
-        with open(filename, &#39;w&#39;) as outfile:
-            json.dump(cyjs, outfile)
+        return G
 
-    def as_default(self):
+    def as_default(self) -&gt; &#34;Graph&#34;:
         &#39;&#39;&#39;Sets the current graph as the default graph
 
         Returns
@@ -295,7 +289,7 @@ class Graph(Saveable):
         _default_graph = self
         return self
 
-    def get_descendants(self, name):
+    def get_descendants(self, name: str) -&gt; Iterator[int]:
         &#39;&#39;&#39;Returns a list of ids of variables that are dependent on
         the input name(recursively returns all of the child ids).
         The name can either be the name of the variable or the id. Right now
@@ -341,7 +335,7 @@ class BaseNode(Saveable):
         - If not specified it adds it to the default graph
     &#39;&#39;&#39;
 
-    def __init__(self, name=None, name_prefix=None, G=None):
+    def __init__(self, name: str=None, name_prefix: str=None, G: Graph=None):
         global _PH_COUNT
         if name is None:
             if name_prefix is None:
@@ -351,9 +345,11 @@ class BaseNode(Saveable):
         
         if G is None:
             G = get_default_graph()
-        self.G = G
+        self.G = G # This is a pointer to the graph it is contained in
         self.name = name
         self.id = id(self)
+
+        # Add itself into the graph
         self.G.nodes[self.id] = self
         self.G.name2id[self.name] = self.id
         self.prior = None
@@ -367,15 +363,25 @@ class BaseNode(Saveable):
 
 class DataNode:
     &#39;&#39;&#39;Base class for an object that wants to be used as the data class in inference.
+    This sets the `.data` pointer in `Graph`
 
+    Parameters
+    ----------
+    name : str, Optional
+        - name of the node. If one is not provided, a unique one will be generated
+    name_prefix : str, Optional
+        - name prefix if `name` is not passed in
+    G : Graph, Optional
+        - Graph object to add the node to.
+        - If not specified it adds it to the default graph
     &#39;&#39;&#39;
-    def __init__(self, name=None, name_prefix=None, G=None):
+    def __init__(self, name: str=None, name_prefix: str=None, G: Graph=None):
         self.G = G
         self.name = name
         self.id = id(self)
         if self.G.data is not None:
             logging.info(&#39;Overriding old data object in graph {}&#39;.format(self))
-        self.G.data = self
+        self.G.data = self # Set itself as the .data pointer
 
     def delete(self):
         &#39;&#39;&#39;Deletes this data object from the graph it belogns to
@@ -385,12 +391,6 @@ class DataNode:
 
 class Node(BaseNode):
     &#39;&#39;&#39;Variable that can be in the graph
-
-    ####################################
-    self.metropolis
-
-    This is the metropolis object that gets instantiated by the metropolis class
-    ####################################
 
     Parameters
     ----------
@@ -402,16 +402,20 @@ class Node(BaseNode):
         - Graph object or graph id to add the node to.
         - If not specified it adds it to the default graph
     &#39;&#39;&#39;
-    def __init__(self, name=None, name_prefix=None, G=None):
+    def __init__(self, name: str=None, name_prefix: str=None, G: Graph=None):
         BaseNode.__init__(self, name=name, name_prefix=name_prefix, G=G)
-        self.parents = {}
-        self.children = {}
+        self.parents = {} # maps the ID of the node to the Node objects
+        self.children = {} # maps the ID of the node to the Node objects
         self.undirected = {}
+
+        # Depreciated
         self._metropolis = None
 
     @property
     def metropolis(self):
-        &#39;&#39;&#39;Get the metropolis object
+        &#39;&#39;&#39;DEPRECIATED
+        
+        Get the metropolis object
         &#39;&#39;&#39;
         return self._metropolis
 
@@ -430,7 +434,7 @@ class Node(BaseNode):
         BaseNode.delete(self)
 
     @property
-    def degree(self):
+    def degree(self) -&gt; int:
         &#39;&#39;&#39;Get the degree of the node
 
         Returns
@@ -440,7 +444,7 @@ class Node(BaseNode):
         # return the degree of the node
         return len(self.parents) + len(self.children) + len(self.undirected)
 
-    def get_adjacent_keys(self):
+    def get_adjacent_keys(self) -&gt; Iterator[int]:
         &#39;&#39;&#39;Get the adjacent nodes
 
         Returns
@@ -450,7 +454,7 @@ class Node(BaseNode):
         &#39;&#39;&#39;
         return list(self.parents.keys()) + list(self.children.keys())
 
-    def add_parent(self, parent):
+    def add_parent(self, parent: &#34;Node&#34;):
         &#39;&#39;&#39;Adds `parent` as a parent to the node
         Also adds self as a child to `parent`
 
@@ -470,7 +474,7 @@ class Node(BaseNode):
         self.parents[parent.id] = parent
         parent.children[self.id] = self
 
-    def add_child(self, child):
+    def add_child(self, child: &#34;Node&#34;):
         &#39;&#39;&#39;Adds `child` as a child to the node
         Also adds self as a parent to `child`
 
@@ -490,7 +494,7 @@ class Node(BaseNode):
         self.children[child.id] = child
         child.parents[self.id] = self
 
-    def add_undirected(self, node):
+    def add_undirected(self, node: &#34;Node&#34;):
         &#39;&#39;&#39;Adds `node` as an undirected neighbor to the node
         Does the same for `node`
 
@@ -509,7 +513,7 @@ class Node(BaseNode):
         self.undirected[node.id] = node
         node.undirected[self.id] = self
 
-    def add_prior(self, prior):
+    def add_prior(self, prior: &#34;Node&#34;):
         &#39;&#39;&#39;Override the name of the passed in distribution `prior`.
 
         Parameters
@@ -537,7 +541,7 @@ class Data(DataNode):
     **kwargs
         See `pylab.graph.DataNode`
     &#39;&#39;&#39;
-    def __init__(self, X, y, **kwargs):
+    def __init__(self, X: np.ndarray, y: np.ndarray, **kwargs):
         DataNode.__init__(self, **kwargs)
         self.X = X
         self.y = y
@@ -555,7 +559,7 @@ _default_graph_id = _default_graph.id</code></pre>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.pylab.graph.clear_default_graph"><code class="name flex">
-<span>def <span class="ident">clear_default_graph</span></span>(<span>)</span>
+<span>def <span class="ident">clear_default_graph</span></span>(<span>) ‑> <a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Delete the old default graph. Make a new one</p>
@@ -568,7 +572,7 @@ _default_graph_id = _default_graph.id</code></pre>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def clear_default_graph():
+<pre><code class="python">def clear_default_graph() -&gt; &#34;Graph&#34;:
     &#39;&#39;&#39;Delete the old default graph. Make a new one
 
     Returns
@@ -585,7 +589,7 @@ _default_graph_id = _default_graph.id</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.graph.get_default_graph"><code class="name flex">
-<span>def <span class="ident">get_default_graph</span></span>(<span>)</span>
+<span>def <span class="ident">get_default_graph</span></span>(<span>) ‑> <a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns the default graph object</p>
@@ -598,7 +602,7 @@ _default_graph_id = _default_graph.id</code></pre>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_default_graph():
+<pre><code class="python">def get_default_graph() -&gt; &#34;Graph&#34;:
     &#39;&#39;&#39;Returns the default graph object
 
     Returns
@@ -609,7 +613,7 @@ _default_graph_id = _default_graph.id</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.graph.hasprior"><code class="name flex">
-<span>def <span class="ident">hasprior</span></span>(<span>x)</span>
+<span>def <span class="ident">hasprior</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks whether <code>x</code> has a prior defined. It must be a subclass of
@@ -628,7 +632,7 @@ _default_graph_id = _default_graph.id</code></pre>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def hasprior(x):
+<pre><code class="python">def hasprior(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks whether `x` has a prior defined. It must be a subclass of 
     `pylab.graph.BaseNode` for it to be True.
 
@@ -647,7 +651,7 @@ _default_graph_id = _default_graph.id</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.graph.isgraph"><code class="name flex">
-<span>def <span class="ident">isgraph</span></span>(<span>x)</span>
+<span>def <span class="ident">isgraph</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if the type (or subtype) of <code>x</code> is a Graph</p>
@@ -665,7 +669,7 @@ _default_graph_id = _default_graph.id</code></pre>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isgraph(x):
+<pre><code class="python">def isgraph(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if the type (or subtype) of `x` is a Graph
 
     Parameters
@@ -682,7 +686,7 @@ _default_graph_id = _default_graph.id</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.pylab.graph.isnode"><code class="name flex">
-<span>def <span class="ident">isnode</span></span>(<span>x)</span>
+<span>def <span class="ident">isnode</span></span>(<span>x: Any) ‑> bool</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Checks if the type (or subtype) of <code>x</code> is a Node</p>
@@ -700,7 +704,7 @@ _default_graph_id = _default_graph.id</code></pre>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def isnode(x):
+<pre><code class="python">def isnode(x: Any) -&gt; bool:
     &#39;&#39;&#39;Checks if the type (or subtype) of `x` is a Node
 
     Parameters
@@ -723,7 +727,7 @@ _default_graph_id = _default_graph.id</code></pre>
 <dl>
 <dt id="mdsine2.pylab.graph.BaseNode"><code class="flex name class">
 <span>class <span class="ident">BaseNode</span></span>
-<span>(</span><span>name=None, name_prefix=None, G=None)</span>
+<span>(</span><span>name: str = None, name_prefix: str = None, G: <a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a> = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This is the baseclass of a Node.</p>
@@ -767,7 +771,7 @@ _default_graph_id = _default_graph.id</code></pre>
         - If not specified it adds it to the default graph
     &#39;&#39;&#39;
 
-    def __init__(self, name=None, name_prefix=None, G=None):
+    def __init__(self, name: str=None, name_prefix: str=None, G: Graph=None):
         global _PH_COUNT
         if name is None:
             if name_prefix is None:
@@ -777,9 +781,11 @@ _default_graph_id = _default_graph.id</code></pre>
         
         if G is None:
             G = get_default_graph()
-        self.G = G
+        self.G = G # This is a pointer to the graph it is contained in
         self.name = name
         self.id = id(self)
+
+        # Add itself into the graph
         self.G.nodes[self.id] = self
         self.G.name2id[self.name] = self.id
         self.prior = None
@@ -830,7 +836,7 @@ _default_graph_id = _default_graph.id</code></pre>
 </dd>
 <dt id="mdsine2.pylab.graph.Data"><code class="flex name class">
 <span>class <span class="ident">Data</span></span>
-<span>(</span><span>X, y, **kwargs)</span>
+<span>(</span><span>X: numpy.ndarray, y: numpy.ndarray, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Simple class defining the covariates <code>X</code> and the observations <code>y</code></p>
@@ -859,7 +865,7 @@ _default_graph_id = _default_graph.id</code></pre>
     **kwargs
         See `pylab.graph.DataNode`
     &#39;&#39;&#39;
-    def __init__(self, X, y, **kwargs):
+    def __init__(self, X: np.ndarray, y: np.ndarray, **kwargs):
         DataNode.__init__(self, **kwargs)
         self.X = X
         self.y = y</code></pre>
@@ -879,25 +885,58 @@ _default_graph_id = _default_graph.id</code></pre>
 </dd>
 <dt id="mdsine2.pylab.graph.DataNode"><code class="flex name class">
 <span>class <span class="ident">DataNode</span></span>
-<span>(</span><span>name=None, name_prefix=None, G=None)</span>
+<span>(</span><span>name: str = None, name_prefix: str = None, G: <a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a> = None)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Base class for an object that wants to be used as the data class in inference.</p></div>
+<div class="desc"><p>Base class for an object that wants to be used as the data class in inference.
+This sets the <code>.data</code> pointer in <code><a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a></code></p>
+<h2 id="parameters">Parameters</h2>
+<dl>
+<dt><strong><code>name</code></strong> :&ensp;<code>str, Optional</code></dt>
+<dd>
+<ul>
+<li>name of the node. If one is not provided, a unique one will be generated</li>
+</ul>
+</dd>
+<dt><strong><code>name_prefix</code></strong> :&ensp;<code>str, Optional</code></dt>
+<dd>
+<ul>
+<li>name prefix if <code>name</code> is not passed in</li>
+</ul>
+</dd>
+<dt><strong><code>G</code></strong> :&ensp;<code><a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a>, Optional</code></dt>
+<dd>
+<ul>
+<li>Graph object to add the node to.</li>
+<li>If not specified it adds it to the default graph</li>
+</ul>
+</dd>
+</dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">class DataNode:
     &#39;&#39;&#39;Base class for an object that wants to be used as the data class in inference.
+    This sets the `.data` pointer in `Graph`
 
+    Parameters
+    ----------
+    name : str, Optional
+        - name of the node. If one is not provided, a unique one will be generated
+    name_prefix : str, Optional
+        - name prefix if `name` is not passed in
+    G : Graph, Optional
+        - Graph object to add the node to.
+        - If not specified it adds it to the default graph
     &#39;&#39;&#39;
-    def __init__(self, name=None, name_prefix=None, G=None):
+    def __init__(self, name: str=None, name_prefix: str=None, G: Graph=None):
         self.G = G
         self.name = name
         self.id = id(self)
         if self.G.data is not None:
             logging.info(&#39;Overriding old data object in graph {}&#39;.format(self))
-        self.G.data = self
+        self.G.data = self # Set itself as the .data pointer
 
     def delete(self):
         &#39;&#39;&#39;Deletes this data object from the graph it belogns to
@@ -931,7 +970,7 @@ _default_graph_id = _default_graph.id</code></pre>
 </dd>
 <dt id="mdsine2.pylab.graph.Graph"><code class="flex name class">
 <span>class <span class="ident">Graph</span></span>
-<span>(</span><span>name=None, seed=None)</span>
+<span>(</span><span>name: str = None, seed: int = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Graph class</p>
@@ -957,7 +996,7 @@ _default_graph_id = _default_graph.id</code></pre>
         This is how we should seed the graph
     &#39;&#39;&#39;
 
-    def __init__(self, name=None, seed=None):
+    def __init__(self, name: str=None, seed: int=None):
         global _graph_dict
         global _PH_COUNT
 
@@ -973,11 +1012,12 @@ _default_graph_id = _default_graph.id</code></pre>
         self.name = name
         self.nodes = {} # dict id -&gt; Node or Node subclass
         self.name2id = {} # dict name -&gt; id
-        self.perturbations = None
-        self.data = None
-        self.inference = None
+        self.perturbations = None # If this is set, it is set to a pylab.base.Perturbations object
+        self.data = None # This is a pointer to the data object
+        self.inference = None # This is a pointer to the pylab.inference.BaseMCMC object
         self.id = id(self)
-        self.tracer = None
+        self.tracer = None # This is a pointer to the pylab.inference.Tracer
+
         # Add a persistent object to the graph so it knows 
         # what variables have persistent workers. This is optional
         # for the persistent Pool
@@ -986,7 +1026,7 @@ _default_graph_id = _default_graph.id</code></pre>
         # Add to the graph dict
         _graph_dict[self.id] = self
 
-    def set_seed(self, seed):
+    def set_seed(self, seed: int):
         &#39;&#39;&#39;Sets the seed of the graph
 
         Parameters
@@ -998,7 +1038,7 @@ _default_graph_id = _default_graph.id</code></pre>
         set_seed(x=seed)
 
     @property
-    def size(self):
+    def size(self) -&gt; int:
         &#39;&#39;&#39;Alias for `__len__`
 
         Returns
@@ -1008,10 +1048,10 @@ _default_graph_id = _default_graph.id</code></pre>
         &#39;&#39;&#39;
         return len(self.nodes)
 
-    def __len__(self):
+    def __len__(self) -&gt; int:
         return len(self.nodes)
 
-    def __getitem__(self, nid):
+    def __getitem__(self, nid: Union[str, int]) -&gt; &#34;Node&#34;:
         &#39;&#39;&#39;Get a node either using the name or the id. First 
         check if it is an id, then a str. If neither work to 
         index the node then an error is thrown
@@ -1031,10 +1071,10 @@ _default_graph_id = _default_graph.id</code></pre>
                     type(nid), nid, self.name))
         return ret
 
-    def __contains__(self, nid):
+    def __contains__(self, nid: Union[str, int]) -&gt; bool:
         return nid in self.name2id or nid in self.nodes
 
-    def __str__(self):
+    def __str__(self) -&gt; str:
         s = &#39;&#39;
         for node in self.nodes.values():
             s += node.name + &#39; ({})\n&#39;.format(node.id)
@@ -1048,28 +1088,20 @@ _default_graph_id = _default_graph.id</code></pre>
                     s += &#39;\t\t{} ({})\n&#39;.format(parent.name,parent.id)
         return s
 
-    def __iter__(self):
+    def __iter__(self) -&gt; &#34;Node&#34;:
         for _id in self.nodes:
             yield self.nodes[_id]
 
-    def render(self, filename, ax=None):
-        &#39;&#39;&#39;We save the graph in Cytoscape format so that we can
-        open it in Cytoscape.
+    def to_networkx(self) -&gt; nx.DiGraph:
+        &#39;&#39;&#39;Make a networkx graph
 
-        Parameters
-        ----------
-        filename : str
-            - Place to save the figure
+        Returns
+        -------
+        networkx.DiGraph
         &#39;&#39;&#39;
-        from py2cytoscape.util import from_networkx
-        import json
 
         G = nx.DiGraph()
-        cmap = []
         labels = {}
-
-        if filename[-5:] != &#39;.cyjs&#39;:
-            filename += &#39;.cyjs&#39;
 
         # Add nodes
         for id,node in self.nodes.items():
@@ -1086,11 +1118,9 @@ _default_graph_id = _default_graph.id</code></pre>
             except:
                 pass
 
-        cyjs = from_networkx(G)
-        with open(filename, &#39;w&#39;) as outfile:
-            json.dump(cyjs, outfile)
+        return G
 
-    def as_default(self):
+    def as_default(self) -&gt; &#34;Graph&#34;:
         &#39;&#39;&#39;Sets the current graph as the default graph
 
         Returns
@@ -1102,7 +1132,7 @@ _default_graph_id = _default_graph.id</code></pre>
         _default_graph = self
         return self
 
-    def get_descendants(self, name):
+    def get_descendants(self, name: str) -&gt; Iterator[int]:
         &#39;&#39;&#39;Returns a list of ids of variables that are dependent on
         the input name(recursively returns all of the child ids).
         The name can either be the name of the variable or the id. Right now
@@ -1139,7 +1169,7 @@ _default_graph_id = _default_graph.id</code></pre>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.graph.Graph.size"><code class="name">var <span class="ident">size</span></code></dt>
+<dt id="mdsine2.pylab.graph.Graph.size"><code class="name">var <span class="ident">size</span> : int</code></dt>
 <dd>
 <div class="desc"><p>Alias for <code>__len__</code></p>
 <h2 id="returns">Returns</h2>
@@ -1152,7 +1182,7 @@ _default_graph_id = _default_graph.id</code></pre>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def size(self):
+def size(self) -&gt; int:
     &#39;&#39;&#39;Alias for `__len__`
 
     Returns
@@ -1167,7 +1197,7 @@ def size(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.graph.Graph.as_default"><code class="name flex">
-<span>def <span class="ident">as_default</span></span>(<span>self)</span>
+<span>def <span class="ident">as_default</span></span>(<span>self) ‑> <a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sets the current graph as the default graph</p>
@@ -1180,7 +1210,7 @@ def size(self):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def as_default(self):
+<pre><code class="python">def as_default(self) -&gt; &#34;Graph&#34;:
     &#39;&#39;&#39;Sets the current graph as the default graph
 
     Returns
@@ -1194,7 +1224,7 @@ def size(self):
 </details>
 </dd>
 <dt id="mdsine2.pylab.graph.Graph.get_descendants"><code class="name flex">
-<span>def <span class="ident">get_descendants</span></span>(<span>self, name)</span>
+<span>def <span class="ident">get_descendants</span></span>(<span>self, name: str) ‑> Iterator[int]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Returns a list of ids of variables that are dependent on
@@ -1219,7 +1249,7 @@ it DOES NOT look at undirected edges</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_descendants(self, name):
+<pre><code class="python">def get_descendants(self, name: str) -&gt; Iterator[int]:
     &#39;&#39;&#39;Returns a list of ids of variables that are dependent on
     the input name(recursively returns all of the child ids).
     The name can either be the name of the variable or the id. Right now
@@ -1251,43 +1281,56 @@ it DOES NOT look at undirected edges</p>
     return ret</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.pylab.graph.Graph.render"><code class="name flex">
-<span>def <span class="ident">render</span></span>(<span>self, filename, ax=None)</span>
+<dt id="mdsine2.pylab.graph.Graph.set_seed"><code class="name flex">
+<span>def <span class="ident">set_seed</span></span>(<span>self, seed: int)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>We save the graph in Cytoscape format so that we can
-open it in Cytoscape.</p>
+<div class="desc"><p>Sets the seed of the graph</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>filename</code></strong> :&ensp;<code>str</code></dt>
-<dd>
-<ul>
-<li>Place to save the figure</li>
-</ul>
-</dd>
+<dt><strong><code>seed</code></strong> :&ensp;<code>int</code></dt>
+<dd>Seed to set for the graph</dd>
 </dl></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def render(self, filename, ax=None):
-    &#39;&#39;&#39;We save the graph in Cytoscape format so that we can
-    open it in Cytoscape.
+<pre><code class="python">def set_seed(self, seed: int):
+    &#39;&#39;&#39;Sets the seed of the graph
 
     Parameters
     ----------
-    filename : str
-        - Place to save the figure
+    seed : int
+        Seed to set for the graph
     &#39;&#39;&#39;
-    from py2cytoscape.util import from_networkx
-    import json
+    self.seed = seed
+    set_seed(x=seed)</code></pre>
+</details>
+</dd>
+<dt id="mdsine2.pylab.graph.Graph.to_networkx"><code class="name flex">
+<span>def <span class="ident">to_networkx</span></span>(<span>self) ‑> networkx.classes.digraph.DiGraph</span>
+</code></dt>
+<dd>
+<div class="desc"><p>Make a networkx graph</p>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>networkx.DiGraph</code></dt>
+<dd>&nbsp;</dd>
+</dl></div>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def to_networkx(self) -&gt; nx.DiGraph:
+    &#39;&#39;&#39;Make a networkx graph
+
+    Returns
+    -------
+    networkx.DiGraph
+    &#39;&#39;&#39;
 
     G = nx.DiGraph()
-    cmap = []
     labels = {}
-
-    if filename[-5:] != &#39;.cyjs&#39;:
-        filename += &#39;.cyjs&#39;
 
     # Add nodes
     for id,node in self.nodes.items():
@@ -1304,35 +1347,7 @@ open it in Cytoscape.</p>
         except:
             pass
 
-    cyjs = from_networkx(G)
-    with open(filename, &#39;w&#39;) as outfile:
-        json.dump(cyjs, outfile)</code></pre>
-</details>
-</dd>
-<dt id="mdsine2.pylab.graph.Graph.set_seed"><code class="name flex">
-<span>def <span class="ident">set_seed</span></span>(<span>self, seed)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Sets the seed of the graph</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>seed</code></strong> :&ensp;<code>int</code></dt>
-<dd>Seed to set for the graph</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def set_seed(self, seed):
-    &#39;&#39;&#39;Sets the seed of the graph
-
-    Parameters
-    ----------
-    seed : int
-        Seed to set for the graph
-    &#39;&#39;&#39;
-    self.seed = seed
-    set_seed(x=seed)</code></pre>
+    return G</code></pre>
 </details>
 </dd>
 </dl>
@@ -1349,14 +1364,10 @@ open it in Cytoscape.</p>
 </dd>
 <dt id="mdsine2.pylab.graph.Node"><code class="flex name class">
 <span>class <span class="ident">Node</span></span>
-<span>(</span><span>name=None, name_prefix=None, G=None)</span>
+<span>(</span><span>name: str = None, name_prefix: str = None, G: <a title="mdsine2.pylab.graph.Graph" href="#mdsine2.pylab.graph.Graph">Graph</a> = None)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Variable that can be in the graph</p>
-<h6 id="_1"></h6>
-<p>self.metropolis</p>
-<p>This is the metropolis object that gets instantiated by the metropolis class</p>
-<h6 id="_2"></h6>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>name</code></strong> :&ensp;<code>str</code></dt>
@@ -1386,12 +1397,6 @@ open it in Cytoscape.</p>
 <pre><code class="python">class Node(BaseNode):
     &#39;&#39;&#39;Variable that can be in the graph
 
-    ####################################
-    self.metropolis
-
-    This is the metropolis object that gets instantiated by the metropolis class
-    ####################################
-
     Parameters
     ----------
     name : str
@@ -1402,16 +1407,20 @@ open it in Cytoscape.</p>
         - Graph object or graph id to add the node to.
         - If not specified it adds it to the default graph
     &#39;&#39;&#39;
-    def __init__(self, name=None, name_prefix=None, G=None):
+    def __init__(self, name: str=None, name_prefix: str=None, G: Graph=None):
         BaseNode.__init__(self, name=name, name_prefix=name_prefix, G=G)
-        self.parents = {}
-        self.children = {}
+        self.parents = {} # maps the ID of the node to the Node objects
+        self.children = {} # maps the ID of the node to the Node objects
         self.undirected = {}
+
+        # Depreciated
         self._metropolis = None
 
     @property
     def metropolis(self):
-        &#39;&#39;&#39;Get the metropolis object
+        &#39;&#39;&#39;DEPRECIATED
+        
+        Get the metropolis object
         &#39;&#39;&#39;
         return self._metropolis
 
@@ -1430,7 +1439,7 @@ open it in Cytoscape.</p>
         BaseNode.delete(self)
 
     @property
-    def degree(self):
+    def degree(self) -&gt; int:
         &#39;&#39;&#39;Get the degree of the node
 
         Returns
@@ -1440,7 +1449,7 @@ open it in Cytoscape.</p>
         # return the degree of the node
         return len(self.parents) + len(self.children) + len(self.undirected)
 
-    def get_adjacent_keys(self):
+    def get_adjacent_keys(self) -&gt; Iterator[int]:
         &#39;&#39;&#39;Get the adjacent nodes
 
         Returns
@@ -1450,7 +1459,7 @@ open it in Cytoscape.</p>
         &#39;&#39;&#39;
         return list(self.parents.keys()) + list(self.children.keys())
 
-    def add_parent(self, parent):
+    def add_parent(self, parent: &#34;Node&#34;):
         &#39;&#39;&#39;Adds `parent` as a parent to the node
         Also adds self as a child to `parent`
 
@@ -1470,7 +1479,7 @@ open it in Cytoscape.</p>
         self.parents[parent.id] = parent
         parent.children[self.id] = self
 
-    def add_child(self, child):
+    def add_child(self, child: &#34;Node&#34;):
         &#39;&#39;&#39;Adds `child` as a child to the node
         Also adds self as a parent to `child`
 
@@ -1490,7 +1499,7 @@ open it in Cytoscape.</p>
         self.children[child.id] = child
         child.parents[self.id] = self
 
-    def add_undirected(self, node):
+    def add_undirected(self, node: &#34;Node&#34;):
         &#39;&#39;&#39;Adds `node` as an undirected neighbor to the node
         Does the same for `node`
 
@@ -1509,7 +1518,7 @@ open it in Cytoscape.</p>
         self.undirected[node.id] = node
         node.undirected[self.id] = self
 
-    def add_prior(self, prior):
+    def add_prior(self, prior: &#34;Node&#34;):
         &#39;&#39;&#39;Override the name of the passed in distribution `prior`.
 
         Parameters
@@ -1547,7 +1556,7 @@ open it in Cytoscape.</p>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.pylab.graph.Node.degree"><code class="name">var <span class="ident">degree</span></code></dt>
+<dt id="mdsine2.pylab.graph.Node.degree"><code class="name">var <span class="ident">degree</span> : int</code></dt>
 <dd>
 <div class="desc"><p>Get the degree of the node</p>
 <h2 id="returns">Returns</h2>
@@ -1560,7 +1569,7 @@ open it in Cytoscape.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def degree(self):
+def degree(self) -&gt; int:
     &#39;&#39;&#39;Get the degree of the node
 
     Returns
@@ -1573,14 +1582,17 @@ def degree(self):
 </dd>
 <dt id="mdsine2.pylab.graph.Node.metropolis"><code class="name">var <span class="ident">metropolis</span></code></dt>
 <dd>
-<div class="desc"><p>Get the metropolis object</p></div>
+<div class="desc"><p>DEPRECIATED</p>
+<p>Get the metropolis object</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
 def metropolis(self):
-    &#39;&#39;&#39;Get the metropolis object
+    &#39;&#39;&#39;DEPRECIATED
+    
+    Get the metropolis object
     &#39;&#39;&#39;
     return self._metropolis</code></pre>
 </details>
@@ -1589,7 +1601,7 @@ def metropolis(self):
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.pylab.graph.Node.add_child"><code class="name flex">
-<span>def <span class="ident">add_child</span></span>(<span>self, child)</span>
+<span>def <span class="ident">add_child</span></span>(<span>self, child: <a title="mdsine2.pylab.graph.Node" href="#mdsine2.pylab.graph.Node">Node</a>)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Adds <code>child</code> as a child to the node
@@ -1607,7 +1619,7 @@ Also adds self as a parent to <code>child</code></p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def add_child(self, child):
+<pre><code class="python">def add_child(self, child: &#34;Node&#34;):
     &#39;&#39;&#39;Adds `child` as a child to the node
     Also adds self as a parent to `child`
 
@@ -1629,7 +1641,7 @@ Also adds self as a parent to <code>child</code></p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.graph.Node.add_parent"><code class="name flex">
-<span>def <span class="ident">add_parent</span></span>(<span>self, parent)</span>
+<span>def <span class="ident">add_parent</span></span>(<span>self, parent: <a title="mdsine2.pylab.graph.Node" href="#mdsine2.pylab.graph.Node">Node</a>)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Adds <code>parent</code> as a parent to the node
@@ -1647,7 +1659,7 @@ Also adds self as a child to <code>parent</code></p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def add_parent(self, parent):
+<pre><code class="python">def add_parent(self, parent: &#34;Node&#34;):
     &#39;&#39;&#39;Adds `parent` as a parent to the node
     Also adds self as a child to `parent`
 
@@ -1669,7 +1681,7 @@ Also adds self as a child to <code>parent</code></p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.graph.Node.add_prior"><code class="name flex">
-<span>def <span class="ident">add_prior</span></span>(<span>self, prior)</span>
+<span>def <span class="ident">add_prior</span></span>(<span>self, prior: <a title="mdsine2.pylab.graph.Node" href="#mdsine2.pylab.graph.Node">Node</a>)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Override the name of the passed in distribution <code>prior</code>.</p>
@@ -1686,7 +1698,7 @@ Also adds self as a child to <code>parent</code></p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def add_prior(self, prior):
+<pre><code class="python">def add_prior(self, prior: &#34;Node&#34;):
     &#39;&#39;&#39;Override the name of the passed in distribution `prior`.
 
     Parameters
@@ -1703,7 +1715,7 @@ Also adds self as a child to <code>parent</code></p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.graph.Node.add_undirected"><code class="name flex">
-<span>def <span class="ident">add_undirected</span></span>(<span>self, node)</span>
+<span>def <span class="ident">add_undirected</span></span>(<span>self, node: <a title="mdsine2.pylab.graph.Node" href="#mdsine2.pylab.graph.Node">Node</a>)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Adds <code>node</code> as an undirected neighbor to the node
@@ -1721,7 +1733,7 @@ Does the same for <code>node</code></p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def add_undirected(self, node):
+<pre><code class="python">def add_undirected(self, node: &#34;Node&#34;):
     &#39;&#39;&#39;Adds `node` as an undirected neighbor to the node
     Does the same for `node`
 
@@ -1742,7 +1754,7 @@ Does the same for <code>node</code></p>
 </details>
 </dd>
 <dt id="mdsine2.pylab.graph.Node.get_adjacent_keys"><code class="name flex">
-<span>def <span class="ident">get_adjacent_keys</span></span>(<span>self)</span>
+<span>def <span class="ident">get_adjacent_keys</span></span>(<span>self) ‑> Iterator[int]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Get the adjacent nodes</p>
@@ -1755,7 +1767,7 @@ Does the same for <code>node</code></p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def get_adjacent_keys(self):
+<pre><code class="python">def get_adjacent_keys(self) -&gt; Iterator[int]:
     &#39;&#39;&#39;Get the adjacent nodes
 
     Returns
@@ -1824,9 +1836,9 @@ Does the same for <code>node</code></p>
 <ul class="">
 <li><code><a title="mdsine2.pylab.graph.Graph.as_default" href="#mdsine2.pylab.graph.Graph.as_default">as_default</a></code></li>
 <li><code><a title="mdsine2.pylab.graph.Graph.get_descendants" href="#mdsine2.pylab.graph.Graph.get_descendants">get_descendants</a></code></li>
-<li><code><a title="mdsine2.pylab.graph.Graph.render" href="#mdsine2.pylab.graph.Graph.render">render</a></code></li>
 <li><code><a title="mdsine2.pylab.graph.Graph.set_seed" href="#mdsine2.pylab.graph.Graph.set_seed">set_seed</a></code></li>
 <li><code><a title="mdsine2.pylab.graph.Graph.size" href="#mdsine2.pylab.graph.Graph.size">size</a></code></li>
+<li><code><a title="mdsine2.pylab.graph.Graph.to_networkx" href="#mdsine2.pylab.graph.Graph.to_networkx">to_networkx</a></code></li>
 </ul>
 </li>
 <li>

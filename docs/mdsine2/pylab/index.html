@@ -56,10 +56,10 @@ from .contrib import isclusterperturbationindicator, isclusterperturbation, isin
 from .multiprocessing import ispersistentworker, ispersistentpool, isDASW, isSADW
 
 # Import commonly used Pylab functions and classes
-from .util import taxaname_formatter, toarray, fast_index, coarsen_phylogenetic_tree, \
-    taxaname_for_paper, TAXANAME_PAPER_FORMAT
-from .base import Taxon, TaxaSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
-    Subject, Study, condense_matrix_with_taxonomy
+from .util import toarray, fast_index, coarsen_phylogenetic_tree
+from .base import Taxon, OTU, TaxaSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
+    Subject, Study, condense_matrix_with_taxonomy, taxaname_for_paper, taxaname_formatter, \
+    TAXANAME_PAPER_FORMAT
 from .variables import Variable, Constant, summary
 from .graph import Graph, Node, hasprior
 from .cluster import Clustering
@@ -78,7 +78,7 @@ from .errors import UndefinedError, MathError, GraphIDError, InheritanceError, \
 <dl>
 <dt><code class="name"><a title="mdsine2.pylab.base" href="base.html">mdsine2.pylab.base</a></code></dt>
 <dd>
-<div class="desc"><p>These are base classes that are used throughout the rest of Pylab …</p></div>
+<div class="desc"><p>These are base classes that are used throughout the rest of Pylab</p></div>
 </dd>
 <dt><code class="name"><a title="mdsine2.pylab.cluster" href="cluster.html">mdsine2.pylab.cluster</a></code></dt>
 <dd>

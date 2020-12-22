@@ -40,6 +40,9 @@ import os
 import matplotlib.pyplot as plt
 import math
 
+# Typing
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple
+
 from .cluster import isclustering
 from .util import count_calls, issquare, inspect_trace, isarray
 from .errors import MathError
@@ -48,7 +51,7 @@ from .variables import summary as variable_summary
 # Constants
 ERROR_TOLERANCE_FORCE_SYMMETRY = 1e-20
 
-def log_det(M):
+def log_det(M: np.ndarray) -&gt; float:
     &#39;&#39;&#39;Computes the log determinant using the cholesky decomposition trick
 
     Parameters
@@ -68,7 +71,7 @@ def log_det(M):
     return 2*np.sum(np.log(np.diag(L)))
 
 # @inspect_trace(max_trace=None)
-def safe_cholesky(M, jitter=False, save_if_crash=False):
+def safe_cholesky(M: np.ndarray, jitter: bool=False, save_if_crash: bool=False) -&gt; np.ndarray:
     &#39;&#39;&#39;First try numpy, then do scipy
 
     Parameters
@@ -117,7 +120,8 @@ class metrics:
     &#39;&#39;&#39;A class defining different metrics
     &#39;&#39;&#39;
     @staticmethod
-    def rocauc_posterior_interactions(pred, truth, signed=False, average=&#39;weighted&#39;, per_gibb=False):
+    def rocauc_posterior_interactions(pred: np.ndarray, truth: np.ndarray, signed: bool=False, 
+        average: str=&#39;weighted&#39;, per_gibb: bool=False) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the Area Under Curve (AUC) between `pred` and `truth` between 
         interaction matrices. If `signed` is True, then we distinguish betwen possitive
         and negative interactions. Else we just check if the interaction is there. This
@@ -198,7 +202,7 @@ class metrics:
             return sklearn.metrics.roc_auc_score(y_true=truth_, y_score=pred_, average=average)
 
     @staticmethod
-    def RMSE(arr1, arr2, axis=None):
+    def RMSE(arr1: np.ndarray, arr2: np.ndarray, axis: int=None) -&gt; float:
         &#39;&#39;&#39;Root Mean Square Error between `arr1` and `arr2`
 
         Parameters
@@ -228,7 +232,7 @@ class metrics:
         return np.sqrt(np.nanmean((arr1 - arr2) ** 2, axis=axis))
 
     @staticmethod
-    def variation_of_information(X, Y, n):
+    def variation_of_information(X: Iterator[Iterator[int]], Y: Iterator[Iterator[int]], n: int) -&gt; float:
         &#39;&#39;&#39;Variation of information:
 
         .. math::
@@ -305,7 +309,7 @@ class metrics:
         return abs(sigma)
 
     @staticmethod
-    def PE(truth, predicted, axis=None, fillvalue=None):
+    def PE(truth: np.ndarray, predicted: np.ndarray, axis: int=None, fillvalue: float=None) -&gt; float:
         &#39;&#39;&#39;Percent error between the truth and predicted. If 
         `truth=0`, then we substitute it with `fillvalue`
 
@@ -336,7 +340,7 @@ class metrics:
         return np.mean(np.absolute((truth-predicted)/truth), axis=axis)
 
     @staticmethod
-    def logPE(truth, predicted, axis=None, fillvalue=None):
+    def logPE(truth: np.ndarray, predicted: np.ndarray, axis: int=None, fillvalue: float=None) -&gt; float:
         &#39;&#39;&#39;Percent error between the truth and predicted in log space.
 
         If any of the values in truth or predicted are 0 or negative, we
@@ -375,7 +379,7 @@ class metrics:
         return np.mean(np.absolute((logtruth-np.log(predicted))/logtruth), axis=axis)
 
 @count_calls(max_calls=None)
-def force_symmetry(M, check=True):
+def force_symmetry(M: np.ndarray, check: bool=True) -&gt; np.ndarray:
     &#39;&#39;&#39;Forces symmetry for the input square matrix
 
     Parameters
@@ -405,7 +409,7 @@ def force_symmetry(M, check=True):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.pylab.math.log_det"><code class="name flex">
-<span>def <span class="ident">log_det</span></span>(<span>M)</span>
+<span>def <span class="ident">log_det</span></span>(<span>M: numpy.ndarray) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Computes the log determinant using the cholesky decomposition trick</p>
@@ -422,7 +426,7 @@ def force_symmetry(M, check=True):
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def log_det(M):
+<pre><code class="python">def log_det(M: np.ndarray) -&gt; float:
     &#39;&#39;&#39;Computes the log determinant using the cholesky decomposition trick
 
     Parameters
@@ -443,7 +447,7 @@ def force_symmetry(M, check=True):
 </details>
 </dd>
 <dt id="mdsine2.pylab.math.safe_cholesky"><code class="name flex">
-<span>def <span class="ident">safe_cholesky</span></span>(<span>M, jitter=False, save_if_crash=False)</span>
+<span>def <span class="ident">safe_cholesky</span></span>(<span>M: numpy.ndarray, jitter: bool = False, save_if_crash: bool = False) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>First try numpy, then do scipy</p>
@@ -461,7 +465,7 @@ to the diagonal until it becomes numerically stable</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def safe_cholesky(M, jitter=False, save_if_crash=False):
+<pre><code class="python">def safe_cholesky(M: np.ndarray, jitter: bool=False, save_if_crash: bool=False) -&gt; np.ndarray:
     &#39;&#39;&#39;First try numpy, then do scipy
 
     Parameters
@@ -525,7 +529,8 @@ to the diagonal until it becomes numerically stable</dd>
     &#39;&#39;&#39;A class defining different metrics
     &#39;&#39;&#39;
     @staticmethod
-    def rocauc_posterior_interactions(pred, truth, signed=False, average=&#39;weighted&#39;, per_gibb=False):
+    def rocauc_posterior_interactions(pred: np.ndarray, truth: np.ndarray, signed: bool=False, 
+        average: str=&#39;weighted&#39;, per_gibb: bool=False) -&gt; Union[float, np.ndarray]:
         &#39;&#39;&#39;Calculate the Area Under Curve (AUC) between `pred` and `truth` between 
         interaction matrices. If `signed` is True, then we distinguish betwen possitive
         and negative interactions. Else we just check if the interaction is there. This
@@ -606,7 +611,7 @@ to the diagonal until it becomes numerically stable</dd>
             return sklearn.metrics.roc_auc_score(y_true=truth_, y_score=pred_, average=average)
 
     @staticmethod
-    def RMSE(arr1, arr2, axis=None):
+    def RMSE(arr1: np.ndarray, arr2: np.ndarray, axis: int=None) -&gt; float:
         &#39;&#39;&#39;Root Mean Square Error between `arr1` and `arr2`
 
         Parameters
@@ -636,7 +641,7 @@ to the diagonal until it becomes numerically stable</dd>
         return np.sqrt(np.nanmean((arr1 - arr2) ** 2, axis=axis))
 
     @staticmethod
-    def variation_of_information(X, Y, n):
+    def variation_of_information(X: Iterator[Iterator[int]], Y: Iterator[Iterator[int]], n: int) -&gt; float:
         &#39;&#39;&#39;Variation of information:
 
         .. math::
@@ -713,7 +718,7 @@ to the diagonal until it becomes numerically stable</dd>
         return abs(sigma)
 
     @staticmethod
-    def PE(truth, predicted, axis=None, fillvalue=None):
+    def PE(truth: np.ndarray, predicted: np.ndarray, axis: int=None, fillvalue: float=None) -&gt; float:
         &#39;&#39;&#39;Percent error between the truth and predicted. If 
         `truth=0`, then we substitute it with `fillvalue`
 
@@ -744,7 +749,7 @@ to the diagonal until it becomes numerically stable</dd>
         return np.mean(np.absolute((truth-predicted)/truth), axis=axis)
 
     @staticmethod
-    def logPE(truth, predicted, axis=None, fillvalue=None):
+    def logPE(truth: np.ndarray, predicted: np.ndarray, axis: int=None, fillvalue: float=None) -&gt; float:
         &#39;&#39;&#39;Percent error between the truth and predicted in log space.
 
         If any of the values in truth or predicted are 0 or negative, we
@@ -785,7 +790,7 @@ to the diagonal until it becomes numerically stable</dd>
 <h3>Static methods</h3>
 <dl>
 <dt id="mdsine2.pylab.math.metrics.PE"><code class="name flex">
-<span>def <span class="ident">PE</span></span>(<span>truth, predicted, axis=None, fillvalue=None)</span>
+<span>def <span class="ident">PE</span></span>(<span>truth: numpy.ndarray, predicted: numpy.ndarray, axis: int = None, fillvalue: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Percent error between the truth and predicted. If
@@ -811,7 +816,7 @@ samples that are == 0.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def PE(truth, predicted, axis=None, fillvalue=None):
+def PE(truth: np.ndarray, predicted: np.ndarray, axis: int=None, fillvalue: float=None) -&gt; float:
     &#39;&#39;&#39;Percent error between the truth and predicted. If 
     `truth=0`, then we substitute it with `fillvalue`
 
@@ -843,7 +848,7 @@ def PE(truth, predicted, axis=None, fillvalue=None):
 </details>
 </dd>
 <dt id="mdsine2.pylab.math.metrics.RMSE"><code class="name flex">
-<span>def <span class="ident">RMSE</span></span>(<span>arr1, arr2, axis=None)</span>
+<span>def <span class="ident">RMSE</span></span>(<span>arr1: numpy.ndarray, arr2: numpy.ndarray, axis: int = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Root Mean Square Error between <code>arr1</code> and <code>arr2</code></p>
@@ -865,7 +870,7 @@ Else we do not do any reshaping</dd>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def RMSE(arr1, arr2, axis=None):
+def RMSE(arr1: np.ndarray, arr2: np.ndarray, axis: int=None) -&gt; float:
     &#39;&#39;&#39;Root Mean Square Error between `arr1` and `arr2`
 
     Parameters
@@ -896,7 +901,7 @@ def RMSE(arr1, arr2, axis=None):
 </details>
 </dd>
 <dt id="mdsine2.pylab.math.metrics.logPE"><code class="name flex">
-<span>def <span class="ident">logPE</span></span>(<span>truth, predicted, axis=None, fillvalue=None)</span>
+<span>def <span class="ident">logPE</span></span>(<span>truth: numpy.ndarray, predicted: numpy.ndarray, axis: int = None, fillvalue: float = None) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Percent error between the truth and predicted in log space.</p>
@@ -924,7 +929,7 @@ samples that are &lt;= 0.</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def logPE(truth, predicted, axis=None, fillvalue=None):
+def logPE(truth: np.ndarray, predicted: np.ndarray, axis: int=None, fillvalue: float=None) -&gt; float:
     &#39;&#39;&#39;Percent error between the truth and predicted in log space.
 
     If any of the values in truth or predicted are 0 or negative, we
@@ -964,7 +969,7 @@ def logPE(truth, predicted, axis=None, fillvalue=None):
 </details>
 </dd>
 <dt id="mdsine2.pylab.math.metrics.rocauc_posterior_interactions"><code class="name flex">
-<span>def <span class="ident">rocauc_posterior_interactions</span></span>(<span>pred, truth, signed=False, average='weighted', per_gibb=False)</span>
+<span>def <span class="ident">rocauc_posterior_interactions</span></span>(<span>pred: numpy.ndarray, truth: numpy.ndarray, signed: bool = False, average: str = 'weighted', per_gibb: bool = False) ‑> Union[float, numpy.ndarray]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the Area Under Curve (AUC) between <code>pred</code> and <code>truth</code> between
@@ -1001,7 +1006,8 @@ ROCAUC (pylab.variables.summary)</dd>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def rocauc_posterior_interactions(pred, truth, signed=False, average=&#39;weighted&#39;, per_gibb=False):
+def rocauc_posterior_interactions(pred: np.ndarray, truth: np.ndarray, signed: bool=False, 
+    average: str=&#39;weighted&#39;, per_gibb: bool=False) -&gt; Union[float, np.ndarray]:
     &#39;&#39;&#39;Calculate the Area Under Curve (AUC) between `pred` and `truth` between 
     interaction matrices. If `signed` is True, then we distinguish betwen possitive
     and negative interactions. Else we just check if the interaction is there. This
@@ -1083,7 +1089,7 @@ def rocauc_posterior_interactions(pred, truth, signed=False, average=&#39;weight
 </details>
 </dd>
 <dt id="mdsine2.pylab.math.metrics.variation_of_information"><code class="name flex">
-<span>def <span class="ident">variation_of_information</span></span>(<span>X, Y, n)</span>
+<span>def <span class="ident">variation_of_information</span></span>(<span>X: Iterator[Iterator[int]], Y: Iterator[Iterator[int]], n: int) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Variation of information:</p>
@@ -1152,7 +1158,7 @@ doi:10.1016/j.jmva.2006.11.013</p></div>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@staticmethod
-def variation_of_information(X, Y, n):
+def variation_of_information(X: Iterator[Iterator[int]], Y: Iterator[Iterator[int]], n: int) -&gt; float:
     &#39;&#39;&#39;Variation of information:
 
     .. math::

@@ -37,6 +37,7 @@ from . import negbin
 from . import model
 from . import config
 from . import dataset
+from . import synthetic
 
 # Import key modules from pylab
 from .pylab import random
@@ -58,10 +59,10 @@ from .pylab.contrib import isclusterperturbationindicator, isclusterperturbation
 from .pylab.multiprocessing import ispersistentworker, ispersistentpool, isDASW, isSADW
 
 # Import commonly used Pylab functions and classes
-from .pylab.util import taxaname_formatter, toarray, fast_index, coarsen_phylogenetic_tree, \
-    taxaname_for_paper, TAXANAME_PAPER_FORMAT
+from .pylab.util import toarray, fast_index, coarsen_phylogenetic_tree
 from .pylab.base import Taxon, OTU, TaxaSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
-    Subject, Study, condense_matrix_with_taxonomy
+    Subject, Study, condense_matrix_with_taxonomy, taxaname_for_paper, TAXANAME_PAPER_FORMAT, \
+    taxaname_formatter
 from .pylab.variables import Variable, Constant, summary
 from .pylab.graph import Graph, Node
 from .pylab.cluster import Clustering
@@ -69,6 +70,7 @@ from .pylab.random import seed
 from .pylab.contrib import Interactions, ClusterPerturbationEffect
 from .pylab.inference import BaseMCMC, r_hat
 from .pylab.dynamics import integrate, BaseDynamics
+from .synthetic import Synthetic
 
 # Import PyLab errors
 from .pylab.errors import UndefinedError, MathError, GraphIDError, InheritanceError, \
@@ -80,7 +82,8 @@ from .run import initialize_graph, normalize_parameters, denormalize_parameters,
 from .util import is_gram_negative, generate_interation_bayes_factors_posthoc, \
     generate_perturbation_bayes_factors_posthoc, aggregate_items, consistency_filtering, \
     conditional_consistency_filtering, generate_cluster_assignments_posthoc, \
-    generate_taxonomic_distribution_over_clusters_posthoc, condense_fixed_clustering_interaction_matrix</code></pre>
+    generate_taxonomic_distribution_over_clusters_posthoc, condense_fixed_clustering_interaction_matrix, \
+    condense_fixed_clustering_perturbation</code></pre>
 </details>
 </section>
 <section>
@@ -127,7 +130,7 @@ parameters that we are learning.</p></div>
 </dd>
 <dt><code class="name"><a title="mdsine2.synthetic" href="synthetic.html">mdsine2.synthetic</a></code></dt>
 <dd>
-<div class="desc"><p>Generating synthetic data …</p></div>
+<div class="desc"><p>Generates synthetic systems</p></div>
 </dd>
 <dt><code class="name"><a title="mdsine2.util" href="util.html">mdsine2.util</a></code></dt>
 <dd>

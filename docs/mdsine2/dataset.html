@@ -29,17 +29,19 @@
 <pre><code class="python">import pandas as pd
 import os
 import logging
+from typing import Dict, Union
 from .pylab import TaxaSet, Study
 
 __all__ = [&#39;load_gibson&#39;, &#39;parse&#39;]
 
-def load_gibson(dset=None, as_df=False, with_perturbations=True, species_assignment=&#39;both&#39;,
-    load_local=None, max_n_species=2):
+def load_gibson(dset: str=None, as_df: bool=False, with_perturbations: bool=True, species_assignment: str=&#39;both&#39;,
+    load_local: str=None, max_n_species: int=2) -&gt; Union[Dict[str, pd.DataFrame], Study]:
     &#39;&#39;&#39;Load the Gibson dataset.
     Returns either a `mdsine2.Study` object or the `pandas.DataFrame` objects that
     that comprise the Gibson dataset.
 
-    Reads in the dataset from Github
+    Tries to load the dataset from Github. If there is no internet connection, then we
+    can read it from a local path specfied with the parameter `load_local`.
 
     Parameters
     ----------
@@ -106,7 +108,8 @@ def load_gibson(dset=None, as_df=False, with_perturbations=True, species_assignm
             perturbations=perturbations)
         return study
 
-def parse(name, metadata, taxonomy, reads=None, qpcr=None, perturbations=None, sep=&#39;\t&#39;):
+def parse(name: str, metadata: str, taxonomy: str, reads: str=None, qpcr: str=None, 
+    perturbations: str=None, sep: str=&#39;\t&#39;) -&gt; Study:
     &#39;&#39;&#39;Parse a dataset. Acts as a wrapper for `mdsine2.Study.parse`
 
     Parameters
@@ -467,13 +470,14 @@ class _Gibson:
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.dataset.load_gibson"><code class="name flex">
-<span>def <span class="ident">load_gibson</span></span>(<span>dset=None, as_df=False, with_perturbations=True, species_assignment='both', load_local=None, max_n_species=2)</span>
+<span>def <span class="ident">load_gibson</span></span>(<span>dset: str = None, as_df: bool = False, with_perturbations: bool = True, species_assignment: str = 'both', load_local: str = None, max_n_species: int = 2) ‑> Union[Dict[str, pandas.core.frame.DataFrame], <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a>]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Load the Gibson dataset.
 Returns either a <code>mdsine2.Study</code> object or the <code>pandas.DataFrame</code> objects that
 that comprise the Gibson dataset.</p>
-<p>Reads in the dataset from Github</p>
+<p>Tries to load the dataset from Github. If there is no internet connection, then we
+can read it from a local path specfied with the parameter <code>load_local</code>.</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
 <dt><strong><code>dset</code></strong> :&ensp;<code>str, None</code></dt>
@@ -515,13 +519,14 @@ assignment gets bumped up to Genus.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def load_gibson(dset=None, as_df=False, with_perturbations=True, species_assignment=&#39;both&#39;,
-    load_local=None, max_n_species=2):
+<pre><code class="python">def load_gibson(dset: str=None, as_df: bool=False, with_perturbations: bool=True, species_assignment: str=&#39;both&#39;,
+    load_local: str=None, max_n_species: int=2) -&gt; Union[Dict[str, pd.DataFrame], Study]:
     &#39;&#39;&#39;Load the Gibson dataset.
     Returns either a `mdsine2.Study` object or the `pandas.DataFrame` objects that
     that comprise the Gibson dataset.
 
-    Reads in the dataset from Github
+    Tries to load the dataset from Github. If there is no internet connection, then we
+    can read it from a local path specfied with the parameter `load_local`.
 
     Parameters
     ----------
@@ -590,7 +595,7 @@ assignment gets bumped up to Genus.</dd>
 </details>
 </dd>
 <dt id="mdsine2.dataset.parse"><code class="name flex">
-<span>def <span class="ident">parse</span></span>(<span>name, metadata, taxonomy, reads=None, qpcr=None, perturbations=None, sep='\t')</span>
+<span>def <span class="ident">parse</span></span>(<span>name: str, metadata: str, taxonomy: str, reads: str = None, qpcr: str = None, perturbations: str = None, sep: str = '\t') ‑> <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Parse a dataset. Acts as a wrapper for <code>mdsine2.Study.parse</code></p>
@@ -620,7 +625,8 @@ assignment gets bumped up to Genus.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def parse(name, metadata, taxonomy, reads=None, qpcr=None, perturbations=None, sep=&#39;\t&#39;):
+<pre><code class="python">def parse(name: str, metadata: str, taxonomy: str, reads: str=None, qpcr: str=None, 
+    perturbations: str=None, sep: str=&#39;\t&#39;) -&gt; Study:
     &#39;&#39;&#39;Parse a dataset. Acts as a wrapper for `mdsine2.Study.parse`
 
     Parameters

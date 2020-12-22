@@ -31,6 +31,8 @@ import numpy as np
 import h5py
 import os
 
+from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Callable
+
 # Custom modules
 from . import config
 from .names import STRNAMES
@@ -38,15 +40,16 @@ from . import design_matrices
 from . import posterior
 
 from . import pylab as pl
+from .pylab import Study, BaseMCMC
 
-def initialize_graph(params, graph_name, subjset, continue_inference=None, 
-    intermediate_validation=None):
+def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset: Study, continue_inference: int=None, 
+    intermediate_validation: Dict[str, Union[float, Callable, Dict[str, Any]]]=None) -&gt; BaseMCMC:
     &#39;&#39;&#39;Builds the graph with the posterior classes and creates an
     mdsine2.BaseMCMC inference chain object that you ran run inference with
 
     Parameters
     ----------
-    params : mdsine2.config.ModelConfig
+    params : mdsine2.config.MDSINE2ModelConfig
         This class specifies all of the parameters of the model.
     graph_name : str
         Name of the graph you want to build
@@ -419,14 +422,14 @@ def initialize_graph(params, graph_name, subjset, continue_inference=None,
     # ---------------
     hdf5_filename = os.path.join(basepath, config.HDF5_FILENAME)
     mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
-    mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CHECKPOINT)
+    mcmc.set_tracer(filename=hdf5_filename, checkpoint=params.CHECKPOINT)
     mcmc.set_save_location(mcmc_filename)
     params.save(os.path.join(basepath, config.PARAMS_FILENAME))
     pl.seed(params.SEED)
 
     return mcmc
 
-def run_graph(mcmc, crash_if_error=True):
+def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True) -&gt; BaseMCMC:
     &#39;&#39;&#39;Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
 
     Parameters
@@ -456,7 +459,7 @@ def run_graph(mcmc, crash_if_error=True):
     mcmc.graph.data.design_matrices = None
     return mcmc
 
-def normalize_parameters(mcmc, subjset):
+def normalize_parameters(mcmc: BaseMCMC, subjset: Study) -&gt; Tuple[BaseMCMC, Study]:
     &#39;&#39;&#39;Normalize the abundance of the parameters by the normalization factor
     in the subject set
 
@@ -474,7 +477,7 @@ def normalize_parameters(mcmc, subjset):
     GRAPH = mcmc.graph
     if subjset.qpcr_normalization_factor is None:
         f = h5py.File(GRAPH.tracer.filename, &#39;r+&#39;, libver=&#39;latest&#39;)
-        ckpt = GRAPH.tracer.ckpt
+        checkpoint = GRAPH.tracer.checkpoint
 
         try:
             GRAPH[STRNAMES.FILTERING].v2 *= subjset.qpcr_normalization_factor
@@ -511,9 +514,9 @@ def normalize_parameters(mcmc, subjset):
             dset = f[STRNAMES.INTERACTIONS_OBJ]
             total_samples = dset.attrs[&#39;end_iter&#39;]
             i = 0
-            while (i * ckpt) &lt; total_samples:
-                start_idx = int(i * ckpt)
-                end_idx = int((i+1) * ckpt)
+            while (i * checkpoint) &lt; total_samples:
+                start_idx = int(i * checkpoint)
+                end_idx = int((i+1) * checkpoint)
 
                 if end_idx &gt; total_samples:
                     end_idx = total_samples
@@ -536,9 +539,9 @@ def normalize_parameters(mcmc, subjset):
                 dset = f[name]
                 total_samples = dset.attrs[&#39;end_iter&#39;]
                 i = 0
-                while (i * ckpt) &lt; total_samples:
-                    start_idx = int(i * ckpt)
-                    end_idx = int((i+1) * ckpt)
+                while (i * checkpoint) &lt; total_samples:
+                    start_idx = int(i * checkpoint)
+                    end_idx = int((i+1) * checkpoint)
 
                     if end_idx &gt; total_samples:
                         end_idx = total_samples
@@ -551,7 +554,7 @@ def normalize_parameters(mcmc, subjset):
     
     return mcmc, subjset
 
-def denormalize_parameters(mcmc):
+def denormalize_parameters(mcmc: BaseMCMC) -&gt; Tuple[BaseMCMC, Study]:
     &#39;&#39;&#39;Denormalize the abundance of the parameters by the normalization factor
     in the subject set
 
@@ -572,7 +575,7 @@ def denormalize_parameters(mcmc):
         logging.info(&#39;Denormalizing the parameters&#39;)
 
         f = h5py.File(GRAPH.tracer.filename, &#39;r+&#39;, libver=&#39;latest&#39;)
-        ckpt = GRAPH.tracer.ckpt
+        checkpoint = GRAPH.tracer.checkpoint
 
         try:
             GRAPH[STRNAMES.FILTERING].v2 /= subjset.qpcr_normalization_factor
@@ -609,9 +612,9 @@ def denormalize_parameters(mcmc):
             dset = f[STRNAMES.INTERACTIONS_OBJ]
             total_samples = dset.attrs[&#39;end_iter&#39;]
             i = 0
-            while (i * ckpt) &lt; total_samples:
-                start_idx = int(i * ckpt)
-                end_idx = int((i+1) * ckpt)
+            while (i * checkpoint) &lt; total_samples:
+                start_idx = int(i * checkpoint)
+                end_idx = int((i+1) * checkpoint)
 
                 if end_idx &gt; total_samples:
                     end_idx = total_samples
@@ -634,9 +637,9 @@ def denormalize_parameters(mcmc):
                 dset = f[name]
                 total_samples = dset.attrs[&#39;end_iter&#39;]
                 i = 0
-                while (i * ckpt) &lt; total_samples:
-                    start_idx = int(i * ckpt)
-                    end_idx = int((i+1) * ckpt)
+                while (i * checkpoint) &lt; total_samples:
+                    start_idx = int(i * checkpoint)
+                    end_idx = int((i+1) * checkpoint)
 
                     if end_idx &gt; total_samples:
                         end_idx = total_samples
@@ -650,7 +653,7 @@ def denormalize_parameters(mcmc):
         logging.info(&#39;Data already denormalized&#39;)
     return mcmc, subjset
 
-def calculate_stability_over_gibbs(mcmc, section=&#39;auto&#39;, log_every=1000):
+def calculate_stability_over_gibbs(mcmc: BaseMCMC, section: str=&#39;auto&#39;, log_every: int=1000) -&gt; np.ndarray:
     &#39;&#39;&#39;Calculate the stability over each of the Gibb steps in the chain `mcmc`
 
     stability = diag(r) @ A, where
@@ -790,7 +793,7 @@ def calculate_stability_over_gibbs(mcmc, section=&#39;auto&#39;, log_every=1000)
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.run.calculate_stability_over_gibbs"><code class="name flex">
-<span>def <span class="ident">calculate_stability_over_gibbs</span></span>(<span>mcmc, section='auto', log_every=1000)</span>
+<span>def <span class="ident">calculate_stability_over_gibbs</span></span>(<span>mcmc: <a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a>, section: str = 'auto', log_every: int = 1000) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the stability over each of the Gibb steps in the chain <code>mcmc</code></p>
@@ -828,7 +831,7 @@ steps. If None then there is not display.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def calculate_stability_over_gibbs(mcmc, section=&#39;auto&#39;, log_every=1000):
+<pre><code class="python">def calculate_stability_over_gibbs(mcmc: BaseMCMC, section: str=&#39;auto&#39;, log_every: int=1000) -&gt; np.ndarray:
     &#39;&#39;&#39;Calculate the stability over each of the Gibb steps in the chain `mcmc`
 
     stability = diag(r) @ A, where
@@ -961,7 +964,7 @@ steps. If None then there is not display.</dd>
 </details>
 </dd>
 <dt id="mdsine2.run.denormalize_parameters"><code class="name flex">
-<span>def <span class="ident">denormalize_parameters</span></span>(<span>mcmc)</span>
+<span>def <span class="ident">denormalize_parameters</span></span>(<span>mcmc: <a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a>) ‑> Tuple[<a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a>, <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a>]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Denormalize the abundance of the parameters by the normalization factor
@@ -982,7 +985,7 @@ in the subject set</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def denormalize_parameters(mcmc):
+<pre><code class="python">def denormalize_parameters(mcmc: BaseMCMC) -&gt; Tuple[BaseMCMC, Study]:
     &#39;&#39;&#39;Denormalize the abundance of the parameters by the normalization factor
     in the subject set
 
@@ -1003,7 +1006,7 @@ in the subject set</p>
         logging.info(&#39;Denormalizing the parameters&#39;)
 
         f = h5py.File(GRAPH.tracer.filename, &#39;r+&#39;, libver=&#39;latest&#39;)
-        ckpt = GRAPH.tracer.ckpt
+        checkpoint = GRAPH.tracer.checkpoint
 
         try:
             GRAPH[STRNAMES.FILTERING].v2 /= subjset.qpcr_normalization_factor
@@ -1040,9 +1043,9 @@ in the subject set</p>
             dset = f[STRNAMES.INTERACTIONS_OBJ]
             total_samples = dset.attrs[&#39;end_iter&#39;]
             i = 0
-            while (i * ckpt) &lt; total_samples:
-                start_idx = int(i * ckpt)
-                end_idx = int((i+1) * ckpt)
+            while (i * checkpoint) &lt; total_samples:
+                start_idx = int(i * checkpoint)
+                end_idx = int((i+1) * checkpoint)
 
                 if end_idx &gt; total_samples:
                     end_idx = total_samples
@@ -1065,9 +1068,9 @@ in the subject set</p>
                 dset = f[name]
                 total_samples = dset.attrs[&#39;end_iter&#39;]
                 i = 0
-                while (i * ckpt) &lt; total_samples:
-                    start_idx = int(i * ckpt)
-                    end_idx = int((i+1) * ckpt)
+                while (i * checkpoint) &lt; total_samples:
+                    start_idx = int(i * checkpoint)
+                    end_idx = int((i+1) * checkpoint)
 
                     if end_idx &gt; total_samples:
                         end_idx = total_samples
@@ -1083,14 +1086,14 @@ in the subject set</p>
 </details>
 </dd>
 <dt id="mdsine2.run.initialize_graph"><code class="name flex">
-<span>def <span class="ident">initialize_graph</span></span>(<span>params, graph_name, subjset, continue_inference=None, intermediate_validation=None)</span>
+<span>def <span class="ident">initialize_graph</span></span>(<span>params: <a title="mdsine2.config.MDSINE2ModelConfig" href="config.html#mdsine2.config.MDSINE2ModelConfig">MDSINE2ModelConfig</a>, graph_name: str, subjset: <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a>, continue_inference: int = None, intermediate_validation: Dict[str, Union[float, Callable, Dict[str, Any]]] = None) ‑> <a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Builds the graph with the posterior classes and creates an
 mdsine2.BaseMCMC inference chain object that you ran run inference with</p>
 <h2 id="parameters">Parameters</h2>
 <dl>
-<dt><strong><code>params</code></strong> :&ensp;<code>mdsine2.config.ModelConfig</code></dt>
+<dt><strong><code>params</code></strong> :&ensp;<code><a title="mdsine2.config.MDSINE2ModelConfig" href="config.html#mdsine2.config.MDSINE2ModelConfig">MDSINE2ModelConfig</a></code></dt>
 <dd>This class specifies all of the parameters of the model.</dd>
 <dt><strong><code>graph_name</code></strong> :&ensp;<code>str</code></dt>
 <dd>Name of the graph you want to build</dd>
@@ -1117,14 +1120,14 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def initialize_graph(params, graph_name, subjset, continue_inference=None, 
-    intermediate_validation=None):
+<pre><code class="python">def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset: Study, continue_inference: int=None, 
+    intermediate_validation: Dict[str, Union[float, Callable, Dict[str, Any]]]=None) -&gt; BaseMCMC:
     &#39;&#39;&#39;Builds the graph with the posterior classes and creates an
     mdsine2.BaseMCMC inference chain object that you ran run inference with
 
     Parameters
     ----------
-    params : mdsine2.config.ModelConfig
+    params : mdsine2.config.MDSINE2ModelConfig
         This class specifies all of the parameters of the model.
     graph_name : str
         Name of the graph you want to build
@@ -1497,7 +1500,7 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
     # ---------------
     hdf5_filename = os.path.join(basepath, config.HDF5_FILENAME)
     mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
-    mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CHECKPOINT)
+    mcmc.set_tracer(filename=hdf5_filename, checkpoint=params.CHECKPOINT)
     mcmc.set_save_location(mcmc_filename)
     params.save(os.path.join(basepath, config.PARAMS_FILENAME))
     pl.seed(params.SEED)
@@ -1506,7 +1509,7 @@ These are additional arguments to pass into fucntion <code>func</code></dd>
 </details>
 </dd>
 <dt id="mdsine2.run.normalize_parameters"><code class="name flex">
-<span>def <span class="ident">normalize_parameters</span></span>(<span>mcmc, subjset)</span>
+<span>def <span class="ident">normalize_parameters</span></span>(<span>mcmc: <a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a>, subjset: <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a>) ‑> Tuple[<a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a>, <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a>]</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Normalize the abundance of the parameters by the normalization factor
@@ -1527,7 +1530,7 @@ in the subject set</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def normalize_parameters(mcmc, subjset):
+<pre><code class="python">def normalize_parameters(mcmc: BaseMCMC, subjset: Study) -&gt; Tuple[BaseMCMC, Study]:
     &#39;&#39;&#39;Normalize the abundance of the parameters by the normalization factor
     in the subject set
 
@@ -1545,7 +1548,7 @@ in the subject set</p>
     GRAPH = mcmc.graph
     if subjset.qpcr_normalization_factor is None:
         f = h5py.File(GRAPH.tracer.filename, &#39;r+&#39;, libver=&#39;latest&#39;)
-        ckpt = GRAPH.tracer.ckpt
+        checkpoint = GRAPH.tracer.checkpoint
 
         try:
             GRAPH[STRNAMES.FILTERING].v2 *= subjset.qpcr_normalization_factor
@@ -1582,9 +1585,9 @@ in the subject set</p>
             dset = f[STRNAMES.INTERACTIONS_OBJ]
             total_samples = dset.attrs[&#39;end_iter&#39;]
             i = 0
-            while (i * ckpt) &lt; total_samples:
-                start_idx = int(i * ckpt)
-                end_idx = int((i+1) * ckpt)
+            while (i * checkpoint) &lt; total_samples:
+                start_idx = int(i * checkpoint)
+                end_idx = int((i+1) * checkpoint)
 
                 if end_idx &gt; total_samples:
                     end_idx = total_samples
@@ -1607,9 +1610,9 @@ in the subject set</p>
                 dset = f[name]
                 total_samples = dset.attrs[&#39;end_iter&#39;]
                 i = 0
-                while (i * ckpt) &lt; total_samples:
-                    start_idx = int(i * ckpt)
-                    end_idx = int((i+1) * ckpt)
+                while (i * checkpoint) &lt; total_samples:
+                    start_idx = int(i * checkpoint)
+                    end_idx = int((i+1) * checkpoint)
 
                     if end_idx &gt; total_samples:
                         end_idx = total_samples
@@ -1624,7 +1627,7 @@ in the subject set</p>
 </details>
 </dd>
 <dt id="mdsine2.run.run_graph"><code class="name flex">
-<span>def <span class="ident">run_graph</span></span>(<span>mcmc, crash_if_error=True)</span>
+<span>def <span class="ident">run_graph</span></span>(<span>mcmc: <a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a>, crash_if_error: bool = True) ‑> <a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Run the MCMC chain <code>mcmc</code>. Initialize the MCMC chain with <code>build_graph</code></p>
@@ -1645,7 +1648,7 @@ it continues out of inference.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def run_graph(mcmc, crash_if_error=True):
+<pre><code class="python">def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True) -&gt; BaseMCMC:
     &#39;&#39;&#39;Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
 
     Parameters

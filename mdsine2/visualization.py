@@ -2,7 +2,7 @@
 
 Heatmap Rendering
 -----------------
-These functions render heatmaps of matrix data:
+- These functions render heatmaps of matrix data:
     - render_bayes_factors
     - render_cocluster_probabilities
     - render_interaction_strength
@@ -10,7 +10,7 @@ These functions render heatmaps of matrix data:
 
 Abundance functions
 -------------------
-These functions either plot the abundance of the data or a metric of them:
+- These functions either plot the abundance of the data or a metric of them:
     - alpha_diversity_over_time
     - qpcr_over_time
     - abundance_over_time
@@ -18,7 +18,7 @@ These functions either plot the abundance of the data or a metric of them:
 
 Tracing functions
 -----------------
-These functions plot how the value of a variable changes over inference:
+- These functions plot how the value of a variable changes over inference:
     - render_acceptance_rate_trace
     - render_trace
 
@@ -1098,22 +1098,22 @@ def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, 
 
     What you're plotting
     --------------------
-    There are several different types of abundances you can plot, which is specified using
-    the `dtype` (str) parameter:
-    'raw'
-        This plots the counts of the Taxa. `subj` must be a single pl.base.Subject object.
-    'rel'
-        This plots the relative abundance of the Taxa. `subj` must be a single 
+    - There are several different types of abundances you can plot, which is specified using
+      the `dtype` (str) parameter:
+        - 'raw'
+            - This plots the counts of the Taxa. `subj` must be a single pl.base.Subject object.
+        - 'rel'
+            - This plots the relative abundance of the Taxa. `subj` must be a single 
         pl.base.Subject object.
-    'abs'
-        This plots the absolute abundance of the Taxa. `subj` must be a single 
-        pl.base.Subject object.
-    'qpcr'
-        This plots the qPCR measurements at each time point. `subj` can also be a 
+        - 'abs'
+            - This plots the absolute abundance of the Taxa. `subj` must be a single 
+              pl.base.Subject object.
+        - 'qpcr'
+            - This plots the qPCR measurements at each time point. `subj` can also be a 
         list of pl.base.Subject objects, or a `pl.base.Study` object.
-    'read-depth'
-        These are the the read depths at each timepoint. `subj` can also be a 
-        list of pl.base.Subject objects, or a `pl.base.Study` object.
+        - 'read-depth'
+            - These are the the read depths at each timepoint. `subj` can also be a 
+              list of pl.base.Subject objects, or a `pl.base.Study` object.
     
     Aggregating by taxanomic level
     ------------------------------
@@ -1133,34 +1133,34 @@ def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, 
 
     What to plot?
     -------------
-    You can plot a subset of the Taxa by using the `plot_` arguments. If None of those
-    parameters are specified, then it will plot everything. NOTE: You can only specify 
-    one of the `plot_` at a time. NOTE: these are only necessary if dtype is either 
-    'raw', 're', or 'abs'.
+    - You can plot a subset of the Taxa by using the `plot_` arguments. If None of those
+      parameters are specified, then it will plot everything. NOTE: You can only specify 
+      one of the `plot_` at a time. NOTE: these are only necessary if dtype is either 
+      'raw', 're', or 'abs'.
 
-    plot_abundant : int
-    If you want to only plot the x most abundant Taxa, specify that number 
-    with `plot_abundant` (`int`) as a positive number. Example: `plot_abundant = 15` will
-    only plot the 15 most abundant. If `plot_abundant` is a negative number, it will
-    plot the least abundant. Example: `plot_abundant = -15` will only plot the 15 least 
-    abundant. 
+    - plot_abundant : int
+        - If you want to only plot the x most abundant Taxa, specify that number 
+          with `plot_abundant` (`int`) as a positive number. Example: `plot_abundant = 15` will
+          only plot the 15 most abundant. If `plot_abundant` is a negative number, it will
+          plot the least abundant. Example: `plot_abundant = -15` will only plot the 15 least 
+          abundant. 
     
-    plot_specific : list
-    If you want to only plot specific Taxa, you can specify them by any identification
-    (index, name, ID, etc.) as a list of Taxa to plot.
-    NOTE: If you specify `plot_specific` and you are clustering along a taxonomic level, then
-    you specify the names at the taxonomic level you clustered at.
-    Example::
-        If taxlevel = 'phylum'
-        VALID: plot_specific = [('Bacteria', 'Bacteroidetes'), ('Bacteria', 'Firmicutes')]
-        INVALID: plot_specific = ['Bacteroidetes', 'Firmicutes'] # Need full taxonomy
-        INVALID: plot_specific = ['Bacteroidia', 'Clostridia'] # This is at the class level
-        INVALID: plot_specific = ['Taxa_32'] # These names are no longer valid
+    - plot_specific : list
+        - If you want to only plot specific Taxa, you can specify them by any identification
+          (index, name, ID, etc.) as a list of Taxa to plot.
+          NOTE: If you specify `plot_specific` and you are clustering along a taxonomic level, then
+          you specify the names at the taxonomic level you clustered at.
+        - Example::
+            - If taxlevel = 'phylum'
+            - VALID: plot_specific = [('Bacteria', 'Bacteroidetes'), ('Bacteria', 'Firmicutes')]
+            - INVALID: plot_specific = ['Bacteroidetes', 'Firmicutes'] # Need full taxonomy
+            - INVALID: plot_specific = ['Bacteroidia', 'Clostridia'] # This is at the class level
+            - INVALID: plot_specific = ['Taxa_32'] # These names are no longer valid
 
-    plot_clusters : list(int), int
-    If you want to plot specific clusters (or a single cluster), you can specify the cluster
-    ID/s to plot. Note that you must also specify the `clustering` parameter as well and you
-    cannot aggregate the data into taxonomic classes.
+    - plot_clusters : list(int), int
+        - If you want to plot specific clusters (or a single cluster), you can specify the cluster
+          ID/s to plot. Note that you must also specify the `clustering` parameter as well and you
+          cannot aggregate the data into taxonomic classes.
 
     Log-scale and NaN's
     -------------------

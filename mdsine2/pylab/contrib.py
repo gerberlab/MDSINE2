@@ -304,12 +304,13 @@ class ClusterPerturbationIndicator(ClusterValue):
         value that the cluster that contains it has. This is the same as 
         calling ClusterValue.item_array
         Example
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             >>> np.ndarray([True, False, True, False, True])
+            ```
 
         Returns
         -------
@@ -323,12 +324,13 @@ class ClusterPerturbationIndicator(ClusterValue):
         is the same as calling ClusterValue.cluster_array()
 
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             >>> np.ndarray([True, False])
+            ```
         
         Returns
         -------
@@ -340,12 +342,14 @@ class ClusterPerturbationIndicator(ClusterValue):
     def item_arg_array(self) -> np.ndarray:
         '''Creates an ordered index array of items that are positive.
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             >>> np.ndarray([0,2,4])
+            ```
+
         Returns
         -------
         np.ndarray((n_c,), dtype=int)
@@ -360,12 +364,14 @@ class ClusterPerturbationIndicator(ClusterValue):
     def cluster_arg_array(self) -> np.ndarray:
         '''Creates an ordered index array of clusters that are positive.
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             >>> np.ndarray([0])
+            ```
+
         Returns
         -------
         np.ndarray((n_c,), dtype=int)
@@ -378,12 +384,13 @@ class ClusterPerturbationIndicator(ClusterValue):
     def num_on_items(self) -> int:
         '''These are the number of on items for this perturbation
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             >>> 3
+            ```
 
         Returns
         -------
@@ -404,12 +411,13 @@ class ClusterPerturbationIndicator(ClusterValue):
     def num_on_clusters(self) -> int:
         '''These are the number of on clusters for this perturbation
         Example:
+            ```
             cluster1 = {0,2,4}
             cluster2 = {1,3}
             value[cluster1] = True
             value[cluster2] = False
-
             >>> 1
+            ```
 
         Returns
         -------
@@ -568,6 +576,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
         in the data.
 
         Example
+            ```
             ** Cluster assignments **
             cluster1 = {0,2,4}
             cluster2 = {1,3}
@@ -579,6 +588,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
             magnitude.value = -0.5
 
             >>> np.ndarray([-0.5, 0, -0.5, 0, -0.5])
+            ```
         
         Parameters
         ----------
@@ -602,6 +612,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
         '''Make an array for each cluster with the magnitude
 
         Example
+            ```
             ** Cluster assignments **
             cluster1 = {0,2,4}
             cluster2 = {1,3}
@@ -613,6 +624,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
             magnitude.value = -0.5
 
             >>> np.ndarray([-0.5, 0])
+            ```
         
         Parameters
         ----------

@@ -24,21 +24,33 @@
 <section id="section-intro">
 <p>Visualization funtions for pylab</p>
 <h2 id="heatmap-rendering">Heatmap Rendering</h2>
-<p>These functions render heatmaps of matrix data:
-- render_bayes_factors
-- render_cocluster_probabilities
-- render_interaction_strength
-- render_growth_vector</p>
+<ul>
+<li>These functions render heatmaps of matrix data:<ul>
+<li>render_bayes_factors</li>
+<li>render_cocluster_probabilities</li>
+<li>render_interaction_strength</li>
+<li>render_growth_vector</li>
+</ul>
+</li>
+</ul>
 <h2 id="abundance-functions">Abundance Functions</h2>
-<p>These functions either plot the abundance of the data or a metric of them:
-- alpha_diversity_over_time
-- qpcr_over_time
-- abundance_over_time
-- taxonomic_distribution_over_time</p>
+<ul>
+<li>These functions either plot the abundance of the data or a metric of them:<ul>
+<li>alpha_diversity_over_time</li>
+<li>qpcr_over_time</li>
+<li>abundance_over_time</li>
+<li>taxonomic_distribution_over_time</li>
+</ul>
+</li>
+</ul>
 <h2 id="tracing-functions">Tracing Functions</h2>
-<p>These functions plot how the value of a variable changes over inference:
-- render_acceptance_rate_trace
-- render_trace</p>
+<ul>
+<li>These functions plot how the value of a variable changes over inference:<ul>
+<li>render_acceptance_rate_trace</li>
+<li>render_trace</li>
+</ul>
+</li>
+</ul>
 <p>Linewidths are automatically shutoff if the number of taxa is greater than 75</p>
 <details class="source">
 <summary>
@@ -48,7 +60,7 @@
 
 Heatmap Rendering
 -----------------
-These functions render heatmaps of matrix data:
+- These functions render heatmaps of matrix data:
     - render_bayes_factors
     - render_cocluster_probabilities
     - render_interaction_strength
@@ -56,7 +68,7 @@ These functions render heatmaps of matrix data:
 
 Abundance functions
 -------------------
-These functions either plot the abundance of the data or a metric of them:
+- These functions either plot the abundance of the data or a metric of them:
     - alpha_diversity_over_time
     - qpcr_over_time
     - abundance_over_time
@@ -64,7 +76,7 @@ These functions either plot the abundance of the data or a metric of them:
 
 Tracing functions
 -----------------
-These functions plot how the value of a variable changes over inference:
+- These functions plot how the value of a variable changes over inference:
     - render_acceptance_rate_trace
     - render_trace
 
@@ -80,14 +92,18 @@ import pandas
 import sys
 import numba
 
+from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Callable
+
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import seaborn as sns
 from matplotlib.pyplot import arrow
 import matplotlib.ticker as plticker
+import matplotlib
 
 from . import pylab as pl
-from .pylab.base import DEFAULT_TAXLEVEL_NAME
+from .pylab.base import DEFAULT_TAXLEVEL_NAME, Perturbations, Subject, TaxaSet, Study, OTU
+from .pylab import Clustering, variables
 
 warnings.filterwarnings(&#39;ignore&#39;)
 _plt_labels = [&#39;title&#39;, &#39;xlabel&#39;, &#39;ylabel&#39;]
@@ -112,7 +128,7 @@ PLT_YLABEL_LABEL = &#39;ylabel&#39;
 # ----------------
 # Global Functions
 # ----------------
-def set_default_tax_level(level):
+def set_default_tax_level(level: str):
     &#39;&#39;&#39;This sets the default taxonomic level to plot at.
     
     Parameters
@@ -128,7 +144,7 @@ def set_default_tax_level(level):
         raise ValueError(&#39;`level` ({}) not valid&#39;.format(level))
     DEFAULT_TAX_LEVEL = level
 
-def set_perturbation_color(color):
+def set_perturbation_color(color: Any):
     &#39;&#39;&#39;Set the color for the perturbation shading. Must be matplotlib compatible.
 
     Parameters
@@ -143,7 +159,7 @@ def set_perturbation_color(color):
     global PERTURBATION_COLOR
     PERTURBATION_COLOR = color
 
-def set_xtick_frequency(x):
+def set_xtick_frequency(x: Union[float, int]):
     &#39;&#39;&#39;Sets the xtick frequency (how often a label on the x axis should occur)
 
     Parameters
@@ -158,7 +174,7 @@ def set_xtick_frequency(x):
         raise ValueError(&#39;x ({}) must be &gt;= 0&#39;.format(x))
     XTICK_FREQUENCY = x
 
-def set_default_trace_color(color):
+def set_default_trace_color(color: Any):
     &#39;&#39;&#39;Sets defalt color of the trace. Must be matplotlib compatible.
 
     Parameters
@@ -173,7 +189,9 @@ def set_default_trace_color(color):
     global DEFAULT_TRACE_COLOR
     DEFAULT_TRACE_COLOR = color
 
-def shade_in_perturbations(ax, perturbations, subj, textcolor=&#39;black&#39;, textsize=None, alpha=0.25, label=True):
+def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbations, 
+    subj: Subject, textcolor: str=&#39;black&#39;, textsize: Union[float, int]=None, 
+    alpha: float=0.25, label: bool=True) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Shade in the axis where there are perturbations and adds the label of
     the perturbation above it.
 
@@ -181,7 +199,7 @@ def shade_in_perturbations(ax, perturbations, subj, textcolor=&#39;black&#39;, t
     ----------
     ax : matplotlib.pyplot.Axes
         Axis we are plotting on
-    perturbations : list(mdsine2.BasePerturbations)
+    perturbations : mdsine2.Perturbations
         List of perturbations we are coloring in
     subj : mdsine2.Subject, str
 
@@ -248,11 +266,12 @@ def shade_in_perturbations(ax, perturbations, subj, textcolor=&#39;black&#39;, t
 # --------
 # Heatmaps
 # --------
-def render_bayes_factors(bayes_factors, taxa=None, ax=None,
-    n_colors=100, max_value=None, xticklabels=&#39;%(index)s&#39;, yticklabels=&#39;%(name)s %(index)s&#39;,
-    include_tick_marks=False, linewidths=0.8, linecolor=&#39;black&#39;,cmap=&#39;Blues&#39;,
-    include_colorbar=True, title=&#39;Microbe Interaction Bayes Factors&#39;, figure_size=None,
-    order=None):
+def render_bayes_factors(bayes_factors: np.ndarray, taxa: TaxaSet=None, ax:matplotlib.pyplot.Axes=None,
+    n_colors: int=100, max_value: Union[float, int]=None, xticklabels: str=&#39;%(index)s&#39;, 
+    yticklabels: str=&#39;%(name)s %(index)s&#39;, include_tick_marks: bool=False, linewidths: float=0.8, 
+    linecolor: str=&#39;black&#39;, cmap: str=&#39;Blues&#39;,
+    include_colorbar: bool=True, title: str=&#39;Microbe Interaction Bayes Factors&#39;, figure_size: Tuple[float, float]=None,
+    order: Union[Iterator[int], np.ndarray]=None) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Renders the bayes factors for each of the interactions. Self interactions
     are automatically set to np.nan.
 
@@ -356,11 +375,12 @@ def render_bayes_factors(bayes_factors, taxa=None, ax=None,
     plt.yticks(rotation=0)
     return ax
 
-def render_cocluster_probabilities(coclusters, taxa, ax=None,
-    n_colors=100, xticklabels=&#39;%(index)s&#39;, yticklabels=&#39;%(name)s %(index)s&#39;,
-    include_tick_marks=False, linewidths=0.8, linecolor=&#39;black&#39;, cmap=&#39;Blues&#39;,
-    include_colorbar=True, title=&#39;Microbe Co-cluster Probabilities&#39;, figure_size=None,
-    order=None):
+def render_cocluster_probabilities(coclusters: np.ndarray, taxa: TaxaSet, ax: matplotlib.pyplot.Axes=None,
+    n_colors: int=100, max_value: Union[float, int]=None, xticklabels: str=&#39;%(index)s&#39;, 
+    yticklabels: str=&#39;%(name)s %(index)s&#39;, include_tick_marks: bool=False, linewidths: float=0.8, 
+    linecolor: str=&#39;black&#39;, cmap: str=&#39;Blues&#39;,
+    include_colorbar: bool=True, title: str=&#39;Microbe Co-cluster Probabilities&#39;, figure_size: Tuple[float, float]=None,
+    order: Union[Iterator[int], np.ndarray]=None) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Render the cocluster proportions. Values in coclusters should be [0,1].
 
     Parameters
@@ -449,12 +469,12 @@ def render_cocluster_probabilities(coclusters, taxa, ax=None,
     plt.yticks(rotation=0)
     return ax
 
-def render_interaction_strength(interaction_matrix, log_scale, taxa, clustering=None,
-    ax=None, center_colors=False, n_colors=100, xticklabels=&#39;%(index)s&#39;, 
-    vmax=None, vmin=None, yticklabels=&#39;%(name)s %(index)s&#39;, 
-    include_tick_marks=False, linewidths=0.8, linecolor=&#39;black&#39;,
-    cmap=None, include_colorbar=True, title=&#39;Microbe Interaction Strength&#39;,
-    figure_size=None, order=None):
+def render_interaction_strength(interaction_matrix: np.ndarray, log_scale: bool, taxa: TaxaSet, 
+    clustering: Clustering=None, ax: matplotlib.pyplot.Axes=None, center_colors: bool=False, 
+    n_colors: int=100, xticklabels: str=&#39;%(index)s&#39;, vmax: Union[float, int]=None, vmin: Union[float, int]=None, 
+    yticklabels: str=&#39;%(name)s %(index)s&#39;, include_tick_marks: bool=False, linewidths: float=0.8, linecolor: str=&#39;black&#39;,
+    cmap: Any=None, include_colorbar: bool=True, title: str=&#39;Microbe Interaction Strength&#39;,
+    figure_size: Tuple[float, float]=None, order: Union[Iterator[int], np.ndarray]=None) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Render the interaction strength matrix. If you want the values in log scale,
     it will annotate the box with the sign of the interaction and plot the absolute
     value of the interaction. If you want the Taxa in the same clusters to be grouped
@@ -609,76 +629,13 @@ def render_interaction_strength(interaction_matrix, log_scale, taxa, clustering=
             &#39;plotting this axis.&#39;.format(str(e), _is_just_zero_or_nan(interaction_matrix)))
     return ax
 
-def render_growth_vector(growth, difference=False, ax=None, light_palette=&#39;Navy&#39;, **kwargs):
-    &#39;&#39;&#39;Renders the growth terms of the regression coefficients as an image. Pass
-    in the raw regression coefficients and
-
-    Parameters
-    ----------
-    growth : np.ndarray
-        - growth terms from the interaction matrix
-    ax : matplotlib.pyplot.Axes, Optional
-        - Axis to plot on.
-        - If nothing is provided, a new figure is created with a subplot
-          that takes up the entire figure.
-    difference : bool, Optional
-        - If True, Resets the colormap so that a 0 difference is white and
-          it is diverging.
-    light_palette : str, Optional
-        - Palette to use for the colormap
-    kwargs : dict
-        - optional arguments for plt.imshow
-        - Default values:
-            &#39;vmin&#39; = - max(abs(max(raw_regress_coeff)), abs(min(raw_regress_coeff)))
-            &#39;vmin&#39; = + max(abs(max(raw_regress_coeff)), abs(min(raw_regress_coeff)))
-
-    Returns
-    -------
-    matplotlib.pyplot.Axes
-        - Axis object that has the rendering of the growth values
-    &#39;&#39;&#39;
-
-    growth = growth.reshape(-1,1)
-    if ax is None:
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-
-    # Set labels if necessary
-    ax, kwargs = _set_plt_labels(kwargs, ax)
-
-    # Set default values if necessary
-    if difference:
-        kwargs[&#39;cmap&#39;] = sns.diverging_palette(240,10,n=DEFAULT_N_COLORS, as_cmap=True)
-    else:
-        kwargs[&#39;cmap&#39;] = sns.light_palette(light_palette, as_cmap=True)
-
-    _max = np.max(np.absolute(growth))
-    if &#39;vmin&#39; not in kwargs and difference:
-        kwargs[&#39;vmin&#39;] = -_max
-    if &#39;vmax&#39; not in kwargs and difference:
-        kwargs[&#39;vmax&#39;] = _max
-
-    im = ax.imshow(growth, **kwargs)
-
-    # Set ticks so that you can discern between pixels
-    ax.set_yticks(np.arange(-.5, growth.shape[0], 1), minor = False)
-    ax.set_yticks(np.arange(0, growth.shape[0], 1), minor = True)
-
-    ax.set_xticklabels([])
-    ax.set_yticklabels(labels = np.arange(0, growth.shape[0], dtype=int), minor = True)
-    ax.tick_params(which = &#39;major&#39;,labelbottom = False, labelleft = False,
-        labelright = False, labeltop = False)
-    ax.tick_params(which = &#39;minor&#39;,labelbottom = False, labelleft = True,
-        labelright = False, labeltop = False)
-    ax.grid(color=&#39;black&#39;, linewidth = 1.5, which=&#39;major&#39;, axis=&#39;y&#39;)
-    plt.yticks(rotation=0)
-    return im
-
 # ------
 # Traces
 # ------
-def render_acceptance_rate_trace(var, idx=None, prev=&#39;default&#39;, ax=None, include_burnin=True, 
-    scatter=True, n_burnin=None, section=&#39;posterior&#39;, **kwargs):
+def render_acceptance_rate_trace(var: variables.Variable, idx: Union[int, Tuple[int, int]]=None, 
+    prev: Union[int, str]=&#39;default&#39;, ax: matplotlib.pyplot.Axes=None, include_burnin: bool=True, 
+    scatter: bool=True, n_burnin: int=None, section: str=&#39;posterior&#39;, 
+    **kwargs) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Visualize the acceptance rate over time for a
     metropolis._BaseKernel object.
 
@@ -822,8 +779,10 @@ def render_acceptance_rate_trace(var, idx=None, prev=&#39;default&#39;, ax=None,
         logging.info(&#39;`ax.plot` failed. No points to plot&#39;)
     return ax
 
-def render_trace(var, idx=None, ax=None, plt_type=None, include_burnin=True, 
-    scatter=True, log_scale=False, n_burnin=None, section=&#39;posterior&#39;, **kwargs):
+def render_trace(var: variables.Variable, idx: Union[int, Tuple[int, int]]=None, 
+    ax: matplotlib.pyplot.Axes=None, plt_type: str=None, include_burnin: bool=True, 
+    scatter: bool=True, log_scale: bool=False, n_burnin: int=None, section:str=&#39;posterior&#39;, 
+    **kwargs) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;
     Visualizes the Trace of a random variable.
     Produces a historgram of the values and a plot of the sample
@@ -1050,10 +1009,10 @@ def render_trace(var, idx=None, ax=None, plt_type=None, include_burnin=True,
 # ----------
 # Abundances
 # ----------
-def alpha_diversity_over_time(subjs, metric, taxlevel=None,
-    highlight=None, marker=&#39;o&#39;, markersize=4, shade_perturbations=True, 
-    legend=True, cmap=None, alpha=1.0, linestyle=&#39;-&#39;, ax=None, grid=False,
-    colors=None, **kwargs):
+def alpha_diversity_over_time(subjs: Union[Subject, List[Subject]], metric: Callable, taxlevel: str=None,
+    highlight: List[float]=None, marker: str=&#39;o&#39;, markersize: Union[float, int]=4, shade_perturbations: bool=True, 
+    legend: bool=True, cmap: Any=None, alpha: float=1.0, linestyle: str=&#39;-&#39;, ax: matplotlib.pyplot.Axes=None, 
+    grid: bool=False, colors: Any=None, **kwargs) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Plots the alpha diversity over time for the subject
 
     Parameters
@@ -1185,31 +1144,34 @@ def alpha_diversity_over_time(subjs, metric, taxlevel=None,
         ax.grid()
     return ax
 
-def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
-    plot_abundant=None, plot_specific=None, plot_clusters=None, highlight=None, marker=&#39;o&#39;,
-    ylim=None, markersize=4, shade_perturbations=True, legend=True, set_0_to_nan=False, 
-    color_code_clusters=False, clustering=None, cmap=None, alpha=1.0, linestyle=&#39;-&#39;, ax=None,
-    include_errorbars=False, grid=False, label_formatter=None, label_func=None, **kwargs):
+def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, taxlevel: str=None, 
+    yscale_log: bool=None, plot_abundant: int=None, plot_specific: Iterator[str]=None, 
+    plot_clusters: Iterator[int]=None, highlight: List[float]=None, marker: str=&#39;o&#39;,
+    ylim: Tuple[float, float]=None, markersize: Union[float, int]=4, shade_perturbations: bool=True, 
+    legend: bool=True, set_0_to_nan: bool=False, color_code_clusters: bool=False, clustering: Clustering=None, 
+    cmap: Any=None, alpha: float=1.0, linestyle: str=&#39;-&#39;, ax: matplotlib.pyplot.Axes=None,
+    include_errorbars: bool=False, grid: bool=False, label_formatter: str=None, 
+    label_func: Callable=None, **kwargs) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Plots the abundance over time for the Taxa in `subj`.
 
     What you&#39;re plotting
     --------------------
-    There are several different types of abundances you can plot, which is specified using
-    the `dtype` (str) parameter:
-    &#39;raw&#39;
-        This plots the counts of the Taxa. `subj` must be a single pl.base.Subject object.
-    &#39;rel&#39;
-        This plots the relative abundance of the Taxa. `subj` must be a single 
+    - There are several different types of abundances you can plot, which is specified using
+      the `dtype` (str) parameter:
+        - &#39;raw&#39;
+            - This plots the counts of the Taxa. `subj` must be a single pl.base.Subject object.
+        - &#39;rel&#39;
+            - This plots the relative abundance of the Taxa. `subj` must be a single 
         pl.base.Subject object.
-    &#39;abs&#39;
-        This plots the absolute abundance of the Taxa. `subj` must be a single 
-        pl.base.Subject object.
-    &#39;qpcr&#39;
-        This plots the qPCR measurements at each time point. `subj` can also be a 
+        - &#39;abs&#39;
+            - This plots the absolute abundance of the Taxa. `subj` must be a single 
+              pl.base.Subject object.
+        - &#39;qpcr&#39;
+            - This plots the qPCR measurements at each time point. `subj` can also be a 
         list of pl.base.Subject objects, or a `pl.base.Study` object.
-    &#39;read-depth&#39;
-        These are the the read depths at each timepoint. `subj` can also be a 
-        list of pl.base.Subject objects, or a `pl.base.Study` object.
+        - &#39;read-depth&#39;
+            - These are the the read depths at each timepoint. `subj` can also be a 
+              list of pl.base.Subject objects, or a `pl.base.Study` object.
     
     Aggregating by taxanomic level
     ------------------------------
@@ -1229,34 +1191,34 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
 
     What to plot?
     -------------
-    You can plot a subset of the Taxa by using the `plot_` arguments. If None of those
-    parameters are specified, then it will plot everything. NOTE: You can only specify 
-    one of the `plot_` at a time. NOTE: these are only necessary if dtype is either 
-    &#39;raw&#39;, &#39;re&#39;, or &#39;abs&#39;.
+    - You can plot a subset of the Taxa by using the `plot_` arguments. If None of those
+      parameters are specified, then it will plot everything. NOTE: You can only specify 
+      one of the `plot_` at a time. NOTE: these are only necessary if dtype is either 
+      &#39;raw&#39;, &#39;re&#39;, or &#39;abs&#39;.
 
-    plot_abundant : int
-    If you want to only plot the x most abundant Taxa, specify that number 
-    with `plot_abundant` (`int`) as a positive number. Example: `plot_abundant = 15` will
-    only plot the 15 most abundant. If `plot_abundant` is a negative number, it will
-    plot the least abundant. Example: `plot_abundant = -15` will only plot the 15 least 
-    abundant. 
+    - plot_abundant : int
+        - If you want to only plot the x most abundant Taxa, specify that number 
+          with `plot_abundant` (`int`) as a positive number. Example: `plot_abundant = 15` will
+          only plot the 15 most abundant. If `plot_abundant` is a negative number, it will
+          plot the least abundant. Example: `plot_abundant = -15` will only plot the 15 least 
+          abundant. 
     
-    plot_specific : list
-    If you want to only plot specific Taxa, you can specify them by any identification
-    (index, name, ID, etc.) as a list of Taxa to plot.
-    NOTE: If you specify `plot_specific` and you are clustering along a taxonomic level, then
-    you specify the names at the taxonomic level you clustered at.
-    Example::
-        If taxlevel = &#39;phylum&#39;
-        VALID: plot_specific = [(&#39;Bacteria&#39;, &#39;Bacteroidetes&#39;), (&#39;Bacteria&#39;, &#39;Firmicutes&#39;)]
-        INVALID: plot_specific = [&#39;Bacteroidetes&#39;, &#39;Firmicutes&#39;] # Need full taxonomy
-        INVALID: plot_specific = [&#39;Bacteroidia&#39;, &#39;Clostridia&#39;] # This is at the class level
-        INVALID: plot_specific = [&#39;Taxa_32&#39;] # These names are no longer valid
+    - plot_specific : list
+        - If you want to only plot specific Taxa, you can specify them by any identification
+          (index, name, ID, etc.) as a list of Taxa to plot.
+          NOTE: If you specify `plot_specific` and you are clustering along a taxonomic level, then
+          you specify the names at the taxonomic level you clustered at.
+        - Example::
+            - If taxlevel = &#39;phylum&#39;
+            - VALID: plot_specific = [(&#39;Bacteria&#39;, &#39;Bacteroidetes&#39;), (&#39;Bacteria&#39;, &#39;Firmicutes&#39;)]
+            - INVALID: plot_specific = [&#39;Bacteroidetes&#39;, &#39;Firmicutes&#39;] # Need full taxonomy
+            - INVALID: plot_specific = [&#39;Bacteroidia&#39;, &#39;Clostridia&#39;] # This is at the class level
+            - INVALID: plot_specific = [&#39;Taxa_32&#39;] # These names are no longer valid
 
-    plot_clusters : list(int), int
-    If you want to plot specific clusters (or a single cluster), you can specify the cluster
-    ID/s to plot. Note that you must also specify the `clustering` parameter as well and you
-    cannot aggregate the data into taxonomic classes.
+    - plot_clusters : list(int), int
+        - If you want to plot specific clusters (or a single cluster), you can specify the cluster
+          ID/s to plot. Note that you must also specify the `clustering` parameter as well and you
+          cannot aggregate the data into taxonomic classes.
 
     Log-scale and NaN&#39;s
     -------------------
@@ -1617,9 +1579,10 @@ def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
         ax.grid()
     return ax
 
-def taxonomic_distribution_over_time(subj, taxlevel=None,
-    legend=True, ax=None, plot_abundant=None, label_formatter=None, 
-    dtype=&#39;rel&#39;, shade_perturbations=True, **kwargs):
+def taxonomic_distribution_over_time(subj: Union[Subject, Study], taxlevel: str=None,
+    legend: bool=True, ax: matplotlib.pyplot.Axes=None, plot_abundant: int=None, 
+    label_formatter: str=None, dtype: str=&#39;rel&#39;, shade_perturbations: bool=True, 
+    **kwargs) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Produces a taxonomic bar graph for each datapoint
 
     Aggregating by taxanomic level
@@ -1755,9 +1718,11 @@ def taxonomic_distribution_over_time(subj, taxlevel=None,
     # ax = _set_xticks(ax)
     return ax
 
-def aggregate_taxa_abundances(subj, agg, dtype=&#39;rel&#39;, yscale_log=True, ax=None, 
-    title=&#39;Subject %(subjectname)s&#39;, xlabel=&#39;auto&#39;, ylabel=&#39;auto&#39;, vmin=None, vmax=None,
-    alpha_agg=0.5, alpha_asv=1., legend=True, fontstyle=None, shade_perturbations=True):
+def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: str=&#39;rel&#39;, 
+    yscale_log: bool=True, ax: matplotlib.pyplot.Axes=None, title: str=&#39;Subject %(subjectname)s&#39;, 
+    xlabel: str=&#39;auto&#39;, ylabel: str=&#39;auto&#39;, vmin: Union[float, int]=None, vmax: Union[float, int]=None,
+    alpha_agg: float=0.5, alpha_asv: float=1., legend: bool=True, fontstyle: str=None, 
+    shade_perturbations: bool=True) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Plot the abundances of the aggregated Taxa within the OTU `agg` for the subject `subj`
 
     Each subject within the study has its own axis within the figure. If you want to
@@ -1951,7 +1916,7 @@ def aggregate_taxa_abundances(subj, agg, dtype=&#39;rel&#39;, yscale_log=True, a
 # ---------------
 # INNER FUNCTIONS
 # ---------------
-def _is_just_zero_or_nan(matrix):
+def _is_just_zero_or_nan(matrix: np.ndarray) -&gt; bool:
     &#39;&#39;&#39;Returns True if the input matrix has only zero or only NaNs
 
     Parameters
@@ -1971,7 +1936,7 @@ def _is_just_zero_or_nan(matrix):
                 return False
     return True
 
-def _format_ticklabel(format, order, taxa):
+def _format_ticklabel(format: str, order: Union[List[int], np.ndarray], taxa: TaxaSet) -&gt; List[str]:
     &#39;&#39;&#39;Format the xtick labels witha  slightly different format than that in 
     `pylab.taxaname_formatter`: Overrides the %(index)s to be where it appears 
     in the local order, not the global order
@@ -2003,8 +1968,9 @@ def _format_ticklabel(format, order, taxa):
         ticklabels.append(label)
     return ticklabels
 
-def _set_heatmap_default_args(linewidths=None, linecolor=None, n_colors=None, xticklabels=None,
-    yticklabels=None, include_colorbar=None, include_tick_marks=None):
+def _set_heatmap_default_args(linewidths: float=None, linecolor: str=None, n_colors: int=None, 
+    xticklabels: str=None, yticklabels: str=None, include_colorbar: bool=None, 
+    include_tick_marks: str=None) -&gt; Dict[str, Any]:
     &#39;&#39;&#39;Sets the defaults of the above parameters if they are None.
 
     Parameters
@@ -2032,24 +1998,25 @@ def _set_heatmap_default_args(linewidths=None, linecolor=None, n_colors=None, xt
     if linewidths is None:
         linewidths = DEFAULT_LINEWIDTHS
     if linecolor is None:
-        linecolor = DEFAULT_LINECOLOR
+        linecolor = &#39;blue&#39;
     if n_colors is None:
-        n_colors = DEFAULT_N_COLORS
+        n_colors = 100
     if xticklabels is None:
-        xticklabels = DEFAULT_XTICKLABELS
+        xticklabels = &#39;%(index)s&#39;
     if yticklabels is None:
-        yticklabels = DEFAULT_YTICKLABELS
+        yticklabels = &#39;%(name)s %(index)s&#39;
     if include_colorbar is None:
-        include_colorbar = DEFAULT_INCLUDE_COLORBAR
+        include_colorbar = True
     if include_tick_marks is None:
-        include_tick_marks = DEFAULT_INCLUDE_TICK_MARKS
+        include_tick_marks = False
 
     return {&#39;linewidths&#39;: linewidths, &#39;linecolor&#39;: linecolor, &#39;n_colors&#39;: n_colors, 
         &#39;xticklabels&#39;: xticklabels, &#39;yticklabels&#39;: yticklabels, 
         &#39;include_colorbar&#39;: include_colorbar, &#39;include_tick_marks&#39;: include_tick_marks}
 
-def _init_parameters_heatmap(matrix, taxa, clustering, xticklabels, yticklabels, ax, figure_size,
-    linewidths, order):
+def _init_parameters_heatmap(matrix: np.ndarray, taxa: TaxaSet, clustering: Clustering, 
+    xticklabels: str, yticklabels: str, ax: matplotlib.pyplot.Axes, figure_size: Tuple[float, float],
+    linewidths: Union[float, int], order: Iterator[int]) -&gt; Dict[str, Any]:
     &#39;&#39;&#39;Checks if the parameters are initialized correctly for the standard arguments
     for `render_interaction_strength`, `render_cocluster_probabilities`, and
     `render_bayes_factors`.
@@ -2210,7 +2177,7 @@ def _init_parameters_heatmap(matrix, taxa, clustering, xticklabels, yticklabels,
     return {&#39;matrix&#39;:matrix, &#39;xticklabels&#39;:xticklabels, &#39;yticklabels&#39;:yticklabels,
         &#39;ax&#39;:ax, &#39;fig&#39;:fig, &#39;cbar_kws&#39;: None, &#39;linewidths&#39;:linewidths}
 
-def _set_plt_labels(d, ax=None):
+def _set_plt_labels(d: Dict[str, Any], ax: matplotlib.pyplot.Axes=None) -&gt; Tuple[matplotlib.pyplot.Axes, Dict]:
     &#39;&#39;&#39;Removes labels form the dictionay and puts it in
     a new dictionary. This is useful so that we can pass
     **kwargs into matplotlib functions without throwing
@@ -2248,13 +2215,13 @@ def _set_plt_labels(d, ax=None):
         ax.set_ylabel(labels[PLT_YLABEL_LABEL])
     return ax, d
 
-def _set_xticks(ax):
+def _set_xticks(ax: matplotlib.pyplot.Axes) -&gt; matplotlib.pyplot.Axes:
 
     loc = plticker.MultipleLocator(base=XTICK_FREQUENCY)
     ax.xaxis.set_major_locator(loc)
     return ax
 
-def _set_tick_fontsize(ax, fontsize):
+def _set_tick_fontsize(ax: matplotlib.pyplot.Axes, fontsize: Union[int, float]) -&gt; matplotlib.pyplot.Axes:
 
     for tick in ax.xaxis.get_major_ticks():
         tick.label.set_fontsize(fontsize)
@@ -2262,7 +2229,7 @@ def _set_tick_fontsize(ax, fontsize):
         tick.label.set_fontsize(fontsize)
     return ax
 
-def _set_taxlevel(taxlevel):
+def _set_taxlevel(taxlevel: str) -&gt; str:
     if taxlevel == &#39;default&#39;:
         taxlevel = DEFAULT_TAX_LEVEL
     if taxlevel is None:
@@ -2274,7 +2241,8 @@ def _set_taxlevel(taxlevel):
         raise ValueError(&#39;taxlevel ({}) not recognized&#39;.format(taxlevel))
     return taxlevel
 
-def _set_default_matplotlib_params(ax=None, title=None, xlabel=None, ylabel=None, figsize=None):
+def _set_default_matplotlib_params(ax: matplotlib.pyplot.Axes=None, title: str=None, 
+    xlabel: str=None, ylabel: str=None, figsize: Tuple[float, float]=None) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Sets standard stuff with plotting and matplotlib
 
     Parameters
@@ -2308,7 +2276,7 @@ def _set_default_matplotlib_params(ax=None, title=None, xlabel=None, ylabel=None
     return ax
 
 @numba.jit(nopython=True, parallel=True)
-def _calc_acceptance_rate(ret, trace, prev):
+def _calc_acceptance_rate(ret: np.ndarray, trace: np.ndarray, prev: int):
     &#39;&#39;&#39;Calculate the acceptance rate over a scalar trace
 
     Parameters
@@ -2345,27 +2313,41 @@ def _calc_acceptance_rate(ret, trace, prev):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.visualization.abundance_over_time"><code class="name flex">
-<span>def <span class="ident">abundance_over_time</span></span>(<span>subj, dtype, taxlevel=None, yscale_log=None, plot_abundant=None, plot_specific=None, plot_clusters=None, highlight=None, marker='o', ylim=None, markersize=4, shade_perturbations=True, legend=True, set_0_to_nan=False, color_code_clusters=False, clustering=None, cmap=None, alpha=1.0, linestyle='-', ax=None, include_errorbars=False, grid=False, label_formatter=None, label_func=None, **kwargs)</span>
+<span>def <span class="ident">abundance_over_time</span></span>(<span>subj: Union[<a title="mdsine2.pylab.base.Subject" href="pylab/base.html#mdsine2.pylab.base.Subject">Subject</a>, <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a>, List[<a title="mdsine2.pylab.base.Subject" href="pylab/base.html#mdsine2.pylab.base.Subject">Subject</a>]], dtype: str, taxlevel: str = None, yscale_log: bool = None, plot_abundant: int = None, plot_specific: Iterator[str] = None, plot_clusters: Iterator[int] = None, highlight: List[float] = None, marker: str = 'o', ylim: Tuple[float, float] = None, markersize: Union[float, int] = 4, shade_perturbations: bool = True, legend: bool = True, set_0_to_nan: bool = False, color_code_clusters: bool = False, clustering: <a title="mdsine2.pylab.cluster.Clustering" href="pylab/cluster.html#mdsine2.pylab.cluster.Clustering">Clustering</a> = None, cmap: Any = None, alpha: float = 1.0, linestyle: str = '-', ax: matplotlib.axes._axes.Axes = None, include_errorbars: bool = False, grid: bool = False, label_formatter: str = None, label_func: Callable = None, **kwargs) ‑> matplotlib.axes._axes.Axes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Plots the abundance over time for the Taxa in <code>subj</code>.</p>
 <h2 id="what-youre-plotting">What you're plotting</h2>
-<p>There are several different types of abundances you can plot, which is specified using
-the <code>dtype</code> (str) parameter:
-'raw'
-This plots the counts of the Taxa. <code>subj</code> must be a single pl.base.Subject object.
-'rel'
-This plots the relative abundance of the Taxa. <code>subj</code> must be a single
-pl.base.Subject object.
-'abs'
-This plots the absolute abundance of the Taxa. <code>subj</code> must be a single
-pl.base.Subject object.
-'qpcr'
-This plots the qPCR measurements at each time point. <code>subj</code> can also be a
-list of pl.base.Subject objects, or a <code>pl.base.Study</code> object.
-'read-depth'
-These are the the read depths at each timepoint. <code>subj</code> can also be a
-list of pl.base.Subject objects, or a <code>pl.base.Study</code> object.</p>
+<ul>
+<li>There are several different types of abundances you can plot, which is specified using
+the <code>dtype</code> (str) parameter:<ul>
+<li>'raw'<ul>
+<li>This plots the counts of the Taxa. <code>subj</code> must be a single pl.base.Subject object.</li>
+</ul>
+</li>
+<li>'rel'<ul>
+<li>This plots the relative abundance of the Taxa. <code>subj</code> must be a single
+pl.base.Subject object.</li>
+</ul>
+</li>
+<li>'abs'<ul>
+<li>This plots the absolute abundance of the Taxa. <code>subj</code> must be a single
+pl.base.Subject object.</li>
+</ul>
+</li>
+<li>'qpcr'<ul>
+<li>This plots the qPCR measurements at each time point. <code>subj</code> can also be a
+list of pl.base.Subject objects, or a <code>pl.base.Study</code> object.</li>
+</ul>
+</li>
+<li>'read-depth'<ul>
+<li>These are the the read depths at each timepoint. <code>subj</code> can also be a
+list of pl.base.Subject objects, or a <code>pl.base.Study</code> object.</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
 <h2 id="aggregating-by-taxanomic-level">Aggregating By Taxanomic Level</h2>
 <p>If the taxonomy of the Taxa are specified, you can aggregate Taxa into specific
 taxonomic levels and plot them as a trajectory by using the parameter <code>taxlevel</code>.
@@ -2380,31 +2362,49 @@ will return the entire taxonomy as a label for the taxon. NOTE, you cannot speci
 a taxonomy <em>below</em> that youre clustering at. For example, you cannot cluster at the
 'class' level and then specify <code>'%(genus)s'</code> in <code>label_formatter</code>.</p>
 <h2 id="what-to-plot">What to plot?</h2>
+<ul>
+<li>
 <p>You can plot a subset of the Taxa by using the <code>plot_</code> arguments. If None of those
 parameters are specified, then it will plot everything. NOTE: You can only specify
 one of the <code>plot_</code> at a time. NOTE: these are only necessary if dtype is either
 'raw', 're', or 'abs'.</p>
-<p>plot_abundant : int
-If you want to only plot the x most abundant Taxa, specify that number
+</li>
+<li>
+<p>plot_abundant : int</p>
+<ul>
+<li>If you want to only plot the x most abundant Taxa, specify that number
 with <code>plot_abundant</code> (<code>int</code>) as a positive number. Example: <code>plot_abundant = 15</code> will
 only plot the 15 most abundant. If <code>plot_abundant</code> is a negative number, it will
 plot the least abundant. Example: <code>plot_abundant = -15</code> will only plot the 15 least
-abundant. </p>
-<p>plot_specific : list
-If you want to only plot specific Taxa, you can specify them by any identification
+abundant. </li>
+</ul>
+</li>
+<li>
+<p>plot_specific : list</p>
+<ul>
+<li>If you want to only plot specific Taxa, you can specify them by any identification
 (index, name, ID, etc.) as a list of Taxa to plot.
 NOTE: If you specify <code>plot_specific</code> and you are clustering along a taxonomic level, then
-you specify the names at the taxonomic level you clustered at.
-Example::
-If taxlevel = 'phylum'
-VALID: plot_specific = [('Bacteria', 'Bacteroidetes'), ('Bacteria', 'Firmicutes')]
-INVALID: plot_specific = ['Bacteroidetes', 'Firmicutes'] # Need full taxonomy
-INVALID: plot_specific = ['Bacteroidia', 'Clostridia'] # This is at the class level
-INVALID: plot_specific = ['Taxa_32'] # These names are no longer valid</p>
-<p>plot_clusters : list(int), int
-If you want to plot specific clusters (or a single cluster), you can specify the cluster
+you specify the names at the taxonomic level you clustered at.</li>
+<li>Example::<ul>
+<li>If taxlevel = 'phylum'</li>
+<li>VALID: plot_specific = [('Bacteria', 'Bacteroidetes'), ('Bacteria', 'Firmicutes')]</li>
+<li>INVALID: plot_specific = ['Bacteroidetes', 'Firmicutes'] # Need full taxonomy</li>
+<li>INVALID: plot_specific = ['Bacteroidia', 'Clostridia'] # This is at the class level</li>
+<li>INVALID: plot_specific = ['Taxa_32'] # These names are no longer valid</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p>plot_clusters : list(int), int</p>
+<ul>
+<li>If you want to plot specific clusters (or a single cluster), you can specify the cluster
 ID/s to plot. Note that you must also specify the <code>clustering</code> parameter as well and you
-cannot aggregate the data into taxonomic classes.</p>
+cannot aggregate the data into taxonomic classes.</li>
+</ul>
+</li>
+</ul>
 <h2 id="log-scale-and-nans">Log-scale and NaN's</h2>
 <p>We will automatically plot the yscale as log for the 'raw' and 'abs'
 datatypes and regular for 'rel'. If you want to do something different
@@ -2494,31 +2494,34 @@ Size of the figure</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def abundance_over_time(subj, dtype, taxlevel=None, yscale_log=None,
-    plot_abundant=None, plot_specific=None, plot_clusters=None, highlight=None, marker=&#39;o&#39;,
-    ylim=None, markersize=4, shade_perturbations=True, legend=True, set_0_to_nan=False, 
-    color_code_clusters=False, clustering=None, cmap=None, alpha=1.0, linestyle=&#39;-&#39;, ax=None,
-    include_errorbars=False, grid=False, label_formatter=None, label_func=None, **kwargs):
+<pre><code class="python">def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, taxlevel: str=None, 
+    yscale_log: bool=None, plot_abundant: int=None, plot_specific: Iterator[str]=None, 
+    plot_clusters: Iterator[int]=None, highlight: List[float]=None, marker: str=&#39;o&#39;,
+    ylim: Tuple[float, float]=None, markersize: Union[float, int]=4, shade_perturbations: bool=True, 
+    legend: bool=True, set_0_to_nan: bool=False, color_code_clusters: bool=False, clustering: Clustering=None, 
+    cmap: Any=None, alpha: float=1.0, linestyle: str=&#39;-&#39;, ax: matplotlib.pyplot.Axes=None,
+    include_errorbars: bool=False, grid: bool=False, label_formatter: str=None, 
+    label_func: Callable=None, **kwargs) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Plots the abundance over time for the Taxa in `subj`.
 
     What you&#39;re plotting
     --------------------
-    There are several different types of abundances you can plot, which is specified using
-    the `dtype` (str) parameter:
-    &#39;raw&#39;
-        This plots the counts of the Taxa. `subj` must be a single pl.base.Subject object.
-    &#39;rel&#39;
-        This plots the relative abundance of the Taxa. `subj` must be a single 
+    - There are several different types of abundances you can plot, which is specified using
+      the `dtype` (str) parameter:
+        - &#39;raw&#39;
+            - This plots the counts of the Taxa. `subj` must be a single pl.base.Subject object.
+        - &#39;rel&#39;
+            - This plots the relative abundance of the Taxa. `subj` must be a single 
         pl.base.Subject object.
-    &#39;abs&#39;
-        This plots the absolute abundance of the Taxa. `subj` must be a single 
-        pl.base.Subject object.
-    &#39;qpcr&#39;
-        This plots the qPCR measurements at each time point. `subj` can also be a 
+        - &#39;abs&#39;
+            - This plots the absolute abundance of the Taxa. `subj` must be a single 
+              pl.base.Subject object.
+        - &#39;qpcr&#39;
+            - This plots the qPCR measurements at each time point. `subj` can also be a 
         list of pl.base.Subject objects, or a `pl.base.Study` object.
-    &#39;read-depth&#39;
-        These are the the read depths at each timepoint. `subj` can also be a 
-        list of pl.base.Subject objects, or a `pl.base.Study` object.
+        - &#39;read-depth&#39;
+            - These are the the read depths at each timepoint. `subj` can also be a 
+              list of pl.base.Subject objects, or a `pl.base.Study` object.
     
     Aggregating by taxanomic level
     ------------------------------
@@ -2538,34 +2541,34 @@ Size of the figure</dd>
 
     What to plot?
     -------------
-    You can plot a subset of the Taxa by using the `plot_` arguments. If None of those
-    parameters are specified, then it will plot everything. NOTE: You can only specify 
-    one of the `plot_` at a time. NOTE: these are only necessary if dtype is either 
-    &#39;raw&#39;, &#39;re&#39;, or &#39;abs&#39;.
+    - You can plot a subset of the Taxa by using the `plot_` arguments. If None of those
+      parameters are specified, then it will plot everything. NOTE: You can only specify 
+      one of the `plot_` at a time. NOTE: these are only necessary if dtype is either 
+      &#39;raw&#39;, &#39;re&#39;, or &#39;abs&#39;.
 
-    plot_abundant : int
-    If you want to only plot the x most abundant Taxa, specify that number 
-    with `plot_abundant` (`int`) as a positive number. Example: `plot_abundant = 15` will
-    only plot the 15 most abundant. If `plot_abundant` is a negative number, it will
-    plot the least abundant. Example: `plot_abundant = -15` will only plot the 15 least 
-    abundant. 
+    - plot_abundant : int
+        - If you want to only plot the x most abundant Taxa, specify that number 
+          with `plot_abundant` (`int`) as a positive number. Example: `plot_abundant = 15` will
+          only plot the 15 most abundant. If `plot_abundant` is a negative number, it will
+          plot the least abundant. Example: `plot_abundant = -15` will only plot the 15 least 
+          abundant. 
     
-    plot_specific : list
-    If you want to only plot specific Taxa, you can specify them by any identification
-    (index, name, ID, etc.) as a list of Taxa to plot.
-    NOTE: If you specify `plot_specific` and you are clustering along a taxonomic level, then
-    you specify the names at the taxonomic level you clustered at.
-    Example::
-        If taxlevel = &#39;phylum&#39;
-        VALID: plot_specific = [(&#39;Bacteria&#39;, &#39;Bacteroidetes&#39;), (&#39;Bacteria&#39;, &#39;Firmicutes&#39;)]
-        INVALID: plot_specific = [&#39;Bacteroidetes&#39;, &#39;Firmicutes&#39;] # Need full taxonomy
-        INVALID: plot_specific = [&#39;Bacteroidia&#39;, &#39;Clostridia&#39;] # This is at the class level
-        INVALID: plot_specific = [&#39;Taxa_32&#39;] # These names are no longer valid
+    - plot_specific : list
+        - If you want to only plot specific Taxa, you can specify them by any identification
+          (index, name, ID, etc.) as a list of Taxa to plot.
+          NOTE: If you specify `plot_specific` and you are clustering along a taxonomic level, then
+          you specify the names at the taxonomic level you clustered at.
+        - Example::
+            - If taxlevel = &#39;phylum&#39;
+            - VALID: plot_specific = [(&#39;Bacteria&#39;, &#39;Bacteroidetes&#39;), (&#39;Bacteria&#39;, &#39;Firmicutes&#39;)]
+            - INVALID: plot_specific = [&#39;Bacteroidetes&#39;, &#39;Firmicutes&#39;] # Need full taxonomy
+            - INVALID: plot_specific = [&#39;Bacteroidia&#39;, &#39;Clostridia&#39;] # This is at the class level
+            - INVALID: plot_specific = [&#39;Taxa_32&#39;] # These names are no longer valid
 
-    plot_clusters : list(int), int
-    If you want to plot specific clusters (or a single cluster), you can specify the cluster
-    ID/s to plot. Note that you must also specify the `clustering` parameter as well and you
-    cannot aggregate the data into taxonomic classes.
+    - plot_clusters : list(int), int
+        - If you want to plot specific clusters (or a single cluster), you can specify the cluster
+          ID/s to plot. Note that you must also specify the `clustering` parameter as well and you
+          cannot aggregate the data into taxonomic classes.
 
     Log-scale and NaN&#39;s
     -------------------
@@ -2928,7 +2931,7 @@ Size of the figure</dd>
 </details>
 </dd>
 <dt id="mdsine2.visualization.aggregate_taxa_abundances"><code class="name flex">
-<span>def <span class="ident">aggregate_taxa_abundances</span></span>(<span>subj, agg, dtype='rel', yscale_log=True, ax=None, title='Subject %(subjectname)s', xlabel='auto', ylabel='auto', vmin=None, vmax=None, alpha_agg=0.5, alpha_asv=1.0, legend=True, fontstyle=None, shade_perturbations=True)</span>
+<span>def <span class="ident">aggregate_taxa_abundances</span></span>(<span>subj: <a title="mdsine2.pylab.base.Subject" href="pylab/base.html#mdsine2.pylab.base.Subject">Subject</a>, agg: Union[str, <a title="mdsine2.pylab.base.OTU" href="pylab/base.html#mdsine2.pylab.base.OTU">OTU</a>, int], dtype: str = 'rel', yscale_log: bool = True, ax: matplotlib.axes._axes.Axes = None, title: str = 'Subject %(subjectname)s', xlabel: str = 'auto', ylabel: str = 'auto', vmin: Union[float, int] = None, vmax: Union[float, int] = None, alpha_agg: float = 0.5, alpha_asv: float = 1.0, legend: bool = True, fontstyle: str = None, shade_perturbations: bool = True) ‑> matplotlib.axes._axes.Axes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Plot the abundances of the aggregated Taxa within the OTU <code>agg</code> for the subject <code>subj</code></p>
@@ -2987,9 +2990,11 @@ If None then do not set</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def aggregate_taxa_abundances(subj, agg, dtype=&#39;rel&#39;, yscale_log=True, ax=None, 
-    title=&#39;Subject %(subjectname)s&#39;, xlabel=&#39;auto&#39;, ylabel=&#39;auto&#39;, vmin=None, vmax=None,
-    alpha_agg=0.5, alpha_asv=1., legend=True, fontstyle=None, shade_perturbations=True):
+<pre><code class="python">def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: str=&#39;rel&#39;, 
+    yscale_log: bool=True, ax: matplotlib.pyplot.Axes=None, title: str=&#39;Subject %(subjectname)s&#39;, 
+    xlabel: str=&#39;auto&#39;, ylabel: str=&#39;auto&#39;, vmin: Union[float, int]=None, vmax: Union[float, int]=None,
+    alpha_agg: float=0.5, alpha_asv: float=1., legend: bool=True, fontstyle: str=None, 
+    shade_perturbations: bool=True) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Plot the abundances of the aggregated Taxa within the OTU `agg` for the subject `subj`
 
     Each subject within the study has its own axis within the figure. If you want to
@@ -3182,7 +3187,7 @@ If None then do not set</dd>
 </details>
 </dd>
 <dt id="mdsine2.visualization.alpha_diversity_over_time"><code class="name flex">
-<span>def <span class="ident">alpha_diversity_over_time</span></span>(<span>subjs, metric, taxlevel=None, highlight=None, marker='o', markersize=4, shade_perturbations=True, legend=True, cmap=None, alpha=1.0, linestyle='-', ax=None, grid=False, colors=None, **kwargs)</span>
+<span>def <span class="ident">alpha_diversity_over_time</span></span>(<span>subjs: Union[<a title="mdsine2.pylab.base.Subject" href="pylab/base.html#mdsine2.pylab.base.Subject">Subject</a>, List[<a title="mdsine2.pylab.base.Subject" href="pylab/base.html#mdsine2.pylab.base.Subject">Subject</a>]], metric: Callable, taxlevel: str = None, highlight: List[float] = None, marker: str = 'o', markersize: Union[float, int] = 4, shade_perturbations: bool = True, legend: bool = True, cmap: Any = None, alpha: float = 1.0, linestyle: str = '-', ax: matplotlib.axes._axes.Axes = None, grid: bool = False, colors: Any = None, **kwargs) ‑> matplotlib.axes._axes.Axes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Plots the alpha diversity over time for the subject</p>
@@ -3238,10 +3243,10 @@ Others for matplotlib.pylot.plot</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def alpha_diversity_over_time(subjs, metric, taxlevel=None,
-    highlight=None, marker=&#39;o&#39;, markersize=4, shade_perturbations=True, 
-    legend=True, cmap=None, alpha=1.0, linestyle=&#39;-&#39;, ax=None, grid=False,
-    colors=None, **kwargs):
+<pre><code class="python">def alpha_diversity_over_time(subjs: Union[Subject, List[Subject]], metric: Callable, taxlevel: str=None,
+    highlight: List[float]=None, marker: str=&#39;o&#39;, markersize: Union[float, int]=4, shade_perturbations: bool=True, 
+    legend: bool=True, cmap: Any=None, alpha: float=1.0, linestyle: str=&#39;-&#39;, ax: matplotlib.pyplot.Axes=None, 
+    grid: bool=False, colors: Any=None, **kwargs) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Plots the alpha diversity over time for the subject
 
     Parameters
@@ -3375,7 +3380,7 @@ Others for matplotlib.pylot.plot</dd>
 </details>
 </dd>
 <dt id="mdsine2.visualization.render_acceptance_rate_trace"><code class="name flex">
-<span>def <span class="ident">render_acceptance_rate_trace</span></span>(<span>var, idx=None, prev='default', ax=None, include_burnin=True, scatter=True, n_burnin=None, section='posterior', **kwargs)</span>
+<span>def <span class="ident">render_acceptance_rate_trace</span></span>(<span>var: <a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a>, idx: Union[int, Tuple[int, int]] = None, prev: Union[int, str] = 'default', ax: matplotlib.axes._axes.Axes = None, include_burnin: bool = True, scatter: bool = True, n_burnin: int = None, section: str = 'posterior', **kwargs) ‑> matplotlib.axes._axes.Axes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Visualize the acceptance rate over time for a
@@ -3479,8 +3484,10 @@ of the chain.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def render_acceptance_rate_trace(var, idx=None, prev=&#39;default&#39;, ax=None, include_burnin=True, 
-    scatter=True, n_burnin=None, section=&#39;posterior&#39;, **kwargs):
+<pre><code class="python">def render_acceptance_rate_trace(var: variables.Variable, idx: Union[int, Tuple[int, int]]=None, 
+    prev: Union[int, str]=&#39;default&#39;, ax: matplotlib.pyplot.Axes=None, include_burnin: bool=True, 
+    scatter: bool=True, n_burnin: int=None, section: str=&#39;posterior&#39;, 
+    **kwargs) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Visualize the acceptance rate over time for a
     metropolis._BaseKernel object.
 
@@ -3626,7 +3633,7 @@ of the chain.</dd>
 </details>
 </dd>
 <dt id="mdsine2.visualization.render_bayes_factors"><code class="name flex">
-<span>def <span class="ident">render_bayes_factors</span></span>(<span>bayes_factors, taxa=None, ax=None, n_colors=100, max_value=None, xticklabels='%(index)s', yticklabels='%(name)s %(index)s', include_tick_marks=False, linewidths=0.8, linecolor='black', cmap='Blues', include_colorbar=True, title='Microbe Interaction Bayes Factors', figure_size=None, order=None)</span>
+<span>def <span class="ident">render_bayes_factors</span></span>(<span>bayes_factors: numpy.ndarray, taxa: <a title="mdsine2.pylab.base.TaxaSet" href="pylab/base.html#mdsine2.pylab.base.TaxaSet">TaxaSet</a> = None, ax: matplotlib.axes._axes.Axes = None, n_colors: int = 100, max_value: Union[float, int] = None, xticklabels: str = '%(index)s', yticklabels: str = '%(name)s %(index)s', include_tick_marks: bool = False, linewidths: float = 0.8, linecolor: str = 'black', cmap: str = 'Blues', include_colorbar: bool = True, title: str = 'Microbe Interaction Bayes Factors', figure_size: Tuple[float, float] = None, order: Union[Iterator[int], numpy.ndarray] = None) ‑> matplotlib.axes._axes.Axes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Renders the bayes factors for each of the interactions. Self interactions
@@ -3737,11 +3744,12 @@ dimension for every 50 Taxa</li>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def render_bayes_factors(bayes_factors, taxa=None, ax=None,
-    n_colors=100, max_value=None, xticklabels=&#39;%(index)s&#39;, yticklabels=&#39;%(name)s %(index)s&#39;,
-    include_tick_marks=False, linewidths=0.8, linecolor=&#39;black&#39;,cmap=&#39;Blues&#39;,
-    include_colorbar=True, title=&#39;Microbe Interaction Bayes Factors&#39;, figure_size=None,
-    order=None):
+<pre><code class="python">def render_bayes_factors(bayes_factors: np.ndarray, taxa: TaxaSet=None, ax:matplotlib.pyplot.Axes=None,
+    n_colors: int=100, max_value: Union[float, int]=None, xticklabels: str=&#39;%(index)s&#39;, 
+    yticklabels: str=&#39;%(name)s %(index)s&#39;, include_tick_marks: bool=False, linewidths: float=0.8, 
+    linecolor: str=&#39;black&#39;, cmap: str=&#39;Blues&#39;,
+    include_colorbar: bool=True, title: str=&#39;Microbe Interaction Bayes Factors&#39;, figure_size: Tuple[float, float]=None,
+    order: Union[Iterator[int], np.ndarray]=None) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Renders the bayes factors for each of the interactions. Self interactions
     are automatically set to np.nan.
 
@@ -3847,7 +3855,7 @@ dimension for every 50 Taxa</li>
 </details>
 </dd>
 <dt id="mdsine2.visualization.render_cocluster_probabilities"><code class="name flex">
-<span>def <span class="ident">render_cocluster_probabilities</span></span>(<span>coclusters, taxa, ax=None, n_colors=100, xticklabels='%(index)s', yticklabels='%(name)s %(index)s', include_tick_marks=False, linewidths=0.8, linecolor='black', cmap='Blues', include_colorbar=True, title='Microbe Co-cluster Probabilities', figure_size=None, order=None)</span>
+<span>def <span class="ident">render_cocluster_probabilities</span></span>(<span>coclusters: numpy.ndarray, taxa: <a title="mdsine2.pylab.base.TaxaSet" href="pylab/base.html#mdsine2.pylab.base.TaxaSet">TaxaSet</a>, ax: matplotlib.axes._axes.Axes = None, n_colors: int = 100, max_value: Union[float, int] = None, xticklabels: str = '%(index)s', yticklabels: str = '%(name)s %(index)s', include_tick_marks: bool = False, linewidths: float = 0.8, linecolor: str = 'black', cmap: str = 'Blues', include_colorbar: bool = True, title: str = 'Microbe Co-cluster Probabilities', figure_size: Tuple[float, float] = None, order: Union[Iterator[int], numpy.ndarray] = None) ‑> matplotlib.axes._axes.Axes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Render the cocluster proportions. Values in coclusters should be [0,1].</p>
@@ -3941,11 +3949,12 @@ dimension for every 50 Taxa</li>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def render_cocluster_probabilities(coclusters, taxa, ax=None,
-    n_colors=100, xticklabels=&#39;%(index)s&#39;, yticklabels=&#39;%(name)s %(index)s&#39;,
-    include_tick_marks=False, linewidths=0.8, linecolor=&#39;black&#39;, cmap=&#39;Blues&#39;,
-    include_colorbar=True, title=&#39;Microbe Co-cluster Probabilities&#39;, figure_size=None,
-    order=None):
+<pre><code class="python">def render_cocluster_probabilities(coclusters: np.ndarray, taxa: TaxaSet, ax: matplotlib.pyplot.Axes=None,
+    n_colors: int=100, max_value: Union[float, int]=None, xticklabels: str=&#39;%(index)s&#39;, 
+    yticklabels: str=&#39;%(name)s %(index)s&#39;, include_tick_marks: bool=False, linewidths: float=0.8, 
+    linecolor: str=&#39;black&#39;, cmap: str=&#39;Blues&#39;,
+    include_colorbar: bool=True, title: str=&#39;Microbe Co-cluster Probabilities&#39;, figure_size: Tuple[float, float]=None,
+    order: Union[Iterator[int], np.ndarray]=None) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Render the cocluster proportions. Values in coclusters should be [0,1].
 
     Parameters
@@ -4035,132 +4044,8 @@ dimension for every 50 Taxa</li>
     return ax</code></pre>
 </details>
 </dd>
-<dt id="mdsine2.visualization.render_growth_vector"><code class="name flex">
-<span>def <span class="ident">render_growth_vector</span></span>(<span>growth, difference=False, ax=None, light_palette='Navy', **kwargs)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Renders the growth terms of the regression coefficients as an image. Pass
-in the raw regression coefficients and</p>
-<h2 id="parameters">Parameters</h2>
-<dl>
-<dt><strong><code>growth</code></strong> :&ensp;<code>np.ndarray</code></dt>
-<dd>
-<ul>
-<li>growth terms from the interaction matrix</li>
-</ul>
-</dd>
-<dt><strong><code>ax</code></strong> :&ensp;<code>matplotlib.pyplot.Axes, Optional</code></dt>
-<dd>
-<ul>
-<li>Axis to plot on.</li>
-<li>If nothing is provided, a new figure is created with a subplot
-that takes up the entire figure.</li>
-</ul>
-</dd>
-<dt><strong><code>difference</code></strong> :&ensp;<code>bool, Optional</code></dt>
-<dd>
-<ul>
-<li>If True, Resets the colormap so that a 0 difference is white and
-it is diverging.</li>
-</ul>
-</dd>
-<dt><strong><code>light_palette</code></strong> :&ensp;<code>str, Optional</code></dt>
-<dd>
-<ul>
-<li>Palette to use for the colormap</li>
-</ul>
-</dd>
-<dt><strong><code>kwargs</code></strong> :&ensp;<code>dict</code></dt>
-<dd>
-<ul>
-<li>optional arguments for plt.imshow</li>
-<li>Default values:
-'vmin' = - max(abs(max(raw_regress_coeff)), abs(min(raw_regress_coeff)))
-'vmin' = + max(abs(max(raw_regress_coeff)), abs(min(raw_regress_coeff)))</li>
-</ul>
-</dd>
-</dl>
-<h2 id="returns">Returns</h2>
-<dl>
-<dt><code>matplotlib.pyplot.Axes</code></dt>
-<dd>
-<ul>
-<li>Axis object that has the rendering of the growth values</li>
-</ul>
-</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def render_growth_vector(growth, difference=False, ax=None, light_palette=&#39;Navy&#39;, **kwargs):
-    &#39;&#39;&#39;Renders the growth terms of the regression coefficients as an image. Pass
-    in the raw regression coefficients and
-
-    Parameters
-    ----------
-    growth : np.ndarray
-        - growth terms from the interaction matrix
-    ax : matplotlib.pyplot.Axes, Optional
-        - Axis to plot on.
-        - If nothing is provided, a new figure is created with a subplot
-          that takes up the entire figure.
-    difference : bool, Optional
-        - If True, Resets the colormap so that a 0 difference is white and
-          it is diverging.
-    light_palette : str, Optional
-        - Palette to use for the colormap
-    kwargs : dict
-        - optional arguments for plt.imshow
-        - Default values:
-            &#39;vmin&#39; = - max(abs(max(raw_regress_coeff)), abs(min(raw_regress_coeff)))
-            &#39;vmin&#39; = + max(abs(max(raw_regress_coeff)), abs(min(raw_regress_coeff)))
-
-    Returns
-    -------
-    matplotlib.pyplot.Axes
-        - Axis object that has the rendering of the growth values
-    &#39;&#39;&#39;
-
-    growth = growth.reshape(-1,1)
-    if ax is None:
-        fig = plt.figure()
-        ax = fig.add_subplot(111)
-
-    # Set labels if necessary
-    ax, kwargs = _set_plt_labels(kwargs, ax)
-
-    # Set default values if necessary
-    if difference:
-        kwargs[&#39;cmap&#39;] = sns.diverging_palette(240,10,n=DEFAULT_N_COLORS, as_cmap=True)
-    else:
-        kwargs[&#39;cmap&#39;] = sns.light_palette(light_palette, as_cmap=True)
-
-    _max = np.max(np.absolute(growth))
-    if &#39;vmin&#39; not in kwargs and difference:
-        kwargs[&#39;vmin&#39;] = -_max
-    if &#39;vmax&#39; not in kwargs and difference:
-        kwargs[&#39;vmax&#39;] = _max
-
-    im = ax.imshow(growth, **kwargs)
-
-    # Set ticks so that you can discern between pixels
-    ax.set_yticks(np.arange(-.5, growth.shape[0], 1), minor = False)
-    ax.set_yticks(np.arange(0, growth.shape[0], 1), minor = True)
-
-    ax.set_xticklabels([])
-    ax.set_yticklabels(labels = np.arange(0, growth.shape[0], dtype=int), minor = True)
-    ax.tick_params(which = &#39;major&#39;,labelbottom = False, labelleft = False,
-        labelright = False, labeltop = False)
-    ax.tick_params(which = &#39;minor&#39;,labelbottom = False, labelleft = True,
-        labelright = False, labeltop = False)
-    ax.grid(color=&#39;black&#39;, linewidth = 1.5, which=&#39;major&#39;, axis=&#39;y&#39;)
-    plt.yticks(rotation=0)
-    return im</code></pre>
-</details>
-</dd>
 <dt id="mdsine2.visualization.render_interaction_strength"><code class="name flex">
-<span>def <span class="ident">render_interaction_strength</span></span>(<span>interaction_matrix, log_scale, taxa, clustering=None, ax=None, center_colors=False, n_colors=100, xticklabels='%(index)s', vmax=None, vmin=None, yticklabels='%(name)s %(index)s', include_tick_marks=False, linewidths=0.8, linecolor='black', cmap=None, include_colorbar=True, title='Microbe Interaction Strength', figure_size=None, order=None)</span>
+<span>def <span class="ident">render_interaction_strength</span></span>(<span>interaction_matrix: numpy.ndarray, log_scale: bool, taxa: <a title="mdsine2.pylab.base.TaxaSet" href="pylab/base.html#mdsine2.pylab.base.TaxaSet">TaxaSet</a>, clustering: <a title="mdsine2.pylab.cluster.Clustering" href="pylab/cluster.html#mdsine2.pylab.cluster.Clustering">Clustering</a> = None, ax: matplotlib.axes._axes.Axes = None, center_colors: bool = False, n_colors: int = 100, xticklabels: str = '%(index)s', vmax: Union[float, int] = None, vmin: Union[float, int] = None, yticklabels: str = '%(name)s %(index)s', include_tick_marks: bool = False, linewidths: float = 0.8, linecolor: str = 'black', cmap: Any = None, include_colorbar: bool = True, title: str = 'Microbe Interaction Strength', figure_size: Tuple[float, float] = None, order: Union[Iterator[int], numpy.ndarray] = None) ‑> matplotlib.axes._axes.Axes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Render the interaction strength matrix. If you want the values in log scale,
@@ -4288,12 +4173,12 @@ dimension for every 50 Taxa</li>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def render_interaction_strength(interaction_matrix, log_scale, taxa, clustering=None,
-    ax=None, center_colors=False, n_colors=100, xticklabels=&#39;%(index)s&#39;, 
-    vmax=None, vmin=None, yticklabels=&#39;%(name)s %(index)s&#39;, 
-    include_tick_marks=False, linewidths=0.8, linecolor=&#39;black&#39;,
-    cmap=None, include_colorbar=True, title=&#39;Microbe Interaction Strength&#39;,
-    figure_size=None, order=None):
+<pre><code class="python">def render_interaction_strength(interaction_matrix: np.ndarray, log_scale: bool, taxa: TaxaSet, 
+    clustering: Clustering=None, ax: matplotlib.pyplot.Axes=None, center_colors: bool=False, 
+    n_colors: int=100, xticklabels: str=&#39;%(index)s&#39;, vmax: Union[float, int]=None, vmin: Union[float, int]=None, 
+    yticklabels: str=&#39;%(name)s %(index)s&#39;, include_tick_marks: bool=False, linewidths: float=0.8, linecolor: str=&#39;black&#39;,
+    cmap: Any=None, include_colorbar: bool=True, title: str=&#39;Microbe Interaction Strength&#39;,
+    figure_size: Tuple[float, float]=None, order: Union[Iterator[int], np.ndarray]=None) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Render the interaction strength matrix. If you want the values in log scale,
     it will annotate the box with the sign of the interaction and plot the absolute
     value of the interaction. If you want the Taxa in the same clusters to be grouped
@@ -4450,7 +4335,7 @@ dimension for every 50 Taxa</li>
 </details>
 </dd>
 <dt id="mdsine2.visualization.render_trace"><code class="name flex">
-<span>def <span class="ident">render_trace</span></span>(<span>var, idx=None, ax=None, plt_type=None, include_burnin=True, scatter=True, log_scale=False, n_burnin=None, section='posterior', **kwargs)</span>
+<span>def <span class="ident">render_trace</span></span>(<span>var: <a title="mdsine2.pylab.variables.Variable" href="pylab/variables.html#mdsine2.pylab.variables.Variable">Variable</a>, idx: Union[int, Tuple[int, int]] = None, ax: matplotlib.axes._axes.Axes = None, plt_type: str = None, include_burnin: bool = True, scatter: bool = True, log_scale: bool = False, n_burnin: int = None, section: str = 'posterior', **kwargs) ‑> matplotlib.axes._axes.Axes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Visualizes the Trace of a random variable.
@@ -4573,8 +4458,10 @@ Tells how big the burnin array is.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def render_trace(var, idx=None, ax=None, plt_type=None, include_burnin=True, 
-    scatter=True, log_scale=False, n_burnin=None, section=&#39;posterior&#39;, **kwargs):
+<pre><code class="python">def render_trace(var: variables.Variable, idx: Union[int, Tuple[int, int]]=None, 
+    ax: matplotlib.pyplot.Axes=None, plt_type: str=None, include_burnin: bool=True, 
+    scatter: bool=True, log_scale: bool=False, n_burnin: int=None, section:str=&#39;posterior&#39;, 
+    **kwargs) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;
     Visualizes the Trace of a random variable.
     Produces a historgram of the values and a plot of the sample
@@ -4800,7 +4687,7 @@ Tells how big the burnin array is.</dd>
 </details>
 </dd>
 <dt id="mdsine2.visualization.set_default_tax_level"><code class="name flex">
-<span>def <span class="ident">set_default_tax_level</span></span>(<span>level)</span>
+<span>def <span class="ident">set_default_tax_level</span></span>(<span>level: str)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This sets the default taxonomic level to plot at.</p>
@@ -4814,7 +4701,7 @@ Tells how big the burnin array is.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_default_tax_level(level):
+<pre><code class="python">def set_default_tax_level(level: str):
     &#39;&#39;&#39;This sets the default taxonomic level to plot at.
     
     Parameters
@@ -4832,7 +4719,7 @@ Tells how big the burnin array is.</dd>
 </details>
 </dd>
 <dt id="mdsine2.visualization.set_default_trace_color"><code class="name flex">
-<span>def <span class="ident">set_default_trace_color</span></span>(<span>color)</span>
+<span>def <span class="ident">set_default_trace_color</span></span>(<span>color: Any)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sets defalt color of the trace. Must be matplotlib compatible.</p>
@@ -4847,7 +4734,7 @@ Tells how big the burnin array is.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_default_trace_color(color):
+<pre><code class="python">def set_default_trace_color(color: Any):
     &#39;&#39;&#39;Sets defalt color of the trace. Must be matplotlib compatible.
 
     Parameters
@@ -4864,7 +4751,7 @@ Tells how big the burnin array is.</dd>
 </details>
 </dd>
 <dt id="mdsine2.visualization.set_perturbation_color"><code class="name flex">
-<span>def <span class="ident">set_perturbation_color</span></span>(<span>color)</span>
+<span>def <span class="ident">set_perturbation_color</span></span>(<span>color: Any)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Set the color for the perturbation shading. Must be matplotlib compatible.</p>
@@ -4879,7 +4766,7 @@ Tells how big the burnin array is.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_perturbation_color(color):
+<pre><code class="python">def set_perturbation_color(color: Any):
     &#39;&#39;&#39;Set the color for the perturbation shading. Must be matplotlib compatible.
 
     Parameters
@@ -4896,7 +4783,7 @@ Tells how big the burnin array is.</dd>
 </details>
 </dd>
 <dt id="mdsine2.visualization.set_xtick_frequency"><code class="name flex">
-<span>def <span class="ident">set_xtick_frequency</span></span>(<span>x)</span>
+<span>def <span class="ident">set_xtick_frequency</span></span>(<span>x: Union[float, int])</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Sets the xtick frequency (how often a label on the x axis should occur)</p>
@@ -4909,7 +4796,7 @@ Tells how big the burnin array is.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def set_xtick_frequency(x):
+<pre><code class="python">def set_xtick_frequency(x: Union[float, int]):
     &#39;&#39;&#39;Sets the xtick frequency (how often a label on the x axis should occur)
 
     Parameters
@@ -4926,7 +4813,7 @@ Tells how big the burnin array is.</dd>
 </details>
 </dd>
 <dt id="mdsine2.visualization.shade_in_perturbations"><code class="name flex">
-<span>def <span class="ident">shade_in_perturbations</span></span>(<span>ax, perturbations, subj, textcolor='black', textsize=None, alpha=0.25, label=True)</span>
+<span>def <span class="ident">shade_in_perturbations</span></span>(<span>ax: matplotlib.axes._axes.Axes, perturbations: <a title="mdsine2.pylab.base.Perturbations" href="pylab/base.html#mdsine2.pylab.base.Perturbations">Perturbations</a>, subj: <a title="mdsine2.pylab.base.Subject" href="pylab/base.html#mdsine2.pylab.base.Subject">Subject</a>, textcolor: str = 'black', textsize: Union[float, int] = None, alpha: float = 0.25, label: bool = True) ‑> matplotlib.axes._axes.Axes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Shade in the axis where there are perturbations and adds the label of
@@ -4935,7 +4822,7 @@ the perturbation above it.</p>
 <dl>
 <dt><strong><code>ax</code></strong> :&ensp;<code>matplotlib.pyplot.Axes</code></dt>
 <dd>Axis we are plotting on</dd>
-<dt><strong><code>perturbations</code></strong> :&ensp;<code>list(mdsine2.BasePerturbations)</code></dt>
+<dt><strong><code>perturbations</code></strong> :&ensp;<code>mdsine2.Perturbations</code></dt>
 <dd>List of perturbations we are coloring in</dd>
 <dt><strong><code>subj</code></strong> :&ensp;<code>mdsine2.Subject, str</code></dt>
 <dd>&nbsp;</dd>
@@ -4949,7 +4836,9 @@ the perturbation above it.</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def shade_in_perturbations(ax, perturbations, subj, textcolor=&#39;black&#39;, textsize=None, alpha=0.25, label=True):
+<pre><code class="python">def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbations, 
+    subj: Subject, textcolor: str=&#39;black&#39;, textsize: Union[float, int]=None, 
+    alpha: float=0.25, label: bool=True) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Shade in the axis where there are perturbations and adds the label of
     the perturbation above it.
 
@@ -4957,7 +4846,7 @@ the perturbation above it.</p>
     ----------
     ax : matplotlib.pyplot.Axes
         Axis we are plotting on
-    perturbations : list(mdsine2.BasePerturbations)
+    perturbations : mdsine2.Perturbations
         List of perturbations we are coloring in
     subj : mdsine2.Subject, str
 
@@ -5023,7 +4912,7 @@ the perturbation above it.</p>
 </details>
 </dd>
 <dt id="mdsine2.visualization.taxonomic_distribution_over_time"><code class="name flex">
-<span>def <span class="ident">taxonomic_distribution_over_time</span></span>(<span>subj, taxlevel=None, legend=True, ax=None, plot_abundant=None, label_formatter=None, dtype='rel', shade_perturbations=True, **kwargs)</span>
+<span>def <span class="ident">taxonomic_distribution_over_time</span></span>(<span>subj: Union[<a title="mdsine2.pylab.base.Subject" href="pylab/base.html#mdsine2.pylab.base.Subject">Subject</a>, <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a>], taxlevel: str = None, legend: bool = True, ax: matplotlib.axes._axes.Axes = None, plot_abundant: int = None, label_formatter: str = None, dtype: str = 'rel', shade_perturbations: bool = True, **kwargs) ‑> matplotlib.axes._axes.Axes</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Produces a taxonomic bar graph for each datapoint</p>
@@ -5079,9 +4968,10 @@ If True, add a legend</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def taxonomic_distribution_over_time(subj, taxlevel=None,
-    legend=True, ax=None, plot_abundant=None, label_formatter=None, 
-    dtype=&#39;rel&#39;, shade_perturbations=True, **kwargs):
+<pre><code class="python">def taxonomic_distribution_over_time(subj: Union[Subject, Study], taxlevel: str=None,
+    legend: bool=True, ax: matplotlib.pyplot.Axes=None, plot_abundant: int=None, 
+    label_formatter: str=None, dtype: str=&#39;rel&#39;, shade_perturbations: bool=True, 
+    **kwargs) -&gt; matplotlib.pyplot.Axes:
     &#39;&#39;&#39;Produces a taxonomic bar graph for each datapoint
 
     Aggregating by taxanomic level
@@ -5246,7 +5136,6 @@ If True, add a legend</dd>
 <li><code><a title="mdsine2.visualization.render_acceptance_rate_trace" href="#mdsine2.visualization.render_acceptance_rate_trace">render_acceptance_rate_trace</a></code></li>
 <li><code><a title="mdsine2.visualization.render_bayes_factors" href="#mdsine2.visualization.render_bayes_factors">render_bayes_factors</a></code></li>
 <li><code><a title="mdsine2.visualization.render_cocluster_probabilities" href="#mdsine2.visualization.render_cocluster_probabilities">render_cocluster_probabilities</a></code></li>
-<li><code><a title="mdsine2.visualization.render_growth_vector" href="#mdsine2.visualization.render_growth_vector">render_growth_vector</a></code></li>
 <li><code><a title="mdsine2.visualization.render_interaction_strength" href="#mdsine2.visualization.render_interaction_strength">render_interaction_strength</a></code></li>
 <li><code><a title="mdsine2.visualization.render_trace" href="#mdsine2.visualization.render_trace">render_trace</a></code></li>
 <li><code><a title="mdsine2.visualization.set_default_tax_level" href="#mdsine2.visualization.set_default_tax_level">set_default_tax_level</a></code></li>

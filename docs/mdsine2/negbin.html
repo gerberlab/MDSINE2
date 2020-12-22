@@ -46,16 +46,20 @@ import math
 import numpy.random as npr
 import numba
 
+from typing import Union, Dict, Iterator, Tuple, List, Any, IO
+
 import matplotlib.pyplot as plt
+import matplotlib
 import seaborn as sns
 from . import visualization
 
 from . import pylab as pl
+from .pylab import Study, BaseMCMC
 from .names import STRNAMES
 from . import config
 
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def negbin_loglikelihood(k,m,dispersion):
+def negbin_loglikelihood(k: float, m: float, dispersion: float) -&gt; float:
     &#39;&#39;&#39;Loglikelihood - with parameterization in [1]
     
     Parameters
@@ -90,20 +94,20 @@ class Data(pl.graph.DataNode):
         These are a list of the subjects that we are going to get data from
     &#39;&#39;&#39;
 
-    def __init__(self, subjects, **kwargs):
+    def __init__(self, subjects: Study, **kwargs):
         kwargs[&#39;name&#39;] = &#39;Data&#39;
         pl.graph.DataNode.__init__(self, **kwargs)
         if not pl.isstudy(subjects):
             raise ValueError(&#39;`subjects` ({}) must be a pylab SubjectSet&#39;.format(
                 type(subjects)))
         
-        self.taxa = subjects.taxa
-        self.subjects = subjects
-        self.n_taxa = len(self.taxa)
+        self.taxa = subjects.taxa # mdsine2.pylab.base.TaxaSet
+        self.subjects = subjects # mdsine2.pylab.base.Study
+        self.n_taxa = len(self.taxa) # int
 
-        self.data = []
-        self.read_depths = []
-        self.qpcr = []
+        self.data = [] # list(np.ndarray)
+        self.read_depths = [] # list(np.ndarray)
+        self.qpcr = [] # qPCR measurement for each value
         for subject in self.subjects:
             d = subject.matrix()[&#39;raw&#39;]
             self.data.append(d)
@@ -112,7 +116,7 @@ class Data(pl.graph.DataNode):
 
         self.n_replicates = len(self.data)
 
-    def __len__(self):
+    def __len__(self) -&gt; int:
         return self.n_replicates
 
 
@@ -131,11 +135,11 @@ class NegBinDispersionParam(pl.variables.Uniform):
         Engine for microbiome time-series analyses.&#34; Genome biology 17.1 (2016): 121.
     &#39;&#39;&#39;
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name: str, **kwargs):
         pl.variables.Uniform.__init__(
             self, dtype=float, name=name, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -&gt; str:
         try:
             s = &#39;Value: {}, Acceptance rate: {}&#39;.format(
                 self.value, np.mean(self.acceptances[
@@ -144,8 +148,9 @@ class NegBinDispersionParam(pl.variables.Uniform):
             s = str(self.value)
         return s
 
-    def initialize(self, value, truncation_settings, proposal_option,
-        target_acceptance_rate, tune, end_tune, proposal_var=None, delay=0):
+    def initialize(self, value: Union[float, int], truncation_settings: Union[str, Tuple[float, float]], 
+        proposal_option: str, target_acceptance_rate: Union[str, float], tune: Union[str, int], 
+        end_tune: Union[str, int], proposal_var: float=None, delay: int=0):
         &#39;&#39;&#39;Initialize the negative binomial dispersion parameter
 
         Parameters
@@ -331,7 +336,7 @@ class NegBinDispersionParam(pl.variables.Uniform):
         else:
             self.value = prev_value
 
-    def data_likelihood(self):
+    def data_likelihood(self) -&gt; float:
         &#39;&#39;&#39;Calculate the current log likelihood
         &#39;&#39;&#39;
         a0 = self.G[STRNAMES.NEGBIN_A0].value
@@ -348,13 +353,14 @@ class NegBinDispersionParam(pl.variables.Uniform):
             total_abund = np.sum(latent)
             rel_abund = latent / total_abund
 
-            cumm += NegBinDispersionParam._data_likelihood(a0=a0, a1=a1, latent=latent, 
+            cumm += NegBinDispersionParam._data_likelihood(a0=a0, a1=a1,
                 data=data, read_depth=read_depth, rel_abund=rel_abund)
         return cumm
     
     @staticmethod
     @numba.jit(nopython=True)
-    def _data_likelihood(a0, a1, latent, data, read_depth, rel_abund):
+    def _data_likelihood(a0: float, a1: float, data: np.ndarray, read_depth: np.ndarray, 
+        rel_abund: np.ndarray) -&gt; float:
         cumm = 0
 
         # For each taxon
@@ -374,7 +380,7 @@ class NegBinDispersionParam(pl.variables.Uniform):
                 #     raise
         return cumm
 
-    def visualize(self, path, f, section=&#39;posterior&#39;):
+    def visualize(self, path: str, f: IO, section: str=&#39;posterior&#39;) -&gt; IO:
         &#39;&#39;&#39;Visualize the posterior of the negative binomial dispersion parameter
 
         Parameters
@@ -423,16 +429,16 @@ class NegBinDispersionParam(pl.variables.Uniform):
 class TrajectorySet(pl.variables.Variable):
     &#39;&#39;&#39;This aggregates a set of trajectories from each Replicate
     &#39;&#39;&#39;
-    def __init__(self, ridx, subjname, **kwargs):
+    def __init__(self, ridx: int, subjname: str, **kwargs):
         kwargs[&#39;name&#39;] = STRNAMES.LATENT_TRAJECTORY + &#39;_{}&#39;.format(subjname)
         pl.variables.Variable.__init__(self, **kwargs)
         n_taxa = len(self.G.data.taxa)
         self.set_value_shape(shape=(n_taxa,))
         self.ridx = ridx
         self.value = np.zeros(n_taxa, dtype=float)
-        self.data = self.G.data.data[self.ridx]
-        self.read_depths = self.G.data.read_depths[self.ridx]
-        self.qpcr_measurement = self.G.data.qpcr[self.ridx]
+        self.data = self.G.data.data[self.ridx] # np.ndarray
+        self.read_depths = self.G.data.read_depths[self.ridx] # np.ndarray
+        self.qpcr_measurement = self.G.data.qpcr[self.ridx] # mdsine2.pylab.base.qPCRData
     
         prior = pl.variables.Normal(
             loc=pl.variables.Constant(name=self.name+&#39;_prior_loc&#39;, value=None, G=self.G),
@@ -440,8 +446,8 @@ class TrajectorySet(pl.variables.Variable):
             name=self.name+&#39;_prior&#39;, G=self.G)
         self.add_prior(prior)
 
-    def __getitem__(self, ridx):
-        return self.value[ridx]
+    def __getitem__(self, idx: int) -&gt; float:
+        return self.value[idx]
 
     def initialize(self):
         &#39;&#39;&#39;Initialize the value
@@ -474,7 +480,7 @@ class FilteringMP(pl.graph.Node):
 
     This assumes that we are using the log model for the dynamics
     &#39;&#39;&#39;
-    def __init__(self, mp, **kwargs):
+    def __init__(self, mp: str, **kwargs):
         kwargs[&#39;name&#39;] = STRNAMES.FILTERING
         pl.graph.Node.__init__(self, **kwargs)
         self.value = []
@@ -485,16 +491,16 @@ class FilteringMP(pl.graph.Node):
         self._strr = &#39;NA&#39;
         self.mp = mp
 
-    def __str__(self):
+    def __str__(self) -&gt; str:
         return self._strr
 
     @property
-    def sample_iter(self):
+    def sample_iter(self) -&gt; int:
         # It doesnt matter if we chose q or x because they are both the same
         return self.value[0].sample_iter
 
-    def initialize(self, tune, end_tune, target_acceptance_rate,  qpcr_variance_inflation, 
-        delay=0):
+    def initialize(self, tune: Union[int, str], end_tune: Union[int, str], target_acceptance_rate: Union[float, str],  
+        qpcr_variance_inflation: Union[float, int], delay: int=0):
         &#39;&#39;&#39;Initialize the latent state
 
         Parameters
@@ -607,6 +613,8 @@ class FilteringMP(pl.graph.Node):
         self.total_n_datapoints = len(self.G.data.taxa) * len(self.G.data)
 
     def update(self):
+        &#39;&#39;&#39;Gibb step
+        &#39;&#39;&#39;
         start_time = time.time()
         a0 = self.G[STRNAMES.NEGBIN_A0].value
         a1 = self.G[STRNAMES.NEGBIN_A1].value
@@ -646,7 +654,7 @@ class FilteringMP(pl.graph.Node):
         if pl.ispersistentpool(self.pool):
             self.pool.kill()
 
-    def visualize(self, basepath, section=&#39;posterior&#39;, taxa_formatter=&#39;%(paperformat)s&#39;):
+    def visualize(self, basepath: str, section: str=&#39;posterior&#39;, taxa_formatter: str=&#39;%(paperformat)s&#39;):
         &#39;&#39;&#39;Render the latent trajectories in the base folder and write the statistics.
 
         Parameters
@@ -727,9 +735,9 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
     def __init__(self):
         return
 
-    def initialize(self, reads, qpcr_loc, qpcr_scale, prior_loc, prior_scale,
-        proposal_std, tune, end_tune, target_acceptance_rate, value, delay,
-        ridx):
+    def initialize(self, reads: np.ndarray, qpcr_loc: float, qpcr_scale: float, prior_loc: float, prior_scale: float,
+        proposal_std: float, tune: int, end_tune: int, target_acceptance_rate: float, value: np.ndarray, 
+        delay: int, ridx: int):
         &#39;&#39;&#39;Initialize the values
 
         reads : np.ndarray((n_taxa x n_reps))
@@ -783,7 +791,7 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
             self.acceptances = 0
             self.n_props_local = 0
 
-    def update(self, a0, a1):
+    def update(self, a0: float, a1: float):
         &#39;&#39;&#39;Update the latent state with the updated negative binomial
         dispersion parameters
         &#39;&#39;&#39;
@@ -801,7 +809,7 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
 
         return self.ridx, self.value, self.n_accepted_iter/len(self.value)
 
-    def update_single(self, oidx):
+    def update_single(self, oidx: int):
         &#39;&#39;&#39;Update the latent state for the Taxa index `oidx` in this replicate
         &#39;&#39;&#39;
         old_log_value = np.log(self.value[oidx])
@@ -843,15 +851,21 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
         self.n_props_local += 1
         self.n_props_total += 1
 
-    def prior_ll(self):
+    def prior_ll(self) -&gt; float:
+        &#39;&#39;&#39;Prior loglikelihood
+        &#39;&#39;&#39;
         return pl.random.normal.logpdf(value=self.curr_log_val, 
             loc=self.prior_loc[self.oidx], scale=self.prior_scale)
 
-    def qpcr_ll(self):
+    def qpcr_ll(self) -&gt; float:
+        &#39;&#39;&#39;qPCR loglikelihood
+        &#39;&#39;&#39;
         return pl.random.normal.logpdf(value=self.log_sumq, 
             loc=self.qpcr_loc, scale=self.qpcr_scale)
 
-    def negbin_ll(self):
+    def negbin_ll(self) -&gt; float:
+        &#39;&#39;&#39;Negative binomial loglikelihood
+        &#39;&#39;&#39;
         cumm = 0
         rel = self.value[self.oidx]/self.sumq
         for k in range(self.reads.shape[1]):
@@ -863,7 +877,8 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
 
 
 @numba.jit(nopython=True, fastmath=True, cache=True)
-def _single_calc_mean_var(means, variances, a0, a1, rels, read_depths):
+def _single_calc_mean_var(means: np.ndarray, variances: np.ndarray, a0: float, a1: float, 
+    rels: np.ndarray, read_depths: np.ndarray) -&gt; Tuple[np.ndarray, np.ndarray]:
     i = 0
     for col in range(rels.shape[1]):
         for oidx in range(rels.shape[0]):
@@ -875,7 +890,7 @@ def _single_calc_mean_var(means, variances, a0, a1, rels, read_depths):
             i += 1
     return means, variances
 
-def visualize_learned_negative_binomial_model(mcmc, section=&#39;posterior&#39;):
+def visualize_learned_negative_binomial_model(mcmc: BaseMCMC, section: str=&#39;posterior&#39;) -&gt; matplotlib.pyplot.figure:
     &#39;&#39;&#39;Visualize the negative binomial dispersion model.
 
     Plot variance on y-axis, mean on x-axis. both in logscale.
@@ -978,7 +993,7 @@ def visualize_learned_negative_binomial_model(mcmc, section=&#39;posterior&#39;)
 
     return fig
 
-def build_graph(params, graph_name, subjset):
+def build_graph(params: config.NegBinConfig, graph_name: str, subjset: Study) -&gt; BaseMCMC:
     &#39;&#39;&#39;Builds the graph used for posterior inference of the negative binomial
     dispersion parameters
 
@@ -1038,13 +1053,13 @@ def build_graph(params, graph_name, subjset):
     hdf5_filename = os.path.join(basepath, config.HDF5_FILENAME)
     mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
     param_filename = os.path.join(basepath, config.PARAMS_FILENAME)
-    mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CKPT)
+    mcmc.set_tracer(filename=hdf5_filename, checkpoint=params.CHECKPOINT)
     mcmc.set_save_location(mcmc_filename)
     params.save(param_filename)
 
     return mcmc
 
-def run_graph(mcmc, crash_if_error=True):
+def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True) -&gt; BaseMCMC:
     &#39;&#39;&#39;Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
 
     Parameters
@@ -1078,7 +1093,7 @@ def run_graph(mcmc, crash_if_error=True):
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="mdsine2.negbin.build_graph"><code class="name flex">
-<span>def <span class="ident">build_graph</span></span>(<span>params, graph_name, subjset)</span>
+<span>def <span class="ident">build_graph</span></span>(<span>params: <a title="mdsine2.config.NegBinConfig" href="config.html#mdsine2.config.NegBinConfig">NegBinConfig</a>, graph_name: str, subjset: <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a>) ‑> <a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Builds the graph used for posterior inference of the negative binomial
@@ -1096,7 +1111,7 @@ dispersion parameters</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def build_graph(params, graph_name, subjset):
+<pre><code class="python">def build_graph(params: config.NegBinConfig, graph_name: str, subjset: Study) -&gt; BaseMCMC:
     &#39;&#39;&#39;Builds the graph used for posterior inference of the negative binomial
     dispersion parameters
 
@@ -1156,7 +1171,7 @@ dispersion parameters</p>
     hdf5_filename = os.path.join(basepath, config.HDF5_FILENAME)
     mcmc_filename = os.path.join(basepath, config.MCMC_FILENAME)
     param_filename = os.path.join(basepath, config.PARAMS_FILENAME)
-    mcmc.set_tracer(filename=hdf5_filename, ckpt=params.CKPT)
+    mcmc.set_tracer(filename=hdf5_filename, checkpoint=params.CHECKPOINT)
     mcmc.set_save_location(mcmc_filename)
     params.save(param_filename)
 
@@ -1164,7 +1179,7 @@ dispersion parameters</p>
 </details>
 </dd>
 <dt id="mdsine2.negbin.negbin_loglikelihood"><code class="name flex">
-<span>def <span class="ident">negbin_loglikelihood</span></span>(<span>k, m, dispersion)</span>
+<span>def <span class="ident">negbin_loglikelihood</span></span>(<span>k: float, m: float, dispersion: float) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Loglikelihood - with parameterization in [1]</p>
@@ -1189,7 +1204,7 @@ dispersion parameters</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@numba.jit(nopython=True, fastmath=True, cache=True)
-def negbin_loglikelihood(k,m,dispersion):
+def negbin_loglikelihood(k: float, m: float, dispersion: float) -&gt; float:
     &#39;&#39;&#39;Loglikelihood - with parameterization in [1]
     
     Parameters
@@ -1216,7 +1231,7 @@ def negbin_loglikelihood(k,m,dispersion):
 </details>
 </dd>
 <dt id="mdsine2.negbin.run_graph"><code class="name flex">
-<span>def <span class="ident">run_graph</span></span>(<span>mcmc, crash_if_error=True)</span>
+<span>def <span class="ident">run_graph</span></span>(<span>mcmc: <a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a>, crash_if_error: bool = True) ‑> <a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Run the MCMC chain <code>mcmc</code>. Initialize the MCMC chain with <code><a title="mdsine2.negbin.build_graph" href="#mdsine2.negbin.build_graph">build_graph()</a></code></p>
@@ -1237,7 +1252,7 @@ it continues out of inference.</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def run_graph(mcmc, crash_if_error=True):
+<pre><code class="python">def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True) -&gt; BaseMCMC:
     &#39;&#39;&#39;Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
 
     Parameters
@@ -1264,7 +1279,7 @@ it continues out of inference.</dd>
 </details>
 </dd>
 <dt id="mdsine2.negbin.visualize_learned_negative_binomial_model"><code class="name flex">
-<span>def <span class="ident">visualize_learned_negative_binomial_model</span></span>(<span>mcmc, section='posterior')</span>
+<span>def <span class="ident">visualize_learned_negative_binomial_model</span></span>(<span>mcmc: <a title="mdsine2.pylab.inference.BaseMCMC" href="pylab/inference.html#mdsine2.pylab.inference.BaseMCMC">BaseMCMC</a>, section: str = 'posterior') ‑> <function figure at 0x0000027A9948C378></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Visualize the negative binomial dispersion model.</p>
@@ -1289,7 +1304,7 @@ and the data it was learned on</dd>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def visualize_learned_negative_binomial_model(mcmc, section=&#39;posterior&#39;):
+<pre><code class="python">def visualize_learned_negative_binomial_model(mcmc: BaseMCMC, section: str=&#39;posterior&#39;) -&gt; matplotlib.pyplot.figure:
     &#39;&#39;&#39;Visualize the negative binomial dispersion model.
 
     Plot variance on y-axis, mean on x-axis. both in logscale.
@@ -1400,7 +1415,7 @@ and the data it was learned on</dd>
 <dl>
 <dt id="mdsine2.negbin.Data"><code class="flex name class">
 <span>class <span class="ident">Data</span></span>
-<span>(</span><span>subjects, **kwargs)</span>
+<span>(</span><span>subjects: <a title="mdsine2.pylab.base.Study" href="pylab/base.html#mdsine2.pylab.base.Study">Study</a>, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This is the raw data that we are regressing over</p>
@@ -1422,20 +1437,20 @@ and the data it was learned on</dd>
         These are a list of the subjects that we are going to get data from
     &#39;&#39;&#39;
 
-    def __init__(self, subjects, **kwargs):
+    def __init__(self, subjects: Study, **kwargs):
         kwargs[&#39;name&#39;] = &#39;Data&#39;
         pl.graph.DataNode.__init__(self, **kwargs)
         if not pl.isstudy(subjects):
             raise ValueError(&#39;`subjects` ({}) must be a pylab SubjectSet&#39;.format(
                 type(subjects)))
         
-        self.taxa = subjects.taxa
-        self.subjects = subjects
-        self.n_taxa = len(self.taxa)
+        self.taxa = subjects.taxa # mdsine2.pylab.base.TaxaSet
+        self.subjects = subjects # mdsine2.pylab.base.Study
+        self.n_taxa = len(self.taxa) # int
 
-        self.data = []
-        self.read_depths = []
-        self.qpcr = []
+        self.data = [] # list(np.ndarray)
+        self.read_depths = [] # list(np.ndarray)
+        self.qpcr = [] # qPCR measurement for each value
         for subject in self.subjects:
             d = subject.matrix()[&#39;raw&#39;]
             self.data.append(d)
@@ -1444,7 +1459,7 @@ and the data it was learned on</dd>
 
         self.n_replicates = len(self.data)
 
-    def __len__(self):
+    def __len__(self) -&gt; int:
         return self.n_replicates</code></pre>
 </details>
 <h3>Ancestors</h3>
@@ -1462,7 +1477,7 @@ and the data it was learned on</dd>
 </dd>
 <dt id="mdsine2.negbin.FilteringMP"><code class="flex name class">
 <span>class <span class="ident">FilteringMP</span></span>
-<span>(</span><span>mp, **kwargs)</span>
+<span>(</span><span>mp: str, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This handles multiprocessing of the latent state</p>
@@ -1492,7 +1507,7 @@ This is where each subject gets their own process</p>
 
     This assumes that we are using the log model for the dynamics
     &#39;&#39;&#39;
-    def __init__(self, mp, **kwargs):
+    def __init__(self, mp: str, **kwargs):
         kwargs[&#39;name&#39;] = STRNAMES.FILTERING
         pl.graph.Node.__init__(self, **kwargs)
         self.value = []
@@ -1503,16 +1518,16 @@ This is where each subject gets their own process</p>
         self._strr = &#39;NA&#39;
         self.mp = mp
 
-    def __str__(self):
+    def __str__(self) -&gt; str:
         return self._strr
 
     @property
-    def sample_iter(self):
+    def sample_iter(self) -&gt; int:
         # It doesnt matter if we chose q or x because they are both the same
         return self.value[0].sample_iter
 
-    def initialize(self, tune, end_tune, target_acceptance_rate,  qpcr_variance_inflation, 
-        delay=0):
+    def initialize(self, tune: Union[int, str], end_tune: Union[int, str], target_acceptance_rate: Union[float, str],  
+        qpcr_variance_inflation: Union[float, int], delay: int=0):
         &#39;&#39;&#39;Initialize the latent state
 
         Parameters
@@ -1625,6 +1640,8 @@ This is where each subject gets their own process</p>
         self.total_n_datapoints = len(self.G.data.taxa) * len(self.G.data)
 
     def update(self):
+        &#39;&#39;&#39;Gibb step
+        &#39;&#39;&#39;
         start_time = time.time()
         a0 = self.G[STRNAMES.NEGBIN_A0].value
         a1 = self.G[STRNAMES.NEGBIN_A1].value
@@ -1664,7 +1681,7 @@ This is where each subject gets their own process</p>
         if pl.ispersistentpool(self.pool):
             self.pool.kill()
 
-    def visualize(self, basepath, section=&#39;posterior&#39;, taxa_formatter=&#39;%(paperformat)s&#39;):
+    def visualize(self, basepath: str, section: str=&#39;posterior&#39;, taxa_formatter: str=&#39;%(paperformat)s&#39;):
         &#39;&#39;&#39;Render the latent trajectories in the base folder and write the statistics.
 
         Parameters
@@ -1746,7 +1763,7 @@ This is where each subject gets their own process</p>
 </ul>
 <h3>Instance variables</h3>
 <dl>
-<dt id="mdsine2.negbin.FilteringMP.sample_iter"><code class="name">var <span class="ident">sample_iter</span></code></dt>
+<dt id="mdsine2.negbin.FilteringMP.sample_iter"><code class="name">var <span class="ident">sample_iter</span> : int</code></dt>
 <dd>
 <div class="desc"></div>
 <details class="source">
@@ -1754,7 +1771,7 @@ This is where each subject gets their own process</p>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">@property
-def sample_iter(self):
+def sample_iter(self) -&gt; int:
     # It doesnt matter if we chose q or x because they are both the same
     return self.value[0].sample_iter</code></pre>
 </details>
@@ -1777,7 +1794,7 @@ def sample_iter(self):
 </details>
 </dd>
 <dt id="mdsine2.negbin.FilteringMP.initialize"><code class="name flex">
-<span>def <span class="ident">initialize</span></span>(<span>self, tune, end_tune, target_acceptance_rate, qpcr_variance_inflation, delay=0)</span>
+<span>def <span class="ident">initialize</span></span>(<span>self, tune: Union[int, str], end_tune: Union[int, str], target_acceptance_rate: Union[float, str], qpcr_variance_inflation: Union[float, int], delay: int = 0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Initialize the latent state</p>
@@ -1813,8 +1830,8 @@ initial_value**2 / 100
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def initialize(self, tune, end_tune, target_acceptance_rate,  qpcr_variance_inflation, 
-    delay=0):
+<pre><code class="python">def initialize(self, tune: Union[int, str], end_tune: Union[int, str], target_acceptance_rate: Union[float, str],  
+    qpcr_variance_inflation: Union[float, int], delay: int=0):
     &#39;&#39;&#39;Initialize the latent state
 
     Parameters
@@ -1959,12 +1976,14 @@ initial_value**2 / 100
 <span>def <span class="ident">update</span></span>(<span>self)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
+<div class="desc"><p>Gibb step</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def update(self):
+    &#39;&#39;&#39;Gibb step
+    &#39;&#39;&#39;
     start_time = time.time()
     a0 = self.G[STRNAMES.NEGBIN_A0].value
     a1 = self.G[STRNAMES.NEGBIN_A1].value
@@ -1994,7 +2013,7 @@ initial_value**2 / 100
 </details>
 </dd>
 <dt id="mdsine2.negbin.FilteringMP.visualize"><code class="name flex">
-<span>def <span class="ident">visualize</span></span>(<span>self, basepath, section='posterior', taxa_formatter='%(paperformat)s')</span>
+<span>def <span class="ident">visualize</span></span>(<span>self, basepath: str, section: str = 'posterior', taxa_formatter: str = '%(paperformat)s')</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Render the latent trajectories in the base folder and write the statistics.</p>
@@ -2014,7 +2033,7 @@ initial_value**2 / 100
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def visualize(self, basepath, section=&#39;posterior&#39;, taxa_formatter=&#39;%(paperformat)s&#39;):
+<pre><code class="python">def visualize(self, basepath: str, section: str=&#39;posterior&#39;, taxa_formatter: str=&#39;%(paperformat)s&#39;):
     &#39;&#39;&#39;Render the latent trajectories in the base folder and write the statistics.
 
     Parameters
@@ -2111,7 +2130,7 @@ initial_value**2 / 100
 </dd>
 <dt id="mdsine2.negbin.NegBinDispersionParam"><code class="flex name class">
 <span>class <span class="ident">NegBinDispersionParam</span></span>
-<span>(</span><span>name, **kwargs)</span>
+<span>(</span><span>name: str, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>These are for learning the a0 and a1 parameters - updated with
@@ -2141,11 +2160,11 @@ Engine for microbiome time-series analyses." Genome biology 17.1 (2016): 121.</p
         Engine for microbiome time-series analyses.&#34; Genome biology 17.1 (2016): 121.
     &#39;&#39;&#39;
 
-    def __init__(self, name, **kwargs):
+    def __init__(self, name: str, **kwargs):
         pl.variables.Uniform.__init__(
             self, dtype=float, name=name, **kwargs)
 
-    def __str__(self):
+    def __str__(self) -&gt; str:
         try:
             s = &#39;Value: {}, Acceptance rate: {}&#39;.format(
                 self.value, np.mean(self.acceptances[
@@ -2154,8 +2173,9 @@ Engine for microbiome time-series analyses." Genome biology 17.1 (2016): 121.</p
             s = str(self.value)
         return s
 
-    def initialize(self, value, truncation_settings, proposal_option,
-        target_acceptance_rate, tune, end_tune, proposal_var=None, delay=0):
+    def initialize(self, value: Union[float, int], truncation_settings: Union[str, Tuple[float, float]], 
+        proposal_option: str, target_acceptance_rate: Union[str, float], tune: Union[str, int], 
+        end_tune: Union[str, int], proposal_var: float=None, delay: int=0):
         &#39;&#39;&#39;Initialize the negative binomial dispersion parameter
 
         Parameters
@@ -2341,7 +2361,7 @@ Engine for microbiome time-series analyses." Genome biology 17.1 (2016): 121.</p
         else:
             self.value = prev_value
 
-    def data_likelihood(self):
+    def data_likelihood(self) -&gt; float:
         &#39;&#39;&#39;Calculate the current log likelihood
         &#39;&#39;&#39;
         a0 = self.G[STRNAMES.NEGBIN_A0].value
@@ -2358,13 +2378,14 @@ Engine for microbiome time-series analyses." Genome biology 17.1 (2016): 121.</p
             total_abund = np.sum(latent)
             rel_abund = latent / total_abund
 
-            cumm += NegBinDispersionParam._data_likelihood(a0=a0, a1=a1, latent=latent, 
+            cumm += NegBinDispersionParam._data_likelihood(a0=a0, a1=a1,
                 data=data, read_depth=read_depth, rel_abund=rel_abund)
         return cumm
     
     @staticmethod
     @numba.jit(nopython=True)
-    def _data_likelihood(a0, a1, latent, data, read_depth, rel_abund):
+    def _data_likelihood(a0: float, a1: float, data: np.ndarray, read_depth: np.ndarray, 
+        rel_abund: np.ndarray) -&gt; float:
         cumm = 0
 
         # For each taxon
@@ -2384,7 +2405,7 @@ Engine for microbiome time-series analyses." Genome biology 17.1 (2016): 121.</p
                 #     raise
         return cumm
 
-    def visualize(self, path, f, section=&#39;posterior&#39;):
+    def visualize(self, path: str, f: IO, section: str=&#39;posterior&#39;) -&gt; IO:
         &#39;&#39;&#39;Visualize the posterior of the negative binomial dispersion parameter
 
         Parameters
@@ -2443,7 +2464,7 @@ Engine for microbiome time-series analyses." Genome biology 17.1 (2016): 121.</p
 <h3>Methods</h3>
 <dl>
 <dt id="mdsine2.negbin.NegBinDispersionParam.data_likelihood"><code class="name flex">
-<span>def <span class="ident">data_likelihood</span></span>(<span>self)</span>
+<span>def <span class="ident">data_likelihood</span></span>(<span>self) ‑> float</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Calculate the current log likelihood</p></div>
@@ -2451,7 +2472,7 @@ Engine for microbiome time-series analyses." Genome biology 17.1 (2016): 121.</p
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def data_likelihood(self):
+<pre><code class="python">def data_likelihood(self) -&gt; float:
     &#39;&#39;&#39;Calculate the current log likelihood
     &#39;&#39;&#39;
     a0 = self.G[STRNAMES.NEGBIN_A0].value
@@ -2468,13 +2489,13 @@ Engine for microbiome time-series analyses." Genome biology 17.1 (2016): 121.</p
         total_abund = np.sum(latent)
         rel_abund = latent / total_abund
 
-        cumm += NegBinDispersionParam._data_likelihood(a0=a0, a1=a1, latent=latent, 
+        cumm += NegBinDispersionParam._data_likelihood(a0=a0, a1=a1,
             data=data, read_depth=read_depth, rel_abund=rel_abund)
     return cumm</code></pre>
 </details>
 </dd>
 <dt id="mdsine2.negbin.NegBinDispersionParam.initialize"><code class="name flex">
-<span>def <span class="ident">initialize</span></span>(<span>self, value, truncation_settings, proposal_option, target_acceptance_rate, tune, end_tune, proposal_var=None, delay=0)</span>
+<span>def <span class="ident">initialize</span></span>(<span>self, value: Union[float, int], truncation_settings: Union[str, Tuple[float, float]], proposal_option: str, target_acceptance_rate: Union[str, float], tune: Union[str, int], end_tune: Union[str, int], proposal_var: float = None, delay: int = 0)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Initialize the negative binomial dispersion parameter</p>
@@ -2510,8 +2531,9 @@ If str:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def initialize(self, value, truncation_settings, proposal_option,
-    target_acceptance_rate, tune, end_tune, proposal_var=None, delay=0):
+<pre><code class="python">def initialize(self, value: Union[float, int], truncation_settings: Union[str, Tuple[float, float]], 
+    proposal_option: str, target_acceptance_rate: Union[str, float], tune: Union[str, int], 
+    end_tune: Union[str, int], proposal_var: float=None, delay: int=0):
     &#39;&#39;&#39;Initialize the negative binomial dispersion parameter
 
     Parameters
@@ -2689,7 +2711,7 @@ If str:
 </details>
 </dd>
 <dt id="mdsine2.negbin.NegBinDispersionParam.visualize"><code class="name flex">
-<span>def <span class="ident">visualize</span></span>(<span>self, path, f, section='posterior')</span>
+<span>def <span class="ident">visualize</span></span>(<span>self, path: str, f: <class 'IO'>, section: str = 'posterior') ‑> <class 'IO'></span>
 </code></dt>
 <dd>
 <div class="desc"><p>Visualize the posterior of the negative binomial dispersion parameter</p>
@@ -2714,7 +2736,7 @@ If str:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def visualize(self, path, f, section=&#39;posterior&#39;):
+<pre><code class="python">def visualize(self, path: str, f: IO, section: str=&#39;posterior&#39;) -&gt; IO:
     &#39;&#39;&#39;Visualize the posterior of the negative binomial dispersion parameter
 
     Parameters
@@ -2795,7 +2817,7 @@ If str:
 </dd>
 <dt id="mdsine2.negbin.TrajectorySet"><code class="flex name class">
 <span>class <span class="ident">TrajectorySet</span></span>
-<span>(</span><span>ridx, subjname, **kwargs)</span>
+<span>(</span><span>ridx: int, subjname: str, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This aggregates a set of trajectories from each Replicate</p></div>
@@ -2806,16 +2828,16 @@ If str:
 <pre><code class="python">class TrajectorySet(pl.variables.Variable):
     &#39;&#39;&#39;This aggregates a set of trajectories from each Replicate
     &#39;&#39;&#39;
-    def __init__(self, ridx, subjname, **kwargs):
+    def __init__(self, ridx: int, subjname: str, **kwargs):
         kwargs[&#39;name&#39;] = STRNAMES.LATENT_TRAJECTORY + &#39;_{}&#39;.format(subjname)
         pl.variables.Variable.__init__(self, **kwargs)
         n_taxa = len(self.G.data.taxa)
         self.set_value_shape(shape=(n_taxa,))
         self.ridx = ridx
         self.value = np.zeros(n_taxa, dtype=float)
-        self.data = self.G.data.data[self.ridx]
-        self.read_depths = self.G.data.read_depths[self.ridx]
-        self.qpcr_measurement = self.G.data.qpcr[self.ridx]
+        self.data = self.G.data.data[self.ridx] # np.ndarray
+        self.read_depths = self.G.data.read_depths[self.ridx] # np.ndarray
+        self.qpcr_measurement = self.G.data.qpcr[self.ridx] # mdsine2.pylab.base.qPCRData
     
         prior = pl.variables.Normal(
             loc=pl.variables.Constant(name=self.name+&#39;_prior_loc&#39;, value=None, G=self.G),
@@ -2823,8 +2845,8 @@ If str:
             name=self.name+&#39;_prior&#39;, G=self.G)
         self.add_prior(prior)
 
-    def __getitem__(self, ridx):
-        return self.value[ridx]
+    def __getitem__(self, idx: int) -&gt; float:
+        return self.value[idx]
 
     def initialize(self):
         &#39;&#39;&#39;Initialize the value
