@@ -1246,6 +1246,15 @@ class TaxaSet(Clusterable):
         '''
         return self._len
 
+    def reset(self):
+        '''Reset the system
+        '''
+        self.taxonomy_table = None
+        self.ids = CustomOrderedDict()
+        self.names = CustomOrderedDict()
+        self.index = []
+        self._len = 0
+
     def parse(self, taxonomy_table: pd.DataFrame):
         '''Parse a taxonomy table
 
@@ -1581,6 +1590,26 @@ class TaxaSet(Clusterable):
         if path is not None:
             df.to_csv(path, sep=sep, index=False, header=True)
         return df
+
+    def make_random(self, n_taxa: int):
+        '''Reset the TaxaSet so that it is composed of `n_taxa` random `Taxon` objects.
+        You would use this function for debugging or testing.
+
+        Parameters
+        ----------
+        n_taxa : int
+            Number of taxa to initialize the `TaxaSet` object with
+        '''
+        import random
+
+        self.reset()
+        letters = ['A', 'T', 'G', 'C']
+        for i in range(n_taxa):
+            seq = ''.join(random.choice(letters) for _ in range(50))
+            self.add_taxon(
+                name='Taxon_{}'.format(i+1), 
+                sequence=seq)
+
 
 
 class qPCRdata:

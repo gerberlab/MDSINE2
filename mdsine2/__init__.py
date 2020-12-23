@@ -37,10 +37,10 @@ from .pylab.base import Taxon, OTU, TaxaSet, qPCRdata, Saveable, Traceable, Base
     taxaname_formatter, Perturbations, qPCRdata
 from .pylab.variables import Variable, Constant, summary
 from .pylab.graph import Graph, Node
-from .pylab.cluster import Clustering
+from .pylab.cluster import Clustering, ClusterProperty
 from .pylab.random import seed
 from .pylab.contrib import Interactions, ClusterPerturbationEffect
-from .pylab.inference import BaseMCMC, r_hat
+from .pylab.inference import BaseMCMC, r_hat, Tracer
 from .pylab.dynamics import integrate, BaseDynamics
 from .pylab.math import metrics
 from .synthetic import Synthetic
