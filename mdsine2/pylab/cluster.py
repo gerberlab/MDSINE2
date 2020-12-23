@@ -2,7 +2,6 @@ import numpy as np
 import logging
 import copy
 import numba
-from  orderedset import OrderedSet
 
 # Typing
 from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, Type
@@ -431,7 +430,7 @@ class _Cluster:
         Identifier
     '''
     def __init__(self, members: Iterator[int], parent: Clustering, iden: int):
-        self.members = OrderedSet()
+        self.members = set()
         for mem in members:
             self.members.add(mem)
         self.id = iden # Unique id for class

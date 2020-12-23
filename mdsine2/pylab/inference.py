@@ -6,7 +6,6 @@ import time
 import shutil
 import inspect
 import pickle
-from orderedset import OrderedSet
 import numpy as np
 
 # Typing
@@ -354,7 +353,7 @@ class BaseMCMC(BaseModel):
 
         # Check if the function has the right arguments
         kwarg_keys = list(kwargs.keys())
-        valid_args = OrderedSet(['burnin', 'n_samples', 'chain', 'sample_iter'] + kwarg_keys)
+        valid_args = set(['burnin', 'n_samples', 'chain', 'sample_iter'] + kwarg_keys)
         args = inspect.getargspec(func).args
         for arg in args:
             if arg not in valid_args:
@@ -546,7 +545,7 @@ class Tracer(Saveable):
                 raise TypeError('filename ({}) must be a str'.format(type(filename)))
             self.filename = os.path.abspath(filename)
             self.f = h5py.File(self.filename, 'w', libver='latest') #This is the h5py file
-            self.being_traced = OrderedSet()
+            self.being_traced = set()
 
             self.f.attrs['burnin'] = self.mcmc.burnin
             self.f.attrs['n_samples'] = self.mcmc.n_samples

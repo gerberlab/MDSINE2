@@ -16,7 +16,6 @@ import scipy.sparse
 import scipy
 import math
 import random
-from orderedset import OrderedSet
 
 from typing import Union, Dict, Iterator, Tuple, List, Any, IO
 
@@ -1082,7 +1081,7 @@ class ClusterAssignments(pl.graph.Node):
             if len(idxs_to_delete) > 0:
                 clusters = np.delete(clusters, idxs_to_delete).tolist()
 
-            all_oidxs = OrderedSet()
+            all_oidxs = set()
             for cluster in clusters:
                 for oidx in cluster:
                     if not pl.isint(oidx):
@@ -2670,9 +2669,9 @@ class FilteringLogMP(pl.graph.Node):
             logging.info('Setting up the essential timepoints')
             if pl.isstr(essential_timepoints):
                 if essential_timepoints in ['auto', 'union']:
-                    essential_timepoints = OrderedSet()
+                    essential_timepoints = set()
                     for ts in self.G.data.times:
-                        essential_timepoints = essential_timepoints.union(OrderedSet(list(ts)))
+                        essential_timepoints = essential_timepoints.union(set(list(ts)))
                     essential_timepoints = np.sort(list(essential_timepoints))
                 else:
                     raise ValueError('`essential_timepoints` ({}) not recognized'.format(

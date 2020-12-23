@@ -63,7 +63,6 @@ REQUIREMENTS = [
     'numba==0.50',
     'biopython==1.78',
     'treeswift==1.1.14',
-    'orderedset==2.0.3'
     'py2cytoscape==0.7.1']
 
 # Custom C distributions
