@@ -2201,7 +2201,16 @@ class Study(Saveable):
         self._samples = {}
         
     def __getitem__(self, key: Union[str, int, Subject]) -> Subject:
-        return self._subjects[key]
+        if plutil.isint(key):
+            name = self.names()[key]
+            return self._subjects[name]
+        elif plutil.isstr(key):
+            return self._subjects[key]
+        elif issubject(key):
+            if key.name not in self:
+                raise ValueError('Subject not found in study ({})'.format(key.name))
+        else:
+            raise KeyError('Key ({}) not recognized'.format(type(key)))
 
     def __len__(self) -> int:
         return len(self._subjects)
@@ -2211,7 +2220,14 @@ class Study(Saveable):
             yield v
 
     def __contains__(self, key: Union[str, int, Subject]) -> bool:
-        return key in self._subjects
+        if plutil.isint(key):
+            return key < len(self)
+        elif plutil.isstr(key):
+            return key in self._subjects
+        elif issubject(key):
+            return key.name in self._subjects
+        else:
+            raise KeyError('Key ({}) not recognized'.format(type(key)))
 
     def parse(self, metadata: pd.DataFrame, reads: pd.DataFrame=None, qpcr: pd.DataFrame=None, 
         perturbations: pd.DataFrame=None):
@@ -2267,7 +2283,7 @@ class Study(Saveable):
         # Add the perturbations if there are any
         # --------------------------------------
         if perturbations is not None:
-            logging.warning('Reseting perturbations')
+            logging.debug('Reseting perturbations')
             self.perturbations = Perturbations()
             if not plutil.isdataframe(perturbations):
                 raise TypeError('`metadata` ({}) must be a pandas.DataFrame'.format(type(metadata)))

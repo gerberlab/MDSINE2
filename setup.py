@@ -63,7 +63,8 @@ REQUIREMENTS = [
     'numba==0.50',
     'biopython==1.78',
     'treeswift==1.1.14',
-    'orderedset==2.0.3']
+    'orderedset==2.0.3'
+    'py2cytoscape==0.7.1']
 
 # Custom C distributions
 ext1 = Extension('_distribution', ['mdsine2/pylab/c_code/distributionmodule.c'])

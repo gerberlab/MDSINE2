@@ -43,11 +43,11 @@ def is_gram_negative(taxon: Union[OTU, Taxon]) -> bool:
             'proteobacteria, you must add another phylum'.format(str(taxon)))
 
 def generate_interation_bayes_factors_posthoc(mcmc: BaseMCMC, section: str='posterior') -> np.ndarray:
-    '''Generates the bayes factors on an item-item level for the interactions, 
-    given the passed in prior. All negative indicators are set as `np.nan`s in 
+    '''Generates the bayes factors on an item-item level for the interactions,
+    given the passed in prior. All negative indicators are set as `np.nan`s in
     the trace, so we do `~np.isnan` to get the indicators.
 
-    Since the prior is conjugate, we can fully integrate out the prior of the 
+    Since the prior is conjugate, we can fully integrate out the prior of the
     calculation:
         bf[i,j] = (count_on[i,j] * b) / (count_off[i,j] * a)
 
@@ -79,13 +79,13 @@ def generate_interation_bayes_factors_posthoc(mcmc: BaseMCMC, section: str='post
 
     return (cnts_1 * b) / (cnts_0 * a)
 
-def generate_perturbation_bayes_factors_posthoc(mcmc: BaseMCMC, perturbation: ClusterPerturbationEffect, 
+def generate_perturbation_bayes_factors_posthoc(mcmc: BaseMCMC, perturbation: ClusterPerturbationEffect,
     section: str='posterior') -> np.ndarray:
-    '''Generates the bayes factors on an item-item level for the perturbations, 
-    given the passed in prior. All negative indicators are set as `np.nan`s in 
+    '''Generates the bayes factors on an item-item level for the perturbations,
+    given the passed in prior. All negative indicators are set as `np.nan`s in
     the trace, so we do `~np.isnan` to get the indicators.
 
-    Since the prior is conjugate, we can fully integrate out the prior of the 
+    Since the prior is conjugate, we can fully integrate out the prior of the
     calculation:
         bf[i,j] = (count_on[i] * b) / (count_off[i] * a)
 
@@ -143,7 +143,7 @@ def generate_cluster_assignments_posthoc(clustering: Clustering, n_clusters: Uni
         If True then set the result as the value of the clustering object
     section : str
         What part of the chain to take the samples from
-    
+
     Returns
     -------
     np.ndarray(size=(len(items), ), dtype=int)
@@ -193,7 +193,7 @@ def generate_taxonomic_distribution_over_clusters_posthoc(mcmc: BaseMCMC, tax_fm
         rows: taxonomic lables
         columns: clusters
         value: abundance of those taxonomies
-    
+
     Value
     -----
     If there are perturbations, then the value is the mean abundance over the taxa
@@ -255,7 +255,7 @@ def generate_taxonomic_distribution_over_clusters_posthoc(mcmc: BaseMCMC, tax_fm
     return df
 
 def condense_fixed_clustering_interaction_matrix(M: np.ndarray, clustering: Clustering) -> np.ndarray:
-    '''Condense the interaction matrix `M` with the cluster assignments 
+    '''Condense the interaction matrix `M` with the cluster assignments
     in `clustering`. Assume that the current cluster assignments is what
     is used. Assumes that the input matrix is run with a fixed clustering.
 
@@ -323,7 +323,22 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     -------
     mdsine2.Study
     '''
+    def _avg_dist(taxon1: Union[Taxon, OTU], taxon2: Union[Taxon, OTU]) -> float:
+        dists = []
+        if pl.isotu(taxon1):
+            seqs1 = taxon1.aggregated_seqs.values()
+        else:
+            seqs1 = [taxon1.sequence]
 
+        if pl.isotu(taxon2):
+            seqs2 = taxon2.aggregated_seqs.values()
+        else:
+            seqs2 = [taxon2.sequence]
+
+        for v1 in seqs1:
+            for v2 in seqs2:
+                dists.append(diversity.beta.hamming(v1, v2))
+        return np.nanmean(dists)
     cnt = 0
     found = False
     iii = 0
@@ -355,28 +370,125 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     logging.info('Aggregated {} taxa'.format(cnt))
     return subjset
 
-def _avg_dist(taxon1: Union[Taxon, OTU], taxon2: Union[Taxon, OTU]) -> float:
-    dists = []
-    if pl.isotu(taxon1):
-        seqs1 = taxon1.aggregated_seqs.values()
-    else:
-        seqs1 = [taxon1.sequence]
+def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_filename: str):
+    '''Export the posterior fixed topology as a json usable in Cytoscape
 
-    if pl.isotu(taxon2):
-        seqs2 = taxon2.aggregated_seqs.values()
-    else:
-        seqs2 = [taxon2.sequence]
+    Parameters
+    ----------
+    mcmc : BaseMCMC
+        This is the chain that contains the traces
+    output_filename : str
+        This is the path to save the json file
+    '''
+    import networkx as nx
+    from py2cytoscape.util import from_networkx
+    import json
 
-    for v1 in seqs1:
-        for v2 in seqs2:
-            dists.append(diversity.beta.hamming(v1, v2))
-    return np.nanmean(dists)
+    def clusterize(labels: np.ndarray, taxa_list: List[str]) -> Dict[int, List[str]]:
+        cluster = {}
+        for i in range(len(labels)):
+            if labels[i] not in cluster:
+                cluster[labels[i]] = []
+            cluster[labels[i]].append(taxa_list[i])
+        return cluster
 
-def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min_num_consecutive: int, min_num_subjects: int, 
+    def get_largest_weight(matrix: np.ndarray) -> float:
+        '''Returns the largest non infinite weight (value) in the matrix
+        '''
+        new_matrix = np.where(matrix == np.inf, -np.inf, matrix)
+        return np.amax(new_matrix)
+
+    def get_bayes_category(bf: float) -> int:
+        '''Classify bayes factor according to strength of evidence
+
+        Parameters
+        ----------
+        bf : float
+            Bayes factor
+
+        Returns
+        -------
+        int
+        '''
+        category = 0
+        #decisive
+        if bf > 10 ** 2 :
+            category = 3
+        #strong
+        elif 10 < bf <= 10 ** 2:
+            category = 2
+        # substantial + not worth mentioning
+        elif 0 < bf <= 10:
+            category = 1
+        return category
+
+    clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
+    consensus_cluster_labels = generate_cluster_assignments_posthoc(clustering=clustering, set_as_value=True)
+
+    taxa_names = []
+    taxas = mcmc.graph.data.taxas
+    for taxa in taxas:
+        taxa_names.append(taxa.name)
+
+    consensus_cluster = clusterize(consensus_cluster_labels, taxa_names)
+    M = pl.summary(mcmc.graph[STRNAMES.INTERACTIONS_OBJ], set_nan_to_0=True, section='posterior')['mean']
+    M_condensed = condense_fixed_clustering_interaction_matrix(M, clustering=clustering)
+
+    bf = generate_interation_bayes_factors_posthoc(mcmc=mcmc, section='posterior') # (n_taxa, n_taxa)
+    bf_condensed = condense_fixed_clustering_interaction_matrix(bf, clustering=clustering)
+
+    columns = np.sort(list(consensus_cluster.keys()))
+    # Take the transpose so that rows are the srouce and columns destination
+    bayes_df = pd.DataFrame(bf_condensed.T, columns=columns, index=columns)
+    graph_bayes = nx.from_pandas_adjacency(bayes_df, create_using=nx.DiGraph())
+
+    largest = get_largest_weight(bf_condensed)
+    all_edges = graph_bayes.edges()
+    edge_attributes = {}
+
+    for edge in graph_bayes.edges(data=True):
+        # Column is the source and row is the destination
+        int_strength = M_condensed[edge[1], edge[0]]
+        coord = (edge[0], edge[1])
+        sign = 0
+        weight = edge[2]['weight']
+
+        if np.isint('weight'):
+            weight = largest
+        if int_strength < 0:
+            sign = -1
+        else:
+            sign = 1
+
+        category = get_bayes_category(weight)
+        bend = False
+        if (edge[1], edge[0]) in all_edges:
+            bend = True
+        
+        edge_attributes[coord] = {'bayes_fac': category, 'sign': sign, 
+            'weight': weight, 'bend': bend}
+
+    nx.set_edge_attributes(graph_bayes, edge_attributes)
+
+    nodes_attributes = {}
+    for keys in consensus_cluster:
+        nodes_attributes[keys] = {'size': len(consensus_cluster[keys])}
+
+    nx.set_node_attributes(graph_bayes, nodes_attributes)
+    data_json = from_networkx(graph_bayes, nodes_attributes)
+    if '.json' not in output_filename:
+        output_filename += '.json'
+    with open(filename, 'w') as f:
+        json.dump(data_json, f)
+    
+
+
+
+def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min_num_consecutive: int, min_num_subjects: int,
     colonization_time: Union[float, int]=None, union_other_consortia: Study=None) -> Study:
     '''Filters the subjects by looking at the consistency of the 'dtype', which can
     be either 'raw' where we look for the minimum number of counts, 'rel', where we
-    look for a minimum relative abundance, or 'abs' where we look for a minium 
+    look for a minimum relative abundance, or 'abs' where we look for a minium
     absolute abundance.
 
     There must be at least `threshold` for at least
@@ -399,7 +511,7 @@ def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min
     min_num_consecutive : int
         Number of consecutive timepoints to look for in a row
     colonization_time : numeric
-        This is the time we are looking after for colonization. If None we assume 
+        This is the time we are looking after for colonization. If None we assume
         there is no colonization time.
     min_num_subjects : int, str
         This is the minimum number of subjects this needs to be valid for.
@@ -455,8 +567,8 @@ def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min
             raise TypeError('`union_other_consortia` ({}) must be a mdsine2.Study'.format(
                 type(union_other_consortia)))
 
-    subjset = copy.deepcopy(subjset)      
-    
+    subjset = copy.deepcopy(subjset)
+
     if union_other_consortia is not None:
         taxa_to_keep = OrderedSet()
         for subjset_temp in [subjset, union_other_consortia]:
@@ -500,12 +612,12 @@ def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min
     subjset.pop_taxa(to_delete)
     return subjset
 
-def conditional_consistency_filtering(subjset: Study, other: Study, dtype: str, threshold: Union[float, int], 
-    min_num_consecutive_upper: int, min_num_consecutive_lower: int, min_num_subjects: int, 
+def conditional_consistency_filtering(subjset: Study, other: Study, dtype: str, threshold: Union[float, int],
+    min_num_consecutive_upper: int, min_num_consecutive_lower: int, min_num_subjects: int,
     colonization_time: Union[float, int]) -> Study:
     '''Filters the cohorts in `subjset` with the `mdsine2.consistency_filtering`
     filtering method but conditional on another cohort. If a taxon passes the filter
-    in the cohort `other`, the taxon can only have `min_num_consecutive_lower` 
+    in the cohort `other`, the taxon can only have `min_num_consecutive_lower`
     consecutive timepoints instead of `min_num_consecutive_upper`. This potentially
     increases the overlap of the taxa between cohorts, which is the reason why
     we would do this filtering over just `mdsine2.consistency_filtering`
@@ -513,7 +625,7 @@ def conditional_consistency_filtering(subjset: Study, other: Study, dtype: str, 
     Algorithm
     ---------
     First, we apply the function `mdsine2.consistency_filtering` to the subjects
-    `subjset` and `other` with minimum number of consectutive timepoints 
+    `subjset` and `other` with minimum number of consectutive timepoints
     `min_num_consecutive_upper` and `min_num_consecutive_lower`.
 
     For each taxon in cohort `subjset`
@@ -538,12 +650,12 @@ def conditional_consistency_filtering(subjset: Study, other: Study, dtype: str, 
     min_num_consecutive_upper, min_num_consecutive_lower : int
         Number of consecutive timepoints to look for in a row
     colonization_time : numeric
-        This is the time we are looking after for colonization. If None we assume 
+        This is the time we are looking after for colonization. If None we assume
         there is no colonization time.
     min_num_subjects : int, str
         This is the minimum number of subjects this needs to be valid for.
         If str, we accept 'all', which we set that automatically.
-    
+
     Returns
     -------
     mdsine2.Study
@@ -554,18 +666,18 @@ def conditional_consistency_filtering(subjset: Study, other: Study, dtype: str, 
     mdsine2.consistency_filtering
     '''
     # All of the checks are done within `consistency_filtering` so dont check here
-    subjset_upper = consistency_filtering(subjset=copy.deepcopy(subjset), 
+    subjset_upper = consistency_filtering(subjset=copy.deepcopy(subjset),
         dtype=dtype, threshold=threshold,
-        min_num_consecutive=min_num_consecutive_upper, min_num_subjects=min_num_subjects, 
+        min_num_consecutive=min_num_consecutive_upper, min_num_subjects=min_num_subjects,
         colonization_time=colonization_time)
-    subjset_lower = consistency_filtering(subjset=copy.deepcopy(subjset), 
+    subjset_lower = consistency_filtering(subjset=copy.deepcopy(subjset),
         dtype=dtype, threshold=threshold,
-        min_num_consecutive=min_num_consecutive_lower, min_num_subjects=min_num_subjects, 
+        min_num_consecutive=min_num_consecutive_lower, min_num_subjects=min_num_subjects,
         colonization_time=colonization_time)
 
-    other_upper = consistency_filtering(subjset=copy.deepcopy(other), 
+    other_upper = consistency_filtering(subjset=copy.deepcopy(other),
         dtype=dtype, threshold=threshold,
-        min_num_consecutive=min_num_consecutive_upper, min_num_subjects=min_num_subjects, 
+        min_num_consecutive=min_num_consecutive_upper, min_num_subjects=min_num_subjects,
         colonization_time=colonization_time)
 
     # Conditional consistency filtering

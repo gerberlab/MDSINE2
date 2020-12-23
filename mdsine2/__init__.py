@@ -34,7 +34,7 @@ from .pylab.multiprocessing import ispersistentworker, ispersistentpool, isDASW,
 from .pylab.util import toarray, fast_index, coarsen_phylogenetic_tree
 from .pylab.base import Taxon, OTU, TaxaSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
     Subject, Study, condense_matrix_with_taxonomy, taxaname_for_paper, TAXANAME_PAPER_FORMAT, \
-    taxaname_formatter
+    taxaname_formatter, Perturbations, qPCRdata
 from .pylab.variables import Variable, Constant, summary
 from .pylab.graph import Graph, Node
 from .pylab.cluster import Clustering
@@ -56,4 +56,4 @@ from .util import is_gram_negative, generate_interation_bayes_factors_posthoc, \
     generate_perturbation_bayes_factors_posthoc, aggregate_items, consistency_filtering, \
     conditional_consistency_filtering, generate_cluster_assignments_posthoc, \
     generate_taxonomic_distribution_over_clusters_posthoc, condense_fixed_clustering_interaction_matrix, \
-    condense_fixed_clustering_perturbation
+    condense_fixed_clustering_perturbation, write_fixed_clustering_as_json

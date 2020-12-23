@@ -5938,6 +5938,7 @@ class Growth(pl.variables.TruncatedNormal):
         if delay < 0:
             raise ValueError('`delay` ({}) must be >= 0'.format(delay))
         self.delay = delay
+        self._n_times_nan = 0
 
         # Truncation settings
         if truncation_settings is None:
@@ -6012,6 +6013,7 @@ class Growth(pl.variables.TruncatedNormal):
         if self.sample_iter < self.delay:
             return
 
+        prev_value = self.value
         self.calculate_posterior()
         self.sample()
 
@@ -6020,10 +6022,15 @@ class Growth(pl.variables.TruncatedNormal):
             self.value = np.array([self.value])
 
         if np.any(np.isnan(self.value)):
+            if self._n_times_nan > 5:
+                raise ValueError('Too many nans')
+            
+            self._n_times_nan += 1
             logging.critical('mean: {}'.format(self.loc.value))
             logging.critical('var: {}'.format(self.scale2.value))
             logging.critical('value: {}'.format(self.value))
-            raise ValueError('`Values in {} are nan: {}'.format(self.name, self.value))
+            logging.critical('`Values in {} are nan: {}. Replace with the previous value'.format(self.name, self.value))
+            self.value[np.isnan(self.value)] = prev_value[np.isnan(self.value)]
 
         if self._there_are_perturbations:
             # If there are perturbations then we need to update their
@@ -6259,6 +6266,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         if delay < 0:
             raise ValueError('`delay` ({}) must be >= 0'.format(delay))
         self.delay = delay
+        self._n_times_nan = 0
 
         # Set truncation settings
         if pl.isstr(truncation_settings):
@@ -6404,6 +6412,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         if self.sample_iter < self.delay:
             return
 
+        prev_value = self.value
         self.calculate_posterior()
         self.sample()
 
@@ -6412,10 +6421,15 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             self.value = np.array([self.value])
 
         if np.any(np.isnan(self.value)):
+            if self._n_times_nan > 5:
+                raise ValueError('Too many nans')
+            
+            self._n_times_nan += 1
             logging.critical('mean: {}'.format(self.loc.value))
             logging.critical('var: {}'.format(self.scale2.value))
             logging.critical('value: {}'.format(self.value))
-            raise ValueError('`Values in {} are nan: {}'.format(self.name, self.value))
+            logging.critical('`Values in {} are nan: {}. Replace with the previous value'.format(self.name, self.value))
+            self.value[np.isnan(self.value)] = prev_value[np.isnan(self.value)]
 
     def calculate_posterior(self):
 
