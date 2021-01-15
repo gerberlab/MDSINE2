@@ -607,10 +607,10 @@ class Tracer(Saveable):
         self.f.close()
         self.f = None
 
-    def open(self):
+    def open(self, mode='r+'):
         '''Open the file
         '''
-        self.f = h5py.File(self.filename, 'r+', libver='latest')
+        self.f = h5py.File(self.filename, mode=mode, libver='latest')
 
     def copy(self) -> "Tracer":
         '''Return a copy of the object but do not copy the underlying hdf5 object
