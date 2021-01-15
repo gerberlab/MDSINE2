@@ -833,15 +833,11 @@ class Tracer(Saveable):
         if not util.isstr(section):
             raise TypeError('`section` ({}) must be a str'.format(type(str)))
         
-        self.open()
+        self.open(mode='r')
         dset = self.f[name]
         if section == 'posterior':
             high = dset.attrs['end_iter']
             low = self.burnin
-            if low < self.burnin:
-                self.close()
-                raise IndexError('Last iteration ({}) is less than the burnin ({}). ' \
-                    'Cannot get the trace'.format(i, self.burnin))
         elif section == 'burnin':
             high = dset.attrs['end_iter']
             low = 0
