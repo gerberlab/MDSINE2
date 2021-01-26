@@ -149,7 +149,7 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
             loc=pl.Constant(None, G=GRAPH),
             scale2=pl.Constant(None, G=GRAPH), G=GRAPH), 
         child_name=STRNAMES.SELF_INTERACTION_VALUE, G=GRAPH)
-    prior_si = pl.variables.Normal(
+    prior_si = pl.variables.TruncatedNormal(
         loc=mean_si, scale2=var_si,
         name='prior_{}'.format(STRNAMES.SELF_INTERACTION_VALUE), G=GRAPH)
     self_interactions = posterior.SelfInteractions(prior=prior_si, G=GRAPH)

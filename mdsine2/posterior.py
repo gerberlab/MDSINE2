@@ -4029,9 +4029,14 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
             dtype=float, **kwargs)
         self.add_prior(prior)
 
-    def initialize(self, value_option: str, hyperparam_option: str, 
-        a: Union[int, float]=None, b: Union[int, float]=None, 
-        value: float=None, N: Union[float, str]='auto', delay: int=0):
+    def initialize(self,
+                   value_option: str,
+                   hyperparam_option: str,
+                   a: Union[int, float]=None,
+                   b: Union[int, float]=None,
+                   value: float=None,
+                   N: Union[float, str]='auto',
+                   delay: int=0):
         '''Initialize the hyperparameters of the beta prior
 
         Parameters
@@ -5093,10 +5098,19 @@ class PriorVarMH(pl.variables.SICS):
             s = str(self.value)
         return s
 
-    def initialize(self, value_option: str, dof_option: str, scale_option: str, 
-        proposal_option: str, target_acceptance_rate: Union[float,str], tune: Union[float, str], 
-        end_tune: Union[str, int], value: float=None, dof: float=None, scale: float=None, 
-        proposal_dof: float=None, delay: int=0):
+    def initialize(self,
+                   value_option: str,
+                   dof_option: str,
+                   scale_option: str,
+                   proposal_option: str,
+                   target_acceptance_rate: Union[float,str],
+                   tune: Union[float, str],
+                   end_tune: Union[str, int],
+                   value: float=None,
+                   dof: float=None,
+                   scale: float=None,
+                   proposal_dof: float=None,
+                   delay: int=0):
         '''Initialize the parameters of the distribution and the 
         proposal distribution
 
@@ -5993,8 +6007,8 @@ class Growth(pl.variables.TruncatedNormal):
 
             prec = X.T @ X
             cov = pinv(prec, self)
-            mean = (cov @ X.transpose().dot(y)).ravel()
-            self.value = np.absolute(mean[:len(self.G.data.taxa)])
+            least_squares = (cov @ X.transpose().dot(y)).ravel()
+            self.value = np.absolute(least_squares[:len(self.G.data.taxa)])
         elif value_option in ['auto', 'ones']:
             self.value = np.ones(len(self.G.data.taxa), dtype=float)
         elif value_option == 'prior-mean':
@@ -6233,6 +6247,8 @@ class SelfInteractions(pl.variables.TruncatedNormal):
                       of the off perturbation data
                 - 'prior-mean'
                     - Set the value to the mean of the prior
+                - 'linear-regression'
+                    - Perform linear regression to figure out a reasonable mean & variance.
         truncation_settings : str, 2-tuple
             - How to set the truncations for the normal distribution
             - (low,high)
@@ -6399,8 +6415,8 @@ class SelfInteractions(pl.variables.TruncatedNormal):
 
             prec = X.T @ X
             cov = pinv(prec, self)
-            mean = cov @ X.T @ y
-            self.value = np.asarray(mean).ravel()
+            least_squares = cov @ X.T @ y
+            self.value = np.asarray(least_squares).ravel()
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
 
