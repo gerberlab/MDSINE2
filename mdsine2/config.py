@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import sys
 import os.path
+import json
 
 from .names import STRNAMES
 from . import pylab as pl
@@ -376,6 +377,13 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.QPCR_DOFS,
             STRNAMES.QPCR_VARIANCES]
 
+    def set_negbin_params(self, a0: float, a1: float):
+        self.NEGBIN_A0 = a0
+        self.NEGBIN_A1 = a1
+        self.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['a0'] = a0
+        self.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['a1'] = a1
+
+
     def suffix(self):
         '''Create a suffix with the parameters
         '''
@@ -419,7 +427,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             'Cluster interaction probability prior: {clus_ind_prior}\n' \
             'Perturbation probability prior: {pert_ind_prior}\n' \
             'Filtering initialization: {filt}\n' \
-            'Cluster initialization: {clus_init}\n'
+            'Cluster initialization: {clus_init}\n\n'
         # params learned
         # --------------
         i = 0
@@ -462,6 +470,8 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             pert_ind_prior=self.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['hyperparam_option'],
             filt=self.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['x_value_option'],
             clus_init=clus_init))
+        f.write("Complete initialization kwargs: \n")
+        f.write(json.dumps(self.INITIALIZATION_KWARGS, indent=2))
         f.close()
 
 

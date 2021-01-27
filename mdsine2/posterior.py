@@ -8413,7 +8413,7 @@ class _qPCRPriorAggVar(_qPCRBase):
             self.value.append(
                 child(L=L, l=l, **kwargs))
 
-    def add_qpcr_measurement(self, ridx, tidx, l):
+    def add_qpcr_measurement(self, ridx, tidx, sidx):
         '''Add a qPCR measurement for subject `ridx` at time index
         `tidx` to qPCR set `l`
 
@@ -8423,7 +8423,7 @@ class _qPCRPriorAggVar(_qPCRBase):
             Subject index
         tidx : int
             Time index
-        l : int
+        sidx : int
             qPCR set index
         '''
         if not pl.isint(ridx):
@@ -8436,12 +8436,12 @@ class _qPCRPriorAggVar(_qPCRBase):
         if tidx >= len(self.G.data.given_timepoints[ridx]):
             raise ValueError('`tidx` ({}) out of range ({})'.format(tidx, 
                 len(self.G.data.given_timepoints[ridx])))
-        if not pl.isint(l):
-            raise TypeError('`l` ({}) must be an int'.format(type(l)))
-        if l >= self.L:
+        if not pl.isint(sidx):
+            raise TypeError('`l` ({}) must be an int'.format(type(sidx)))
+        if sidx >= self.L:
             raise ValueError('`l` ({}) out of range ({})'.format(tidx, 
                 self.L))
-        self.value[l].add_qpcr_measurement(ridx=ridx, tidx=tidx)
+        self.value[sidx].add_qpcr_measurement(ridx=ridx, tidx=tidx)
 
     def set_shape(self):
         for a in self.value:
@@ -8466,7 +8466,7 @@ class qPCRVariances(_qPCRBase):
             self.value.append( 
                 qPCRVarianceReplicate(ridx=ridx, **kwargs))
 
-    def add_qpcr_measurement(self, ridx, tidx, l):
+    def add_qpcr_measurement(self, ridx, tidx, sidx):
         '''Add a qPCR measurement for subject `ridx` at time index
         `tidx` to qPCR set `l`
 
@@ -8476,7 +8476,7 @@ class qPCRVariances(_qPCRBase):
             Subject index
         tidx : int
             Time index
-        l : int
+        sidx : int
             qPCR set index
         '''
         if not pl.isint(ridx):
@@ -8489,12 +8489,12 @@ class qPCRVariances(_qPCRBase):
         if tidx >= len(self.G.data.given_timepoints[ridx]):
             raise ValueError('`tidx` ({}) out of range ({})'.format(tidx, 
                 len(self.G.data.given_timepoints[ridx])))
-        if not pl.isint(l):
-            raise TypeError('`l` ({}) must be an int'.format(type(l)))
-        if l >= self.L:
+        if not pl.isint(sidx):
+            raise TypeError('`l` ({}) must be an int'.format(type(sidx)))
+        if sidx >= self.L:
             raise ValueError('`l` ({}) out of range ({})'.format(tidx, 
                 self.L))
-        self.value[ridx].add_qpcr_measurement(tidx=tidx, l=l)        
+        self.value[ridx].add_qpcr_measurement(tidx=tidx, l=sidx)
 
 
 class qPCRVarianceReplicate(pl.variables.SICS):
@@ -8531,15 +8531,14 @@ class qPCRVarianceReplicate(pl.variables.SICS):
                 'manual'
                     Set the values manually
         value : float, np.ndarray(float)
-            If float, set all the values to the same number. If array then set the 
-            values to each of the parameters
+            If float, set all the values to the same number.
         inflated : float, None
             Necessary if `value_option` == 'inflated'
         '''
         if not pl.isstr(value_option):
             raise TypeError('`value_option` ({}) must be a str'.format(type(value_option)))
         if value_option in ['empirical', 'auto']:
-            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
+            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=np.float)
             for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
                 self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data)
 
@@ -8549,12 +8548,21 @@ class qPCRVarianceReplicate(pl.variables.SICS):
             if inflated < 0:
                 raise ValueError('`inflated` ({}) must be positive'.format(inflated))
             # Set each variance by the empirical variance * inflated
-            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
+            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=np.float)
             for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
                 self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data) * inflated
 
         elif value_option == 'manual':
-            raise NotImplementedError('Need to implement')
+            if not pl.isnumeric(value):
+                raise TypeError('`value` ({}) must be a numeric'.format(type(value)))
+            if value < 0:
+                raise ValueError('`value` ({}) must be positive'.format(value))
+            # Set each variance to a constant value.
+            self.value = np.full(
+                shape=len(self.G.data.qpcr[self.ridx]),
+                value=value,
+                dtype=np.float
+            )
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
 
@@ -8592,13 +8600,13 @@ class qPCRVarianceReplicate(pl.variables.SICS):
             scale = ((prior_scale * prior_dof) + resid_sum)/dof
             self.value[tidx] = pl.random.sics.sample(dof, scale)
 
-    def add_qpcr_measurement(self, tidx, l):
+    def add_qpcr_measurement(self, tidx, sidx):
         '''Add qPCR measurement for subject index `ridx` and time index `tidx`
 
         Parameters
         ----------
-        ridx : int
-            Subject index
+        sidx : int
+            qPCR set index
         tidx : int
             Time index
         '''
@@ -8607,9 +8615,9 @@ class qPCRVarianceReplicate(pl.variables.SICS):
         if tidx >= len(self.G.data.given_timepoints[self.ridx]):
             raise ValueError('`tidx` ({}) out of range ({})'.format(tidx, 
                 len(self.G.data.given_timepoints[self.ridx])))
-        if not pl.isint(l):
-            raise TypeError('`l` ({}) must be an int'.format(type(l)))
-        self.priors_idx[tidx] = l
+        if not pl.isint(sidx):
+            raise TypeError('`sidx` ({}) must be an int'.format(type(sidx)))
+        self.priors_idx[tidx] = sidx
 
 
 class qPCRDegsOfFreedoms(_qPCRPriorAggVar):

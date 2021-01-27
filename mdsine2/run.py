@@ -254,16 +254,16 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
         ' {} measurements long'.format(len(indices), params.N_QPCR_BUCKETS, l_len))
 
     iii = 0
-    for l in range(params.N_QPCR_BUCKETS):
+    for bucket_idx in range(params.N_QPCR_BUCKETS):
         # If it is the last bucket, assign the rest of the elements to it
-        if l == params.N_QPCR_BUCKETS - 1:
+        if bucket_idx == params.N_QPCR_BUCKETS - 1:
             l_len = len(mean_log_measurements) - iii
         for i in range(l_len):
             idx = idxs[iii]
             ridx,tidx = indices[idx]
-            qpcr_variances.add_qpcr_measurement(ridx=ridx, tidx=tidx, l=l)
-            qpcr_dofs.add_qpcr_measurement(ridx=ridx, tidx=tidx, l=l)
-            qpcr_scales.add_qpcr_measurement(ridx=ridx, tidx=tidx, l=l)
+            qpcr_variances.add_qpcr_measurement(ridx=ridx, tidx=tidx, sidx=bucket_idx)
+            qpcr_dofs.add_qpcr_measurement(ridx=ridx, tidx=tidx, sidx=bucket_idx)
+            qpcr_scales.add_qpcr_measurement(ridx=ridx, tidx=tidx, sidx=bucket_idx)
             iii += 1
     qpcr_dofs.set_shape()
     qpcr_scales.set_shape()
