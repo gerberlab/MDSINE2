@@ -8600,12 +8600,12 @@ class qPCRVarianceReplicate(pl.variables.SICS):
             scale = ((prior_scale * prior_dof) + resid_sum)/dof
             self.value[tidx] = pl.random.sics.sample(dof, scale)
 
-    def add_qpcr_measurement(self, tidx, sidx):
+    def add_qpcr_measurement(self, tidx, l):
         '''Add qPCR measurement for subject index `ridx` and time index `tidx`
 
         Parameters
         ----------
-        sidx : int
+        l : int
             qPCR set index
         tidx : int
             Time index
@@ -8615,9 +8615,9 @@ class qPCRVarianceReplicate(pl.variables.SICS):
         if tidx >= len(self.G.data.given_timepoints[self.ridx]):
             raise ValueError('`tidx` ({}) out of range ({})'.format(tidx, 
                 len(self.G.data.given_timepoints[self.ridx])))
-        if not pl.isint(sidx):
-            raise TypeError('`sidx` ({}) must be an int'.format(type(sidx)))
-        self.priors_idx[tidx] = sidx
+        if not pl.isint(l):
+            raise TypeError('`l` ({}) must be an int'.format(type(l)))
+        self.priors_idx[tidx] = l
 
 
 class qPCRDegsOfFreedoms(_qPCRPriorAggVar):
