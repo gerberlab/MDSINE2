@@ -49,8 +49,8 @@ LONG_DESC = \
         - Optimization based algorithms (use PyTorch or TensorFlow)
     '''
 REQUIREMENTS = [
-    'numpy>=1.16.4',
-    'pandas>=0.25',
+    'numpy>=1.19.4',
+    'pandas>=1.1.4',
     'matplotlib==3.3.1',
     'sklearn==0.0',
     'seaborn==0.11.0',
