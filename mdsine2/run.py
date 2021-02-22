@@ -133,7 +133,7 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
             loc=pl.Constant(None, G=GRAPH),
             scale2=pl.Constant(None, G=GRAPH), G=GRAPH), 
         child_name=STRNAMES.GROWTH_VALUE, G=GRAPH)
-    prior_growth = pl.variables.Normal(
+    prior_growth = pl.variables.TruncatedNormal(
         loc=mean_growth, scale2=var_growth,
         name='prior_{}'.format(STRNAMES.GROWTH_VALUE), G=GRAPH)
     growth = posterior.Growth(prior=prior_growth, G=GRAPH)
@@ -401,7 +401,7 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
 
     return mcmc
 
-def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True) -> BaseMCMC:
+def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True, log_every: int=1) -> BaseMCMC:
     '''Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
 
     Parameters
@@ -417,10 +417,10 @@ def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True) -> BaseMCMC:
     mdsine2.BaseMCMC
     '''
     try:
-        mcmc.run(log_every=1)
+        mcmc.run(log_every=log_every)
     except Exception as e:
         logging.critical('CHAIN `{}` CRASHED'.format(mcmc.graph.name))
-        logging.critical('Error: {}'.format(e))
+        logging.error(e)
         if crash_if_error:
             raise
     mcmc.graph[STRNAMES.FILTERING].kill()
@@ -447,7 +447,7 @@ def normalize_parameters(mcmc: BaseMCMC, subjset: Study) -> Tuple[BaseMCMC, Stud
     mdsine2.BaseMCMC, mdsine2.Study
     '''
     GRAPH = mcmc.graph
-    if subjset.qpcr_normalization_factor is None:
+    if subjset.qpcr_normalization_factor is not None:
         f = h5py.File(GRAPH.tracer.filename, 'r+', libver='latest')
         checkpoint = GRAPH.tracer.checkpoint
 

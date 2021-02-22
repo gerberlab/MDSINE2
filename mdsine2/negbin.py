@@ -328,17 +328,17 @@ class NegBinDispersionParam(pl.variables.Uniform):
     
     @staticmethod
     @numba.jit(nopython=True)
-    def _data_likelihood(a0: float, a1: float, data: np.ndarray, read_depth: np.ndarray, 
+    def _data_likelihood(a0: float, a1: float, data: np.ndarray, read_depth: np.ndarray,
         rel_abund: np.ndarray) -> float:
         cumm = 0
 
         # For each taxon
         for oidx in range(data.shape[0]):
             # For each replicate
-            for k in range(data.shape[1]):
-                y = data[oidx, k]
-                mean = read_depth[k] * rel_abund[oidx]
-                dispersion = a0/rel_abund[k] + a1
+            for ridx in range(data.shape[1]):
+                y = data[oidx, ridx]
+                mean = read_depth[ridx] * rel_abund[oidx]
+                dispersion = a0/rel_abund[oidx] + a1
 
                 # This is the negative binomial loglikelihood
                 r = 1/dispersion
@@ -823,7 +823,7 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
     def prior_ll(self) -> float:
         '''Prior loglikelihood
         '''
-        return pl.random.normal.logpdf(value=self.curr_log_val, 
+        return pl.random.normal.logpdf(value=self.curr_log_val,
             loc=self.prior_loc[self.oidx], scale=self.prior_scale)
 
     def qpcr_ll(self) -> float:

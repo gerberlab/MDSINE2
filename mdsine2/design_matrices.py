@@ -642,6 +642,7 @@ class Data(DataNode):
     def construct_lhs(self, keys: List[str]=[], kwargs_dict: Dict[str, Dict[str, Any]]={}, 
         index_out_perturbations: bool=False) -> np.ndarray:
         '''Does the stacking and subtracting necessary to make the observation vector
+        NOTE: "left hand side" refers to the residuals (regression y = Ax)
 
         Parameters
         ----------
@@ -1063,9 +1064,11 @@ class GrowthDesignMatrix(DesignMatrix):
             return
 
         self.data_w_perts = np.zeros(self.n_rows_master, dtype=float)
-        d = []
-        for ridx in range(self.G.data.n_replicates):
-            d.append(np.ones(shape=self.G.data.data[ridx].shape))
+        d = np.ones(shape=(
+            self.G.data.n_replicates,
+            self.G.data.data[0].shape[0],
+            self.G.data.data[0].shape[1]
+        ), dtype=np.float)
 
         for pidx, pert in enumerate(self.G.perturbations):
             val = (pert.item_array(only_pos_ind=True) + 1).reshape(-1,1)
