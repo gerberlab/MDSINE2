@@ -6761,7 +6761,7 @@ class GLVParameters(pl.variables.MVN):
             Y = self.G.data.construct_lhs(keys=lhs)
 
             # ==== M: pseudoinverse(X) = (X^T X)^-1 * X^T
-            # M = pinv(X, self)
+            M = pinv(X, self)
 
             _growth = self.G[STRNAMES.GROWTH_VALUE]
             _self_int = self.G[STRNAMES.SELF_INTERACTION_VALUE]
