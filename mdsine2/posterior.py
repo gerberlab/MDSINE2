@@ -6700,8 +6700,6 @@ class GLVParameters(pl.variables.MVN):
 
         self.update_jointly_pert_inter = update_jointly_pert_inter
         self.update_jointly_growth_selfinter = update_jointly_growth_selfinter
-
-        self.joint_growth_selfinter_acceptances = np.zeros(shape=(self.G.data.n_taxa, self.G.inference.n_samples), dtype=bool)
         self.sample_iter = 0
                 
     # @profile
@@ -6870,13 +6868,6 @@ class GLVParameters(pl.variables.MVN):
         r = (new_target_ll - prev_prop_ll) - (prev_target_ll - new_prop_ll)
         u = np.log(pl.random.misc.fast_sample_standard_uniform())
         if r >= u:
-            self.joint_growth_selfinter_acceptances[taxa_id, self.sample_iter] = True
-            logging.info("Taxa {} -- Growth/SI acceptance rate: {:.2f}, Accepted Growth: {}, Accepted SI: {}".format(
-                taxa_id + 1,
-                np.sum(self.joint_growth_selfinter_acceptances[taxa_id, :self.sample_iter]) / (self.sample_iter),
-                proposal_growth,
-                proposal_si
-            ))
             _growth.value[taxa_id] = proposal_growth
             _self_int.value[taxa_id] = proposal_si
 
