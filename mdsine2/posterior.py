@@ -6784,12 +6784,12 @@ class GLVParameters(pl.variables.MVN):
 
             # The optimal regression solution uses the following matrices:
             W = np.linalg.inv(X.T @ np.diag(np.reciprocal(noise_var)) @ X - np.diag(np.reciprocal(prior_var)))
-            WX = W @ X.T @ np.diag(np.reciprocal(noise_var))
+            WX = W @ X.T
 
             # The optimal regression solution (MLE / Bayesian Least-Squares)
             proposal_dist = scipy.stats.multivariate_normal(
                 mean=prior_mean,
-                cov=(WX @ noise_covar @ WX.T)
+                cov=(WX @ np.diag(np.reciprocal(noise_var)) @ WX.T)
             )
             proposal = proposal_dist.rvs()  # sample
 
