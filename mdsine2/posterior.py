@@ -6752,6 +6752,7 @@ class GLVParameters(pl.variables.MVN):
             rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             lhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
 
+            # Setup of an p-dim regression on n observations (design matrix X is (n x p)).
             X = self.G.data.construct_rhs(
                 keys=rhs,
                 kwargs_dict={
@@ -6760,18 +6761,37 @@ class GLVParameters(pl.variables.MVN):
             )
             Y = self.G.data.construct_lhs(keys=lhs)
 
-            # ==== M: pseudoinverse(X) = (X^T X)^-1 * X^T
-            M = pinv(X, self)
+            # n-dimensional vector.
+            if self.G.data.zero_inflation_transition_policy is not None:
+                noise_var = self.G[STRNAMES.PROCESSVAR].value / self.G.data.dt_vec[self.G.data.rows_to_include_zero_inflation]
+            else:
+                noise_var = self.G[STRNAMES.PROCESSVAR].value / self.G.data.dt_vec
 
             _growth = self.G[STRNAMES.GROWTH_VALUE]
             _self_int = self.G[STRNAMES.SELF_INTERACTION_VALUE]
 
-            # Propose a sample centered around the least-squares solution.
-            if self.G.data.zero_inflation_transition_policy is not None:
-                noise_cov = np.eye(Y.shape[0]) * self.G[STRNAMES.PROCESSVAR].value / self.G.data.sqrt_dt_vec[self.G.data.rows_to_include_zero_inflation]
-            else:
-                noise_cov = np.eye(Y.shape[0]) * self.G[STRNAMES.PROCESSVAR].value / self.G.data.sqrt_dt_vec
-            proposal = M @ pl.random.multivariate_normal.sample(mean=Y.reshape(-1), cov=noise_cov)
+            # p-dimensional vectors.
+            prior_mean = np.hstack([
+                _growth.prior.loc.value * np.ones(_growth.value.shape),
+                _self_int.prior.loc.value * np.ones(_self_int.value.shape)
+            ])
+            prior_var = np.hstack([
+                _growth.prior.scale2.value * np.ones(_growth.value.shape),
+                _self_int.prior.scale2.value * np.ones(_self_int.value.shape)
+            ])
+
+            noise_covar = np.diag(noise_var)
+
+            # The optimal regression solution uses the following matrices:
+            W = np.linalg.inv(X.T @ np.diag(np.reciprocal(noise_var)) @ X - np.diag(np.reciprocal(prior_var)))
+            WX = W @ X.T @ np.diag(np.reciprocal(noise_var))
+
+            # The optimal regression solution (MLE / Bayesian Least-Squares)
+            proposal_dist = scipy.stats.multivariate_normal(
+                mean=prior_mean,
+                cov=(WX @ noise_covar @ WX.T)
+            )
+            proposal = proposal_dist.rvs()  # sample
 
             # Auto-reject non-negative solutions.
             if np.sum(proposal < 0) > 0:
@@ -6779,39 +6799,34 @@ class GLVParameters(pl.variables.MVN):
 
             prev_value = np.hstack([_growth.value, _self_int.value])
 
-            least_squares_solution = M @ Y
-            least_squares_solution = least_squares_solution.reshape(-1)
-            least_squares_covar = M @ noise_cov @ M.T
+            # NOTE: transition proposal likelihoods
+            #   g(new_param | old_param), g(old_param | new_param)
+            # are NOT symmetric, due to the other intermediate gibbs steps which must be accounted for.
+            # (e.g. X, prior_var, noise_var all depend on what the previous iteration's value)
+            # Use the following calculation as a heuristic (results in a non-reversible markov chain).
 
-            new_prop_ll = pl.random.multivariate_normal.logpdf(
-                value=proposal,
-                mean=least_squares_solution,
-                cov=least_squares_covar
-            )
-            prev_prop_ll = pl.random.multivariate_normal.logpdf(
-                value=prev_value,
-                mean=least_squares_solution,
-                cov=least_squares_covar
-            )
+            new_prop_ll = proposal_dist.logpdf(proposal)  # This is mathematically correct, p(new_proposal | prev_value)
+            prev_prop_ll = proposal_dist.logpdf(prev_value)  # ... but this is not
 
             # Target likelihoods, up to constant scaling
             n_growths = _growth.value.shape[0]
             proposal_growths = proposal[0:n_growths]
             proposal_si = proposal[n_growths:]
 
+            # Target distribution \propto (Growth, SI priors (Truncated Normal)) * (Model likelihood (Gaussian) | growth,SI)
             new_target_ll = (
                     np.sum(_growth.prior.logpdf(value=proposal_growths))
                     + np.sum(_self_int.prior.logpdf(value=proposal_si))
                     + pl.random.multivariate_normal.logpdf(value=(Y.reshape(-1) - X @ proposal),
                                                            mean=np.zeros(Y.shape[0]),
-                                                           cov=noise_cov)
+                                                           cov=noise_covar)
             )
             prev_target_ll = (
                     np.sum(_growth.prior.logpdf(value=_growth.value))
                     + np.sum(_self_int.prior.logpdf(value=_self_int.value))
                     + pl.random.multivariate_normal.logpdf(value=(Y.reshape(-1) - X @ prev_value),
                                                            mean=np.zeros(Y.shape[0]),
-                                                           cov=noise_cov)
+                                                           cov=noise_covar)
             )
 
             # Accept or reject
@@ -6819,8 +6834,11 @@ class GLVParameters(pl.variables.MVN):
             u = np.log(pl.random.misc.fast_sample_standard_uniform())
             if r >= u:
                 self.joint_growth_selfinter_acceptances[self.sample_iter] = True
-                logging.info("Accepted Growth: {}".format(proposal_growths))
-                logging.info("Accepted SI: {}".format(proposal_si))
+                logging.info("Growth/SI acceptance rate: {:.2f}, Accepted Growth: {}, Accepted SI: {}".format(
+                    np.sum(self.joint_growth_selfinter_acceptances[:self.sample_iter + 1]) / (self.sample_iter + 1),
+                    proposal_growths,
+                    proposal_si
+                ))
                 _growth.value = proposal_growths
                 _growth.update_str()
                 _self_int.value = proposal_si
