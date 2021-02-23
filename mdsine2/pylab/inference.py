@@ -457,16 +457,16 @@ class BaseMCMC(BaseModel):
 
                 # Log where necessary
                 if i % log_every == 0:
-                    logging.debug('\n\nInference iteration {}/{}, time: {}'.format(
+                    logging.info('\n\nInference iteration {}/{}, time: {}'.format(
                         i, self.n_samples, time.time() - start))
                     start = time.time()
                     for id in self.inf_order:
                         if type(id) == list:
                             for id_ in id:
-                                logging.debug('{}: {}'.format(self.graph.nodes[id_].name,
+                                logging.info('{}: {}'.format(self.graph.nodes[id_].name,
                                     str(self.graph.nodes[id_])))
                         else:
-                            logging.debug('{}: {}'.format(self.graph.nodes[id].name,
+                            logging.info('{}: {}'.format(self.graph.nodes[id].name,
                                 str(self.graph.nodes[id])))
 
                 # Sample posterior in the order indicated and add the trace

@@ -6701,7 +6701,7 @@ class GLVParameters(pl.variables.MVN):
         self.update_jointly_pert_inter = update_jointly_pert_inter
         self.update_jointly_growth_selfinter = update_jointly_growth_selfinter
         self.sample_iter = 0
-                
+
     # @profile
     def asarray(self) -> np.ndarray:
         '''Builds the full regression coefficient vector.
@@ -6720,7 +6720,7 @@ class GLVParameters(pl.variables.MVN):
         self._update_perts_and_inter()
         if self._there_are_perturbations:
             self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
-        
+
         # Update growth and self-interactions
         self._update_growth_and_selfinter()
 
@@ -6770,6 +6770,13 @@ class GLVParameters(pl.variables.MVN):
             else:
                 noise_var = self.G[STRNAMES.PROCESSVAR].value / self.G.data.dt_vec
 
+            new_prop_ll = 0
+            prev_prop_ll = 0
+            new_target_ll = 0
+            prev_target_ll = 0
+            proposal_growth = np.zeros(n_taxa, dtype=np.float)
+            proposal_si = np.zeros(n_taxa, dtype=np.float)
+
             # Learn for each taxa separately (regression problem is separable by construction)
             for taxa_id in range(n_taxa):
                 """
@@ -6790,8 +6797,7 @@ class GLVParameters(pl.variables.MVN):
                 prior_var = np.array([_growth.prior.scale2.value, _self_int.prior.scale2.value])
                 current_val = np.array([_growth.value[taxa_id], _self_int.value[taxa_id]])
 
-                self._update_growth_and_selfinter_taxa(
-                    taxa_id,
+                taxa_proposal, taxa_new_prop_ll, taxa_prev_prop_ll, taxa_new_target_ll, taxa_prev_target_ll = self._propose_growth_and_selfinter_taxa(
                     X=X[taxa_id::n_taxa, taxa_id::n_taxa],
                     Y=Y[taxa_id::n_taxa],
                     noise_var=noise_var[taxa_id::n_taxa],
@@ -6799,19 +6805,31 @@ class GLVParameters(pl.variables.MVN):
                     prior_var=prior_var,
                     current_val=current_val
                 )
+                new_prop_ll += taxa_new_prop_ll
+                prev_prop_ll += taxa_prev_prop_ll
+                new_target_ll += taxa_new_target_ll
+                prev_target_ll += taxa_prev_target_ll
+                proposal_growth[taxa_id] = taxa_proposal[0]
+                proposal_si[taxa_id] = taxa_proposal[1]
+
+            # Accept or reject
+            r = (new_target_ll - prev_prop_ll) - (prev_target_ll - new_prop_ll)
+            u = np.log(pl.random.misc.fast_sample_standard_uniform())
+            if r >= u:
+                _growth.value = proposal_growth
+                _self_int.value = proposal_si
 
             # Post processing.
             _growth.update_str()
             _self_int.update_str()
 
-    def _update_growth_and_selfinter_taxa(self,
-                                          taxa_id: int,
-                                          X: np.ndarray,
-                                          Y: np.ndarray,
-                                          noise_var: np.ndarray,
-                                          prior_mean: np.ndarray,
-                                          prior_var: np.ndarray,
-                                          current_val: np.ndarray):
+    def _propose_growth_and_selfinter_taxa(self,
+                                           X: np.ndarray,
+                                           Y: np.ndarray,
+                                           noise_var: np.ndarray,
+                                           prior_mean: np.ndarray,
+                                           prior_var: np.ndarray,
+                                           current_val: np.ndarray):
         _growth = self.G[STRNAMES.GROWTH_VALUE]
         _self_int = self.G[STRNAMES.SELF_INTERACTION_VALUE]
 
@@ -6831,9 +6849,12 @@ class GLVParameters(pl.variables.MVN):
         num_attempts = 0
 
         # Attempt to sample a 2-d truncated Gaussian (rejection sampling)
-        while np.sum(proposal < 0) > 0 and num_attempts < 20:
+        while np.sum(proposal < 0) > 0 and num_attempts < 50:
             num_attempts = num_attempts + 1
             proposal = proposal_dist.rvs()
+
+        if np.sum(proposal < 0) > 0:
+            raise ValueError("Couldn't sample from truncated normal via Rejection sampling. (Use previous value instead)")
 
         # NOTE: transition proposal likelihoods
         #   g(new_param | old_param), g(old_param | new_param)
@@ -6864,12 +6885,7 @@ class GLVParameters(pl.variables.MVN):
                                                        cov=noise_covar)
         )
 
-        # Accept or reject
-        r = (new_target_ll - prev_prop_ll) - (prev_target_ll - new_prop_ll)
-        u = np.log(pl.random.misc.fast_sample_standard_uniform())
-        if r >= u:
-            _growth.value[taxa_id] = proposal_growth
-            _self_int.value[taxa_id] = proposal_si
+        return proposal, new_prop_ll, prev_prop_ll, new_target_ll, prev_target_ll
 
     # @profile
     def _update_perts_and_inter(self):
