@@ -6847,7 +6847,7 @@ class GLVParameters(pl.variables.MVN):
                 cov=(WX @ np.diag(np.reciprocal(noise_var)) @ WX.T)
             )
         except np.linalg.LinAlgError:
-            return current_val
+            return current_val, 0, 0, 0, 0
         proposal = proposal_dist.rvs()  # sample
 
         # Auto-reject non-negative solutions.
