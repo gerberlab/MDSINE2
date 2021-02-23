@@ -6839,10 +6839,15 @@ class GLVParameters(pl.variables.MVN):
         WX = W @ X.T
 
         # The optimal regression solution (MLE / Bayesian Least-Squares)
-        proposal_dist = scipy.stats.multivariate_normal(
-            mean=prior_mean,
-            cov=(WX @ np.diag(np.reciprocal(noise_var)) @ WX.T)
-        )
+        proposal_covar = (WX @ np.diag(np.reciprocal(noise_var)) @ WX.T)
+
+        try:
+            proposal_dist = scipy.stats.multivariate_normal(
+                mean=prior_mean,
+                cov=(WX @ np.diag(np.reciprocal(noise_var)) @ WX.T)
+            )
+        except np.linalg.LinAlgError:
+            return current_val
         proposal = proposal_dist.rvs()  # sample
 
         # Auto-reject non-negative solutions.
