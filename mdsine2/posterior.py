@@ -6701,7 +6701,7 @@ class GLVParameters(pl.variables.MVN):
         self.update_jointly_pert_inter = update_jointly_pert_inter
         self.update_jointly_growth_selfinter = update_jointly_growth_selfinter
 
-        self.joint_growth_selfinter_acceptances = np.zeros(self.G.inference.n_samples, dtype=bool)
+        self.joint_growth_selfinter_acceptances = np.zeros(shape=(self.G.data.n_taxa, self.G.inference.n_samples), dtype=bool)
         self.sample_iter = 0
                 
     # @profile
@@ -6761,90 +6761,124 @@ class GLVParameters(pl.variables.MVN):
             )
             Y = self.G.data.construct_lhs(keys=lhs)
 
+            # Extract relevant objects.
+            _growth = self.G[STRNAMES.GROWTH_VALUE]
+            _self_int = self.G[STRNAMES.SELF_INTERACTION_VALUE]
+            n_taxa = self.G.data.n_taxa
+
             # n-dimensional vector.
             if self.G.data.zero_inflation_transition_policy is not None:
                 noise_var = self.G[STRNAMES.PROCESSVAR].value / self.G.data.dt_vec[self.G.data.rows_to_include_zero_inflation]
             else:
                 noise_var = self.G[STRNAMES.PROCESSVAR].value / self.G.data.dt_vec
 
-            _growth = self.G[STRNAMES.GROWTH_VALUE]
-            _self_int = self.G[STRNAMES.SELF_INTERACTION_VALUE]
+            # Learn for each taxa separately (regression problem is separable by construction)
+            for taxa_id in range(n_taxa):
+                """
+                Assume matrix is organized into (NT x 2N):
+                rows are blocks of N taxa at each timepoint, columns are (N growths), (N self_interaction)
+                
+                ============================================================================
+                                        (N bugs, growth rates)  (N bugs, self-interactions)
+                (N bugs, timepoint 1)
+                (N bugs, timepoint 2)
+                ...
+                ============================================================================
+                
+                Slice the array into T x 2 blocks, solve each 2-dimensional problem separately.
+                """
+                # p-dimensional vectors.
+                prior_mean = np.array([_growth.prior.loc.value, _self_int.prior.loc.value])
+                prior_var = np.array([_growth.prior.scale2.value, _self_int.prior.scale2.value])
+                current_val = np.array([_growth.value[taxa_id], _self_int.value[taxa_id]])
 
-            # p-dimensional vectors.
-            prior_mean = np.hstack([
-                _growth.prior.loc.value * np.ones(_growth.value.shape),
-                _self_int.prior.loc.value * np.ones(_self_int.value.shape)
-            ])
-            prior_var = np.hstack([
-                _growth.prior.scale2.value * np.ones(_growth.value.shape),
-                _self_int.prior.scale2.value * np.ones(_self_int.value.shape)
-            ])
+                self._update_growth_and_selfinter_taxa(
+                    taxa_id,
+                    X=X[taxa_id::n_taxa, taxa_id::n_taxa],
+                    Y=Y[taxa_id::n_taxa],
+                    noise_var=noise_var[taxa_id::n_taxa],
+                    prior_mean=prior_mean,
+                    prior_var=prior_var,
+                    current_val=current_val
+                )
 
-            noise_covar = np.diag(noise_var)
+            # Post processing.
+            _growth.update_str()
+            _self_int.update_str()
 
-            # The optimal regression solution uses the following matrices:
-            W = np.linalg.inv(X.T @ np.diag(np.reciprocal(noise_var)) @ X - np.diag(np.reciprocal(prior_var)))
-            WX = W @ X.T
+    def _update_growth_and_selfinter_taxa(self,
+                                          taxa_id: int,
+                                          X: np.ndarray,
+                                          Y: np.ndarray,
+                                          noise_var: np.ndarray,
+                                          prior_mean: np.ndarray,
+                                          prior_var: np.ndarray,
+                                          current_val: np.ndarray):
+        _growth = self.G[STRNAMES.GROWTH_VALUE]
+        _self_int = self.G[STRNAMES.SELF_INTERACTION_VALUE]
 
-            # The optimal regression solution (MLE / Bayesian Least-Squares)
-            proposal_dist = scipy.stats.multivariate_normal(
-                mean=prior_mean,
-                cov=(WX @ np.diag(np.reciprocal(noise_var)) @ WX.T)
-            )
-            proposal = proposal_dist.rvs()  # sample
+        # The optimal regression solution uses the following matrices:
+        noise_covar = np.diag(noise_var)
+        W = np.linalg.inv(X.T @ np.diag(np.reciprocal(noise_var)) @ X - np.diag(np.reciprocal(prior_var)))
+        WX = W @ X.T
 
-            # Auto-reject non-negative solutions.
-            if np.sum(proposal < 0) > 0:
-                return
+        # The optimal regression solution (MLE / Bayesian Least-Squares)
+        proposal_dist = scipy.stats.multivariate_normal(
+            mean=prior_mean,
+            cov=(WX @ np.diag(np.reciprocal(noise_var)) @ WX.T)
+        )
+        proposal = proposal_dist.rvs()  # sample
 
-            prev_value = np.hstack([_growth.value, _self_int.value])
+        # Auto-reject non-negative solutions.
+        num_attempts = 0
 
-            # NOTE: transition proposal likelihoods
-            #   g(new_param | old_param), g(old_param | new_param)
-            # are NOT symmetric, due to the other intermediate gibbs steps which must be accounted for.
-            # (e.g. X, prior_var, noise_var all depend on what the previous iteration's value)
-            # Use the following calculation as a heuristic (results in a non-reversible markov chain).
+        # Attempt to sample a 2-d truncated Gaussian (rejection sampling)
+        while np.sum(proposal < 0) > 0 and num_attempts < 20:
+            num_attempts = num_attempts + 1
+            proposal = proposal_dist.rvs()
 
-            new_prop_ll = proposal_dist.logpdf(proposal)  # This is mathematically correct, p(new_proposal | prev_value)
-            prev_prop_ll = proposal_dist.logpdf(prev_value)  # ... but this is not
+        # NOTE: transition proposal likelihoods
+        #   g(new_param | old_param), g(old_param | new_param)
+        # are NOT symmetric, due to the other intermediate gibbs steps which must be accounted for.
+        # (e.g. X, prior_var, noise_var all depend on what the previous iteration's value)
+        # Use the following calculation as a heuristic (results in a non-reversible markov chain).
 
-            # Target likelihoods, up to constant scaling
-            n_growths = _growth.value.shape[0]
-            proposal_growths = proposal[0:n_growths]
-            proposal_si = proposal[n_growths:]
+        new_prop_ll = proposal_dist.logpdf(proposal)  # This is mathematically correct, p(new_proposal | prev_value)
+        prev_prop_ll = proposal_dist.logpdf(current_val)  # ... but this is not
 
-            # Target distribution \propto (Growth, SI priors (Truncated Normal)) * (Model likelihood (Gaussian) | growth,SI)
-            new_target_ll = (
-                    np.sum(_growth.prior.logpdf(value=proposal_growths))
-                    + np.sum(_self_int.prior.logpdf(value=proposal_si))
-                    + pl.random.multivariate_normal.logpdf(value=(Y.reshape(-1) - X @ proposal),
-                                                           mean=np.zeros(Y.shape[0]),
-                                                           cov=noise_covar)
-            )
-            prev_target_ll = (
-                    np.sum(_growth.prior.logpdf(value=_growth.value))
-                    + np.sum(_self_int.prior.logpdf(value=_self_int.value))
-                    + pl.random.multivariate_normal.logpdf(value=(Y.reshape(-1) - X @ prev_value),
-                                                           mean=np.zeros(Y.shape[0]),
-                                                           cov=noise_covar)
-            )
+        # Target likelihoods, up to constant scaling
+        proposal_growth = proposal[0]
+        proposal_si = proposal[1]
 
-            # Accept or reject
-            r = (new_target_ll - prev_prop_ll) - (prev_target_ll - new_prop_ll)
-            u = np.log(pl.random.misc.fast_sample_standard_uniform())
-            if r >= u:
-                self.joint_growth_selfinter_acceptances[self.sample_iter] = True
-                logging.info("Growth/SI acceptance rate: {:.2f}, Accepted Growth: {}, Accepted SI: {}".format(
-                    np.sum(self.joint_growth_selfinter_acceptances[:self.sample_iter + 1]) / (self.sample_iter + 1),
-                    proposal_growths,
-                    proposal_si
-                ))
-                _growth.value = proposal_growths
-                _growth.update_str()
-                _self_int.value = proposal_si
-                _self_int.update_str()
+        # Target distribution \propto (Growth, SI priors (Truncated Normal)) * (Model likelihood (Gaussian) | growth,SI)
+        new_target_ll = (
+                np.sum(_growth.prior.logpdf(value=proposal_growth))
+                + np.sum(_self_int.prior.logpdf(value=proposal_si))
+                + pl.random.multivariate_normal.logpdf(value=(Y.reshape(-1) - X @ proposal),
+                                                       mean=np.zeros(Y.shape[0]),
+                                                       cov=noise_covar)
+        )
+        prev_target_ll = (
+                np.sum(_growth.prior.logpdf(value=_growth.value))
+                + np.sum(_self_int.prior.logpdf(value=_self_int.value))
+                + pl.random.multivariate_normal.logpdf(value=(Y.reshape(-1) - X @ current_val),
+                                                       mean=np.zeros(Y.shape[0]),
+                                                       cov=noise_covar)
+        )
 
-
+        # Accept or reject
+        r = (new_target_ll - prev_prop_ll) - (prev_target_ll - new_prop_ll)
+        u = np.log(pl.random.misc.fast_sample_standard_uniform())
+        if r >= u:
+            self.joint_growth_selfinter_acceptances[taxa_id, self.sample_iter] = True
+            logging.info("Taxa {} -- Growth/SI acceptance rate: {:.2f}, Accepted Growth: {}, Accepted SI: {}".format(
+                taxa_id + 1,
+                np.sum(self.joint_growth_selfinter_acceptances[taxa_id, :self.sample_iter]) / (self.sample_iter),
+                proposal_growth,
+                proposal_si
+            ))
+            _growth.value[taxa_id] = proposal_growth
+            _self_int.value[taxa_id] = proposal_si
 
     # @profile
     def _update_perts_and_inter(self):

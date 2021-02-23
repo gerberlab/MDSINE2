@@ -60,7 +60,7 @@ REQUIREMENTS = [
     # 'PySide2==5.15.2',
     # 'PyQt5', 
     'networkx==2.3',
-    'numba==0.50',
+    'numba==0.52',
     'biopython==1.78',
     'treeswift==1.1.14',
     'py2cytoscape==0.7.1']
