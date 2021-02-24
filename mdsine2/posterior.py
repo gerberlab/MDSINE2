@@ -6797,20 +6797,24 @@ class GLVParameters(pl.variables.MVN):
                 prior_var = np.array([_growth.prior.scale2.value, _self_int.prior.scale2.value])
                 current_val = np.array([_growth.value[taxa_id], _self_int.value[taxa_id]])
 
-                taxa_proposal, taxa_new_prop_ll, taxa_prev_prop_ll, taxa_new_target_ll, taxa_prev_target_ll = self._propose_growth_and_selfinter_taxa(
-                    X=X[taxa_id::n_taxa, taxa_id::n_taxa],
-                    Y=Y[taxa_id::n_taxa],
-                    noise_var=noise_var[taxa_id::n_taxa],
-                    prior_mean=prior_mean,
-                    prior_var=prior_var,
-                    current_val=current_val
-                )
-                new_prop_ll += taxa_new_prop_ll
-                prev_prop_ll += taxa_prev_prop_ll
-                new_target_ll += taxa_new_target_ll
-                prev_target_ll += taxa_prev_target_ll
-                proposal_growth[taxa_id] = taxa_proposal[0]
-                proposal_si[taxa_id] = taxa_proposal[1]
+                try:
+                    taxa_proposal, taxa_new_prop_ll, taxa_prev_prop_ll, taxa_new_target_ll, taxa_prev_target_ll = self._propose_growth_and_selfinter_taxa(
+                        X=X[taxa_id::n_taxa, taxa_id::n_taxa],
+                        Y=Y[taxa_id::n_taxa],
+                        noise_var=noise_var[taxa_id::n_taxa],
+                        prior_mean=prior_mean,
+                        prior_var=prior_var,
+                        current_val=current_val
+                    )
+
+                    new_prop_ll += taxa_new_prop_ll
+                    prev_prop_ll += taxa_prev_prop_ll
+                    new_target_ll += taxa_new_target_ll
+                    prev_target_ll += taxa_prev_target_ll
+                    proposal_growth[taxa_id] = taxa_proposal[0]
+                    proposal_si[taxa_id] = taxa_proposal[1]
+                except ValueError:
+                    continue
 
             # Accept or reject
             r = (new_target_ll - prev_prop_ll) - (prev_target_ll - new_prop_ll)
