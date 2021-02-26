@@ -5381,8 +5381,7 @@ class PriorVarMH(pl.variables.SICS):
         new_prop_ll = self.proposal.logpdf(value=new_value)
 
         # Accept or reject
-        r = (new_target_ll - prev_prop_ll) - \
-            (prev_target_ll - new_prop_ll)
+        r = (new_target_ll - prev_target_ll) + (prev_prop_ll - new_prop_ll)
         u = np.log(pl.random.misc.fast_sample_standard_uniform())
 
         if r >= u:
@@ -5826,8 +5825,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             low=low, high=high)
 
         # Accept or reject
-        r = (new_target_ll - prev_prop_ll) - \
-            (prev_target_ll - new_prop_ll)
+        r = (new_target_ll - prev_target_ll) + (prev_prop_ll - new_prop_ll)
         u = np.log(pl.random.misc.fast_sample_standard_uniform())
 
         if r >= u:
@@ -6770,13 +6768,6 @@ class GLVParameters(pl.variables.MVN):
             else:
                 noise_var = self.G[STRNAMES.PROCESSVAR].value / self.G.data.dt_vec
 
-            new_prop_ll = 0
-            prev_prop_ll = 0
-            new_target_ll = 0
-            prev_target_ll = 0
-            proposal_growth = np.zeros(n_taxa, dtype=np.float)
-            proposal_si = np.zeros(n_taxa, dtype=np.float)
-
             # Learn for each taxa separately (regression problem is separable by construction)
             for taxa_id in range(n_taxa):
                 """
@@ -6807,21 +6798,17 @@ class GLVParameters(pl.variables.MVN):
                         current_val=current_val
                     )
 
-                    new_prop_ll += taxa_new_prop_ll
-                    prev_prop_ll += taxa_prev_prop_ll
-                    new_target_ll += taxa_new_target_ll
-                    prev_target_ll += taxa_prev_target_ll
-                    proposal_growth[taxa_id] = taxa_proposal[0]
-                    proposal_si[taxa_id] = taxa_proposal[1]
-                except ValueError:
-                    continue
+                    # Accept or reject
+                    proposal_growth = taxa_proposal[0]
+                    proposal_si = taxa_proposal[1]
 
-            # Accept or reject
-            r = (new_target_ll - prev_prop_ll) - (prev_target_ll - new_prop_ll)
-            u = np.log(pl.random.misc.fast_sample_standard_uniform())
-            if r >= u:
-                _growth.value = proposal_growth
-                _self_int.value = proposal_si
+                    r = (taxa_new_target_ll - taxa_prev_target_ll) + (taxa_prev_prop_ll - taxa_new_prop_ll)
+                    u = np.log(pl.random.misc.fast_sample_standard_uniform())
+                    if r >= u:
+                        _growth.value[taxa_id] = proposal_growth
+                        _self_int.value[taxa_id] = proposal_si
+                except np.linalg.LinAlgError:
+                    continue
 
             # Post processing.
             _growth.update_str()
@@ -6837,55 +6824,22 @@ class GLVParameters(pl.variables.MVN):
         _growth = self.G[STRNAMES.GROWTH_VALUE]
         _self_int = self.G[STRNAMES.SELF_INTERACTION_VALUE]
 
-        # The optimal regression solution uses the following matrices:
+        proposal, new_prop_ll, prev_prop_ll = _growth_si_sample_helper(X, Y, prior_mean, prior_var, noise_var, current_val)
         noise_covar = np.diag(noise_var)
-        W = np.linalg.inv(X.T @ np.diag(np.reciprocal(noise_var)) @ X - np.diag(np.reciprocal(prior_var)))
-        WX = W @ X.T
-
-        # The optimal regression solution (MLE / Bayesian Least-Squares)
-        proposal_covar = (WX @ np.diag(np.reciprocal(noise_var)) @ WX.T)
-
-        try:
-            proposal_dist = scipy.stats.multivariate_normal(
-                mean=prior_mean,
-                cov=(WX @ np.diag(np.reciprocal(noise_var)) @ WX.T)
-            )
-        except np.linalg.LinAlgError:
-            return current_val, 0, 0, 0, 0
-        proposal = proposal_dist.rvs()  # sample
-
-        # Auto-reject non-negative solutions.
-        num_attempts = 0
-
-        # Attempt to sample a 2-d truncated Gaussian (rejection sampling)
-        while np.sum(proposal < 0) > 0 and num_attempts < 50:
-            num_attempts = num_attempts + 1
-            proposal = proposal_dist.rvs()
-
-        if np.sum(proposal < 0) > 0:
-            raise ValueError("Couldn't sample from truncated normal via Rejection sampling. (Use previous value instead)")
-
-        # NOTE: transition proposal likelihoods
-        #   g(new_param | old_param), g(old_param | new_param)
-        # are NOT symmetric, due to the other intermediate gibbs steps which must be accounted for.
-        # (e.g. X, prior_var, noise_var all depend on what the previous iteration's value)
-        # Use the following calculation as a heuristic (results in a non-reversible markov chain).
-
-        new_prop_ll = proposal_dist.logpdf(proposal)  # This is mathematically correct, p(new_proposal | prev_value)
-        prev_prop_ll = proposal_dist.logpdf(current_val)  # ... but this is not
-
-        # Target likelihoods, up to constant scaling
         proposal_growth = proposal[0]
         proposal_si = proposal[1]
 
         # Target distribution \propto (Growth, SI priors (Truncated Normal)) * (Model likelihood (Gaussian) | growth,SI)
-        new_target_ll = (
-                np.sum(_growth.prior.logpdf(value=proposal_growth))
-                + np.sum(_self_int.prior.logpdf(value=proposal_si))
-                + pl.random.multivariate_normal.logpdf(value=(Y.reshape(-1) - X @ proposal),
-                                                       mean=np.zeros(Y.shape[0]),
-                                                       cov=noise_covar)
-        )
+        if np.sum(proposal < 0) > 0:
+            new_target_ll = -np.inf
+        else:
+            new_target_ll = (
+                    np.sum(_growth.prior.logpdf(value=proposal_growth))
+                    + np.sum(_self_int.prior.logpdf(value=proposal_si))
+                    + pl.random.multivariate_normal.logpdf(value=(Y.reshape(-1) - X @ proposal),
+                                                           mean=np.zeros(Y.shape[0]),
+                                                           cov=noise_covar)
+            )
         prev_target_ll = (
                 np.sum(_growth.prior.logpdf(value=_growth.value))
                 + np.sum(_self_int.prior.logpdf(value=_self_int.value))
@@ -6995,6 +6949,47 @@ class GLVParameters(pl.variables.MVN):
         self.interactions.set_trace()
         if self._there_are_perturbations:
             self.pert_mag.set_trace()
+
+
+@numba.jit(nopython=False)
+def _growth_si_sample_helper(X: np.ndarray,
+                             Y: np.ndarray,
+                             prior_mean: np.ndarray,
+                             prior_var: np.ndarray,
+                             noise_var: np.ndarray,
+                             current_val: np.ndarray):
+    prior_covar_inv = np.diag(np.reciprocal(prior_var))
+    noise_covar_inv = np.diag(np.reciprocal(noise_var))
+
+    # Posterior distribution of Beta | X, Y
+    posterior_covar = np.linalg.inv(
+        prior_covar_inv + X.T @ noise_covar_inv @ X
+    )
+
+    posterior_mean = posterior_covar @ (
+            X.T @ noise_covar_inv @ Y.reshape(-1) - prior_covar_inv @ prior_mean
+    )
+
+    proposal = np.random.multivariate_normal(
+        mean=posterior_mean,
+        cov=posterior_covar,
+        size=None
+    )
+
+    # Target likelihoods, up to constant scaling
+    new_prop_ll = pl.random.multivariate_normal.logpdf(
+        value=proposal,
+        mean=posterior_mean,
+        cov=posterior_covar
+    )
+
+    prev_prop_ll = pl.random.multivariate_normal.logpdf(
+        value=current_val,
+        mean=posterior_mean,
+        cov=posterior_covar
+    )
+
+    return proposal, new_prop_ll, prev_prop_ll
 
 
 # Perturbations
@@ -9078,8 +9073,7 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
             low=self.proposal.low, high=self.proposal.high)
 
         # Accept or reject
-        r = (new_target_ll - prev_prop_ll) - \
-            (prev_target_ll - new_prop_ll)
+        r = (new_target_ll - prev_target_ll) + (prev_prop_ll - new_prop_ll)
         u = np.log(pl.random.misc.fast_sample_standard_uniform())
         if r >= u:
             self.acceptances[self.sample_iter] = True
@@ -9346,8 +9340,7 @@ class qPCRScaleL(pl.variables.SICS):
             low=self.proposal.low, high=self.proposal.high)
 
         # Accept or reject
-        r = (new_target_ll - prev_prop_ll) - \
-            (prev_target_ll - new_prop_ll)
+        r = (new_target_ll - prev_target_ll) + (prev_prop_ll - new_prop_ll)
         u = np.log(pl.random.misc.fast_sample_standard_uniform())
 
         if r >= u:
