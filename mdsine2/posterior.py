@@ -573,7 +573,7 @@ class _Loess(object):
             if np.all(self.input_yy == 0):
                 return 0
             else:
-                raise ValueError('`Returning `np.nan`')
+                raise ValueError('value computed is NaN.')
         return ret
 
 
@@ -768,6 +768,8 @@ class ProcessVarGlobal(pl.variables.SICS):
         z = self.G.data.construct_lhs(lhs, 
             kwargs_dict={STRNAMES.GROWTH_VALUE:{
                 'with_perturbations': self._there_are_perturbations}})
+
+        # Isolate Stdev residuals
         z = np.asarray(z).ravel()
         if self.G.data.zero_inflation_transition_policy is not None:
             z = z * self.G.data.sqrt_dt_vec[self.G.data.rows_to_include_zero_inflation]
@@ -785,8 +787,10 @@ class ProcessVarGlobal(pl.variables.SICS):
         self.sample()
         self.rebuild_diag()
 
-        self._strr = '{}, empirical_variance: {:.5f}'.format(self.value, 
-            residual/len(z))
+        self._strr = 'value: {}, empirical_variance: {:.5f}'.format(
+            self.value,
+            residual/len(z)
+        )
 
     def visualize(self, path: str, section: str='posterior') -> Any:
         return _scalar_visualize(self, path=path, f=None, section=section)
@@ -1581,7 +1585,6 @@ class ClusterAssignments(pl.graph.Node):
         oidxs = npr.permutation(len(self.G.data.taxa))
         iii = 0
         for oidx in oidxs:
-            logging.info('{}/{}: {}'.format(iii, len(oidxs), oidx))
             self.gibbs_update_single_taxon_slow_fast(oidx=oidx)
             iii += 1
         self._strtime = time.time() - start_time
@@ -3288,12 +3291,12 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 self.in_pert_transition[tidx] = True
 
             # check if anything is weird
-            if np.sum(self.in_pert_transition) % 2 != 0:
-                raise ValueError('The number of in_pert_transition periods must be even ({})' \
-                    '. There is either something wrong with the data (start and end day are ' \
-                    'the same) or with the algorithm ({})'.format(
-                        np.sum(self.in_pert_transition),
-                        self.in_pert_transition))
+            # if np.sum(self.in_pert_transition) % 2 != 0:
+            #     raise ValueError('The number of in_pert_transition periods must be even ({})' \
+            #         '. There is either something wrong with the data (start and end day are ' \
+            #         'the same) or with the algorithm ({})'.format(
+            #             np.sum(self.in_pert_transition),
+            #             self.in_pert_transition))
 
             # Make the fully in perturbation times
             for pidx in range(len(self.pert_ends)):
@@ -5378,8 +5381,7 @@ class PriorVarMH(pl.variables.SICS):
         new_prop_ll = self.proposal.logpdf(value=new_value)
 
         # Accept or reject
-        r = (new_target_ll - prev_prop_ll) - \
-            (prev_target_ll - new_prop_ll)
+        r = (new_target_ll - prev_target_ll) + (prev_prop_ll - new_prop_ll)
         u = np.log(pl.random.misc.fast_sample_standard_uniform())
 
         if r >= u:
@@ -5481,11 +5483,19 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             s = str(self.value)
         return s
 
-    def initialize(self, value_option: str, loc_option: str, scale2_option: str,
-        truncation_settings: Union[str, Tuple[float, float]], proposal_option: str, 
-        target_acceptance_rate: Union[str, float], tune: Union[str, int], 
-        end_tune: Union[str, int], value: float=None, loc: float=None, scale: float=None, 
-        proposal_var: float=None, delay: int=0):
+    def initialize(self, value_option: str,
+                   loc_option: str,
+                   scale2_option: str,
+                   truncation_settings: Union[str, Tuple[float, float]],
+                   proposal_option: str,
+                   target_acceptance_rate: Union[str, float],
+                   tune: Union[str, int],
+                   end_tune: Union[str, int],
+                   value: float=None,
+                   loc: float=None,
+                   scale2: float=None,
+                   proposal_var: float=None,
+                   delay: int=0):
         '''These are the parameters to initialize the parameters
         of the class. Depending whether it is a self-interaction
         or a growth, it does it differently.
@@ -5662,8 +5672,8 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         if not pl.isstr(scale2_option):
             raise TypeError('`scale2_option` ({}) must be a str'.format(type(scale2_option)))
         if scale2_option == 'manual':
-            if not pl.isnumeric(scale):
-                raise TypeError('`scale` ({}) must be a numeric'.format(type(scale)))
+            if not pl.isnumeric(scale2):
+                raise TypeError('`scale` ({}) must be a numeric'.format(type(scale2)))
         elif scale2_option in ['auto', 'diffuse-linear-regression']:
             # Perform linear regression
             if self.child_name == STRNAMES.GROWTH_VALUE:
@@ -5815,8 +5825,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             low=low, high=high)
 
         # Accept or reject
-        r = (new_target_ll - prev_prop_ll) - \
-            (prev_target_ll - new_prop_ll)
+        r = (new_target_ll - prev_target_ll) + (prev_prop_ll - new_prop_ll)
         u = np.log(pl.random.misc.fast_sample_standard_uniform())
 
         if r >= u:
@@ -6064,7 +6073,6 @@ class Growth(pl.variables.TruncatedNormal):
             kwargs_dict={STRNAMES.GROWTH_VALUE:{
                 'with_perturbations':self._there_are_perturbations}})
         y = self.G.data.construct_lhs(keys=lhs)
-        # X = X.toarray()
 
         process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(
             cov=False, sparse=True)
@@ -6135,9 +6143,9 @@ class Growth(pl.variables.TruncatedNormal):
         else:
             len_posterior = self.G.inference.sample_iter + 1
 
-        print(self.G.inference.sample_iter)
-        print(self.G.inference.burnin)
-        print(len_posterior)
+        # print(self.G.inference.sample_iter)
+        # print(self.G.inference.burnin)
+        # print(len_posterior)
 
         # Plot the prior on top of the posterior
         if self.G.tracer.is_being_traced(STRNAMES.PRIOR_MEAN_GROWTH):
@@ -6654,7 +6662,7 @@ class GLVParameters(pl.variables.MVN):
                 str(self.pert_mag))
         return a
 
-    def initialize(self, update_jointly_pert_inter: bool):
+    def initialize(self, update_jointly_pert_inter: bool, update_jointly_growth_selfinter: bool):
         '''The interior objects are initialized by themselves. Define which variables
         get updated together.
 
@@ -6678,6 +6686,10 @@ class GLVParameters(pl.variables.MVN):
             If True, update the interactions and the perturbations jointly.
             If False, update the interactions and perturbations separately - you
             randomly choose which one to update first.
+        update_jointly_growth_selfinter : bool
+            If True, update the growth and the self-interactions jointly.
+            If False, update the interactions and perturbations separately - you
+            randomly choose which one to update first.
         '''
         self._there_are_perturbations = self.G.perturbations is not None
         if not pl.isbool(update_jointly_pert_inter):
@@ -6685,8 +6697,9 @@ class GLVParameters(pl.variables.MVN):
                 type(update_jointly_pert_inter)))
 
         self.update_jointly_pert_inter = update_jointly_pert_inter
+        self.update_jointly_growth_selfinter = update_jointly_growth_selfinter
         self.sample_iter = 0
-                
+
     # @profile
     def asarray(self) -> np.ndarray:
         '''Builds the full regression coefficient vector.
@@ -6705,14 +6718,9 @@ class GLVParameters(pl.variables.MVN):
         self._update_perts_and_inter()
         if self._there_are_perturbations:
             self.G.data.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
-        
+
         # Update growth and self-interactions
-        if pl.random.misc.fast_sample_standard_uniform():
-            self.growth.update()
-            self.self_interactions.update()
-        else:
-            self.self_interactions.update()
-            self.growth.update()
+        self._update_growth_and_selfinter()
 
         self.sample_iter += 1
 
@@ -6720,6 +6728,127 @@ class GLVParameters(pl.variables.MVN):
             # If there are perturbations then we need to update their
             # matrix because the growths changed
             self.G.data.design_matrices[STRNAMES.PERT_VALUE].update_values()
+
+
+    def _update_growth_and_selfinter(self):
+        if not self.update_jointly_growth_selfinter:
+            """
+            Alternate sampling (random order).
+            """
+            if pl.random.misc.fast_sample_standard_uniform():
+                self.growth.update()
+                self.self_interactions.update()
+            else:
+                self.self_interactions.update()
+                self.growth.update()
+        else:
+            """
+            Jointly learn growth rates and self-interactions, via linear regression + MH.
+            """
+            rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
+            lhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
+
+            # Setup of an p-dim regression on n observations (design matrix X is (n x p)).
+            X = self.G.data.construct_rhs(
+                keys=rhs,
+                kwargs_dict={
+                    STRNAMES.GROWTH_VALUE: {'with_perturbations': self._there_are_perturbations}
+                }
+            )
+            Y = self.G.data.construct_lhs(keys=lhs)
+
+            # Extract relevant objects.
+            _growth = self.G[STRNAMES.GROWTH_VALUE]
+            _self_int = self.G[STRNAMES.SELF_INTERACTION_VALUE]
+            n_taxa = self.G.data.n_taxa
+
+            # n-dimensional vector.
+            if self.G.data.zero_inflation_transition_policy is not None:
+                noise_var = self.G[STRNAMES.PROCESSVAR].value / self.G.data.dt_vec[self.G.data.rows_to_include_zero_inflation]
+            else:
+                noise_var = self.G[STRNAMES.PROCESSVAR].value / self.G.data.dt_vec
+
+            # Learn for each taxa separately (regression problem is separable by construction)
+            for taxa_id in range(n_taxa):
+                """
+                Assume matrix is organized into (NT x 2N):
+                rows are blocks of N taxa at each timepoint, columns are (N growths), (N self_interaction)
+                
+                ============================================================================
+                                        (N bugs, growth rates)  (N bugs, self-interactions)
+                (N bugs, timepoint 1)
+                (N bugs, timepoint 2)
+                ...
+                ============================================================================
+                
+                Slice the array into T x 2 blocks, solve each 2-dimensional problem separately.
+                """
+                # p-dimensional vectors.
+                prior_mean = np.array([_growth.prior.loc.value, _self_int.prior.loc.value])
+                prior_var = np.array([_growth.prior.scale2.value, _self_int.prior.scale2.value])
+                current_val = np.array([_growth.value[taxa_id], _self_int.value[taxa_id]])
+
+                try:
+                    taxa_proposal, taxa_new_prop_ll, taxa_prev_prop_ll, taxa_new_target_ll, taxa_prev_target_ll = self._propose_growth_and_selfinter_taxa(
+                        X=X[taxa_id::n_taxa, taxa_id::n_taxa],
+                        Y=Y[taxa_id::n_taxa],
+                        noise_var=noise_var[taxa_id::n_taxa],
+                        prior_mean=prior_mean,
+                        prior_var=prior_var,
+                        current_val=current_val
+                    )
+
+                    # Accept or reject
+                    proposal_growth = taxa_proposal[0]
+                    proposal_si = taxa_proposal[1]
+
+                    r = (taxa_new_target_ll - taxa_prev_target_ll) + (taxa_prev_prop_ll - taxa_new_prop_ll)
+                    u = np.log(pl.random.misc.fast_sample_standard_uniform())
+                    if r >= u:
+                        _growth.value[taxa_id] = proposal_growth
+                        _self_int.value[taxa_id] = proposal_si
+                except np.linalg.LinAlgError:
+                    continue
+
+            # Post processing.
+            _growth.update_str()
+            _self_int.update_str()
+
+    def _propose_growth_and_selfinter_taxa(self,
+                                           X: np.ndarray,
+                                           Y: np.ndarray,
+                                           noise_var: np.ndarray,
+                                           prior_mean: np.ndarray,
+                                           prior_var: np.ndarray,
+                                           current_val: np.ndarray):
+        _growth = self.G[STRNAMES.GROWTH_VALUE]
+        _self_int = self.G[STRNAMES.SELF_INTERACTION_VALUE]
+
+        proposal, new_prop_ll, prev_prop_ll = _growth_si_sample_helper(X, Y, prior_mean, prior_var, noise_var, current_val)
+        noise_covar = np.diag(noise_var)
+        proposal_growth = proposal[0]
+        proposal_si = proposal[1]
+
+        # Target distribution \propto (Growth, SI priors (Truncated Normal)) * (Model likelihood (Gaussian) | growth,SI)
+        if np.sum(proposal < 0) > 0:
+            new_target_ll = -np.inf
+        else:
+            new_target_ll = (
+                    np.sum(_growth.prior.logpdf(value=proposal_growth))
+                    + np.sum(_self_int.prior.logpdf(value=proposal_si))
+                    + pl.random.multivariate_normal.logpdf(value=(Y.reshape(-1) - X @ proposal),
+                                                           mean=np.zeros(Y.shape[0]),
+                                                           cov=noise_covar)
+            )
+        prev_target_ll = (
+                np.sum(_growth.prior.logpdf(value=_growth.value))
+                + np.sum(_self_int.prior.logpdf(value=_self_int.value))
+                + pl.random.multivariate_normal.logpdf(value=(Y.reshape(-1) - X @ current_val),
+                                                       mean=np.zeros(Y.shape[0]),
+                                                       cov=noise_covar)
+        )
+
+        return proposal, new_prop_ll, prev_prop_ll, new_target_ll, prev_target_ll
 
     # @profile
     def _update_perts_and_inter(self):
@@ -6820,6 +6949,47 @@ class GLVParameters(pl.variables.MVN):
         self.interactions.set_trace()
         if self._there_are_perturbations:
             self.pert_mag.set_trace()
+
+
+@numba.jit(nopython=False)
+def _growth_si_sample_helper(X: np.ndarray,
+                             Y: np.ndarray,
+                             prior_mean: np.ndarray,
+                             prior_var: np.ndarray,
+                             noise_var: np.ndarray,
+                             current_val: np.ndarray):
+    prior_covar_inv = np.diag(np.reciprocal(prior_var))
+    noise_covar_inv = np.diag(np.reciprocal(noise_var))
+
+    # Posterior distribution of Beta | X, Y
+    posterior_covar = np.linalg.inv(
+        prior_covar_inv + X.T @ noise_covar_inv @ X
+    )
+
+    posterior_mean = posterior_covar @ (
+            X.T @ noise_covar_inv @ Y.reshape(-1) - prior_covar_inv @ prior_mean
+    )
+
+    proposal = np.random.multivariate_normal(
+        mean=posterior_mean,
+        cov=posterior_covar,
+        size=None
+    )
+
+    # Target likelihoods, up to constant scaling
+    new_prop_ll = pl.random.multivariate_normal.logpdf(
+        value=proposal,
+        mean=posterior_mean,
+        cov=posterior_covar
+    )
+
+    prev_prop_ll = pl.random.multivariate_normal.logpdf(
+        value=current_val,
+        mean=posterior_mean,
+        cov=posterior_covar
+    )
+
+    return proposal, new_prop_ll, prev_prop_ll
 
 
 # Perturbations
@@ -8903,8 +9073,7 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
             low=self.proposal.low, high=self.proposal.high)
 
         # Accept or reject
-        r = (new_target_ll - prev_prop_ll) - \
-            (prev_target_ll - new_prop_ll)
+        r = (new_target_ll - prev_target_ll) + (prev_prop_ll - new_prop_ll)
         u = np.log(pl.random.misc.fast_sample_standard_uniform())
         if r >= u:
             self.acceptances[self.sample_iter] = True
@@ -9171,8 +9340,7 @@ class qPCRScaleL(pl.variables.SICS):
             low=self.proposal.low, high=self.proposal.high)
 
         # Accept or reject
-        r = (new_target_ll - prev_prop_ll) - \
-            (prev_target_ll - new_prop_ll)
+        r = (new_target_ll - prev_target_ll) + (prev_prop_ll - new_prop_ll)
         u = np.log(pl.random.misc.fast_sample_standard_uniform())
 
         if r >= u:

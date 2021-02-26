@@ -24,6 +24,11 @@ DEFAULT_LOG_EVERY = 5
 REQUIRED_ATTRS = ['update', 'initialize', 'set_trace', 'add_trace']
 GLOBAL_PARAMETER = -1
 
+
+class TraceNotFoundException(BaseException):
+    pass
+
+
 def isMCMC(x: Any) -> bool:
     '''Checks if the input array is an MCMC inference object
 
@@ -147,6 +152,16 @@ class BaseMCMC(BaseModel):
         self._intermediate_func = None # callable
         self._intermediate_t = None # float
         self._intermediate_kwargs = None # dict
+
+    def num_iters(self, section: str):
+        if section == 'burnin':
+            return self.burnin
+        elif section == 'full':
+            return self.n_samples
+        elif section == 'posterior':
+            return self.n_samples - self.burnin
+        else:
+            raise ValueError("Unexpected section {}".format(section))
 
     @classmethod
     def load(cls, filename: str):
@@ -437,7 +452,7 @@ class BaseMCMC(BaseModel):
                 except AttributeError:
                     logging.info('Pre Pylab 3.0.0 implementation. Ignore')
                 except:
-                    logging.critical('unknown error')
+                    logging.error('unknown error')
                     raise
 
                 # Log where necessary
@@ -460,7 +475,7 @@ class BaseMCMC(BaseModel):
                         self.graph.nodes[_id].update()
                         self.graph.nodes[_id].add_trace()
                     except:
-                        logging.critical('Crashed in `{}`'.format(self.graph[_id].name))
+                        logging.error('Crashed in `{}`'.format(self.graph[_id].name))
                         # self.graph.tracer.finish_tracing()
                         raise
 
@@ -834,7 +849,11 @@ class Tracer(Saveable):
             raise TypeError('`section` ({}) must be a str'.format(type(str)))
         
         self.open(mode='r')
-        dset = self.f[name]
+        try:
+            dset = self.f[name]
+        except KeyError:
+            raise TraceNotFoundException("Trace of {} not found.".format(name))
+
         if section == 'posterior':
             high = dset.attrs['end_iter']
             low = self.burnin

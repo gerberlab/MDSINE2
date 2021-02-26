@@ -181,7 +181,7 @@ class _BaseArithmeticClass:
     "Ask forgiveness, not permission"
     '''
     def __str__(self):
-        return str(self.value)
+        return "[{}({})]".format(self.__class__.__name__, self.value)
 
     # ----------------
     # Binary operators
@@ -597,6 +597,9 @@ class Normal(Variable, _RandomBase):
         # Set graph with parents
         self.add_parent(self._loc)
         self.add_parent(self._scale2)
+
+    def __str__(self):
+        return "[{}(loc={},scale={})]".format(self.__class__.__name__, self.loc, self.scale2)
 
     @property
     def loc(self) -> Variable:
