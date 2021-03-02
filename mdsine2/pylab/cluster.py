@@ -4,7 +4,7 @@ import copy
 import numba
 
 # Typing
-from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, Type
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, Type, List
 
 from . import util
 from .errors import NeedToImplementError
@@ -343,8 +343,17 @@ class Clustering(Node, Traceable):
         '''Make the cocluster matrix of the current cluster configuration
         '''
         return _generate_coclusters_fast(idx2cid=self.idx2cid)
-    
-    def tolistoflists(self) -> Iterator[Iterator[int]]:
+
+    def fromlistoflists(self, clustering_arr: List[List[int]]):
+        '''
+        Takes a list of lists, representing clusterings (each constituent is an int), and repopulate a clustering.
+        '''
+        for new_clust in clustering_arr:
+            cid = self.make_new_cluster_with(new_clust[0])
+            for item in new_clust[1:]:
+                self.move_item(item, cid)
+
+    def tolistoflists(self) -> List[List[int]]:
         '''Converts clusters into array format:
         clusters = [clus1, ..., clusN],
             clusters{i} = [idx1, ..., idxM]

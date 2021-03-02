@@ -372,12 +372,42 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.PRIOR_MEAN_PERT,
             STRNAMES.PRIOR_VAR_PERT,
             STRNAMES.PERT_INDICATOR,
-			STRNAMES.PERT_VALUE,
+            STRNAMES.PERT_VALUE,
             STRNAMES.PERT_INDICATOR_PROB,
             STRNAMES.GLV_PARAMETERS,
             STRNAMES.QPCR_SCALES,
             STRNAMES.QPCR_DOFS,
             STRNAMES.QPCR_VARIANCES]
+
+    def copy(self):
+        cfg = MDSINE2ModelConfig(
+            self.OUTPUT_BASEPATH,
+            self.SEED,
+            self.BURNIN,
+            self.N_SAMPLES,
+            self.NEGBIN_A0,
+            self.NEGBIN_A1,
+            self.LEAVE_OUT,
+            self.CHECKPOINT
+        )
+
+        cfg.PROCESS_VARIANCE_TYPE = self.PROCESS_VARIANCE_TYPE
+        cfg.DATA_DTYPE = self.DATA_DTYPE
+        cfg.QPCR_NORMALIZATION_MAX_VALUE = self.QPCR_NORMALIZATION_MAX_VALUE
+        cfg.ZERO_INFLATION_TRANSITION_POLICY = self.ZERO_INFLATION_TRANSITION_POLICY
+        cfg.GROWTH_TRUNCATION_SETTINGS = self.GROWTH_TRUNCATION_SETTINGS
+        cfg.SELF_INTERACTIONS_TRUNCATION_SETTINGS = self.SELF_INTERACTIONS_TRUNCATION_SETTINGS
+        cfg.MP_FILTERING = self.MP_FILTERING
+        cfg.MP_CLUSTERING = self.MP_CLUSTERING
+        cfg.N_QPCR_BUCKETS = self.N_QPCR_BUCKETS
+        cfg.INTERMEDIATE_VALIDATION_T = self.INTERMEDIATE_VALIDATION_T
+        cfg.INTERMEDIATE_VALIDATION_KWARGS = self.INTERMEDIATE_VALIDATION_KWARGS
+
+        cfg.LEARN = self.LEARN
+        cfg.INFERENCE_ORDER = self.INFERENCE_ORDER
+        cfg.INITIALIZATION_KWARGS = self.INITIALIZATION_KWARGS
+        cfg.INITIALIZATION_ORDER = self.INITIALIZATION_ORDER
+        return cfg
 
     def set_negbin_params(self, a0: float, a1: float):
         self.NEGBIN_A0 = a0
