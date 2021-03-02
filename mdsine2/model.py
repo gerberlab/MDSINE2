@@ -2,7 +2,7 @@
 '''
 import numpy as np
 import time
-import logging
+from mdsine2.logger import logger
 
 from typing import Union, Dict, Iterator, Tuple, List, Any
 
@@ -211,7 +211,7 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         initial_conditions = initial_conditions.reshape(-1,1)
         for gibb in range(growths.shape[0]):
             if gibb % 5 == 0 and gibb > 0:
-                logging.info('{}/{} - {}'.format(gibb,growths.shape[0],
+                logger.info('{}/{} - {}'.format(gibb,growths.shape[0],
                     time.time()-start_time))
                 start_time = time.time()
             dyn.growth = growths[gibb]

@@ -1,5 +1,5 @@
 import numpy as np
-import logging
+from mdsine2.logger import logger
 import copy
 import numba
 

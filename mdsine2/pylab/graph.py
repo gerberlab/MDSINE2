@@ -7,7 +7,7 @@ The Node class is also defined here.
 '''
 import numpy as np
 import networkx as nx
-import logging
+from mdsine2.logger import logger
 import copy
 import random
 import h5py
@@ -348,7 +348,7 @@ class DataNode:
         self.name = name
         self.id = id(self)
         if self.G.data is not None:
-            logging.info('Overriding old data object in graph {}'.format(self))
+            logger.info('Overriding old data object in graph {}'.format(self))
         self.G.data = self # Set itself as the .data pointer
 
     def delete(self):

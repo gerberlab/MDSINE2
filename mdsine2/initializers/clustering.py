@@ -9,6 +9,8 @@ from mdsine2 import initialize_graph, Study, MDSINE2ModelConfig, run_graph
 from mdsine2.pylab import BaseMCMC
 from mdsine2.names import STRNAMES
 
+from mdsine2.logger import logger
+
 
 def sign_str(x: float):
     if x < 0:
@@ -25,7 +27,8 @@ def initialize_mdsine_from_perturbations(
         study: Study,
         n_samples: int=1000,
         burnin: int=0,
-        checkpoint: int=500):
+        checkpoint: int=500,
+        print_debug: bool=False):
     '''
     Trains the model by first learning perturbations (no interactions)
     and divides up the OTUs into clusters based on perturbation magnitudes/signs.
@@ -51,13 +54,22 @@ def initialize_mdsine_from_perturbations(
     otus_with_perturbation_signs = [
         (
             next(iter(cluster.members)),
-            "".join([sign_str(pert.magnitude.value[ckey]) for pert in mcmc_proxy.graph.perturbations])
+            "".join([
+                sign_str(
+                    pert.magnitude.value[ckey]
+                    # if pert.indicator.
+                    # else 0
+                )
+                for pert in mcmc_proxy.graph.perturbations
+            ])
         )
         for ckey, cluster in mcmc_proxy.graph[STRNAMES.CLUSTERING].clustering.clusters.items()
     ]
 
     for otu, pert_sign in otus_with_perturbation_signs:
         result_clustering[pert_sign].append(otu)
+
+    logger.info("Initializing clusters to: {}".format(dict(result_clustering)))
 
     # ========= Save the result into original chain.
     mcmc.graph[STRNAMES.CLUSTERING].value.fromlistoflists([

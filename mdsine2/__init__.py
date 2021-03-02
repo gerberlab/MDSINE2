@@ -11,6 +11,8 @@ from . import config
 from . import dataset
 from . import synthetic
 
+from .logger import MakeDirTimedRotatingFileHandler
+
 # Import key modules from pylab
 from .pylab import random
 from .pylab import variables
@@ -49,7 +51,7 @@ from .synthetic import Synthetic
 from .pylab.errors import UndefinedError, MathError, GraphIDError, InheritanceError, \
     InitializationError
 
-from .config import MDSINE2ModelConfig, NegBinConfig, LoggingConfig
+from .config import MDSINE2ModelConfig, NegBinConfig
 from .run import initialize_graph, normalize_parameters, denormalize_parameters, \
     calculate_stability_over_gibbs, run_graph
 from .util import is_gram_negative, generate_interation_bayes_factors_posthoc, \

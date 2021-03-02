@@ -2,7 +2,7 @@
 parameters that are set manually in here. There are also the filtering
 functions used to preprocess the data
 '''
-import logging
+from mdsine2.logger import logger
 import numpy as np
 import pandas as pd
 import sys
@@ -546,50 +546,6 @@ class FilteringConfig(pl.Saveable):
 
     def suffix(self):
         return str(self)
-
-
-class LoggingConfig(pl.Saveable):
-    '''These are the parameters for logging
-
-    FORMAT : str
-        This is the logging format for stdout
-    LEVEL : logging constant, int
-        This is the level to log at for stdout
-    NUMPY_PRINTOPTIONS : dict
-        These are the printing options for numpy.
-
-    Parameters
-    ----------
-    basepath : str
-        If this is specified, then we also want to log to a file. Set up a
-        steam and a file
-    fmt : str
-        This is the format of the logging prefix for the `logging` module
-    level : int
-        This is the level of logging to log
-    '''
-    def __init__(self, basepath: str=None, level: int=logging.INFO, 
-        fmt: str='%(levelname)s:%(module)s.%(lineno)s: %(message)s'):
-        self.FORMAT = fmt
-        self.LEVEL = level
-        self.NUMPY_PRINTOPTIONS = {
-            'threshold': sys.maxsize, 'linewidth': sys.maxsize}
-
-        if basepath is not None:
-            path = os.path.join(basepath, 'logging.log')
-            self.PATH = path
-            handlers = [
-                logging.FileHandler(self.PATH, mode='w'),
-                logging.StreamHandler()]
-            for handler in logging.root.handlers[:]:
-                logging.root.removeHandler(handler)
-            logging.basicConfig(level=self.LEVEL, format=self.FORMAT, handlers=handlers)
-        else:
-            self.PATH = None
-            logging.basicConfig(format=self.FORMAT, level=self.LEVEL)
-        
-        np.set_printoptions(**self.NUMPY_PRINTOPTIONS)
-        pd.set_option('display.max_columns', None)
 
 
 class NegBinConfig(_BaseModelConfig):

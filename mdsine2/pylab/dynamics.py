@@ -14,7 +14,7 @@ import numpy as np
 import numpy.random as npr
 import sys
 import time
-import logging
+from mdsine2.logger import logger
 import math
 
 # Typing
@@ -277,7 +277,7 @@ def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float,
     prev = X[:,[0]]
     for i in range(1,n_timepoints_to_integrate):
         if i % log_every == 0:
-            logging.info('Simulating {}/{}'.format(i, n_timepoints_to_integrate))
+            logger.info('Simulating {}/{}'.format(i, n_timepoints_to_integrate))
         t += dt 
         a = dynamics.integrate_single_timestep(x=prev, t=t, dt=dt)
         X[:,i] = processvar.integrate_single_timestep(x=a, t=t, dt=dt)

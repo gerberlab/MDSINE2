@@ -12,7 +12,7 @@ import math
 import numpy.random as npr
 import pickle
 import random
-import logging
+from mdsine2.logger import logger
 import warnings
 import sys
 import scipy.stats
@@ -105,7 +105,7 @@ def _safe_cholesky(M: np.ndarray, jitter: bool=False, save_if_crash: bool=False)
         while jitter < 1.0:
             try:
                 L = np.linalg.cholesky(M + np.diag(jitter*np.ones(M.shape[0])))
-                logging.warning('jitter threshold: {}'.format(jitter))
+                logger.warning('jitter threshold: {}'.format(jitter))
                 return L
             except:
                 jitter *= 10

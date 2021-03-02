@@ -1,6 +1,6 @@
 import pandas as pd
 import os
-import logging
+from mdsine2.logger import logger
 from typing import Dict, Union
 from .pylab import TaxaSet, Study
 
@@ -52,17 +52,17 @@ def load_gibson(dset: str=None, as_df: bool=False, with_perturbations: bool=True
     mdsine2.Study OR dict
     '''
     # Load the taxonomy assignment
-    logging.debug('Downloading taxonomy')
+    logger.debug('Downloading taxonomy')
     taxonomy = _Gibson.load_taxonomy(species_assignment=species_assignment, load_local=load_local,
         max_n_species=max_n_species)
-    logging.debug('Downloading metadata')
+    logger.debug('Downloading metadata')
     metadata = _Gibson.load_sampleid(dset=dset, load_local=load_local)
-    logging.debug('Downloading reads')
+    logger.debug('Downloading reads')
     reads = _Gibson.load_reads(dset=dset, load_local=load_local)
-    logging.debug('Downloading qpcr')
+    logger.debug('Downloading qpcr')
     qpcr = _Gibson.load_qpcr_masses(dset=dset, load_local=load_local)
     if with_perturbations:
-        logging.debug('Downloading peturbations')
+        logger.debug('Downloading peturbations')
         perturbations = _Gibson.load_perturbations(dset=dset, load_local=load_local)
     else:
         perturbations = None
@@ -162,28 +162,28 @@ class _Gibson:
             if load_local is None:
                 path = _Gibson._URL_PATH + _Gibson._URL_SILVA_TAX
             else:
-                logging.debug('Load local')
+                logger.debug('Load local')
                 path = os.path.join(load_local, _Gibson._URL_SILVA_TAX)
             taxonomy = pd.read_csv(path, sep='\t', index_col=0)
         elif species_assignment == 'rdp':
             if load_local is None:
                 path = _Gibson._URL_PATH + _Gibson._URL_RDP_TAX
             else:
-                logging.debug('Load local')
+                logger.debug('Load local')
                 path = os.path.join(load_local, _Gibson._URL_RDP_TAX)
             taxonomy = pd.read_csv(path, sep='\t', index_col=0)
         elif species_assignment == 'both':
             if load_local is None:
                 path = _Gibson._URL_PATH + _Gibson._URL_RDP_TAX
             else:
-                logging.debug('Load local')
+                logger.debug('Load local')
                 path = os.path.join(load_local, _Gibson._URL_RDP_TAX)
             rdp = pd.read_csv(path, sep='\t', index_col=0)
             
             if load_local is None:
                 path = _Gibson._URL_PATH + _Gibson._URL_SILVA_TAX
             else:
-                logging.debug('Load local')
+                logger.debug('Load local')
                 path = os.path.join(load_local, _Gibson._URL_SILVA_TAX)
             silva = pd.read_csv(path, sep='\t', index_col=0)
 
@@ -245,7 +245,7 @@ class _Gibson:
         if load_local is None:
             path = _Gibson._URL_PATH + _Gibson._URL_PERTS
         else:
-            logging.debug('Load local')
+            logger.debug('Load local')
             path = os.path.join(load_local, _Gibson._URL_PERTS)
         df = pd.read_csv(path, sep='\t')
 
@@ -290,7 +290,7 @@ class _Gibson:
         if load_local is None:
             path = _Gibson._URL_PATH + _Gibson._URL_QPCR
         else:
-            logging.debug('Load local')
+            logger.debug('Load local')
             path = os.path.join(load_local, _Gibson._URL_QPCR)
         
         df = pd.read_csv(path, sep='\t')
@@ -320,7 +320,7 @@ class _Gibson:
         if load_local is None:
             path = _Gibson._URL_PATH + _Gibson._URL_READS
         else:
-            logging.debug('Load local')
+            logger.debug('Load local')
             path = os.path.join(load_local, _Gibson._URL_READS)
         df = pd.read_csv(path, sep='\t', index_col=0)
 

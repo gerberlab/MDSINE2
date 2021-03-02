@@ -25,7 +25,7 @@ Tracing functions
 Linewidths are automatically shutoff if the number of taxa is greater than 75
 '''
 import numpy as np
-import logging
+from mdsine2.logger import logger
 import math
 import warnings
 import re
@@ -565,7 +565,7 @@ def render_interaction_strength(interaction_matrix: np.ndarray, log_scale: bool,
             ax.collections[0].colorbar.ax.set_title("$\\log_{10}$")
         plt.yticks(rotation=0)
     except Exception as e:
-        logging.critical('Could not plot heatmap because of error message: "{}".' \
+        logger.critical('Could not plot heatmap because of error message: "{}".' \
             ' This is likely because `interaction_matrix` has either only NaNs ' \
             'or 0s ({}). We are clearing the current axis and are going to skip' \
             'plotting this axis.'.format(str(e), _is_just_zero_or_nan(interaction_matrix)))
@@ -718,7 +718,7 @@ def render_acceptance_rate_trace(var: variables.Variable, idx: Union[int, Tuple[
         else:
             ax.plot(points, np.squeeze(value), **kwargs)
     except:
-        logging.info('`ax.plot` failed. No points to plot')
+        logger.info('`ax.plot` failed. No points to plot')
     return ax
 
 def render_trace(var: variables.Variable, idx: Union[int, Tuple[int, int]]=None, 
@@ -911,7 +911,7 @@ def render_trace(var: variables.Variable, idx: Union[int, Tuple[int, int]]=None,
         try:
             if log_scale:
                 if np.any(trace < 0):
-                    logging.warning('Some values in trace are negative, take absolute value of vector')
+                    logger.warning('Some values in trace are negative, take absolute value of vector')
                     trace = np.absolute(trace)
                 ax.set_yscale('log')
             if scatter:
@@ -919,7 +919,7 @@ def render_trace(var: variables.Variable, idx: Union[int, Tuple[int, int]]=None,
             else:
                 ax.plot(points, np.squeeze(trace), **kwargs)
         except:
-            logging.info('`ax.plot` failed. No points to plot')
+            logger.info('`ax.plot` failed. No points to plot')
         if log_scale:
             ax.set_yscale('log')
     elif plt_type == 'hist':
@@ -930,7 +930,7 @@ def render_trace(var: variables.Variable, idx: Union[int, Tuple[int, int]]=None,
         try:
             if log_scale:
                 if np.any(trace < 0):
-                    logging.warning('Some values in trace are negative, take absolute value of vector')
+                    logger.warning('Some values in trace are negative, take absolute value of vector')
                     trace = np.absolute(trace)
                 hist, bins = np.histogram(trace, bins=30)
                 logbins = np.logspace(np.log10(bins[0]),np.log10(bins[-1]),len(bins))
@@ -942,7 +942,7 @@ def render_trace(var: variables.Variable, idx: Union[int, Tuple[int, int]]=None,
             # ax.axvline(x=np.median(trace), color = 'blue')
 
         except Exception as e:
-            logging.info('`ax.hist` failed: {}'.format(e))
+            logger.info('`ax.hist` failed: {}'.format(e))
             return None
     else:
         raise ValueError('plt_type ({}) not recognized'.format(plt_type))
@@ -1331,11 +1331,11 @@ def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, 
                 type(color_code_clusters)))
         if color_code_clusters:
             if taxlevel != 'taxon':
-                logging.warning('Overriding `color_code_clusters` to False because `taxlevel`' \
+                logger.warning('Overriding `color_code_clusters` to False because `taxlevel`' \
                     ' ({}) is not None nor "taxon"'.format(taxlevel))
                 color_code_clusters = False
             if legend:
-                logging.warning('Overriding `legend` to False because `color_code_clusters` is True')
+                logger.warning('Overriding `legend` to False because `color_code_clusters` is True')
             legend = False
 
         _cumm = 0
@@ -1421,7 +1421,7 @@ def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, 
                 markersize=markersize, alpha=alpha, linestyle=linestyle, **kwargs)
         
         if highlight is not None:
-            logging.warning('`highlight` is not implemented for dtype ({}). Skipping'.format(
+            logger.warning('`highlight` is not implemented for dtype ({}). Skipping'.format(
                 dtype))
     else:
         if dtype == 'qpcr':
@@ -2102,14 +2102,14 @@ def _init_parameters_heatmap(matrix: np.ndarray, taxa: TaxaSet, clustering: Clus
         yticklabels = False
     if type(xticklabels) == str:
         if taxa is None:
-            logging.warning('Automatically setting xlabels as index because there are no taxa')
+            logger.warning('Automatically setting xlabels as index because there are no taxa')
             xticklabels = ['{}'.format(i+1) for i in range(matrix.shape[0])]
         else:
             xticklabels = _format_ticklabel(format=xticklabels, order=order, taxa=taxa)
     
     if type(yticklabels) == str:
         if taxa is None:
-            logging.warning('Automatically setting xlabels as index because there are no taxa')
+            logger.warning('Automatically setting xlabels as index because there are no taxa')
             yticklabels = ['{}'.format(i+1) for i in range(matrix.shape[0])]
         else:
             yticklabels = _format_ticklabel(format=yticklabels, order=order, taxa=taxa)

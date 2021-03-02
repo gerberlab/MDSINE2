@@ -4,7 +4,7 @@ This contains all of the data structures used for inference: design matrices, po
 classes, auxiliary functions, building the graph
 '''
 import numpy as np
-import logging
+from mdsine2.logger import logger
 import sys
 import time
 import pandas as pd
@@ -750,7 +750,7 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
             # Adjust
             acc_rate = self.acceptances/self.n_props_total
             if acc_rate < 0.1:
-                logging.debug('Very low acceptance rate, scaling down past covariance')
+                logger.debug('Very low acceptance rate, scaling down past covariance')
                 self.proposal_std *= 0.01
             elif acc_rate < self.target_acceptance_rate:
                 self.proposal_std /= np.sqrt(1.5)
@@ -1014,7 +1014,7 @@ def build_graph(params: config.NegBinConfig, graph_name: str, subjset: Study) ->
         try:
             GRAPH[name].initialize(**params.INITIALIZATION_KWARGS[name])
         except:
-            logging.critical('Failed in {}'.format(name))
+            logger.critical('Failed in {}'.format(name))
             raise
 
     # Set tracing object
@@ -1046,8 +1046,8 @@ def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True) -> BaseMCMC:
     try:
         mcmc.run(log_every=1)
     except Exception as e:
-        logging.critical('CHAIN `{}` CRASHED'.format(mcmc.graph.name))
-        logging.critical('Error: {}'.format(e))
+        logger.critical('CHAIN `{}` CRASHED'.format(mcmc.graph.name))
+        logger.critical('Error: {}'.format(e))
         if crash_if_error:
             raise
     mcmc.graph[STRNAMES.FILTERING].kill()

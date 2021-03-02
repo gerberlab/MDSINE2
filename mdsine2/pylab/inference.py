@@ -1,7 +1,9 @@
 import os
 import copy
+import sys
+
 import h5py
-import logging
+from mdsine2.logger import logger
 import time
 import shutil
 import inspect
@@ -18,6 +20,7 @@ from .variables import isVariable, Variable
 from .errors import UndefinedError, InheritanceError
 from . import util
 from .random import seed as set_seed
+from tqdm import tqdm
 
 # Constants
 DEFAULT_LOG_EVERY = 5
@@ -407,21 +410,21 @@ class BaseMCMC(BaseModel):
                 raise UndefinedError('Cannot run mcmc until you have set the inference order.' \
                     ' Set with the function `self.set_inference_order`.')
             if self.tracer is None:
-                logging.warning('No tracer set - assume you do not want to write to disk')
+                logger.warning('No tracer set - assume you do not want to write to disk')
                 self.tracer_filename = None
                 self.tracer = Tracer(mcmc=self, filename=None)
                 self.checkpoint = None
 
-                logging.info('Setting the trace of learned parameters')
-                logging.info('#######################################')
+                logger.info('Setting the trace of learned parameters')
+                logger.info('#######################################')
                 for nid in self.inf_order:
-                    logging.info('Setting the trace of {}'.format(self.graph[nid].name))
+                    logger.info('Setting the trace of {}'.format(self.graph[nid].name))
                     self.graph[nid].set_trace()
-                logging.info('Setting the trace for diagnostic variables')
-                logging.info('##########################################')
+                logger.info('Setting the trace for diagnostic variables')
+                logger.info('##########################################')
                 if self.diagnostic_variables is not None:
                     for nid in self.diagnostic_variables:
-                        logging.info('Setting the trace of {}'.format(self.graph[nid].name))
+                        logger.info('Setting the trace of {}'.format(self.graph[nid].name))
                         self.graph[nid].set_trace()
 
             total_time = time.time()
@@ -430,14 +433,15 @@ class BaseMCMC(BaseModel):
 
             start = time.time()
             intermediate_time = time.time()
-            for i in range(self.start_step, self.n_samples):
+
+            for i in tqdm(range(self.start_step, self.n_samples), file=sys.stdout):
                 self.sample_iter = i
 
                 # Check if we need to run the intermediate script
                 try:
                     if self._intermediate_t is not None:
                         if time.time() - intermediate_time > self._intermediate_t:
-                            logging.info('Running intermediate script {}'.format(
+                            logger.info('Running intermediate script {}'.format(
                                 self._intermediate_func.__name__))
                             kwargs = {
                                 'chain': self, 'burnin': self.burnin, 
@@ -450,23 +454,26 @@ class BaseMCMC(BaseModel):
                                 raise ValueError('failed in intermediate function')
                             intermediate_time = time.time() 
                 except AttributeError:
-                    logging.info('Pre Pylab 3.0.0 implementation. Ignore')
+                    logger.info('Pre Pylab 3.0.0 implementation. Ignore')
                 except:
-                    logging.error('unknown error')
+                    logger.error('unknown error')
                     raise
 
                 # Log where necessary
                 if i % log_every == 0:
-                    logging.info('\n\nInference iteration {}/{}, time: {}'.format(
-                        i, self.n_samples, time.time() - start))
+                    logger.debug('Inference iteration {}/{}, time: {}'.format(
+                        i,
+                        self.n_samples,
+                        time.time() - start)
+                    )
                     start = time.time()
                     for id in self.inf_order:
                         if type(id) == list:
                             for id_ in id:
-                                logging.info('{}: {}'.format(self.graph.nodes[id_].name,
+                                logger.debug('{}: {}'.format(self.graph.nodes[id_].name,
                                     str(self.graph.nodes[id_])))
                         else:
-                            logging.info('{}: {}'.format(self.graph.nodes[id].name,
+                            logger.debug('{}: {}'.format(self.graph.nodes[id].name,
                                 str(self.graph.nodes[id])))
 
                 # Sample posterior in the order indicated and add the trace
@@ -475,7 +482,7 @@ class BaseMCMC(BaseModel):
                         self.graph.nodes[_id].update()
                         self.graph.nodes[_id].add_trace()
                     except:
-                        logging.error('Crashed in `{}`'.format(self.graph[_id].name))
+                        logger.error('Crashed in `{}`'.format(self.graph[_id].name))
                         # self.graph.tracer.finish_tracing()
                         raise
 
@@ -490,7 +497,7 @@ class BaseMCMC(BaseModel):
                     try:
                         self.save()
                     except:
-                        logging.critical('If you want to checkpoint, you must set the save location ' \
+                        logger.critical('If you want to checkpoint, you must set the save location ' \
                             'of tracer, graph, and mcmc using the function self.set_save_location()')
                         print(self._save_loc)
                         raise
@@ -498,12 +505,12 @@ class BaseMCMC(BaseModel):
             # Finish the tracing
             self.graph.tracer.finish_tracing()
             self.ran = True
-            logging.info('Inference total time: {}/Gibb step'.format(
+            logger.info('Inference total time: {}/Gibb step'.format(
                 (time.time() - total_time)/self.n_samples))
             
             # Remove the local traces
             if self.tracer is not None:
-                logging.info('remove local traces')
+                logger.info('remove local traces')
                 for node in self.graph:
                     if isVariable(node):
                         node.remove_local_trace()
@@ -580,21 +587,21 @@ class Tracer(Saveable):
             else:
                 a = []
             self.f.attrs['diagnostic_variables'] = a
-            logging.info('Setting Single Write, Multiple Read Mode')
+            logger.info('Setting Single Write, Multiple Read Mode')
             self.f.swmr_mode = True # single writer, multiple reader mode
             self.close()
 
             # Add all of the variables being traced to the file
-            logging.info('Setting the trace of learned parameters')
-            logging.info('#######################################')
+            logger.info('Setting the trace of learned parameters')
+            logger.info('#######################################')
             for nid in self.mcmc.inf_order:
-                logging.info('Setting the trace of {}'.format(self.graph[nid].name))
+                logger.info('Setting the trace of {}'.format(self.graph[nid].name))
                 self.graph[nid].set_trace()
-            logging.info('Setting the trace for diagnostic variables')
-            logging.info('##########################################')
+            logger.info('Setting the trace for diagnostic variables')
+            logger.info('##########################################')
             if self.mcmc.diagnostic_variables is not None:
                 for nid in self.mcmc.diagnostic_variables:
-                    logging.info('Setting the trace of {}'.format(self.graph[nid].name))
+                    logger.info('Setting the trace of {}'.format(self.graph[nid].name))
                     self.graph[nid].set_trace()
 
     # def __enter__(self):
@@ -696,7 +703,7 @@ class Tracer(Saveable):
             This is the group you want it added to 
         '''
         if name in self.being_traced:
-            logging.info('Skipping adding the trace of `{}` because it is already being' \
+            logger.info('Skipping adding the trace of `{}` because it is already being' \
                 ' traced ({})'.format(name, list(self.being_traced)))
             return
         if not util.isstr(name):

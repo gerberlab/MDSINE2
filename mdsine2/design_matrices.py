@@ -28,7 +28,7 @@ Main classes
 '''
 
 import numpy as np
-import logging
+from mdsine2.logger import logger
 import numba
 import time
 import itertools
@@ -514,7 +514,7 @@ class Data(DataNode):
         if self.zero_inflation_transition_policy is None:
             # raise ValueError('Cannot set set the zero infation if `zero_inflation_transition_policy` ' \
             #     'is not set during initialization')
-            logging.warning('`zero_inflation_transition_policy` is None so we are not doing anything')
+            logger.warning('`zero_inflation_transition_policy` is None so we are not doing anything')
             return
         if turn_on is not None:
             for i, (ridx,tidx,aidx) in enumerate(turn_on):
@@ -676,7 +676,7 @@ class Data(DataNode):
             try:
                 b = self.design_matrices[x].set_to_lhs(**kwargs)
             except:
-                logging.critical('Crash in `construct_lhs` making the matrix. Key: {}. {}'.format(x,
+                logger.critical('Crash in `construct_lhs` making the matrix. Key: {}. {}'.format(x,
                     keys))
                 raise
             if valid_indices is not None:
@@ -684,7 +684,7 @@ class Data(DataNode):
             try:
                 y = y - b
             except:
-                logging.critical('Crash in `construct_lhs` subtracting the matrix.' \
+                logger.critical('Crash in `construct_lhs` subtracting the matrix.' \
                     ' Key: {}, y.shape: {}, b.shape: {}'.format(x, y.shape, b.shape))
                 raise
         return y.reshape(-1,1)
@@ -744,8 +744,8 @@ class Data(DataNode):
                 # except:
                 t = [type(a) for a in v]
                 s = [a.shape for a in v]
-                logging.critical('shapes: {}, types: {}'.format(s,t))
-                logging.critical('keys: {}'.format([self.G[a].name for a in keys]))
+                logger.critical('shapes: {}, types: {}'.format(s,t))
+                logger.critical('keys: {}'.format([self.G[a].name for a in keys]))
                 raise
         if toarray:
             X_ = np.zeros(shape=X.shape)
@@ -848,7 +848,7 @@ class LHSVector(ObservationVector):
     '''
     def __init__(self, **kwargs):
         ObservationVector.__init__(self, **kwargs)
-        logging.info('Initializing LHS vector')
+        logger.info('Initializing LHS vector')
 
     def build(self, subjects: Union[List[int], int, str]='all'):
         '''Build the observation vector
@@ -929,7 +929,7 @@ class SelfInteractionDesignMatrix(DesignMatrix):
         self.master_cols = np.kron(
                 np.ones(total_n_dts, dtype=int),
                 np.arange(self.G.data.n_taxa,dtype=int))
-        logging.info('Initializing self-interactions design matrix')
+        logger.info('Initializing self-interactions design matrix')
 
     def build(self):
         '''Builds the matrix. Flatten Fortran style
@@ -1003,7 +1003,7 @@ class GrowthDesignMatrix(DesignMatrix):
         self.master_cols = np.kron(
                 np.ones(total_n_dts, dtype=int),
                 np.arange(self.G.data.n_taxa,dtype=int))
-        logging.info('Initializing growth design matrix')
+        logger.info('Initializing growth design matrix')
 
     def build(self):
         '''Build RHS matrices with perturbations multiplied in and not multiplied in.
@@ -1452,7 +1452,7 @@ class InteractionsBaseDesignMatrix(DesignMatrix):
             np.arange(self.n_cols, dtype=int))
 
         self.master_data = np.zeros(len(self.master_cols))
-        logging.info('Initializing interactions base design matrix')
+        logger.info('Initializing interactions base design matrix')
 
     # @profile
     def build(self):
@@ -1581,7 +1581,7 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
                 i += 1
 
         self.build(build=False)
-        logging.info('Initialized interactions mixing design matrix')
+        logger.info('Initialized interactions mixing design matrix')
 
         # Compile and set `_get_rows` in cache - these values are dummy values that are
         # not used in inference
@@ -1922,7 +1922,7 @@ class InteractionsDesignMatrix(DesignMatrix):
         self.M = InteractionsMixingDesignMatrix(add_to_dict=False, parent=self,**kwargs)
         self.build()
         self.interactions = self.M.interactions
-        logging.info('Initializing interactions matrix')
+        logger.info('Initializing interactions matrix')
 
     def build(self):
         self.matrix = self.base.matrix @ self.M.matrix

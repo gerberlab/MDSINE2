@@ -1,4 +1,4 @@
-import logging
+from mdsine2.logger import logger
 import numpy as np
 import h5py
 import os
@@ -67,7 +67,7 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
     # Continue inference if necessary
     # -------------------------------
     if continue_inference is not None:
-        logging.info('Continuing inference at Gibb step {}'.format(continue_inference))
+        logger.info('Continuing inference at Gibb step {}'.format(continue_inference))
         mcmc = pl.inference.BaseMCMC.load(params.MCMC_FILENAME)
         mcmc.continue_inference(gibb_step_start=continue_inference)
 
@@ -82,7 +82,7 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
     # -------------------------------------------------------
     if params.QPCR_NORMALIZATION_MAX_VALUE is not None:
         subjset.normalize_qpcr(max_value=params.QPCR_NORMALIZATION_MAX_VALUE)
-        logging.info('Normalizing abundances for a max value of {}. Normalization ' \
+        logger.info('Normalizing abundances for a max value of {}. Normalization ' \
             'constant: {:.4E}'.format(params.QPCR_NORMALIZATION_MAX_VALUE, 
             subjset.qpcr_normalization_factor))
         
@@ -250,7 +250,7 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
 
     idxs = np.argsort(mean_log_measurements)
     l_len = int(len(mean_log_measurements)/params.N_QPCR_BUCKETS)
-    logging.info('There are {} qPCR measurements for {} buckets. Each bucket is' \
+    logger.info('There are {} qPCR measurements for {} buckets. Each bucket is' \
         ' {} measurements long'.format(len(indices), params.N_QPCR_BUCKETS, l_len))
 
     iii = 0
@@ -286,9 +286,9 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
     # Initialize the posterior and instantiate the design matrices
     # ------------------------------------------------------------
     for name in params.INITIALIZATION_ORDER:
-        logging.info('Initializing {}'.format(name))
+        logger.info('Initializing {}'.format(name))
         if STRNAMES.is_perturbation_param(name) and subjset.perturbations is None:
-            logging.info('Skipping over {} because it is a perturbation parameter ' \
+            logger.info('Skipping over {} because it is a perturbation parameter ' \
                 'and there are no perturbations'.format(name))
             continue
         
@@ -296,7 +296,7 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
         try:
             GRAPH[name].initialize(**params.INITIALIZATION_KWARGS[name])
         except Exception as error:
-            logging.critical('Initialization in `{}` failed with the parameters: {}'.format(
+            logger.critical('Initialization in `{}` failed with the parameters: {}'.format(
                 name, params.INITIALIZATION_KWARGS[name]) + ' with the follwing error:\n{}'.format(
                     error))
             for a in GRAPH._persistent_pntr:
@@ -324,71 +324,69 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
         if name == STRNAMES.PERT_VALUE and subjset.perturbations is not None:
             d.design_matrices[STRNAMES.GROWTH_VALUE].build_with_perturbations()
 
-    logging.info('\n\n\n')
-    logging.info('Initialization Values:')
-    logging.info('Growth')
-    logging.info('\tprior.loc: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].prior.loc.value))
-    logging.info('\tprior.scale2: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].prior.scale2.value))
-    logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].value.flatten()))
+    logger.info('\n\n\n')
+    logger.info('Initialization Values:')
+    logger.info('Growth')
+    logger.info('\tprior.loc: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].prior.loc.value))
+    logger.info('\tprior.scale2: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].prior.scale2.value))
+    logger.info('\tvalue: {}'.format(GRAPH[STRNAMES.GROWTH_VALUE].value.flatten()))
 
-    logging.info('Self-Interactions')
-    logging.info('\tprior.loc: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].prior.loc.value))
-    logging.info('\tprior.scale2: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].prior.scale2.value))
-    logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].value.flatten()))
+    logger.info('Self-Interactions')
+    logger.info('\tprior.loc: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].prior.loc.value))
+    logger.info('\tprior.scale2: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].prior.scale2.value))
+    logger.info('\tvalue: {}'.format(GRAPH[STRNAMES.SELF_INTERACTION_VALUE].value.flatten()))
 
-    logging.info('Prior Variance Growth')
-    logging.info('\tprior.dof: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_GROWTH].prior.dof.value))
-    logging.info('\tprior.scale: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_GROWTH].prior.scale.value))
-    logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_GROWTH].value))
+    logger.info('Prior Variance Growth')
+    logger.info('\tprior.dof: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_GROWTH].prior.dof.value))
+    logger.info('\tprior.scale: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_GROWTH].prior.scale.value))
+    logger.info('\tvalue: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_GROWTH].value))
 
-    logging.info('Prior Variance Self-Interactions')
-    logging.info('\tprior.dof: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].prior.dof.value))
-    logging.info('\tprior.scale: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].prior.scale.value))
-    logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value))
+    logger.info('Prior Variance Self-Interactions')
+    logger.info('\tprior.dof: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].prior.dof.value))
+    logger.info('\tprior.scale: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].prior.scale.value))
+    logger.info('\tvalue: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value))
 
-    logging.info('Prior Variance Interactions')
-    logging.info('\tprior.dof: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_INTERACTIONS].prior.dof.value))
-    logging.info('\tprior.scale: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_INTERACTIONS].prior.scale.value))
-    logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_INTERACTIONS].value))
+    logger.info('Prior Variance Interactions')
+    logger.info('\tprior.dof: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_INTERACTIONS].prior.dof.value))
+    logger.info('\tprior.scale: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_INTERACTIONS].prior.scale.value))
+    logger.info('\tvalue: {}'.format(GRAPH[STRNAMES.PRIOR_VAR_INTERACTIONS].value))
 
-    logging.info('Process Variance')
-    logging.info('\tprior.dof: {}'.format(GRAPH[STRNAMES.PROCESSVAR].prior.dof.value))
-    logging.info('\tprior.scale: {}'.format(GRAPH[STRNAMES.PROCESSVAR].prior.scale.value))
-    logging.info('\tprior mean: {}'.format(GRAPH[STRNAMES.PROCESSVAR].prior.mean()))
+    logger.info('Process Variance')
+    logger.info('\tprior.dof: {}'.format(GRAPH[STRNAMES.PROCESSVAR].prior.dof.value))
+    logger.info('\tprior.scale: {}'.format(GRAPH[STRNAMES.PROCESSVAR].prior.scale.value))
+    logger.info('\tprior mean: {}'.format(GRAPH[STRNAMES.PROCESSVAR].prior.mean()))
 
-    logging.info('Concentration')
-    logging.info('\tprior.shape: {}'.format(GRAPH[STRNAMES.CONCENTRATION].prior.shape.value))
-    logging.info('\tprior.scale: {}'.format(GRAPH[STRNAMES.CONCENTRATION].prior.scale.value))
-    logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.CONCENTRATION].value))
+    logger.info('Concentration')
+    logger.info('\tprior.shape: {}'.format(GRAPH[STRNAMES.CONCENTRATION].prior.shape.value))
+    logger.info('\tprior.scale: {}'.format(GRAPH[STRNAMES.CONCENTRATION].prior.scale.value))
+    logger.info('\tvalue: {}'.format(GRAPH[STRNAMES.CONCENTRATION].value))
 
-    logging.info('Indicator probability')
-    logging.info('\tprior.a: {}'.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value))
-    logging.info('\tprior.b: {}'.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.b.value))
-    logging.info('\tvalue: {}'.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value))
+    logger.info('Indicator probability')
+    logger.info('\tprior.a: {}'.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value))
+    logger.info('\tprior.b: {}'.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.b.value))
+    logger.info('\tvalue: {}'.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value))
 
     if subjset.perturbations is not None:
-        logging.info('Perturbation values:')
+        logger.info('Perturbation values:')
         for perturbation in GRAPH.perturbations:
-            logging.info('\tperturbation {}'.format(perturbation.name))
-            logging.info('\t\tvalue: {}'.format(perturbation.magnitude.value))
-            logging.info('\t\tprior.loc: {}'.format(perturbation.magnitude.prior.loc.value))
-        logging.info('Perturbation prior variances:')
+            logger.info('\tperturbation {}'.format(perturbation.name))
+            logger.info('\t\tvalue: {}'.format(perturbation.magnitude.value))
+            logger.info('\t\tprior.loc: {}'.format(perturbation.magnitude.prior.loc.value))
+        logger.info('Perturbation prior variances:')
         for perturbation in GRAPH.perturbations:
-            logging.info('\t\tdof: {}'.format(perturbation.magnitude.prior.scale2.prior.dof.value))
-            logging.info('\t\tscale: {}'.format(perturbation.magnitude.prior.scale2.prior.scale.value))
-            logging.info('\t\tvalue: {}'.format(perturbation.magnitude.prior.scale2.value))
-        logging.info('Perturbation indicators:')
+            logger.info('\t\tdof: {}'.format(perturbation.magnitude.prior.scale2.prior.dof.value))
+            logger.info('\t\tscale: {}'.format(perturbation.magnitude.prior.scale2.prior.scale.value))
+            logger.info('\t\tvalue: {}'.format(perturbation.magnitude.prior.scale2.value))
+        logger.info('Perturbation indicators:')
         for perturbation in GRAPH.perturbations:
-            logging.info('\tperturbation {}: {}'.format(perturbation.name,
+            logger.info('\tperturbation {}: {}'.format(perturbation.name,
                 perturbation.indicator.cluster_array()))
-        logging.info('Perturbation indicator probability:')
+        logger.info('Perturbation indicator probability:')
         for perturbation in GRAPH.perturbations:
-            logging.info('\tperturbation {}'.format(perturbation.name))
-            logging.info('\t\tvalue: {}'.format(perturbation.probability.value))
-            logging.info('\t\tprior.a: {}'.format(perturbation.probability.prior.a.value))
-            logging.info('\t\tprior.b: {}'.format(perturbation.probability.prior.b.value))
-
-    logging.info('\n\n\n')
+            logger.info('\tperturbation {}'.format(perturbation.name))
+            logger.info('\t\tvalue: {}'.format(perturbation.probability.value))
+            logger.info('\t\tprior.a: {}'.format(perturbation.probability.prior.a.value))
+            logger.info('\t\tprior.b: {}'.format(perturbation.probability.prior.b.value))
 
     # Setup filenames
     # ---------------
@@ -419,8 +417,8 @@ def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True, log_every: int=1) -> Ba
     try:
         mcmc.run(log_every=log_every)
     except Exception as e:
-        logging.critical('CHAIN `{}` CRASHED'.format(mcmc.graph.name))
-        logging.error(e)
+        logger.critical('CHAIN `{}` CRASHED'.format(mcmc.graph.name))
+        logger.error(e)
         if crash_if_error:
             raise
     mcmc.graph[STRNAMES.FILTERING].kill()
@@ -454,7 +452,7 @@ def normalize_parameters(mcmc: BaseMCMC, subjset: Study) -> Tuple[BaseMCMC, Stud
         try:
             GRAPH[STRNAMES.FILTERING].v2 *= subjset.qpcr_normalization_factor
         except:
-            logging.info('v2 not applicable')
+            logger.info('v2 not applicable')
 
         # Adjust the self interactions if necessary
         if STRNAMES.SELF_INTERACTION_VALUE in mcmc.tracer.being_traced:
@@ -522,7 +520,7 @@ def normalize_parameters(mcmc: BaseMCMC, subjset: Study) -> Tuple[BaseMCMC, Stud
 
         f.close()
     else:
-        logging.info('Objects are already normalized')
+        logger.info('Objects are already normalized')
     
     return mcmc, subjset
 
@@ -544,7 +542,7 @@ def denormalize_parameters(mcmc: BaseMCMC) -> Tuple[BaseMCMC, Study]:
     GRAPH = mcmc.graph
     subjset = mcmc.graph.data.subjects
     if subjset.qpcr_normalization_factor is not None:
-        logging.info('Denormalizing the parameters')
+        logger.info('Denormalizing the parameters')
 
         f = h5py.File(GRAPH.tracer.filename, 'r+', libver='latest')
         checkpoint = GRAPH.tracer.checkpoint
@@ -552,7 +550,7 @@ def denormalize_parameters(mcmc: BaseMCMC) -> Tuple[BaseMCMC, Study]:
         try:
             GRAPH[STRNAMES.FILTERING].v2 /= subjset.qpcr_normalization_factor
         except:
-            logging.info('v2 not applicable')
+            logger.info('v2 not applicable')
 
         # Adjust the self interactions if necessary
         if STRNAMES.SELF_INTERACTION_VALUE in mcmc.tracer.being_traced:
@@ -622,7 +620,7 @@ def denormalize_parameters(mcmc: BaseMCMC) -> Tuple[BaseMCMC, Study]:
         subjset.denormalize_qpcr()
         mcmc.save()
     else:
-        logging.info('Data already denormalized')
+        logger.info('Data already denormalized')
     return mcmc, subjset
 
 def calculate_stability_over_gibbs(mcmc: BaseMCMC, section: str='auto', log_every: int=1000) -> np.ndarray:
@@ -708,7 +706,7 @@ def calculate_stability_over_gibbs(mcmc: BaseMCMC, section: str='auto', log_ever
     # Load data
     # ---------
     N_TAXA = len(mcmc.graph.data.taxa)
-    logging.info('Loading data for stability')
+    logger.info('Loading data for stability')
     growth = mcmc.graph[STRNAMES.GROWTH_VALUE]
     if mcmc.tracer.is_being_traced(STRNAMES.GROWTH_VALUE):
         growth = growth.get_trace_from_disk(section=section)
@@ -751,7 +749,7 @@ def calculate_stability_over_gibbs(mcmc: BaseMCMC, section: str='auto', log_ever
             if i == 0:
                 continue
             else:
-                logging.info('{}/{}'.foramt(i, LEN_ARR))
+                logger.info('{}/{}'.foramt(i, LEN_ARR))
         
         ret[i] = np.diag(growth[i]) @ interactions[i]
     return ret

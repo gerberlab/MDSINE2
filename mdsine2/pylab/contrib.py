@@ -6,7 +6,7 @@ depend on contrib
 import numpy as np
 import numpy.random as npr
 import sys
-import logging
+from mdsine2.logger import logger
 import scipy.special
 
 # Typing
@@ -404,8 +404,8 @@ class ClusterPerturbationIndicator(ClusterValue):
                     cumm += cluster.size
             return int(cumm)
         except:
-            logging.critical('Inner cluster ids:\n{}'.format(list(self.value.keys())))
-            logging.critical('Clustering cluster ids:\n{}'.format(self.clustering.order))
+            logger.critical('Inner cluster ids:\n{}'.format(list(self.value.keys())))
+            logger.critical('Clustering cluster ids:\n{}'.format(self.clustering.order))
             raise
 
     def num_on_clusters(self) -> int:
