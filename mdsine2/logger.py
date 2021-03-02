@@ -78,6 +78,7 @@ if not __config_loaded__:
         print("[logger.py] No logging INI file found. "
               "Create a `log_config.ini` file, "
               "or set the `{}` environment variable to point to the right configuration.".format(__env_key__))
+        print("[logger.py] Loading default settings (stdout, stderr).")
         logger = default_loggers()
     else:
         try:
