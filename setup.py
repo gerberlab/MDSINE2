@@ -73,7 +73,8 @@ EXTENSIONS = [ext1, ext2]
 # Subpackages
 PACKAGES = [
     'mdsine2',
-    'mdsine2.pylab']
+    'mdsine2.pylab',
+    'mdsine2.initializers']
 
 setup(
     name='mdsine2',
