@@ -6892,7 +6892,7 @@ class GLVParameters(pl.variables.MVN):
             lhs += [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             X = self.G.data.construct_rhs(keys=rhs)
             if X.shape[1] == 0:
-                logger.info('No columns, skipping')
+                # logger.info('No columns, skipping')
                 return
             y = self.G.data.construct_lhs(keys=lhs,
                 kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations': False}})

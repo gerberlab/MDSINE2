@@ -344,14 +344,18 @@ class Clustering(Node, Traceable):
         '''
         return _generate_coclusters_fast(idx2cid=self.idx2cid)
 
-    def fromlistoflists(self, clustering_arr: List[List[int]]):
+    def fromlistoflists(self, clustering_arr: List[List[int]]) -> List:
         '''
         Takes a list of lists, representing clusterings (each constituent is an int), and repopulate a clustering.
+        :return: The list of new Cluster IDs (cids).
         '''
+        cids = []
         for new_clust in clustering_arr:
             cid = self.make_new_cluster_with(new_clust[0])
             for item in new_clust[1:]:
                 self.move_item(item, cid)
+            cids.append(cid)
+        return cids
 
     def tolistoflists(self) -> List[List[int]]:
         '''Converts clusters into array format:

@@ -4,6 +4,7 @@ on individual OTUs (no interactions), then grouping the OTUs by perturbation sig
 """
 import os
 from collections import defaultdict
+import numpy as np
 
 from mdsine2 import initialize_graph, Study, MDSINE2ModelConfig, run_graph
 from mdsine2.pylab import BaseMCMC
@@ -27,8 +28,7 @@ def initialize_mdsine_from_perturbations(
         study: Study,
         n_samples: int=1000,
         burnin: int=0,
-        checkpoint: int=500,
-        print_debug: bool=False):
+        checkpoint: int=500):
     '''
     Trains the model by first learning perturbations (no interactions)
     and divides up the OTUs into clusters based on perturbation magnitudes/signs.
@@ -45,6 +45,15 @@ def initialize_mdsine_from_perturbations(
     # Disable clustering.
     cfg_proxy.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'no-clusters'
     cfg_proxy.LEARN[STRNAMES.CLUSTERING] = False
+    cfg_proxy.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB] = {
+        'value_option': 'manual',
+        'value': 1,
+        'hyperparam_option': 'manual',
+        'a': 10000,
+        'b': 1,
+        'delay': 0
+    }
+    cfg_proxy.LEARN[STRNAMES.PERT_INDICATOR_PROB] = False
 
     mcmc_proxy = initialize_graph(params=cfg_proxy, graph_name=study.name, subjset=study)
     run_graph(mcmc_proxy, crash_if_error=True)
@@ -54,14 +63,7 @@ def initialize_mdsine_from_perturbations(
     otus_with_perturbation_signs = [
         (
             next(iter(cluster.members)),
-            "".join([
-                sign_str(
-                    pert.magnitude.value[ckey]
-                    # if pert.indicator.
-                    # else 0
-                )
-                for pert in mcmc_proxy.graph.perturbations
-            ])
+            "".join([sign_str(pert.magnitude.value[ckey]) for pert in mcmc_proxy.graph.perturbations])
         )
         for ckey, cluster in mcmc_proxy.graph[STRNAMES.CLUSTERING].clustering.clusters.items()
     ]
@@ -69,9 +71,22 @@ def initialize_mdsine_from_perturbations(
     for otu, pert_sign in otus_with_perturbation_signs:
         result_clustering[pert_sign].append(otu)
 
-    logger.info("Initializing clusters to: {}".format(dict(result_clustering)))
-
     # ========= Save the result into original chain.
-    mcmc.graph[STRNAMES.CLUSTERING].value.fromlistoflists([
+    result_clustering_arr = [
         c for _, c in result_clustering.items()
-    ])
+    ]
+
+    cids = mcmc.graph[STRNAMES.CLUSTERING].value.fromlistoflists(result_clustering_arr)
+
+    # Perturbation initialize to mean value across constituents of cluster.
+    for cid, cluster in zip(cids, result_clustering_arr):
+        for pert, pert_proxy in zip(mcmc.graph.perturbations, mcmc_proxy.graph.perturbations):
+            pert_value = np.mean([
+                pert_proxy.magnitude.value[pert_proxy.clustering.idx2cid[taxa_id]] for taxa_id in cluster
+            ])
+            logger.info("Initializing cluster {} with perturbation ({})={}".format(
+                cluster,
+                pert.name,
+                pert_value
+            ))
+            pert.magnitude.value[cid] = pert_value

@@ -56,12 +56,16 @@ class MakeDirTimedRotatingFileHandler(logging.handlers.TimedRotatingFileHandler)
 
 def default_loggers():
     # Default behavior: direct all INFO/WARNING/ERROR to stdout.
+    formatter = logging.Formatter("%(asctime)s [%(levelname)s] [%(module)s.py (%(lineno)d)] - %(message)s")
+
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.addFilter(InfoFilter())
     stdout_handler.setLevel(logging.INFO)
+    stdout_handler.setFormatter(formatter)
 
     stderr_handler = logging.StreamHandler(sys.stderr)
     stderr_handler.setLevel(logging.ERROR)
+    stdout_handler.setFormatter(formatter)
 
     logger = logging.getLogger("DefaultLogger")
     logger.setLevel(logging.INFO)
