@@ -113,16 +113,24 @@ def initialize_mdsine_from_perturbations(
 
     # ========= Divide up OTUs based on perturbation signs.
     result_clustering = defaultdict(list)
-    otus_with_perturbation_signs = [
+
+    proxy_clustering_obj = mcmc_proxy.graph[STRNAMES.CLUSTERING].clustering
+    pert_means = np.vstack(
+        [pert.get_trace_from_disk().mean(axis=0) for pert in mcmc_proxy.graph.perturbations]
+    )
+    taxa_with_pert_signs = [
         (
             next(iter(cluster.members)),
-            "".join([sign_str(pert.magnitude.value[ckey]) for pert in mcmc_proxy.graph.perturbations])
+            "".join([
+                sign_str(pert_means[pidx, cidx])
+                for pidx in range(pert_means.shape[0])
+            ])
         )
-        for ckey, cluster in mcmc_proxy.graph[STRNAMES.CLUSTERING].clustering.clusters.items()
+        for cidx, cluster in enumerate(proxy_clustering_obj)
     ]
 
-    for otu, pert_sign in otus_with_perturbation_signs:
-        result_clustering[pert_sign].append(otu)
+    for taxa_idx, pert_sign in taxa_with_pert_signs:
+        result_clustering[pert_sign].append(taxa_idx)
 
     # ========= Save the result into original chain.
     result_clustering_arr = [
@@ -133,9 +141,12 @@ def initialize_mdsine_from_perturbations(
 
     # Perturbation initialize to mean value across constituents of cluster.
     for cid, cluster in zip(cids, result_clustering_arr):
-        for pert, pert_proxy in zip(mcmc.graph.perturbations, mcmc_proxy.graph.perturbations):
+        for pidx, (pert, pert_proxy) in enumerate(zip(mcmc.graph.perturbations, mcmc_proxy.graph.perturbations)):
             pert_value = np.mean([
-                pert_proxy.magnitude.value[pert_proxy.clustering.idx2cid[taxa_id]] for taxa_id in cluster
+                pert_means[
+                    pidx,
+                    proxy_clustering_obj.member_idx_to_cidx(taxa_idx)  # Taxa idx -> Cluster ID -> Cluster IDX
+                ] for taxa_idx in cluster
             ])
             logger.info("Initializing cluster {} with perturbation ({})={}".format(
                 cluster,

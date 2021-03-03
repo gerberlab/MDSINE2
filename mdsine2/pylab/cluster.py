@@ -339,6 +339,15 @@ class Clustering(Node, Traceable):
     def split_cluster(self, cid, members1, members2):
         raise NotImplementedError('Not Implemented')
 
+    def member_idx_to_cid(self, member):
+        return self.idx2cid[member]
+
+    def cid_to_cidx(self, cluster_id):
+        return self.cid2cidx[cluster_id]
+
+    def member_idx_to_cidx(self, member):
+        return self.cid_to_cidx(self.member_idx_to_cid(member))
+
     def generate_coclusters(self) -> np.ndarray:
         '''Make the cocluster matrix of the current cluster configuration
         '''
