@@ -12,6 +12,7 @@ from . import dataset
 from . import synthetic
 
 from .logger import MakeDirTimedRotatingFileHandler
+from .initializers import clustering
 
 # Import key modules from pylab
 from .pylab import random
