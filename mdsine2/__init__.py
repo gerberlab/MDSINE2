@@ -12,7 +12,7 @@ from . import dataset
 from . import synthetic
 
 from .logger import MakeDirTimedRotatingFileHandler
-from .initializers import clustering
+from .initializers import initialize_mdsine_from_perturbations
 
 # Import key modules from pylab
 from .pylab import random
