@@ -2,7 +2,7 @@
 parameters that are set manually in here. There are also the filtering
 functions used to preprocess the data
 '''
-import logging
+from mdsine2.logger import logger
 import numpy as np
 import pandas as pd
 import sys
@@ -372,12 +372,42 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.PRIOR_MEAN_PERT,
             STRNAMES.PRIOR_VAR_PERT,
             STRNAMES.PERT_INDICATOR,
-			STRNAMES.PERT_VALUE,
+            STRNAMES.PERT_VALUE,
             STRNAMES.PERT_INDICATOR_PROB,
             STRNAMES.GLV_PARAMETERS,
             STRNAMES.QPCR_SCALES,
             STRNAMES.QPCR_DOFS,
             STRNAMES.QPCR_VARIANCES]
+
+    def copy(self):
+        cfg = MDSINE2ModelConfig(
+            self.OUTPUT_BASEPATH,
+            self.SEED,
+            self.BURNIN,
+            self.N_SAMPLES,
+            self.NEGBIN_A0,
+            self.NEGBIN_A1,
+            self.LEAVE_OUT,
+            self.CHECKPOINT
+        )
+
+        cfg.PROCESS_VARIANCE_TYPE = self.PROCESS_VARIANCE_TYPE
+        cfg.DATA_DTYPE = self.DATA_DTYPE
+        cfg.QPCR_NORMALIZATION_MAX_VALUE = self.QPCR_NORMALIZATION_MAX_VALUE
+        cfg.ZERO_INFLATION_TRANSITION_POLICY = self.ZERO_INFLATION_TRANSITION_POLICY
+        cfg.GROWTH_TRUNCATION_SETTINGS = self.GROWTH_TRUNCATION_SETTINGS
+        cfg.SELF_INTERACTIONS_TRUNCATION_SETTINGS = self.SELF_INTERACTIONS_TRUNCATION_SETTINGS
+        cfg.MP_FILTERING = self.MP_FILTERING
+        cfg.MP_CLUSTERING = self.MP_CLUSTERING
+        cfg.N_QPCR_BUCKETS = self.N_QPCR_BUCKETS
+        cfg.INTERMEDIATE_VALIDATION_T = self.INTERMEDIATE_VALIDATION_T
+        cfg.INTERMEDIATE_VALIDATION_KWARGS = self.INTERMEDIATE_VALIDATION_KWARGS
+
+        cfg.LEARN = self.LEARN
+        cfg.INFERENCE_ORDER = self.INFERENCE_ORDER
+        cfg.INITIALIZATION_KWARGS = self.INITIALIZATION_KWARGS
+        cfg.INITIALIZATION_ORDER = self.INITIALIZATION_ORDER
+        return cfg
 
     def set_negbin_params(self, a0: float, a1: float):
         self.NEGBIN_A0 = a0
@@ -516,50 +546,6 @@ class FilteringConfig(pl.Saveable):
 
     def suffix(self):
         return str(self)
-
-
-class LoggingConfig(pl.Saveable):
-    '''These are the parameters for logging
-
-    FORMAT : str
-        This is the logging format for stdout
-    LEVEL : logging constant, int
-        This is the level to log at for stdout
-    NUMPY_PRINTOPTIONS : dict
-        These are the printing options for numpy.
-
-    Parameters
-    ----------
-    basepath : str
-        If this is specified, then we also want to log to a file. Set up a
-        steam and a file
-    fmt : str
-        This is the format of the logging prefix for the `logging` module
-    level : int
-        This is the level of logging to log
-    '''
-    def __init__(self, basepath: str=None, level: int=logging.INFO, 
-        fmt: str='%(levelname)s:%(module)s.%(lineno)s: %(message)s'):
-        self.FORMAT = fmt
-        self.LEVEL = level
-        self.NUMPY_PRINTOPTIONS = {
-            'threshold': sys.maxsize, 'linewidth': sys.maxsize}
-
-        if basepath is not None:
-            path = os.path.join(basepath, 'logging.log')
-            self.PATH = path
-            handlers = [
-                logging.FileHandler(self.PATH, mode='w'),
-                logging.StreamHandler()]
-            for handler in logging.root.handlers[:]:
-                logging.root.removeHandler(handler)
-            logging.basicConfig(level=self.LEVEL, format=self.FORMAT, handlers=handlers)
-        else:
-            self.PATH = None
-            logging.basicConfig(format=self.FORMAT, level=self.LEVEL)
-        
-        np.set_printoptions(**self.NUMPY_PRINTOPTIONS)
-        pd.set_option('display.max_columns', None)
 
 
 class NegBinConfig(_BaseModelConfig):

@@ -1,6 +1,6 @@
 '''Utility functions for mdsine2
 '''
-import logging
+from mdsine2.logger import logger
 import numpy as np
 import scipy
 import math
@@ -170,13 +170,13 @@ def generate_cluster_assignments_posthoc(clustering: Clustering, n_clusters: Uni
 
     A = pl.summary(clustering.coclusters, section=section)['mean']
     A = 1 - A
-    logging.info('Number of clusters: {}'.format(int(n)))
+    logger.info('Number of clusters: {}'.format(int(n)))
     c = AgglomerativeClustering(
         n_clusters=int(n),
         affinity='precomputed',
         linkage=linkage)
     ret = c.fit_predict(A)
-    logging.info('Clusters assigned: {}'.format(ret))
+    logger.info('Clusters assigned: {}'.format(ret))
     if set_as_value:
         for cidx in range(np.max(ret)):
             cluster = np.where(ret == cidx)[0]
@@ -341,11 +341,11 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     cnt = 0
     found = False
     iii = 0
-    logging.info('Agglomerating taxa')
+    logger.info('Agglomerating taxa')
     while not found:
         for iii in range(iii, len(subjset.taxa)):
             if iii % 200 == 0:
-                logging.info('{}/{}'.format(iii, len(subjset.taxa)))
+                logger.info('{}/{}'.format(iii, len(subjset.taxa)))
             taxon1 = subjset.taxa[iii]
             for taxon2 in subjset.taxa.names.order[iii:]:
                 taxon2 = subjset.taxa[taxon2]
@@ -366,7 +366,7 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
             found = False
         else:
             break
-    logging.info('Aggregated {} taxa'.format(cnt))
+    logger.info('Aggregated {} taxa'.format(cnt))
     return subjset
 
 def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_filename: str):

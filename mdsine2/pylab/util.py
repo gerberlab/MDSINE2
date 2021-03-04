@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import pickle
 import inspect
-import logging
+from mdsine2.logger import logger
 import random
 import scipy.sparse
 import numba
@@ -448,7 +448,7 @@ class inspect_trace:
                     l = len(stack)
                 for i in range(1, l):
                     trace.append((stack[i][1].split('/')[-1], stack[i][2], stack[i][3]))
-                logging.critical('Error thrown in "{}". Trace: {}'.format(f.__name__, trace))
+                logger.critical('Error thrown in "{}". Trace: {}'.format(f.__name__, trace))
                 raise
         wrapped_func.__name__ = f.__name__
         return wrapped_func

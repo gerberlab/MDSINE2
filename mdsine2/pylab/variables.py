@@ -22,7 +22,7 @@ import math
 import numpy.random as npr
 import pickle
 import random
-import logging
+from mdsine2.logger import logger
 import warnings
 import sys
 import scipy.stats
@@ -140,7 +140,7 @@ def summary(var: Traceable, set_nan_to_0: bool=False, section: str='posterior',
         if do is True:
             ret['median'] = np.nan_to_num(np.nanmedian(var,axis=0))
     except:
-        logging.error('median failed')
+        logger.error('median failed')
         ret['median'] = np.nan
     try:
         do = True
@@ -149,7 +149,7 @@ def summary(var: Traceable, set_nan_to_0: bool=False, section: str='posterior',
         if do is True:
             ret['mean'] = np.nan_to_num(np.nanmean(var,axis=0))
     except:
-        logging.error('mean failed')
+        logger.error('mean failed')
         ret['mean'] = np.nan
     try:
         do = True
@@ -158,7 +158,7 @@ def summary(var: Traceable, set_nan_to_0: bool=False, section: str='posterior',
         if do is True:
             ret['25th percentile'] = np.nan_to_num(np.nanpercentile(var,25,axis=0))
     except:
-        logging.error('25th percentile failed')
+        logger.error('25th percentile failed')
         ret['25th percentile'] = np.nan
     try:
         do = True
@@ -167,7 +167,7 @@ def summary(var: Traceable, set_nan_to_0: bool=False, section: str='posterior',
         if do is True:
             ret['75th percentile'] = np.nan_to_num(np.nanpercentile(var,75,axis=0))
     except:
-        logging.error('75th percentile failed')
+        logger.error('75th percentile failed')
         ret['75th percentile'] = np.nan
     return ret
 
@@ -522,7 +522,7 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
         try:
             self.trace[self.ckpt_iter] = self.value
         except:
-            logging.critical('{} - trace shape ({}), value shape ({})'.format(
+            logger.critical('{} - trace shape ({}), value shape ({})'.format(
                 self.name, self.trace[self.ckpt_iter].shape, self.value.shape))
             raise
         self.ckpt_iter += 1
@@ -1560,7 +1560,7 @@ class MVN(Variable, _RandomBase):
                 self.value[idxs] = random.multivariate_normal.sample(
                     mean=self._mean.value, cov=self._cov.value, size=size)
         except RuntimeWarning:
-            logging.critical('covariance is not positive semi-definate')
+            logger.critical('covariance is not positive semi-definate')
             print('mean\n',np.squeeze(self._mean.value))
             print('cov\n',self._cov.value)
             raise

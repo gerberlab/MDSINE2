@@ -8,7 +8,7 @@ These are only for scalars.
 import numpy.random as npr
 import numpy as np
 import sys
-import logging
+from mdsine2.logger import logger
 
 # Typing
 from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple
@@ -377,7 +377,7 @@ class _TunableKernel(_BaseKernel):
             return
         acc_rate = self.acceptance_rate(prev=self.tune)
 
-        # logging.info('Tuning the variance of {}. Acceptance rate: {}'.format(
+        # logger.info('Tuning the variance of {}. Acceptance rate: {}'.format(
         #     self.x.name, acc_rate))
 
         

@@ -1,6 +1,6 @@
 '''Posterior objects used for inference of MDSINE2 model
 '''
-import logging
+from mdsine2.logger import logger
 import time
 import itertools
 import psutil
@@ -263,7 +263,7 @@ def sample_categorical_log(log_p: Iterator[float]) -> int:
         events -= events[-1]
         return next(x[0]-1 for x in enumerate(events) if x[1] >= exp_sample)
     except:
-        logging.critical('CRASHED IN `sample_categorical_log`:\nlog_p{}'.format(
+        logger.critical('CRASHED IN `sample_categorical_log`:\nlog_p{}'.format(
             log_p))
         raise
 
@@ -298,7 +298,7 @@ def log_det(M: np.ndarray, var: Variable) -> float:
             sample_iter = None
         filename = 'crashes/logdet_error_iter{}_var{}pinv_{}.npy'.format(
             sample_iter, var.name, var.G.name)
-        logging.critical('\n\n\n\n\n\n\n\nSaved array at "{}" - now crashing\n\n\n'.format(
+        logger.critical('\n\n\n\n\n\n\n\nSaved array at "{}" - now crashing\n\n\n'.format(
                 filename))
         os.makedirs('crashes/', exist_ok=True)
         np.save(filename, M)
@@ -339,7 +339,7 @@ def pinv(M: np.ndarray, var: Variable) -> np.ndarray:
             sample_iter = None
         filename = 'crashes/pinv_error_iter{}_var{}pinv_{}.npy'.format(
             sample_iter, var.name, var.G.name)
-        logging.critical('\n\n\n\n\n\n\n\nSaved array at "{}" - now crashing\n\n\n'.format(
+        logger.critical('\n\n\n\n\n\n\n\nSaved array at "{}" - now crashing\n\n\n'.format(
                 filename))
         os.makedirs('crashes/', exist_ok=True)
         np.save(filename, M)
@@ -391,9 +391,9 @@ def _scalar_visualize(obj: Variable, path: str, f: IO, section: str='posterior',
             ax1.plot(xs, ys, label='prior', alpha=0.5, color='red')
             ax1.legend()
         except OverflowError:
-            logging.critical('OverflowError while plotting prior')
+            logger.critical('OverflowError while plotting prior')
         except Exception as e:
-            logging.critical('Failed plotting prior of {}: {}'.format(
+            logger.critical('Failed plotting prior of {}: {}'.format(
                 obj.name, e))
 
     fig = plt.gcf()
@@ -655,7 +655,7 @@ class ProcessVarGlobal(pl.variables.SICS):
             if dof <= 0:
                 raise ValueError('`dof` ({}) must be > 0'.format(dof))
             if dof <= 2:
-                logging.critical('Process Variance dof ({}) is set unproper'.format(dof))
+                logger.critical('Process Variance dof ({}) is set unproper'.format(dof))
         elif dof_option == 'half':
             dof = len(self.G.data.lhs)
         elif dof_option in ['auto', 'diffuse']:
@@ -873,7 +873,7 @@ class Concentration(pl.variables.Gamma):
 
         self.shape.value = self.prior.shape.value
         self.scale.value = self.prior.scale.value
-        logging.info('Cluster Concentration initialization results:\n' \
+        logger.info('Cluster Concentration initialization results:\n' \
             '\tprior shape: {}\n\tprior scale: {}\n\tvalue: {}'.format(
                 self.prior.shape.value, self.prior.scale.value, self.value))
 
@@ -1062,7 +1062,7 @@ class ClusterAssignments(pl.graph.Node):
             if n_clusters <= 0:
                 raise ValueError('`n_clusters` ({}) must be > 0'.format(n_clusters))
             if n_clusters > self.G.data.n_taxa:
-                raise ValueError('`n_clusters` ({}) must be <= than the number of s ({})'.format(
+                raise ValueError('`n_clusters` ({}) must be <= than the number of taxa ({})'.format(
                     n_clusters, self.G.data.n_taxa))
 
         if value_option == 'manual':
@@ -1079,7 +1079,7 @@ class ClusterAssignments(pl.graph.Node):
                         idx, cluster))
                 cluster = list(cluster)
                 if len(cluster) == 0:
-                    logging.warning('Cluster index {} has 0 elements, deleting'.format(
+                    logger.warning('Cluster index {} has 0 elements, deleting'.format(
                         idx))
                     idxs_to_delete.append(idx)
             if len(idxs_to_delete) > 0:
@@ -1101,7 +1101,7 @@ class ClusterAssignments(pl.graph.Node):
             # Now everything is checked and valid
 
         elif value_option == 'fixed-clustering':
-            logging.info('Fixed topology initialization')
+            logger.info('Fixed topology initialization')
             if not pl.isstr(value):
                 raise TypeError('`value` ({}) must be a str'.format(value))
 
@@ -1123,7 +1123,7 @@ class ClusterAssignments(pl.graph.Node):
             # Get the most likely cluster configuration and set as the value for the passed in cluster
             ret = generate_cluster_assignments_posthoc(CLUSTERING2, n_clusters='mode', set_as_value=False)
             CLUSTERING2.from_array(ret)
-            logging.info('Clustering set to:\n{}'.format(str(CLUSTERING2)))
+            logger.info('Clustering set to:\n{}'.format(str(CLUSTERING2)))
 
             # Set the passed in cluster assignment as the current cluster assignment
             # Need to be careful because the indices of the s might not line up
@@ -1174,7 +1174,7 @@ class ClusterAssignments(pl.graph.Node):
         elif value_option == 'sequence':
             from pylab import diversity
 
-            logging.info('Making affinity matrix from sequences')
+            logger.info('Making affinity matrix from sequences')
             evenness = np.diag(np.ones(len(self.G.data.taxa), dtype=float))
 
             for i in range(len(self.G.data.taxa)):
@@ -1238,7 +1238,7 @@ class ClusterAssignments(pl.graph.Node):
                     cid = self.clustering.make_new_cluster_with(idx=oidx)
                 else:
                     self.clustering.move_item(idx=oidx, cid=cid)
-        logging.info('Cluster Assingments initialization results:\n{}'.format(
+        logger.info('Cluster Assingments initialization results:\n{}'.format(
             str(self.clustering)))
         self._there_are_perturbations = self.G.perturbations is not None
 
@@ -1543,9 +1543,9 @@ class ClusterAssignments(pl.graph.Node):
         try:
             beta_logdet = log_det(beta_cov, self)
         except:
-            logging.critical('Crashed in log_det')
-            logging.critical('beta_cov:\n{}'.format(beta_cov))
-            logging.critical('prior_prec\n{}'.format(prior_prec))
+            logger.critical('Crashed in log_det')
+            logger.critical('beta_cov:\n{}'.format(beta_cov))
+            logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
         priorvar_logdet = log_det(prior_var, self)
         ll2 = 0.5 * (beta_logdet - priorvar_logdet)
@@ -1699,9 +1699,9 @@ class ClusterAssignments(pl.graph.Node):
         try:
             beta_logdet = log_det(beta_cov, self)
         except:
-            logging.critical('Crashed in log_det')
-            logging.critical('beta_cov:\n{}'.format(beta_cov))
-            logging.critical('prior_prec\n{}'.format(prior_prec))
+            logger.critical('Crashed in log_det')
+            logger.critical('beta_cov:\n{}'.format(beta_cov))
+            logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
         priorvar_logdet = log_det(prior_var, self)
         ll2 = 0.5 * (beta_logdet - priorvar_logdet)
@@ -1762,9 +1762,9 @@ class ClusterAssignments(pl.graph.Node):
         try:
             beta_logdet = log_det(beta_cov, self)
         except:
-            logging.critical('Crashed in log_det')
-            logging.critical('beta_cov:\n{}'.format(beta_cov))
-            logging.critical('prior_prec\n{}'.format(prior_prec))
+            logger.critical('Crashed in log_det')
+            logger.critical('beta_cov:\n{}'.format(beta_cov))
+            logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
         priorvar_logdet = log_det(prior_var, self)
         ll2 = 0.5 * (beta_logdet - priorvar_logdet)
@@ -1865,7 +1865,7 @@ class ClusterAssignments(pl.graph.Node):
 
         oidxs = npr.permutation(np.arange(len(self.G.data.taxa)))
         for iii, oidx in enumerate(oidxs):
-            logging.info('{}/{} - {}'.format(iii, len(self.G.data.taxa), oidx))
+            logger.info('{}/{} - {}'.format(iii, len(self.G.data.taxa), oidx))
             self.oidx = oidx
             self.gibbs_update_single_taxon_parallel()
 
@@ -1980,7 +1980,7 @@ class ClusterAssignments(pl.graph.Node):
         assigned_cid = KEYS[idx]
 
         if assigned_cid != self.original_cluster:
-            logging.info('cluster changed')
+            logger.info('cluster changed')
 
         self.clustering.move_item(idx=self.oidx, cid=assigned_cid)
 
@@ -2261,9 +2261,9 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         try:
             beta_logdet = log_det(beta_cov, self)
         except:
-            logging.critical('Crashed in log_det')
-            logging.critical('beta_cov:\n{}'.format(beta_cov))
-            logging.critical('prior_prec\n{}'.format(prior_prec))
+            logger.critical('Crashed in log_det')
+            logger.critical('beta_cov:\n{}'.format(beta_cov))
+            logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
         
         priorvar_logdet = log_det(prior_cov, self)
@@ -2426,7 +2426,7 @@ class TrajectorySet(pl.graph.Node):
         taxa = subjset.taxa
         subj = subjset.iloc(ridx)
         obj = self.value[ridx]
-        logging.info('Retrieving trace for subject {}'.format(subj.name))
+        logger.info('Retrieving trace for subject {}'.format(subj.name))
 
         given_data = subj.matrix()['abs']
         given_times = subj.times
@@ -2669,7 +2669,7 @@ class FilteringLogMP(pl.graph.Node):
 
         # Set the essential timepoints (check to see if there is any missing data)
         if essential_timepoints is not None:
-            logging.info('Setting up the essential timepoints')
+            logger.info('Setting up the essential timepoints')
             if pl.isstr(essential_timepoints):
                 if essential_timepoints in ['auto', 'union']:
                     essential_timepoints = set()
@@ -2682,7 +2682,7 @@ class FilteringLogMP(pl.graph.Node):
             elif not pl.isarray(essential_timepoints):
                 raise TypeError('`essential_timepoints` ({}) must be a str or an array'.format(
                     type(essential_timepoints)))
-            logging.info('Essential timepoints: {}'.format(essential_timepoints))
+            logger.info('Essential timepoints: {}'.format(essential_timepoints))
             self.G.data.set_timepoints(times=essential_timepoints, eps=None, reset_timepoints=True)
             self.x.reset_value_size()
 
@@ -3572,7 +3572,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             # Adjust
             acc_rate = self.acceptances/self.n_props_total
             if acc_rate < 0.1:
-                logging.debug('Very low acceptance rate, scaling down past covariance')
+                logger.debug('Very low acceptance rate, scaling down past covariance')
                 self.proposal_std *= 0.01
             elif acc_rate < self.target_acceptance_rate:
                 self.proposal_std /= np.sqrt(1.5)
@@ -3867,7 +3867,7 @@ class PriorVarInteractions(pl.variables.SICS):
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
 
-        logging.info('Prior Variance Interactions initialization results:\n' \
+        logger.info('Prior Variance Interactions initialization results:\n' \
             '\tprior dof: {}\n' \
             '\tprior scale: {}\n' \
             '\tvalue: {}'.format(
@@ -4137,7 +4137,7 @@ class ClusterInteractionIndicatorProbability(pl.variables.Beta):
 
         self.a.value = self.prior.a.value
         self.b.value = self.prior.b.value
-        logging.info('Indicator Probability initialization results:\n' \
+        logger.info('Indicator Probability initialization results:\n' \
             '\tprior a: {}\n\tprior b: {}\n\tvalue: {}'.format(
                 self.prior.a.value, self.prior.b.value, self.value))
 
@@ -4277,7 +4277,7 @@ class ClusterInteractionValue(pl.variables.MVN):
         if self.obj.sample_iter < self.delay:
             return
         if self.obj.num_pos_indicators() == 0:
-            # logging.info('No positive indicators, skipping')
+            # logger.info('No positive indicators, skipping')
             self._strr = '[]'
             return
 
@@ -4314,9 +4314,9 @@ class ClusterInteractionValue(pl.variables.MVN):
         self.update_str()
 
         if np.any(np.isnan(self.value)):
-            logging.critical('mean: {}'.format(self.mean.value))
-            logging.critical('nan in cov: {}'.format(np.any(np.isnan(self.cov.value))))
-            logging.critical('value: {}'.format(self.value))
+            logger.critical('mean: {}'.format(self.mean.value))
+            logger.critical('nan in cov: {}'.format(np.any(np.isnan(self.cov.value))))
+            logger.critical('value: {}'.format(self.value))
             raise ValueError('`Values in {} are nan: {}'.format(self.name, self.value))
 
     def update_str(self):
@@ -4354,7 +4354,7 @@ class ClusterInteractionValue(pl.variables.MVN):
             represent it
         '''
         if not self.G.inference.tracer.is_being_traced(self.obj.name):
-            logging.info('Interactions are not being learned')
+            logger.info('Interactions are not being learned')
         
         # Get cluster ordering
         taxa = self.G.data.taxa
@@ -4849,9 +4849,9 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         try:
             beta_logdet = log_det(beta_cov, self)
         except:
-            logging.critical('Crashed in log_det')
-            logging.critical('beta_cov:\n{}'.format(beta_cov))
-            logging.critical('prior_prec\n{}'.format(prior_prec))
+            logger.critical('Crashed in log_det')
+            logger.critical('beta_cov:\n{}'.format(beta_cov))
+            logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
         priorvar_logdet = log_det(prior_var, self)
         ll2 = 0.5 * (beta_logdet - priorvar_logdet)
@@ -4962,9 +4962,9 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         try:
             beta_logdet = log_det(beta_cov, self)
         except:
-            logging.critical('Crashed in log_det')
-            logging.critical('beta_cov:\n{}'.format(beta_cov))
-            logging.critical('prior_prec\n{}'.format(prior_prec))
+            logger.critical('Crashed in log_det')
+            logger.critical('beta_cov:\n{}'.format(beta_cov))
+            logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
         
         if val:
@@ -5009,7 +5009,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         from . util import generate_interation_bayes_factors_posthoc
 
         if not self.G.inference.tracer.is_being_traced(self.G[STRNAMES.INTERACTIONS_OBJ]):
-            logging.info('Interactions are not being learned')
+            logger.info('Interactions are not being learned')
         
         # Get cluster ordering
         taxa = self.G.data.taxa
@@ -5412,7 +5412,7 @@ class PriorVarMH(pl.variables.SICS):
         pandas.DataFrame
         '''
         if not self.G.inference.tracer.is_being_traced(self):
-            logging.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
+            logger.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
             return pd.DataFrame()
         summ = pl.summary(self, section=section)
         data = [[self.name] + [v for _,v in summ.items()]]
@@ -5856,7 +5856,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         pandas.DataFrame
         '''
         if not self.G.inference.tracer.is_being_traced(self):
-            logging.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
+            logger.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
             return pd.DataFrame()
         summ = pl.summary(self, section=section)
         data = [[self.name] + [v for _,v in summ.items()]]
@@ -6025,9 +6025,9 @@ class Growth(pl.variables.TruncatedNormal):
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
 
-        logging.info('Growth value initialization: {}'.format(self.value))
-        logging.info('Growth prior mean: {}'.format(self.prior.loc.value))
-        logging.info('Growth truncation settings: {}'.format((self.low, self.high)))
+        logger.info('Growth value initialization: {}'.format(self.value))
+        logger.info('Growth prior mean: {}'.format(self.prior.loc.value))
+        logger.info('Growth truncation settings: {}'.format((self.low, self.high)))
 
     def update(self):
         '''Update the values using a truncated normal
@@ -6048,10 +6048,10 @@ class Growth(pl.variables.TruncatedNormal):
                 raise ValueError('Too many nans')
             
             self._n_times_nan += 1
-            logging.critical('mean: {}'.format(self.loc.value))
-            logging.critical('var: {}'.format(self.scale2.value))
-            logging.critical('value: {}'.format(self.value))
-            logging.critical('`Values in {} are nan: {}. Replace with the previous value'.format(self.name, self.value))
+            logger.critical('mean: {}'.format(self.loc.value))
+            logger.critical('var: {}'.format(self.scale2.value))
+            logger.critical('value: {}'.format(self.value))
+            logger.critical('`Values in {} are nan: {}. Replace with the previous value'.format(self.name, self.value))
             self.value[np.isnan(self.value)] = prev_value[np.isnan(self.value)]
 
         if self._there_are_perturbations:
@@ -6114,7 +6114,7 @@ class Growth(pl.variables.TruncatedNormal):
         pandas.DataFrame
         '''
         if not self.G.inference.tracer.is_being_traced(self):
-            logging.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
+            logger.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
             return pd.DataFrame()
 
         taxa = self.G.data.subjects.taxa
@@ -6428,8 +6428,8 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
 
-        logging.info('Self-interactions value initialization: {}'.format(self.value))
-        logging.info('Self-interactions truncation settings: {}'.format((self.low, self.high)))
+        logger.info('Self-interactions value initialization: {}'.format(self.value))
+        logger.info('Self-interactions truncation settings: {}'.format((self.low, self.high)))
 
     def update(self):
         if self.sample_iter < self.delay:
@@ -6448,10 +6448,10 @@ class SelfInteractions(pl.variables.TruncatedNormal):
                 raise ValueError('Too many nans')
             
             self._n_times_nan += 1
-            logging.critical('mean: {}'.format(self.loc.value))
-            logging.critical('var: {}'.format(self.scale2.value))
-            logging.critical('value: {}'.format(self.value))
-            logging.critical('`Values in {} are nan: {}. Replace with the previous value'.format(self.name, self.value))
+            logger.critical('mean: {}'.format(self.loc.value))
+            logger.critical('var: {}'.format(self.scale2.value))
+            logger.critical('value: {}'.format(self.value))
+            logger.critical('`Values in {} are nan: {}. Replace with the previous value'.format(self.name, self.value))
             self.value[np.isnan(self.value)] = prev_value[np.isnan(self.value)]
 
     def calculate_posterior(self):
@@ -6506,7 +6506,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         pandas.DataFrame
         '''
         if not self.G.inference.tracer.is_being_traced(self):
-            logging.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
+            logger.info('`{}` not learned\n\tValue: {}\n'.format(self.name, self.value))
             return pd.DataFrame()
 
         taxa = self.G.data.subjects.taxa
@@ -6892,7 +6892,7 @@ class GLVParameters(pl.variables.MVN):
             lhs += [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             X = self.G.data.construct_rhs(keys=rhs)
             if X.shape[1] == 0:
-                logging.info('No columns, skipping')
+                # logger.info('No columns, skipping')
                 return
             y = self.G.data.construct_lhs(keys=lhs,
                 kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations': False}})
@@ -6914,7 +6914,7 @@ class GLVParameters(pl.variables.MVN):
             try:
                 value = self.sample()
             except:
-                logging.critical('failed here, updating separately')
+                logger.critical('failed here, updating separately')
                 self.pert_mag.update()
                 self.interactions.update()
                 return
@@ -7104,7 +7104,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
                 a = perturbation.name
             s += '\tPerturbation {}:\n' \
                 '\t\tvalue: {}\n'.format(a, perturbation.magnitude.cluster_array())
-        logging.info(s)
+        logger.info(s)
 
     def update(self):
         '''Update with a gibbs step jointly
@@ -7148,10 +7148,10 @@ class PerturbationMagnitudes(pl.variables.Normal):
         value = self.sample()
 
         if np.any(np.isnan(value)):
-            logging.critical('mean: {}'.format(self.loc.value))
-            logging.critical('var: {}'.format(self.scale2.value))
-            logging.critical('value: {}'.format(self.value))
-            logging.critical('prior mean: {}'.format(prior_mean.ravel()))
+            logger.critical('mean: {}'.format(self.loc.value))
+            logger.critical('var: {}'.format(self.scale2.value))
+            logger.critical('value: {}'.format(self.value))
+            logger.critical('prior mean: {}'.format(prior_mean.ravel()))
             raise ValueError('`Values in {} are nan: {}'.format(self.name, self.value))
 
         i = 0
@@ -7423,7 +7423,7 @@ class PerturbationProbabilities(pl.Node):
                     perturbation.probability.prior.a.value,
                     perturbation.probability.prior.b.value,
                     perturbation.probability.value)
-        logging.info(s)
+        logger.info(s)
 
     def update(self):
         '''Update according to how many positive and negative indicators there
@@ -7590,7 +7590,7 @@ class PerturbationIndicators(pl.Node):
         for i, perturbation in enumerate(self.perturbations):
             s += '\tPerturbation {}:\n' \
                 '\t\tindicator: {}\n'.format(i, perturbation.indicator.cluster_bool_array())
-        logging.info(s)
+        logger.info(s)
 
     def _make_idx_for_clusters(self) -> Dict[int, np.ndarray]:
         '''Creates a dictionary that maps the cluster id to the
@@ -7911,9 +7911,9 @@ class PerturbationIndicators(pl.Node):
         try:
             beta_logdet = log_det(beta_cov, self)
         except:
-            logging.critical('Crashed in log_det')
-            logging.critical('beta_cov:\n{}'.format(beta_cov))
-            logging.critical('prior_prec\n{}'.format(prior_prec))
+            logger.critical('Crashed in log_det')
+            logger.critical('beta_cov:\n{}'.format(beta_cov))
+            logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
         
         if val:
@@ -8027,9 +8027,9 @@ class PerturbationIndicators(pl.Node):
         try:
             beta_logdet = log_det(beta_cov, self)
         except:
-            logging.critical('Crashed in log_det')
-            logging.critical('beta_cov:\n{}'.format(beta_cov))
-            logging.critical('prior_prec\n{}'.format(prior_prec))
+            logger.critical('Crashed in log_det')
+            logger.critical('beta_cov:\n{}'.format(beta_cov))
+            logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
         priorvar_logdet = log_det(prior_var, self)
         ll2 = 0.5 * (beta_logdet - priorvar_logdet)
@@ -8294,7 +8294,7 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
 
-        logging.info('Prior Variance Interactions initialization results:\n' \
+        logger.info('Prior Variance Interactions initialization results:\n' \
             '\tprior dof: {}\n' \
             '\tprior scale: {}\n' \
             '\tvalue: {}'.format(

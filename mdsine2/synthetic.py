@@ -2,7 +2,7 @@
 '''
 
 import numpy as np
-import logging
+from mdsine2.logger import logger
 import os
 import random
 
@@ -144,7 +144,7 @@ class Synthetic(pl.Saveable):
             Subject to add
         '''
         if name in self.subjs:
-            logging.warning('Subject {} already in synthetic. Skipping'.format(name))
+            logger.warning('Subject {} already in synthetic. Skipping'.format(name))
             return
         if not pl.isstr(name):
             raise TypeError('`name` ({}) must be a str'.format(type(name)))
@@ -172,7 +172,7 @@ class Synthetic(pl.Saveable):
         for subj in self.subjs:
             if subj in self._data:
                 continue
-            logging.info('Forward simulating {}'.format(subj))
+            logger.info('Forward simulating {}'.format(subj))
             init_abund = init_dist.sample(size=len(self.taxa)).reshape(-1,1)
 
             pert_start = None
@@ -246,7 +246,7 @@ class Synthetic(pl.Saveable):
         if self.times is None or self._data is None or self.subjs is None:
             raise ValueError('Need to fully initialize the system before')
 
-        logging.info('Fitting real data')
+        logger.info('Fitting real data')
 
         # Make the study object
         study = pl.Study(taxa=self.taxa, name=name)

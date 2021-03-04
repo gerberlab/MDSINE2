@@ -7,7 +7,7 @@ import collections
 import pickle
 import scipy.spatial.distance
 import pandas as pd
-import logging
+from mdsine2.logger import logger
 import os
 import os.path
 import copy
@@ -327,7 +327,7 @@ def taxaname_for_paper(taxon: Union["Taxon", "OTU"], taxa: "TaxaSet") -> str:
             format='****** %(kingdom)s %(name)s',
             taxon=taxon, taxa=taxa)
     else:
-        logging.debug('Something went wrong - no taxnonomy: {}'.format(str(taxon)))
+        logger.debug('Something went wrong - no taxnonomy: {}'.format(str(taxon)))
         label = 'NA {}'.format(taxa[taxon].name)
 
     return label
@@ -430,9 +430,9 @@ def taxaname_formatter(format: str, taxon: Union["Taxon", "OTU"], taxa: "TaxaSet
         try:
             label = label.replace(fmt, str(taxon.get_taxonomy(taxlevel)))
         except:
-            logging.critical('taxon: {}'.format(taxon))
-            logging.critical('fmt: {}'.format(fmt))
-            logging.critical('label: {}'.format(label))
+            logger.critical('taxon: {}'.format(taxon))
+            logger.critical('fmt: {}'.format(fmt))
+            logger.critical('label: {}'.format(label))
             raise
 
     return label
@@ -1016,11 +1016,11 @@ class OTU(Taxon):
 
                 # Set the consensus base if it passes the threshold
                 if consensus_percent >= threshold:
-                    logging.debug('Consensus found for taxon {} in position {} as {}, found ' \
+                    logger.debug('Consensus found for taxon {} in position {} as {}, found ' \
                         '{}'.format(self.name, i, consensus_base, found))
                     consensus_seq += consensus_base
                 else:
-                    logging.debug('No consensus for taxon {} in position {}. Consensus: {}' \
+                    logger.debug('No consensus for taxon {} in position {}. Consensus: {}' \
                         ', found {}'.format(self.name, i, consensus, found))
                     consensus_seq += noconsensus_char
 
@@ -1029,7 +1029,7 @@ class OTU(Taxon):
             perc_dist = diversity.beta.hamming(seq, consensus_seq, 
                 ignore_char=noconsensus_char)/l
             if perc_dist > 0.03:
-                logging.warning('Taxon {} has a hamming distance > 3% ({}) to the generated ' \
+                logger.warning('Taxon {} has a hamming distance > 3% ({}) to the generated ' \
                     'consensus sequence {} from individual sequence {}. Check that sequences ' \
                     'make sense'.format(self.name, perc_dist, consensus_seq, seq))
 
@@ -1126,10 +1126,10 @@ class OTU(Taxon):
                     self.taxonomy[tax] = '/'.join(consensus)
                 else:
                     # This means that the taxonomy is different on a level different than
-                    logging.critical('{} taxonomy does not agree'.format(self.name))
-                    logging.critical(str(self))
+                    logger.critical('{} taxonomy does not agree'.format(self.name))
+                    logger.critical(str(self))
                     for taxonname in self.aggregated_taxonomies:
-                        logging.warning('{}'.format(list(self.aggregated_taxonomies[taxonname].values())))
+                        logger.warning('{}'.format(list(self.aggregated_taxonomies[taxonname].values())))
 
                     if consensus_table is not None:
                         # Set from the table
@@ -1281,7 +1281,7 @@ class TaxaSet(Clusterable):
             DataFrame containing the required information (Taxonomy, sequence).
             If nothing is passed in, it will be an empty TaxaSet
         '''
-        logging.info('TaxaSet parsng new taxonomy table. Resetting')
+        logger.info('TaxaSet parsng new taxonomy table. Resetting')
         self.taxonomy_table = taxonomy_table
         self.ids = CustomOrderedDict()
         self.names = CustomOrderedDict()
@@ -1291,7 +1291,7 @@ class TaxaSet(Clusterable):
         self.taxonomy_table = taxonomy_table
         taxonomy_table = taxonomy_table.rename(str.lower, axis='columns')
         if 'name' not in taxonomy_table.columns:
-            logging.info('No `name` found - assuming index is the name')
+            logger.info('No `name` found - assuming index is the name')
         else:
             taxonomy_table = taxonomy_table.set_index('name')
         if SEQUENCE_COLUMN_LABEL not in taxonomy_table.columns:
@@ -1300,7 +1300,7 @@ class TaxaSet(Clusterable):
 
         for tax in TAX_LEVELS[:-1]:
             if tax not in taxonomy_table.columns:
-                logging.info('Adding in `{}` column'.format(tax))
+                logger.info('Adding in `{}` column'.format(tax))
                 taxonomy_table = taxonomy_table.insert(-1, tax, 
                     [DEFAULT_TAXLEVEL_NAME for _ in range(len(taxonomy_table.index))])
 
@@ -1825,7 +1825,7 @@ class Subject(Saveable):
         for tidx, timepoint in enumerate(timepoints):
             if timepoint in self.reads:
                 if self.reads[timepoint] is not None:
-                    logging.debug('There are already reads specified at time `{}` for subject `{}`, overwriting'.format(
+                    logger.debug('There are already reads specified at time `{}` for subject `{}`, overwriting'.format(
                         timepoint, self.name))
                 
             self.reads[timepoint] = reads[:,tidx]
@@ -1899,7 +1899,7 @@ class Subject(Saveable):
         for tidx, timepoint in enumerate(timepoints):
             if timepoint in self.qpcr:
                 if self.qpcr[timepoint] is not None:
-                    logging.debug('There are already qpcr measurements specified at time `{}` for subject `{}`, overwriting'.format(
+                    logger.debug('There are already qpcr measurements specified at time `{}` for subject `{}`, overwriting'.format(
                         timepoint, self.name))
             if masses is not None:
                 mass = masses[tidx]
@@ -1954,7 +1954,7 @@ class Subject(Saveable):
             for i,t in enumerate(self.times):
                 abs[:,i] = rel[:,i] * self.qpcr[t].mean()
         except AttributeError as e:
-            logging.info('Attribute Error ({}) for absolute abundance. This is likely ' \
+            logger.info('Attribute Error ({}) for absolute abundance. This is likely ' \
                 'because you did not set the qPCR abundances. Skipping `abs`'.format(e))
             abs = None
 
@@ -2097,7 +2097,7 @@ class Subject(Saveable):
         Internal funciton, should not be used by the user
         '''
         if len(self.parent.perturbations) == 0:
-            logging.info('No perturbations to split on, do nothing')
+            logger.info('No perturbations to split on, do nothing')
             return
 
         # Get the time intervals for each of the times that we are not on perturbations
@@ -2312,7 +2312,7 @@ class Study(Saveable):
         # Add the perturbations if there are any
         # --------------------------------------
         if perturbations is not None:
-            logging.debug('Reseting perturbations')
+            logger.debug('Reseting perturbations')
             self.perturbations = Perturbations()
             if not plutil.isdataframe(perturbations):
                 raise TypeError('`metadata` ({}) must be a pandas.DataFrame'.format(type(metadata)))
@@ -2333,7 +2333,7 @@ class Study(Saveable):
                         self.perturbations[pname].starts[subj] = perturbations['start'][pidx]
                         self.perturbations[pname].ends[subj] = perturbations['end'][pidx]
             except KeyError as e:
-                logging.critical(e)
+                logger.critical(e)
                 raise KeyError('Make sure that `subject`, `start`, and `end` are columns')
 
         # Add the reads if necessary
@@ -2759,7 +2759,7 @@ class Study(Saveable):
                 type(max_value)))
 
         if self.qpcr_normalization_factor is not None:
-            logging.warning('qPCR is already rescaled. unscaling and rescaling')
+            logger.warning('qPCR is already rescaled. unscaling and rescaling')
             self.denormalize_qpcr()
 
         temp_max = -1
@@ -2768,7 +2768,7 @@ class Study(Saveable):
                 temp_max = np.max([temp_max, subj.qpcr[key].mean()])
 
         self.qpcr_normalization_factor = max_value/temp_max
-        logging.info('max_value found: {}, scaling_factor: {}'.format(
+        logger.info('max_value found: {}, scaling_factor: {}'.format(
             temp_max, self.qpcr_normalization_factor))
 
         for subj in self:
@@ -2785,7 +2785,7 @@ class Study(Saveable):
         self
         '''
         if self.qpcr_normalization_factor is None:
-            logging.warning('qPCR is not normalized. Doing nothing')
+            logger.warning('qPCR is not normalized. Doing nothing')
             return
         for subj in self:
             for key in subj.qpcr:

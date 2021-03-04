@@ -15,10 +15,10 @@ pass the random state or do no sampling in the multiprocessed object.
 import sys
 import multiprocessing
 import copy
-import logging
 import os
 import signal
 import time
+from mdsine2.logger import logger
 
 # Typing
 from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
@@ -355,8 +355,8 @@ class PersistentPool:
                 return ret
             except:
                 self.kill()
-                logging.critical('A child threw an error')
-                logging.critical('Error: {}'.format(sys.exc_info()[0]))
+                logger.critical('A child threw an error')
+                logger.critical('Error: {}'.format(sys.exc_info()[0]))
                 raise
         except:
             if type(self.tasks) == DestroyedFromPickling:
@@ -386,8 +386,8 @@ class PersistentPool:
                     return ret
                 except:
                     self.kill()
-                    logging.critical('A child threw an error')
-                    logging.critical('Error: {}'.format(sys.exc_info()[0]))
+                    logger.critical('A child threw an error')
+                    logger.critical('Error: {}'.format(sys.exc_info()[0]))
                     raise
             else:
                 # Send each args to specific processes
@@ -450,8 +450,8 @@ class PersistentPool:
                     ' because `tasks`, `results`, and `workers` are nonserializable.' \
                     ' You must reinitialize it')
             else:
-                logging.critical('A child threw an error')
-                logging.critical('Error: {}'.format(sys.exc_info()[0]))
+                logger.critical('A child threw an error')
+                logger.critical('Error: {}'.format(sys.exc_info()[0]))
                 raise
 
     def staged_map_get(self, timeout: float=None) -> Iterator[Any]:
@@ -546,7 +546,7 @@ class _PersistentWorker(multiprocessing.Process):
             new_args = self.task_queue.get()
             if new_args is None:
                 # Poison pill means shutdown
-                # logging.critical('{}: Exiting'.format(self.name))
+                # logger.critical('{}: Exiting'.format(self.name))
                 self.task_queue.task_done()
                 break
             func, kwargs = new_args
@@ -557,7 +557,7 @@ class _PersistentWorker(multiprocessing.Process):
             except:
                 self.task_queue.task_done()
                 self.result_queue.put(None)
-                logging.critical('Child {} ({}) failed on function `{}`'.format(
+                logger.critical('Child {} ({}) failed on function `{}`'.format(
                     self.name, os.getpid(), func))
                 raise
 
