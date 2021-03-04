@@ -435,6 +435,7 @@ class BaseMCMC(BaseModel):
             intermediate_time = time.time()
 
             for i in tqdm(range(self.start_step, self.n_samples), file=sys.stdout):
+                logger.debug("Iteration {} / {}".format(i+1, self.n_samples))
                 self.sample_iter = i
 
                 # Check if we need to run the intermediate script
