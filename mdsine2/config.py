@@ -343,7 +343,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'run_every_n_iterations': 4},
             STRNAMES.GLV_PARAMETERS: {
                 'update_jointly_pert_inter': True,
-                'update_jointly_growth_selfinter': True
+                'update_jointly_growth_selfinter': False
             },
             STRNAMES.PROCESSVAR: {
                 'dof_option': 'diffuse', # 'half', 
