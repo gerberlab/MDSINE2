@@ -418,7 +418,7 @@ def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True, log_every: int=1) -> Ba
         mcmc.run(log_every=log_every)
     except Exception as e:
         logger.critical('CHAIN `{}` CRASHED'.format(mcmc.graph.name))
-        logger.error(e)
+        logger.exception(e)
         if crash_if_error:
             raise
     mcmc.graph[STRNAMES.FILTERING].kill()
