@@ -75,22 +75,19 @@ def default_loggers():
 
 
 # ============= Create logger instance. Execute once globally. ===========
-__config_loaded__ = False
-if not __config_loaded__:
-    logging.handlers.MakeDirTimedRotatingFileHandler = MakeDirTimedRotatingFileHandler
-    if not os.path.exists(__ini__):
-        print("[logger.py] No logging INI file found. "
-              "Create a `log_config.ini` file, "
-              "or set the `{}` environment variable to point to the right configuration.".format(__env_key__))
-        print("[logger.py] Loading default settings (stdout, stderr).")
-        logger = default_loggers()
-    else:
-        try:
-            logging.config.fileConfig(__ini__)
-            logger = logging.getLogger(__name__)
-            print("[logger.py] Loaded logging configuration from {}.".format(__ini__))
-        except KeyError as e:
-            print("[logger.py] Key error while looking for loggers. "
-                  "Make sure INI file defines logger with key `{}` .".format(__name__))
-            raise e
-    __config_loaded__ = True
+logging.handlers.MakeDirTimedRotatingFileHandler = MakeDirTimedRotatingFileHandler
+if not os.path.exists(__ini__):
+    print("[logger.py] No logging INI file found. "
+          "Create a `log_config.ini` file, "
+          "or set the `{}` environment variable to point to the right configuration.".format(__env_key__))
+    print("[logger.py] Loading default settings (stdout, stderr).")
+    logger = default_loggers()
+else:
+    try:
+        logging.config.fileConfig(__ini__)
+        logger = logging.getLogger(__name__)
+        print("[logger.py] Loaded logging configuration from {}.".format(__ini__))
+    except KeyError as e:
+        print("[logger.py] Key error while looking for loggers. "
+              "Make sure INI file defines logger with key `{}` .".format(__name__))
+        raise e
