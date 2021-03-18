@@ -136,7 +136,7 @@ def expected_n_clusters(G: Graph) -> int:
     conc = G[STRNAMES.CONCENTRATION].prior.mean()
     return conc * np.log((G.data.n_taxa + conc) / conc)
 
-def build_prior_covariance(G: Graph, cov: bool, order: List[str], sparse: bool=True, 
+def build_prior_covariance(G: Graph, cov: bool, order: List[str], sparse: bool=True,
     diag: bool=False) -> Union[scipy.sparse.spmatrix, np.ndarray]:
     '''Build basic prior covariance or precision for the variables
     specified in `order`
@@ -345,9 +345,9 @@ def pinv(M: np.ndarray, var: Variable) -> np.ndarray:
         np.save(filename, M)
         raise
 
-def _scalar_visualize(obj: Variable, path: str, f: IO, section: str='posterior', 
+def _scalar_visualize(obj: Variable, path: str, f: IO, section: str='posterior',
     log_scale: bool=True) -> IO:
-    '''Render the traces in the folder `basepath` and write the 
+    '''Render the traces in the folder `basepath` and write the
     learned values to the file `f`. This works for scalar variables
 
     Parameters
@@ -378,13 +378,13 @@ def _scalar_visualize(obj: Variable, path: str, f: IO, section: str='posterior',
     if f is not None:
         for k,v in summ.items():
             f.write('\t{}: {}\n'.format(k,v))
-    ax1, _ = visualization.render_trace(var=obj, plt_type='both', 
+    ax1, _ = visualization.render_trace(var=obj, plt_type='both',
         section=section, include_burnin=True, log_scale=log_scale, rasterized=True)
 
     if pl.hasprior(obj):
         l,h = ax1.get_xlim()
         try:
-            xs = np.arange(l,h,step=(h-l)/1000) 
+            xs = np.arange(l,h,step=(h-l)/1000)
             ys = []
             for x in xs:
                 ys.append(obj.prior.pdf(value=x))
@@ -424,9 +424,9 @@ def _make_cluster_order(graph: Graph, section: str) -> np.ndarray:
     '''
     order = []
     if graph.inference.is_in_inference_order(STRNAMES.CLUSTERING):
-        ret = generate_cluster_assignments_posthoc(clustering=graph[STRNAMES.CLUSTERING_OBJ], 
+        ret = generate_cluster_assignments_posthoc(clustering=graph[STRNAMES.CLUSTERING_OBJ],
             n_clusters='mode', section=section, set_as_value=False)
-        
+
         for cidx in range(np.max(ret)+1):
             idxs = np.where(ret == cidx)[0]
             for idx in idxs:
@@ -473,9 +473,9 @@ def prod_gaussians(means: np.ndarray, variances: np.ndarray) -> Tuple[float, flo
 
 class _Loess(object):
     '''LOESS - Locally Estimated Scatterplot Smoothing
-    This module was created by João Paulo Figueira and copied from the 
+    This module was created by João Paulo Figueira and copied from the
     repository: https://github.com/joaofig/pyloess.git
-    There are a few modifications, mostly to handle edge cases, i.e., what 
+    There are a few modifications, mostly to handle edge cases, i.e., what
     happens when the entire thing is zero
     '''
     def __init__(self, xx, yy, degree=1):
@@ -567,7 +567,7 @@ class _Loess(object):
                 (sum_weight_x2 - mean_x * mean_x * sum_weight)
             a = mean_y - b * mean_x
             y = a + b * n_x
-        
+
         ret = self.denormalize_y(y)
         if np.isnan(ret):
             if np.all(self.input_yy == 0):
@@ -602,8 +602,8 @@ class ProcessVarGlobal(pl.variables.SICS):
     def __str__(self) -> str:
         return self._strr
 
-    def initialize(self, dof_option: str, scale_option: str, value_option: str, 
-        dof: Union[float, int]=None, scale: Union[float, int]=None, 
+    def initialize(self, dof_option: str, scale_option: str, value_option: str,
+        dof: Union[float, int]=None, scale: Union[float, int]=None,
         value: Union[float, int]=None, variance_scaling: Union[float, int]=1,
         delay: int=0):
         '''Initialize the value and hyperparameter.
@@ -695,7 +695,7 @@ class ProcessVarGlobal(pl.variables.SICS):
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
         self.value = value
-        
+
         self.rebuild_diag()
         self._there_are_perturbations = self.G.perturbations is not None
 
@@ -729,7 +729,7 @@ class ProcessVarGlobal(pl.variables.SICS):
         a = self.value / self.G.data.dt_vec
         if self.G.data.zero_inflation_transition_policy is not None:
             a = a[self.G.data.rows_to_include_zero_inflation]
-        
+
         self.diag = a
         self.prec = 1/a
 
@@ -744,9 +744,9 @@ class ProcessVarGlobal(pl.variables.SICS):
 
         % Subtract the mean
         ..math:: y - Xb ~ Normal( 0, \sigma^2_w / dt)
-        
+
         % Substitute
-        ..math:: z = y - Xb 
+        ..math:: z = y - Xb
 
         ..math:: z ~ Normal (0, \\sigma^2_w / dt)
         ..math:: z * \\sqrt{dt} ~ Normal (0, \\sigma^2_w)
@@ -755,17 +755,17 @@ class ProcessVarGlobal(pl.variables.SICS):
         '''
         if self._there_are_perturbations:
             lhs = [
-                STRNAMES.GROWTH_VALUE, 
+                STRNAMES.GROWTH_VALUE,
                 STRNAMES.SELF_INTERACTION_VALUE,
                 STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
             lhs = [
-                STRNAMES.GROWTH_VALUE, 
+                STRNAMES.GROWTH_VALUE,
                 STRNAMES.SELF_INTERACTION_VALUE,
                 STRNAMES.CLUSTER_INTERACTION_VALUE]
-        
+
         # This is the residual z = y - Xb
-        z = self.G.data.construct_lhs(lhs, 
+        z = self.G.data.construct_lhs(lhs,
             kwargs_dict={STRNAMES.GROWTH_VALUE:{
                 'with_perturbations': self._there_are_perturbations}})
 
@@ -780,7 +780,7 @@ class ProcessVarGlobal(pl.variables.SICS):
         self.dof.value = self.prior.dof.value + len(z)
         self.scale.value = ((self.prior.scale.value * self.prior.dof.value) + \
            residual)/self.dof.value
-        
+
         # shape = 2 + (len(residual)/2)
         # scale = 0.00001 + np.sum(np.square(residual))/2
         # self.value = pl.random.invgamma.sample(shape=shape, scale=scale)
@@ -813,7 +813,7 @@ class Concentration(pl.variables.Gamma):
     n_iter : int
         How many times to resample
     '''
-    def __init__(self, prior: variables.Gamma, value: Union[float, int]=None, 
+    def __init__(self, prior: variables.Gamma, value: Union[float, int]=None,
         n_iter: int=None, **kwargs):
         kwargs['name'] = STRNAMES.CONCENTRATION
         # initialize shape and scale as the same as the priors
@@ -822,8 +822,8 @@ class Concentration(pl.variables.Gamma):
             dtype=float, **kwargs)
         self.add_prior(prior)
 
-    def initialize(self, value_option: str, hyperparam_option: str, n_iter: int=None, 
-        value: Union[int, float]=None, shape: Union[int, float]=None, scale: Union[int, float]=None, 
+    def initialize(self, value_option: str, hyperparam_option: str, n_iter: int=None,
+        value: Union[int, float]=None, shape: Union[int, float]=None, scale: Union[int, float]=None,
         delay: int=0):
         '''Initialize the hyperparameters of the beta prior
 
@@ -899,7 +899,7 @@ class Concentration(pl.variables.Gamma):
             self.sample()
 
     def visualize(self, path: str, f: IO, section: str='posterior') -> IO:
-        '''Render the traces in the folder `basepath` and write the 
+        '''Render the traces in the folder `basepath` and write the
         learned values to the file `f`.
 
         Parameters
@@ -1000,7 +1000,7 @@ class ClusterAssignments(pl.graph.Node):
         '''
         return self.clustering.n_clusters.sample_iter
 
-    def initialize(self, value_option: str, hyperparam_option: str=None, value: Union[np.ndarray, str, List]=None, 
+    def initialize(self, value_option: str, hyperparam_option: str=None, value: Union[np.ndarray, str, List]=None,
         n_clusters: Union[int, str]=None, delay: int=0, run_every_n_iterations: int=1):
         '''Initialize the cluster assingments - there are no hyperparamters to
         initialize because the concentration is initialized somewhere else
@@ -1276,10 +1276,10 @@ class ClusterAssignments(pl.graph.Node):
             self.replicate_bias[ridx] = self.replicate_bias[ridx-1] + \
                 self.n_taxa * self.n_dts_for_replicate[ridx - 1]
 
-    def visualize(self, basepath: str, f: IO, section: str='posterior', 
-        taxa_formatter: str='%(paperformat)s', yticklabels: str='%(paperformat)s %(index)s', 
+    def visualize(self, basepath: str, f: IO, section: str='posterior',
+        taxa_formatter: str='%(paperformat)s', yticklabels: str='%(paperformat)s %(index)s',
         xticklabels: str='%(index)s', tax_fmt: str='%(family)s') -> IO:
-        '''Render the traces in the folder `basepath` and write the 
+        '''Render the traces in the folder `basepath` and write the
         learned values to the file `f`.
 
         Parameters
@@ -1326,14 +1326,14 @@ class ClusterAssignments(pl.graph.Node):
             coclusters[i,i] = np.nan
 
         # N clusters
-        visualization.render_trace(var=self.clustering.n_clusters, plt_type='both', 
+        visualization.render_trace(var=self.clustering.n_clusters, plt_type='both',
             section=section, include_burnin=True, rasterized=True)
         fig = plt.gcf()
         fig.suptitle('Number of Clusters')
         plt.savefig(os.path.join(basepath, 'n_clusters.pdf'))
         plt.close()
 
-        ret = generate_cluster_assignments_posthoc(clustering=self.clustering, n_clusters='mode', 
+        ret = generate_cluster_assignments_posthoc(clustering=self.clustering, n_clusters='mode',
             section=section, set_as_value=True)
         data = []
         for taxon in taxa:
@@ -1477,7 +1477,7 @@ class ClusterAssignments(pl.graph.Node):
         self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
         if self._there_are_perturbations:
             self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
-        
+
         LOG_KEYS.append(cid)
         LOG_P.append(np.log(concentration/self.m) + \
             self.calculate_marginal_loglikelihood_slow()['ret'])
@@ -1512,8 +1512,8 @@ class ClusterAssignments(pl.graph.Node):
         # reconstruct the X matrices
         for v in rhs:
             self.G.data.design_matrices[v].M.build()
-        
-        y = self.G.data.construct_lhs(lhs, 
+
+        y = self.G.data.construct_lhs(lhs,
             kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations': False}})
         X = self.G.data.construct_rhs(keys=rhs, toarray=True)
         process_prec = self.G[STRNAMES.PROCESSVAR].build_matrix(cov=False, sparse=False)
@@ -1557,7 +1557,7 @@ class ClusterAssignments(pl.graph.Node):
         # print('prior_prec truth:\n', prior_prec)
 
         return {
-            'a': X.T @ process_prec, 'beta_prec': beta_prec, 'process_prec': prior_prec, 
+            'a': X.T @ process_prec, 'beta_prec': beta_prec, 'process_prec': prior_prec,
             'ret': ll2+ll3, 'beta_logdet': beta_logdet, 'priorvar_logdet': priorvar_logdet,
             'bEb': bEb, 'bEbprior': bEbprior}
 
@@ -1579,7 +1579,7 @@ class ClusterAssignments(pl.graph.Node):
         self.process_prec = self.G[STRNAMES.PROCESSVAR].prec.ravel() #.build_matrix(cov=False, sparse=False)
         self.process_prec_matrix = self.G[STRNAMES.PROCESSVAR].build_matrix(sparse=True, cov=False)
         lhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
-        self.y = self.G.data.construct_lhs(lhs, 
+        self.y = self.G.data.construct_lhs(lhs,
             kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations': False}})
 
         oidxs = npr.permutation(len(self.G.data.taxa))
@@ -1588,7 +1588,7 @@ class ClusterAssignments(pl.graph.Node):
             self.gibbs_update_single_taxon_slow_fast(oidx=oidx)
             iii += 1
         self._strtime = time.time() - start_time
-    
+
     # @profile
     def gibbs_update_single_taxon_slow_fast(self, oidx: int):
         '''The update function is based off of Algorithm 8 in 'Markov Chain
@@ -1604,68 +1604,61 @@ class ClusterAssignments(pl.graph.Node):
         oidx : int
             Taxa index that we are updating the cluster assignment of
         '''
-        curr_cluster = self.clustering.idx2cid[oidx]
         concentration = self.concentration.value
+        debug_cluster_ordering = []
 
         # start as a dictionary then send values to `sample_categorical_log`
         LOG_P = []
         LOG_KEYS = []
 
-        # Calculate current cluster
-        # =========================
-        # If the element is already in its own cluster, use the new cluster case
-        if self.clustering.clusters[curr_cluster].size == 1:
-            a = np.log(concentration/self.m)
-        else:
-            a = np.log(self.clustering.clusters[curr_cluster].size - 1)
-        LOG_P.append(a + self.calculate_marginal_loglikelihood_slow_fast_sparse())
-        LOG_KEYS.append(curr_cluster)
+        # If singleton, eliminate existing cluster (to be recreated later with fresh values)
+        # (Here, it is implemented by moving it to a different existing cluster).
+        current_cid = self.clustering.idx2cid[oidx]
+        if self.clustering.clusters[current_cid].size == 1:
+            for cid in self.clustering.order:
+                if cid == current_cid:
+                    continue
+                else:
+                    self.clustering.move_item(idx=oidx, cid=cid)
+                    break
 
-        # Calculate going to every other cluster
-        # ======================================
+        # Evaluate likelihood on all existing clusters (non-empty not counting current taxa).
         for cid in self.clustering.order:
-            if curr_cluster == cid:
-                continue
-
             # Move Taxa and recompute the matrices
-            self.clustering.move_item(idx=oidx,cid=cid)
+            self.clustering.move_item(idx=oidx, cid=cid)
             self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
             self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
             if self._there_are_perturbations:
                 self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
-
             LOG_P.append(np.log(self.clustering.clusters[cid].size - 1) + \
-                self.calculate_marginal_loglikelihood_slow_fast_sparse())
+                         self.calculate_marginal_loglikelihood_slow_fast_sparse())
             LOG_KEYS.append(cid)
+            debug_cluster_ordering.append(self.clustering.clusters[cid])
 
-
-        # Calculate new cluster
-        # =====================
-        cid=self.clustering.make_new_cluster_with(idx=oidx)
+        # new cluster
+        cid = self.clustering.make_new_cluster_with(idx=oidx)
         self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
         self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
         if self._there_are_perturbations:
             self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
-        
         LOG_KEYS.append(cid)
-        LOG_P.append(np.log(concentration/self.m) + \
-            self.calculate_marginal_loglikelihood_slow_fast_sparse())
+        LOG_P.append(np.log(concentration / self.m) + \
+                     self.calculate_marginal_loglikelihood_slow_fast_sparse())
+        debug_cluster_ordering.append(self.clustering.clusters[cid])
 
         # Sample the assignment
         # =====================
         idx = sample_categorical_log(LOG_P)
         assigned_cid = LOG_KEYS[idx]
-        curr_clus = self.clustering.idx2cid[oidx]
-
-        if assigned_cid != curr_clus:
+        last_temp_cid = self.clustering.idx2cid[oidx]
+        if assigned_cid != last_temp_cid:
             self.clustering.move_item(idx=oidx,cid=assigned_cid)
             self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-
             # Change the mixing matrix for the interactions and (potentially) perturbations
             self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
             if self._there_are_perturbations:
                 self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
-
+                
     # @profile
     def calculate_marginal_loglikelihood_slow_fast(self):
         '''Marginalizes out the interactions and the perturbations
@@ -1676,8 +1669,8 @@ class ClusterAssignments(pl.graph.Node):
             rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
             rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
-        
-        
+
+
         y = self.y
         X = self.G.data.construct_rhs(keys=rhs, toarray=True)
 
@@ -1723,14 +1716,14 @@ class ClusterAssignments(pl.graph.Node):
             rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
             rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
-        
-        
+
+
         y = self.y
         X = self.G.data.construct_rhs(keys=rhs, toarray=False)
 
         process_prec = self.process_prec_matrix
-        prior_prec = build_prior_covariance(G=self.G, cov=False, order=rhs, sparse=True)  
-        prior_prec_diag = build_prior_covariance(G=self.G, cov=False, order=rhs, diag=True)        
+        prior_prec = build_prior_covariance(G=self.G, cov=False, order=rhs, sparse=True)
+        prior_prec_diag = build_prior_covariance(G=self.G, cov=False, order=rhs, diag=True)
         prior_var = build_prior_covariance(G=self.G, cov=True, order=rhs, sparse=True)
         prior_mean = build_prior_mean(G=self.G, order=rhs, shape=(-1,1))
 
@@ -1790,8 +1783,8 @@ class ClusterAssignments(pl.graph.Node):
         different arguments, single worker). For more information what this means look
         at pylab.multiprocessing documentation.
 
-        If we initialized our pool as a pylab.multiprocessing.PersistentPool, then we 
-        multiprocess the likelihood calculations for each taxa. If we didnt then this 
+        If we initialized our pool as a pylab.multiprocessing.PersistentPool, then we
+        multiprocess the likelihood calculations for each taxa. If we didnt then this
         implementation has the same performance as `ClusterAssignments.update_slow_fast`.
         '''
         if self.G.data.zero_inflation_transition_policy is not None:
@@ -1857,7 +1850,7 @@ class ClusterAssignments(pl.graph.Node):
             'prior_var_pert': prior_var_pert,
             'prior_mean_interactions': prior_mean_interactions,
             'prior_mean_pert': prior_mean_pert}
-        
+
         if pl.ispersistentpool(self.pool):
             self.pool.map('initialize_gibbs', [kwargs]*self.pool.num_workers)
         else:
@@ -1989,7 +1982,7 @@ class ClusterAssignments(pl.graph.Node):
         if self._there_are_perturbations:
             self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
-        
+
 class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
     '''Make the full parallelization
         - Mixture matricies for interactions and perturbations
@@ -2016,17 +2009,17 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
     n_perturbations : int, None
         Number of perturbations. None if there are no perturbations
     base_Xrows, base_Xcols, base_Xpertrows, base_Xpertcols : np.ndarray
-        These are the rows and columns necessary to build the interaction and perturbation 
+        These are the rows and columns necessary to build the interaction and perturbation
         matrices, respectively. Whats passed in is the data vector and then we build
         it using sparse matrices
     n_rowsM, n_rowsMpert : int
         These are the number of rows for the mixing matrix for the interactions and
         perturbations respectively.
     '''
-    def __init__(self, n_taxa: int, total_n_dts_per_taxon: int, n_replicates: int, 
-        n_dts_for_replicate: Union[np.ndarray, List[int]], there_are_perturbations: bool, 
+    def __init__(self, n_taxa: int, total_n_dts_per_taxon: int, n_replicates: int,
+        n_dts_for_replicate: Union[np.ndarray, List[int]], there_are_perturbations: bool,
         keypair2col_interactions: np.ndarray, keypair2col_perturbations: np.ndarray,
-        n_perturbations: int, base_Xrows: np.ndarray, base_Xcols: np.ndarray, base_Xshape: Tuple, 
+        n_perturbations: int, base_Xrows: np.ndarray, base_Xcols: np.ndarray, base_Xshape: Tuple,
         base_Xpertrows: np.ndarray, base_Xpertcols: np.ndarray,
         base_Xpertshape: Tuple, n_rowsM: int, n_rowsMpert: int):
         self.n_taxa = n_taxa
@@ -2049,9 +2042,9 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         self.n_rowsM = n_rowsM
         self.n_rowsMpert = n_rowsMpert
 
-    def initialize_gibbs(self, base_Xdata: scipy.sparse.spmatrix, base_Xpertdata: scipy.sparse.spmatrix, 
-        concentration: float, m: int, y: np.ndarray, process_prec_diag: np.ndarray, 
-        prior_var_interactions: float, prior_var_pert: np.ndarray, 
+    def initialize_gibbs(self, base_Xdata: scipy.sparse.spmatrix, base_Xpertdata: scipy.sparse.spmatrix,
+        concentration: float, m: int, y: np.ndarray, process_prec_diag: np.ndarray,
+        prior_var_interactions: float, prior_var_pert: np.ndarray,
         prior_mean_interactions: float, prior_mean_pert: np.ndarray):
         '''Pass in the information that changes every Gibbs step
 
@@ -2074,7 +2067,7 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         self.base_X = scipy.sparse.coo_matrix(
             (base_Xdata,(self.base_Xrows,self.base_Xcols)),
             shape=self.base_Xshape).tocsc()
-        
+
         self.concentration = concentration
         self.m = m
         self.y = y.reshape(-1,1)
@@ -2100,14 +2093,14 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
 
         Parameters
         ----------
-        
+
         '''
         self.saved_interaction_on_idxs = interaction_on_idxs
         self.saved_perturbation_on_idxs = perturbation_on_idxs
 
     # @profile
-    def run(self, interaction_on_idxs: np.ndarray, perturbation_on_idxs: List[np.ndarray], 
-        cluster_config: np.ndarray, log_mult_factor: float, cid: int, 
+    def run(self, interaction_on_idxs: np.ndarray, perturbation_on_idxs: List[np.ndarray],
+        cluster_config: np.ndarray, log_mult_factor: float, cid: int,
         use_saved_params: bool):
         '''Pass in the parameters for the specific cluster assignment for
         the OTU and run the marginalization
@@ -2147,12 +2140,12 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
             on_perturbations=perturbation_on_idxs)
         self.prior_cov, self.prior_prec, self.prior_prec_diag = self.build_prior_cov_and_prec_and_diag(
             on_interactions=interaction_on_idxs, on_perturbations=perturbation_on_idxs)
-        
+
         return cid, self.calculate_marginal_loglikelihood_slow_fast_sparse() + log_mult_factor
 
     def set_clustering(self, cluster_config: np.ndarray):
         self.clustering = CondensedClustering(oidx2cidx=cluster_config)
-        self.iidx2cidxpair = np.zeros(shape=(len(self.clustering)*(len(self.clustering)-1), 2), 
+        self.iidx2cidxpair = np.zeros(shape=(len(self.clustering)*(len(self.clustering)-1), 2),
             dtype=int)
         self.iidx2cidxpair = SingleClusterFullParallelization.make_iidx2cidxpair(
             ret=self.iidx2cidxpair,
@@ -2172,10 +2165,10 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         for ccc in on_columns:
             tcidx = self.iidx2cidxpair[ccc, 0]
             scidx = self.iidx2cidxpair[ccc, 1]
-            
+
             smems = self.clustering.clusters[scidx]
             tmems = self.clustering.clusters[tcidx]
-            
+
             a = np.zeros(len(smems)*len(tmems), dtype=int)
             rows.append(SingleClusterFullParallelization.get_indices(a,
                 self.keypair2col_interactions, tmems, smems))
@@ -2194,7 +2187,7 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
     def build_perturbations_matrix(self, on_columns: np.ndarray):
         if not self.there_are_perturbations:
             raise ValueError('You should not be here')
-        
+
         keypair2col = self.keypair2col_perturbations
         rows = []
         cols = []
@@ -2206,7 +2199,7 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
                     rows.append(keypair2col[oidx, pidx])
                     cols.append(col)
                 col += 1
-        
+
         data = np.ones(len(rows), dtype=np.float64)
         M = scipy.sparse.coo_matrix((data,(rows,cols)),
             shape=(self.n_rowsMpert, col)).tocsc()
@@ -2220,7 +2213,7 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         '''
         ret = []
         for pidx, pert in enumerate(on_perturbations):
-            ret = np.append(ret, 
+            ret = np.append(ret,
                 np.full(len(pert), fill_value=self.prior_mean_pert[pidx]))
         ret = np.append(ret, np.full(len(on_interactions), fill_value=self.prior_mean_interactions))
         return ret.reshape(-1,1)
@@ -2230,14 +2223,14 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         '''
         ret = []
         for pidx, pert in enumerate(on_perturbations):
-            ret = np.append(ret, 
+            ret = np.append(ret,
                 np.full(len(pert), fill_value=self.prior_var_pert[pidx]))
         prior_var_diag = np.append(ret, np.full(len(on_interactions), fill_value=self.prior_var_interactions))
         prior_prec_diag = 1/prior_var_diag
 
-        prior_var = scipy.sparse.dia_matrix((prior_var_diag,[0]), 
+        prior_var = scipy.sparse.dia_matrix((prior_var_diag,[0]),
             shape=(len(prior_var_diag),len(prior_var_diag))).tocsc()
-        prior_prec = scipy.sparse.dia_matrix((prior_prec_diag,[0]), 
+        prior_prec = scipy.sparse.dia_matrix((prior_prec_diag,[0]),
             shape=(len(prior_prec_diag),len(prior_prec_diag))).tocsc()
 
         return prior_var, prior_prec, prior_prec_diag
@@ -2265,7 +2258,7 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
             logger.critical('beta_cov:\n{}'.format(beta_cov))
             logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
-        
+
         priorvar_logdet = log_det(prior_cov, self)
         ll2 = 0.5 * (beta_logdet - priorvar_logdet)
 
@@ -2418,7 +2411,7 @@ class TrajectorySet(pl.graph.Node):
             self.value[ridx].value[~self.G[STRNAMES.ZERO_INFLATION].value[ridx]] = np.nan
             self.value[ridx].add_trace()
 
-    def visualize(self, ridx: int, section: str, basepath: str, taxa_formatter: str, 
+    def visualize(self, ridx: int, section: str, basepath: str, taxa_formatter: str,
         vmin: Union[float, int]=None, vmax: Union[float, int]=None):
         '''Visualize the replicate at index `ridx`
         '''
@@ -2430,7 +2423,7 @@ class TrajectorySet(pl.graph.Node):
 
         given_data = subj.matrix()['abs']
         given_times = subj.times
-        
+
         trace = obj.get_trace_from_disk(section=section)
         summ = pl.summary(trace)
         data_times = self.G.data.times[ridx]
@@ -2439,12 +2432,12 @@ class TrajectorySet(pl.graph.Node):
         # Make the tables
         for k,arr in summ.items():
             df = pd.DataFrame(arr, index=index, columns=data_times)
-            df.to_csv(os.path.join(basepath, '{}.tsv'.format(k)), 
+            df.to_csv(os.path.join(basepath, '{}.tsv'.format(k)),
                 sep='\t', index=True, header=True)
 
         percentile2_5 = np.nanpercentile(trace, q=2.5, axis=0)
         percentile97_5 = np.nanpercentile(trace, q=97.5, axis=0)
-        
+
         acceptance_rates = []
         for oidx in range(len(subjset.taxa)):
             fig = plt.figure()
@@ -2458,9 +2451,9 @@ class TrajectorySet(pl.graph.Node):
             high_traj = percentile97_5[oidx, :]
 
             ax.plot(data_times, med_traj, color='blue', marker='.', label='median')
-            ax.fill_between(data_times, y1=low_traj, y2=high_traj, color='blue', 
+            ax.fill_between(data_times, y1=low_traj, y2=high_traj, color='blue',
                 alpha=0.15, label='95th percentile')
-            ax.plot(given_times, given_data[oidx, :], marker='x', color='black', 
+            ax.plot(given_times, given_data[oidx, :], marker='x', color='black',
                 linestyle=':', label='data')
 
             ax.set_yscale('log')
@@ -2476,7 +2469,7 @@ class TrajectorySet(pl.graph.Node):
             # Calculate the acceptance rate at every taxon and timepoint
             temp = []
             for tidx in range(trace.shape[-1]):
-                temp.append(pl.metropolis.acceptance_rate(x=trace[:, oidx, tidx], 
+                temp.append(pl.metropolis.acceptance_rate(x=trace[:, oidx, tidx],
                     start=0, end=trace.shape[0]))
             acceptance_rates.append(temp)
 
@@ -2532,12 +2525,12 @@ class FilteringLogMP(pl.graph.Node):
         # It doesnt matter if we chose q or x because they are both the same
         return self.x.sample_iter
 
-    def initialize(self, x_value_option: str, a0: Union[float, str], a1: Union[float, str], 
-        v1: Union[float, int], v2: Union[float, int], essential_timepoints: Union[np.ndarray, str], 
+    def initialize(self, x_value_option: str, a0: Union[float, str], a1: Union[float, str],
+        v1: Union[float, int], v2: Union[float, int], essential_timepoints: Union[np.ndarray, str],
         tune: Tuple[int, int], proposal_init_scale: Union[float, int],
-        intermediate_step: Union[Tuple[str, Tuple], np.ndarray, List, type(None)], 
-        intermediate_interpolation: str=None, delay: int=0, bandwidth: Union[float, int]=None, 
-        window: int=None, target_acceptance_rate: Union[str, float]=0.44, 
+        intermediate_step: Union[Tuple[str, Tuple], np.ndarray, List, type(None)],
+        intermediate_interpolation: str=None, delay: int=0, bandwidth: Union[float, int]=None,
+        window: int=None, target_acceptance_rate: Union[str, float]=0.44,
         calculate_qpcr_loglik: bool=True):
         '''Initialize the values of the error model (values for the
         latent and the auxiliary trajectory). Additionally this sets
@@ -2613,7 +2606,7 @@ class FilteringLogMP(pl.graph.Node):
         target_acceptance_rate : numeric
             This is the target acceptance rate for each time point individually
         calculate_qpcr_loglik : bool
-            If True, calculate the loglikelihood of the qPCR measurements during the 
+            If True, calculate the loglikelihood of the qPCR measurements during the
             proposal
         '''
         if not pl.isint(delay):
@@ -2642,7 +2635,7 @@ class FilteringLogMP(pl.graph.Node):
             raise TypeError('`tune` ({}) 2nd parameter must be an int'.format(type(tune[1])))
         if tune[1] < 0:
             raise ValueError('`tune` ({}) 2nd parameter must be > 0'.format(tune[1]))
-        
+
         if not pl.isnumeric(a0):
             raise TypeError('`a0` ({}) must be a numeric type'.format(type(a0)))
         elif a0 <= 0:
@@ -2971,10 +2964,10 @@ class FilteringLogMP(pl.graph.Node):
         qpcr_vars = []
         for aaa in self.G[STRNAMES.QPCR_VARIANCES].value:
             qpcr_vars.append(aaa.value)
-        
-        
+
+
         kwargs = {'growth':growth, 'self_interactions':self_interactions,
-            'pv':pv, 'interactions':interactions, 'perturbations':perts, 
+            'pv':pv, 'interactions':interactions, 'perturbations':perts,
             'zero_inflation_data': None, 'qpcr_variances':qpcr_vars}
 
         str_acc = [None]*self.G.data.n_replicates
@@ -3005,7 +2998,7 @@ class FilteringLogMP(pl.graph.Node):
         except:
             self._strr = 'NA'
 
-    def visualize(self, basepath: str, section: str='posterior', taxa_formatter: str='%(name)s', 
+    def visualize(self, basepath: str, section: str='posterior', taxa_formatter: str='%(name)s',
         vmin: float=None, vmax: float=None):
         '''Plot the posterior for each filtering object
 
@@ -3028,7 +3021,7 @@ class FilteringLogMP(pl.graph.Node):
             subj = self.G.data.subjects.iloc(ridx)
             path = os.path.join(basepath, 'Subject_{}'.format(subj.name))
             os.makedirs(path, exist_ok=True)
-            self.x.visualize(ridx=ridx, section=section, basepath=path, 
+            self.x.visualize(ridx=ridx, section=section, basepath=path,
                 taxa_formatter=taxa_formatter)
 
 
@@ -3092,12 +3085,12 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         '''
         return
 
-    def initialize(self, times: np.ndarray, qpcr_log_measurements: Dict[float, np.ndarray], 
+    def initialize(self, times: np.ndarray, qpcr_log_measurements: Dict[float, np.ndarray],
         reads: Dict[float, np.ndarray], there_are_intermediate_timepoints: bool,
         there_are_perturbations: bool, pv_global: bool, x_prior_mean: Union[float, int],
-        x_prior_std: Union[float, int], tune: int, delay: int, end_iter: int, proposal_init_scale: float, 
+        x_prior_std: Union[float, int], tune: int, delay: int, end_iter: int, proposal_init_scale: float,
         a0: float, a1: float, x: np.ndarray, calculate_qpcr_loglik: bool,
-        pert_starts: np.ndarray, pert_ends: np.ndarray, ridx: int, subjname: str, 
+        pert_starts: np.ndarray, pert_ends: np.ndarray, ridx: int, subjname: str,
         h5py_xname: str, target_acceptance_rate: float, zero_inflation_transition_policy: Any):
         '''Initialize the object at the beginning of the inference
 
@@ -3312,11 +3305,11 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                     end_tidx = np.searchsorted(self.times, end_t) - 1
 
                 self.fully_in_pert[start_tidx:end_tidx] = pidx
-    
+
     # @profile
-    def persistent_run(self, growth: np.ndarray, self_interactions: np.ndarray, 
+    def persistent_run(self, growth: np.ndarray, self_interactions: np.ndarray,
         pv: Union[float, int, np.ndarray], interactions: np.ndarray,
-        perturbations: np.ndarray, qpcr_variances: np.ndarray, 
+        perturbations: np.ndarray, qpcr_variances: np.ndarray,
         zero_inflation_data: Any) -> Tuple[int, np.ndarray, float]:
         '''Run an update of the values for a single gibbs step for all of the data points
         in this replicate
@@ -3367,7 +3360,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         if self.there_are_perturbations:
             self.growth_rate_non_pert = growth.ravel()
             self.growth_rate_on_pert = growth.reshape(-1,1) * (1 + perturbations)
-                
+
         # Go through each randomly Taxa and go in time order
         oidxs = npr.permutation(self.n_taxa)
         # print('===============================')
@@ -3578,7 +3571,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 self.proposal_std /= np.sqrt(1.5)
             else:
                 self.proposal_std *= np.sqrt(1.5)
-            
+
             self.acceptances = 0
             self.n_props_local = 0
 
@@ -3596,11 +3589,11 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         try:
             return pl.random.normal.logpdf(
-                value=self.curr_logx[self.next_tidx], 
+                value=self.curr_logx[self.next_tidx],
                 loc=logmu, scale=self.curr_pv_std*self.sqrt_dts[self.tidx])
         except:
             return _normal_logpdf(
-                value=self.curr_logx[self.next_tidx], 
+                value=self.curr_logx[self.next_tidx],
                 loc=logmu, scale=self.curr_pv_std*self.sqrt_dts[self.tidx])
 
     def first_timepoint_reverse(self) -> float:
@@ -3622,10 +3615,10 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             a1=self.reverse_growth_rate)
 
         try:
-            return pl.random.normal.logpdf(value=self.curr_logx[self.tidx], 
+            return pl.random.normal.logpdf(value=self.curr_logx[self.tidx],
                 loc=logmu, scale=self.curr_pv_std*self.sqrt_dts[self.prev_tidx])
         except:
-            return _normal_logpdf(value=self.curr_logx[self.tidx], 
+            return _normal_logpdf(value=self.curr_logx[self.tidx],
                 loc=logmu, scale=self.curr_pv_std*self.sqrt_dts[self.prev_tidx])
 
     def data_loglik_w_intermediates(self) -> float:
@@ -3671,7 +3664,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         Zero-inflation
         --------------
-        When we get here, the current taxon at `tidx` is not a structural zero, but 
+        When we get here, the current taxon at `tidx` is not a structural zero, but
         there might be other bugs in the system that do have a structural zero there.
         Thus we do nan adds
         '''
@@ -3683,7 +3676,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 class ZeroInflation(pl.graph.Node):
     '''This is the posterior distribution for the zero inflation model. These are used
     to learn when the model should use use the data and when it should not. We do not need
-    to trace this object because we set the structural zeros to nans in the trace for 
+    to trace this object because we set the structural zeros to nans in the trace for
     filtering.
 
     TODO: Parallel version of the class
@@ -3767,7 +3760,7 @@ class ZeroInflation(pl.graph.Node):
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
 
         self.G.data.set_zero_inflation(turn_on=turn_on, turn_off=turn_off)
-                
+
 
 # Interactions
 # ------------
@@ -3783,7 +3776,7 @@ class PriorVarInteractions(pl.variables.SICS):
         self.add_prior(prior)
 
     def initialize(self, value_option: str, dof_option: str, scale_option: str, value: float=None,
-        mean_scaling_factor: Union[float, int]=None, dof: Union[float, int]=None, 
+        mean_scaling_factor: Union[float, int]=None, dof: Union[float, int]=None,
         scale: Union[float, int]=None, delay: int=0):
         '''Initialize the hyperparameters of the self interaction variance based on the
         passed in option
@@ -3906,12 +3899,12 @@ class PriorMeanInteractions(pl.variables.Normal):
 
     def __str__(self) -> str:
         # If this fails, it is because we are dividing by 0 sampler_iter
-        # If which case we just return the value 
+        # If which case we just return the value
         s = str(self.value)
         return s
 
-    def initialize(self, value_option: str, loc_option: str, scale2_option: str, 
-        value: Union[float, int]=None, loc: Union[float, int]=None, 
+    def initialize(self, value_option: str, loc_option: str, scale2_option: str,
+        value: Union[float, int]=None, loc: Union[float, int]=None,
         scale2: Union[float, int]=None, delay: int=0):
         '''Initialize the hyperparameters
 
@@ -3937,7 +3930,7 @@ class PriorMeanInteractions(pl.variables.Normal):
             'manual'
                 Set with the `scale2` parameter
         value, loc, scale2 : float
-            These are only necessary if we specify manual for any of the other 
+            These are only necessary if we specify manual for any of the other
             options
         delay : int
             How much to delay the start of the update during inference
@@ -4016,7 +4009,7 @@ class PriorMeanInteractions(pl.variables.Normal):
 class ClusterInteractionIndicatorProbability(pl.variables.Beta):
     '''This is the posterior for the probability of a cluster being on.
 
-    Note that in the beta prior, `a` is the number of ons, `b` is the 
+    Note that in the beta prior, `a` is the number of ons, `b` is the
     number of offs.
 
     Parameters
@@ -4197,7 +4190,7 @@ class ClusterInteractionValue(pl.variables.MVN):
         '''
         self.obj.set_values(*args, **kwargs)
 
-    def initialize(self, value_option: str, hyperparam_option: str=None, 
+    def initialize(self, value_option: str, hyperparam_option: str=None,
         value: np.ndarray=None, indicators: np.ndarray=None, delay: int=0):
         '''Initialize the interactions object.
 
@@ -4328,7 +4321,7 @@ class ClusterInteractionValue(pl.variables.MVN):
     def add_trace(self):
         self.obj.add_trace()
 
-    def visualize(self, basepath: str, section: str='posterior', taxa_formatter: str='%(paperformat)s', 
+    def visualize(self, basepath: str, section: str='posterior', taxa_formatter: str='%(paperformat)s',
         yticklabels: str='%(paperformat)s %(index)s', xticklabels: str='%(index)s',
         fixed_clustering: bool=False):
         '''Render the interaction matrices in the folder `basepath`
@@ -4355,7 +4348,7 @@ class ClusterInteractionValue(pl.variables.MVN):
         '''
         if not self.G.inference.tracer.is_being_traced(self.obj.name):
             logger.info('Interactions are not being learned')
-        
+
         # Get cluster ordering
         taxa = self.G.data.taxa
         summ = pl.summary(self.obj, set_nan_to_0=True, section=section)
@@ -4392,7 +4385,7 @@ class ClusterInteractionValue(pl.variables.MVN):
 
             visualization.render_interaction_strength(interaction_matrix=M,
                 log_scale=True, taxa=taxa, yticklabels=yticklabels,
-                xticklabels=xticklabels, order=order, 
+                xticklabels=xticklabels, order=order,
                 title='{} Interactions'.format(k.capitalize()))
             fig = plt.gcf()
             fig.tight_layout()
@@ -4402,7 +4395,7 @@ class ClusterInteractionValue(pl.variables.MVN):
             if not fixed_clustering:
                 M = M[order, :]
                 M = M[:, order]
-            
+
             df = pd.DataFrame(M, index=labels, columns=labels)
             df.to_csv(os.path.join(basepath, '{}_matrix.tsv'.format(k)),
                 sep='\t', index=True, header=True)
@@ -4609,10 +4602,10 @@ class ClusterInteractionIndicators(pl.variables.Variable):
                 i += l
 
             d[cid] = a
-        
+
         if self.G.data.zero_inflation_transition_policy is not None:
-            # We need to convert the indices that are meant from no zero inflation to 
-            # ones that take into account zero inflation - use the array from 
+            # We need to convert the indices that are meant from no zero inflation to
+            # ones that take into account zero inflation - use the array from
             # `data.Data._setrows_to_include_zero_inflation`. If the index should be
             # included, then we subtract the number of indexes that are previously off
             # before that index. If it should not be included then we exclude it
@@ -4640,7 +4633,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         --------------------------------------------
         - ys : dict (int -> np.ndarray)
             - Maps the target cluster id to the observation matrix that it
-              corresponds to (only the Taxa in the target cluster). This 
+              corresponds to (only the Taxa in the target cluster). This
               array already has the growth and self-interactions subtracted
               out:
                 * $ \frac{log(x_{k+1}) - log(x_{k})}{dt} - a_{1,k} - a_{2,k}x_{k} $
@@ -4677,14 +4670,14 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         Parameters created if there are perturbations
         ---------------------------------------------
         - perturbationsXs : dict (int -> np.ndarray)
-            - Maps the target cluster id to the design matrix that corresponds to 
+            - Maps the target cluster id to the design matrix that corresponds to
               the on perturbations of the target clusters. This is preindexed in
               both rows and columns
         - prior_prec_perturbations : dict (int -> np.ndarray)
             - Maps the target cluster id to the diagonal of the prior precision
               of the perturbations
         - prior_var_perturbations : dict (int -> np.ndarray)
-            - Maps the target cluster id to the diagonal of the prior variance 
+            - Maps the target cluster id to the diagonal of the prior variance
               of the perturbations
         - prior_mean_perturbations : dict (int -> np.ndarray)
             - Maps the target cluster id to the vector of the prior mean of the
@@ -4821,7 +4814,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         else:
             rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
 
-        y = self.G.data.construct_lhs(lhs, 
+        y = self.G.data.construct_lhs(lhs,
             kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations': False}})
         X = self.G.data.construct_rhs(rhs, toarray=True)
 
@@ -4877,7 +4870,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         # Get the current interaction by the index
         self.curr_interaction = self.interactions.iloc(idx)
         start_sign = self.curr_interaction.indicator
-        
+
         tcid = self.curr_interaction.target_cid
         self.curr_interaction.indicator = False
         self.col_idxs = np.asarray(
@@ -4928,7 +4921,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
             cols = np.append(self.col_idxs, idx)
         else:
             cols = self.col_idxs
-        
+
         X = self.interactionXs[tcid][:, cols]
         prior_mean = np.full(len(cols), self.prior_mean_interaction)
         prior_prec_diag = np.full(len(cols), self.prior_prec_interaction)
@@ -4940,7 +4933,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
             prior_mean = np.append(
                 prior_mean,
                 self.prior_mean_perturbations[tcid])
-            
+
             prior_prec_diag = np.append(
                 prior_prec_diag,
                 self.prior_prec_perturbations[tcid])
@@ -4966,7 +4959,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
             logger.critical('beta_cov:\n{}'.format(beta_cov))
             logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
-        
+
         if val:
             bEbprior = (self.prior_mean_interaction**2)/self.prior_var_interaction
             priorvar_logdet = self.priorvar_logdet
@@ -4977,11 +4970,11 @@ class ClusterInteractionIndicators(pl.variables.Variable):
         ll2 = 0.5 * (beta_logdet - priorvar_logdet)
         ll3 = 0.5 * (bEb - bEbprior)
         return ll2 + ll3
-            
+
     def kill(self):
         pass
 
-    def visualize(self, basepath: str, section: str='posterior', taxa_formatter: str='%(paperformat)s', 
+    def visualize(self, basepath: str, section: str='posterior', taxa_formatter: str='%(paperformat)s',
         yticklabels: str='%(paperformat)s %(index)s', xticklabels: str='%(index)s', vmax: Union[float, int]=10,
         fixed_clustering: bool=False):
         '''Render the interaction matrices in the folder `basepath`
@@ -5010,7 +5003,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         if not self.G.inference.tracer.is_being_traced(self.G[STRNAMES.INTERACTIONS_OBJ]):
             logger.info('Interactions are not being learned')
-        
+
         # Get cluster ordering
         taxa = self.G.data.taxa
         order = _make_cluster_order(graph=self.G, section=section)
@@ -5044,7 +5037,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
             taxa = self.G.data.taxa
             title = 'Microbe Interaction Bayes Factors'
 
-        visualization.render_bayes_factors(bfs, taxa=taxa, order=order, max_value=vmax, 
+        visualization.render_bayes_factors(bfs, taxa=taxa, order=order, max_value=vmax,
             xticklabels=xticklabels, yticklabels=yticklabels, title=title)
         fig = plt.gcf()
         fig.tight_layout()
@@ -5062,7 +5055,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 # ---------------
 class PriorVarMH(pl.variables.SICS):
     '''This is the posterior for the prior variance of either the growth
-    or self-interaction parameter. We update with a MH update since this 
+    or self-interaction parameter. We update with a MH update since this
     prior is not conjugate.
 
     Parameters
@@ -5072,7 +5065,7 @@ class PriorVarMH(pl.variables.SICS):
         Inverse Chi Squared (SICS) distribution
     child_name : str
         This is the name of the variable that this is a prior variance
-        for. This is either the name of the growth parameter or the 
+        for. This is either the name of the growth parameter or the
         self-interactions parameter
     kwargs : dict
         These are the other parameters for the initialization.
@@ -5092,7 +5085,7 @@ class PriorVarMH(pl.variables.SICS):
 
     def __str__(self) -> str:
         # If this fails, it is because we are dividing by 0 sampler_iter
-        # If which case we just return the value 
+        # If which case we just return the value
         try:
             s = 'Value: {}, Acceptance rate: {}'.format(
                 self.value, np.mean(self.acceptances[
@@ -5114,7 +5107,7 @@ class PriorVarMH(pl.variables.SICS):
                    scale: float=None,
                    proposal_dof: float=None,
                    delay: int=0):
-        '''Initialize the parameters of the distribution and the 
+        '''Initialize the parameters of the distribution and the
         proposal distribution
 
         Parameters
@@ -5328,11 +5321,11 @@ class PriorVarMH(pl.variables.SICS):
         if self.sample_iter == 0:
             self.temp_acceptances = 0
             self.acceptances = np.zeros(self.G.inference.n_samples, dtype=bool)
-        
+
         elif self.sample_iter > self.end_tune:
             # Don't do any more updates
             return
-        
+
         elif self.sample_iter % self.tune == 0:
             # Update dof
             acceptance_rate = self.temp_acceptances / self.tune
@@ -5426,10 +5419,10 @@ class PriorVarMH(pl.variables.SICS):
 
         # Plot the prior over the posterior
         l,h = ax1.get_xlim()
-        xs = np.arange(l,h,step=(h-l)/100) 
+        xs = np.arange(l,h,step=(h-l)/100)
         ys = []
         for x in xs:
-            ys.append(pl.random.sics.pdf(value=x, 
+            ys.append(pl.random.sics.pdf(value=x,
                 dof=self.prior.dof.value,
                 scale=self.prior.scale.value))
         ax1.plot(xs, ys, label='prior', alpha=0.5, color='red', rasterized=True)
@@ -5437,7 +5430,7 @@ class PriorVarMH(pl.variables.SICS):
 
         # Plot the acceptance rate over the trace
         ax3 = ax2.twinx()
-        ax3 = visualization.render_acceptance_rate_trace(var=self, ax=ax3, 
+        ax3 = visualization.render_acceptance_rate_trace(var=self, ax=ax3,
             label='Acceptance Rate', color='red', scatter=False, rasterized=True)
         ax3.legend()
         fig = plt.gcf()
@@ -5474,7 +5467,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
 
     def __str__(self) -> str:
         # If this fails, it is because we are dividing by 0 sampler_iter
-        # If which case we just return the value 
+        # If which case we just return the value
         try:
             s = 'Value: {}, Acceptance rate: {}'.format(
                 self.value, np.mean(self.acceptances[
@@ -5544,7 +5537,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
                     `proposal_var` must also be supplied
         target_acceptance_rate : str, float
             If float, this is the target acceptance rate
-            If str: 
+            If str:
                 'optimal', 'auto': 0.44
         tune : str, int
             How often to tune the proposal. If str:
@@ -5652,7 +5645,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             X = self.G.data.construct_rhs(keys=rhs,
                 kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
                 index_out_perturbations=True)
-            y = self.G.data.construct_lhs(keys=lhs, 
+            y = self.G.data.construct_lhs(keys=lhs,
                 kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
                 index_out_perturbations=True)
 
@@ -5685,7 +5678,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             X = self.G.data.construct_rhs(keys=rhs,
                 kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
                 index_out_perturbations=True)
-            y = self.G.data.construct_lhs(keys=lhs, 
+            y = self.G.data.construct_lhs(keys=lhs,
                 kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
                 index_out_perturbations=True)
 
@@ -5719,7 +5712,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
             X = self.G.data.construct_rhs(keys=rhs,
                 kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
                 index_out_perturbations=True)
-            y = self.G.data.construct_lhs(keys=lhs, 
+            y = self.G.data.construct_lhs(keys=lhs,
                 kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
                 index_out_perturbations=True)
 
@@ -5761,11 +5754,11 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         if self.sample_iter == 0:
             self.temp_acceptances = 0
             self.acceptances = np.zeros(self.G.inference.n_samples, dtype=bool)
-        
+
         elif self.sample_iter > self.end_tune:
             # Don't do any more updates
             return
-        
+
         elif self.sample_iter % self.tune == 0:
             # Update var
             acceptance_rate = self.temp_acceptances / self.tune
@@ -5798,16 +5791,16 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         new_mean = self.proposal.sample() # Sample a new value
 
         # Calculate the target distribution ll
-        prev_target_ll = pl.random.truncnormal.logpdf( 
-            value=prev_mean, loc=self.prior.loc.value, 
+        prev_target_ll = pl.random.truncnormal.logpdf(
+            value=prev_mean, loc=self.prior.loc.value,
             scale=np.sqrt(self.prior.scale2.value), low=self.low,
             high=self.high)
         for i in range(len(x)):
             prev_target_ll += pl.random.truncnormal.logpdf(
                 value=x[i], loc=prev_mean, scale=std,
                 low=low, high=high)
-        new_target_ll = pl.random.truncnormal.logpdf( 
-            value=new_mean, loc=self.prior.loc.value, 
+        new_target_ll = pl.random.truncnormal.logpdf(
+            value=new_mean, loc=self.prior.loc.value,
             scale=np.sqrt(self.prior.scale2.value), low=self.low,
             high=self.high)
         for i in range(len(x)):
@@ -5819,7 +5812,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
         prev_prop_ll = pl.random.truncnormal.logpdf(
             value=prev_mean, loc=new_mean, scale=proposal_std,
             low=low, high=high)
-        
+
         new_prop_ll = pl.random.truncnormal.logpdf(
             value=new_mean, loc=prev_mean, scale=proposal_std,
             low=low, high=high)
@@ -5870,10 +5863,10 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
 
         # Plot the prior over the posterior
         l,h = ax1.get_xlim()
-        xs = np.arange(l,h,step=(h-l)/100) 
+        xs = np.arange(l,h,step=(h-l)/100)
         ys = []
         for x in xs:
-            ys.append(pl.random.normal.pdf(value=x, 
+            ys.append(pl.random.normal.pdf(value=x,
                 loc=self.prior.loc.value,
                 scale=np.sqrt(self.prior.scale2.value)))
         ax1.plot(xs, ys, label='prior', alpha=0.5, color='red', rasterized=True)
@@ -5881,7 +5874,7 @@ class PriorMeanMH(pl.variables.TruncatedNormal):
 
         # Plot the acceptance rate over the trace
         ax3 = ax2.twinx()
-        ax3 = visualization.render_acceptance_rate_trace(var=self, ax=ax3, 
+        ax3 = visualization.render_acceptance_rate_trace(var=self, ax=ax3,
             label='Acceptance Rate', color='red', scatter=False, rasterized=True)
         ax3.legend()
         fig = plt.gcf()
@@ -6046,7 +6039,7 @@ class Growth(pl.variables.TruncatedNormal):
         if np.any(np.isnan(self.value)):
             if self._n_times_nan > 5:
                 raise ValueError('Too many nans')
-            
+
             self._n_times_nan += 1
             logger.critical('mean: {}'.format(self.loc.value))
             logger.critical('var: {}'.format(self.scale2.value))
@@ -6088,7 +6081,7 @@ class Growth(pl.variables.TruncatedNormal):
         self.loc.value = np.asarray(cov @ (X.T @ process_prec.dot(y) + pm)).ravel()
         self.scale2.value = np.diag(cov)
 
-    def visualize(self, basepath: str, section: str='posterior', taxa_formatter: str='%(name)s', 
+    def visualize(self, basepath: str, section: str='posterior', taxa_formatter: str='%(name)s',
         true_value: np.ndarray=None) -> pd.DataFrame:
         '''Render the traces in the folder `basepath`. Makes a `pandas.DataFrame` table
         where the index is the Taxa name in `taxa_formatter` and the columns are
@@ -6133,7 +6126,7 @@ class Growth(pl.variables.TruncatedNormal):
             for _,v in summ.items():
                 temp.append(v[idx])
             data.append(temp)
-        
+
         df = pd.DataFrame(data, columns=columns, index=index)
 
         if section == 'posterior':
@@ -6172,13 +6165,13 @@ class Growth(pl.variables.TruncatedNormal):
 
             arr = np.zeros(len(prior_std_trace), dtype=float)
             for i in range(len(prior_std_trace)):
-                arr[i] = pl.random.truncnormal.sample(loc=prior_mean_trace[i], scale=prior_std_trace[i], 
+                arr[i] = pl.random.truncnormal.sample(loc=prior_mean_trace[i], scale=prior_std_trace[i],
                     low=self.low, high=self.high)
-            visualization.render_trace(var=arr, plt_type='hist', 
+            visualization.render_trace(var=arr, plt_type='hist',
                 label='prior', color='red', ax=ax_posterior, rasterized=True)
 
             if true_value is not None:
-                ax_posterior.axvline(x=true_value[idx], color='red', alpha=0.65, 
+                ax_posterior.axvline(x=true_value[idx], color='red', alpha=0.65,
                     label='True Value')
 
             ax_posterior.legend()
@@ -6186,11 +6179,11 @@ class Growth(pl.variables.TruncatedNormal):
 
             # plot the trace
             ax_trace = fig.add_subplot(1,2,2)
-            visualization.render_trace(var=self, idx=idx, plt_type='trace', 
+            visualization.render_trace(var=self, idx=idx, plt_type='trace',
                 ax=ax_trace, section=section, include_burnin=True, rasterized=True)
 
             if true_value is not None:
-                ax_trace.axhline(y=true_value[idx], color='red', alpha=0.65, 
+                ax_trace.axhline(y=true_value[idx], color='red', alpha=0.65,
                     label='True Value')
                 ax_trace.legend()
 
@@ -6413,7 +6406,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             # Get the self-interactions by using the values of the growth terms
             self.value = 1/ss
         elif value_option == 'linear-regression':
-            
+
             rhs = [STRNAMES.SELF_INTERACTION_VALUE]
             lhs = [STRNAMES.GROWTH_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
@@ -6446,7 +6439,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         if np.any(np.isnan(self.value)):
             if self._n_times_nan > 5:
                 raise ValueError('Too many nans')
-            
+
             self._n_times_nan += 1
             logger.critical('mean: {}'.format(self.loc.value))
             logger.critical('var: {}'.format(self.scale2.value))
@@ -6480,7 +6473,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
         self.loc.value = np.asarray(cov @ (X.T @ process_prec.dot(y) + pm)).ravel()
         self.scale2.value = np.diag(cov)
 
-    def visualize(self, basepath: str, section: str='posterior', taxa_formatter: str='%(name)s', 
+    def visualize(self, basepath: str, section: str='posterior', taxa_formatter: str='%(name)s',
         true_value: np.ndarray=None) -> pd.DataFrame:
         '''Render the traces in the folder `basepath`. Makes a `pandas.DataFrame` table
         where the index is the Taxa name in `taxa_formatter` and the columns are
@@ -6525,7 +6518,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
             for _,v in summ.items():
                 temp.append(v[idx])
             data.append(temp)
-        
+
         df = pd.DataFrame(data, columns=columns, index=index)
 
         if section == 'posterior':
@@ -6560,13 +6553,13 @@ class SelfInteractions(pl.variables.TruncatedNormal):
 
             arr = np.zeros(len(prior_std_trace), dtype=float)
             for i in range(len(prior_std_trace)):
-                arr[i] = pl.random.truncnormal.sample(loc=prior_mean_trace[i], scale=prior_std_trace[i], 
+                arr[i] = pl.random.truncnormal.sample(loc=prior_mean_trace[i], scale=prior_std_trace[i],
                     low=self.low, high=self.high)
-            visualization.render_trace(var=arr, plt_type='hist', 
+            visualization.render_trace(var=arr, plt_type='hist',
                 label='prior', color='red', ax=ax_posterior, rasterized=True)
 
             if true_value is not None:
-                ax_posterior.axvline(x=true_value[idx], color='red', alpha=0.65, 
+                ax_posterior.axvline(x=true_value[idx], color='red', alpha=0.65,
                     label='True Value')
 
             ax_posterior.legend()
@@ -6574,11 +6567,11 @@ class SelfInteractions(pl.variables.TruncatedNormal):
 
             # plot the trace
             ax_trace = fig.add_subplot(1,2,2)
-            visualization.render_trace(var=self, idx=idx, plt_type='trace', 
+            visualization.render_trace(var=self, idx=idx, plt_type='trace',
                 ax=ax_trace, section=section, include_burnin=True, rasterized=True)
 
             if true_value is not None:
-                ax_trace.axhline(y=true_value[idx], color='red', alpha=0.65, 
+                ax_trace.axhline(y=true_value[idx], color='red', alpha=0.65,
                     label='True Value')
                 ax_trace.legend()
 
@@ -6610,7 +6603,7 @@ class GLVParameters(pl.variables.MVN):
         These are the magnitudes of the perturbation parameters (per clsuter)
         Set to None if there are no perturbations
     '''
-    def __init__(self, growth: Growth, self_interactions: SelfInteractions, 
+    def __init__(self, growth: Growth, self_interactions: SelfInteractions,
         interactions: ClusterInteractionValue, pert_mag: "PerturbationMagnitudes", **kwargs):
 
         if not issubclass(growth.__class__, Growth):
@@ -6676,7 +6669,7 @@ class GLVParameters(pl.variables.MVN):
 
         Growths and self-interactions
         -----------------------------
-        These are conjugate and have a truncated normal prior. If they are set to be 
+        These are conjugate and have a truncated normal prior. If they are set to be
         updated together, then we must do MH because we cannot sample from a truncated
         multivariate gaussian.
 
@@ -6773,14 +6766,14 @@ class GLVParameters(pl.variables.MVN):
                 """
                 Assume matrix is organized into (NT x 2N):
                 rows are blocks of N taxa at each timepoint, columns are (N growths), (N self_interaction)
-                
+
                 ============================================================================
                                         (N bugs, growth rates)  (N bugs, self-interactions)
                 (N bugs, timepoint 1)
                 (N bugs, timepoint 2)
                 ...
                 ============================================================================
-                
+
                 Slice the array into T x 2 blocks, solve each 2-dimensional problem separately.
                 """
                 # p-dimensional vectors.
@@ -7003,7 +6996,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
 
         kwargs['name'] = STRNAMES.PERT_VALUE
         pl.variables.Normal.__init__(self, loc=None, scale2=None, dtype=float, **kwargs)
-        self.perturbations = self.G.perturbations # mdsine2.pylab.base.Perturbations 
+        self.perturbations = self.G.perturbations # mdsine2.pylab.base.Perturbations
 
     def __str__(self) -> str:
         s = 'Perturbation Magnitudes (multiplicative)'
@@ -7044,7 +7037,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
     def sample_iter(self):
         return self.perturbations[0].sample_iter
 
-    def initialize(self, value_option: str, value: np.ndarray=None, 
+    def initialize(self, value_option: str, value: np.ndarray=None,
         loc: Union[float, int]=None, delay: int=0):
         '''Initialize the prior and the value of the perturbation. We assume that
         each perturbation has the same hyperparameters for the prior
@@ -7114,7 +7107,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
 
         n_on = [perturbation.indicator.num_on_clusters() for perturbation in \
             self.perturbations]
-        
+
         if n_on == 0:
             return
 
@@ -7222,7 +7215,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
             data = data_clustering
         else:
             index = [taxon.name for taxon in self.G.data.taxa]
-        df = pd.DataFrame(data, columns=[k for k in summ], 
+        df = pd.DataFrame(data, columns=[k for k in summ],
             index=index)
         df.to_csv(os.path.join(basepath, 'values.tsv'), sep='\t', index=True, header=True)
 
@@ -7242,7 +7235,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
             prior_std_trace = np.sqrt(perturbation.magnitude.prior.scale2.get_trace_from_disk(section=section))
         else:
             prior_std_trace = np.ones(len_posterior) + np.sqrt(perturbation.magnitude.prior.scale2.value)
-        
+
         if fixed_clustering:
             rang = len(clustering)
         else:
@@ -7264,7 +7257,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
             arr = np.zeros(len(prior_std_trace), dtype=float)
             for i in range(len(prior_std_trace)):
                 arr[i] = pl.random.normal.sample(loc=prior_mean_trace[i], scale=prior_std_trace[i])
-            visualization.render_trace(var=arr, plt_type='hist', 
+            visualization.render_trace(var=arr, plt_type='hist',
                 label='prior', color='red', ax=ax_posterior, rasterized=True)
 
             ax_posterior.legend()
@@ -7272,7 +7265,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
 
             # plot the trace
             ax_trace = fig.add_subplot(1,2,2)
-            visualization.render_trace(var=perturbation, idx=oidx, plt_type='trace', 
+            visualization.render_trace(var=perturbation, idx=oidx, plt_type='trace',
                 ax=ax_trace, section=section, include_burnin=True, rasterized=True)
 
             if fixed_clustering:
@@ -7309,7 +7302,7 @@ class PerturbationProbabilities(pl.Node):
     def sample_iter(self) -> int:
         return self.perturbations[0].probability.sample_iter
 
-    def initialize(self, value_option: str, hyperparam_option: str, a: float=None, 
+    def initialize(self, value_option: str, hyperparam_option: str, a: float=None,
         b: float=None, value: Union[float, int]=None, N: Union[str, int]='auto', delay: int=0):
         '''Initialize the hyperparameters of the prior and the value. Each
         perturbation has the same prior.
@@ -7338,7 +7331,7 @@ class PerturbationProbabilities(pl.Node):
                     a = 0.5
                     b = N*M(N*M-1), N are the expected number of clusters
         N : str, int
-            This is the number of clusters to set the hyperparam options to 
+            This is the number of clusters to set the hyperparam options to
             (if they are dependent on the number of cluster). If 'auto', set to the expected number
             of clusters from a dirichlet process. Else use this number (must be an int).
         delay : int
@@ -7378,7 +7371,7 @@ class PerturbationProbabilities(pl.Node):
         else:
             raise TypeError('`N` ({}) type not recognized'.format(type(N)))
 
-        
+
         if hyperparam_option == 'strong-dense':
             a = N
             b = 0.5
@@ -7627,10 +7620,10 @@ class PerturbationIndicators(pl.Node):
                 i += l
 
             d[cid] = a
-        
+
         if self.G.data.zero_inflation_transition_policy is not None:
-            # We need to convert the indices that are meant from no zero inflation to 
-            # ones that take into account zero inflation - use the array from 
+            # We need to convert the indices that are meant from no zero inflation to
+            # ones that take into account zero inflation - use the array from
             # `data.Data._setrows_to_include_zero_inflation`. If the index should be
             # included, then we subtract the number of indexes that are previously off
             # before that index. If it should not be included then we exclude it
@@ -7660,7 +7653,7 @@ class PerturbationIndicators(pl.Node):
         --------------------------------------------
         - ys : dict (int -> np.ndarray)
             - Maps the target cluster id to the observation matrix that it
-              corresponds to (only the Taxa in the target cluster). This 
+              corresponds to (only the Taxa in the target cluster). This
               array already has the growth and self-interactions subtracted
               out:
                 - $ \frac{log(x_{k+1}) - log(x_{k})}{dt} - a_{1,k} - a_{2,k}x_{k} $
@@ -7673,10 +7666,10 @@ class PerturbationIndicators(pl.Node):
             - Maps the target cluster id to the design matrix for the interactions
               going into that cluster. We pre-index it with the rows and columns
         - prior_prec_interaction : dict (int -> np.ndarray)
-            - Maps the target cluster id to to the diagonal of the prior precision 
+            - Maps the target cluster id to to the diagonal of the prior precision
               for the interaction values.
         - prior_mean_interaction : dict (int -> np.ndarray)
-            - Maps the target cluster id to to the diagonal of the prior mean 
+            - Maps the target cluster id to to the diagonal of the prior mean
               for the interaction values.
         - prior_ll_ons : np.ndarray
             - Prior log likelihood of a positive indicator. These are separate for each
@@ -7688,8 +7681,8 @@ class PerturbationIndicators(pl.Node):
             - This is the prior variance log determinant that we add when the indicator
               is positive. This is different for each perturbation.
         - perturbationsXs : dict (int -> np.ndarray)
-            - Maps the target cluster id to the design matrix that corresponds to 
-              the on perturbations of the target clusters. This is preindexed by the 
+            - Maps the target cluster id to the design matrix that corresponds to
+              the on perturbations of the target clusters. This is preindexed by the
               rows but not the columns - the columns assume that all of the perturbations
               are on and we index the ones that we want.
         - prior_prec_perturbations : np.ndarray
@@ -7726,7 +7719,7 @@ class PerturbationIndicators(pl.Node):
                     if interaction.indicator:
                         cols.append(i)
             cols = np.asarray(cols, dtype=int)
-            self.interactionXs[tcid] = pl.util.fast_index(M=XM_master, 
+            self.interactionXs[tcid] = pl.util.fast_index(M=XM_master,
                 rows=row_idxs[tcid], cols=cols)
 
         # Make prior parameters for interactions
@@ -7744,11 +7737,11 @@ class PerturbationIndicators(pl.Node):
             prob_on = perturbation.probability.value
             self.prior_ll_ons.append(np.log(prob_on))
             self.prior_ll_offs.append(np.log(1 - prob_on))
-            
+
             self.priorvar_logdet_diffs.append(
                 np.log(perturbation.magnitude.prior.scale2.value))
 
-            self.prior_prec_perturbations.append( 
+            self.prior_prec_perturbations.append(
                 1/perturbation.magnitude.prior.scale2.value)
 
             self.prior_mean_perturbations.append(
@@ -7756,7 +7749,7 @@ class PerturbationIndicators(pl.Node):
 
         # Make perturbation matrices
         self.perturbationsXs = {}
-        self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build(build=True, 
+        self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build(build=True,
             build_for_neg_ind=True)
         Xpert_master = self.G.data.design_matrices[STRNAMES.PERT_VALUE].toarray()
         for tcid in self.clustering.order:
@@ -7773,7 +7766,7 @@ class PerturbationIndicators(pl.Node):
         self.arr = []
         for perturbation in self.perturbations:
             self.arr = np.append(
-                self.arr, 
+                self.arr,
                 perturbation.indicator.cluster_bool_array())
         self.arr = np.asarray(self.arr, dtype=bool)
 
@@ -7915,7 +7908,7 @@ class PerturbationIndicators(pl.Node):
             logger.critical('beta_cov:\n{}'.format(beta_cov))
             logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
-        
+
         if val:
             bEbprior = (self.prior_mean_perturbations[pidx]**2) * \
                 self.prior_prec_perturbations[pidx]
@@ -7933,7 +7926,7 @@ class PerturbationIndicators(pl.Node):
         #     'priorvar_logdet': priorvar_logdet,
         #     'bEb': bEb,
         #     'bEbprior': bEbprior}
-        return ll2 + ll3        
+        return ll2 + ll3
 
     # @profile
     def update_slow(self):
@@ -7966,7 +7959,7 @@ class PerturbationIndicators(pl.Node):
         '''
         cidx = idx % self.G.data.n_taxa
         cid = self.clustering.order[cidx]
-        
+
         pidx = idx // self.G.data.n_taxa
         perturbation = self.perturbations[pidx]
 
@@ -7988,7 +7981,7 @@ class PerturbationIndicators(pl.Node):
             self.G.data.design_matrices[STRNAMES.PERT_VALUE].build()
 
     # @profile
-    def calculate_marginal_loglikelihood(self, cid: int, val: bool, 
+    def calculate_marginal_loglikelihood(self, cid: int, val: bool,
         perturbation: pl.contrib.ClusterPerturbationEffect) -> Dict[str, float]:
         '''Calculate the log marginal likelihood with the perturbations integrated
         out
@@ -8001,9 +7994,9 @@ class PerturbationIndicators(pl.Node):
         rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
         lhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
         X = self.G.data.construct_rhs(keys=rhs)
-        y = self.G.data.construct_lhs(keys=lhs, 
+        y = self.G.data.construct_lhs(keys=lhs,
             kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations': False}})
-        
+
         if X.shape[1] == 0:
             return {
             'ret': 0,
@@ -8087,7 +8080,7 @@ class PerturbationIndicators(pl.Node):
             df = pd.DataFrame([bf_clusters], index=[perturbation.name],
                 columns=['Cluster {}'.format(cidx+1) for cidx in range(len(clustering))])
         else:
-            df = pd.DataFrame([bayes_factors], index=[perturbation.name], 
+            df = pd.DataFrame([bayes_factors], index=[perturbation.name],
                 columns=[taxon.name for taxon in self.G.data.taxa])
         df.to_csv(path, sep='\t', index=True, header=True)
 
@@ -8196,7 +8189,7 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
     '''This is the posterior of the prior variance of regression coefficients
     for the interaction (off diagonal) variables
     '''
-    def __init__(self, prior: variables.SICS, perturbation: pl.ClusterPerturbationEffect, 
+    def __init__(self, prior: variables.SICS, perturbation: pl.ClusterPerturbationEffect,
         value: Union[float, int]=None, **kwargs):
 
         kwargs['name'] = STRNAMES.PRIOR_VAR_PERT + '_' + perturbation.name
@@ -8204,7 +8197,7 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
         self.add_prior(prior)
         self.perturbation = perturbation
 
-    def initialize(self, value_option: str, dof_option: str, scale_option: str, 
+    def initialize(self, value_option: str, dof_option: str, scale_option: str,
         value: float=None, dof: float=None, scale: float=None, delay: int=0):
         '''Initialize the hyperparameters of the perturbation prior variance based on the
         passed in option
@@ -8420,7 +8413,7 @@ class PriorMeanPerturbations(pl.Variable):
 
 
 class PriorMeanPerturbationSingle(pl.variables.Normal):
-    
+
     def __init__(self, prior: variables.Normal, perturbation: pl.ClusterPerturbationEffect, **kwargs):
 
         kwargs['name'] = STRNAMES.PRIOR_MEAN_PERT + '_' + perturbation.name
@@ -8428,7 +8421,7 @@ class PriorMeanPerturbationSingle(pl.variables.Normal):
         self.add_prior(prior)
         self.perturbation = perturbation
 
-    def initialize(self, value_option: str, loc_option: str, scale2_option: str, 
+    def initialize(self, value_option: str, loc_option: str, scale2_option: str,
         value: float=None, loc: float=None, scale2: float=None, delay: int=0):
         '''Initialize the hyperparameters
 
@@ -8456,7 +8449,7 @@ class PriorMeanPerturbationSingle(pl.variables.Normal):
             'manual'
                 Set with the `scale2` parameter
         value, loc, scale2 : float
-            These are only necessary if we specify manual for any of the other 
+            These are only necessary if we specify manual for any of the other
             options
         delay : int
             How much to delay the start of the update during inference
@@ -8508,7 +8501,7 @@ class PriorMeanPerturbationSingle(pl.variables.Normal):
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
         self.value = value
-        
+
     def update(self):
         '''Update using a Gibbs update
         '''
@@ -8599,17 +8592,17 @@ class _qPCRPriorAggVar(_qPCRBase):
         if not pl.isint(ridx):
             raise TypeError('`ridx` ({}) must be an int'.format(type(ridx)))
         if ridx >= self.G.data.n_replicates:
-            raise ValueError('`ridx` ({}) out of range ({})'.format(ridx, 
+            raise ValueError('`ridx` ({}) out of range ({})'.format(ridx,
                 self.G.data.n_replicates))
         if not pl.isint(tidx):
             raise TypeError('`tidx` ({}) must be an int'.format(type(tidx)))
         if tidx >= len(self.G.data.given_timepoints[ridx]):
-            raise ValueError('`tidx` ({}) out of range ({})'.format(tidx, 
+            raise ValueError('`tidx` ({}) out of range ({})'.format(tidx,
                 len(self.G.data.given_timepoints[ridx])))
         if not pl.isint(sidx):
             raise TypeError('`l` ({}) must be an int'.format(type(sidx)))
         if sidx >= self.L:
-            raise ValueError('`l` ({}) out of range ({})'.format(tidx, 
+            raise ValueError('`l` ({}) out of range ({})'.format(tidx,
                 self.L))
         self.value[sidx].add_qpcr_measurement(ridx=ridx, tidx=tidx)
 
@@ -8619,8 +8612,8 @@ class _qPCRPriorAggVar(_qPCRBase):
 
 
 class qPCRVariances(_qPCRBase):
-    '''Aggregation class for qPCR variance for a set of qPCR variances. 
-    The qPCR variances are 
+    '''Aggregation class for qPCR variance for a set of qPCR variances.
+    The qPCR variances are
 
     Parameters
     ----------
@@ -8631,9 +8624,9 @@ class qPCRVariances(_qPCRBase):
         kwargs['name'] = STRNAMES.QPCR_VARIANCES
         _qPCRBase.__init__(self, **kwargs)
         self.G.data.qpcr_variances = self
-        
+
         for ridx in range(self.n_replicates):
-            self.value.append( 
+            self.value.append(
                 qPCRVarianceReplicate(ridx=ridx, **kwargs))
 
     def add_qpcr_measurement(self, ridx, tidx, sidx):
@@ -8652,17 +8645,17 @@ class qPCRVariances(_qPCRBase):
         if not pl.isint(ridx):
             raise TypeError('`ridx` ({}) must be an int'.format(type(ridx)))
         if ridx >= self.G.data.n_replicates:
-            raise ValueError('`ridx` ({}) out of range ({})'.format(ridx, 
+            raise ValueError('`ridx` ({}) out of range ({})'.format(ridx,
                 self.G.data.n_replicates))
         if not pl.isint(tidx):
             raise TypeError('`tidx` ({}) must be an int'.format(type(tidx)))
         if tidx >= len(self.G.data.given_timepoints[ridx]):
-            raise ValueError('`tidx` ({}) out of range ({})'.format(tidx, 
+            raise ValueError('`tidx` ({}) out of range ({})'.format(tidx,
                 len(self.G.data.given_timepoints[ridx])))
         if not pl.isint(sidx):
             raise TypeError('`l` ({}) must be an int'.format(type(sidx)))
         if sidx >= self.L:
-            raise ValueError('`l` ({}) out of range ({})'.format(tidx, 
+            raise ValueError('`l` ({}) out of range ({})'.format(tidx,
                 self.L))
         self.value[ridx].add_qpcr_measurement(tidx=tidx, l=sidx)
 
@@ -8783,7 +8776,7 @@ class qPCRVarianceReplicate(pl.variables.SICS):
         if not pl.isint(tidx):
             raise TypeError('`tidx` ({}) must be an int'.format(type(tidx)))
         if tidx >= len(self.G.data.given_timepoints[self.ridx]):
-            raise ValueError('`tidx` ({}) out of range ({})'.format(tidx, 
+            raise ValueError('`tidx` ({}) out of range ({})'.format(tidx,
                 len(self.G.data.given_timepoints[self.ridx])))
         if not pl.isint(l):
             raise TypeError('`l` ({}) must be an int'.format(type(l)))
@@ -8805,7 +8798,7 @@ class qPCRDegsOfFreedoms(_qPCRPriorAggVar):
 
 class qPCRDegsOfFreedomL(pl.variables.Uniform):
     '''Posterior for a single qPCR degrees of freedom parameter for a SICS set
-    
+
     Parameters
     ----------
     L : int
@@ -8825,7 +8818,7 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
 
     def __str__(self):
         # If this fails, it is because we are dividing by 0 sampler_iter
-        # If which case we just return the value 
+        # If which case we just return the value
         try:
             s = 'Value: {}, Acceptance rate: {}'.format(
                 self.value, np.mean(self.acceptances[
@@ -8841,14 +8834,14 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
 
     def add_qpcr_measurement(self, ridx, tidx):
         '''Add the qPCR measurement for subject index `ridx` and time index
-        `tidx` to 
+        `tidx` to
         '''
         self.data_locs.append((ridx, tidx))
 
-    def initialize(self, value_option, low_option, high_option, proposal_option, 
-        target_acceptance_rate, tune, end_tune, value=None, low=None, high=None, 
+    def initialize(self, value_option, low_option, high_option, proposal_option,
+        target_acceptance_rate, tune, end_tune, value=None, low=None, high=None,
         proposal_var=None, delay=0):
-        '''Initialize the values and hyperparameters. The proposal truncation is 
+        '''Initialize the values and hyperparameters. The proposal truncation is
         always set to the same as the parameterization of the prior.
 
         Parameters
@@ -8895,9 +8888,9 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
         self.qpcr_data = []
         for ridx, tidx in self.data_locs:
             t = self.G.data.given_timepoints[ridx][tidx]
-            self.qpcr_data = np.append(self.qpcr_data, 
+            self.qpcr_data = np.append(self.qpcr_data,
                 self.G.data.qpcr[ridx][t].log_data)
-        
+
         # Set the prior low
         if not pl.isstr(low_option):
             raise TypeError('`low_option` ({}) must be a str'.format(type(low_option)))
@@ -8912,7 +8905,7 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
             low = 0
         else:
             raise ValueError('`low_option` ({}) not recognized'.format(low_option))
-        self.prior.low.override_value(low)  
+        self.prior.low.override_value(low)
 
         # Set the prior high
         if not pl.isstr(high_option):
@@ -8929,7 +8922,7 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
         else:
             raise ValueError('`high_option` ({}) not recognized'.format(high_option))
         if high < self.prior.low.value:
-            raise ValueError('`high` ({}) must be >= low ({})'.format(high, 
+            raise ValueError('`high` ({}) must be >= low ({})'.format(high,
                 self.prior.low.value))
         self.prior.high.override_value(high)
 
@@ -8964,7 +8957,7 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
             raise TypeError('`target_acceptance_rate` ({}) type not recognized'.format(
                 type(target_acceptance_rate)))
         self.target_acceptance_rate = target_acceptance_rate
-        
+
         if pl.isstr(tune):
             if tune in ['auto']:
                 tune = 50
@@ -9016,11 +9009,11 @@ class qPCRDegsOfFreedomL(pl.variables.Uniform):
         if self.sample_iter == 0:
             self.temp_acceptances = 0
             self.acceptances = np.zeros(self.G.inference.n_samples, dtype=bool)
-        
+
         elif self.sample_iter > self.end_tune:
             # Don't do any more updates
             return
-        
+
         elif self.sample_iter % self.tune == 0:
             # Update var
             acceptance_rate = self.temp_acceptances / self.tune
@@ -9111,7 +9104,7 @@ class qPCRScaleL(pl.variables.SICS):
 
     def __str__(self):
         # If this fails, it is because we are dividing by 0 sampler_iter
-        # If which case we just return the value 
+        # If which case we just return the value
         try:
             s = 'Value: {}, Acceptance rate: {}'.format(
                 self.value, np.mean(self.acceptances[
@@ -9127,11 +9120,11 @@ class qPCRScaleL(pl.variables.SICS):
 
     def add_qpcr_measurement(self, ridx, tidx):
         '''Add the qPCR measurement for subject index `ridx` and time index
-        `tidx` to 
+        `tidx` to
         '''
         self.data_locs.append((ridx, tidx))
 
-    def initialize(self, value_option, scale_option, dof_option, proposal_option, 
+    def initialize(self, value_option, scale_option, dof_option, proposal_option,
         target_acceptance_rate, tune, end_tune, value=None, dof=None, scale=None,
         proposal_var=None, delay=0):
         '''Initialize the values and hyperparameters
@@ -9161,7 +9154,7 @@ class qPCRScaleL(pl.variables.SICS):
                 'auto'
                     mean**2 / 100
                 'manual'
-                    `proposal_var` must also be supplied     
+                    `proposal_var` must also be supplied
         '''
         if not pl.isint(delay):
             raise TypeError('`delay` ({}) must be an int'.format(type(delay)))
@@ -9172,7 +9165,7 @@ class qPCRScaleL(pl.variables.SICS):
         self.qpcr_data = []
         for ridx, tidx in self.data_locs:
             t = self.G.data.given_timepoints[ridx][tidx]
-            self.qpcr_data = np.append(self.qpcr_data, 
+            self.qpcr_data = np.append(self.qpcr_data,
                 self.G.data.qpcr[ridx][t].log_data)
 
         # Set the prior dof
@@ -9286,11 +9279,11 @@ class qPCRScaleL(pl.variables.SICS):
         if self.sample_iter == 0:
             self.temp_acceptances = 0
             self.acceptances = np.zeros(self.G.inference.n_samples, dtype=bool)
-        
+
         elif self.sample_iter > self.end_tune:
             # Don't do any more updates
             return
-        
+
         elif self.sample_iter % self.tune == 0:
             # Update var
             acceptance_rate = self.temp_acceptances / self.tune
@@ -9320,12 +9313,12 @@ class qPCRScaleL(pl.variables.SICS):
         new_scale = self.proposal.sample()
 
         # Calculate the target distribution log likelihood
-        prev_target_ll = pl.random.sics.logpdf(value=prev_scale, 
+        prev_target_ll = pl.random.sics.logpdf(value=prev_scale,
             dof=self.prior.dof.value, scale=self.prior.scale.value)
         for x in xs:
             prev_target_ll += pl.random.sics.logpdf(value=x,
                 scale=prev_scale, dof=dof)
-        new_target_ll = pl.random.sics.logpdf(value=new_scale, 
+        new_target_ll = pl.random.sics.logpdf(value=new_scale,
             dof=self.prior.dof.value, scale=self.prior.scale.value)
         for x in xs:
             new_target_ll += pl.random.sics.logpdf(value=x,
@@ -9349,4 +9342,3 @@ class qPCRScaleL(pl.variables.SICS):
             self.temp_acceptances += 1
         else:
             self.value = prev_scale
-
