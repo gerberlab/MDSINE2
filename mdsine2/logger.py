@@ -8,7 +8,7 @@ import logging.handlers
 
 __env_key__ = "MDSINE2_LOG_INI"
 __name__ = "MDSINELogger"
-__ini__ = os.getenv(__env_key__, "log_config.ini")
+__ini__ = os.getenv(__env_key__, os.path.abspath("log_config.ini"))
 
 
 class InfoFilter(logging.Filter):
