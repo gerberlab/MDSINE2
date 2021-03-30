@@ -1710,10 +1710,13 @@ class qPCRdata:
         self.scaling_factor = scaling_factor
         self.recalculate_parameters()
 
-    def mean(self) -> float:
+    def mean(self, qpcr_unnormalize: bool = False) -> float:
         '''Return the geometric mean
         '''
-        return self.gmean()
+        ans = self.gmean()
+        if qpcr_unnormalize:
+            ans = (1 / self.scaling_factor) * ans
+        return ans
     
     def var(self) -> float:
         return self._var_dist
@@ -2889,7 +2892,7 @@ class Study(Saveable):
             raise ValueError('`times` ({}) not recognized'.format(times))
         return times
 
-    def _matrix(self, dtype: str, agg: str, times: Union[str, np.ndarray]) -> Tuple[np.ndarray, np.ndarray]:
+    def _matrix(self, dtype: str, agg: str, times: Union[str, np.ndarray], qpcr_unnormalize: bool = False) -> Tuple[np.ndarray, np.ndarray]:
         if dtype not in ['raw', 'rel', 'abs']:
             raise ValueError('`dtype` ({}) not recognized'.format(dtype))
         
@@ -2926,7 +2929,7 @@ class Study(Saveable):
                     a = subj.reads[t]/np.sum(subj.reads[t])
                 else:
                     rel = subj.reads[t]/np.sum(subj.reads[t])
-                    a = rel * subj.qpcr[t].mean()
+                    a = rel * subj.qpcr[t].mean(qpcr_unnormalize=qpcr_unnormalize)
                 if temp is None:
                     temp = (a.reshape(-1,1), )
                 else:
@@ -2940,7 +2943,7 @@ class Study(Saveable):
 
         return M, times
 
-    def matrix(self, dtype: str, agg: str, times: Union[str, np.ndarray]) -> np.ndarray:
+    def matrix(self, dtype: str, agg: str, times: Union[str, np.ndarray], qpcr_unnormalize: bool = False) -> np.ndarray:
         '''Make a matrix of the aggregation of all the subjects in the subjectset
 
         Aggregation of subjects
@@ -2978,7 +2981,7 @@ class Study(Saveable):
         -------
         np.ndarray(n_taxa, n_times)
         '''
-        M, _ =  self._matrix(dtype=dtype, agg=agg, times=times)
+        M, _ =  self._matrix(dtype=dtype, agg=agg, times=times, qpcr_unnormalize=qpcr_unnormalize)
         return M
 
     def df(self, dtype: str, agg: str, times: Union[str, np.ndarray]) -> pd.DataFrame:
