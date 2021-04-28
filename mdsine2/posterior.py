@@ -1230,14 +1230,7 @@ class ClusterAssignments(pl.graph.Node):
             raise ValueError('`value_option` "{}" not recognized'.format(value_option))
 
         # Move all the taxa into their assigned clusters
-        for cluster in clusters:
-            cid = None
-            for oidx in cluster:
-                if cid is None:
-                    # make new cluster
-                    cid = self.clustering.make_new_cluster_with(idx=oidx)
-                else:
-                    self.clustering.move_item(idx=oidx, cid=cid)
+        self.clustering.fromlistoflists(clusters)
         logger.info('Cluster Assingments initialization results:\n{}'.format(
             str(self.clustering)))
         self._there_are_perturbations = self.G.perturbations is not None

@@ -356,6 +356,7 @@ class Clustering(Node, Traceable):
     def fromlistoflists(self, clustering_arr: List[List[int]]) -> List:
         '''
         Takes a list of lists, representing clusterings (each constituent is an int), and repopulate a clustering.
+        Sets the iteration ordering to the provided list ordering.
         :return: The list of new Cluster IDs (cids).
         '''
         cids = []
@@ -364,6 +365,7 @@ class Clustering(Node, Traceable):
             for item in new_clust[1:]:
                 self.move_item(item, cid)
             cids.append(cid)
+        self.order = cids
         return cids
 
     def tolistoflists(self) -> List[List[int]]:
