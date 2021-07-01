@@ -2,6 +2,11 @@
 
 This reposity contains code used to run the MDSINE2 (Microbial Dynamical Systems INference Engine 2) used to infer microbiome time-series analyses.
 
+
+## Description of the software
+
+
+
 ## Dependencies (Python 3.7.3)
 
 
