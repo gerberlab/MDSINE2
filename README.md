@@ -1,12 +1,17 @@
 # MDSINE2
 
-This repository contains the MDSINE2 (Microbial Dynamical Systems INference Engine 2) package. A python implementation of a robust and scalable Bayesian model for learning  microbial dynamics
+This repository contains the MDSINE2 (Microbial Dynamical Systems INference Engine 2) package. A python implementation of a robust and scalable Bayesian model for learning  microbial dynamics.
+MDSINE2 extends the generalized Lotka-Volterra (gLV) model to include automatically learned interaction modules, which we define as groups of taxa that share common interaction structure (i.e., are promoted or inhibited by the same taxa outside the module) and have a common response to external perturbations (e.g., antibiotics).
 
+There is another repo for the paper associated with this model. If this is your first time using MDSINE2 we suggest you go to the companion repo  https://github.com/gerberlab/MDSINE2_Paper
 
-## Description of the software
+## Description of inputs and outputs
 
+MDSINE2 takes as inputs microbial abundances from two data modalities, reads from sequencing and qPCR for quantification of total bacterial load. Of note, because our model is fully Bayesian, MDSINE2 returns confidence measures on all aspects of the model (e.g., Bayes Factors). See [mathematical model](####Underlying-model-and-parameters) for more details.
 
-
+<p align="center">
+<img src="/figures/github2.svg" width="700" />
+</p>
 
 ## Documentation
 [documentation link](https://htmlpreview.github.io/?https://raw.githubusercontent.com/gerberlab/MDSINE2/master/docs/mdsine2/index.html)
@@ -49,7 +54,9 @@ pip install MDSINE2/.
 
 
 ## Underlying model and parameters
+<p align="center">
 <img src="/figures/github1.svg" width="600" />
+</p>
 
 Key model parameters
 - $i$: taxon number
@@ -70,4 +77,4 @@ Inference is performed using MCMC with Gibbs and collapsed Gibbs sampling.
 
 ## Tutorials
 
-We recommend heading on over to the github repo for the paper (https://github.com/gerberlab/MDSINE2_Paper) that has detailed examples for working with `MDSINE2` as well as example data
+We recommend heading on over to the github repo for the paper https://github.com/gerberlab/MDSINE2_Paper that has detailed examples for working with `MDSINE2` as well as example data
