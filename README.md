@@ -1,9 +1,24 @@
 # MDSINE2
 
-This reposity contains code used to run the MDSINE2 (Microbial Dynamical Systems INference Engine 2) used to infer microbiome time-series analyses.
+This repository contains the MDSINE2 (Microbial Dynamical Systems INference Engine 2) package. A python implementation of a robust and scalable Bayesian model for learning  microbial dynamics.
+MDSINE2 extends the generalized Lotka-Volterra (gLV) model to include automatically learned interaction modules, which we define as groups of taxa that share common interaction structure (i.e., are promoted or inhibited by the same taxa outside the module) and have a common response to external perturbations (e.g., antibiotics).
 
-## Dependencies (Python 3.7.3)
+There is another repo for the paper associated with this model. If this is your first time using MDSINE2 we suggest you go to the companion repo  https://github.com/gerberlab/MDSINE2_Paper
 
+## Description of inputs and outputs
+
+MDSINE2 takes as inputs microbial abundances from two data modalities, reads from sequencing and qPCR for quantification of total bacterial load. The output from the model are the traces of the posterior samples for all the [model](#underlying-model-and-parameters) parameters. Of note, because our model is fully Bayesian, MDSINE2 returns confidence measures on all aspects of the model (e.g., Bayes Factors). See [model](#underlying-model-and-parameters) for more details.
+
+<p align="center">
+<img src="/figures/github2.svg" width="700" />
+</p>
+
+## Documentation
+[documentation link](https://htmlpreview.github.io/?https://raw.githubusercontent.com/gerberlab/MDSINE2/master/docs/mdsine2/index.html)
+
+## Installation
+
+#### Dependencies (Python 3.7.3)
 
  * biopython==1.78
  * ete3==3.1.2
@@ -17,13 +32,16 @@ This reposity contains code used to run the MDSINE2 (Microbial Dynamical Systems
  * h5py==2.9.0
  * networkx==2.3
 
-## Installation
+#### Option 1 Simple installation of just the 'MDSINE2' package
 
-If you already have Python 3.7.3 Clone this directory, `cd` into mdsine and type
+clone the repository, `cd` into mdsine, and then `pip install`
 ```bash
-pip install .
+git clone https://github.com/gerberlab/MDSINE2
+pip install MDSINE2/.
 ```
-This installs the package `mdsine2` and all of the dependencies listed above.
+This installs the package `MDSINE2` and all of the dependencies listed above.
+
+#### Option 2 Create a `conda` environment with MDSINE2 and jupyterlab
 
 For a fresh install of Python 3.7.3 and MDSINE2 with a linked Jupyter kernel all from the command line one can take the followings steps
 ```bash
@@ -32,45 +50,35 @@ conda activate mdsine2
 python -m ipykernel install --user --name mdsine2 --display-name "mdsine2"
 git clone https://github.com/gerberlab/MDSINE2
 pip install MDSINE2/.
- ``` 
+ ```
+
+
+## Underlying model and parameters
+<p align="center">
+<img src="/figures/github1.svg" width="600" />
+</p>
+
+Key model parameters
+- $i$: taxon number
+- $k$: time index
+- $s$: replicate index (for different time series: mouse, subject, etc)
+- $y_{s,i}(k)$: reads taxon $i$, replicate $s$, time index $k$
+- $Q_{j,s}(k)$: qPCR replicate $j$, replicate $s$, time index $k$
+- $x_{s,i}(k)$: latent state for microbial abundance
+- $c_i$: cluster assignment for taxon $i$
+- $b_{c_i,c_j}$: interaction parameter for taxon $j$ to taxon $i$
+- $z^{(b)}_{c_i,c_j}$: interaction indicator for taxon $j$ to taxon $i$
+- $\gamma_{p,c_i}$: perturbation $p$ affect on cluster $c_i$ members
+- $z^{(\gamma)}_{p,c_i}$: perturbation indicator for $\gamma_{p,c_i}$
+- $a_{i,1}$: growth rate of taxa $i$
+- $a_{i,2}$: self limiting term for taxa $i$
+
+Inference is performed using MCMC with Gibbs and collapsed Gibbs sampling.
+
+```math
+y=x
+```
 
 ## Tutorials
- ---
- Tutorials on how to use the package can be found in the `tutorials` directory.
 
-## Datasets
----
-```python
-import mdsine2 as md2
-```
-#### Gibson dataset
-
-The Gibson dataset that was used in ########## can be obtained using
-```python
-study = md2.dataset.gibson()
-```
-Which returns an `md2.Study` object that contains all of the data from both the Healthy and Ulcerative Colitis cohorts. To obtain a `md2.Study` object of a single cohort, simply:
-```python
-healthy_cohort = md2.dataset.gibson(healthy=True)
-ulcerative_colitis_cohort = md2.dataset.gibson(healthy=False)
-```
-To retrieve the raw data used to construct the `md2.Study` object:
-```python
-dfs = md2.dataset.gibson(as_df=True)
-taxonomy = dfs['taxonomy']
-qpcr = dfs['qpcr']
-reads = dfs['reads']
-metadata = dfs['metadata']
-```
-where `taxonomy`, `qpcr`, `reads`, and `metadata` are `pandas.DataFrame` objects that contain the raw data. If you additionally specify the `healthy` parameter in `md2.dataset.gibson`, it will only retrieve the raw data for that specific cohort.
-
-#### Parsing your own dataset
----
-To parse your own data, refer to `tutorials/parsing_data.md`.
-
-## Generating documentation
-To generate the documentation, run the script
-```bash
-pdoc3 mdsine2 --html -o path/to/MDSINE2/docs
-```
-Install `pdoc3` using [this documentation](https://pdoc3.github.io/pdoc/doc/pdoc/#gsc.tab=0).
+We recommend heading on over to the github repo for the paper https://github.com/gerberlab/MDSINE2_Paper that has detailed examples for working with `MDSINE2` as well as example data
