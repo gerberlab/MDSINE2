@@ -75,6 +75,10 @@ Key model parameters
 
 Inference is performed using MCMC with Gibbs and collapsed Gibbs sampling.
 
+```math
+y=x
+```
+
 ## Tutorials
 
 We recommend heading on over to the github repo for the paper https://github.com/gerberlab/MDSINE2_Paper that has detailed examples for working with `MDSINE2` as well as example data
