@@ -5,6 +5,8 @@ This reposity contains code used to run the MDSINE2 (Microbial Dynamical Systems
 
 ## Description of the software
 
+## Documentation
+[documentaion link](https://htmlpreview.github.io/?https://raw.githubusercontent.com/gerberlab/MDSINE2/master/docs/mdsine2/index.html)
 
 
 ## Dependencies (Python 3.7.3)
@@ -73,9 +75,3 @@ where `taxonomy`, `qpcr`, `reads`, and `metadata` are `pandas.DataFrame` objects
 ---
 To parse your own data, refer to `tutorials/parsing_data.md`.
 
-## Generating documentation
-To generate the documentation, run the script
-```bash
-pdoc3 mdsine2 --html -o path/to/MDSINE2/docs
-```
-Install `pdoc3` using [this documentation](https://pdoc3.github.io/pdoc/doc/pdoc/#gsc.tab=0).
