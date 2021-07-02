@@ -49,7 +49,8 @@ pip install MDSINE2/.
 
 
 ## Underlying model and parameters
-![Alt text](/figures/github1.svg)
+<img src="/figures/github1.svg" width="600" />
+
 Key model parameters
 - $i$: taxon number
 - $k$: time index
