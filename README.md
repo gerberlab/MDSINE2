@@ -58,26 +58,7 @@ pip install MDSINE2/.
 <img src="/figures/github1.svg" width="600" />
 </p>
 
-Key model parameters
-- $i$: taxon number
-- $k$: time index
-- $s$: replicate index (for different time series: mouse, subject, etc)
-- $y_{s,i}(k)$: reads taxon $i$, replicate $s$, time index $k$
-- $Q_{j,s}(k)$: qPCR replicate $j$, replicate $s$, time index $k$
-- $x_{s,i}(k)$: latent state for microbial abundance
-- $c_i$: cluster assignment for taxon $i$
-- $b_{c_i,c_j}$: interaction parameter for taxon $j$ to taxon $i$
-- $z^{(b)}_{c_i,c_j}$: interaction indicator for taxon $j$ to taxon $i$
-- $\gamma_{p,c_i}$: perturbation $p$ affect on cluster $c_i$ members
-- $z^{(\gamma)}_{p,c_i}$: perturbation indicator for $\gamma_{p,c_i}$
-- $a_{i,1}$: growth rate of taxa $i$
-- $a_{i,2}$: self limiting term for taxa $i$
 
-Inference is performed using MCMC with Gibbs and collapsed Gibbs sampling.
-
-```math
-y=x
-```
 
 ## Tutorials
 
