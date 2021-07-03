@@ -32,14 +32,14 @@ MDSINE2 takes as inputs microbial abundances from two data modalities, reads fro
  * h5py==2.9.0
  * networkx==2.3
 
-#### Option 1 Simple installation of just the 'MDSINE2' package
+#### Option 1 Simple installation of just the MDSINE2
 
-clone the repository, `cd` into mdsine, and then `pip install`
+clone the repository and then `pip install`
 ```bash
 git clone https://github.com/gerberlab/MDSINE2
 pip install MDSINE2/.
 ```
-This installs the package `MDSINE2` and all of the dependencies listed above.
+This installs the package MDSINE2 and all of the dependencies listed above.
 
 #### Option 2 Create a `conda` environment with MDSINE2 and jupyterlab
 
@@ -62,4 +62,4 @@ pip install MDSINE2/.
 
 ## Tutorials
 
-We recommend heading on over to the github repo for the paper https://github.com/gerberlab/MDSINE2_Paper that has detailed examples for working with `MDSINE2` as well as example data
+We recommend heading on over to the github repo for the paper https://github.com/gerberlab/MDSINE2_Paper that has detailed examples for working with MDSINE2 as well as example data
