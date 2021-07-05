@@ -10,7 +10,7 @@ There is another repo for the paper associated with this model. If this is your 
 MDSINE2 takes as inputs microbial abundances from two data modalities, reads from sequencing and qPCR for quantification of total bacterial load. The output from the model are the traces of the posterior samples for all the [model](#underlying-model-and-parameters) parameters. Of note, because our model is fully Bayesian, MDSINE2 returns confidence measures on all aspects of the model (e.g., Bayes Factors). See [model](#underlying-model-and-parameters) for more details.
 
 <p align="center">
-<img src="/figures/github2.svg" width="700" />
+<img src="/figures/github2.svg" />
 </p>
 
 ## Documentation
