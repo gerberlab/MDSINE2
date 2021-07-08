@@ -5,7 +5,7 @@ MDSINE2 extends the generalized Lotka-Volterra (gLV) model to include automatica
 
 There is another repo for the paper associated with this model. If this is your first time using MDSINE2 we suggest you go to the companion repo  https://github.com/gerberlab/MDSINE2_Paper
 
-## Description of inputs and outputs
+## 1. Description of inputs and outputs
 
 MDSINE2 takes as inputs microbial abundances from two data modalities, reads from sequencing and qPCR for quantification of total bacterial load. The output from the model are the traces of the posterior samples for all the [model](#underlying-model-and-parameters) parameters (growth rates, module assignments, interaction indicators and strengths, perturbation indicators and strengths ...). Of note, because our model is fully Bayesian, MDSINE2 returns confidence measures on all aspects of the model (e.g., Bayes Factors). See [model](#underlying-model-and-parameters) for more details.
 
@@ -13,12 +13,48 @@ MDSINE2 takes as inputs microbial abundances from two data modalities, reads fro
 <img src="/figures/github2.svg" />
 </p>
 
-## Documentation
+## 2. Documentation
+MDSINE2 is implemented as a python library, which is importable using python's import command: `import mdsine2`.
+The classes and methods' documentation can be found here: 
+
 [documentation link](https://htmlpreview.github.io/?https://raw.githubusercontent.com/gerberlab/MDSINE2/master/docs/mdsine2/index.html)
 
-## Installation
+## 3. Features
 
-#### Dependencies (Python 3.7.3)
+MDSINE2 has the following core features implemented:
+
+1) Input processing and Visualization
+
+    - ASV count information and qPCR
+    - Time-series plots of qPCR, abundances, alpha-diversity
+
+2) MCMC inference of gLV model.
+
+    - regular and fixed-cluster inference.
+
+3) Visualization of posterior distribution from MCMC samples
+
+4) Computation and visualization of forward-simulation of learned gLV model for each OTU.
+
+5) Visualize the phylogenetic placement of OTUs.
+
+    - Input is phylogenetic placement of OTUs (e.g. pplacer on OTU 16s sequences + reference set).
+
+6) Visualize OTU co-clustering probabilities.
+
+    - Draw a heatmap which shows the empirical posterior probabilities.
+
+7) visualize the learned network of interactions
+
+    - fixed-cluster inference mode as input, filter by Bayes factor.
+
+8) compute and visualize keystoneness metric (work-in-progress)
+
+    - Perform a series of forward simulations by excluding one cluster at a time.
+
+## 4. Installation
+
+### 4.1 Dependencies (Python 3.7.3)
 
  * biopython==1.78
  * ete3==3.1.2
@@ -32,25 +68,33 @@ MDSINE2 takes as inputs microbial abundances from two data modalities, reads fro
  * h5py==2.9.0
  * networkx==2.3
 
-#### Option 1 Simple installation of just the MDSINE2
+#### Option 1: Simple installation using pip
 
 clone the repository and then `pip install`
-```bash
+```
 git clone https://github.com/gerberlab/MDSINE2
 pip install MDSINE2/.
 ```
 This installs the package MDSINE2 and all of the dependencies listed above.
 
-#### Option 2 Create a `conda` environment with MDSINE2 and jupyterlab
+#### Option 2: Conda environment with MDSINE2 and jupyterlab
 
-For a fresh install of Python 3.7.3 and MDSINE2 with a linked Jupyter kernel all from the command line one can take the followings steps
-```bash
+An alternative is to install MDSINE2 through conda and a linked jupyter kernel (useful for data exploration).
+```
 conda create -n mdsine2 -c conda-forge python=3.7.3 jupyterlab
 conda activate mdsine2
 python -m ipykernel install --user --name mdsine2 --display-name "mdsine2"
 git clone https://github.com/gerberlab/MDSINE2
 pip install MDSINE2/.
- ```
+```
+
+To install without the Jupyter kernel, follow these shortened instructions:
+```
+conda create -n mdsine2 -c conda-forge python=3.7.3
+conda activate mdsine2
+git clone https://github.com/gerberlab/MDSINE2
+pip install MDSINE2/.
+```
 
 
 ## Underlying model and parameters
