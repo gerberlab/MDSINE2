@@ -25,7 +25,7 @@ MDSINE2 takes as inputs microbial abundances from two data modalities, reads fro
  * numpy==1.19.4
  * pandas==1.14
  * matplotlib==3.3.1
- * numba==0.48
+ * numba==0.52
  * sklearn==0.0
  * seaborn==0.11.0
  * psutil==5.7.3
