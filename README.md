@@ -54,7 +54,7 @@ MDSINE2 has the following core features implemented:
 
 ## 4. Installation
 
-### 4.1 Dependencies (Python 3.7.3)
+#### Dependencies (Python 3.7.3)
 
  * biopython==1.78
  * ete3==3.1.2
@@ -97,13 +97,13 @@ pip install MDSINE2/.
 ```
 
 
-## Underlying model and parameters
+## 5. Underlying model and parameters
 <p align="center">
 <img src="/figures/github1.svg" width="600" />
 </p>
 
 
 
-## Tutorials
+## 6. Tutorials
 
 We recommend heading on over to the github repo for the paper https://github.com/gerberlab/MDSINE2_Paper that has detailed examples for working with MDSINE2 as well as example data
