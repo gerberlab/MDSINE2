@@ -369,15 +369,16 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     logger.info('Aggregated {} taxa'.format(cnt))
     return subjset
 
-def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_filename: str):
+
+def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_path: str):
     '''Export the posterior fixed topology as a json usable in Cytoscape
 
     Parameters
     ----------
     mcmc : BaseMCMC
         This is the chain that contains the traces
-    output_filename : str
-        This is the path to save the json file
+    output_path : str
+        This is the path to save the json file.
     '''
     import networkx as nx
     from py2cytoscape.util import from_networkx
@@ -475,12 +476,8 @@ def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_filename: str):
 
     nx.set_node_attributes(graph_bayes, nodes_attributes)
     data_json = from_networkx(graph_bayes, nodes_attributes)
-    if '.json' not in output_filename:
-        output_filename += '.json'
-    with open(filename, 'w') as f:
+    with open(output_path, 'w') as f:
         json.dump(data_json, f)
-    
-
 
 
 def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min_num_consecutive: int, min_num_subjects: int,

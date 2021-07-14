@@ -1,19 +1,13 @@
-'''MDSINE2
-
-Built and tested for Python >= 3.7
-
-For installing on Windows OS
-----------------------------
-For python 3.7.3, `distutils` has a bug that is described issue 35893 in Python Bug
-Tracker (https://bugs.python.org/issue35893). This bug does not affect MacOS.
-'''
+import os
 from pathlib import Path
 from setuptools import setup
 from distutils.core import Extension
 
 lib_dir = Path(__file__).resolve().parent
 
-VERSION = '0.1.0'
+with open(lib_dir / 'VERSION.txt', "r") as f:
+    VERSION = f.readline().strip()
+
 SHORT_DESC = 'Implements core features of the MDSINE2 model'
 LONG_DESC = \
     '''
@@ -38,11 +32,21 @@ LONG_DESC = \
     '''
 
 # Package requirements: Parse from `requirements.txt`.
-requirementPath = lib_dir / 'requirements.txt'
-REQUIREMENTS = []
-if Path(requirementPath).is_file():
-    with open(requirementPath, "r") as f:
-        REQUIREMENTS = f.read().splitlines()
+with open(lib_dir / 'requirements.txt', "r") as f:
+    REQUIREMENTS = f.read().splitlines()
+
+# This is for it to run on windows
+if os.name == 'nt':
+    from distutils.command import build_ext
+    def get_export_symbols(self, ext):
+        parts = ext.name.split(".")
+        print('parts', parts)
+        if parts[-1] == "__init__":
+            initfunc_name = "PyInit_" + parts[-2]
+        else:
+            initfunc_name = "PyInit_" + parts[-1]
+
+    build_ext.build_ext.get_export_symbols = get_export_symbols
 
 # Custom C distributions
 EXTENSIONS = [
@@ -53,8 +57,8 @@ EXTENSIONS = [
 # Subpackages
 PACKAGES = [
     'mdsine2',
-    'mdsine2.pylab',
-    'mdsine2.initializers'
+    'mdsine2.cli',
+    'mdsine2.pylab'
 ]
 
 setup(
@@ -70,5 +74,10 @@ setup(
     zip_safe=False,
     install_requires=REQUIREMENTS,
     ext_modules=EXTENSIONS,
-    include_package_data=True
+    include_package_data=True,
+    entry_points={
+        'console_scripts': [
+            'mdsine2=mdsine2.cli:main'
+        ]
+    }
 )
