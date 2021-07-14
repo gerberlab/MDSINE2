@@ -72,7 +72,7 @@ class ForwardSimulationCLI(CLIModule):
                             help='Maximum value for abundances.')
         parser.add_argument('--output-path', '-o', type=str, dest='out_path',
                             required=True,
-                            help='This is where you are saving the posterior renderings')
+                            help='This is where you are saving the posterior forward simulation. (stored in numpy format)')
         parser.add_argument('--gibbs_subsample', type=int,
                             required=False, default=1,
                             help='The number of gibbs samples to skip. A value of n indicates that one out of every '
@@ -80,10 +80,11 @@ class ForwardSimulationCLI(CLIModule):
 
         parser.add_argument('--plot', type=str,
                             required=False, default="None",
-                            help='If flag is set, will render plots of chosen taxa to PDF in addition to saving the '
-                                 'values to numpy arrays. Default: `None`.'
+                            help='If specified, will render plots of chosen taxa to PDF in addition to saving the '
+                                 'values to numpy arrays. These plots will be saved to the same directory as the '
+                                 'resulting numpy file. (Default: `None`).'
                                  '\nAvailable options: `None`, `All`, `<comma_separated_taxa_names>`.'
-                                 '\nExample: --plot OTU_1,OTU_3,OTU_10')
+                                 '\nExample: `--plot All`, or `--plot OTU_1,OTU_3,OTU_10`')
 
     def main(self, args: argparse.Namespace):
         out_path = Path(args.out_path)
