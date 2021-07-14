@@ -37,7 +37,7 @@ class PosteriorVisualizationCLI(CLIModule):
                             required=False, default="posterior",
                             choices=['posterior', 'burnin', 'entire'],
                             help='Section to plot the variables of.')
-        parser.add_argument('--is-fixed-clustering', type=int, dest='fixed_clustering',
+        parser.add_argument('--is-fixed-clustering', dest='fixed_clustering',
                             action="store_true",
                             help='If flag is set, plot the posterior with fixed clustering options.')
 
