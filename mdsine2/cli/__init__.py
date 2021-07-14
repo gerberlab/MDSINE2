@@ -1,5 +1,4 @@
 from .base import dispatch
-from .aggregate import AggregationCLI
 from .parse_input import InputParseCLI
 from .taxa_filter import TaxaFilterCLI
 from .render_phylogeny import PhylogenyRenderCLI
@@ -20,7 +19,6 @@ def main():
         InferenceCLI(subcommand="infer"),
         TaxaFilterCLI(subcommand="filter"),
         PhylogenyRenderCLI(subcommand="render-phylogeny"),
-        AggregationCLI(subcommand="aggregate"),
         NegBinCLI(subcommand="infer-negbin"),
         NegBinVisualizationCLI(subcommand="visualize-negbin"),
         CoclusteringVisualizationCLI(subcommand="visualize-coclustering"),
