@@ -7,7 +7,12 @@ There is another repo for the paper associated with this model. If this is your 
 
 ## 1. Description of inputs and outputs
 
-MDSINE2 takes as inputs microbial abundances from two data modalities, reads from sequencing and qPCR for quantification of total bacterial load. The output from the model are the traces of the posterior samples for all the [model](#underlying-model-and-parameters) parameters (growth rates, module assignments, interaction indicators and strengths, perturbation indicators and strengths ...). Of note, because our model is fully Bayesian, MDSINE2 returns confidence measures on all aspects of the model (e.g., Bayes Factors). See [model](#underlying-model-and-parameters) for more details.
+MDSINE2 takes as inputs microbial abundances from two data modalities, reads from sequencing and qPCR for 
+quantification of total bacterial load. The output from the model are the traces of the posterior samples 
+for all the [model](#4-Underlying-model-and-parameters) parameters (growth rates, module assignments, interaction 
+indicators and strengths, perturbation indicators and strengths ...). Of note, because our model is fully Bayesian, 
+MDSINE2 returns confidence measures on all aspects of the model (e.g., Bayes Factors). 
+See [model](#4-Underlying-model-and-parameters) for more details.
 
 <p align="center">
 <img src="/figures/github2.svg" />
@@ -18,6 +23,11 @@ MDSINE2 is implemented as a python library, which is importable using python's i
 The classes and methods' documentation can be found here: 
 
 [documentation link](https://htmlpreview.github.io/?https://raw.githubusercontent.com/gerberlab/MDSINE2/master/docs/mdsine2/index.html)
+
+We also provide some comand-line interfaces for the core features. 
+While these are more limited in functionality than directly using the python package, it does allow bash scripting
+for tasks generalizable to arbitrary datasets.
+See [Features and Examples](#6-features-and-examples) for more details.
 
 
 ## 3. Installation
