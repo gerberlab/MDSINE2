@@ -193,7 +193,7 @@ within a specified radius of each taxa -- provided by the user (e.g. produced by
 > mdsine2 render-phylogeny --study dataset.pkl --tree my_tree.nhx --output-basepath phylo/ (...)
 ```
     
-### 6.6 visualize the learned network of interactions
+### 6.6 Visualize the learned network of interactions
 
 In addition to the visualizations from 3.3 which draws a heatmap of interactions, gLV interactions can be drawn
 as a network of nodes (modules of taxa) and edges (signed interactions). 
@@ -214,7 +214,7 @@ md2.write_fixed_clustering_as_json(
 > mdsine2 interaction-to-cytoscape -i fixed_clustering/mcmc.pkl -o fixed_clustering/fixed_module_interactions.json 
 ```
 
-### 6.7 compute and visualize keystoneness metric (work-in-progress)
+### 6.7 Compute and visualize keystoneness metric
 
 As a downstream analysis, we compute "keystoneness" which quantifies the amount of influence that each module has
 on the rest of the system.
