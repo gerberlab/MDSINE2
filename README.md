@@ -5,7 +5,7 @@ MDSINE2 extends the generalized Lotka-Volterra (gLV) model to include automatica
 
 There is another repo for the paper associated with this model. If this is your first time using MDSINE2 we suggest you go to the companion repo  https://github.com/gerberlab/MDSINE2_Paper
 
-## Description of inputs and outputs
+## 1. Description of inputs and outputs
 
 MDSINE2 takes as inputs microbial abundances from two data modalities, reads from sequencing and qPCR for 
 quantification of total bacterial load. The output from the model are the traces of the posterior samples 
@@ -18,7 +18,7 @@ See [model](#4-Underlying-model-and-parameters) for more details.
 <img src="/figures/github2.svg" />
 </p>
 
-## Documentation
+## 2. Documentation
 MDSINE2 is implemented as a python library, which is importable using python's import command: `import mdsine2`.
 The classes and methods' documentation can be found here: 
 
@@ -30,7 +30,7 @@ for tasks generalizable to arbitrary datasets.
 See [Features and Examples](#6-features-and-examples) for more details.
 
 
-## Installation
+## 3. Installation
 
 #### Dependencies (Python 3.7.3)
 
@@ -75,25 +75,25 @@ pip install MDSINE2/.
 ```
 
 
-## Underlying model and parameters
+## 4. Underlying model and parameters
 <p align="center">
 <img src="/figures/github1.svg" width="600" />
 </p>
 
 
 
-## Tutorials
+## 5. Tutorials
 
 We recommend heading on over to the github repo for the paper https://github.com/gerberlab/MDSINE2_Paper that has detailed examples for working with MDSINE2 as well as example data
 
 
-## Features and Examples
+## 6. Features and Examples
 
 MDSINE2 has the following core features, implemented as a python package but also interfacable using the command line.
 For the specifications on the python functions, refer to the documentation.
 For command line specifications, use the `--help` option (e.g. `mdsine2 infer --help`).
 
-### Input processing and Visualization
+### 6.1 Input processing and Visualization
 
 Process the raw input files (TSV format) and process them into python `mdsine2.Study` objects.
 
@@ -114,7 +114,7 @@ study = md2.dataset.parse(name="gibson_datset", reads="counts.tsv", (...))
 
 *(coming soon)*
 
-### MCMC inference using MDSINE2's model.
+### 6.2 MCMC inference using MDSINE2's model.
 
 MDSINE2's primary function is to implement an MCMC algorithm for learning gLV parameters for many taxa.
 To do this, we fit some parameters as a preliminary step (negative-binomial disperson parameters) and then pass
@@ -152,7 +152,7 @@ md2.run_graph(mcmc)
 > mdsine2 infer --input dataset.pkl (...)
 ```
 
-### Visualization of posterior distribution from MCMC samples
+### 6.3 Visualization of posterior distribution from MCMC samples
 
 Using the results of MDSINE2's MCMC output (a collection of posterior samples), visualize the posterior distribution of
 the parameters. This includes a visual summary of the gLV parameters for each taxa, a heatmap of
@@ -169,7 +169,7 @@ mcmc.graph[STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS].visualize(path='si_mean.pdf', 
 > mdsine2 visualize-posterior --chain output/mcmc.pkl --section posterior (...)
 ```
 
-### Computation and visualization of forward-simulation of learned gLV model for each OTU.
+### 6.4 Computation and visualization of forward-simulation of learned gLV model for each OTU.
 
 *python example:*
 ```python
@@ -183,7 +183,7 @@ np.save("fwsim.npy", x)
 > mdsine2 forward-simulate (TODO) -i output/mcmc.pkl --study dataset.pkl --plot all (...)
 ```
 
-### Visualize the phylogenetic placement of OTUs.
+### 6.5 Visualize the phylogenetic placement of OTUs.
 
 We provide a tool to draw phylogenetic placements -- rendered into PDF as local subtrees induced by leaves
 within a specified radius of each taxa -- provided by the user (e.g. produced by FastTree + pplacer).
@@ -193,7 +193,7 @@ within a specified radius of each taxa -- provided by the user (e.g. produced by
 mdsine2 render-phylogeny --study dataset.pkl --tree my_tree.nhx --output-basepath phylo/ (...)
 ```
     
-### Visualize the learned network of interactions
+### 6.6 visualize the learned network of interactions
 
 In addition to the visualizations from 3.3 which draws a heatmap of interactions, gLV interactions can be drawn
 as a network of nodes (modules of taxa) and edges (signed interactions). 
@@ -214,7 +214,7 @@ md2.write_fixed_clustering_as_json(
 mdsine2 interaction-to-cytoscape -i fixed_clustering/mcmc.pkl -o fixed_clustering/fixed_module_interactions.json 
 ```
 
-### Compute and visualize keystoneness metric (work-in-progress)
+### 6.7 compute and visualize keystoneness metric (work-in-progress)
 
 As a downstream analysis, we compute "keystoneness" which quantifies the amount of influence that each module has
 on the rest of the system.
