@@ -5,7 +5,6 @@ from .render_phylogeny import PhylogenyRenderCLI
 from .inference import InferenceCLI
 from .infer_negbin import NegBinCLI
 from .visualize_negbin import NegBinVisualizationCLI
-from .visualize_coclustering import CoclusteringVisualizationCLI
 from .interactions_to_cytoscape import InteractionToCytoscapeCLI
 from .visualize_posterior import PosteriorVisualizationCLI
 from .forward_simulate import ForwardSimulationCLI
@@ -21,7 +20,6 @@ def main():
         PhylogenyRenderCLI(subcommand="render-phylogeny"),
         NegBinCLI(subcommand="infer-negbin"),
         NegBinVisualizationCLI(subcommand="visualize-negbin"),
-        CoclusteringVisualizationCLI(subcommand="visualize-coclustering"),
         InteractionToCytoscapeCLI(subcommand="interaction-to-cytoscape"),
         PosteriorVisualizationCLI(subcommand="visualize-posterior"),
         ForwardSimulationCLI(subcommand="forward-simulate"),

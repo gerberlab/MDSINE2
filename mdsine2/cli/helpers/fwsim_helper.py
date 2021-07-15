@@ -3,6 +3,7 @@ from pathlib import Path
 import mdsine2 as md2
 
 from typing import List, Tuple, Union
+from mdsine2.logger import logger
 
 import matplotlib.pyplot as plt
 
@@ -16,7 +17,7 @@ def run_forward_sim(growth: np.ndarray,
                     dt: float,
                     sim_max: float,
                     n_days: float):
-    '''
+    """
     Forward simulate with the given dynamics, with the option to apply perturbations during specified timeframes.
 
     Parameters
@@ -39,7 +40,7 @@ def run_forward_sim(growth: np.ndarray,
         Maximum clip for forward sim
     n_days : float
         Total number of days
-    '''
+    """
     dyn = md2.model.gLVDynamicsSingleClustering(
         growth=growth,
         interactions=interactions,
@@ -49,10 +50,6 @@ def run_forward_sim(growth: np.ndarray,
         start_day=0,
         sim_max=sim_max
     )
-
-    dyn.growth = growth
-    dyn.interactions = interactions
-    dyn.perturbations = perturbations
 
     x = md2.integrate(
         dynamics=dyn,
@@ -68,6 +65,7 @@ def run_forward_sim(growth: np.ndarray,
 def plot_fwsim_comparison(
         taxa: md2.Taxon,
         taxa_trajectory: np.ndarray,
+        trajectory_times: np.ndarray,
         subject: md2.Subject,
         out_path: Path,
         mcmc_display_method: str = "quantiles",
@@ -75,25 +73,33 @@ def plot_fwsim_comparison(
         ylim: Tuple = (1e5, 1e12)
 ):
     times = subject.times
-    subject_truth = subject.matrix()['abs']
-    taxa_trajectory = taxa_trajectory[~np.isnan(taxa_trajectory).any(axis=1)]
+    subject_truth = subject.matrix()['abs'][taxa.idx, :]
+
+    valid_indices = ~np.isnan(taxa_trajectory).any(axis=1)
+    taxa_trajectory = taxa_trajectory[valid_indices]
 
     fig, ax = plt.subplots(1, 1, figsize=figsize)
 
-    if mcmc_display_method == "quantiles":
-        low = np.percentile(taxa_trajectory, q=25, axis=0)
-        high = np.percentile(taxa_trajectory, q=75, axis=0)
-        median = np.percentile(taxa_trajectory, q=50, axis=0)
-        ax.fill_between(times, y1=low, y2=high, alpha=0.2)
-        ax.plot(times, median, label='Forward Sim')
-    elif mcmc_display_method == "all":
-        cmap = plt.get_cmap("blues")
-        for mcmc_idx in range(taxa_trajectory.shape[0]):
-            ax.plot(times, taxa_trajectory[mcmc_idx, :], c=cmap(mcmc_idx / taxa_trajectory.shape[0]), linewidth=0.8)
+    if taxa_trajectory.shape[0] == 0:
+        logger.info("Taxa `{}` had no simulations without NaNs. Check for numerical integrity.".format(taxa.name))
     else:
-        raise ValueError("Unrecognized mcmc_display_argument value `{}`".format(mcmc_display_method))
+        if mcmc_display_method == "quantiles":
+            low = np.percentile(taxa_trajectory, q=25, axis=0)
+            high = np.percentile(taxa_trajectory, q=75, axis=0)
+            median = np.percentile(taxa_trajectory, q=50, axis=0)
 
-    ax.plot(times, subject_truth[taxa.idx, :], label='Data', marker='x', color='black', linestyle=':')
+            ax.fill_between(trajectory_times, y1=low, y2=high, alpha=0.2)
+            ax.plot(trajectory_times, median, label='Forward Sim')
+        elif mcmc_display_method == "all":
+            cmap = plt.get_cmap("blues")
+            for mcmc_idx in range(taxa_trajectory.shape[0]):
+                ax.plot(times, taxa_trajectory[mcmc_idx, :], c=cmap(mcmc_idx / taxa_trajectory.shape[0]), linewidth=0.8)
+        else:
+            raise ValueError("Unrecognized mcmc_display_argument value `{}`".format(mcmc_display_method))
+
+    # Ground truth data.
+    ax.plot(times, subject_truth, label='Data', marker='x', color='black', linestyle=':')
+
     md2.visualization.shade_in_perturbations(ax, perturbations=subject.perturbations, subj=subject)
 
     ax.set_yscale('log')

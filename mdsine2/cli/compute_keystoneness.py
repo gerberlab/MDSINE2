@@ -15,6 +15,8 @@ from mdsine2.names import STRNAMES
 from .base import CLIModule
 from .helpers.fwsim_helper import run_forward_sim
 
+from mdsine2.logger import logger
+
 
 class KeystonenessCLI(CLIModule):
     def __init__(self, subcommand="evaluate-keystoneness"):
@@ -33,9 +35,7 @@ class KeystonenessCLI(CLIModule):
         parser.add_argument('--initial-condition-path', type=str, dest='initial_condition_path',
                             required=True,
                             help='The path to a file specifying the initial conditions. File will be interpreted as a '
-                                 'two-column TSV file (Taxa name, Absolute abundance).'
-                                 'If not specified, the simulations will default to the first timepoint in the provided'
-                                 'Study object, aggregated across the subjects.')
+                                 'two-column TSV file (Taxa name, Absolute abundance).')
 
         # Outputs
         parser.add_argument('--output-dir', '-o', type=str, dest='out_dir',
@@ -67,6 +67,7 @@ class KeystonenessCLI(CLIModule):
         n_samples = growth.shape[0]
 
         # Baseline run (no taxa excluded)
+        logger.info("Evaluating baseline forward-sim.")
         baseline_steady_state = run_forward_simulations(n_samples,
                                                         initial_conditions,
                                                         growth, interactions,
@@ -74,7 +75,11 @@ class KeystonenessCLI(CLIModule):
 
         # Exclude one taxa at a time.
         altered_steady_states = []
-        for cluster in clustering:
+        for cidx, cluster in enumerate(clustering):
+            logger.info("Evaluating forward-sim with cluster #{} (ID `{}`) excluded.".format(
+                cidx + 1,
+                cluster.id
+            ))
             altered_initial_conditions = np.copy(initial_conditions)
             for tidx in cluster.members:
                 altered_initial_conditions[tidx] = 0.0
@@ -86,6 +91,8 @@ class KeystonenessCLI(CLIModule):
 
         out_dir = Path(args.out_dir)
         out_dir.mkdir(exist_ok=True, parents=True)
+
+        logger.info("Aggregating data. (Output dir = {}).".format(str(out_dir)))
         aggregate_dataframes(study, clustering, baseline_steady_state, altered_steady_states, out_dir)
 
 
@@ -187,4 +194,4 @@ def load_initial_conditions(study: md2.Study, initial_condition_path: str) -> np
             abundances[tidx] = taxa_to_abundance[taxa.name]
         except KeyError:
             raise KeyError("Could not find initial condition value for taxa `{}`.".format(taxa.name))
-    return abundances
+    return abundances.reshape(-1, 1)

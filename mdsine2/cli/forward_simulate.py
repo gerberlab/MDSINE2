@@ -40,8 +40,8 @@ from pathlib import Path
 import mdsine2 as md2
 from mdsine2.names import STRNAMES
 from mdsine2.logger import logger
-from .base import CLIModule
-from .helpers.fwsim_helper import run_forward_sim, plot_fwsim_comparison
+from mdsine2.cli.base import CLIModule
+from mdsine2.cli.helpers.fwsim_helper import run_forward_sim, plot_fwsim_comparison
 
 
 class ForwardSimulationCLI(CLIModule):
@@ -52,7 +52,7 @@ class ForwardSimulationCLI(CLIModule):
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):
-        parser.add_argument('--input-mcmc', '-i', type=str, dest='input-mcmc',
+        parser.add_argument('--input-mcmc', '-i', type=str, dest='input_mcmc',
                             required=True,
                             help='Location of input containing MDSINE2.BaseMCMC chain')
         parser.add_argument('--study', type=str, dest='study',
@@ -73,7 +73,7 @@ class ForwardSimulationCLI(CLIModule):
         parser.add_argument('--output-path', '-o', type=str, dest='out_path',
                             required=True,
                             help='This is where you are saving the posterior forward simulation. (stored in numpy format)')
-        parser.add_argument('--gibbs_subsample', type=int,
+        parser.add_argument('--gibbs-subsample', type=int,
                             required=False, default=1,
                             help='The number of gibbs samples to skip. A value of n indicates that one out of every '
                                  'n samples will be used.')
@@ -82,16 +82,17 @@ class ForwardSimulationCLI(CLIModule):
                             required=False, default="None",
                             help='If specified, will render plots of chosen taxa to PDF in addition to saving the '
                                  'values to numpy arrays. These plots will be saved to the same directory as the '
-                                 'resulting numpy file. (Default: `None`).'
-                                 '\nAvailable options: `None`, `All`, `<comma_separated_taxa_names>`.'
-                                 '\nExample: `--plot All`, or `--plot OTU_1,OTU_3,OTU_10`')
+                                 'resulting numpy file. (Default: `none`).'
+                                 '\nAvailable options: `none`, `all`, `<comma_separated_taxa_names>`.'
+                                 '\nExample: `--plot all`, or `--plot OTU_1,OTU_3,OTU_10`')
 
     def main(self, args: argparse.Namespace):
         out_path = Path(args.out_path)
         out_path.parent.mkdir(exist_ok=True, parents=True)
 
-        study = md2.Study.load(args.validation)
+        study = md2.Study.load(args.study)
         subj_name = args.subject
+
         try:
             subject = study[subj_name]
         except KeyError:
@@ -101,7 +102,8 @@ class ForwardSimulationCLI(CLIModule):
             ))
             exit(1)
 
-        mcmc = md2.BaseMCMC.load(args.input)
+        mcmc = md2.BaseMCMC.load(args.input_mcmc)
+        n_days = np.ceil(subject.times[-1] - subject.times[0])
 
         limit_of_detection = args.limit_of_detection
 
@@ -133,6 +135,7 @@ class ForwardSimulationCLI(CLIModule):
 
         # ======= Initial conditions
         M = subject.matrix()['abs']
+
         initial_conditions = M[:, 0]
         if np.any(initial_conditions == 0):
             logger.info('{} taxa have abundance zero at the start. Setting to {}'.format(
@@ -152,22 +155,23 @@ class ForwardSimulationCLI(CLIModule):
                 growth=growth[gibbs_idx],
                 interactions=interactions[gibbs_idx],
                 initial_conditions=initial_conditions,
-                perturbations=perturbations,
+                perturbations=[p[gibbs_idx] for p in perturbations],
                 perturbations_start=perturbations_start,
                 perturbations_end=perturbations_end,
                 dt=args.dt,
                 sim_max=args.sim_max,
-                n_days=args.n_days
+                n_days=n_days
             )
             fwsims.append(fwsim)
 
         fwsims = np.stack(fwsims)
+        times = np.array([args.dt * i for i in range(fwsims.shape[-1])]) + subject.times[0]
         np.save(str(out_path), fwsims)
         logger.info("Saved forward simulations to {}.".format(str(out_path)))
 
-        if args.plot == "All":
+        if args.plot.lower() == "all":
             taxa_to_plot = list(study.taxa)
-        elif args.plot == "None":
+        elif args.plot.lower() == "none":
             taxa_to_plot = []
         else:
             tokens = args.plot.split(",")
@@ -182,10 +186,10 @@ class ForwardSimulationCLI(CLIModule):
                 plot_fwsim_comparison(
                     taxa=taxa,
                     taxa_trajectory=fwsims[:, taxa.idx, :],
+                    trajectory_times=times,
                     subject=subject,
                     out_path=plot_out_path,
                     mcmc_display_method="quantiles",
                     figsize=(10, 8),
                     ylim=(1e5, 1e12)
                 )
-
