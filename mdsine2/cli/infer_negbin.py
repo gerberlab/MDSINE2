@@ -40,7 +40,7 @@ class NegBinCLI(CLIModule):
         parser.add_argument('--basepath', '-b', type=str, dest='basepath',
                             required=True,
                             help='This is folder to save the output of inference')
-        parser.add_argument('--multiprocessing', '-mp', action='store_true',
+        parser.add_argument('--multiprocessing', '-mp', action='store_true', dest="mp",
                             help='If flag is set, run the inference with multiprocessing. Else run on a single process')
 
     def main(self, args: argparse.Namespace):
