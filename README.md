@@ -190,7 +190,7 @@ within a specified radius of each taxa -- provided by the user (e.g. produced by
 
 *command-line example:*
 ```bash
-mdsine2 render-phylogeny --study dataset.pkl --tree my_tree.nhx --output-basepath phylo/ (...)
+> mdsine2 render-phylogeny --study dataset.pkl --tree my_tree.nhx --output-basepath phylo/ (...)
 ```
     
 ### 6.6 visualize the learned network of interactions
@@ -211,7 +211,7 @@ md2.write_fixed_clustering_as_json(
 
 *command-line example:*
 ```bash
-mdsine2 interaction-to-cytoscape -i fixed_clustering/mcmc.pkl -o fixed_clustering/fixed_module_interactions.json 
+> mdsine2 interaction-to-cytoscape -i fixed_clustering/mcmc.pkl -o fixed_clustering/fixed_module_interactions.json 
 ```
 
 ### 6.7 compute and visualize keystoneness metric (work-in-progress)
@@ -221,5 +221,5 @@ on the rest of the system.
 
 *command-line example:*
 ```bash
-mdsine2 evaluate-keystoneness -i fixed_clustering/mcmc.pkl --initial-condition-path initial.tsv (...)
+> mdsine2 evaluate-keystoneness -i fixed_clustering/mcmc.pkl --initial-condition-path initial.tsv (...)
 ```
