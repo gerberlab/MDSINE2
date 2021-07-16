@@ -76,7 +76,7 @@ class TaxaFilterCLI(CLIModule):
         if args.max_n_taxa is not None:
             n = args.max_n_taxa
             if n <= 0:
-                raise ValueError('`max_n_otus` ({}) must be > 0'.format(n))
+                raise ValueError('`max_n_taxa` ({}) must be > 0'.format(n))
             to_delete = []
             for taxon in study.taxa:
                 if taxon.idx >= n:
