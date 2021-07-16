@@ -73,8 +73,8 @@ class TaxaFilterCLI(CLIModule):
             colonization_time=args.colonization_time
         )
 
-        if args.max_n_otus is not None:
-            n = args.max_n_otus
+        if args.max_n_taxa is not None:
+            n = args.max_n_taxa
             if n <= 0:
                 raise ValueError('`max_n_otus` ({}) must be > 0'.format(n))
             to_delete = []
