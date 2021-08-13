@@ -370,15 +370,15 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     return subjset
 
 
-def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_path: str):
+def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_filename: str):
     '''Export the posterior fixed topology as a json usable in Cytoscape
 
     Parameters
     ----------
     mcmc : BaseMCMC
         This is the chain that contains the traces
-    output_path : str
-        This is the path to save the json file.
+    output_filename : str
+        This is the path to save the json file
     '''
     import networkx as nx
     from py2cytoscape.util import from_networkx
@@ -423,19 +423,35 @@ def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_path: str):
         return category
 
     clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
-    consensus_cluster_labels = generate_cluster_assignments_posthoc(clustering=clustering, set_as_value=True)
+    #consensus_cluster_labels = generate_cluster_assignments_posthoc(clustering=clustering, set_as_value=True)
+    consensus_cluster_labels = clustering.toarray()
 
     taxa_names = []
-    taxas = mcmc.graph.data.taxas
+    taxas = mcmc.graph.data.taxa
     for taxa in taxas:
         taxa_names.append(taxa.name)
 
     consensus_cluster = clusterize(consensus_cluster_labels, taxa_names)
-    M = pl.summary(mcmc.graph[STRNAMES.INTERACTIONS_OBJ], set_nan_to_0=True, section='posterior')['mean']
-    M_condensed = condense_fixed_clustering_interaction_matrix(M, clustering=clustering)
+    M = pl.summary(mcmc.graph[STRNAMES.INTERACTIONS_OBJ], set_nan_to_0=True,
+        section='posterior')['mean']
+    M_condensed = condense_fixed_clustering_interaction_matrix(M,
+        clustering=clustering)
 
-    bf = generate_interation_bayes_factors_posthoc(mcmc=mcmc, section='posterior') # (n_taxa, n_taxa)
-    bf_condensed = condense_fixed_clustering_interaction_matrix(bf, clustering=clustering)
+    int_mat = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(
+        section="posterior")
+    int_mat_condensed = condense_fixed_clustering_interaction_matrix(int_mat,
+        clustering=clustering)
+
+    int_mat_condensed[np.isnan(int_mat_condensed)] = 0
+    sign_mat = np.where(int_mat_condensed<0, -1, int_mat_condensed)
+    sign_mat = np.where(sign_mat > 0, 1, sign_mat)
+    sign_mat = np.sum(sign_mat, axis=0)
+
+
+    bf = generate_interation_bayes_factors_posthoc(mcmc=mcmc,
+          section='posterior')
+    bf_condensed = condense_fixed_clustering_interaction_matrix(bf,
+        clustering=clustering)
 
     columns = np.sort(list(consensus_cluster.keys()))
     # Take the transpose so that rows are the srouce and columns destination
@@ -451,21 +467,22 @@ def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_path: str):
         int_strength = M_condensed[edge[1], edge[0]]
         coord = (edge[0], edge[1])
         sign = 0
+        majority_sign = sign_mat[edge[1], edge[0]]
         weight = edge[2]['weight']
 
-        if np.isint('weight'):
+        if np.isinf(weight):
             weight = largest
-        if int_strength < 0:
+        if majority_sign < 0:
             sign = -1
-        else:
+        elif majority_sign > 0:
             sign = 1
 
         category = get_bayes_category(weight)
         bend = False
         if (edge[1], edge[0]) in all_edges:
             bend = True
-        
-        edge_attributes[coord] = {'bayes_fac': category, 'sign': sign, 
+
+        edge_attributes[coord] = {'bayes_fac': category, 'sign': sign,
             'weight': weight, 'bend': bend}
 
     nx.set_edge_attributes(graph_bayes, edge_attributes)
@@ -475,9 +492,13 @@ def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_path: str):
         nodes_attributes[keys] = {'size': len(consensus_cluster[keys])}
 
     nx.set_node_attributes(graph_bayes, nodes_attributes)
-    data_json = from_networkx(graph_bayes, nodes_attributes)
-    with open(output_path, 'w') as f:
+
+    data_json = from_networkx(graph_bayes)
+    if '.json' not in output_filename:
+        output_filename += '.json'
+    with open(output_filename, 'w') as f:
         json.dump(data_json, f)
+    print("cyjs file exported to: {}".format(output_filename))
 
 
 def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min_num_consecutive: int, min_num_subjects: int,
