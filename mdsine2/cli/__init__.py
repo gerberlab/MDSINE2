@@ -9,6 +9,7 @@ from .interactions_to_cytoscape import InteractionToCytoscapeCLI
 from .visualize_posterior import PosteriorVisualizationCLI
 from .forward_simulate import ForwardSimulationCLI
 from .compute_keystoneness import KeystonenessCLI
+from .plot_abundance_qpcr import PlotAbundanceCLI
 
 
 def main():
@@ -23,7 +24,8 @@ def main():
         InteractionToCytoscapeCLI(subcommand="interaction-to-cytoscape"),
         PosteriorVisualizationCLI(subcommand="visualize-posterior"),
         ForwardSimulationCLI(subcommand="forward-simulate"),
-        KeystonenessCLI(subcommand="evaluate-keystoneness")
+        KeystonenessCLI(subcommand="evaluate-keystoneness"),
+        PlotAbundanceCLI(subcommand="plot-abundances")
     ]
 
     dispatch({

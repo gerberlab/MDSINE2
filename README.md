@@ -90,7 +90,9 @@ We recommend heading on over to the github repo for the paper https://github.com
 ## 6. Features and Examples
 
 MDSINE2 has the following core features, implemented as a python package but also interfacable using the command line.
-For the specifications on the python functions, refer to the documentation.
+We **strongly** encourage users to start with the [tutorials](#5-tutorials) to get started, using the following sections
+as a high-level overview only.
+For more detailed specifications on the python functions, refer to the documentation.
 For command line specifications, use the `--help` option (e.g. `mdsine2 infer --help`).
 
 ### 6.1 Input processing and Visualization
@@ -102,7 +104,7 @@ Process the raw input files (TSV format) and process them into python `mdsine2.S
 *python example:*
 ```python
 import mdsine2 as md2
-study = md2.dataset.parse(name="gibson_datset", reads="counts.tsv", (...))
+study = md2.dataset.parse(name="gibson_dataset", reads="counts.tsv", (...))
 ```
 
 *command-line example:*
@@ -110,9 +112,12 @@ study = md2.dataset.parse(name="gibson_datset", reads="counts.tsv", (...))
 > mdsine2 parse --name "gibson_dataset" --reads counts.tsv (...)
 ```
     
-#### B) Time-series plots of qPCR, abundances, alpha-diversity
+#### B) Time-series plots of qPCR and abundances.
 
-*(coming soon)*
+*command-line example:*
+```bash
+> mdsine2 plot-abundances -i dataset.pkl -o plot.png -t family
+```
 
 ### 6.2 MCMC inference using MDSINE2's model.
 
