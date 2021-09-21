@@ -159,8 +159,7 @@ def aggregate_dataframes(study, clustering,
     )
 
     eps = 1e5
-    merged_df["SteadyStateDiff"] = np.log10(merged_df["SteadyState"] + eps) - np.log10(
-        merged_df["SteadyStateBase"] + eps)
+    merged_df["SteadyStateDiff"] = np.log10(merged_df["SteadyStateBase"] + eps) - np.log10(merged_df["SteadyState"] + eps)
 
     ky_df = merged_df[["ExcludedCluster", "SampleIdx", "SteadyStateDiff"]].groupby(
         ["ExcludedCluster", "SampleIdx"]  # Aggregate over taxa
