@@ -12,3 +12,4 @@ numba==0.52
 biopython==1.78
 treeswift==1.1.14
 py2cytoscape==0.7.1
+tqdm
