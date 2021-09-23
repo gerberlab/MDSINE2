@@ -9,7 +9,7 @@ from .interactions_to_cytoscape import InteractionToCytoscapeCLI
 from .visualize_posterior import PosteriorVisualizationCLI
 from .forward_simulate import ForwardSimulationCLI
 from .compute_keystoneness import KeystonenessCLI
-from .plot_abundance_qpcr import PlotAbundanceCLI
+from .plot_subjects import PlotAbundanceCLI
 
 
 def main():

@@ -57,7 +57,6 @@ EXTENSIONS = [
 # Subpackages
 PACKAGES = [
     'mdsine2',
-    'mdsine2.plots',
     'mdsine2.cli',
     'mdsine2.cli.helpers',
     'mdsine2.pylab'
