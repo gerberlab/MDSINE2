@@ -112,7 +112,7 @@ study = md2.dataset.parse(name="gibson_dataset", reads="counts.tsv", (...))
 > mdsine2 parse --name "gibson_dataset" --reads counts.tsv (...)
 ```
     
-#### B) Time-series plots of qPCR and abundances.
+#### B) Time-series plots of qPCR, abundances and alpha-diversity of each subject.
 
 *command-line example:*
 ```bash
