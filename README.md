@@ -116,7 +116,7 @@ study = md2.dataset.parse(name="gibson_dataset", reads="counts.tsv", (...))
 
 *command-line example:*
 ```bash
-> mdsine2 plot-abundances -i dataset.pkl -o plot.png -t family
+> mdsine2 plot-subjects -i dataset.pkl -o . -t phylum
 ```
 
 ### 6.2 MCMC inference using MDSINE2's model.
