@@ -874,13 +874,8 @@ def render_trace(var: variables.Variable, idx: Union[int, Tuple[int, int]]=None,
         else:
             points = np.arange(len(trace))
 
-    try:
-        if trace.ndim > 1:
-            raise ValueError('`render_trace` only supports vectors ({})'.format(trace.shape))
-    except:
-        print(trace.shape)
-        print(idxs)
-        raise
+    if trace.ndim > 1:
+        raise ValueError('`render_trace` only supports vectors ({})'.format(trace.shape))
 
     if ax is None:
         fig = plt.figure()
@@ -1506,12 +1501,14 @@ def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, 
     if shade_perturbations:
         if pl.issubject(subj):
             perturbations = subj.parent.perturbations
+            ax = shade_in_perturbations(ax, perturbations, subj=subj)
         elif pl.isstudy(subj):
             perturbations = subj.perturbations
+            ax = shade_in_perturbations(ax, perturbations, subj=next(iter(subj)))
         else:
             # Else it is an array of subjsets
             perturbations = subj[0].parent.perturbations
-        ax = shade_in_perturbations(ax, perturbations, subj=subj)
+            ax = shade_in_perturbations(ax, perturbations, subj=subj[0])
 
     if legend:
         ax.legend(bbox_to_anchor=(1,1))
@@ -1523,7 +1520,7 @@ def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, 
 
 def taxonomic_distribution_over_time(subj: Union[Subject, Study], taxlevel: str=None,
     legend: bool=True, ax: matplotlib.pyplot.Axes=None, plot_abundant: int=None, 
-    label_formatter: str=None, dtype: str='rel', shade_perturbations: bool=True, 
+    label_formatter: str=None, dtype: str='rel', shade_perturbations: bool=True, colormap=None,
     **kwargs) -> matplotlib.pyplot.Axes:
     '''Produces a taxonomic bar graph for each datapoint
 
@@ -1601,7 +1598,7 @@ def taxonomic_distribution_over_time(subj: Union[Subject, Study], taxlevel: str=
 
     ax, kwargs = _set_plt_labels(d=kwargs, ax=ax)
     if len(kwargs) != 0:
-        raise ValueError('Arguemnts {} not recognized'.format(list(kwargs.keys())))
+        raise ValueError('Arguments {} not recognized'.format(list(kwargs.keys())))
 
     if pl.isstudy(subj):
         raise NotImplementedError('Not implemented yet')
@@ -1643,7 +1640,7 @@ def taxonomic_distribution_over_time(subj: Union[Subject, Study], taxlevel: str=
     if dtype == 'abs':
         kwargs['logy'] = True
 
-    ax = df.T.plot(ax=ax, kind='bar', stacked=True, **kwargs)
+    ax = df.T.plot(ax=ax, kind='bar', stacked=True, colormap=colormap, **kwargs)
     if shade_perturbations:
         if pl.isstudy(subj):
             for sss in subj:
