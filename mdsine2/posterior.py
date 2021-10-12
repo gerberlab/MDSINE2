@@ -5308,7 +5308,8 @@ class PriorVarMH(pl.variables.SICS):
         self.value = value
 
     def update_dof(self):
-        '''Updat the `dof` parameter so that we adjust the acceptance
+        '''
+        Update the proposal `dof` parameter (which controls the variance) so that we adjust the acceptance
         rate to `target_acceptance_rate`
         '''
         if self.sample_iter == 0:
@@ -5322,10 +5323,15 @@ class PriorVarMH(pl.variables.SICS):
         elif self.sample_iter % self.tune == 0:
             # Update dof
             acceptance_rate = self.temp_acceptances / self.tune
+            # Note: increasing DOF decreases variance. So if acceptance rate is too high
+            # (e.g. distribution is too concentrated), we increase variance by shrinking DOF.
             if acceptance_rate > self.target_acceptance_rate:
-                self.proposal.dof.value = self.proposal.dof.value * 1.5
-            else:
+                # TODO: Also, search should be a binary search which restricts to DOF > 4.
+                #  Simply multiplying/dividing by 1.5 won't work.
+
                 self.proposal.dof.value = self.proposal.dof.value / 1.5
+            else:
+                self.proposal.dof.value = self.proposal.dof.value * 1.5
             self.temp_acceptances = 0
 
     def update(self):
