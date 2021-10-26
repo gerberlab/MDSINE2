@@ -3,7 +3,10 @@
 This repository contains the MDSINE2 (Microbial Dynamical Systems INference Engine 2) package. A python implementation of a robust and scalable Bayesian model for learning  microbial dynamics.
 MDSINE2 extends the generalized Lotka-Volterra (gLV) model to include automatically learned interaction modules, which we define as groups of taxa that share common interaction structure (i.e., are promoted or inhibited by the same taxa outside the module) and have a common response to external perturbations (e.g., antibiotics).
 
-There is another repo for the paper associated with this model. If this is your first time using MDSINE2 we suggest you go to the companion repo  https://github.com/gerberlab/MDSINE2_Paper
+There is another repo for the paper associated with this model, which contains a tutorial all first-time users
+ should visit: 
+ 
+ <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
 
 ## 1. Description of inputs and outputs
 
@@ -84,7 +87,10 @@ pip install MDSINE2/.
 
 ## 5. Tutorials
 
-We recommend heading on over to the github repo for the paper https://github.com/gerberlab/MDSINE2_Paper that has detailed examples for working with MDSINE2 as well as example data
+We recommend reading the MDSINE2_Paper repository that has detailed examples for working with MDSINE2 as well as 
+example data:
+
+<a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
 
 
 ## 6. Features and Examples
