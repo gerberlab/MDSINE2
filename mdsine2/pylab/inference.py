@@ -1044,7 +1044,7 @@ def r_hat(chains: Iterator[BaseMCMC], vname: str, start: int, end: int, idx: Uni
     )
 
     # degrees of freedom
-    dof = 2 * np.power(v_hat, 2) * var_v_hat
+    dof = 2 * np.power(v_hat, 2) / var_v_hat
 
     # R-hat (Empirical conditional variance, divided by W)
     rhat = np.sqrt(
