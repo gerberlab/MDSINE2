@@ -5,9 +5,10 @@ MDSINE2 extends the generalized Lotka-Volterra (gLV) model to include automatica
 
 There is an associated repo for the paper that introduces and applies this model to a novel gnotobiotic time series of healthy and dysbiotic microbiomes alomng with google colab tutorials exploring this model and reproducing the results underlying our paper
 
- - <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
- - <a href="https://"><img alt="" src="https://img.shields.io/badge/DOI-addmelater-blue?style=flat"/></a>
- - 
+ 
+- sister repository for paper <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
+- pre-print <a href="https://"><img alt="" src="https://img.shields.io/badge/DOI-addmelater-blue?style=flat"/></a>
+- notebooks 
 
 References
 ```
