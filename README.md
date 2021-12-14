@@ -7,6 +7,13 @@ There is another repo for the paper associated with this model, which contains a
  should visit: 
  
  <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
+ <a href="https://"><img alt="" src="https://img.shields.io/badge/DOI-addmelater-blue?style=flat"/></a>
+
+
+References
+```
+Add the bibtex to reference our work here
+```
 
 ## 1. Description of inputs and outputs
 
