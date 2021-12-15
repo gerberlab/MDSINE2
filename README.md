@@ -3,13 +3,13 @@
 This repository contains the MDSINE2 (Microbial Dynamical Systems INference Engine 2) package. A python implementation of a robust and scalable Bayesian model for learning  microbial dynamics.
 MDSINE2 extends the generalized Lotka-Volterra (gLV) model to include automatically learned interaction modules, which we define as groups of taxa that share common interaction structure (i.e., are promoted or inhibited by the same taxa outside the module) and have a common response to external perturbations (e.g., antibiotics).
 
-There is an [associated repo](https://github.com/gerberlab/MDSINE2_Paper) for the [pre-print]() that introduces and applies this model to a novel gnotobiotic time series of healthy and dysbiotic microbiomes along with [google colab tutorials](https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab) exploring the model, data, and paper results. The important links above are also spelled out here as well for your convenience.
+There is an [associated repo](https://github.com/gerberlab/MDSINE2_Paper) for the [pre-print]() that introduces and applies this model to a densely sampled gnotobiotic time series of healthy and dysbiotic microbiomes along with [google colab tutorials](https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab) exploring the model, data, and paper results. The important links above are also spelled out here as well for your convenience.
 
 - Main Paper (Pre-print): ["Intrinsic instability of the dysbiotic microbiome revealed through dynamical systems inference at scale"]()<br />
   <a href="https://"><img alt="" src="https://img.shields.io/badge/DOI-addmelater-blue?style=flat"/></a>
-- Associated GitHub repo for the paper: ["MDSINE2_Paper"]()<br />
+- Associated GitHub repo for the paper: ["MDSINE2_Paper"](https://github.com/gerberlab/MDSINE2_Paper)<br />
   <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
-- [Google Colab tutorials exploring the model, data and paper]()<br /><a href="https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab">
+- [Google Colab tutorials exploring the model, data and paper](https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab)<br /><a href="https://colab.research.google.com/github/gerberlab/MDSINE2_Paper/tree/master/google_colab">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 - The mathematics behind this model are detailed in the supplemental text for the pre-print direct link [here]() <br />
 <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/PDF-MDSINE2%20Mathematics-blue?style=flat&logo=adobeacrobatreader"/></a>
@@ -91,9 +91,7 @@ See [Features and Examples](#features-and-examples) for more details.
 MDSINE2 takes as inputs microbial abundances from two data modalities, reads from sequencing and qPCR for 
 quantification of total bacterial load. The output from the model are the traces of the posterior samples 
 for all the [model](#Underlying-model-and-parameters) parameters (growth rates, module assignments, interaction 
-indicators and strengths, perturbation indicators and strengths ...). Of note, because our model is fully Bayesian, 
-MDSINE2 returns confidence measures on all aspects of the model (e.g., Bayes Factors). 
-See [model](#Underlying-model-and-parameters) for more details.
+indicators and strengths, perturbation indicators and strengths ...).
 
 <p align="center">
 <img src="/figures/github2.svg" />
@@ -104,10 +102,7 @@ A complete description of the model is given as supplemental text in [doi], or f
 
 ## Tutorials
 
-We recommend reading the MDSINE2_Paper repository that has detailed examples for working with MDSINE2 as well as 
-example data:
-
-<a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
+We recommend going to ['MDSINE2_Paper/google_colab'](https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab) repository that has detailed examples for working with MDSINE2 and exploring real data
 
 
 ## Features and Examples
