@@ -11,34 +11,11 @@ There is an [associated repo](https://github.com/gerberlab/MDSINE2_Paper) for th
 References
 ```
 Add the bibtex to reference our work here
+
 ```
 
-## 1. Description of inputs and outputs
 
-MDSINE2 takes as inputs microbial abundances from two data modalities, reads from sequencing and qPCR for 
-quantification of total bacterial load. The output from the model are the traces of the posterior samples 
-for all the [model](#4-Underlying-model-and-parameters) parameters (growth rates, module assignments, interaction 
-indicators and strengths, perturbation indicators and strengths ...). Of note, because our model is fully Bayesian, 
-MDSINE2 returns confidence measures on all aspects of the model (e.g., Bayes Factors). 
-See [model](#4-Underlying-model-and-parameters) for more details.
-
-<p align="center">
-<img src="/figures/github2.svg" />
-</p>
-
-## 2. Documentation
-MDSINE2 is implemented as a python library, which is importable using python's import command: `import mdsine2`.
-The classes and methods' documentation can be found here: 
-
-[documentation link](https://htmlpreview.github.io/?https://raw.githubusercontent.com/gerberlab/MDSINE2/master/docs/mdsine2/index.html)
-
-We also provide some comand-line interfaces for the core features. 
-While these are more limited in functionality than directly using the python package, it does allow bash scripting
-for tasks generalizable to arbitrary datasets.
-See [Features and Examples](#6-features-and-examples) for more details.
-
-
-## 3. Installation
+## Installation
 
 #### Dependencies (Python 3.7.3)
 
@@ -82,15 +59,34 @@ git clone https://github.com/gerberlab/MDSINE2
 pip install MDSINE2/.
 ```
 
+## Documentation
+MDSINE2 is implemented as a python library, which is importable using python's import command: `import mdsine2`.
+The classes and methods' documentation can be found here: 
 
-## 4. Underlying model and parameters
+[documentation link](https://htmlpreview.github.io/?https://raw.githubusercontent.com/gerberlab/MDSINE2/master/docs/mdsine2/index.html)
+
+We also provide some comand-line interfaces for the core features. 
+While these are more limited in functionality than directly using the python package, it does allow bash scripting
+for tasks generalizable to arbitrary datasets.
+See [Features and Examples](#features-and-examples) for more details.
+
+
+## Description of inputs and outputs
+MDSINE2 takes as inputs microbial abundances from two data modalities, reads from sequencing and qPCR for 
+quantification of total bacterial load. The output from the model are the traces of the posterior samples 
+for all the [model](#Underlying-model-and-parameters) parameters (growth rates, module assignments, interaction 
+indicators and strengths, perturbation indicators and strengths ...). Of note, because our model is fully Bayesian, 
+MDSINE2 returns confidence measures on all aspects of the model (e.g., Bayes Factors). 
+See [model](#Underlying-model-and-parameters) for more details.
+
 <p align="center">
-<img src="/figures/github1.svg" width="600" />
+<img src="/figures/github2.svg" />
 </p>
 
+## Underlying model and parameters
+A complete description of the model is given as supplemental text in [doi], or for a direct link click [here]().
 
-
-## 5. Tutorials
+## Tutorials
 
 We recommend reading the MDSINE2_Paper repository that has detailed examples for working with MDSINE2 as well as 
 example data:
@@ -98,15 +94,15 @@ example data:
 <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
 
 
-## 6. Features and Examples
+## Features and Examples
 
 MDSINE2 has the following core features, implemented as a python package but also interfacable using the command line.
-We **strongly** encourage users to start with the [tutorials](#5-tutorials) to get started, using the following sections
+We **strongly** encourage users to start with the [tutorials](#tutorials) to get started, using the following sections
 as a high-level overview only.
 For more detailed specifications on the python functions, refer to the documentation.
 For command line specifications, use the `--help` option (e.g. `mdsine2 infer --help`).
 
-### 6.1 Input processing and Visualization
+### Input processing and Visualization
 
 Process the raw input files (TSV format) and process them into python `mdsine2.Study` objects.
 
@@ -130,7 +126,7 @@ study = md2.dataset.parse(name="gibson_dataset", reads="counts.tsv", (...))
 > mdsine2 plot-subjects -i dataset.pkl -o . -t phylum
 ```
 
-### 6.2 MCMC inference using MDSINE2's model.
+### MCMC inference using MDSINE2's model.
 
 MDSINE2's primary function is to implement an MCMC algorithm for learning gLV parameters for many taxa.
 To do this, we fit some parameters as a preliminary step (negative-binomial disperson parameters) and then pass
@@ -168,7 +164,7 @@ md2.run_graph(mcmc)
 > mdsine2 infer --input dataset.pkl (...)
 ```
 
-### 6.3 Visualization of posterior distribution from MCMC samples
+### Visualization of posterior distribution from MCMC samples
 
 Using the results of MDSINE2's MCMC output (a collection of posterior samples), visualize the posterior distribution of
 the parameters. This includes a visual summary of the gLV parameters for each taxa, a heatmap of
@@ -185,7 +181,7 @@ mcmc.graph[STRNAMES.PRIOR_MEAN_SELF_INTERACTIONS].visualize(path='si_mean.pdf', 
 > mdsine2 visualize-posterior --chain output/mcmc.pkl --section posterior (...)
 ```
 
-### 6.4 Computation and visualization of forward-simulation of learned gLV model for each OTU.
+### Computation and visualization of forward-simulation of learned gLV model for each OTU.
 
 *python example:*
 ```python
@@ -199,7 +195,7 @@ np.save("fwsim.npy", x)
 > mdsine2 forward-simulate (TODO) -i output/mcmc.pkl --study dataset.pkl --plot all (...)
 ```
 
-### 6.5 Visualize the phylogenetic placement of OTUs.
+### Visualize the phylogenetic placement of OTUs.
 
 We provide a tool to draw phylogenetic placements -- rendered into PDF as local subtrees induced by leaves
 within a specified radius of each taxa -- provided by the user (e.g. produced by FastTree + pplacer).
@@ -209,7 +205,7 @@ within a specified radius of each taxa -- provided by the user (e.g. produced by
 > mdsine2 render-phylogeny --study dataset.pkl --tree my_tree.nhx --output-basepath phylo/ (...)
 ```
     
-### 6.6 Visualize the learned network of interactions
+### Visualize the learned network of interactions
 
 In addition to the visualizations from 3.3 which draws a heatmap of interactions, gLV interactions can be drawn
 as a network of nodes (modules of taxa) and edges (signed interactions). 
@@ -230,7 +226,7 @@ md2.write_fixed_clustering_as_json(
 > mdsine2 interaction-to-cytoscape -i fixed_clustering/mcmc.pkl -o fixed_clustering/fixed_module_interactions.json 
 ```
 
-### 6.7 Compute and visualize keystoneness metric
+### Compute and visualize keystoneness metric
 
 As a downstream analysis, we compute "keystoneness" which quantifies the amount of influence that each module has
 on the rest of the system.
