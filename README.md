@@ -3,17 +3,30 @@
 This repository contains the MDSINE2 (Microbial Dynamical Systems INference Engine 2) package. A python implementation of a robust and scalable Bayesian model for learning  microbial dynamics.
 MDSINE2 extends the generalized Lotka-Volterra (gLV) model to include automatically learned interaction modules, which we define as groups of taxa that share common interaction structure (i.e., are promoted or inhibited by the same taxa outside the module) and have a common response to external perturbations (e.g., antibiotics).
 
-There is an [associated repo](https://github.com/gerberlab/MDSINE2_Paper) for the [paper]() that introduces and applies this model to a novel gnotobiotic time series of healthy and dysbiotic microbiomes alomng with [google colab]() tutorials exploring this model and reproducing the results underlying our [paper]() 
+There is an [associated repo](https://github.com/gerberlab/MDSINE2_Paper) for the [paper]() that introduces and applies this model to a novel gnotobiotic time series of healthy and dysbiotic microbiomes along with [google colab]() tutorials exploring this model and reproducing the results underlying our paper can be found [here](). These important links that are also in the text above are spelled out here as well for your convenience.
 
-<a href="https://"><img alt="" src="https://img.shields.io/badge/DOI-addmelater-blue?style=flat"/></a>
+- Main Paper (Pre-print): ["Intrinsic instability of the dysbiotic microbiome revealed through dynamical systems inference at scale"]()
+ <a href="https://"><img alt="" src="https://img.shields.io/badge/DOI-addmelater-blue?style=flat"/></a>
+- Associated GitHub repo for the paper: ["MDSINE2_Paper"]()
 <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
+- [Google Colab tutorials exploring the model, data and paper]()
 
 References
 ```
-Add the bibtex to reference our work here
-
+@InProceedings{pmlr-v80-gibson18a,
+  title = 	 {Robust and Scalable Models of Microbiome Dynamics},
+  author =       {Gibson, Travis and Gerber, Georg},
+  booktitle = 	 {Proceedings of the 35th International Conference on Machine Learning},
+  pages = 	 {1763--1772},
+  year = 	 {2018},
+  editor = 	 {Dy, Jennifer and Krause, Andreas},
+  volume = 	 {80},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {10--15 Jul},
+  publisher =    {PMLR},
+  url = 	 {https://proceedings.mlr.press/v80/gibson18a.html},
+}
 ```
-
 
 ## Installation
 
