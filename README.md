@@ -10,6 +10,9 @@ There is an [associated repo](https://github.com/gerberlab/MDSINE2_Paper) for th
 - Associated GitHub repo for the paper: ["MDSINE2_Paper"]()
 <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
 - [Google Colab tutorials exploring the model, data and paper]()
+<a href="https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
 
 References
 ```
