@@ -6,11 +6,10 @@ MDSINE2 extends the generalized Lotka-Volterra (gLV) model to include automatica
 There is an [associated repo](https://github.com/gerberlab/MDSINE2_Paper) for the [paper]() that introduces and applies this model to a novel gnotobiotic time series of healthy and dysbiotic microbiomes along with [google colab]() tutorials exploring this model and reproducing the results underlying our paper can be found [here](). These important links that are also in the text above are spelled out here as well for your convenience.
 
 - Main Paper (Pre-print): ["Intrinsic instability of the dysbiotic microbiome revealed through dynamical systems inference at scale"]()
- <a href="https://"><img alt="" src="https://img.shields.io/badge/DOI-addmelater-blue?style=flat"/></a>
+  <a href="https://"><img alt="" src="https://img.shields.io/badge/DOI-addmelater-blue?style=flat"/></a>
 - Associated GitHub repo for the paper: ["MDSINE2_Paper"]()
- <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
-- [Google Colab tutorials exploring the model, data and paper]() 
- <a href="https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab">
+  <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
+- [Google Colab tutorials exploring the model, data and paper]()<a href="https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab">
   <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
  </a>
 
