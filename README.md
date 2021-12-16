@@ -6,13 +6,13 @@ MDSINE2 extends the generalized Lotka-Volterra (gLV) model to include automatica
 There is an [associated repo](https://github.com/gerberlab/MDSINE2_Paper) for the [pre-print]() that introduces and applies this model to a densely sampled gnotobiotic time series of healthy and dysbiotic microbiomes along with [google colab tutorials](https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab) exploring the model, data, and paper results. 
 
 - Main Paper (Pre-print): ["Intrinsic instability of the dysbiotic microbiome revealed through dynamical systems inference at scale"]()<br />
-  <a href="https://"><img alt="" src="https://img.shields.io/badge/DOI-addmelater-blue?style=flat"/></a>
+  <a href="https://doi.org/10.1101/2021.12.14.469105"><img alt="" src="https://img.shields.io/badge/bioRχiv%20DOI-10.1101/2021.12.14.46910-blue?style=flat"/></a>
 - Associated GitHub repo for the paper: ["MDSINE2_Paper"](https://github.com/gerberlab/MDSINE2_Paper)<br />
   <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
 - Folder containing [tutorials as notebooks exploring the model, data and paper](https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab) that can be opened directly in Google Colab<br />
 <a href="https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab"><img alt="" src="https://img.shields.io/badge/Jupyter Notebooks-MDSINE2%20Tutorials-blue?style=flat&logo=jupyter"/></a>
 - The mathematics behind this model are detailed in the supplemental text for the pre-print direct link [here]() <br />
-<a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/PDF-MDSINE2%20Mathematics-blue?style=flat&logo=adobeacrobatreader"/></a>
+<a href="https://www.biorxiv.org/content/biorxiv/early/2021/12/16/2021.12.14.469105/DC1/embed/media-1.pdf"><img alt="" src="https://img.shields.io/badge/PDF-MDSINE2%20Mathematics-blue?style=flat&logo=adobeacrobatreader"/></a>
 
 References
 ```bibtex
