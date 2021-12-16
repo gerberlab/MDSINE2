@@ -9,8 +9,8 @@ There is an [associated repo](https://github.com/gerberlab/MDSINE2_Paper) for th
   <a href="https://"><img alt="" src="https://img.shields.io/badge/DOI-addmelater-blue?style=flat"/></a>
 - Associated GitHub repo for the paper: ["MDSINE2_Paper"](https://github.com/gerberlab/MDSINE2_Paper)<br />
   <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
-- Folder containing [Google Colab tutorials exploring the model, data and paper](https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab) or open directly in colab using button below<br /><a href="https://colab.research.google.com/github/gerberlab/MDSINE2_Paper/tree/master/google_colab">
-  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+- Folder containing [tutorials as notebooks exploring the model, data and paper](https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab) that can be opened directly in Google Colab or open directly in colab using button below<br />
+<a href="https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab"><img alt="" src="https://img.shields.io/badge/Jupyter Notebooks-MDSINE2%20Tutorials-blue?style=flat&logo=jupyter"/></a>
 - The mathematics behind this model are detailed in the supplemental text for the pre-print direct link [here]() <br />
 <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/PDF-MDSINE2%20Mathematics-blue?style=flat&logo=adobeacrobatreader"/></a>
 
