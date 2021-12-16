@@ -14,7 +14,22 @@ There is an [associated repo](https://github.com/gerberlab/MDSINE2_Paper) for th
 - The mathematics behind this model are detailed in the supplemental text for the pre-print direct link [here]() <br />
 <a href="https://www.biorxiv.org/content/biorxiv/early/2021/12/16/2021.12.14.469105/DC1/embed/media-1.pdf"><img alt="" src="https://img.shields.io/badge/PDF-MDSINE2%20Mathematics-blue?style=flat&logo=adobeacrobatreader"/></a>
 
-References
+### References
+Pre-print
+```bibtex
+@article {Gibson2021.12.14.469105,
+	author = {Gibson, Travis E and Kim, Younhun and Acharya, Sawal and Kaplan, David E and DiBenedetto, Nicholas and Lavin, Richard and Berger, Bonnie and Allegretti, Jessica R and Bry, Lynn and Gerber, Georg K},
+	title = {Intrinsic instability of the dysbiotic microbiome revealed through dynamical systems inference at scale},
+	elocation-id = {2021.12.14.469105},
+	year = {2021},
+	doi = {10.1101/2021.12.14.469105},
+	publisher = {Cold Spring Harbor Laboratory},
+	URL = {https://www.biorxiv.org/content/early/2021/12/16/2021.12.14.469105},
+	eprint = {https://www.biorxiv.org/content/early/2021/12/16/2021.12.14.469105.full.pdf},
+	journal = {bioRxiv}
+}
+```
+ICML conference paper 
 ```bibtex
 @InProceedings{pmlr-v80-gibson18a,
   title = 	 {Robust and Scalable Models of Microbiome Dynamics},
