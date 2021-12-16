@@ -15,7 +15,7 @@ There is an [associated repo](https://github.com/gerberlab/MDSINE2_Paper) for th
 <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/PDF-MDSINE2%20Mathematics-blue?style=flat&logo=adobeacrobatreader"/></a>
 
 References
-```
+```bibtex
 @InProceedings{pmlr-v80-gibson18a,
   title = 	 {Robust and Scalable Models of Microbiome Dynamics},
   author =       {Gibson, Travis and Gerber, Georg},
