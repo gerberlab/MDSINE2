@@ -20,14 +20,11 @@ Pre-print
 @article {Gibson2021.12.14.469105,
 	author = {Gibson, Travis E and Kim, Younhun and Acharya, Sawal and Kaplan, David E and DiBenedetto, Nicholas and Lavin, Richard and Berger, Bonnie and Allegretti, Jessica R and Bry, Lynn and Gerber, Georg K},
 	title = {Intrinsic instability of the dysbiotic microbiome revealed through dynamical systems inference at scale},
-	elocation-id = {2021.12.14.469105},
 	year = {2021},
 	doi = {10.1101/2021.12.14.469105},
 	publisher = {Cold Spring Harbor Laboratory},
 	URL = {https://www.biorxiv.org/content/early/2021/12/16/2021.12.14.469105},
-	eprint = {https://www.biorxiv.org/content/early/2021/12/16/2021.12.14.469105.full.pdf},
-	journal = {bioRxiv}
-}
+	journal = {bioRxiv}}
 ```
 ICML conference paper 
 ```bibtex
@@ -42,8 +39,7 @@ ICML conference paper
   series = 	 {Proceedings of Machine Learning Research},
   month = 	 {10--15 Jul},
   publisher =    {PMLR},
-  url = 	 {https://proceedings.mlr.press/v80/gibson18a.html},
-}
+  url = 	 {https://proceedings.mlr.press/v80/gibson18a.html}}
 ```
 
 ## Installation
