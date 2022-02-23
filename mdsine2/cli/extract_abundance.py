@@ -47,7 +47,7 @@ class ExtractAbundancesCLI(CLIModule):
         abundances[abundances < limit_of_detection] = limit_of_detection
 
         Path(args.out_path).parent.mkdir(exist_ok=True, parents=True)
-        with open(args.out_path, "r") as fd:
+        with open(args.out_path, "w") as fd:
             wd = csv.writer(fd, delimiter='\t', quotechar='"')
             for taxa_idx, taxa in enumerate(study.taxa):
                 wd.writerow([taxa.name, abundances[taxa_idx]])
