@@ -4,11 +4,14 @@ Run keystoneness analysis using the specified MDSINE2 output.
 
 import argparse
 import csv
-from typing import List
+from typing import List, Union
 
 import numpy as np
 import pandas as pd
 from pathlib import Path
+from tqdm import tqdm
+
+from mdsine2 import BaseMCMC
 
 import mdsine2 as md2
 from mdsine2.names import STRNAMES
@@ -27,150 +30,154 @@ class KeystonenessCLI(CLIModule):
 
     def create_parser(self, parser: argparse.ArgumentParser):
         # Inputs
-        parser.add_argument('--fixed-clustering-mcmc', '-i', type=str, dest='mcmc_path',
+        parser.add_argument('--fixed-cluster-mcmc-path', '-f', type=str, dest='mcmc_path',
                             required=True,
                             help='Path of saved MDSINE2.BaseMCMC chain (fixed-clustering inference)')
-        parser.add_argument('--study', type=str, required=True,
+        parser.add_argument('--study', '-s', dest='study', type=str, required=True,
                             help="The path to the relevant Study object containing the input data (subjects, taxa).")
-        parser.add_argument('--initial-condition-path', type=str, dest='initial_condition_path',
+
+        # Optional:
+        parser.add_argument('--initial-conditions', '-i', type=str, dest='initial_condition_path',
                             required=True,
                             help='The path to a file specifying the initial conditions. File will be interpreted as a '
                                  'two-column TSV file (Taxa name, Absolute abundance).')
 
         # Outputs
-        parser.add_argument('--output-dir', '-o', type=str, dest='out_dir',
+        parser.add_argument('--output-path', '-o', type=str, dest='out_path',
                             required=True,
                             help='This is where you are saving the posterior renderings')
 
         # Simulation params
         parser.add_argument('--n-days', type=int, dest='n_days', required=False,
-                            help='Total umber of days to simulate for', default=180)
-        parser.add_argument('--simulation-dt', type=float, dest='dt', required=False,
+                            help='Total number of days to simulate for', default=180)
+        parser.add_argument('--simulation-dt', '-dt', type=float, dest='dt', required=False,
                             help='Timesteps we go in during forward simulation', default=0.01)
         parser.add_argument('--sim-max', dest='sim_max', type=float, required=False,
-                            help='Maximum value', default=1e20)
+                            help='Maximum value of abundance.', default=1e20)
+        parser.add_argument('--limit-of-detection', dest='limit_of_detection', required=False,
+                            help='If any of the taxa have a 0 abundance at the start, then we ' \
+                                 'set it to this value.', default=1e5, type=float)
 
     def main(self, args: argparse.Namespace):
-        mcmc = md2.BaseMCMC.load(args.mcmc_path)
         study = md2.Study.load(args.study)
-        initial_conditions = load_initial_conditions(study, args.initial_condition_path)
+        mcmc = md2.BaseMCMC.load(args.mcmc_path)
 
-        clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
-        growth = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section="posterior")
-        self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section="posterior")
-        interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section="posterior")
-        interactions[np.isnan(interactions)] = 0
-        self_interactions = -np.absolute(self_interactions)
-        for i in range(self_interactions.shape[1]):
-            interactions[:, i, i] = self_interactions[:, i]
+        logger.info(f"Loading initial conditions from {args.initial_condition_path}")
+        initial_conditions_master = load_initial_conditions(study, args.initial_condition_path)
 
-        n_samples = growth.shape[0]
+        out_path = Path(args.out_path)
+        out_path.parent.mkdir(exist_ok=True, parents=True)
 
-        # Baseline run (no taxa excluded)
-        logger.info("Evaluating baseline forward-sim.")
-        baseline_steady_state = run_forward_simulations(n_samples,
-                                                        initial_conditions,
-                                                        growth, interactions,
-                                                        args.dt, args.sim_max, args.n_days)
+        df_entries = []
 
-        # Exclude one taxa at a time.
-        altered_steady_states = []
-        for cidx, cluster in enumerate(clustering):
-            logger.info("Evaluating forward-sim with cluster #{} (ID `{}`) excluded.".format(
-                cidx + 1,
-                cluster.id
-            ))
-            altered_initial_conditions = np.copy(initial_conditions)
-            for tidx in cluster.members:
-                altered_initial_conditions[tidx] = 0.0
-            altered_steady_state = run_forward_simulations(n_samples,
-                                                           altered_initial_conditions,
-                                                           growth, interactions,
-                                                           args.dt, args.sim_max, args.n_days)
-            altered_steady_states.append(altered_steady_state)
+        # Baseline
+        compute_keystoneness_of_cluster(
+            mcmc,
+            None,
+            initial_conditions_master,
+            args.n_days,
+            args.dt,
+            args.sim_max,
+            df_entries
+        )
 
-        out_dir = Path(args.out_dir)
-        out_dir.mkdir(exist_ok=True, parents=True)
+        # Cluster exclusion
+        for cluster_idx, cluster in enumerate(mcmc.graph[STRNAMES.CLUSTERING_OBJ]):
+            initial_conditions = exclude_cluster_from(initial_conditions_master, cluster)
+            compute_keystoneness_of_cluster(
+                mcmc,
+                cluster_idx,
+                initial_conditions,
+                args.n_days,
+                args.dt,
+                args.sim_max,
+                df_entries
+            )
 
-        logger.info("Aggregating data. (Output dir = {}).".format(str(out_dir)))
-        aggregate_dataframes(study, clustering, baseline_steady_state, altered_steady_states, out_dir)
+        df = pd.DataFrame(df_entries)
+        del df_entries
+
+        df.to_csv(str(out_path), sep='\t')
 
 
-def run_forward_simulations(n_samples,
-                            initial_conditions,
-                            growth,
-                            interactions,
-                            dt,
-                            sim_max,
-                            n_days) -> np.ndarray:
-    steady_states = []
-    for sample_idx in range(n_samples):
-        traj = run_forward_sim(
-            growth=growth[sample_idx],
-            interactions=interactions[sample_idx],
-            initial_conditions=initial_conditions,
-            perturbations=None, perturbations_start=[], perturbations_end=[],
+def exclude_cluster_from(initial_conditions_master: np.ndarray, cluster):
+    initial_conditions = np.copy(initial_conditions_master)
+    for oidx in cluster.members:
+        initial_conditions_master[oidx] = 0.0
+    return initial_conditions
+
+
+def compute_keystoneness_of_cluster(
+        mcmc: BaseMCMC,
+        cluster_idx: Union[int, None],
+        initial_conditions: np.ndarray,
+        n_days: int,
+        dt: float,
+        sim_max: float,
+        df_entries: List,
+):
+    taxa = mcmc.graph.data.taxa
+
+    # forward simulate and add results to dataframe.
+    if cluster_idx is None:
+        tqdm_disp = "Keystoneness Simulations (Baseline)"
+    else:
+        tqdm_disp = f"Keystoneness Simulations (Cluster {cluster_idx})"
+
+    for gibbs_idx, fwsim in tqdm(do_fwsims(
+        mcmc, initial_conditions, n_days, dt, sim_max
+    ), total=mcmc.n_samples, desc=tqdm_disp):
+        for entry in fwsim_entries(taxa, cluster_idx, fwsim, gibbs_idx):
+            df_entries.append(entry)
+
+
+def fwsim_entries(taxa, excluded_cluster_idx, fwsim, gibbs_idx):
+    stable_states = fwsim[:, -50:].mean(axis=1)
+    for otu in taxa:
+        yield {
+            "ExcludedCluster": str(excluded_cluster_idx),
+            "OTU": otu.name,
+            "SampleIdx": gibbs_idx,
+            "StableState": stable_states[otu.idx]
+        }
+
+
+def do_fwsims(mcmc,
+              initial_conditions: np.ndarray,
+              n_days,
+              dt: float,
+              sim_max
+              ):
+
+    # Forward simulate if necessary
+    # -----------------------------
+    logger.info('Forward simulating')
+
+    # Load the rest of the parameters
+    growth = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section="posterior")
+    self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section="posterior")
+    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section="posterior")
+    interactions[np.isnan(interactions)] = 0
+    self_interactions = -np.absolute(self_interactions)
+    for i in range(self_interactions.shape[1]):
+        interactions[:, i, i] = self_interactions[:, i]
+
+    num_samples = mcmc.n_samples
+
+    # Do the forward sim.
+    for gibb in range(num_samples):
+        gibbs_step_sim = run_forward_sim(
+            growth=growth[gibb],
+            interactions=interactions[gibb],
+            initial_conditions=initial_conditions.reshape(-1, 1),
+            perturbations=None,
+            perturbations_start=[],
+            perturbations_end=[],
             dt=dt,
             sim_max=sim_max,
-            n_days=n_days,
+            n_days=n_days
         )
-        steady_states.append(traj[:, -50:].mean(axis=1))
-    return np.stack(steady_states)
-
-
-def aggregate_dataframes(study, clustering,
-                         baseline_steady_state: np.ndarray,
-                         altered_steady_states: List[np.ndarray],
-                         out_dir: Path):
-    # Convert to pandas and store to disk.
-    baseline_df = pd.DataFrame([
-        {
-            "Taxa": taxa.name,
-            "SampleIdx": sample_idx,
-            "SteadyState": baseline_steady_state[sample_idx, tidx]
-        }
-        for sample_idx in baseline_steady_state.shape[0]
-        for tidx, taxa in enumerate(study.taxa)
-    ])
-
-    altered_df = pd.DataFrame([
-        {
-            "ExcludedCluster": cluster.cidx + 1,
-            "Taxa": taxa.name,
-            "SampleIdx": sample_idx,
-            "SteadyState": altered_steady_states[cidx][sample_idx, tidx]
-        }
-        for sample_idx in baseline_steady_state.shape[0]
-        for tidx, taxa in enumerate(study.taxa)
-        for cidx, cluster in enumerate(clustering)
-        if taxa.idx not in cluster.members
-    ])
-
-    baseline_df.to_csv(out_dir / "baseline_sim.csv")
-    altered_df.to_csv(out_dir / "cluster_exclusion_sim.csv")
-
-    # Compute keystoneness.
-    merged_df = altered_df.merge(
-        baseline_df,
-        left_on=["SampleIdx", "Taxa"],
-        right_on=["SampleIdx", "Taxa"],
-        suffixes=["", "Base"],
-        how="inner"
-    )
-
-    eps = 1e5
-    merged_df["SteadyStateDiff"] = np.log10(merged_df["SteadyStateBase"] + eps) - np.log10(merged_df["SteadyState"] + eps)
-
-    ky_df = merged_df[["ExcludedCluster", "SampleIdx", "SteadyStateDiff"]].groupby(
-        ["ExcludedCluster", "SampleIdx"]  # Aggregate over taxa
-    ).mean().groupby(
-        level=0  # Aggregate over MCMC samples
-    ).mean()
-
-    ky_df.rename(columns={
-        "SteadyStateDiff": "Keystoneness"
-    })
-    ky_df.to_csv(out_dir / "keystoneness.csv")
+        yield gibb, gibbs_step_sim
 
 
 def load_initial_conditions(study: md2.Study, initial_condition_path: str) -> np.ndarray:

@@ -10,6 +10,7 @@ from .visualize_posterior import PosteriorVisualizationCLI
 from .forward_simulate import ForwardSimulationCLI
 from .compute_keystoneness import KeystonenessCLI
 from .plot_subjects import PlotSubjectCLI
+from .extract_abundance import ExtractAbundancesCLI
 
 
 def main():
@@ -25,7 +26,8 @@ def main():
         PosteriorVisualizationCLI(subcommand="visualize-posterior"),
         ForwardSimulationCLI(subcommand="forward-simulate"),
         KeystonenessCLI(subcommand="evaluate-keystoneness"),
-        PlotSubjectCLI(subcommand="plot-subjects")
+        PlotSubjectCLI(subcommand="plot-subjects"),
+        ExtractAbundancesCLI(subcommand="extract-abundances")
     ]
 
     dispatch({

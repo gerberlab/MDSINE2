@@ -232,5 +232,6 @@ on the rest of the system.
 
 *command-line example:*
 ```bash
-> mdsine2 evaluate-keystoneness -i fixed_clustering/mcmc.pkl --initial-condition-path initial.tsv (...)
+> mdsine2 extract-abundances -s dataset.pkl -t 19 -o initial.tsv
+> mdsine2 evaluate-keystoneness -f fixed_clustering/mcmc.pkl -s dataset.pkl -i initial.tsv (...)
 ```

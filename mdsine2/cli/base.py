@@ -26,11 +26,10 @@ def dispatch(cli_mapping: Dict[str, CLIModule]):
 
     try:
         cli_module = cli_mapping[args.subcommand]
+        cli_module.main(args)
     except KeyError:
         print("Supported commands: {cmds}".format(
             prog=sys.argv[0],
             cmds=",".join(list(cli_mapping.keys()))
         ))
         exit(1)
-
-    cli_module.main(args)
