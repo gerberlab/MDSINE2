@@ -2399,7 +2399,7 @@ class TrajectorySet(pl.graph.Node):
         '''
         for ridx in range(self.G.data.n_replicates):
             for tidx in range(self.G.data.n_timepoints_for_replicate[ridx]):
-                for oidx in range(self.G.data.taxas.n_taxas):
+                for oidx in range(self.G.data.n_taxa):
                     yield (ridx, tidx, oidx)
 
     def set_trace(self, *args, **kwargs):
