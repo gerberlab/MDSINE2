@@ -2394,6 +2394,14 @@ class TrajectorySet(pl.graph.Node):
             vals = np.append(vals, data.value)
         return vals
 
+    def iter_indices(self) -> Tuple[int, int, int]:
+        '''Iterate through the indices and the values
+        '''
+        for ridx in range(self.G.data.n_replicates):
+            for tidx in range(self.G.data.n_timepoints_for_replicate[ridx]):
+                for oidx in range(self.G.data.taxas.n_taxas):
+                    yield (ridx, tidx, oidx)
+
     def set_trace(self, *args, **kwargs):
         for ridx in range(len(self.value)):
             self.value[ridx].set_trace(*args, **kwargs)
