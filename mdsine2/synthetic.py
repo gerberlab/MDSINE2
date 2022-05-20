@@ -24,19 +24,21 @@ class Synthetic(pl.Saveable):
         Seed to initialize the system
     '''
 
-    def __init__(self, name: str, seed: int=None):
+    def __init__(self, name: str, seed: int):
         self.G = pl.Graph(name=name, seed=seed)
         self.model = plmodel.gLVDynamicsSingleClustering(growth=None, interactions=None)
         self.taxa = None # mdsine2.pylab.base.TaxaSet
         self.subjs = [] # list[str]
         self._data = {} # list[np.ndarray]
+        self.seed = seed
+        pl.random.seed(self.seed)
 
     @property
     def perturbations(self):
         return self.G.perturbations
 
     def icml_dynamics(self, n_taxa: int=13):
-        '''Recreate the dynamical system used in the ICML paper [1]. If you use the 
+        '''Recreate the dynamical system used in the ICML paper [1]. If you use the
         default parameters you will get the same interaction matrix that was used in [1].
 
         We rescale the self-interactions and the interactions (and potentially growth) by 150
@@ -60,7 +62,7 @@ class Synthetic(pl.Saveable):
             raise TypeError('`n_taxa` ({}) must be an int'.format(type(n_taxa)))
         if n_taxa < 3:
             raise ValueError('`n_taxa` ({}) must be >= 3'.format(n_taxa))
-        
+
         # Make the TaxaSet
         taxa = pl.TaxaSet()
         for aidx in range(n_taxa):
@@ -77,7 +79,7 @@ class Synthetic(pl.Saveable):
         clustering = pl.Clustering(items=taxa, clusters=clusters, name=STRNAMES.CLUSTERING_OBJ, G=self.G)
 
         # Generate the interactions
-        interactions = pl.Interactions(clustering=clustering, use_indicators=True, G=self.G, 
+        interactions = pl.Interactions(clustering=clustering, use_indicators=True, G=self.G,
             name=STRNAMES.INTERACTIONS_OBJ)
         c0 = clustering.order[0]
         c1 = clustering.order[1]
@@ -107,7 +109,7 @@ class Synthetic(pl.Saveable):
         A = interactions.get_datalevel_value_matrix()
         for i in range(A.shape[0]):
             A[i,i] = -self_interactions.value[i]
-        
+
         self.model.interactions = A #
 
         # Generate growth
@@ -150,8 +152,8 @@ class Synthetic(pl.Saveable):
             raise TypeError('`name` ({}) must be a str'.format(type(name)))
         self.subjs.append(name)
 
-    def generate_trajectories(self, dt: float, init_dist: variables.Variable, 
-        processvar: plmodel.MultiplicativeGlobal=None, seed: int=None):
+    def generate_trajectories(self, dt: float, init_dist: variables.Variable,
+        processvar: plmodel.MultiplicativeGlobal=None):
         '''Forward simulate trajectories given the dynamics
 
         Parameters
@@ -166,9 +168,9 @@ class Synthetic(pl.Saveable):
         seed : int
             This is the seed to initialize at. If this is not given then the seed is no reset.
         '''
-        if seed is not None:
-            pl.random.seed(seed)
-        
+        #if seed is not None:
+        #    pl.random.seed(seed)
+
         for subj in self.subjs:
             if subj in self._data:
                 continue
@@ -188,7 +190,7 @@ class Synthetic(pl.Saveable):
                     sss = list(perturbation.starts.keys())[0]
                     start = perturbation.starts[sss]
                     end = perturbation.ends[sss]
-                    
+
                     # add name to the perturbations
                     perturbation.starts[subj] = start
                     perturbation.ends[subj] = end
@@ -197,18 +199,18 @@ class Synthetic(pl.Saveable):
                     pert_end.append(end)
                     pert_eff.append(perturbation.item_array())
 
-                    
+
 
             self.model.perturbation_ends = pert_end
             self.model.perturbation_starts = pert_start
             self.model.perturbations = pert_eff
 
-            d = pl.integrate(dynamics=self.model, initial_conditions=init_abund, 
-                dt=dt, n_days=self.times[-1]+dt, processvar=processvar, 
+            d = pl.integrate(dynamics=self.model, initial_conditions=init_abund,
+                dt=dt, n_days=self.times[-1]+dt, processvar=processvar,
                 subsample=True, times=self.times)
             self._data[subj] = d['X']
-        
-    def simulateMeasurementNoise(self, a0: float, a1: float, qpcr_noise_scale: float, 
+
+    def simulateMeasurementNoise(self, a0: float, a1: float, qpcr_noise_scale: float,
         approx_read_depth: int, name: str='unnamed-study') -> Study:
         '''This function converts the synthetic trajectories into "real" data
         by simulating read counts and qPCR measurements.
@@ -221,15 +223,15 @@ class Synthetic(pl.Saveable):
 
         Simulating count data
         ---------------------
-        First, we get the approximate read depth `r_k` with `approx_read_depth`. We then use `r_k`, 
-        `a_0`, and `a_1` with the relative abundances to sample from a negative binomial 
+        First, we get the approximate read depth `r_k` with `approx_read_depth`. We then use `r_k`,
+        `a_0`, and `a_1` with the relative abundances to sample from a negative binomial
         distirbution. We then use the relative abundances from this sample as the concentrations
         for a multinomial distribution with read depth `r_k`.
 
         Parameters
         ----------
         a0, a1 : numeric
-            These are the negative binomial dispersion parameters that we are using to 
+            These are the negative binomial dispersion parameters that we are using to
             simulate the data
         qpcr_noise_scale : numeric
             This is the parameter to scale the `s` parameter learned by the lognormal
@@ -256,7 +258,7 @@ class Synthetic(pl.Saveable):
         # Add times for each subject
         for subj in study:
             subj.times = self.times
-        
+
         # Make the qPCR measurements
         for subj in study:
             total_abund = np.sum(self._data[subj.name], axis=0)
@@ -267,7 +269,7 @@ class Synthetic(pl.Saveable):
                 triplicates = np.exp(np.log(total_abund[tidx]) + \
                     qpcr_noise_scale * pl.random.normal.sample(size=3))
                 subj.qpcr[t] = pl.qPCRdata(cfus=triplicates, mass=1., dilution_factor=1.)
-        
+
         # Make the reads
         for subj in study:
             for tidx, t in enumerate(self.times):
@@ -289,13 +291,13 @@ class Synthetic(pl.Saveable):
             study.perturbations = self.G.perturbations
 
         return study
-            
-def make_semisynthetic(chain: BaseMCMC, min_bayes_factor: Union[float, int], name: str=None, 
+
+def make_semisynthetic(chain: BaseMCMC, seed: int, min_bayes_factor: Union[float, int], name: str=None,
     set_times: bool=True) -> Synthetic:
-    '''Make a semi synthetic system. We assume that the chain that we pass in was 
+    '''Make a semi synthetic system. We assume that the chain that we pass in was
     run with FIXED CLUSTERING. We assume this because we need to set the cluster-cluster
     interactions and the cluster perturbations.
-    
+
     How the synthetic system is set
     -------------------------------
     - n_taxa: Set to the number in chain.
@@ -347,7 +349,7 @@ def make_semisynthetic(chain: BaseMCMC, min_bayes_factor: Union[float, int], nam
 
     if name is None:
         name = chain.graph.data.subjects.name + '-synthetic'
-    syn = Synthetic(name=name)
+    syn = Synthetic(name=name, seed=seed)
     syn.set_subjects(subjs=[subj.name for subj in chain.graph.data.subjects])
     syn.taxa = chain.graph.data.taxa
 
@@ -359,21 +361,21 @@ def make_semisynthetic(chain: BaseMCMC, min_bayes_factor: Union[float, int], nam
     # Set the clustering
     # ------------------
     cluster_assignments = chain.graph[STRNAMES.CLUSTERING_OBJ].toarray()
-    clustering = pl.Clustering(cluster_assignments, G=syn.G, items=syn.taxa, 
+    clustering = pl.Clustering(cluster_assignments, G=syn.G, items=syn.taxa,
         name=STRNAMES.CLUSTERING_OBJ)
 
     # Set the interactions
     # --------------------
     self_interactions = pl.summary(chain.graph[STRNAMES.SELF_INTERACTION_VALUE])['mean']
     A = pl.summary(chain.graph[STRNAMES.INTERACTIONS_OBJ], set_nan_to_0=True)['mean']
-    A_cluster = condense_fixed_clustering_interaction_matrix(A, 
+    A_cluster = condense_fixed_clustering_interaction_matrix(A,
         clustering=chain.graph[STRNAMES.CLUSTERING_OBJ])
 
     bf = generate_interation_bayes_factors_posthoc(mcmc=chain)
-    bf_cluster = condense_fixed_clustering_interaction_matrix(bf, 
+    bf_cluster = condense_fixed_clustering_interaction_matrix(bf,
         clustering=chain.graph[STRNAMES.CLUSTERING_OBJ])
 
-    interactions = pl.Interactions(clustering=clustering, use_indicators=True, 
+    interactions = pl.Interactions(clustering=clustering, use_indicators=True,
         name=STRNAMES.INTERACTIONS_OBJ, G=syn.G)
 
     for interaction in interactions:
@@ -407,13 +409,13 @@ def make_semisynthetic(chain: BaseMCMC, min_bayes_factor: Union[float, int], nam
                 G=syn.G, clustering=clustering)
 
             # Get the values and the bayes factors
-            bf = generate_perturbation_bayes_factors_posthoc(chain, 
+            bf = generate_perturbation_bayes_factors_posthoc(chain,
                 perturbation=perturbation_master)
-            bf_cluster = condense_fixed_clustering_perturbation(bf, 
+            bf_cluster = condense_fixed_clustering_perturbation(bf,
                 clustering=chain.graph[STRNAMES.CLUSTERING_OBJ])
-            
+
             M = pl.summary(perturbation_master, set_nan_to_0=True)['mean']
-            M_cluster = condense_fixed_clustering_perturbation(M, 
+            M_cluster = condense_fixed_clustering_perturbation(M,
                 clustering=chain.graph[STRNAMES.CLUSTERING_OBJ])
 
             for cidx, cluster in enumerate(clustering):
@@ -465,7 +467,7 @@ def subsample_timepoints(times: np.ndarray, N: int, required: np.ndarray=None) -
 
         add_at_end = []
         for ele in required:
-            # get index at 
+            # get index at
             idx = np.searchsorted(times, ele)
             add_at_end.append(ele)
             times = np.delete(times, [idx])
@@ -485,5 +487,3 @@ def subsample_timepoints(times: np.ndarray, N: int, required: np.ndarray=None) -
     if required is not None:
         a = np.sort(np.append(a, add_at_end))
     return a
-
-    
