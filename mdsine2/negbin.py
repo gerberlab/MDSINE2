@@ -5,9 +5,7 @@ classes, auxiliary functions, building the graph
 '''
 import numpy as np
 from mdsine2.logger import logger
-import sys
 import time
-import pandas as pd
 import os
 import os.path
 import math
@@ -15,7 +13,7 @@ import math
 import numpy.random as npr
 import numba
 
-from typing import Union, Dict, Iterator, Tuple, List, Any, IO
+from typing import Union, Tuple, IO
 
 import matplotlib.pyplot as plt
 import matplotlib
@@ -74,9 +72,14 @@ class Data(pl.graph.DataNode):
         self.subjects = subjects # mdsine2.pylab.base.Study
         self.n_taxa = len(self.taxa) # int
 
-        self.data = [] # list(np.ndarray)
+        self.data = []  # list(np.ndarray)
         self.read_depths = [] # list(np.ndarray)
-        self.qpcr = [] # qPCR measurement for each value
+        self.qpcr = []  # qPCR measurement for each value
+        logger.debug("Available subjects: {}".format(
+            ",".join(
+                subj.name for subj in self.subjects
+            )
+        ))
         for subject in self.subjects:
             d = subject.matrix()['raw']
             self.data.append(d)
