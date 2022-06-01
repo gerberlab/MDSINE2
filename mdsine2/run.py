@@ -399,7 +399,7 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
 
     return mcmc
 
-def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True, log_every: int=1) -> BaseMCMC:
+def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True, log_every: int=100) -> BaseMCMC:
     '''Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
 
     Parameters

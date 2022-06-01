@@ -103,6 +103,12 @@ class InferenceCLI(CLIModule):
             help='Prior of the indicator of the perturbations'
         )
 
+        parser.add_argument(
+            '--log_every', type=int, default=100,
+            required=False,
+            help='<Optional> Tells the inference loop to print debug messages every k iterations.'
+        )
+
     def main(self, args: argparse.Namespace):
         # 1) load dataset
         logger.info('Loading dataset {}'.format(args.input))
@@ -174,7 +180,7 @@ class InferenceCLI(CLIModule):
         params.make_metadata_file(fname=mdata_fname)
 
         start_time = time.time()
-        mcmc = md2.run_graph(mcmc, crash_if_error=True)
+        mcmc = md2.run_graph(mcmc, crash_if_error=True, log_every=args.log_every)
 
         # Record how much time inference took
         t = time.time() - start_time
