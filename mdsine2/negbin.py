@@ -83,7 +83,7 @@ class Data(pl.graph.DataNode):
         for subject in self.subjects:
             logger.debug("Subject {}, available qpcr: {}".format(
                 subject.name,
-                ",".join(subject.qpcr.keys())
+                ",".join(str(i) for i in subject.qpcr.keys())
             ))
 
             d = subject.matrix()['raw']
