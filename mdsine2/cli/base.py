@@ -1,4 +1,3 @@
-import sys
 import argparse
 from typing import Dict
 
@@ -24,12 +23,13 @@ def dispatch(cli_mapping: Dict[str, CLIModule]):
 
     args = parser.parse_args()
 
-    try:
-        cli_module = cli_mapping[args.subcommand]
-        cli_module.main(args)
-    except KeyError:
-        print("Supported commands: {cmds}".format(
-            prog=sys.argv[0],
+    if args.subcommand not in args:
+        print("Subcommand `{in_cmd}` not found. Supported commands: {cmds}".format(
+            in_cmd=args.subcommand,
             cmds=",".join(list(cli_mapping.keys()))
         ))
         exit(1)
+
+    cli_module = cli_mapping[args.subcommand]
+    cli_module.main(args)
+
