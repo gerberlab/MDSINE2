@@ -43,6 +43,11 @@ class NegBinCLI(CLIModule):
         parser.add_argument('--multiprocessing', '-mp', action='store_true', dest="mp",
                             help='If flag is set, run the inference with multiprocessing. Else run on a single process')
 
+        parser.add_argument('--log_every', type=int, required=False, default=100,
+                            help='<Optional> Tells the inference loop to print debug messages '
+                                 '(if logging level is set to DEBUG) every <LOG_EVERY> iterations.'
+                                 '(Default: 100)')
+
     def main(self, args: argparse.Namespace):
         study = md2.Study.load(args.input)
         os.makedirs(args.basepath, exist_ok=True)
@@ -64,6 +69,6 @@ class NegBinCLI(CLIModule):
 
         # 2) Perform inference
         mcmc = md2.negbin.build_graph(params=params, graph_name=study.name, subjset=study)
-        mcmc = md2.negbin.run_graph(mcmc, crash_if_error=True)
+        mcmc = md2.negbin.run_graph(mcmc, crash_if_error=True, log_every=args.log_every)
         mcmc.save()
         study.save(os.path.join(params.MODEL_PATH, md2.config.SUBJSET_FILENAME))

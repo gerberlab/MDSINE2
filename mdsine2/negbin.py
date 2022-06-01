@@ -1036,7 +1036,7 @@ def build_graph(params: config.NegBinConfig, graph_name: str, subjset: Study) ->
 
     return mcmc
 
-def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True) -> BaseMCMC:
+def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True, log_every: int=100) -> BaseMCMC:
     '''Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
 
     Parameters
@@ -1052,7 +1052,7 @@ def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True) -> BaseMCMC:
     mdsine2.BaseMCMC
     '''
     try:
-        mcmc.run(log_every=1)
+        mcmc.run(log_every=log_every)
     except Exception as e:
         logger.critical('CHAIN `{}` CRASHED'.format(mcmc.graph.name))
         logger.critical('Error: {}'.format(e))
