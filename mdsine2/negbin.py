@@ -81,6 +81,11 @@ class Data(pl.graph.DataNode):
             )
         ))
         for subject in self.subjects:
+            logger.debug("Subject {}, available qpcr: {}".format(
+                subject.name,
+                ",".join(subject.qpcr.keys())
+            ))
+
             d = subject.matrix()['raw']
             self.data.append(d)
             self.read_depths.append(np.sum(d, axis=0))
