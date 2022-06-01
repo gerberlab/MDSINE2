@@ -23,7 +23,7 @@ def dispatch(cli_mapping: Dict[str, CLIModule]):
 
     args = parser.parse_args()
 
-    if args.subcommand not in args:
+    if args.subcommand not in cli_mapping:
         print("Subcommand `{in_cmd}` not found. Supported commands: {cmds}".format(
             in_cmd=args.subcommand,
             cmds=",".join(list(cli_mapping.keys()))
