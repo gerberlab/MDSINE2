@@ -160,12 +160,8 @@ class InferenceCLI(CLIModule):
             # params.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICTOR_PROB]['N'] = 'fixed-clustering'
 
         # Set the sparsities
-        if args.interaction_prior is None:
-            raise ValueError('Must specify `--interaction-ind-prior`')
         params.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB]['hyperparam_option'] = \
             args.interaction_prior
-        if args.perturbation_prior is None:
-            raise ValueError('Must specify `--perturbation-ind-prior`')
         params.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['hyperparam_option'] = \
             args.perturbation_prior
 
