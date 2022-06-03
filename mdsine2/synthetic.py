@@ -280,8 +280,8 @@ class Synthetic(pl.Saveable):
                 phi = approx_read_depth * rel_abund
                 eps = a0/rel_abund + a1
 
-                # print(phi)
-                # print(eps)
+                logger.debug(f'negbin mean = {phi}')
+                logger.debug(f'negbin dispersion = {eps}')
 
                 reads = pl.random.negative_binomial.sample(mean=phi, dispersion=eps)
                 subj.reads[t] = reads
