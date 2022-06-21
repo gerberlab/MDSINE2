@@ -506,6 +506,19 @@ class BaseMCMC(BaseModel):
                             logger.debug('{}: {}'.format(self.graph.nodes[id].name,
                                 str(self.graph.nodes[id])))
 
+                    if benchmarking:
+                        # print benchmarking results.
+                        logger.info("Runtime summary:")
+                        for _name, _durations in update_runtimes.items():
+                            _durations = np.array(_durations)
+                            logger.info("{}: [min = {}, max = {}, median = {}, mean = {}]".format(
+                                _name,
+                                np.min(_durations),
+                                np.max(_durations),
+                                np.median(_durations),
+                                np.mean(_durations)
+                            ))
+
                 # Sample posterior in the order indicated and add the trace
                 for _id in self.inf_order:
                     try:
@@ -549,19 +562,6 @@ class BaseMCMC(BaseModel):
                     if isVariable(node):
                         node.remove_local_trace()
             self.save()
-
-            if benchmarking:
-                # print benchmarking results.
-                logger.info("Runtime summary:")
-                for _name, _durations in update_runtimes.items():
-                    _durations = np.array(_durations)
-                    logger.info("{}: [min = {}, max = {}, median = {}, mean = {}]".format(
-                        _name,
-                        np.min(_durations),
-                        np.max(_durations),
-                        np.median(_durations),
-                        np.mean(_durations)
-                    ))
 
             return self
         except:
