@@ -399,7 +399,10 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
 
     return mcmc
 
-def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True, log_every: int=100) -> BaseMCMC:
+def run_graph(mcmc: BaseMCMC,
+              crash_if_error: bool=True,
+              log_every: int=100,
+              benchmarking: bool = False) -> BaseMCMC:
     '''Run the MCMC chain `mcmc`. Initialize the MCMC chain with `build_graph`
 
     Parameters
@@ -415,7 +418,7 @@ def run_graph(mcmc: BaseMCMC, crash_if_error: bool=True, log_every: int=100) -> 
     mdsine2.BaseMCMC
     '''
     try:
-        mcmc.run(log_every=log_every)
+        mcmc.run(log_every=log_every, benchmarking=benchmarking)
     except Exception as e:
         logger.critical('CHAIN `{}` CRASHED'.format(mcmc.graph.name))
         logger.exception(e)

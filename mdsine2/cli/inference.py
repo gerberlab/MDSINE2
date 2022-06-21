@@ -104,9 +104,14 @@ class InferenceCLI(CLIModule):
         )
 
         parser.add_argument(
-            '--log_every', type=int, default=100,
+            '--log-every', type=int, default=100, dest='log_every',
             required=False,
             help='<Optional> Tells the inference loop to print debug messages every k iterations.'
+        )
+
+        parser.add_argument(
+            '--benchmark', action='store_true', dest='benchmark',
+            help='If flag is set, then logs (at INFO level) the update() runtime of each component at the end.'
         )
 
     def main(self, args: argparse.Namespace):
@@ -176,7 +181,7 @@ class InferenceCLI(CLIModule):
         params.make_metadata_file(fname=mdata_fname)
 
         start_time = time.time()
-        mcmc = md2.run_graph(mcmc, crash_if_error=True, log_every=args.log_every)
+        mcmc = md2.run_graph(mcmc, crash_if_error=True, log_every=args.log_every, benchmarking=args.benchmark)
 
         # Record how much time inference took
         t = time.time() - start_time
