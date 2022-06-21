@@ -509,10 +509,10 @@ class BaseMCMC(BaseModel):
                     if benchmarking:
                         # print benchmarking results.
                         logger.info("Runtime summary:")
-                        for _name, _durations in update_runtimes.items():
+                        for node_name, _durations in update_runtimes.items():
                             _durations = np.array(_durations)
                             logger.info("{}: [min = {}, max = {}, median = {}, mean = {}]".format(
-                                _name,
+                                node_name,
                                 np.min(_durations),
                                 np.max(_durations),
                                 np.median(_durations),
@@ -521,13 +521,14 @@ class BaseMCMC(BaseModel):
 
                 # Sample posterior in the order indicated and add the trace
                 for _id in self.inf_order:
+                    node = self.graph.nodes[_id]
                     try:
                         with time_counter() as t:
-                            self.graph.nodes[_id].update()
-                            self.graph.nodes[_id].add_trace()
+                            node.update()
+                            node.add_trace()
 
                         if benchmarking:
-                            update_runtimes[_id].append(float(t))
+                            update_runtimes[node.name].append(float(t))
                     except:
                         logger.error('Crashed in `{}`'.format(self.graph[_id].name))
                         # self.graph.tracer.finish_tracing()
