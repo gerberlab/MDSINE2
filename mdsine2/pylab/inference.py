@@ -1,6 +1,8 @@
 import os
 import copy
 import sys
+from collections import defaultdict
+from contextlib import contextmanager
 
 import h5py
 from mdsine2.logger import logger
@@ -12,7 +14,7 @@ import numpy as np
 
 # Typing
 from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
-    Callable, Type
+    Callable, Type, List
 
 from .graph import get_default_graph, isgraph, isnode, Graph, Node
 from .base import Saveable
@@ -61,6 +63,27 @@ def ismodel(x: Any) -> bool:
         True if `x` is a model object
     '''
     return x is not None and issubclass(x.__class__, BaseModel)
+
+
+class time_counter:
+    def __enter__(self):
+        self.t = time.clock()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.e = time.clock()
+
+    def __float__(self):
+        return float(self.e - self.t)
+
+    def __coerce__(self, other):
+        return (float(self), other)
+
+    def __str__(self):
+        return str(float(self))
+
+    def __repr__(self):
+        return str(float(self))
 
 
 class BaseModel(Saveable):
@@ -130,7 +153,11 @@ class BaseMCMC(BaseModel):
         Number of posterior samples = n_samples-burnin
     '''
 
-    def __init__(self, burnin: int, n_samples: int, * args, **kwargs):
+    def __init__(self,
+                 burnin: int,
+                 n_samples: int,
+                 *args,
+                 **kwargs):
         BaseModel.__init__(self, *args, **kwargs)
         if not util.isint(burnin):
             raise TypeError('`burnin` ({}) must be an int'.format(type(burnin)))
@@ -388,7 +415,7 @@ class BaseMCMC(BaseModel):
         self._intermediate_func = func
         self._intermediate_kwargs = kwargs
 
-    def run(self, log_every: int=1) -> "BaseMCMC":
+    def run(self, log_every: int=1, benchmarking: bool = False) -> "BaseMCMC":
         '''Run the inference.
 
         Parameters
@@ -402,6 +429,9 @@ class BaseMCMC(BaseModel):
         pylab.inference.BaseMCMC
             Output from the inference, self
         '''
+
+        update_runtimes: Dict[str, List[float]] = defaultdict(list)
+
         set_seed(self.graph.seed)
         if self.start_step is None:
             self.start_step = 0
@@ -479,8 +509,12 @@ class BaseMCMC(BaseModel):
                 # Sample posterior in the order indicated and add the trace
                 for _id in self.inf_order:
                     try:
-                        self.graph.nodes[_id].update()
-                        self.graph.nodes[_id].add_trace()
+                        with time_counter() as t:
+                            self.graph.nodes[_id].update()
+                            self.graph.nodes[_id].add_trace()
+
+                        if benchmarking:
+                            update_runtimes[_id].append(float(t))
                     except:
                         logger.error('Crashed in `{}`'.format(self.graph[_id].name))
                         # self.graph.tracer.finish_tracing()
@@ -515,6 +549,19 @@ class BaseMCMC(BaseModel):
                     if isVariable(node):
                         node.remove_local_trace()
             self.save()
+
+            if benchmarking:
+                # print benchmarking results.
+                logger.info("Runtime summary:")
+                for _name, _durations in update_runtimes.items():
+                    _durations = np.array(_durations)
+                    logger.info("{}: [min = {}, max = {}, median = {}, mean = {}]".format(
+                        _name,
+                        np.min(_durations),
+                        np.max(_durations),
+                        np.median(_durations),
+                        np.mean(_durations)
+                    ))
 
             return self
         except:
