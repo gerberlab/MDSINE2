@@ -1688,10 +1688,10 @@ class ClusterAssignments(pl.graph.Node):
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
-            logger.critical('beta_cov:\n{}'.format(beta_cov))
+            # logger.critical('beta_cov:\n{}'.format(beta_cov))
             logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
         priorvar_logdet = log_det(prior_var, self)
