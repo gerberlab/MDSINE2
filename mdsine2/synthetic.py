@@ -210,7 +210,7 @@ class Synthetic(pl.Saveable):
 
             d = pl.integrate(dynamics=self.model, initial_conditions=init_abund,
                 dt=dt, n_days=n_days, processvar=processvar,
-                subsample=True, times=self.times)
+                subsample=False, times=self.times)
 
             n_timepoints_to_integrate = np.ceil(n_days / dt)
             steps_per_day = int(n_timepoints_to_integrate / n_days)
