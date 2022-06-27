@@ -32,6 +32,11 @@ _LOG_INV_SQRT_2PI = np.log(1/np.sqrt(2*math.pi))
 
 # Helper functions
 #-----------------
+@numba.jit
+def get_inv_mult(A: np.ndarray, x: np.ndarray) -> np.ndarray:
+    return np.linalg.inv(A) @ x
+
+
 def _normal_logpdf(value: float, loc: float, scale: float) -> float:
     '''We use this function if `pylab.random.normal.logpdf` fails to compile,
     which can happen when running jobs on the cluster.
@@ -1684,7 +1689,8 @@ class ClusterAssignments(pl.graph.Node):
         # beta_cov = pinv(beta_prec, self)
         # beta_mean = beta_cov @ ( a @ y + prior_prec @ prior_mean )
 
-        beta_mean = scipy.linalg.solve(beta_prec, a @ y + prior_prec @ prior_mean)
+        # beta_mean = scipy.linalg.solve(beta_prec, a @ y + prior_prec @ prior_mean)
+        beta_mean = get_inv_mult(beta_prec, a @ y + prior_prec @ prior_mean)
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
         try:
