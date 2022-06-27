@@ -170,8 +170,7 @@ class Synthetic(pl.Saveable):
 
         :return: The raw simulated trajectory (for debugging purposes.)
         '''
-        #if seed is not None:
-        #    pl.random.seed(seed)
+        raw_trajs = {}
 
         for subj in self.subjs:
             if subj in self._data:
@@ -220,7 +219,8 @@ class Synthetic(pl.Saveable):
             X = d['X']
 
             self._data[subj] = X[:, idxs]
-            return X
+            raw_trajs[subj] = X
+        return raw_trajs
 
     def simulateMeasurementNoise(self, a0: float, a1: float, qpcr_noise_scale: float,
         approx_read_depth: int, name: str='unnamed-study') -> Study:
