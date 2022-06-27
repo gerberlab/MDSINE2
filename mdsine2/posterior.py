@@ -9,7 +9,7 @@ import pandas as pd
 
 import numpy as np
 import numba
-import scipyb
+import scipy
 import scipy.linalg
 import scipy.sparse
 import numpy.random as npr
