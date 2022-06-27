@@ -167,6 +167,8 @@ class Synthetic(pl.Saveable):
             If this is not given then there will be no processvariance during simulation
         seed : int
             This is the seed to initialize at. If this is not given then the seed is no reset.
+
+        :return: The raw simulated trajectory (for debugging purposes.)
         '''
         #if seed is not None:
         #    pl.random.seed(seed)
@@ -204,11 +206,21 @@ class Synthetic(pl.Saveable):
             self.model.perturbation_ends = pert_end
             self.model.perturbation_starts = pert_start
             self.model.perturbations = pert_eff
+            n_days = self.times[-1] + dt
 
             d = pl.integrate(dynamics=self.model, initial_conditions=init_abund,
-                dt=dt, n_days=self.times[-1]+dt, processvar=processvar,
+                dt=dt, n_days=n_days, processvar=processvar,
                 subsample=True, times=self.times)
-            self._data[subj] = d['X']
+
+            n_timepoints_to_integrate = np.ceil(n_days / dt)
+            steps_per_day = int(n_timepoints_to_integrate / n_days)
+            idxs = []
+            for t in self.times:
+                idxs.append(int(steps_per_day * t))
+            X = d['X']
+
+            self._data[subj] = X[:, idxs]
+            return X
 
     def simulateMeasurementNoise(self, a0: float, a1: float, qpcr_noise_scale: float,
         approx_read_depth: int, name: str='unnamed-study') -> Study:
