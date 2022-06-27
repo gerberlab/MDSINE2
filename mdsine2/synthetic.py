@@ -219,7 +219,7 @@ class Synthetic(pl.Saveable):
             X = d['X']
 
             self._data[subj] = X[:, idxs]
-            raw_trajs[subj] = X
+            raw_trajs[subj] = d
         return raw_trajs
 
     def simulateMeasurementNoise(self, a0: float, a1: float, qpcr_noise_scale: float,
