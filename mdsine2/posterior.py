@@ -32,7 +32,7 @@ _LOG_INV_SQRT_2PI = np.log(1/np.sqrt(2*math.pi))
 
 # Helper functions
 #-----------------
-@numba.jit
+@numba.njit
 def get_inv_mult(A: np.ndarray, x: np.ndarray) -> np.ndarray:
     return np.linalg.inv(A) @ x
 
