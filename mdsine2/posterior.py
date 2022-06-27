@@ -9,11 +9,12 @@ import pandas as pd
 
 import numpy as np
 import numba
+import scipyb
+import scipy.linalg
 import scipy.sparse
 import numpy.random as npr
 import scipy.stats
 import scipy.sparse
-import scipy
 import math
 import random
 
@@ -1678,8 +1679,12 @@ class ClusterAssignments(pl.graph.Node):
         a = X.T * process_prec
 
         beta_prec = a @ X + prior_prec
-        beta_cov = pinv(beta_prec, self)
-        beta_mean = beta_cov @ ( a @ y + prior_prec @ prior_mean )
+
+
+        # beta_cov = pinv(beta_prec, self)
+        # beta_mean = beta_cov @ ( a @ y + prior_prec @ prior_mean )
+
+        beta_mean = scipy.linalg.solve(beta_prec, a @ y + prior_prec @ prior_mean)
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
         try:
