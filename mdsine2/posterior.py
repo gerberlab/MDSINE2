@@ -9,11 +9,12 @@ import pandas as pd
 
 import numpy as np
 import numba
+import scipy
+import scipy.linalg
 import scipy.sparse
 import numpy.random as npr
 import scipy.stats
 import scipy.sparse
-import scipy
 import math
 import random
 
@@ -31,6 +32,11 @@ _LOG_INV_SQRT_2PI = np.log(1/np.sqrt(2*math.pi))
 
 # Helper functions
 #-----------------
+@numba.njit
+def get_inv_mult(A: np.ndarray, x: np.ndarray) -> np.ndarray:
+    return np.linalg.inv(A) @ x
+
+
 def _normal_logpdf(value: float, loc: float, scale: float) -> float:
     '''We use this function if `pylab.random.normal.logpdf` fails to compile,
     which can happen when running jobs on the cluster.
@@ -1678,15 +1684,20 @@ class ClusterAssignments(pl.graph.Node):
         a = X.T * process_prec
 
         beta_prec = a @ X + prior_prec
-        beta_cov = pinv(beta_prec, self)
-        beta_mean = beta_cov @ ( a @ y + prior_prec @ prior_mean )
+
+
+        # beta_cov = pinv(beta_prec, self)
+        # beta_mean = beta_cov @ ( a @ y + prior_prec @ prior_mean )
+
+        # beta_mean = scipy.linalg.solve(beta_prec, a @ y + prior_prec @ prior_mean)
+        beta_mean = get_inv_mult(beta_prec, a @ y + prior_prec @ prior_mean)
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
-            logger.critical('beta_cov:\n{}'.format(beta_cov))
+            # logger.critical('beta_cov:\n{}'.format(beta_cov))
             logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
         priorvar_logdet = log_det(prior_var, self)

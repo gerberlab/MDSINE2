@@ -490,7 +490,7 @@ class BaseMCMC(BaseModel):
                     raise
 
                 # Log where necessary
-                if i % log_every == 0:
+                if i % log_every == 0 and i > 0:
                     logger.debug('Inference iteration {}/{}, time: {}'.format(
                         i,
                         self.n_samples,
