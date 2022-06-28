@@ -67,11 +67,11 @@ def ismodel(x: Any) -> bool:
 
 class time_counter:
     def __enter__(self):
-        self.t = time.clock()
+        self.t = time.time()
         return self
 
     def __exit__(self, type, value, traceback):
-        self.e = time.clock()
+        self.e = time.time()
 
     def __float__(self):
         return float(self.e - self.t)
