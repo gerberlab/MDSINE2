@@ -33,6 +33,50 @@ _LOG_INV_SQRT_2PI = np.log(1/np.sqrt(2*math.pi))
 # Helper functions
 #-----------------
 @numba.njit
+def gaussian_marginals(Xs: List[np.ndarray],
+                       prior_vars: List[np.ndarray],
+                       prior_means: List[np.ndarray],
+                       y: np.ndarray,
+                       process_prec: np.ndarray):
+    ans = np.empty(len(Xs), np.float64)
+    for i in numba.prange(len(Xs)):
+        ll = single_gaussian_marginal(Xs[i], prior_vars[i], prior_means[i], y, process_prec)
+        ans[i] = ll
+    return ans
+
+
+@numba.njit
+def single_gaussian_marginal(X: np.ndarray,
+                             prior_var: np.ndarray,
+                             prior_mean: np.ndarray,
+                             y: np.ndarray,
+                             process_prec: np.ndarray):
+    """
+    :param X:
+    :param prior_var: a vector representing the diagonal entries.
+    :param prior_mean:
+    :param y:
+    :param process_var:
+    :return:
+    """
+    a = X.T * np.expand_dims(process_prec, 0)
+    beta_prec = a @ X + np.diag(np.reciprocal(prior_var))
+    sgn, beta_prec_logdet = np.linalg.slogdet(beta_prec)
+    if sgn != 1.0:
+        raise ValueError(f"Expected positive determinant, but got zero/negative value.")
+
+    priorvar_logdet = np.sum(np.log(prior_var))
+    ll2 = 0.5 * (-beta_prec_logdet - priorvar_logdet)
+
+    beta_mean = np.linalg.solve(beta_prec, (a @ y).ravel() + (prior_mean / prior_var))
+    beta_mean = beta_mean.ravel()
+    numer = np.sum(np.square(prior_mean) * np.reciprocal(prior_var))
+    denom = beta_mean.dot(beta_prec @ beta_mean)
+    ll3 = 0.5 * (numer - denom)
+    return ll2 + ll3
+
+
+@numba.njit
 def get_inv_mult(A: np.ndarray, x: np.ndarray) -> np.ndarray:
     return np.linalg.inv(A) @ x
 
@@ -962,13 +1006,6 @@ class ClusterAssignments(pl.graph.Node):
         self.m = m # int
         self.mp = mp # float
         self._strtime = -1
-
-        # if self.mp is not None:
-        #     self.update = self.update_mp
-        # else:
-        #     self.update = self.update_slow_fast
-        self.update = self.update_slow_fast #self.update_mp
-
         kwargs['name'] = STRNAMES.CLUSTERING
         pl.graph.Node.__init__(self, **kwargs)
 
@@ -1400,13 +1437,7 @@ class ClusterAssignments(pl.graph.Node):
             self.pool.kill()
         return
 
-    # Update super safe - meant to be used during debugging
-    # =====================================================
-    def update_slow(self):
-        ''' This is updating the new cluster. Depending on the iteration you do
-        either split-merge Metropolis-Hasting update or a regular Gibbs update. To
-        get highest mixing we alternate between each.
-        '''
+    def update(self):
         if self.clustering.n_clusters.sample_iter < self.delay:
             return
 
@@ -1414,11 +1445,113 @@ class ClusterAssignments(pl.graph.Node):
            return
 
         start_time = time.time()
-        oidxs = npr.permutation(np.arange(len(self.G.data.taxa)))
+        # self.update_slow_fast()
+        self.update_parallel()
+        self._strtime = time.time() - start_time
 
+    def update_parallel(self):
+        """
+        Parallelized version, an attempt to speed up this step.
+        :return:
+        """
+        self.process_prec = self.G[STRNAMES.PROCESSVAR].prec.ravel()
+        lhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
+        self.y = self.G.data.construct_lhs(
+            lhs,
+            kwargs_dict={STRNAMES.GROWTH_VALUE: {'with_perturbations': False}}
+        )
+
+        oidxs = npr.permutation(len(self.G.data.taxa))
+        for oidx in oidxs:
+            self.gibbs_update_single_taxon_parallel(oidx=oidx)
+
+    def gibbs_update_single_taxon_parallel(self, oidx: int):
+        concentration = self.concentration.value
+
+        # Idea: Pre-compute all necessary matrices.
+
+        """
+        Initial step: Eliminate existing cluster (to be recreated later with fresh values)
+        Implemented by moving it to a different existing cluster.
+        """
+        current_cid = self.clustering.idx2cid[oidx]
+        if self.clustering.clusters[current_cid].size == 1:
+            for cid in self.clustering.order:
+                if cid == current_cid:
+                    continue
+                else:
+                    self.clustering.move_item(idx=oidx, cid=cid)
+                    break
+
+        """
+        Move OTU into each cluster one-by-one. Last step is always a "new" cluster.
+        """
+        Xs = []
+        prior_vars = []
+        prior_means = []
+
+        dirichlet_weights = []
+        cluster_keys = []
+        def collect_matrices():
+            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+            self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+            if self._there_are_perturbations:
+                self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
+            X, prior_var, prior_mean = self.calculate_matrices()
+            Xs.append(np.ascontiguousarray(X))
+            prior_vars.append(prior_var)
+            prior_means.append(prior_mean.astype(np.float64))
+
+        # Existing clusters
+        for cid in self.clustering.order:
+            self.clustering.move_item(idx=oidx, cid=cid)
+            collect_matrices()
+            dirichlet_weights.append(self.clustering.clusters[cid].size - 1)
+            cluster_keys.append(cid)
+
+        # new cluster
+        new_cid = self.clustering.make_new_cluster_with(idx=oidx)
+        collect_matrices()
+        dirichlet_weights.append(concentration / self.m)
+        cluster_keys.append(new_cid)
+
+        marginals = gaussian_marginals(Xs, prior_vars, prior_means, self.y, self.process_prec)
+        log_p = marginals + np.log(dirichlet_weights)
+
+        # Sample the assignment
+        # =====================
+        idx = sample_categorical_log(log_p)
+        assigned_cid = cluster_keys[idx]
+        if assigned_cid != new_cid:
+            self.clustering.move_item(idx=oidx, cid=assigned_cid)
+            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+            # Change the mixing matrix for the interactions and (potentially) perturbations
+            self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+            if self._there_are_perturbations:
+                self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
+
+    def calculate_matrices(self):
+        if self._there_are_perturbations:
+            rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
+        else:
+            rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
+
+        X = self.G.data.construct_rhs(keys=rhs, toarray=False).toarray()
+        prior_var = build_prior_covariance(G=self.G, cov=True, order=rhs, diag=True)
+        prior_mean = build_prior_mean(G=self.G, order=rhs)
+        return X, prior_var, prior_mean
+
+
+    # Update super safe - meant to be used during debugging
+    # =====================================================
+    def update_slow(self):
+        ''' This is updating the new cluster. Depending on the iteration you do
+        either split-merge Metropolis-Hasting update or a regular Gibbs update. To
+        get highest mixing we alternate between each.
+        '''
+        oidxs = npr.permutation(np.arange(len(self.G.data.taxa)))
         for oidx in oidxs:
             self.gibbs_update_single_taxon_slow(oidx=oidx)
-        self._strtime = time.time() - start_time
 
     def gibbs_update_single_taxon_slow(self, oidx: int):
         '''The update function is based off of Algorithm 8 in 'Markov Chain
@@ -1564,17 +1697,9 @@ class ClusterAssignments(pl.graph.Node):
     # ==================================================
     # @profile
     def update_slow_fast(self):
-        '''Much faster than `update_slow`
         '''
-
-        if self.clustering.n_clusters.sample_iter < self.delay:
-            return
-
-        if self.clustering.n_clusters.sample_iter % self.run_every_n_iterations != 0:
-           return
-
-        start_time = time.time()
-
+        Much faster than `update_slow`
+        '''
         self.process_prec = self.G[STRNAMES.PROCESSVAR].prec.ravel() #.build_matrix(cov=False, sparse=False)
         self.process_prec_matrix = self.G[STRNAMES.PROCESSVAR].build_matrix(sparse=True, cov=False)
         lhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
@@ -1582,11 +1707,8 @@ class ClusterAssignments(pl.graph.Node):
             kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations': False}})
 
         oidxs = npr.permutation(len(self.G.data.taxa))
-        iii = 0
         for oidx in oidxs:
             self.gibbs_update_single_taxon_slow_fast(oidx=oidx)
-            iii += 1
-        self._strtime = time.time() - start_time
 
     # @profile
     def gibbs_update_single_taxon_slow_fast(self, oidx: int):
@@ -1604,7 +1726,6 @@ class ClusterAssignments(pl.graph.Node):
             Taxa index that we are updating the cluster assignment of
         '''
         concentration = self.concentration.value
-        debug_cluster_ordering = []
 
         # start as a dictionary then send values to `sample_categorical_log`
         LOG_P = []
@@ -1632,7 +1753,6 @@ class ClusterAssignments(pl.graph.Node):
             LOG_P.append(np.log(self.clustering.clusters[cid].size - 1) + \
                          self.calculate_marginal_loglikelihood_slow_fast_sparse())
             LOG_KEYS.append(cid)
-            debug_cluster_ordering.append(self.clustering.clusters[cid])
 
         # new cluster
         cid = self.clustering.make_new_cluster_with(idx=oidx)
@@ -1643,7 +1763,6 @@ class ClusterAssignments(pl.graph.Node):
         LOG_KEYS.append(cid)
         LOG_P.append(np.log(concentration / self.m) + \
                      self.calculate_marginal_loglikelihood_slow_fast_sparse())
-        debug_cluster_ordering.append(self.clustering.clusters[cid])
 
         # Sample the assignment
         # =====================
@@ -1688,7 +1807,6 @@ class ClusterAssignments(pl.graph.Node):
 
         # beta_cov = pinv(beta_prec, self)
         # beta_mean = beta_cov @ ( a @ y + prior_prec @ prior_mean )
-
         # beta_mean = scipy.linalg.solve(beta_prec, a @ y + prior_prec @ prior_mean)
         beta_mean = get_inv_mult(beta_prec, a @ y + prior_prec @ prior_mean)
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
@@ -1777,215 +1895,6 @@ class ClusterAssignments(pl.graph.Node):
         ll3 = -0.5 * (a  - b)
 
         return ll2+ll3
-
-    # Update MP - meant to be used during inference
-    # =============================================
-    def update_mp(self):
-        '''Implements `update_slow` but parallelizes calculating the likelihood
-        of being in a cluster. NOTE that this does not parallelize on the Taxa level.
-
-        On the first gibb step with initialize the workers that we implement with DASW (
-        different arguments, single worker). For more information what this means look
-        at pylab.multiprocessing documentation.
-
-        If we initialized our pool as a pylab.multiprocessing.PersistentPool, then we
-        multiprocess the likelihood calculations for each taxa. If we didnt then this
-        implementation has the same performance as `ClusterAssignments.update_slow_fast`.
-        '''
-        if self.G.data.zero_inflation_transition_policy is not None:
-            raise NotImplementedError('Multiprocessing for zero inflation data is not implemented yet.' \
-                ' Use `mp=None`')
-        DMI = self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE]
-        DMP = self.G.data.design_matrices[STRNAMES.PERT_VALUE]
-        if self.clustering.n_clusters.sample_iter == 0 or self.pool == []:
-            kwargs = {
-                'n_taxa': len(self.G.data.taxa),
-                'total_n_dts_per_taxon': self.G.data.total_n_dts_per_taxon,
-                'n_replicates': self.G.data.n_replicates,
-                'n_dts_for_replicate': self.G.data.n_dts_for_replicate,
-                'there_are_perturbations': self._there_are_perturbations,
-                'keypair2col_interactions': DMI.M.keypair2col,
-                'keypair2col_perturbations': DMP.M.keypair2col,
-                'n_perturbations': len(self.G.perturbations) if self._there_are_perturbations else None,
-                'base_Xrows': DMI.base.rows,
-                'base_Xcols': DMI.base.cols,
-                'base_Xshape': DMI.base.shape,
-                'base_Xpertrows': DMP.base.rows,
-                'base_Xpertcols': DMP.base.cols,
-                'base_Xpertshape': DMP.base.shape,
-                'n_rowsM': DMI.M.n_rows,
-                'n_rowsMpert': DMP.M.n_rows}
-
-            if pl.ispersistentpool(self.pool):
-                for _ in range(self.n_cpus):
-                    self.pool.add_worker(SingleClusterFullParallelization(**kwargs))
-            else:
-                self.pool = SingleClusterFullParallelization(**kwargs)
-        if self.clustering.n_clusters.sample_iter < self.delay:
-            return
-        if self.clustering.n_clusters.sample_iter % self.run_every_n_iterations != 0:
-            return
-        # Send in arguments for the start of the gibbs step
-        start_time = time.time()
-        base_Xdata = DMI.base.data
-        self.concentration = self.G[STRNAMES.CONCENTRATION].value
-        y = self.G.data.construct_lhs(keys=[STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE],
-            kwargs_dict={STRNAMES.GROWTH_VALUE: {'with_perturbations':False}})
-        prior_var_interactions = self.G[STRNAMES.PRIOR_VAR_INTERACTIONS].value
-        prior_mean_interactions = self.G[STRNAMES.PRIOR_MEAN_INTERACTIONS].value
-        process_prec_diag = self.G[STRNAMES.PROCESSVAR].prec
-
-        if self._there_are_perturbations:
-            prior_var_pert = self.G[STRNAMES.PRIOR_VAR_PERT].get_single_value_of_perts()
-            prior_mean_pert = self.G[STRNAMES.PRIOR_MEAN_PERT].get_single_value_of_perts()
-            base_Xpertdata = DMP.base.data
-        else:
-            prior_var_pert = None
-            prior_mean_pert = None
-            base_Xpertdata = None
-
-        kwargs = {
-            'base_Xdata': base_Xdata,
-            'base_Xpertdata': base_Xpertdata,
-            'concentration': self.concentration,
-            'm': self.m,
-            'y': y,
-            'process_prec_diag': process_prec_diag,
-            'prior_var_interactions': prior_var_interactions,
-            'prior_var_pert': prior_var_pert,
-            'prior_mean_interactions': prior_mean_interactions,
-            'prior_mean_pert': prior_mean_pert}
-
-        if pl.ispersistentpool(self.pool):
-            self.pool.map('initialize_gibbs', [kwargs]*self.pool.num_workers)
-        else:
-            self.pool.initialize_gibbs(**kwargs)
-
-        oidxs = npr.permutation(np.arange(len(self.G.data.taxa)))
-        for iii, oidx in enumerate(oidxs):
-            logger.info('{}/{} - {}'.format(iii, len(self.G.data.taxa), oidx))
-            self.oidx = oidx
-            self.gibbs_update_single_taxon_parallel()
-
-        self._strtime = time.time() - start_time
-
-    def gibbs_update_single_taxon_parallel(self):
-        '''Update for a single taxon
-        '''
-        self.original_cluster = self.clustering.idx2cid[self.oidx]
-        self.curr_cluster = self.original_cluster
-
-        interactions = self.G[STRNAMES.INTERACTIONS_OBJ]
-        interaction_on_idxs = interactions.get_indicators(return_idxs=True)
-        if self._there_are_perturbations:
-            perturbation_on_idxs = [p.indicator.cluster_arg_array() for p in self.G.perturbations]
-        else:
-            perturbation_on_idxs = None
-        use_saved_params = False
-
-        if pl.ispersistentpool(self.pool):
-            self.pool.staged_map_start('run')
-        else:
-            notpool_ret = []
-
-        # Get the likelihood of the current configuration
-        if self.clustering.clusters[self.original_cluster].size == 1:
-            log_mult_factor = math.log(self.concentration/self.m)
-        else:
-            log_mult_factor = math.log(self.clustering.clusters[self.original_cluster].size - 1)
-
-        if use_saved_params and pl.ispersistentpool(self.pool):
-            interaction_on_idxs = None
-            perturbation_on_idxs = None
-
-        cluster_config = self.clustering.toarray()
-
-        kwargs = {
-            'interaction_on_idxs': interaction_on_idxs,
-            'perturbation_on_idxs': perturbation_on_idxs,
-            'cluster_config': cluster_config,
-            'log_mult_factor': log_mult_factor,
-            'cid': self.original_cluster,
-            'use_saved_params': use_saved_params}
-
-        if pl.ispersistentpool(self.pool):
-            self.pool.staged_map_put(kwargs)
-        else:
-            notpool_ret.append(self.pool.run(**kwargs))
-
-        # Check every cluster
-        for cid in self.clustering.order:
-            if cid == self.original_cluster:
-                continue
-            self.clustering.move_item(idx=self.oidx, cid=cid)
-            self.curr_cluster = cid
-
-            if not use_saved_params:
-                interaction_on_idxs = interactions.get_indicators(return_idxs=True)
-                if self._there_are_perturbations:
-                    perturbation_on_idxs = [p.indicator.cluster_arg_array() for p in self.G.perturbations]
-                else:
-                    perturbation_on_idxs = None
-
-            cluster_config = self.clustering.toarray()
-            log_mult_factor = np.log(self.clustering.clusters[self.curr_cluster].size - 1)
-
-            kwargs = {
-                'interaction_on_idxs': interaction_on_idxs,
-                'perturbation_on_idxs': perturbation_on_idxs,
-                'cluster_config': cluster_config,
-                'log_mult_factor': log_mult_factor,
-                'cid': self.curr_cluster,
-                'use_saved_params': use_saved_params}
-
-            if pl.ispersistentpool(self.pool):
-                self.pool.staged_map_put(kwargs)
-            else:
-                notpool_ret.append(self.pool.run(**kwargs))
-
-        # Make a new cluster
-        self.curr_cluster = self.clustering.make_new_cluster_with(idx=self.oidx)
-        cluster_config = self.clustering.toarray()
-        interaction_on_idxs = interactions.get_indicators(return_idxs=True)
-        if self._there_are_perturbations:
-            perturbation_on_idxs = [p.indicator.cluster_arg_array() for p in self.G.perturbations]
-        else:
-            perturbation_on_idxs = None
-        log_mult_factor = np.log(self.concentration/self.m)
-
-        kwargs = {
-            'interaction_on_idxs': interaction_on_idxs,
-            'perturbation_on_idxs': perturbation_on_idxs,
-            'cluster_config': cluster_config,
-            'log_mult_factor': log_mult_factor,
-            'cid': self.curr_cluster,
-            'use_saved_params': False}
-
-        # Put the values and get if necessary
-        KEYS = []
-        LOG_P = []
-        if pl.ispersistentpool(self.pool):
-            self.pool.staged_map_put(kwargs)
-            ret = self.pool.staged_map_get()
-        else:
-            notpool_ret.append(self.pool.run(**kwargs))
-            ret = notpool_ret
-        for c, p in ret:
-            KEYS.append(c)
-            LOG_P.append(p)
-
-        idx = sample_categorical_log(LOG_P)
-        assigned_cid = KEYS[idx]
-
-        if assigned_cid != self.original_cluster:
-            logger.info('cluster changed')
-
-        self.clustering.move_item(idx=self.oidx, cid=assigned_cid)
-
-        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-        self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
-        if self._there_are_perturbations:
-            self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
 
 
 class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
