@@ -1754,7 +1754,7 @@ class ClusterAssignments(pl.graph.Node):
         beta_prec = a.dot(X) + prior_prec
         # beta_cov = pinv(beta_prec, self)
         # beta_mean = beta_cov @ ( a @ y + prior_prec @ prior_mean )
-        beta_mean = scipy.linalg.solve(beta_prec, a @ y + prior_prec @ prior_mean)
+        beta_mean = scipy.linalg.solve(beta_prec.todense(), a @ y + prior_prec @ prior_mean)
         # beta_mean = get_inv_mult(beta_prec, a @ y + prior_prec @ prior_mean)
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
