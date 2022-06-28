@@ -1752,15 +1752,16 @@ class ClusterAssignments(pl.graph.Node):
 
         a = X.T.dot(process_prec)
         beta_prec = a.dot(X) + prior_prec
-        beta_cov = pinv(beta_prec, self)
-        beta_mean = beta_cov @ ( a.dot(y) + prior_prec.dot(prior_mean))
+        # beta_cov = pinv(beta_prec, self)
+        # beta_mean = beta_cov @ ( a @ y + prior_prec @ prior_mean )
+        # beta_mean = scipy.linalg.solve(beta_prec, a @ y + prior_prec @ prior_mean)
+        beta_mean = get_inv_mult(beta_prec, a @ y + prior_prec @ prior_mean)
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
-            logger.critical('beta_cov:\n{}'.format(beta_cov))
             logger.critical('prior_prec\n{}'.format(prior_prec))
             raise
         priorvar_logdet = log_det(prior_var, self)
