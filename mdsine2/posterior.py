@@ -1872,7 +1872,7 @@ class ClusterAssignments(pl.graph.Node):
         # beta_mean = get_inv_mult(beta_prec, a @ y + prior_prec @ prior_mean)
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
-        sgn, beta_prec_logdet = np.linalg.slogdet(beta_prec)
+        sgn, beta_prec_logdet = np.linalg.slogdet(beta_prec.toarray())
         if sgn <= 0.0:
             raise ValueError(f"Expected positive determinant, but got zero/negative value.")
         priorvar_logdet = log_det(prior_var, self)
