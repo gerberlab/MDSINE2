@@ -1445,8 +1445,8 @@ class ClusterAssignments(pl.graph.Node):
            return
 
         start_time = time.time()
-        # self.update_slow_fast()
-        self.update_parallel()
+        self.update_slow_fast()
+        # self.update_parallel()
         self._strtime = time.time() - start_time
 
     def update_parallel(self):
@@ -1807,24 +1807,20 @@ class ClusterAssignments(pl.graph.Node):
 
         # beta_cov = pinv(beta_prec, self)
         # beta_mean = beta_cov @ ( a @ y + prior_prec @ prior_mean )
-        # beta_mean = scipy.linalg.solve(beta_prec, a @ y + prior_prec @ prior_mean)
-        beta_mean = get_inv_mult(beta_prec, a @ y + prior_prec @ prior_mean)
+        beta_mean = scipy.linalg.solve(beta_prec, a @ y + prior_prec @ prior_mean)
+        # beta_mean = get_inv_mult(beta_prec, a @ y + prior_prec @ prior_mean)
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
-        try:
-            beta_logdet = -log_det(beta_prec, self)
-        except:
-            logger.critical('Crashed in log_det')
-            # logger.critical('beta_cov:\n{}'.format(beta_cov))
-            logger.critical('prior_prec\n{}'.format(prior_prec))
-            raise
+        sgn, beta_prec_logdet = np.linalg.slogdet(beta_prec)
+        if sgn <= 0.0:
+            raise ValueError(f"Expected positive determinant, but got zero/negative value.")
         priorvar_logdet = log_det(prior_var, self)
-        ll2 = 0.5 * (beta_logdet - priorvar_logdet)
+        ll2 = 0.5 * (-beta_prec_logdet - priorvar_logdet)
 
-        a = np.sum((prior_mean.ravel() ** 2) *prior_prec_diag)
+        a = np.sum((prior_mean.ravel() ** 2) * prior_prec_diag)
         # np.asarray(prior_mean.T @ prior_prec @ prior_mean)[0,0]
         b = np.asarray(beta_mean.T @ beta_prec @ beta_mean)[0,0]
-        ll3 = -0.5 * (a  - b)
+        ll3 = -0.5 * (a - b)
 
         return ll2+ll3
 
@@ -1876,14 +1872,11 @@ class ClusterAssignments(pl.graph.Node):
         # beta_mean = get_inv_mult(beta_prec, a @ y + prior_prec @ prior_mean)
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
-        try:
-            beta_logdet = -log_det(beta_prec, self)
-        except:
-            logger.critical('Crashed in log_det')
-            logger.critical('prior_prec\n{}'.format(prior_prec))
-            raise
+        sgn, beta_prec_logdet = np.linalg.slogdet(beta_prec)
+        if sgn <= 0.0:
+            raise ValueError(f"Expected positive determinant, but got zero/negative value.")
         priorvar_logdet = log_det(prior_var, self)
-        ll2 = 0.5 * (beta_logdet - priorvar_logdet)
+        ll2 = 0.5 * (-beta_prec_logdet - priorvar_logdet)
 
         a = np.sum((prior_mean.ravel() ** 2) *prior_prec_diag)
         # np.asarray(prior_mean.T @ prior_prec @ prior_mean)[0,0]
