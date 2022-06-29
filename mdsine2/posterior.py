@@ -46,7 +46,7 @@ def gaussian_marginals(Xs: List[np.ndarray],
 
 
 @numba.njit
-def single_gaussian_marginal(X: np.ndarray,
+def gaussian_marginal_single(X: np.ndarray,
                              prior_var: np.ndarray,
                              prior_mean: np.ndarray,
                              y: np.ndarray,
@@ -73,6 +73,42 @@ def single_gaussian_marginal(X: np.ndarray,
     numer = np.sum(np.square(prior_mean) * np.reciprocal(prior_var))
     denom = beta_mean.dot(beta_prec @ beta_mean)
     ll3 = 0.5 * (numer - denom)
+    return ll2 + ll3
+
+
+def gaussian_marginal_vectorized(X: np.ndarray,
+                                 prior_var: np.ndarray,
+                                 prior_mean: np.ndarray,
+                                 y: np.ndarray,
+                                 process_prec: np.ndarray):
+    """
+    Same math as gaussian_marginal_single, but assumes the first 3 arguments is a 3-d array (batched computation).
+    Let N be # of variables (# cluster-level perts + # cluster interactions)
+    Let M be (# of timepts) * (# taxa), potentially sparsified.
+    Let B be # of batches.
+    :param X: (B x M x N) stacked matrices
+    :param prior_var: length N vector.
+    :param prior_mean: length N
+    :param y: length N
+    :param process_prec: length M vector.
+    :return:
+    """
+    y = y.ravel()
+    a = X.transpose((0, 2, 1)) * process_prec[None, None, :]  # B x N x M
+    beta_precs = a @ X + np.diag(np.reciprocal(prior_var))[None, :, :]  # B x N x N
+    sgns, beta_prec_logdets = np.linalg.slogdet(beta_precs)  # both length B
+
+    ct_nonpos = np.sum(sgns <= 0.0)
+    if ct_nonpos > 0:
+        raise ValueError(f"Expected positive determinant, but got {ct_nonpos} negative dets.")
+
+    priorvar_logdet = np.sum(np.log(prior_var))  # scalar
+    ll2 = 0.5 * (-beta_prec_logdets - priorvar_logdet)  # length B
+
+    beta_means = np.linalg.solve(beta_precs, (a @ y) + (prior_mean / prior_var)[None, :])  # B x N
+    numer = np.sum(np.square(prior_mean) * np.reciprocal(prior_var))  # scalar
+    denom = beta_means[:, None, :] @ beta_precs @ beta_means[:, :, None]
+    ll3 = 0.5 * (numer - denom.squeeze(1).squeeze(1))  # length B
     return ll2 + ll3
 
 
@@ -1445,11 +1481,11 @@ class ClusterAssignments(pl.graph.Node):
            return
 
         start_time = time.time()
-        self.update_slow_fast()
-        # self.update_parallel()
+        # self.update_slow_fast()
+        self.update_vectorized()
         self._strtime = time.time() - start_time
 
-    def update_parallel(self):
+    def update_vectorized(self):
         """
         Parallelized version, an attempt to speed up this step.
         :return:
@@ -1463,9 +1499,9 @@ class ClusterAssignments(pl.graph.Node):
 
         oidxs = npr.permutation(len(self.G.data.taxa))
         for oidx in oidxs:
-            self.gibbs_update_single_taxon_parallel(oidx=oidx)
+            self.gibbs_update_single_taxon_vectorized(oidx=oidx)
 
-    def gibbs_update_single_taxon_parallel(self, oidx: int):
+    def gibbs_update_single_taxon_vectorized(self, oidx: int):
         concentration = self.concentration.value
 
         # Idea: Pre-compute all necessary matrices.
@@ -1486,10 +1522,6 @@ class ClusterAssignments(pl.graph.Node):
         """
         Move OTU into each cluster one-by-one. Last step is always a "new" cluster.
         """
-        Xs = []
-        prior_vars = []
-        prior_means = []
-
         dirichlet_weights = []
         cluster_keys = []
         def collect_matrices():
@@ -1498,24 +1530,31 @@ class ClusterAssignments(pl.graph.Node):
             if self._there_are_perturbations:
                 self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
             X, prior_var, prior_mean = self.calculate_matrices()
-            Xs.append(np.ascontiguousarray(X))
-            prior_vars.append(prior_var)
-            prior_means.append(prior_mean.astype(np.float64))
+            return X, prior_var, prior_mean
 
         # Existing clusters
+        Xs = []
+        prior_var = []
+        prior_mean = []
         for cid in self.clustering.order:
             self.clustering.move_item(idx=oidx, cid=cid)
-            collect_matrices()
             dirichlet_weights.append(self.clustering.clusters[cid].size - 1)
             cluster_keys.append(cid)
+            X, prior_var, prior_mean = collect_matrices()
+            Xs.append(X)
+
+        # These can be vectorized, since they're all the same size.
+        Xs = np.stack(Xs, axis=0)
+        marginals = gaussian_marginal_vectorized(Xs, prior_var, prior_mean, self.y, self.process_prec)
 
         # new cluster
         new_cid = self.clustering.make_new_cluster_with(idx=oidx)
-        collect_matrices()
         dirichlet_weights.append(concentration / self.m)
         cluster_keys.append(new_cid)
+        X, prior_var, prior_mean = collect_matrices()
+        new_clust_marginal = gaussian_marginal_single(X, prior_var, prior_mean, self.y, self.process_prec)
 
-        marginals = gaussian_marginals(Xs, prior_vars, prior_means, self.y, self.process_prec)
+        marginals = np.concatenate([marginals, [new_clust_marginal]])
         log_p = marginals + np.log(dirichlet_weights)
 
         # Sample the assignment
@@ -1725,6 +1764,7 @@ class ClusterAssignments(pl.graph.Node):
         oidx : int
             Taxa index that we are updating the cluster assignment of
         '''
+        print(f"OIDX = {oidx}")
         concentration = self.concentration.value
 
         # start as a dictionary then send values to `sample_categorical_log`
@@ -1788,7 +1828,6 @@ class ClusterAssignments(pl.graph.Node):
         else:
             rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
 
-
         y = self.y
         X = self.G.data.construct_rhs(keys=rhs, toarray=True)
 
@@ -1834,7 +1873,6 @@ class ClusterAssignments(pl.graph.Node):
             rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
         else:
             rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
-
 
         y = self.y
         X = self.G.data.construct_rhs(keys=rhs, toarray=False)
@@ -2150,7 +2188,6 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         prior_mean = self.prior_mean
         prior_cov = self.prior_cov
         prior_prec = self.prior_prec
-        prior_prec_diag = self.prior_prec_diag
 
         a = X.T.dot(process_prec)
         beta_prec = a.dot(X) + prior_prec
