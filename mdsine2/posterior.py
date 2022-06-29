@@ -40,7 +40,7 @@ def gaussian_marginals(Xs: List[np.ndarray],
                        process_prec: np.ndarray):
     ans = np.empty(len(Xs), np.float64)
     for i in numba.prange(len(Xs)):
-        ll = single_gaussian_marginal(Xs[i], prior_vars[i], prior_means[i], y, process_prec)
+        ll = gaussian_marginal_single(Xs[i], prior_vars[i], prior_means[i], y, process_prec)
         ans[i] = ll
     return ans
 
@@ -68,10 +68,11 @@ def gaussian_marginal_single(X: np.ndarray,
     priorvar_logdet = np.sum(np.log(prior_var))
     ll2 = 0.5 * (-beta_prec_logdet - priorvar_logdet)
 
-    beta_mean = np.linalg.solve(beta_prec, (a @ y).ravel() + (prior_mean / prior_var))
+    v = (a @ y).ravel() + (prior_mean / prior_var)
+    beta_mean = np.linalg.solve(beta_prec, v)
     beta_mean = beta_mean.ravel()
     numer = np.sum(np.square(prior_mean) * np.reciprocal(prior_var))
-    denom = beta_mean.dot(beta_prec @ beta_mean)
+    denom = beta_mean.dot(v)
     ll3 = 0.5 * (numer - denom)
     return ll2 + ll3
 
@@ -82,7 +83,7 @@ def gaussian_marginal_vectorized(X: np.ndarray,
                                  y: np.ndarray,
                                  process_prec: np.ndarray):
     """
-    Same math as gaussian_marginal_single, but assumes the first 3 arguments is a 3-d array (batched computation).
+    Same math as gaussian_marginal_single, but assumes X is a 3-d array (batched computation).
     Let N be # of variables (# cluster-level perts + # cluster interactions)
     Let M be (# of timepts) * (# taxa), potentially sparsified.
     Let B be # of batches.
@@ -95,8 +96,8 @@ def gaussian_marginal_vectorized(X: np.ndarray,
     """
     y = y.ravel()
     a = X.transpose((0, 2, 1)) * process_prec[None, None, :]  # B x N x M
-    beta_precs = a @ X + np.diag(np.reciprocal(prior_var))[None, :, :]  # B x N x N
-    sgns, beta_prec_logdets = np.linalg.slogdet(beta_precs)  # both length B
+    beta_precs = a @ X + np.diag(np.reciprocal(prior_var))[None, :, :]  # B x N x N  -> (expensive!)
+    sgns, beta_prec_logdets = np.linalg.slogdet(beta_precs)  # both length B  -> (expensive!)
 
     ct_nonpos = np.sum(sgns <= 0.0)
     if ct_nonpos > 0:
@@ -105,9 +106,12 @@ def gaussian_marginal_vectorized(X: np.ndarray,
     priorvar_logdet = np.sum(np.log(prior_var))  # scalar
     ll2 = 0.5 * (-beta_prec_logdets - priorvar_logdet)  # length B
 
-    beta_means = np.linalg.solve(beta_precs, (a @ y) + (prior_mean / prior_var)[None, :])  # B x N
+    v = (a @ y) + (prior_mean / prior_var)[None, :]  # B x N
+    denom = v[:, None, :] @ np.linalg.solve(beta_precs, v[:, :, None])
+
+    # beta_means = (np.linalg.inv(beta_precs) @ v[:, :, None]).squeeze(-1)
+    # denom = v[:, None, :] @ np.linalg.inv(beta_precs) @ v[:, :, None]
     numer = np.sum(np.square(prior_mean) * np.reciprocal(prior_var))  # scalar
-    denom = beta_means[:, None, :] @ beta_precs @ beta_means[:, :, None]
     ll3 = 0.5 * (numer - denom.squeeze(1).squeeze(1))  # length B
     return ll2 + ll3
 
