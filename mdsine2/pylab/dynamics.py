@@ -275,7 +275,7 @@ def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float,
 
     t = 0
     prev = X[:,[0]]
-    for i in range(1,n_timepoints_to_integrate):
+    for i in range(1, n_timepoints_to_integrate):
         if i % log_every == 0:
             logger.debug('Simulating {}/{}'.format(i, n_timepoints_to_integrate))
         t += dt 

@@ -1485,8 +1485,8 @@ class ClusterAssignments(pl.graph.Node):
            return
 
         start_time = time.time()
-        # self.update_slow_fast()
-        self.update_vectorized()
+        self.update_slow_fast()
+        # self.update_vectorized()
         self._strtime = time.time() - start_time
 
     def update_vectorized(self):
@@ -1526,25 +1526,31 @@ class ClusterAssignments(pl.graph.Node):
         """
         Move OTU into each cluster one-by-one. Last step is always a "new" cluster.
         """
+        if self._there_are_perturbations:
+            rhs = [STRNAMES.PERT_VALUE, STRNAMES.CLUSTER_INTERACTION_VALUE]
+        else:
+            rhs = [STRNAMES.CLUSTER_INTERACTION_VALUE]
+
         dirichlet_weights = []
         cluster_keys = []
-        def collect_matrices():
+        def update_state():
             self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
             self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
             if self._there_are_perturbations:
                 self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
-            X, prior_var, prior_mean = self.calculate_matrices()
-            return X, prior_var, prior_mean
 
         # Existing clusters
+        update_state()
+        prior_var = build_prior_covariance(G=self.G, cov=True, order=rhs, diag=True)
+        prior_mean = build_prior_mean(G=self.G, order=rhs)
+
         Xs = []
-        prior_var = []
-        prior_mean = []
         for cid in self.clustering.order:
             self.clustering.move_item(idx=oidx, cid=cid)
             dirichlet_weights.append(self.clustering.clusters[cid].size - 1)
             cluster_keys.append(cid)
-            X, prior_var, prior_mean = collect_matrices()
+            update_state()
+            X = self.G.data.construct_rhs(keys=rhs, toarray=False).toarray()
             Xs.append(X)
 
         # These can be vectorized, since they're all the same size.
@@ -1555,7 +1561,10 @@ class ClusterAssignments(pl.graph.Node):
         new_cid = self.clustering.make_new_cluster_with(idx=oidx)
         dirichlet_weights.append(concentration / self.m)
         cluster_keys.append(new_cid)
-        X, prior_var, prior_mean = collect_matrices()
+        update_state()
+        prior_var = build_prior_covariance(G=self.G, cov=True, order=rhs, diag=True)
+        prior_mean = build_prior_mean(G=self.G, order=rhs)
+        X = self.G.data.construct_rhs(keys=rhs, toarray=False).toarray()
         new_clust_marginal = gaussian_marginal_single(X, prior_var, prior_mean, self.y, self.process_prec)
 
         marginals = np.concatenate([marginals, [new_clust_marginal]])
@@ -1566,12 +1575,7 @@ class ClusterAssignments(pl.graph.Node):
         idx = sample_categorical_log(log_p)
         assigned_cid = cluster_keys[idx]
         if assigned_cid != new_cid:
-            self.clustering.move_item(idx=oidx, cid=assigned_cid)
-            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-            # Change the mixing matrix for the interactions and (potentially) perturbations
-            self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
-            if self._there_are_perturbations:
-                self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
+            update_state()
 
     def calculate_matrices(self):
         if self._there_are_perturbations:
@@ -1846,8 +1850,6 @@ class ClusterAssignments(pl.graph.Node):
         a = X.T * process_prec
 
         beta_prec = a @ X + prior_prec
-
-
         # beta_cov = pinv(beta_prec, self)
         # beta_mean = beta_cov @ ( a @ y + prior_prec @ prior_mean )
         beta_mean = scipy.linalg.solve(beta_prec, a @ y + prior_prec @ prior_mean)
@@ -1912,7 +1914,7 @@ class ClusterAssignments(pl.graph.Node):
         # beta_mean = beta_cov @ ( a @ y + prior_prec @ prior_mean )
         beta_mean = scipy.linalg.solve(beta_prec.toarray(), a @ y + prior_prec @ prior_mean)
         # beta_mean = get_inv_mult(beta_prec, a @ y + prior_prec @ prior_mean)
-        beta_mean = np.asarray(beta_mean).reshape(-1,1)
+        beta_mean = np.asarray(beta_mean).reshape(-1, 1)
 
         sgn, beta_prec_logdet = np.linalg.slogdet(beta_prec.toarray())
         if sgn <= 0.0:
@@ -1920,7 +1922,7 @@ class ClusterAssignments(pl.graph.Node):
         priorvar_logdet = log_det(prior_var, self)
         ll2 = 0.5 * (-beta_prec_logdet - priorvar_logdet)
 
-        a = np.sum((prior_mean.ravel() ** 2) *prior_prec_diag)
+        a = np.sum((prior_mean.ravel() ** 2) * prior_prec_diag)
         # np.asarray(prior_mean.T @ prior_prec @ prior_mean)[0,0]
 
         # print('beta_prec.shape', beta_prec.shape)
