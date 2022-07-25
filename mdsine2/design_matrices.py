@@ -631,11 +631,6 @@ class Data(DataNode):
                     start_tidx*n_taxa, (end_tidx-1)*n_taxa, dtype=int))
             replicate_offset += n_taxa * self.n_dts_for_replicate[ridx]
 
-        # ***GARY MODIFIED***
-        #  ADDED CODE BELOW
-        # self.rhs is already reduced in size and causes an error when subsetting with ridxs,
-        # so if using zero-inflation, we construct ret from the length of 'self.rows_to_include_zero_inflation'
-        # instead, which should be of original full length
         if self.zero_inflation_transition_policy is not None:
             ret = np.ones(len(self.rows_to_include_zero_inflation), dtype=bool)
             ret[ridxs] = False
@@ -643,7 +638,6 @@ class Data(DataNode):
         else:
             ret = np.ones(len(self.lhs), dtype=bool)
             ret[ridxs] = False
-        #  ADDED CODE ABOVE
 
         return ret
 
@@ -738,10 +732,6 @@ class Data(DataNode):
                     x, list(self.design_matrices.keys())))
             X = self.design_matrices[x].set_to_rhs(**kwargs)
 
-            # ***GARY MODIFIED***
-            # if self.G.data.zero_inflation_transition_policy is not None:
-            #     if (x == 'Perturbation value parameter') and (self.G.perturbations is not None):
-            #         valid_indices = self.G.data.rows_to_include_zero_inflation
             if valid_indices is not None:
                 X = X[valid_indices, :]
             v.append(X)
@@ -1172,11 +1162,6 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
         name = STRNAMES.PERT_VALUE+'_base_data'
         DesignMatrix.__init__(self, varname=name, **kwargs)
 
-        # GARY MODIFIED
-        # ****just commenting this out 
-        # if self.G.data.zero_inflation_transition_policy is not None:
-        #     raise NotImplementedError('Not Implemented')
-
         self.perturbations = self.G.perturbations # pylab.base.Perturbations object
         self.n_perturbations = len(self.perturbations) # int
         self.n_replicates = self.G.data.n_replicates # int
@@ -1289,9 +1274,6 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
         self.matrix = scipy.sparse.coo_matrix(
             (self.data,(self.rows,self.cols)),shape=self.shape).tocsc()
 
-        #  ***GARY MODIFIED
-        # added two lines below to filter out structural zeros (similar to what's done in
-        # interaction base matrix)
         if self.G.data.zero_inflation_transition_policy is not None:
             self.matrix = self.matrix[self.G.data.rows_to_include_zero_inflation, :]
 

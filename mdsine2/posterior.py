@@ -2954,19 +2954,14 @@ class FilteringLogMP(pl.graph.Node):
                 perts.append(perturbation.item_array().reshape(-1,1))
             perts = np.hstack(perts)
 
-        # ***GARY MODIFIED, uncommented line below
-        zero_inflation = [self.G[STRNAMES.ZERO_INFLATION].value[ridx] for ridx in range(self.G.data.n_replicates)]  #*** MODIFIED
+        zero_inflation = [self.G[STRNAMES.ZERO_INFLATION].value[ridx] for ridx in range(self.G.data.n_replicates)]
         qpcr_vars = []
         for aaa in self.G[STRNAMES.QPCR_VARIANCES].value:
             qpcr_vars.append(aaa.value)
 
-        #  ***GARY MODIFIED
-        # kwargs = {'growth':growth, 'self_interactions':self_interactions,
-        #     'pv':pv, 'interactions':interactions, 'perturbations':perts,
-        #     'zero_inflation_data': None, 'qpcr_variances':qpcr_vars}  #*** ORIGINAL
         kwargs = {'growth':growth, 'self_interactions':self_interactions,
             'pv':pv, 'interactions':interactions, 'perturbations':perts,
-            'zero_inflation_data': zero_inflation, 'qpcr_variances':qpcr_vars}  #*** MODIFIED
+            'zero_inflation_data': zero_inflation, 'qpcr_variances':qpcr_vars}
 
         str_acc = [None]*self.G.data.n_replicates
         mpstr = None
@@ -3350,11 +3345,10 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.qpcr_stds = np.sqrt(qpcr_variances[self.ridx])
         self.qpcr_stds_d = {}
 
-        #  ***GARY UPDATED
         if zero_inflation_data is not None:
-            self.zero_inflation_data = zero_inflation_data[self.ridx]  # *** MODIFIED
+            self.zero_inflation_data = zero_inflation_data[self.ridx]
         else:
-            self.zero_inflation_data = None  # *** ORIGINAL
+            self.zero_inflation_data = None
 
         for tidx,t in enumerate(self.qpcr_log_measurements):
             self.qpcr_stds_d[t] = self.qpcr_stds[tidx]
@@ -3684,7 +3678,7 @@ class ZeroInflation(pl.graph.Node):
     TODO: Parallel version of the class
     '''
 
-    def __init__(self, **kwargs):
+    def __init__(self, zero_inflation_data_path=None, **kwargs):
         '''
         Parameters
         ----------
@@ -3700,6 +3694,8 @@ class ZeroInflation(pl.graph.Node):
             n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
             self.value.append(np.ones(shape=(len(self.G.data.taxa), n_timepoints), dtype=bool))
 
+        self.zero_inflation_data_path = zero_inflation_data_path
+        print("USING FILE: ", self.zero_inflation_data_path)
     def reset_value_size(self):
         '''Change the size of the trajectory when we set the intermediate timepoints
         '''
@@ -3737,22 +3733,14 @@ class ZeroInflation(pl.graph.Node):
             turn_on = None
             turn_off = None
 
-        # ***GARY MODIFIED (ADDED CODE BELOW)
         elif value_option == "custom":
-            print("\n\n\n\n\n******************IN VALUE OPTION CUSTOM FOR ZERO INFLATION*************\n\n\n\n\n")
-
-            # TODO: make this more proper; sort of a hack right now...
-            time_mask_file = STRNAMES.ZERO_INFLATION_DATA_PATH
-
+            if self.zero_inflation_data_path is None:
+                raise ValueError("Need to specify `zero_inflation_data_path` to use option `custom` for zero-inflation")
             # read in file
-            time_mask = pd.read_csv(time_mask_file, index_col=0,  sep="\t")
-            print(time_mask)
-
-            # 1) loop through taxa and time points; append to turn_on and turn_off
-            # 2) ^ time points based on taxa
+            time_mask = pd.read_csv(self.zero_inflation_data_path, index_col=0,  sep="\t")
 
             # Set everything to on except for specified taxa before specified time, for each subject
-            # TODO: assuming same for all subjects for now
+            # assuming times same for all subjects
             self.value = []
             for ridx in range(self.G.data.n_replicates):
                 n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
@@ -3765,16 +3753,32 @@ class ZeroInflation(pl.graph.Node):
                 for otu, row in time_mask.iterrows():
                     t_intro = row['time']
                     oidx = self.G.data.taxa[otu].idx
-                    # print(index, row['time'])
                     for tidx, t in enumerate(self.G.data.times[ridx]):
                         if t < t_intro:
                             self.value[ridx][oidx, tidx] = False
                             turn_off.append((ridx, tidx, oidx))
                         else:
                             turn_on.append((ridx, tidx, oidx))
-            # print("TURNED ON: ", turn_on)
-            # print("TURNED OFF: ", turn_off)
-            #  ***GARY MODIFIED (ADDED CODE ABOVE)
+
+        elif value_option == 'mdsine1-synthetic':
+            # option for running with synthetic dataset from mdsine1
+            # OTU 0 is introduced at time t=10.0, rest are introduced from beginning
+            self.value = []
+            for ridx in range(self.G.data.n_replicates):
+                n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
+                self.value.append(np.ones(
+                    shape=(len(self.G.data.taxa), n_timepoints), dtype=bool))
+            turn_off = []
+            turn_on = []
+            for ridx in range(self.G.data.n_replicates):
+                t_intro = 10.0
+                oidx = 0
+                for tidx, t in enumerate(self.G.data.times[ridx]):
+                    if t < t_intro:
+                        self.value[ridx][oidx, tidx] = False
+                        turn_off.append((ridx, tidx, oidx))
+                    else:
+                        turn_on.append((ridx, tidx, oidx))
 
         elif value_option == 'mdsine-cdiff':
             # Set everything to on except for cdiff before day 28 for every subject
@@ -7679,10 +7683,7 @@ class PerturbationIndicators(pl.Node):
             prevoff_arr = self.G.data.off_previously_arr_zero_inflation
             # prevoff_arr is the original full array
 
-            #  ***GARY MODIFIED:
             rows_to_include = self.G.data.rows_to_include_zero_inflation
-            #  ***ORIGINAL (looks like a typo)
-            # rows_to_include = self.G.data.zero_inflation_transition_policy
 
             # cid = cluster id
             # d = dict [cluster_id -> np array of row inds]
@@ -7693,13 +7694,9 @@ class PerturbationIndicators(pl.Node):
                 n = 0
                 for i, idx in enumerate(arr):
                     if rows_to_include[idx]:
-                        # ***GARY MODIFIED
                         temp = idx - prevoff_arr[idx]
                         new_arr[n] = temp
                         n += 1
-                # ORIGINAL
-                # new_arr = new_arr[:n]
-                #  ***GARY MODIFIED
                 d[cid] = new_arr[:n]
         return d
 

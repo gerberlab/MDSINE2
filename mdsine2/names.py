@@ -86,12 +86,6 @@ class StrNamesClass(_BaseNameClass):
         - This is the name for the `mdsine2.posterior.qPCRScales` object.
     '''
     def __init__(self):
-        #  GARY MODIFIED ***
-        # temporarily added to pass path to zero-inflation data-file; this should be 
-        # done in a better way, probably as option to the 'study' object or option to
-        # set during runtime based on abundance values
-        self.ZERO_INFLATION_DATA_PATH = None
-
         self.CLUSTERING_OBJ = 'Clustering object (contains ability to change the cluster assignments)'
         self.CLUSTERING = 'Clustering parameter'
         self.CONCENTRATION = 'Clustering concentration parameter'

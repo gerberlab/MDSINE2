@@ -3,7 +3,6 @@ import numpy as np
 import os
 import pandas as pd
 from mdsine2.names import STRNAMES
-import mdsine2.synthetic_data_tools as sdt
 import matplotlib
 import matplotlib.pyplot as plt
 
@@ -52,7 +51,7 @@ def run_inference(datasetloc, outputloc, nburnin, nsamp, perturbation_on=True, t
     if time_mask_on is True:
         params.INITIALIZATION_KWARGS[STRNAMES.ZERO_INFLATION]['value_option'] = "custom"
         params.ZERO_INFLATION_TRANSITION_POLICY = 'ignore'
-        STRNAMES.ZERO_INFLATION_DATA_PATH = os.path.join(datasetloc, "time_mask.tsv")
+        params.ZERO_INFLATION_DATA_PATH = os.path.join(datasetloc, "time_mask.tsv")
 
 
     # initilize the graph
