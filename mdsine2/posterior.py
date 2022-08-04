@@ -1772,7 +1772,6 @@ class ClusterAssignments(pl.graph.Node):
         oidx : int
             Taxa index that we are updating the cluster assignment of
         '''
-        print(f"OIDX = {oidx}")
         concentration = self.concentration.value
 
         # start as a dictionary then send values to `sample_categorical_log`
