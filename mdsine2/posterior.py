@@ -1,5 +1,7 @@
 '''Posterior objects used for inference of MDSINE2 model
 '''
+from contextlib import contextmanager
+
 from mdsine2.logger import logger
 import time
 import itertools
@@ -1778,6 +1780,11 @@ class ClusterAssignments(pl.graph.Node):
         LOG_P = []
         LOG_KEYS = []
 
+        @contextmanager
+        def catchtime() -> float:
+            start = time.perf_counter()
+            yield lambda: time.perf_counter() - start
+
         # If singleton, eliminate existing cluster (to be recreated later with fresh values)
         # (Here, it is implemented by moving it to a different existing cluster).
         current_cid = self.clustering.idx2cid[oidx]
@@ -1791,38 +1798,44 @@ class ClusterAssignments(pl.graph.Node):
 
         # Evaluate likelihood on all existing clusters (non-empty not counting current taxa).
         for cid in self.clustering.order:
-            # Move Taxa and recompute the matrices
-            self.clustering.move_item(idx=oidx, cid=cid)
+            with catchtime() as t:
+                # Move Taxa and recompute the matrices
+                self.clustering.move_item(idx=oidx, cid=cid)
+                self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+                self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+                if self._there_are_perturbations:
+                    self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
+                LOG_P.append(np.log(self.clustering.clusters[cid].size - 1) + \
+                             self.calculate_marginal_loglikelihood_slow_fast_sparse())
+                LOG_KEYS.append(cid)
+            print(f"Existing Cluster calc (Cid {cid}) time took: {t():.4f} sec.")
+
+        # new cluster
+        with catchtime() as t:
+            cid = self.clustering.make_new_cluster_with(idx=oidx)
             self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
             self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
             if self._there_are_perturbations:
                 self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
-            LOG_P.append(np.log(self.clustering.clusters[cid].size - 1) + \
-                         self.calculate_marginal_loglikelihood_slow_fast_sparse())
             LOG_KEYS.append(cid)
-
-        # new cluster
-        cid = self.clustering.make_new_cluster_with(idx=oidx)
-        self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-        self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
-        if self._there_are_perturbations:
-            self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
-        LOG_KEYS.append(cid)
-        LOG_P.append(np.log(concentration / self.m) + \
-                     self.calculate_marginal_loglikelihood_slow_fast_sparse())
+            LOG_P.append(np.log(concentration / self.m) + \
+                         self.calculate_marginal_loglikelihood_slow_fast_sparse())
+        print(f"New cluster calc time took: {t():.4f} sec.")
 
         # Sample the assignment
         # =====================
-        idx = sample_categorical_log(LOG_P)
-        assigned_cid = LOG_KEYS[idx]
-        last_temp_cid = self.clustering.idx2cid[oidx]
-        if assigned_cid != last_temp_cid:
-            self.clustering.move_item(idx=oidx,cid=assigned_cid)
-            self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
-            # Change the mixing matrix for the interactions and (potentially) perturbations
-            self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
-            if self._there_are_perturbations:
-                self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
+        with catchtime() as t:
+            idx = sample_categorical_log(LOG_P)
+            assigned_cid = LOG_KEYS[idx]
+            last_temp_cid = self.clustering.idx2cid[oidx]
+            if assigned_cid != last_temp_cid:
+                self.clustering.move_item(idx=oidx,cid=assigned_cid)
+                self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
+                # Change the mixing matrix for the interactions and (potentially) perturbations
+                self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
+                if self._there_are_perturbations:
+                    self.G.data.design_matrices[STRNAMES.PERT_VALUE].M.build()
+        print(f"Sampling took: {t():.4f} sec.")
                 
     # @profile
     def calculate_marginal_loglikelihood_slow_fast(self):
