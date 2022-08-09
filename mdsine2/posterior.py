@@ -1487,8 +1487,8 @@ class ClusterAssignments(pl.graph.Node):
            return
 
         start_time = time.time()
-        # self.update_slow_fast()
-        self.update_vectorized()
+        self.update_slow_fast()
+        # self.update_vectorized()
         self._strtime = time.time() - start_time
 
     def update_vectorized(self):
@@ -1816,8 +1816,11 @@ class ClusterAssignments(pl.graph.Node):
         # Evaluate likelihood on all existing clusters (non-empty not counting current taxa).
         for cid in self.clustering.order:
             with catchtime() as t:
-                # Move Taxa and recompute the matrices
                 self.clustering.move_item(idx=oidx, cid=cid)
+            print(f"Cluster moving took {t():.4f} sec.")
+
+            with catchtime() as t:
+                # Move Taxa and recompute the matrices
                 self.G[STRNAMES.CLUSTER_INTERACTION_INDICATOR].update_cnt_indicators()
                 self.G.data.design_matrices[STRNAMES.CLUSTER_INTERACTION_VALUE].M.build()
                 if self._there_are_perturbations:
