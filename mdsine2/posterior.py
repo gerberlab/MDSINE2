@@ -1487,8 +1487,8 @@ class ClusterAssignments(pl.graph.Node):
            return
 
         start_time = time.time()
-        self.update_slow_fast()
-        # self.update_vectorized()
+        # self.update_slow_fast()
+        self.update_vectorized()
         self._strtime = time.time() - start_time
 
     def update_vectorized(self):
@@ -1511,6 +1511,11 @@ class ClusterAssignments(pl.graph.Node):
         concentration = self.concentration.value
 
         # Idea: Pre-compute all necessary matrices.
+
+        @contextmanager
+        def catchtime() -> float:
+            start = time.perf_counter()
+            yield lambda: time.perf_counter() - start
 
         """
         Initial step: Eliminate existing cluster (to be recreated later with fresh values)
@@ -1556,8 +1561,10 @@ class ClusterAssignments(pl.graph.Node):
             Xs.append(X)
 
         # These can be vectorized, since they're all the same size.
-        Xs = np.stack(Xs, axis=0)
-        marginals = gaussian_marginal_vectorized(Xs, prior_var, prior_mean, self.y, self.process_prec)
+        with catchtime() as t:
+            Xs = np.stack(Xs, axis=0)
+            marginals = gaussian_marginal_vectorized(Xs, prior_var, prior_mean, self.y, self.process_prec)
+        print(f"Vectorized calculation (existing clusters) took {t():.4f} sec.")
 
         # new cluster
         new_cid = self.clustering.make_new_cluster_with(idx=oidx)
@@ -1567,7 +1574,10 @@ class ClusterAssignments(pl.graph.Node):
         prior_var = build_prior_covariance(G=self.G, cov=True, order=rhs, diag=True)
         prior_mean = build_prior_mean(G=self.G, order=rhs)
         X = self.G.data.construct_rhs(keys=rhs, toarray=False).toarray()
-        new_clust_marginal = gaussian_marginal_single(X, prior_var, prior_mean, self.y, self.process_prec)
+
+        with catchtime() as t:
+            new_clust_marginal = gaussian_marginal_single(X, prior_var, prior_mean, self.y, self.process_prec)
+        print(f"Non-vectorized calculation (new cluster) took {t():.4f} sec.")
 
         marginals = np.concatenate([marginals, [new_clust_marginal]])
         log_p = marginals + np.log(dirichlet_weights)
