@@ -1755,9 +1755,16 @@ class ClusterAssignments(pl.graph.Node):
         self.y = self.G.data.construct_lhs(lhs,
             kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations': False}})
 
+        @contextmanager
+        def catchtime() -> float:
+            start = time.perf_counter()
+            yield lambda: time.perf_counter() - start
+
         oidxs = npr.permutation(len(self.G.data.taxa))
         for oidx in oidxs:
-            self.gibbs_update_single_taxon_slow_fast(oidx=oidx)
+            with catchtime() as t:
+                self.gibbs_update_single_taxon_slow_fast(oidx=oidx)
+            print(f"** Resampling of OIDX {oidx} took {t():.4f} sec.")
 
     # @profile
     def gibbs_update_single_taxon_slow_fast(self, oidx: int):
