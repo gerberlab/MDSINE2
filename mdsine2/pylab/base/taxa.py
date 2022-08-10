@@ -1097,3 +1097,433 @@ class OTU(Taxon):
 #             self.add_taxon(
 #                 name='Taxon_{}'.format(i+1),
 #                 sequence=seq)
+
+
+class TaxaSet(Clusterable):
+    """Wraps a set of `` objects. You can get the  object via the
+     id,  name.
+    Provides functionality for aggregating sequeunces and getting subsets for lineages.
+
+    Aggregating/Deaggregating
+    -------------------------
+    s that are aggregated together to become OTUs are used because sequences are
+    very close together. This class provides functionality for aggregating taxa together
+    (`mdsine2.TaxaSet.aggregate_items`) and to deaggregate a specific name from an aggregation
+    (`mdsine2.TaxaSet.deaggregate_item`). If this object is within a `mdsine2.Study` object,
+    MAKE SURE TO CALL THE AGGREGATION FUNCTIONS FROM THE `mdsine2.Study` OBJECT
+    (`mdsine2.Study.aggregate_items`, `mdsine2.Study.deaggregate_item`) so that the reads
+    for the agglomerates and individual taxa can be consistent with the TaxaSet.
+
+    Parameters
+    ----------
+    taxonomy_table : pandas.DataFrame
+        This is the table defining the set. If this is specified, then it is passed into
+        TaxaSet.parse
+
+    See also
+    --------
+    mdsine2.TaxaSet.parse
+    """
+
+    def __init__(self, taxonomy_table: pd.DataFrame=None):
+        self.taxonomy_table = taxonomy_table
+        self.ids = CustomOrderedDict() # Effectively a dictionary (id (int) -> OTU or Taxon)
+        self.names = CustomOrderedDict() # Effectively a dictionary (name (int) -> OTU or Taxon)
+        self.index = [] # List (index (int) -> OTU or Taxon)
+        self._len = 0
+
+        # Add all of the taxa from the dataframe if necessary
+        if taxonomy_table is not None:
+            self.parse(taxonomy_table=taxonomy_table)
+
+    def __contains__(self, key: Union[Taxon, OTU, str, int]) -> bool:
+        try:
+            self[key]
+            return True
+        except:
+            return False
+
+    def __getitem__(self, key: Union[Taxon, OTU, str, int]):
+        """Get a Taxon/OTU by either its sequence, name, index, or id
+
+        Parameters
+        ----------
+        key : str, int
+            Key to reference the Taxon
+        """
+        if isinstance(key, Taxon):
+            return key
+        if key in self.ids:
+            return self.ids[key]
+        elif plutil.isint(key):
+            return self.index[key]
+        elif key in self.names:
+            return self.names[key]
+        else:
+            raise IndexError('`{}` ({}) was not found as a name, sequence, index, or id'.format(
+                key, type(key)))
+
+    def __iter__(self) -> Union[Taxon, OTU]:
+        """Returns each Taxa obejct in order
+        """
+        for taxon in self.index:
+            yield taxon
+
+    def __len__(self) -> int:
+        """Return the number of taxa in the TaxaSet
+        """
+        return self._len
+
+    @property
+    def n_taxa(self) -> int:
+        """Alias for __len__
+        """
+        return self._len
+
+    def reset(self):
+        """Reset the system
+        """
+        self.taxonomy_table = None
+        self.ids = CustomOrderedDict()
+        self.names = CustomOrderedDict()
+        self.index = []
+        self._len = 0
+
+    def parse(self, taxonomy_table: pd.DataFrame):
+        """Parse a taxonomy table
+
+        `taxonomy_table`
+        ----------------
+        This is a dataframe that contains the taxonomic information for each Taxon.
+        The columns that must be included are:
+            'name' : name of the taxon
+            'sequence' : sequence of the taxon
+        All of the taxonomy specifications are optional:
+            'kingdom' : kingdom taxonomy
+            'phylum' : phylum taxonomy
+            'class' : class taxonomy
+            'family' : family taxonomy
+            'genus' : genus taxonomy
+            'species' : species taxonomy
+
+        Note that if the `name` column is not in the columns, this assumes that the
+        OTU names are the index already.
+
+        Parameters
+        ----------
+        taxonomy_table : pandas.DataFrame, Optional
+            DataFrame containing the required information (Taxonomy, sequence).
+            If nothing is passed in, it will be an empty TaxaSet
+        """
+        logger.info('TaxaSet parsng new taxonomy table. Resetting')
+        self.taxonomy_table = taxonomy_table
+        self.ids = CustomOrderedDict()
+        self.names = CustomOrderedDict()
+        self.index = []
+        self._len = 0
+
+        self.taxonomy_table = taxonomy_table
+        taxonomy_table = taxonomy_table.rename(str.lower, axis='columns')
+        if 'name' not in taxonomy_table.columns:
+            logger.info('No `name` found - assuming index is the name')
+        else:
+            taxonomy_table = taxonomy_table.set_index('name')
+        if SEQUENCE_COLUMN_LABEL not in taxonomy_table.columns:
+            raise ValueError('`"{}"` ({}) not found as a column in `taxonomy_table`'.format(
+                SEQUENCE_COLUMN_LABEL, taxonomy_table.columns))
+
+        for tax in TAX_LEVELS[:-1]:
+            if tax not in taxonomy_table.columns:
+                logger.info('Adding in `{}` column'.format(tax))
+                taxonomy_table = taxonomy_table.insert(-1, tax,
+                    [DEFAULT_TAXLEVEL_NAME for _ in range(len(taxonomy_table.index))])
+
+        for i, name in enumerate(taxonomy_table.index):
+            seq = taxonomy_table[SEQUENCE_COLUMN_LABEL][name]
+            taxon = Taxon(name=name, sequence=seq, idx=self._len)
+            taxon.set_taxonomy(
+                tax_kingdom=taxonomy_table.loc[name]['kingdom'],
+                tax_phylum=taxonomy_table.loc[name]['phylum'],
+                tax_class=taxonomy_table.loc[name]['class'],
+                tax_order=taxonomy_table.loc[name]['order'],
+                tax_family=taxonomy_table.loc[name]['family'],
+                tax_genus=taxonomy_table.loc[name]['genus'],
+                tax_species=taxonomy_table.loc[name]['species'])
+
+            self.ids[taxon.id] = taxon
+            self.names[taxon.name] = taxon
+            self.index.append(taxon)
+            self._len += 1
+
+        self.ids.update_order()
+        self.names.update_order()
+
+    def add(self, taxon: Taxon):
+        self.ids[taxon.id] = taxon
+        self.names[taxon.name] = taxon
+        self.index.append(taxon)
+
+        # update the order of the taxa
+        self.ids.update_order()
+        self.names.update_order()
+        self._len += 1
+
+    def add_taxon(self, name: str, sequence: Iterator[str]=None):
+        """Adds a taxon to the set
+
+        Parameters
+        ----------
+        name : str
+            This is the name of the taxon
+        sequence : str
+            This is the sequence of the taxon
+        """
+        self.add(Taxon(name=name, sequence=sequence, idx=self._len))
+
+    def del_taxon(self, taxon: Union[Taxon, OTU, str, int]):
+        """Deletes the taxon from the set.
+
+        Parameters
+        ----------
+        taxon : str, int, Taxon
+            Can either be the name, sequence, or the ID of the taxon
+        """
+        # Get the ID
+        taxon = self[taxon]
+        oidx = self.ids.index[taxon.id]
+
+        # Delete the taxon from everything
+        # taxon = self[taxon]
+        self.ids.pop(taxon.id, None)
+        self.names.pop(taxon.name, None)
+        self.index.pop(oidx)
+
+        # update the order of the taxa
+        self.ids.update_order()
+        self.names.update_order()
+
+        # Update the indices of the taxa
+        # Since everything points to the same object we only need to do it once
+        for aidx, taxon in enumerate(self.index):
+            taxon.idx = aidx
+
+        self._len -= 1
+        return self
+
+    def taxonomic_similarity(self,
+        oid1: Union[Taxon, OTU, str, int],
+        oid2: Union[Taxon, OTU, str, int]) -> float:
+        """Calculate the taxonomic similarity between taxon1 and taxon2
+        Iterates through most broad to least broad taxonomic level and
+        returns the fraction that are the same.
+
+        Example:
+            taxon1.taxonomy = (A,B,C,D)
+            taxon2.taxonomy = (A,B,E,F)
+            similarity = 0.5
+
+            taxon1.taxonomy = (A,B,C,D)
+            taxon2.taxonomy = (A,B,C,F)
+            similarity = 0.75
+
+            taxon1.taxonomy = (A,B,C,D)
+            taxon2.taxonomy = (A,B,C,D)
+            similarity = 1.0
+
+            taxon1.taxonomy = (X,Y,Z,M)
+            taxon2.taxonomy = (A,B,E,F)
+            similarity = 0.0
+
+        Parameters
+        ----------
+        oid1, oid2 : str, int
+            The name, id, or sequence for the taxon
+        """
+        if oid1 == oid2:
+            return 1
+        taxon1 = self[oid1].get_lineage()
+        taxon2 = self[oid2].get_lineage()
+        i = 0
+        for a in taxon1:
+            if a == taxon2[i]:
+                i += 1
+            else:
+                break
+        return i/8 # including asv
+
+    def aggregate_items(self, groupings: List[List[Taxon]]) -> 'OTUTaxaSet':
+        """Create an OTU with the anchor `anchor` and other taxon  `other`.
+        The aggregate takes the sequence and the taxonomy from the anchor.
+
+        Parameters
+        ----------
+        anchor, other : str, int, mdsine2.Taxon, mdsine2.OTU
+            These are the Taxa/Aggregates that you're joining together. The anchor is
+            the one you are setting the sequeunce and taxonomy to
+
+        Returns
+        -------
+        mdsine2.OTU
+            This is the new aggregated taxon containing anchor and other
+        """
+        other = OTUTaxaSet()
+        for gidx, grouping in enumerate(groupings):
+            otu = OTU(component=grouping, idx=gidx)
+            other.add(otu)
+        return other
+
+    def rename(self, prefix: str, zero_based_index: bool=False):
+        """Rename the contents based on their index:
+
+        Example
+        -------
+        Names before in order:
+        [Taxon_22, Taxon_9982, TUDD_8484]
+
+        Calling taxa.rename(prefix='OTU')
+        New names:
+        [OTU_1, OTU_2, OTU_3]
+
+        Calling taxa.rename(prefix='OTU', zero_based_index=True)
+        New names:
+        [OTU_0, OTU_1, OTU_2]
+
+        Parameters
+        ----------
+        prefix : str
+            This is the prefix of the new taxon. The name of the taxa will change
+            to `'{}_{}'.format(prefix, index)`
+        zero_based_index : bool
+            If this is False, then we start the enumeration of the taxa from 1
+            instead of 0. If True, then the enumeration starts at 0
+        """
+        if not plutil.isstr(prefix):
+            raise TypeError('`prefix` ({}) must be a str'.format(type(prefix)))
+        if not plutil.isbool(zero_based_index):
+            raise TypeError('`zero_based_index` ({}) must be a bool'.format(
+                type(zero_based_index)))
+
+        offset = 0
+        if not zero_based_index:
+            offset = 1
+
+        self.names = CustomOrderedDict()
+        for taxon in self.index:
+            newname = prefix + '_{}'.format(int(taxon.idx + offset))
+            taxon.name = newname
+            self.names[taxon.name] = taxon
+
+    def write_taxonomy_to_csv(self, path: str=None, sep:str='\t') -> pd.DataFrame:
+        """Write the taxon names, sequences, and taxonomy to a table. If a path
+        is passed in, then write to that table
+
+        Parameters
+        ----------
+        path : str
+            This is the location to save the metadata file
+        sep : str
+            This is the separator of the table
+        """
+        columns = ['name', 'sequence', 'kingdom', 'phylum', 'class', 'order', 'family', 'genus', 'species']
+        data = []
+
+        for taxon in self:
+            temp = [taxon.name, taxon.sequence]
+            for taxlevel in TAX_LEVELS[:-1]:
+                temp.append(taxon.taxonomy[taxlevel])
+            data.append(temp)
+
+        df = pd.DataFrame(data, columns=columns)
+        if path is not None:
+            df.to_csv(path, sep=sep, index=False, header=True)
+        return df
+
+    def make_random(self, n_taxa: int):
+        """Reset the TaxaSet so that it is composed of `n_taxa` random `Taxon` objects.
+        You would use this function for debugging or testing.
+
+        Parameters
+        ----------
+        n_taxa : int
+            Number of taxa to initialize the `TaxaSet` object with
+        """
+        import random
+
+        self.reset()
+        letters = ['A', 'T', 'G', 'C']
+        for i in range(n_taxa):
+            seq = ''.join(random.choice(letters) for _ in range(50))
+            self.add_taxon(
+                name='Taxon_{}'.format(i+1),
+                sequence=seq)
+
+
+class OTUTaxaSet(TaxaSet):
+    def __init__(self, taxonomy_table: pd.DataFrame = None):
+        super().__init__(taxonomy_table=taxonomy_table)
+
+    def generate_consensus_seqs(self, threshold: float=0.65, noconsensus_char: str='N'):
+        """Generate the consensus sequence for all of the taxa given the sequences
+        of all the contained ASVs of the respective OTUs
+
+        Parameters
+        ----------
+        threshold : float
+            This is the threshold for consensus (0 < threshold <= 1)
+        noconsensus_char : str
+            This is the character to replace
+        """
+        for taxon in self:
+            taxon.generate_consensus_seq(
+                threshold=threshold,
+                noconsensus_char=noconsensus_char)
+
+    def generate_consensus_taxonomies(self, consensus_table: pd.DataFrame=None):
+        """Generates the consensus taxonomies for all of the OTUs within the TaxaSet.
+        For details on the algorithm - see `OTU.generate_consensus_taxonomy`
+
+        See Also
+        --------
+        mdsine2.pylab.base.OTU.generate_consensus_taxonomy
+        """
+        for taxon in self:
+            taxon.generate_consensus_taxonomy(consensus_table=consensus_table)
+
+    def deaggregate_item(self, agg: Union[OTU, str, int], other: str) -> Taxon:
+        """Deaggregate the sequence `other` from OTU `agg`.
+        `other` is then appended to the end
+
+        Parameters
+        ----------
+        agg : OTU, str
+            This is an OTU with multiple sequences contained. Must
+            have the name `other` in there
+        other : str
+            This is the name of the taxon that should be taken out of `agg`
+
+        Returns
+        -------
+        mdsine2.Taxon
+            This is the deaggregated taxon
+        """
+        agg = self.__getitem__(agg)
+        if not plutil.isstr(other):
+            raise TypeError('`other` ({}) must be a str'.format(type(other)))
+        if other not in agg.aggregated_taxa:
+            raise ValueError('`other` ({}) is not contained in `agg` ({}) ({})'.format(
+                other, agg.name, agg.aggregated_taxa))
+
+        other = Taxon(name=other, sequence=agg.aggregated_seqs[other], idx=self._len)
+        other.taxonomy = agg.aggregated_taxonomies[other.name]
+        agg.aggregated_seqs.pop(other.name, None)
+        agg.aggregated_taxa.remove(other.name)
+        agg.aggregated_taxonomies.pop(other.name, None)
+
+        self.index.append(other)
+        self.ids[other.id] = other
+        self.names[other.name] = other
+
+        self.ids.update_order()
+        self.names.update_order()
+        self._len += 1
+        return other

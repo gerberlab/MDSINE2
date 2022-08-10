@@ -1,12 +1,13 @@
-from typing import Union, Dict, Tuple
+from typing import Union, Dict, Tuple, List
 import numpy as np
 import pandas as pd
 
 from .. import util as plutil
 from .base import Saveable
 from .perturbation import Perturbations
-from .taxa import OTU, Taxon
+from .taxa import OTU, Taxon, TaxaSet
 from .constants import *
+from .qpcr import qPCRdata
 from .util import taxaname_formatter
 
 from mdsine2.logger import logger
@@ -89,8 +90,11 @@ class Subject(Saveable):
                 self.times = np.sort(np.append(self.times, timepoint))
         return self
 
-    def add_qpcr(self, timepoints: Union[np.ndarray, int, float], qpcr: np.ndarray,
-        masses: Union[np.ndarray, int, float]=None, dilution_factors: Union[np.ndarray, int, float]=None):
+    def add_qpcr(self,
+                 timepoints: Union[np.ndarray, int, float],
+                 qpcr: np.ndarray,
+                 masses: Union[np.ndarray, int, float]=None,
+                 dilution_factors: Union[np.ndarray, int, float]=None):
         """Add qpcr measurements for timepoints `timepoints`
 
         Parameters
@@ -438,8 +442,7 @@ class Subject(Saveable):
         self._reads_individ.pop(other)
         return
 
-    # DEPRECATED
-    def _aggregate_items(self, anchor: Union[OTU, Taxon], other: Union[OTU, Taxon]):
+    def aggregate_items(self, taxon_components: List[List[Taxon]]) -> 'Subject':
         """
         Aggregate the taxon `other` into `anchor`. This is called from
         `mdsine2.Study.aggregate_items`.
@@ -449,17 +452,13 @@ class Subject(Saveable):
         anchor, other : OTU, Taxon
             These are the s to combine
         """
-        # If one of them are taxon, then record their individual reads
-        # if we want to dissociate them later
-        for taxon in [anchor, other]:
-            if taxon.name in self._reads_individ:
-                raise ValueError('Taxon is already in this dict. This should not happen.')
-            aidx = taxon.idx
-            self._reads_individ[taxon.name] = {}
-            for t in self.times:
-                self._reads_individ[taxon.name][t] = self.reads[t][aidx]
+        agg_subj = Subject(parent=self.parent, name=self.name)
+        agg_subj.times = self.times
+        agg_subj.qpcr = self.qpcr
 
         for t in self.times:
-            self.reads[t][anchor.idx] += self.reads[t][other.idx]
-            self.reads[t] = np.delete(self.reads[t], other.idx)
-        return
+            for aidx, components in enumerate(taxon_components):
+                subset_idxs = [taxon.idx for taxon in components]
+                agg_subj.reads[t][aidx] = np.sum(self.reads[t][subset_idxs])
+
+        return agg_subj

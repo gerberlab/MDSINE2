@@ -5,4 +5,4 @@ from .perturbation import BasePerturbation, Perturbations
 from .study import Study
 from .subject import Subject
 from .qpcr import qPCRdata
-from .taxa import Taxon, OTU
+from .taxa import Taxon, OTU, TaxaSet

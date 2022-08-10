@@ -21,8 +21,6 @@ from .pylab import variables
 from .pylab.util import isnumeric, isbool, isfloat, isint, isarray, issquare, isstr, \
     itercheck, istype, istuple, isdict, istree
 from .pylab.variables import isVariable, isRandomVariable
-from .pylab.base import isqpcrdata, istaxaset, istaxon, issavable, istraceable, \
-    issubject, isstudy, isperturbation, isclusterable, isotu, istaxontype
 from .pylab.random import israndom
 from .pylab.cluster import isclustering, isclusterproperty, isclustervalue
 from .pylab.inference import isMCMC, ismodel
@@ -34,9 +32,7 @@ from .pylab.multiprocessing import ispersistentworker, ispersistentpool, isDASW,
 
 # Import commonly used Pylab functions and classes
 from .pylab.util import toarray, fast_index, coarsen_phylogenetic_tree
-from .pylab.base import Taxon, OTU, TaxaSet, qPCRdata, Saveable, TraceableNode, BasePerturbation, \
-    Subject, Study, condense_matrix_with_taxonomy, taxaname_for_paper, TAXANAME_PAPER_FORMAT, \
-    taxaname_formatter, Perturbations, qPCRdata
+from .pylab.base import *
 from .pylab.variables import Variable, Constant, summary
 from .pylab.graph import Graph, Node
 from .pylab.cluster import Clustering, ClusterProperty

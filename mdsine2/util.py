@@ -2,6 +2,8 @@
 '''
 import itertools
 
+from mdsine2 import TaxaSet
+
 from mdsine2.logger import logger
 import numpy as np
 import copy
@@ -305,21 +307,17 @@ def condense_fixed_clustering_perturbation(pert: np.ndarray, clustering: Cluster
         ret[..., cidx] = pert[..., aidx]
     return ret
 
+
 def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     """
-    Aggregate Taxa that have an average hamming distance of `hamming_dist`
+    Aggregate Taxa that have an average hamming distance of `hamming_dist`.
 
     Parameters
     ----------
     subjset : mdsine2.Study
         This is the `mdsine2.Study` object that we are aggregating
     hamming_dist : int
-        This is the hamming radius from one taxon to the next where we
-        are aggregating
-
-    Returns
-    -------
-    mdsine2.Study
+        This is the hamming radius from one taxon to the next where we are aggregating
     """
 
     # Compute the hamming dist matrix
@@ -333,63 +331,16 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     clustering = AgglomerativeClustering(
         affinity='precomputed',
         linkage='single',  # min distance
-        distance_threshold=2.0
+        distance_threshold=hamming_dist
     ).fit(dists)
 
+    subsets: List[List[Taxon]] = []
     oidx_set = set(clustering.labels_)
     for oidx in oidx_set:
-        oid = f'OTU_{oidx+1}'
-        asv_subset = [asvs[i] for i in np.where(clustering.labels == oidx)[0]]
+        asv_subset: List[Taxon] = [asvs[i] for i in np.where(clustering.labels == oidx)[0]]
+        subsets.append(asv_subset)
 
-
-    # def _avg_dist(taxon1: Union[Taxon, OTU], taxon2: Union[Taxon, OTU]) -> float:
-    #     dists = []
-    #     if pl.isotu(taxon1):
-    #         seqs1 = taxon1.aggregated_seqs.values()
-    #     else:
-    #         seqs1 = [taxon1.sequence]
-    #
-    #     if pl.isotu(taxon2):
-    #         seqs2 = taxon2.aggregated_seqs.values()
-    #     else:
-    #         seqs2 = [taxon2.sequence]
-    #
-    #     for v1 in seqs1:
-    #         for v2 in seqs2:
-    #             dists.append(diversity.beta.hamming(v1, v2))
-    #     return np.nanmean(dists)
-
-
-
-    # cnt = 0
-    # found = False
-    # iii = 0
-    # logger.info('Agglomerating taxa')
-    # while not found:
-    #     for iii in range(iii, len(subjset.taxa)):
-    #         if iii % 200 == 0:
-    #             logger.info('{}/{}'.format(iii, len(subjset.taxa)))
-    #         taxon1 = subjset.taxa[iii]
-    #         for taxon2 in subjset.taxa.names.order[iii:]:
-    #             taxon2 = subjset.taxa[taxon2]
-    #             if taxon1.name == taxon2.name:
-    #                 continue
-    #             if len(taxon1.sequence) != len(taxon2.sequence):
-    #                 continue
-    #
-    #             dist = _avg_dist(taxon1, taxon2)
-    #             if dist <= hamming_dist:
-    #                 subjset.aggregate_items(taxon1, taxon2)
-    #                 cnt += 1
-    #                 found = True
-    #                 break
-    #         if found:
-    #             break
-    #     if found:
-    #         found = False
-    #     else:
-    #         break
-    # logger.info('Aggregated {} taxa'.format(cnt))
+    return subjset.aggregate_items(subsets)
 
 
 def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_filename: str):
