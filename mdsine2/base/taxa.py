@@ -388,6 +388,7 @@ class OTU(Taxon):
 
                     if consensus_table is not None:
                         # Set from the table
+                        print(consensus_table)
                         self.taxonomy[tax_level] = consensus_table[tax_level][self.name]
                         set_from_table = True
                     else:
