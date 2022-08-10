@@ -1726,7 +1726,8 @@ def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: s
     def _agg_taxaname_for_paper(agg, taxaname):
         '''Makes the name in the format needed for the paper for an OTU
         '''
-        print(agg.taxonomy.keys())
+        print(agg.name)
+        print(taxaname)
         if _tax_is_defined(agg.taxonomy[taxaname], 'species'):
             species = agg.taxonomy[taxaname]['species']
             species = species.split('/')
