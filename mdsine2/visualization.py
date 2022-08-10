@@ -1799,9 +1799,8 @@ def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: s
         marker='x')
 
     individ_trajs = {}
-    for taxaname in agg.components:
-        if taxaname not in subj._reads_individ:
-            raise ValueError('This should not happend. Failing.')
+    for taxon in agg.components:
+        taxaname = taxon.name
         temp = []
         for t in subj.times:
             abund = subj._reads_individ[taxaname][t]

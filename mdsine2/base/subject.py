@@ -456,11 +456,18 @@ class Subject(Saveable):
         agg_subj = Subject(parent=self.parent, name=self.name)
         agg_subj.times = self.times
         agg_subj.qpcr = self.qpcr
+        agg_subj._reads_individ = {}
 
         for t in self.times:
             agg_subj.reads[t] = np.zeros(len(taxon_components), dtype=int)
             for aidx, components in enumerate(taxon_components):
                 subset_idxs = [taxon.idx for taxon in components]
                 agg_subj.reads[t][aidx] = np.sum(self.reads[t][subset_idxs])
+
+        for taxon in taxon_components:
+            agg_subj._reads_individ[taxon.name] = {
+                t: self.reads[t][taxon.idx]
+                for t in self.times
+            }
 
         return agg_subj
