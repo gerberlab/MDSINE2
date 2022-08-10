@@ -1,5 +1,4 @@
 from typing import Dict, Union
-from .subject import Subject
 from mdsine2.pylab import util as plutil
 
 
@@ -40,12 +39,10 @@ class BasePerturbation:
                     self.ends[subj])
         return s
 
-    def __contains__(self, a: Union[str]) -> bool:
+    def __contains__(self, name: str) -> bool:
         '''Checks if subject name `a` is in this perturbation
         '''
-        if isinstance(a, Subject):
-            a = a.name
-        return a in self.starts
+        return name in self.starts
 
     def isactive(self, time: Union[float, int], subj: str) -> bool:
         '''Returns a `bool` if the perturbation is on at time `time`.
