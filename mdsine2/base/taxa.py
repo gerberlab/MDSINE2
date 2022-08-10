@@ -272,7 +272,7 @@ class OTU(Taxon):
                 for base in found:
                     this_ratio = 1 - (found[base]/len(agg_seqs))
                     if this_ratio > consensus_ratio:
-                        consensus_percent = consensus_ratio
+                        consensus_ratio = this_ratio
                         consensus_base = base
 
                 # Set the consensus base if it passes the threshold
