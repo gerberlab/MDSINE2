@@ -388,7 +388,6 @@ class OTU(Taxon):
 
                     if consensus_table is not None:
                         # Set from the table
-                        print(consensus_table)
                         self.taxonomy[tax_level] = consensus_table[tax_level][self.name]
                         set_from_table = True
                     else:
@@ -1369,7 +1368,6 @@ class TaxaSet(Clusterable):
         other = OTUTaxaSet()
         for gidx, grouping in enumerate(groupings):
             otu = OTU(components=grouping, idx=gidx)
-            otu.generate_consensus_taxonomy(consensus_table=self.taxonomy_table)
             other.add(otu)
         return other
 
