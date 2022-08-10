@@ -458,6 +458,7 @@ class Subject(Saveable):
         agg_subj.qpcr = self.qpcr
 
         for t in self.times:
+            agg_subj[t] = {}
             for aidx, components in enumerate(taxon_components):
                 subset_idxs = [taxon.idx for taxon in components]
                 agg_subj.reads[t][aidx] = np.sum(self.reads[t][subset_idxs])
