@@ -337,7 +337,7 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     subsets: List[List[Taxon]] = []
     oidx_set = set(clustering.labels_)
     for oidx in oidx_set:
-        asv_subset: List[Taxon] = [asvs[i] for i in np.where(clustering.labels == oidx)[0]]
+        asv_subset: List[Taxon] = [asvs[i] for i in np.where(clustering.labels_ == oidx)[0]]
         subsets.append(asv_subset)
 
     return subjset.aggregate_items(subsets)
