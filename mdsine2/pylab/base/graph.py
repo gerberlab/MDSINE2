@@ -6,9 +6,12 @@ added to a default graph, which is defined at the bottom of the module.
 The Node class is also defined here.
 '''
 from pathlib import Path
+import pickle
+import os
 import numpy as np
 import networkx as nx
 from mdsine2.logger import logger
+from mdsine2.pylab import util as plutil
 
 # Typing
 from typing import Any, Union, Iterator
@@ -189,7 +192,7 @@ class BaseNode(Saveable):
         - If not specified it adds it to the default graph
     '''
 
-    def __init__(self, name: str = None, name_prefix: str = None, G: Graph = None):
+    def __init__(self, name: str = None, name_prefix: str = None, G: 'Graph' = None):
         global _PH_COUNT
         if name is None:
             if name_prefix is None:
@@ -230,7 +233,7 @@ class DataNode:
         - If not specified it adds it to the default graph
     '''
 
-    def __init__(self, name: str = None, name_prefix: str = None, G: Graph = None):
+    def __init__(self, name: str = None, name_prefix: str = None, G: 'Graph' = None):
         self.G = G
         self.name = name
         self.id = id(self)
@@ -258,7 +261,7 @@ class Node(BaseNode):
         - If not specified it adds it to the default graph
     '''
 
-    def __init__(self, name: str = None, name_prefix: str = None, G: Graph = None):
+    def __init__(self, name: str = None, name_prefix: str = None, G: 'Graph' = None):
         BaseNode.__init__(self, name=name, name_prefix=name_prefix, G=G)
         self.parents = {}  # maps the ID of the node to the Node objects
         self.children = {}  # maps the ID of the node to the Node objects
