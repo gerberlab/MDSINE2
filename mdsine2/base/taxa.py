@@ -187,6 +187,7 @@ class OTU(Taxon):
     """
     def __init__(self, components: List[Taxon], idx: int):
         self.components = components
+        self.name = f"OTU_{idx+1}"
 
         Taxon.__init__(
             self,
@@ -1472,8 +1473,8 @@ class OTUTaxaSet(TaxaSet):
         noconsensus_char : str
             This is the character to replace
         """
-        for taxon in self:
-            taxon.generate_consensus_seq(
+        for otu in self:
+            otu.generate_consensus_seq(
                 threshold=threshold,
                 noconsensus_char=noconsensus_char)
 
