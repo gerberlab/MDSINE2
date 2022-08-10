@@ -63,6 +63,10 @@ PLT_TITLE_LABEL = 'title'
 PLT_XLABEL_LABEL = 'xlabel'
 PLT_YLABEL_LABEL = 'ylabel'
 
+
+def issubject(s):
+    return isinstance(s, Subject)
+
 # ----------------
 # Global Functions
 # ----------------
@@ -147,7 +151,7 @@ def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbati
     '''
     from . import pylab as pl
 
-    if pl.issubject(subj):
+    if issubject(subj):
         subj = subj.name
     if not pl.isstr(subj):
         raise ValueError('`Cannot recognize {}'.format(subj))
@@ -998,7 +1002,7 @@ def alpha_diversity_over_time(subjs: Union[Subject, List[Subject]], metric: Call
     # Type checking
     if not pl.isbool(grid):
         raise TypeError('`grid` ({}) must be a bool'.format(type(grid)))
-    if pl.issubject(subjs):
+    if issubject(subjs):
         subjs = [subjs]
     if not pl.isarray(subjs):
         raise ValueError('`subjs` ({}) must be a pylab.base.Subject or an array'.format(type(subjs)))
@@ -1251,13 +1255,13 @@ def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, 
             raise ValueError('`include_errorbars ({}) must be a bool'.format(type(include_errorbars)))
     if not pl.isbool(grid):
         raise TypeError('`grid` ({}) must be a bool'.format(type(grid)))
-    if not pl.issubject(subj):
+    if not issubject(subj):
         if dtype not in ['qpcr', 'read-depth']:
             raise TypeError('`subj` ({}) must be a pylab.base.Subject'.format(type(subj)))
         else:
             if pl.isarray(subj):
                 for s in subj:
-                    if not pl.issubject(s):
+                    if not issubject(s):
                         raise TypeError('Every element in `subj` ({}) must be a ' \
                             'pl.base.Subject'.format(type(s)))
             if not pl.isstudy(subj):
@@ -1432,7 +1436,7 @@ def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, 
         ax, kwargs = _set_plt_labels(d=kwargs, ax=ax)
         if ylim is not None:
             ax.set_ylim(*ylim)
-        if pl.issubject(subj):
+        if issubject(subj):
             subj = [subj]
         colors = sns.color_palette(cmap, n_colors=len(subj))
         
@@ -1495,7 +1499,7 @@ def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, 
         ax.set_yscale('log')
     ax = _set_xticks(ax)
     if shade_perturbations:
-        if pl.issubject(subj):
+        if issubject(subj):
             perturbations = subj.parent.perturbations
             ax = shade_in_perturbations(ax, perturbations, subj=subj)
         elif pl.isstudy(subj):
@@ -1572,7 +1576,7 @@ def taxonomic_distribution_over_time(subj: Union[Subject, Study], taxlevel: str=
     matplotlib.pyplot.Axes
     ''' 
     # Type checking
-    if not (pl.issubject(subj) or pl.isstudy(subj)):
+    if not (issubject(subj) or pl.isstudy(subj)):
         raise ValueError('`subj` ({}) must be a pylab.base.Subject or pl.base.Study'.format(type(subj)))
     if not pl.isbool(legend):
         raise ValueError('`legend` ({}) must be a bool'.format(type(legend)))
@@ -1753,7 +1757,7 @@ def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: s
                     name=taxaname)
         return label
 
-    if not pl.issubject(subj):
+    if not issubject(subj):
         raise TypeError('`subj` ({}) must be a mdsine2.Subject object'.format(type(subj)))
     if agg not in subj.taxa:
         raise ValueError('`agg` ({}) not found in study'.format(agg))
