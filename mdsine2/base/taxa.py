@@ -382,7 +382,7 @@ class OTU(Taxon):
                 else:
                     # This means that the taxonomy is different on a level different than
                     logger.warning('{} taxonomy does not agree'.format(self.name))
-                    logger.warning(''.join(taxon.name for taxon in self.components))
+                    logger.warning(','.join(taxon.name for taxon in self.components))
 
                     if consensus_table is not None:
                         # Set from the table
