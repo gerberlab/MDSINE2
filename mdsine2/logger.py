@@ -64,7 +64,7 @@ class MakeDirTimedRotatingFileHandler(logging.handlers.TimedRotatingFileHandler)
 
 def default_logger(name: str):
     logger = logging.getLogger(name=name)
-    logger.setLevel(logging.INFO)
+    logger.setLevel(logging.DEBUG)
     logger.propagate = False
 
     stdout_handler = logging.StreamHandler(sys.stdout)
@@ -84,7 +84,7 @@ def default_logger(name: str):
     return logger
 
 
-def meta_create_logger(ini_path: Path) -> Callable[[str], logging.Logger]:
+def create_logger(ini_path: Path) -> logging.Logger:
     logging.handlers.MakeDirTimedRotatingFileHandler = MakeDirTimedRotatingFileHandler
     if not ini_path.exists():
         def __create_logger(module_name):
@@ -102,9 +102,8 @@ def meta_create_logger(ini_path: Path) -> Callable[[str], logging.Logger]:
             str(ini_path)
         ))
 
-    return __create_logger
+    return this_logger
 
 
 # ============= Create logger instance. Execute once globally. ===========
-create_logger = meta_create_logger(Path(__ini__))
-logger = create_logger(__name__)
+logger = create_logger(Path(__ini__))
