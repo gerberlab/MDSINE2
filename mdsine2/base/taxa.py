@@ -381,12 +381,14 @@ class OTU(Taxon):
                     self.taxonomy[tax_level] = '/'.join(sorted(labels))
                 else:
                     # This means that the taxonomy is different on a level different than
-                    logger.warning(f"{self.name} taxonomy does not agree at level `{tax_level}`")
-                    logger.warning(','.join(taxon.name for taxon in self.components))
+                    logger.debug(f"{self.name} taxonomy does not agree at level `{tax_level}`")
+                    logger.debug(','.join(taxon.name for taxon in self.components))
 
                     if consensus_table is not None:
                         # Set from the table
-                        self.taxonomy[tax_level] = consensus_table[tax_level][self.name]
+                        consensus_value = consensus_table[tax_level][self.name]
+                        self.taxonomy[tax_level] = consensus_value
+                        logger.debug("Using consensus value `{consensus_value}`")
                         set_from_table = True
                     else:
                         # Set this taxonomic level and everything below it to NA
