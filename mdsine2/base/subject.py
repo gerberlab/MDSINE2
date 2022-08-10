@@ -403,7 +403,7 @@ class Subject(Saveable):
         ii = 0
         for start,end in not_perts:
             mid = self.name+'_{}'.format(ii)
-            self.parent.add(name=mid)
+            self.parent.add_subject(name=mid)
             for i in range(start,end):
                 t = self.times[i]
                 self.parent[mid].qpcr[t] = self.qpcr[t]

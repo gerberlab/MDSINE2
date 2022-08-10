@@ -11,7 +11,7 @@ from . import model as plmodel
 from . import pylab as pl
 from .names import STRNAMES
 from .pylab import variables, BaseMCMC
-from .base import Study
+from .base import *
 
 
 class Synthetic(pl.Saveable):
@@ -65,7 +65,7 @@ class Synthetic(pl.Saveable):
             raise ValueError('`n_taxa` ({}) must be >= 3'.format(n_taxa))
 
         # Make the TaxaSet
-        taxa = pl.TaxaSet()
+        taxa = TaxaSet()
         for aidx in range(n_taxa):
             seq = ''.join(random.choice(['A', 'T', 'G', 'C']) for _ in range(250))
             taxa.add_taxon(name='TAXA_{}'.format(aidx+1), sequence=seq)
@@ -77,10 +77,10 @@ class Synthetic(pl.Saveable):
         c2size = int(n_taxa - c0size - c1size)
 
         clusters = np.asarray(([0]*c0size) + ([1]*c1size) + ([2]*c2size), dtype=int)
-        clustering = pl.Clustering(items=taxa, clusters=clusters, name=STRNAMES.CLUSTERING_OBJ, G=self.G)
+        clustering = Clustering(items=taxa, clusters=clusters, name=STRNAMES.CLUSTERING_OBJ, G=self.G)
 
         # Generate the interactions
-        interactions = pl.Interactions(clustering=clustering, use_indicators=True, G=self.G,
+        interactions = Interactions(clustering=clustering, use_indicators=True, G=self.G,
             name=STRNAMES.INTERACTIONS_OBJ)
         c0 = clustering.order[0]
         c1 = clustering.order[1]
@@ -264,7 +264,7 @@ class Synthetic(pl.Saveable):
         logger.info('Fitting real data')
 
         # Make the study object
-        study = pl.Study(taxa=self.taxa, name=name)
+        study = Study(taxa=self.taxa, name=name)
         for subjname in self.subjs:
             study.add_subject(name=subjname)
 
@@ -281,7 +281,7 @@ class Synthetic(pl.Saveable):
 
                 triplicates = np.exp(np.log(total_abund[tidx]) + \
                     qpcr_noise_scale * pl.random.normal.sample(size=3))
-                subj.qpcr[t] = pl.qPCRdata(cfus=triplicates, mass=1., dilution_factor=1.)
+                subj.qpcr[t] = qPCRdata(cfus=triplicates, mass=1., dilution_factor=1.)
 
         # Make the reads
         for subj in study:
@@ -374,7 +374,7 @@ def make_semisynthetic(chain: BaseMCMC, seed: int, min_bayes_factor: Union[float
     # Set the clustering
     # ------------------
     cluster_assignments = chain.graph[STRNAMES.CLUSTERING_OBJ].toarray()
-    clustering = pl.Clustering(cluster_assignments, G=syn.G, items=syn.taxa,
+    clustering = Clustering(cluster_assignments, G=syn.G, items=syn.taxa,
         name=STRNAMES.CLUSTERING_OBJ)
 
     # Set the interactions
@@ -388,7 +388,7 @@ def make_semisynthetic(chain: BaseMCMC, seed: int, min_bayes_factor: Union[float
     bf_cluster = condense_fixed_clustering_interaction_matrix(bf,
         clustering=chain.graph[STRNAMES.CLUSTERING_OBJ])
 
-    interactions = pl.Interactions(clustering=clustering, use_indicators=True,
+    interactions = Interactions(clustering=clustering, use_indicators=True,
         name=STRNAMES.INTERACTIONS_OBJ, G=syn.G)
 
     for interaction in interactions:
@@ -415,7 +415,7 @@ def make_semisynthetic(chain: BaseMCMC, seed: int, min_bayes_factor: Union[float
     # --------------------------------
     if chain.graph.perturbations is not None:
         for perturbation_master in chain.graph.perturbations:
-            perturbation = pl.ClusterPerturbationEffect(
+            perturbation = ClusterPerturbationEffect(
                 starts=perturbation_master.starts,
                 ends=perturbation_master.ends,
                 name=perturbation_master.name,

@@ -249,7 +249,7 @@ def generate_taxonomic_distribution_over_clusters_posthoc(mcmc: BaseMCMC, tax_fm
     data = np.hstack(data).shape
 
     # Make the taxonomic heatmap as a dataframe
-    df = pl.base.condense_matrix_with_taxonomy(M, taxa=study.taxa, fmt=tax_fmt)
+    df = condense_matrix_with_taxonomy(M, taxa=study.taxa, fmt=tax_fmt)
     return df
 
 def condense_fixed_clustering_interaction_matrix(M: np.ndarray, clustering: Clustering) -> np.ndarray:

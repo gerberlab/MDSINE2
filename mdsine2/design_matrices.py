@@ -39,7 +39,7 @@ from .pylab import DataNode, Node, Graph
 from .names import STRNAMES
 
 from . import pylab as pl
-from .base import Study
+from .base import *
 
 
 class Data(DataNode):
@@ -90,9 +90,6 @@ class Data(DataNode):
         if 'name' not in kwargs:
             kwargs['name'] = 'data matrix'
         DataNode.__init__(self, **kwargs)
-        if not pl.isstudy(subjects):
-            raise ValueError('`subjects` ({}) must be a pylab Study'.format(
-                type(subjects)))
 
         self.taxa = subjects.taxa # This is the TaxaSet object in pylab.base.TaxaSet
         self.subjects = subjects # This is the Study object in pylab.base.Study
@@ -1752,7 +1749,7 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         self._make_matrix(rows=rows, cols=cols, n_cols=c2ciidx, build=build)
 
     # @profile
-    def inner(self, rows: List, cols: List, d: Dict[int, Any], interaction: pl.contrib._Interaction, 
+    def inner(self, rows: List, cols: List, d: Dict[int, Any], interaction: _Interaction,
         c2ciidx: int) -> Tuple[Dict[int, Any], List, List]:
         tcid = interaction.target_cid
         scid = interaction.source_cid

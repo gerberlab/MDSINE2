@@ -1355,12 +1355,6 @@ class TaxaSet(Clusterable):
         """Create an OTU with the anchor `anchor` and other taxon  `other`.
         The aggregate takes the sequence and the taxonomy from the anchor.
 
-        Parameters
-        ----------
-        anchor, other : str, int, mdsine2.Taxon, mdsine2.OTU
-            These are the Taxa/Aggregates that you're joining together. The anchor is
-            the one you are setting the sequeunce and taxonomy to
-
         Returns
         -------
         mdsine2.OTU

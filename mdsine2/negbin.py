@@ -22,7 +22,7 @@ from . import visualization
 
 from . import pylab as pl
 from .pylab import BaseMCMC
-from .base import Study
+from .base import *
 from .names import STRNAMES
 from . import config
 
@@ -65,10 +65,7 @@ class Data(pl.graph.DataNode):
     def __init__(self, subjects: Study, **kwargs):
         kwargs['name'] = 'Data'
         pl.graph.DataNode.__init__(self, **kwargs)
-        if not pl.isstudy(subjects):
-            raise ValueError('`subjects` ({}) must be a pylab SubjectSet'.format(
-                type(subjects)))
-        
+
         self.taxa = subjects.taxa # mdsine2.pylab.base.TaxaSet
         self.subjects = subjects # mdsine2.pylab.base.Study
         self.n_taxa = len(self.taxa) # int
@@ -672,7 +669,7 @@ class FilteringMP(pl.graph.Node):
                 summ = pl.summary(latent_trace)
                 for aidx, aname in enumerate(taxanames):
                     f.write('\n\nTaxa {}: {}\n'.format(
-                        aidx, pl.taxaname_formatter(taxa_formatter, 
+                        aidx, taxaname_formatter(taxa_formatter,
                         taxon=aname, taxa=taxa)))
                     f.write('-------------------\n')
 
@@ -699,7 +696,7 @@ class FilteringMP(pl.graph.Node):
                         axtrace.axhline(y=M_subj[aidx, idx], color='green', label=label)
 
                     fig = plt.gcf()
-                    fig.suptitle(pl.taxaname_formatter(format=taxa_formatter,
+                    fig.suptitle(taxaname_formatter(format=taxa_formatter,
                         taxon=aname, taxa=taxa))
                     plotpath = os.path.join(subj_basepath, '{}.pdf'.format(aname))
                     plt.savefig(plotpath)
@@ -986,10 +983,6 @@ def build_graph(params: config.NegBinConfig, graph_name: str, subjset: Study) ->
     '''
     if not config.isModelConfig(params):
         raise TypeError('`params` ({}) needs to be a config.ModelConfig object'.format(type(params)))
-    if not pl.isstudy(subjset):
-        raise TypeError('`subjset` ({}) must be a mdsine2.Study'.format(type(subjset)))
-    if not pl.isstr(graph_name):
-        raise TypeError('`graph_name` ({}) must be a str'.format(type(graph_name)))
 
     # Initialize the graph and make the save location
     # -----------------------------------------------
