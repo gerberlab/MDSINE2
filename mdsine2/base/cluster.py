@@ -6,7 +6,6 @@ from typing import Any, Iterator, Type, List
 
 from mdsine2.pylab import Variable, TraceableNode, Node
 from . import util
-from .taxa import TaxaSet
 from mdsine2.pylab import util
 
 # Constants
@@ -177,7 +176,7 @@ class Clustering(TraceableNode):
     kwargs : dict
         These are the additional arguments for the Node class (name, Graph, etc.)
     '''
-    def __init__(self, clusters: np.ndarray, items: TaxaSet, **kwargs):
+    def __init__(self, clusters: np.ndarray, items: List[ClusterItem], **kwargs):
         super().__init__(dtype=None, **kwargs)
         if not isclusterable(items):
             raise TypeError('`items` ({}) must be a pylab.base.Clusterable object'.format( 
