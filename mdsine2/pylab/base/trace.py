@@ -1,12 +1,12 @@
 import os
-from typing import Union
+from typing import Union, Any
 
 import numpy as np
 import pickle
 from pathlib import Path
 
 from .. import util as plutil
-from mdsine2.pylab import Node
+from .graph import Node
 
 
 class Saveable:
@@ -145,3 +145,35 @@ class TraceableNode(Node):
         int
         '''
         return self.G.tracer.get_iter(name=self.name)
+
+
+def issavable(x: Any) -> bool:
+    '''Checks whether the input is a subclass of Savable
+
+    Parameters
+    ----------
+    x : any
+        Input instance to check the type of Savable
+
+    Returns
+    -------
+    bool
+        True if `x` is of type Savable, else False
+    '''
+    return x is not None and issubclass(x.__class__, Saveable)
+
+
+def istraceable(x: Any) -> bool:
+    '''Checks whether the input is a subclass of Traceable
+
+    Parameters
+    ----------
+    x : any
+        Input instance to check the type of Traceable
+
+    Returns
+    -------
+    bool
+        True if `x` is of type Traceable, else False
+    '''
+    return x is not None and issubclass(x.__class__, TraceableNode)

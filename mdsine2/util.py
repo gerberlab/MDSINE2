@@ -2,8 +2,6 @@
 '''
 import itertools
 
-from mdsine2 import TaxaSet
-
 from mdsine2.logger import logger
 import numpy as np
 import copy
@@ -16,7 +14,8 @@ from .names import STRNAMES
 from . import pylab as pl
 
 from typing import Union, Dict, List
-from .pylab import Taxon, OTU, BaseMCMC, ClusterPerturbationEffect, Clustering, Study, diversity
+from .pylab import BaseMCMC, diversity
+from .base import *
 
 
 def is_gram_negative(taxon: Union[OTU, Taxon]) -> bool:

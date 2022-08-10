@@ -30,17 +30,17 @@ Main classes
 import numpy as np
 from mdsine2.logger import logger
 import numba
-import time
 import itertools
 import scipy.sparse
 
 from typing import Union, Dict, Iterator, Tuple, List, Any
 
-from .pylab.graph import DataNode, Node, Graph
+from .pylab import DataNode, Node, Graph
 from .names import STRNAMES
 
 from . import pylab as pl
-from .pylab.base import Study
+from .base import Study
+
 
 class Data(DataNode):
     '''Acts as a collection for the Observation object and a collection of Covariate objects.

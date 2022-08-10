@@ -1,17 +1,13 @@
 import numpy as np
-from mdsine2.logger import logger
-import copy
 import numba
 
 # Typing
-from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, Type, List, Iterable
+from typing import Any, Iterator, Type, List
 
+from mdsine2.pylab import Variable, TraceableNode, Node
 from . import util
-from .errors import NeedToImplementError
-from .graph import Node
-from .base import isclusterable, TraceableNode, TaxaSet
-from .graph import Node
-from .variables import Variable, summary
+from .taxa import TaxaSet
+from mdsine2.pylab import util
 
 # Constants
 DEFAULT_CLUSTERVALUE_DTYPE = float
@@ -60,6 +56,22 @@ def isclustervalue(x: Any) -> bool:
         True if `x` is the correct subtype
     '''
     return x is not None and issubclass(x.__class__, ClusterValue)
+
+
+def isclusterable(x: Any) -> bool:
+    '''Determines whether the input is a subclass of Clusterable
+
+    Parameters
+    ----------
+    x : any
+        Input instance to check the type of Clusterable
+
+    Returns
+    -------
+    bool
+        True if `x` is of type Clusterable, else False
+    '''
+    return x is not None and issubclass(x.__class__, Clusterable)
 
 
 class ClusterItem:
@@ -658,12 +670,12 @@ class ClusterProperty:
     def assignments_changed(self):
         '''Each object inheriting this class needs to implement this function
         '''
-        raise NeedToImplementError('User needs to implement this function')
+        raise NotImplementedError('User needs to implement this function')
 
     def clusters_changed(self, cids_added, cids_removed):
         '''Each object inheriting this class needs to implement this function
         '''
-        raise NeedToImplementError('User needs to implement this function')
+        raise NotImplementedError('User needs to implement this function')
 
     def set_signal_when_clusters_change(self, value: bool):
         '''Switch the signal `signal_when_clusters_change` to `value`
@@ -711,7 +723,7 @@ class ClusterProperty:
         '''Call this function after you set the `signal_when_item_assignment_changes` or
         `signal_when_clusters_change`.
         '''
-        raise NeedToImplementError('User needs to implement this function')
+        raise NotImplementedError('User needs to implement this function')
 
 
 class ClusterValue(ClusterProperty, TraceableNode):

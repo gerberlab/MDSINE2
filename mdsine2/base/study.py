@@ -3,10 +3,11 @@ from typing import Union, Tuple, Dict, Iterable, List
 import numpy as np
 import pandas as pd
 
-from .base import Saveable
-from .taxa import TaxaSet, Subject, OTU, Taxon, OTUTaxaSet
+from mdsine2.pylab import Saveable
+from .taxa import TaxaSet, OTU, Taxon, OTUTaxaSet
+from .subject import Subject
 from .perturbation import Perturbations, BasePerturbation
-from .. import util as plutil
+from mdsine2.pylab import util as plutil
 from mdsine2.logger import logger
 
 class Study(Saveable):

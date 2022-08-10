@@ -5,17 +5,14 @@ These track the acceptance rate and sets backend pointers
 These are only for scalars.
 '''
 
-import numpy.random as npr
 import numpy as np
-import sys
-from mdsine2.logger import logger
 
 # Typing
-from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple
+from typing import Any, Union, Iterator
 
+from .base import *
 from . import util
 from . import variables
-from .errors import MathError
 
 # Constants
 DEFAULT_TARGET_ACCEPTANCE_RATE = 'auto'

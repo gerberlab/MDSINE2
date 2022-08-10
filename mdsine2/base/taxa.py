@@ -2,14 +2,14 @@ from typing import Iterator, Any, Union, List
 
 import pandas as pd
 
-from .constants import *
-from .base import Saveable
-from .util import CustomOrderedDict
-from .. import util as plutil
-from .. import diversity
-from ..cluster import ClusterItem, Clusterable
-
+from mdsine2.pylab import Saveable
+from mdsine2.pylab import util as plutil
+from mdsine2.pylab import diversity
 from mdsine2.logger import logger
+
+from .constants import *
+from .util import CustomOrderedDict
+from .cluster import ClusterItem, Clusterable
 
 
 class Taxon(ClusterItem):

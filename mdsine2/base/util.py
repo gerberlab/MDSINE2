@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 
 from .constants import *
-from .. import util as plutil
+from mdsine2.pylab import util as plutil
 from mdsine2.logger import logger
 
 

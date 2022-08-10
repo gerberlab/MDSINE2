@@ -3,15 +3,16 @@
 
 import numpy as np
 from mdsine2.logger import logger
-import os
 import random
 
-from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Callable
+from typing import Union, List
 
 from . import model as plmodel
 from . import pylab as pl
 from .names import STRNAMES
-from .pylab import variables, Study, BaseMCMC
+from .pylab import variables, BaseMCMC
+from .base import Study
+
 
 class Synthetic(pl.Saveable):
     '''Generate synthetic and semi synthetic datasets for testing MDSINE2.

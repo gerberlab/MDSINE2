@@ -29,23 +29,19 @@ from mdsine2.logger import logger
 import math
 import warnings
 import re
-import copy
 import pandas
-import sys
 import numba
 
 from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Callable
 
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 import seaborn as sns
-from matplotlib.pyplot import arrow
 import matplotlib.ticker as plticker
 import matplotlib
 
 from . import pylab as pl
-from .pylab.base import DEFAULT_TAXLEVEL_NAME, Perturbations, Subject, TaxaSet, Study, OTU
-from .pylab import Clustering, variables
+from .base import *
+from .pylab import variables
 
 warnings.filterwarnings('ignore')
 _plt_labels = ['title', 'xlabel', 'ylabel']

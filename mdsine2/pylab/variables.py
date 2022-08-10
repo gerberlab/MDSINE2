@@ -18,25 +18,15 @@ When you call `add_trace`, the internal mechanism automatically pushes the local
 disk once it has reached the checkpoint to write to disk.
 '''
 import numpy as np
-import math
-import numpy.random as npr
-import pickle
 import random
 from mdsine2.logger import logger
-import warnings
-import sys
-import scipy.stats
 
 # Typing
-from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
-    Type, Callable
+from typing import Any, Union, Dict, Iterator, Tuple, Type
 
-from .graph import get_default_graph, Node, isnode
-from .base import TraceableNode, istraceable
-from .errors import UndefinedError, MathError, InitializationError, \
-    NeedToImplementError
-from . import random
-from .util import isarray, isbool, isstr, istype, istuple
+from .base import *
+from .base import random
+from .util import isarray, isbool, istype, istuple
 
 # Constants
 DEFAULT_VARIABLE_TYPE = float
@@ -357,7 +347,7 @@ class _RandomBase:
     def sample(self, *args, **kwargs):
         '''Sample with the given parameters
         '''
-        raise NeedToImplementError('User needs to implement this function')
+        raise NotImplementedError('User needs to implement this function')
 
     def pdf(self, value: Union[float, Iterator[float]]=None) -> Union[float, Iterator[float]]:
         '''Calculate the pdf with the specified value. If `value` is not
@@ -372,7 +362,7 @@ class _RandomBase:
         -------
         float
         '''
-        raise NeedToImplementError('User needs to implement this function')
+        raise NotImplementedError('User needs to implement this function')
 
     def logpdf(self, value: Union[float, Iterator[float]]=None) -> Union[float, Iterator[float]]:
         '''Calculate the logpdf with the specified value. If `value` is not
@@ -387,7 +377,7 @@ class _RandomBase:
         -------
         float
         '''
-        raise NeedToImplementError('User needs to implement this function')
+        raise NotImplementedError('User needs to implement this function')
 
     def cdf(self, value: Union[float, Iterator[float]]=None) -> Union[float, Iterator[float]]:
         '''Calculate the cdf with the specified value. If `value` is not
@@ -402,7 +392,7 @@ class _RandomBase:
         -------
         float
         '''
-        raise NeedToImplementError('User needs to implement this function')
+        raise NotImplementedError('User needs to implement this function')
 
     def logcdf(self, value: Union[float, Iterator[float]]=None) -> Union[float, Iterator[float]]:
         '''Calculate the logcdf with the specified value. If `value` is not
@@ -417,7 +407,7 @@ class _RandomBase:
         -------
         float
         '''
-        raise NeedToImplementError('User needs to implement this function')
+        raise NotImplementedError('User needs to implement this function')
 
 
 class Constant(Node, _BaseArithmeticClass):

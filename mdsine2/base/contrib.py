@@ -5,21 +5,15 @@ depend on contrib
 '''
 import numpy as np
 import numpy.random as npr
-import sys
 from mdsine2.logger import logger
-import scipy.special
 
 # Typing
-from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
-    Callable
+from mdsine2.pylab import variables, util, TraceableNode
+from typing import Any, Union, Dict, Iterator, Tuple, Callable
+from .cluster import isclustervalue, ClusterValue, isclustering, ClusterProperty, Clustering
+from .perturbation import BasePerturbation, Perturbations
+from .taxa import TaxaSet
 
-from .base import BasePerturbation, TraceableNode
-from .base import Perturbations as PerturbationSet
-from . import variables
-from .cluster import isclustervalue, ClusterValue, isclustering, \
-    ClusterProperty, Clustering
-from .graph import Node
-from . import util, base
 
 # Constants
 DEFAULT_SIGNAL_WHEN_CLUSTERS_CHANGE = False
@@ -85,7 +79,7 @@ class Perturbation(BasePerturbation, variables.Variable):
     ----------
     starts, ends : dict
         Start and end of the perturbation for each subject
-    taxa : pylab.base.TaxaSet
+    taxa : pylab.TaxaSet
         Set of taxon/otu objects
     magnitude : pylab.variables.Variable, int/float, array, Optional
         If a pylab.variables.Variable is passed in it will create one
@@ -100,19 +94,16 @@ class Perturbation(BasePerturbation, variables.Variable):
     kwargs : dict
         - Extra arguments for the Node class
     '''
-    def __init__(self, taxa: base.TaxaSet, starts: Dict[str, float], ends: Dict[str, float], 
+    def __init__(self, taxa: TaxaSet, starts: Dict[str, float], ends: Dict[str, float], 
         magnitude: Union[variables.Variable, np.ndarray, int, float]=None, 
         indicator: Union[variables.Variable, np.ndarray]=None, 
         probability: Union[variables.Variable, float]=None, **kwargs):
         
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
-            self.G.perturbations = PerturbationSet()
+            self.G.perturbations = Perturbations()
         BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         
-        if not base.istaxaset(taxa):
-            raise TypeError('`taxa` ({}) must be pylab.base.TaxaSet'.format(type(taxa)))
-
         self.G.perturbations.append(self)
         self.taxa = taxa
         n_taxa = len(self.taxa)
@@ -500,7 +491,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
         
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
-            self.G.perturbations = PerturbationSet()
+            self.G.perturbations = Perturbations()
 
         BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         self.G.perturbations.append(self)
@@ -1077,9 +1068,9 @@ class Interactions(ClusterProperty, TraceableNode):
             Returns a list of the interactions that are positive in order
         '''
         ret = []
+        n_clusters = len(self.clustering)
         try:
             if target_cid is not None:
-                n_clusters = len(self.clustering)
                 tcidx = self.clustering.cid2cidx[target_cid]
 
                 if source_cid is not None:

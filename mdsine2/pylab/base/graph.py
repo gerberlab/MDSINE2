@@ -8,15 +8,11 @@ The Node class is also defined here.
 import numpy as np
 import networkx as nx
 from mdsine2.logger import logger
-import copy
-import random
-import h5py
-import matplotlib
 
 # Typing
-from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple
+from typing import Any, Union, Iterator
 
-from .base import Saveable
+from .trace import Saveable
 from .random import seed as set_seed
 from .errors import GraphIDError, UndefinedError
 

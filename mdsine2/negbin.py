@@ -21,7 +21,8 @@ import seaborn as sns
 from . import visualization
 
 from . import pylab as pl
-from .pylab import Study, BaseMCMC
+from .pylab import BaseMCMC
+from .base import Study
 from .names import STRNAMES
 from . import config
 

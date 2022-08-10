@@ -12,7 +12,9 @@ from . import design_matrices
 from . import posterior
 
 from . import pylab as pl
-from .pylab import Study, BaseMCMC
+from .pylab import BaseMCMC
+from .base import Study
+
 
 def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset: Study, continue_inference: int=None, 
     intermediate_validation: Dict[str, Union[float, Callable, Dict[str, Any]]]=None) -> BaseMCMC:

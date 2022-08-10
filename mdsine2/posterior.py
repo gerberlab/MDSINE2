@@ -8215,7 +8215,7 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
             if not pl.isnumeric(dof):
                 raise TypeError('`dof` ({}) must be a numeric'.format(type(dof)))
             if dof < 0:
-                raise ValueError('`dof` ({}) must be > 0 for it to be a valid prior'.format(shape))
+                raise ValueError('`dof` ({}) must be > 0 for it to be a valid prior'.format(dof))
         elif dof_option in ['diffuse', 'auto']:
             dof = 2.5
         elif dof_option == 'strong':

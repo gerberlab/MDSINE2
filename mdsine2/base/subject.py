@@ -2,13 +2,15 @@ from typing import Union, Dict, Tuple, List
 import numpy as np
 import pandas as pd
 
-from .. import util as plutil
-from .base import Saveable
+from mdsine2.pylab import util as plutil
+from mdsine2.pylab import Saveable
+
 from .perturbation import Perturbations
 from .taxa import OTU, Taxon, TaxaSet
 from .constants import *
 from .qpcr import qPCRdata
 from .util import taxaname_formatter
+from .study import Study
 
 from mdsine2.logger import logger
 

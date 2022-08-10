@@ -1,6 +1,6 @@
 from typing import Dict, Union
-from .taxa import Subject
-from .. import util as plutil
+from .subject import Subject
+from mdsine2.pylab import util as plutil
 
 
 class BasePerturbation:

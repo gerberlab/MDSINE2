@@ -13,15 +13,13 @@ import pickle
 import numpy as np
 
 # Typing
-from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
+from typing import Any, Union, Dict, Iterator, Tuple, \
     Callable, Type, List
 
-from .graph import get_default_graph, isgraph, isnode, Graph, Node
-from .base import Saveable
+from .base import *
 from .variables import isVariable, Variable
-from .errors import UndefinedError, InheritanceError
 from . import util
-from .random import seed as set_seed
+
 from tqdm import tqdm
 
 # Constants
@@ -432,7 +430,7 @@ class BaseMCMC(BaseModel):
 
         update_runtimes: Dict[str, List[float]] = defaultdict(list)
 
-        set_seed(self.graph.seed)
+        seed(self.graph.seed)
         if self.start_step is None:
             self.start_step = 0
         try:

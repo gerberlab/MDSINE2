@@ -6,7 +6,6 @@ import logging.config
 import logging.handlers
 
 from pathlib import Path
-from typing import Callable
 
 
 __env_key__ = "MDSINE2_LOG_INI"
