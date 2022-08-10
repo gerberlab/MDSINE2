@@ -464,10 +464,11 @@ class Subject(Saveable):
                 subset_idxs = [taxon.idx for taxon in components]
                 agg_subj.reads[t][aidx] = np.sum(self.reads[t][subset_idxs])
 
-        for taxon in taxon_components:
-            agg_subj._reads_individ[taxon.name] = {
-                t: self.reads[t][taxon.idx]
-                for t in self.times
-            }
+        for otu_list in taxon_components:
+            for taxon in otu_list:
+                agg_subj._reads_individ[taxon.name] = {
+                    t: self.reads[t][taxon.idx]
+                    for t in self.times
+                }
 
         return agg_subj
