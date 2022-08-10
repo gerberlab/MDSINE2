@@ -323,7 +323,7 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     asvs = list(subjset.taxa)
     dists = np.zeros((len(asvs), len(asvs)), dtype=int)
     for i, j in itertools.combinations(subjset.taxa, r=2):
-        d = diversity.beta.hamming(i, j)
+        d = diversity.beta.hamming(i.sequence, j.sequence)
         dists[i, j] = d
         dists[j, i] = d
 
