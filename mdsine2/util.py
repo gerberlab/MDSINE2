@@ -329,6 +329,7 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
 
     clustering = AgglomerativeClustering(
         affinity='precomputed',
+        n_clusters=None,
         linkage='single',  # min distance
         distance_threshold=hamming_dist
     ).fit(dists)
