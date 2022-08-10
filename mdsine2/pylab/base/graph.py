@@ -5,6 +5,7 @@ added to a default graph, which is defined at the bottom of the module.
 
 The Node class is also defined here.
 '''
+from pathlib import Path
 import numpy as np
 import networkx as nx
 from mdsine2.logger import logger
