@@ -335,6 +335,8 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
             seqs2 = [taxon2.sequence]
 
         print(taxon1.name)
+        print(seqs1)
+        print(seqs2)
         for v1 in seqs1:
             for v2 in seqs2:
                 print("{}, {} -> {}".format(
