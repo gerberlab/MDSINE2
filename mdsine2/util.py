@@ -13,7 +13,7 @@ from sklearn.cluster import AgglomerativeClustering
 from .names import STRNAMES
 from . import pylab as pl
 
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 from .pylab import BaseMCMC, diversity
 from .base import *
 
@@ -307,7 +307,7 @@ def condense_fixed_clustering_perturbation(pert: np.ndarray, clustering: Cluster
     return ret
 
 
-def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
+def aggregate_items(subjset: Study, hamming_dist: int, linkage: str = 'average') -> Study:
     """
     Aggregate Taxa that have an average hamming distance of `hamming_dist`.
 
@@ -327,10 +327,11 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
         dists[i.idx, j.idx] = d
         dists[j.idx, i.idx] = d
 
+    logger.info(f'Aggregating taxa with a hamming distance of {hamming_dist} (linkage: {linkage})')
     clustering = AgglomerativeClustering(
         affinity='precomputed',
         n_clusters=None,
-        linkage='average',  # min distance
+        linkage=linkage,  # min distance
         distance_threshold=hamming_dist
     ).fit(dists)
 
@@ -479,8 +480,8 @@ def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_filename: str):
     print("cyjs file exported to: {}".format(output_filename))
 
 
-def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min_num_consecutive: int, min_num_subjects: int,
-    colonization_time: Union[float, int]=None, union_other_consortia: Study=None) -> Study:
+def consistency_filtering(subjset: Study, dtype: str, threshold: Union[float, int], min_num_consecutive: int, min_num_subjects: int,
+    colonization_time: Union[float, int]=None, union_other_consortia: Optional[Study]=None) -> Study:
     '''Filters the subjects by looking at the consistency of the 'dtype', which can
     be either 'raw' where we look for the minimum number of counts, 'rel', where we
     look for a minimum relative abundance, or 'abs' where we look for a minium
@@ -529,9 +530,6 @@ def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min
         raise TypeError('`dtype` ({}) must be a str'.format(type(dtype)))
     if dtype not in ['raw', 'rel', 'abs']:
         raise ValueError('`dtype` ({}) not recognized'.format(dtype))
-    if not pl.isstudy(subjset):
-        raise TypeError('`subjset` ({}) must be a mdsine2.Study'.format(
-            type(subjset)))
     if not pl.isnumeric(threshold):
         raise TypeError('`threshold` ({}) must be a numeric'.format(type(threshold)))
     if threshold <= 0:
@@ -557,10 +555,6 @@ def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min
             type(min_num_subjects)))
     if min_num_subjects > len(subjset) or min_num_subjects <= 0:
         raise ValueError('`min_num_subjects` ({}) value not valid'.format(min_num_subjects))
-    if union_other_consortia is not None:
-        if not pl.isstudy(union_other_consortia):
-            raise TypeError('`union_other_consortia` ({}) must be a mdsine2.Study'.format(
-                type(union_other_consortia)))
 
     subjset = copy.deepcopy(subjset)
 
