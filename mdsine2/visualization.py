@@ -1726,40 +1726,42 @@ def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: s
     def _agg_taxaname_for_paper(agg, taxaname):
         '''Makes the name in the format needed for the paper for an OTU
         '''
-        if _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'species'):
-            species = agg.aggregated_taxonomies[taxaname]['species']
+        if _tax_is_defined(agg.taxonomy[taxaname], 'species'):
+            species = agg.taxonomy[taxaname]['species']
             species = species.split('/')
             if len(species) >= 3:
                 species = species[:2]
             species = '/'.join(species)
             label = '{genus} {spec} {name}'.format(
-                    genus=agg.aggregated_taxonomies[taxaname]['genus'],
+                    genus=agg.taxonomy[taxaname]['genus'],
                     spec=species,
                     name=taxaname)
-        elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'genus'):
+        elif _tax_is_defined(agg.taxonomy[taxaname], 'genus'):
             label = '* {genus} {name}'.format(
-                    genus=agg.aggregated_taxonomies[taxaname]['genus'],
+                    genus=agg.taxonomy[taxaname]['genus'],
                     name=taxaname)
-        elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'family'):
+        elif _tax_is_defined(agg.taxonomy[taxaname], 'family'):
             label = '** {family} {name}'.format(
-                    family=agg.aggregated_taxonomies[taxaname]['family'],
+                    family=agg.taxonomy[taxaname]['family'],
                     name=taxaname)
-        elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'order'):
+        elif _tax_is_defined(agg.taxonomy[taxaname], 'order'):
             label = '*** {order} {name}'.format(
-                    order=agg.aggregated_taxonomies[taxaname]['order'],
+                    order=agg.taxonomy[taxaname]['order'],
                     name=taxaname)
-        elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'class'):
+        elif _tax_is_defined(agg.taxonomy[taxaname], 'class'):
             label = '**** {clas} {name}'.format(
-                    clas=agg.aggregated_taxonomies[taxaname]['class'],
+                    clas=agg.taxonomy[taxaname]['class'],
                     name=taxaname)
-        elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'phylum'):
+        elif _tax_is_defined(agg.taxonomy[taxaname], 'phylum'):
             label = '***** {phylum} {name}'.format(
-                    phylum=agg.aggregated_taxonomies[taxaname]['phylum'],
+                    phylum=agg.taxonomy[taxaname]['phylum'],
                     name=taxaname)
-        elif _tax_is_defined(agg.aggregated_taxonomies[taxaname], 'kingdom'):
+        elif _tax_is_defined(agg.taxonomy[taxaname], 'kingdom'):
             label = '****** {kingdom} {name}'.format(
-                    kingdom=agg.aggregated_taxonomies[taxaname]['kingdom'],
+                    kingdom=agg.taxonomy[taxaname]['kingdom'],
                     name=taxaname)
+        else:
+            raise RuntimeError(f"Unexpected taxaname argument `{taxaname}`")
         return label
 
     if not issubject(subj):
