@@ -1728,7 +1728,7 @@ def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: s
         '''
         assert isinstance(agg, OTU)
         print(agg.name)
-        print(agg.components)
+        print([t.name for t in agg.components])
         print(taxaname)
         if _tax_is_defined(agg.taxonomy[taxaname], 'species'):
             species = agg.taxonomy[taxaname]['species']
