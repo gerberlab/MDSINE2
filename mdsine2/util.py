@@ -330,7 +330,7 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     clustering = AgglomerativeClustering(
         affinity='precomputed',
         n_clusters=None,
-        linkage='single',  # min distance
+        linkage='average',  # min distance
         distance_threshold=hamming_dist
     ).fit(dists)
 
@@ -339,6 +339,11 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     for oidx in oidx_set:
         asv_subset: List[Taxon] = [asvs[i] for i in np.where(clustering.labels_ == oidx)[0]]
         subsets.append(asv_subset)
+    subsets = sorted(
+        subsets,
+        key=lambda x: len(x),
+        reverse=True
+    )
 
     return subjset.aggregate_items(subsets)
 

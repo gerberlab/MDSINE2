@@ -1793,8 +1793,6 @@ def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: s
         ax = fig.add_subplot(111)
     
     agg = subj.taxa[agg]
-    for t in subj.taxa:
-        print(t.name)
     M = subj.matrix()[dtype]
 
     # Plot the aggregate

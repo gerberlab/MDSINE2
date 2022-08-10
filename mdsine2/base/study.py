@@ -485,7 +485,7 @@ class Study(Saveable):
             name=self.name
         )
         for subj in self:
-            agg_subj = subj.aggregate_items(components)
+            agg_subj = subj.aggregate_items(other, components)
             other.add_subject_obj(agg_subj)
         return other
 

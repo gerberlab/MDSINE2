@@ -195,13 +195,11 @@ class OTU(Taxon):
             idx=idx,
             sequence=self.generate_consensus_seq()
         )
-        # self.aggregated_taxa = agg1 + agg2 # list
-        # self.aggregated_seqs = agg1_seq # dict: taxon.name (str) -> sequence (str)
-        # self.aggregated_taxonomies = _agg_taxa # dict: taxon.name (str) -> (dict: tax level (str) -> taxonomy (str))
-        # for k,v in agg2_seq.items():
-        #     self.aggregated_seqs[k] = v
-        #
-        # self.taxonomy = anchor.taxonomy
+
+        self.aggregated_taxonomies = {
+            taxa.name: taxa.taxonomy
+            for taxa in components
+        }
 
     def __str__(self) -> str:
         return 'OTU\n\tid: {}\n\tidx: {}\n\tname: {}\n' \

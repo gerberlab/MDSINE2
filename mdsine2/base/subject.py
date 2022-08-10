@@ -443,7 +443,7 @@ class Subject(Saveable):
         self._reads_individ.pop(other)
         return
 
-    def aggregate_items(self, taxon_components: List[List[Taxon]]) -> 'Subject':
+    def aggregate_items(self, study: 'Study', taxon_components: List[List[Taxon]]) -> 'Subject':
         """
         Aggregate the taxon `other` into `anchor`. This is called from
         `mdsine2.Study.aggregate_items`.
@@ -453,7 +453,7 @@ class Subject(Saveable):
         anchor, other : OTU, Taxon
             These are the s to combine
         """
-        agg_subj = Subject(parent=self.parent, name=self.name)
+        agg_subj = Subject(parent=study, name=self.name)
         agg_subj.times = self.times
         agg_subj.qpcr = self.qpcr
         agg_subj._reads_individ = {}
