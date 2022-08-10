@@ -13,7 +13,7 @@ import scipy.special
 from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
     Callable
 
-from .base import BasePerturbation, Traceable
+from .base import BasePerturbation, TraceableNode
 from .base import Perturbations as PerturbationSet
 from . import variables
 from .cluster import isclustervalue, ClusterValue, isclustering, \
@@ -691,7 +691,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
                     i += 1
 
 
-class Interactions(ClusterProperty, Node, Traceable):
+class Interactions(ClusterProperty, TraceableNode):
     '''This is a basic class for interactions between clusters.
 
     This is a 2D dictionary. The first level of the dictionary indexes the target 
@@ -755,7 +755,7 @@ class Interactions(ClusterProperty, Node, Traceable):
         value_initializer: Callable=None, indicator_initializer: Callable=None, 
         signal_when_clusters_change: bool=True, **kwargs):
 
-        Node.__init__(self, **kwargs)
+        TraceableNode.__init__(self, dtype=float, **kwargs)
         ClusterProperty.__init__(self, clustering=clustering, 
             signal_when_clusters_change=signal_when_clusters_change, 
             signal_when_item_assignment_changes=False)
@@ -797,7 +797,6 @@ class Interactions(ClusterProperty, Node, Traceable):
                 self._IIDX += 1
 
         self._shape = (len(self.clustering.items), len(self.clustering.items))
-        self.dtype = float
 
     def __getitem__(self, key: Any) -> '_Interaction':
         return self.value[key]

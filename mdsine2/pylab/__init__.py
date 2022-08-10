@@ -16,8 +16,6 @@ from . import diversity
 from .util import isnumeric, isbool, isfloat, isint, isarray, issquare, isstr, \
     itercheck, istype, istuple, isdict, istree
 from .variables import isVariable, isRandomVariable
-from .base import isqpcrdata, istaxaset, istaxon, issavable, istraceable, \
-    issubject, isstudy, isperturbation, isclusterable, isotu, istaxontype
 from .random import israndom
 from .cluster import isclustering, isclusterproperty, isclustervalue
 from .inference import isMCMC, ismodel
@@ -29,9 +27,7 @@ from .multiprocessing import ispersistentworker, ispersistentpool, isDASW, isSAD
 
 # Import commonly used Pylab functions and classes
 from .util import toarray, fast_index, coarsen_phylogenetic_tree
-from .base import Taxon, OTU, TaxaSet, qPCRdata, Saveable, Traceable, BasePerturbation, \
-    Subject, Study, condense_matrix_with_taxonomy, taxaname_for_paper, taxaname_formatter, \
-    TAXANAME_PAPER_FORMAT
+from .base import *
 from .variables import Variable, Constant, summary
 from .graph import Graph, Node, hasprior
 from .cluster import Clustering

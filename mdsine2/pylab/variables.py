@@ -32,7 +32,7 @@ from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
     Type, Callable
 
 from .graph import get_default_graph, Node, isnode
-from .base import Traceable, istraceable
+from .base import TraceableNode, istraceable
 from .errors import UndefinedError, MathError, InitializationError, \
     NeedToImplementError
 from . import random
@@ -87,8 +87,8 @@ def isRandomVariable(var: Any) -> bool:
     '''
     return var is not None and issubclass(var.__class__, _RandomBase)
 
-def summary(var: Traceable, set_nan_to_0: bool=False, section: str='posterior', 
-    only: Iterator[str]=None) -> Dict[str, Union[str, np.ndarray]]:
+def summary(var: TraceableNode, set_nan_to_0: bool=False, section: str= 'posterior',
+            only: Iterator[str]=None) -> Dict[str, Union[str, np.ndarray]]:
     '''Calculates different metrics about the given trace (mean, 
     median, 25th percentile, 75th percentile)
 
@@ -457,7 +457,7 @@ class Constant(Node, _BaseArithmeticClass):
             '`override_value` explicitly'.format(self.name))
 
 
-class Variable(Node, _BaseArithmeticClass, Traceable):
+class Variable(TraceableNode, _BaseArithmeticClass):
     '''Scalar values that can change over time and be traced
 
     Parameters
@@ -471,7 +471,7 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
     '''
     def __init__(self, value: Union[float, Iterator[float]]=None, 
         dtype: Type=None, shape: Tuple[int]=None, **kwargs):
-        Node.__init__(self, **kwargs)
+        TraceableNode.__init__(self, dtype=dtype, **kwargs)
         if dtype is None:
             dtype = DEFAULT_VARIABLE_TYPE
         if not istype(dtype):
@@ -480,7 +480,6 @@ class Variable(Node, _BaseArithmeticClass, Traceable):
             if not istuple(shape):
                 raise TypeError('`shape` ({}) must be a tuple or None')
         
-        self.dtype = dtype # Type
         self.value = value # array or float
         self._shape = shape # Shape of the .value parameter
         self._init_value = None

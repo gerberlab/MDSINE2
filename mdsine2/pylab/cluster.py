@@ -4,12 +4,12 @@ import copy
 import numba
 
 # Typing
-from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, Type, List
+from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, Type, List, Iterable
 
 from . import util
 from .errors import NeedToImplementError
 from .graph import Node
-from .base import isclusterable, Traceable, TaxaSet
+from .base import isclusterable, TraceableNode, TaxaSet
 from .graph import Node
 from .variables import Variable, summary
 
@@ -62,7 +62,43 @@ def isclustervalue(x: Any) -> bool:
     return x is not None and issubclass(x.__class__, ClusterValue)
 
 
-class Clustering(Node, Traceable):
+class ClusterItem:
+    '''These are single points that get clustered
+
+    It must have the parameter
+        'name'
+    '''
+    def __init__(self, name: str):
+        self.name = name
+
+    def cluster_str(self) -> str:
+        return self.name
+
+
+class Clusterable:
+    '''This is the base class for something to be clusterable (be used to cluster in
+    pylab.cluster.Clustering). These are the functions that need to be implemented
+    for it to be able to be clustered.
+
+    `stritem`: This is the function that we use to get the label of the item
+    '''
+    def __len__(self):
+        raise NotImplementedError('You must implement this function')
+
+    def __getitem__(self, key):
+        raise NotImplementedError('You must implement this function')
+
+    def __iter__(self):
+        raise NotImplementedError('You must implement this function')
+
+    def __contains__(self, key):
+        raise NotImplementedError('You must implement this function')
+
+    def stritem(self, key):
+        raise NotImplementedError('You must implement this function')
+
+
+class Clustering(TraceableNode):
     '''Base class for clustering. This will cluster items where the aggregate
     clas inherits the `pylab.base.Clusterable` class.
     
@@ -130,7 +166,7 @@ class Clustering(Node, Traceable):
         These are the additional arguments for the Node class (name, Graph, etc.)
     '''
     def __init__(self, clusters: np.ndarray, items: TaxaSet, **kwargs):
-        Node.__init__(self, **kwargs)
+        super().__init__(dtype=None, **kwargs)
         if not isclusterable(items):
             raise TypeError('`items` ({}) must be a pylab.base.Clusterable object'.format( 
                 type(items)))
@@ -152,8 +188,8 @@ class Clustering(Node, Traceable):
         
         # Everything is good, make the cluster objects
         self._CIDX = 100100 # Start of the cluster index
-        self.items = items # This is usually a TaxaSet object
-        self.clusters = {} # dict: cluster id (int) -> _Cluster
+        self.items = items  # An indexable container of ClusterItems
+        self.clusters = {}  # dict: cluster id (int) -> _Cluster
         for cidx in np.arange(np.max(clusters)+1):
             idxs = np.where(clusters == cidx)[0]
             temp = _Cluster(members=idxs, parent=self, iden=self._CIDX)
@@ -678,7 +714,7 @@ class ClusterProperty:
         raise NeedToImplementError('User needs to implement this function')
 
 
-class ClusterValue(ClusterProperty, Node, Traceable):
+class ClusterValue(ClusterProperty, TraceableNode):
     '''This is an object that has a value per cluster.
     The value is a dictionary, then there are functions to convert
     that dictionary into an item array or a cluster array.

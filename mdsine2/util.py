@@ -1,19 +1,21 @@
 '''Utility functions for mdsine2
 '''
+import itertools
+
 from mdsine2.logger import logger
 import numpy as np
-import scipy
-import math
 import copy
 import pandas as pd
+
+import scipy.stats
+from sklearn.cluster import AgglomerativeClustering
 
 from .names import STRNAMES
 from . import pylab as pl
 
-from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Callable
+from typing import Union, Dict, List
+from .pylab import Taxon, OTU, BaseMCMC, ClusterPerturbationEffect, Clustering, Study, diversity
 
-from .pylab import diversity
-from .pylab import Taxon, OTU, BaseMCMC, ClusterPerturbationEffect, Clustering, Study
 
 def is_gram_negative(taxon: Union[OTU, Taxon]) -> bool:
     '''Return true if the taxon is gram - or gram positive
@@ -148,10 +150,6 @@ def generate_cluster_assignments_posthoc(clustering: Clustering, n_clusters: Uni
     np.ndarray(size=(len(items), ), dtype=int)
         Each value is the cluster assignment for index i
     '''
-    from sklearn.cluster import AgglomerativeClustering
-    import scipy.stats
-
-
     trace = clustering.n_clusters.get_trace_from_disk(section=section)
     if callable(n_clusters):
         n = n_clusters(trace)
@@ -308,7 +306,8 @@ def condense_fixed_clustering_perturbation(pert: np.ndarray, clustering: Cluster
     return ret
 
 def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
-    '''Aggregate Taxa that have an average hamming distance of `hamming_dist`
+    """
+    Aggregate Taxa that have an average hamming distance of `hamming_dist`
 
     Parameters
     ----------
@@ -321,53 +320,76 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     Returns
     -------
     mdsine2.Study
-    '''
-    def _avg_dist(taxon1: Union[Taxon, OTU], taxon2: Union[Taxon, OTU]) -> float:
-        dists = []
-        if pl.isotu(taxon1):
-            seqs1 = taxon1.aggregated_seqs.values()
-        else:
-            seqs1 = [taxon1.sequence]
+    """
 
-        if pl.isotu(taxon2):
-            seqs2 = taxon2.aggregated_seqs.values()
-        else:
-            seqs2 = [taxon2.sequence]
+    # Compute the hamming dist matrix
+    asvs = list(subjset.taxa)
+    dists = np.zeros((len(asvs), len(asvs)), dtype=int)
+    for i, j in itertools.combinations(subjset.taxa, r=2):
+        d = diversity.beta.hamming(i, j)
+        dists[i, j] = d
+        dists[j, i] = d
 
-        for v1 in seqs1:
-            for v2 in seqs2:
-                dists.append(diversity.beta.hamming(v1, v2))
-        return np.nanmean(dists)
-    cnt = 0
-    found = False
-    iii = 0
-    logger.info('Agglomerating taxa')
-    while not found:
-        for iii in range(iii, len(subjset.taxa)):
-            if iii % 200 == 0:
-                logger.info('{}/{}'.format(iii, len(subjset.taxa)))
-            taxon1 = subjset.taxa[iii]
-            for taxon2 in subjset.taxa.names.order[iii:]:
-                taxon2 = subjset.taxa[taxon2]
-                if taxon1.name == taxon2.name:
-                    continue
-                if len(taxon1.sequence) != len(taxon2.sequence):
-                    continue
+    clustering = AgglomerativeClustering(
+        affinity='precomputed',
+        linkage='single',  # min distance
+        distance_threshold=2.0
+    ).fit(dists)
 
-                dist = _avg_dist(taxon1, taxon2)
-                if dist <= hamming_dist:
-                    subjset.aggregate_items(taxon1, taxon2)
-                    cnt += 1
-                    found = True
-                    break
-            if found:
-                break
-        if found:
-            found = False
-        else:
-            break
-    logger.info('Aggregated {} taxa'.format(cnt))
-    return subjset
+    oidx_set = set(clustering.labels_)
+    for oidx in oidx_set:
+        oid = f'OTU_{oidx+1}'
+        asv_subset = [asvs[i] for i in np.where(clustering.labels == oidx)[0]]
+
+
+    # def _avg_dist(taxon1: Union[Taxon, OTU], taxon2: Union[Taxon, OTU]) -> float:
+    #     dists = []
+    #     if pl.isotu(taxon1):
+    #         seqs1 = taxon1.aggregated_seqs.values()
+    #     else:
+    #         seqs1 = [taxon1.sequence]
+    #
+    #     if pl.isotu(taxon2):
+    #         seqs2 = taxon2.aggregated_seqs.values()
+    #     else:
+    #         seqs2 = [taxon2.sequence]
+    #
+    #     for v1 in seqs1:
+    #         for v2 in seqs2:
+    #             dists.append(diversity.beta.hamming(v1, v2))
+    #     return np.nanmean(dists)
+
+
+
+    # cnt = 0
+    # found = False
+    # iii = 0
+    # logger.info('Agglomerating taxa')
+    # while not found:
+    #     for iii in range(iii, len(subjset.taxa)):
+    #         if iii % 200 == 0:
+    #             logger.info('{}/{}'.format(iii, len(subjset.taxa)))
+    #         taxon1 = subjset.taxa[iii]
+    #         for taxon2 in subjset.taxa.names.order[iii:]:
+    #             taxon2 = subjset.taxa[taxon2]
+    #             if taxon1.name == taxon2.name:
+    #                 continue
+    #             if len(taxon1.sequence) != len(taxon2.sequence):
+    #                 continue
+    #
+    #             dist = _avg_dist(taxon1, taxon2)
+    #             if dist <= hamming_dist:
+    #                 subjset.aggregate_items(taxon1, taxon2)
+    #                 cnt += 1
+    #                 found = True
+    #                 break
+    #         if found:
+    #             break
+    #     if found:
+    #         found = False
+    #     else:
+    #         break
+    # logger.info('Aggregated {} taxa'.format(cnt))
 
 
 def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_filename: str):
