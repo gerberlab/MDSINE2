@@ -324,8 +324,8 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
     dists = np.zeros((len(asvs), len(asvs)), dtype=int)
     for i, j in itertools.combinations(subjset.taxa, r=2):
         d = diversity.beta.hamming(i.sequence, j.sequence)
-        dists[i, j] = d
-        dists[j, i] = d
+        dists[i.idx, j.idx] = d
+        dists[j.idx, i.idx] = d
 
     clustering = AgglomerativeClustering(
         affinity='precomputed',
