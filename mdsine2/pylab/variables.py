@@ -485,6 +485,7 @@ class Variable(TraceableNode, _BaseArithmeticClass):
         It will initialize a buffer the size of the checkpoint size in Tracer
         '''
         if self.G.inference.tracer_filename is not None:
+            print(self.name)
             self.G.tracer.set_trace(self.name, shape=self._shape, dtype=self.dtype)
             checkpoint = self.G.tracer.checkpoint
         else:
