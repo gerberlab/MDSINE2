@@ -394,6 +394,10 @@ class OTU(Taxon):
                         self.taxonomy[tax_level] = DEFAULT_TAXLEVEL_NAME
                         set_to_na = True
 
+        self.aggregated_taxonomies = {}
+        for taxon in self.components:
+            self.aggregated_taxonomies[taxon.name] = taxon.taxonomy
+
 
 
 # class OTU(Taxon):
