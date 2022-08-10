@@ -461,7 +461,6 @@ class Variable(TraceableNode, _BaseArithmeticClass):
     '''
     def __init__(self, value: Union[float, Iterator[float]]=None, 
         dtype: Type=None, shape: Tuple[int]=None, **kwargs):
-        TraceableNode.__init__(self, dtype=dtype, **kwargs)
         if dtype is None:
             dtype = DEFAULT_VARIABLE_TYPE
         if not istype(dtype):
@@ -469,6 +468,8 @@ class Variable(TraceableNode, _BaseArithmeticClass):
         if shape is not None:
             if not istuple(shape):
                 raise TypeError('`shape` ({}) must be a tuple or None')
+
+        TraceableNode.__init__(self, dtype=dtype, **kwargs)
         
         self.value = value # array or float
         self._shape = shape # Shape of the .value parameter
