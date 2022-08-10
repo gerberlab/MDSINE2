@@ -1749,7 +1749,7 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         self._make_matrix(rows=rows, cols=cols, n_cols=c2ciidx, build=build)
 
     # @profile
-    def inner(self, rows: List, cols: List, d: Dict[int, Any], interaction: _Interaction,
+    def inner(self, rows: List, cols: List, d: Dict[int, Any], interaction: Interaction,
         c2ciidx: int) -> Tuple[Dict[int, Any], List, List]:
         tcid = interaction.target_cid
         scid = interaction.source_cid

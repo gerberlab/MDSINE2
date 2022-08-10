@@ -4,7 +4,7 @@ from .cluster import isclustering, isclusterproperty, isclustervalue, isclustera
 from .constants import *
 from .contrib import isclusterperturbation, isclusterperturbationindicator, isinteractions, \
     Perturbation, ClusterPerturbationValue, ClusterPerturbationIndicator, ClusterPerturbationEffect, \
-    Interactions, _Interaction
+    Interactions, Interaction
 from .perturbation import BasePerturbation, Perturbations
 from .qpcr import qPCRdata
 from .study import Study

@@ -780,7 +780,7 @@ class Interactions(ClusterProperty, TraceableNode):
             for scid in order:
                 if tcid == scid:
                     continue
-                self.value[tcid][scid] = _Interaction( 
+                self.value[tcid][scid] = Interaction(
                     source_cid=scid, target_cid=tcid,
                     value=self.value_initializer(),
                     indicator=self.indicator_initializer(),
@@ -789,13 +789,13 @@ class Interactions(ClusterProperty, TraceableNode):
 
         self._shape = (len(self.clustering.items), len(self.clustering.items))
 
-    def __getitem__(self, key: Any) -> '_Interaction':
+    def __getitem__(self, key: Any) -> 'Interaction':
         return self.value[key]
 
     def __setitem__(self, key, val):
         self.value[key] = val
 
-    def __iter__(self) -> "_Interaction":
+    def __iter__(self) -> "Interaction":
         '''Iterates over the interactions in order
         '''
         order = self.clustering.order
@@ -845,7 +845,7 @@ class Interactions(ClusterProperty, TraceableNode):
                     if temp[scid].indicator:
                         yield tcid, scid
 
-    def iter_to_target(self, cid: int, only_valid: bool=False) -> "_Interaction":
+    def iter_to_target(self, cid: int, only_valid: bool=False) -> "Interaction":
         '''Iterates over interactions to the target cluster from all
         source clusters in the order specified by clusters
 
@@ -868,7 +868,7 @@ class Interactions(ClusterProperty, TraceableNode):
                 if scid != cid:
                     yield temp[scid]
 
-    def iter_from_source(self, cid: int, only_valid: bool=False) -> "_Interaction":
+    def iter_from_source(self, cid: int, only_valid: bool=False) -> "Interaction":
         '''Iterates over interactions from the source cluster to all
         target clusters in the order specified by clusters
 
@@ -899,14 +899,14 @@ class Interactions(ClusterProperty, TraceableNode):
             for scid in self.clustering.order:
                 if tcid == scid:
                     continue
-                self.value[tcid][scid] = _Interaction(
+                self.value[tcid][scid] = Interaction(
                     source_cid=scid, target_cid=tcid,
                     value=self.value_initializer(),
                     indicator=self.indicator_initializer()>=.5, 
                     iden=self._IIDX)
                 self._IIDX += 1
 
-    def iloc(self, idx: int) -> "_Interaction":
+    def iloc(self, idx: int) -> "Interaction":
         '''Get the interaction as a function of the index that it occurs at.
         Reverse indexing is allowed.
 
@@ -917,7 +917,7 @@ class Interactions(ClusterProperty, TraceableNode):
 
         Returns
         -------
-        pylab.contrib._Interaction
+        pylab.contrib.Interaction
         '''
         if not util.isint(idx):
             raise TypeError('`idx` ({}) must be an int'.format(idx))
@@ -961,7 +961,7 @@ class Interactions(ClusterProperty, TraceableNode):
         # Add the interaction from clusters already there and 
         # the new cluster
         for ocid in other_cids:
-            self.value[ocid][cid] = _Interaction(
+            self.value[ocid][cid] = Interaction(
                 source_cid=cid, target_cid=ocid,
                 value=self.value_initializer(),
                 indicator=self.indicator_initializer() >= 0.5,
@@ -969,7 +969,7 @@ class Interactions(ClusterProperty, TraceableNode):
             self._IIDX += 1
         self.value[cid] = {}
         for ocid in other_cids:
-            self.value[cid][ocid] = _Interaction(
+            self.value[cid][ocid] = Interaction(
                 source_cid=ocid, target_cid=cid,
                 value=self.value_initializer(),
                 indicator=self.indicator_initializer() >= 0.5,
@@ -1471,7 +1471,7 @@ class Interactions(ClusterProperty, TraceableNode):
         return cids
         
 
-class _Interaction:
+class Interaction:
     '''Defines an interaction from cluster `source` to cluster `target`.
 
     Parameters
