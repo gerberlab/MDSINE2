@@ -1362,7 +1362,7 @@ class TaxaSet(Clusterable):
         """
         other = OTUTaxaSet()
         for gidx, grouping in enumerate(groupings):
-            otu = OTU(component=grouping, idx=gidx)
+            otu = OTU(components=grouping, idx=gidx)
             other.add(otu)
         return other
 
