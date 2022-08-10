@@ -388,7 +388,7 @@ class OTU(Taxon):
                         # Set from the table
                         consensus_value = consensus_table[tax_level][self.name]
                         self.taxonomy[tax_level] = consensus_value
-                        logger.debug("Using consensus value `{consensus_value}`")
+                        logger.debug(f"Using consensus value `{consensus_value}`")
                         set_from_table = True
                     else:
                         # Set this taxonomic level and everything below it to NA
