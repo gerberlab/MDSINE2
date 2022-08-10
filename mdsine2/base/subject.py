@@ -10,7 +10,6 @@ from .taxa import OTU, Taxon, TaxaSet
 from .constants import *
 from .qpcr import qPCRdata
 from .util import taxaname_formatter
-from .study import Study
 
 from mdsine2.logger import logger
 
