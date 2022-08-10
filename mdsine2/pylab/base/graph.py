@@ -175,6 +175,235 @@ class Saveable:
             raise AttributeError('Save location is not set.')
 
 
+class BaseNode(Saveable):
+    '''This is the baseclass of a Node.
+
+    Parameters
+    ----------
+    name : str, Optional
+        - name of the node. If one is not provided, a unique one will be generated
+    name_prefix : str, Optional
+        - name prefix if `name` is not passed in
+    G : Graph, Optional
+        - Graph object to add the node to.
+        - If not specified it adds it to the default graph
+    '''
+
+    def __init__(self, name: str = None, name_prefix: str = None, G: Graph = None):
+        global _PH_COUNT
+        if name is None:
+            if name_prefix is None:
+                name_prefix = DEFAULT_BASENODE_NAME_PREFIX
+            name = name_prefix + '{}'.format(_PH_COUNT)
+            _PH_COUNT += 1
+
+        if G is None:
+            G = get_default_graph()
+        self.G = G  # This is a pointer to the graph it is contained in
+        self.name = name
+        self.id = id(self)
+
+        # Add itself into the graph
+        self.G.nodes[self.id] = self
+        self.G.name2id[self.name] = self.id
+        self.prior = None
+
+    def delete(self):
+        '''Delete itself from the graph
+        '''
+        self.G.name2id.pop(self.name, None)
+        self.G.nodes.pop(self.id)
+
+
+class DataNode:
+    '''Base class for an object that wants to be used as the data class in inference.
+    This sets the `.data` pointer in `Graph`
+
+    Parameters
+    ----------
+    name : str, Optional
+        - name of the node. If one is not provided, a unique one will be generated
+    name_prefix : str, Optional
+        - name prefix if `name` is not passed in
+    G : Graph, Optional
+        - Graph object to add the node to.
+        - If not specified it adds it to the default graph
+    '''
+
+    def __init__(self, name: str = None, name_prefix: str = None, G: Graph = None):
+        self.G = G
+        self.name = name
+        self.id = id(self)
+        if self.G.data is not None:
+            logger.info('Overriding old data object in graph {}'.format(self))
+        self.G.data = self  # Set itself as the .data pointer
+
+    def delete(self):
+        '''Deletes this data object from the graph it belogns to
+        '''
+        self.G.data = None
+
+
+class Node(BaseNode):
+    '''Variable that can be in the graph
+
+    Parameters
+    ----------
+    name : str
+        - name of the node
+    name_prefix : str
+        - name prefix if `name` is not passed in
+    G : Graph, int
+        - Graph object or graph id to add the node to.
+        - If not specified it adds it to the default graph
+    '''
+
+    def __init__(self, name: str = None, name_prefix: str = None, G: Graph = None):
+        BaseNode.__init__(self, name=name, name_prefix=name_prefix, G=G)
+        self.parents = {}  # maps the ID of the node to the Node objects
+        self.children = {}  # maps the ID of the node to the Node objects
+        self.undirected = {}
+
+        # Depreciated
+        self._metropolis = None
+
+    @property
+    def metropolis(self):
+        '''DEPRECIATED
+
+        Get the metropolis object
+        '''
+        return self._metropolis
+
+    def delete(self):
+        '''Delete itself from the graph
+        '''
+        if len(self.parents) > 0:
+            for pid in self.parents:
+                self.G.nodes[pid].children.pop(self.id, None)
+        if len(self.children) > 0:
+            for cid in self.children:
+                self.G.nodes[cid].parents.pop(self.id, None)
+        if len(self.undirected) > 0:
+            for uid in self.undirected:
+                self.G.nodes[uid].undirected.pop(self.id, None)
+        BaseNode.delete(self)
+
+    @property
+    def degree(self) -> int:
+        '''Get the degree of the node
+
+        Returns
+        -------
+        int
+        '''
+        # return the degree of the node
+        return len(self.parents) + len(self.children) + len(self.undirected)
+
+    def get_adjacent_keys(self) -> Iterator[int]:
+        '''Get the adjacent nodes
+
+        Returns
+        -------
+        list(int)
+            A list of all the IDs of the adjacent nodes
+        '''
+        return list(self.parents.keys()) + list(self.children.keys())
+
+    def add_parent(self, parent: "Node"):
+        '''Adds `parent` as a parent to the node
+        Also adds self as a child to `parent`
+
+        Parameters
+        ----------
+        parent : Node
+            - node we want to set as a parent
+        '''
+        if not isnode(parent):
+            raise ValueError('parent ({}) must be a (subclass of) Node'.format(
+                type(parent)))
+
+        if self.G.id != parent.G.id:
+            raise GraphIDError('Attempting to add a parent `{}` to `{}` ' \
+                               'but they are not in the same graph'.format(self.name, parent.name))
+
+        self.parents[parent.id] = parent
+        parent.children[self.id] = self
+
+    def add_child(self, child: "Node"):
+        '''Adds `child` as a child to the node
+        Also adds self as a parent to `child`
+
+        Parameters
+        ----------
+        child : Node
+            - node we want to set as a child
+        '''
+        if not isnode(child):
+            raise ValueError('child ({}) must be a (subclass of) Node'.format(
+                type(child)))
+
+        if self.G.id != child.G.id:
+            raise GraphIDError('Attempting to add a child `{}` to `{}` ' \
+                               'but they are not in the same graph'.format(self.name, child.name))
+
+        self.children[child.id] = child
+        child.parents[self.id] = self
+
+    def add_undirected(self, node: "Node"):
+        '''Adds `node` as an undirected neighbor to the node
+        Does the same for `node`
+
+        Parameters
+        ----------
+        node : Node
+            - node we want to set as an undirected node
+        '''
+        if not isnode(node):
+            raise ValueError('node ({}) must be a (subclass of) Node'.format(
+                type(node)))
+
+        if self.G.id != node.G.id:
+            raise GraphIDError('Attempting to add a node `{}` to `{}` ' \
+                               'but they are not in the same graph'.format(self.name, node.name))
+        self.undirected[node.id] = node
+        node.undirected[self.id] = self
+
+    def add_prior(self, prior: "Node"):
+        '''Override the name of the passed in distribution `prior`.
+
+        Parameters
+        ----------
+        prior : Node
+            - node we want to set as a prior
+        '''
+        if not isnode(prior):
+            raise ValueError('prior ({}) must be a (subclass of) Node'.format(
+                type(prior)))
+
+        self.add_parent(prior)
+        self.prior = prior
+
+
+class Data(DataNode):
+    '''Simple class defining the covariates `X` and the observations `y`
+
+    Parameters
+    ----------
+    X : array_like
+        Defines the covariates
+    y : array_like
+        Defines the observations
+    **kwargs
+        See `pylab.graph.DataNode`
+    '''
+
+    def __init__(self, X: np.ndarray, y: np.ndarray, **kwargs):
+        DataNode.__init__(self, **kwargs)
+        self.X = X
+        self.y = y
+
+
 class TraceableNode(Node):
     '''
     Defines the functionality for a Node to interact with the Graph tracer object
@@ -455,231 +684,6 @@ class Graph(Saveable):
             ret += self.get_descendants(id)
         return ret
 
-
-class BaseNode(Saveable):
-    '''This is the baseclass of a Node.
-
-    Parameters
-    ----------
-    name : str, Optional
-        - name of the node. If one is not provided, a unique one will be generated
-    name_prefix : str, Optional
-        - name prefix if `name` is not passed in
-    G : Graph, Optional
-        - Graph object to add the node to.
-        - If not specified it adds it to the default graph
-    '''
-
-    def __init__(self, name: str=None, name_prefix: str=None, G: Graph=None):
-        global _PH_COUNT
-        if name is None:
-            if name_prefix is None:
-                name_prefix = DEFAULT_BASENODE_NAME_PREFIX
-            name = name_prefix + '{}'.format(_PH_COUNT)
-            _PH_COUNT += 1
-        
-        if G is None:
-            G = get_default_graph()
-        self.G = G # This is a pointer to the graph it is contained in
-        self.name = name
-        self.id = id(self)
-
-        # Add itself into the graph
-        self.G.nodes[self.id] = self
-        self.G.name2id[self.name] = self.id
-        self.prior = None
-
-    def delete(self):
-        '''Delete itself from the graph
-        '''
-        self.G.name2id.pop(self.name, None)
-        self.G.nodes.pop(self.id)
-
-
-class DataNode:
-    '''Base class for an object that wants to be used as the data class in inference.
-    This sets the `.data` pointer in `Graph`
-
-    Parameters
-    ----------
-    name : str, Optional
-        - name of the node. If one is not provided, a unique one will be generated
-    name_prefix : str, Optional
-        - name prefix if `name` is not passed in
-    G : Graph, Optional
-        - Graph object to add the node to.
-        - If not specified it adds it to the default graph
-    '''
-    def __init__(self, name: str=None, name_prefix: str=None, G: Graph=None):
-        self.G = G
-        self.name = name
-        self.id = id(self)
-        if self.G.data is not None:
-            logger.info('Overriding old data object in graph {}'.format(self))
-        self.G.data = self # Set itself as the .data pointer
-
-    def delete(self):
-        '''Deletes this data object from the graph it belogns to
-        '''
-        self.G.data=None
-
-
-class Node(BaseNode):
-    '''Variable that can be in the graph
-
-    Parameters
-    ----------
-    name : str
-        - name of the node
-    name_prefix : str
-        - name prefix if `name` is not passed in
-    G : Graph, int
-        - Graph object or graph id to add the node to.
-        - If not specified it adds it to the default graph
-    '''
-    def __init__(self, name: str=None, name_prefix: str=None, G: Graph=None):
-        BaseNode.__init__(self, name=name, name_prefix=name_prefix, G=G)
-        self.parents = {} # maps the ID of the node to the Node objects
-        self.children = {} # maps the ID of the node to the Node objects
-        self.undirected = {}
-
-        # Depreciated
-        self._metropolis = None
-
-    @property
-    def metropolis(self):
-        '''DEPRECIATED
-        
-        Get the metropolis object
-        '''
-        return self._metropolis
-
-    def delete(self):
-        '''Delete itself from the graph
-        '''
-        if len(self.parents) > 0:
-            for pid in self.parents:
-                self.G.nodes[pid].children.pop(self.id, None)
-        if len(self.children) > 0:
-            for cid in self.children:
-                self.G.nodes[cid].parents.pop(self.id, None)
-        if len(self.undirected) > 0:
-            for uid in self.undirected:
-                self.G.nodes[uid].undirected.pop(self.id, None)
-        BaseNode.delete(self)
-
-    @property
-    def degree(self) -> int:
-        '''Get the degree of the node
-
-        Returns
-        -------
-        int
-        '''
-        # return the degree of the node
-        return len(self.parents) + len(self.children) + len(self.undirected)
-
-    def get_adjacent_keys(self) -> Iterator[int]:
-        '''Get the adjacent nodes
-
-        Returns
-        -------
-        list(int)
-            A list of all the IDs of the adjacent nodes
-        '''
-        return list(self.parents.keys()) + list(self.children.keys())
-
-    def add_parent(self, parent: "Node"):
-        '''Adds `parent` as a parent to the node
-        Also adds self as a child to `parent`
-
-        Parameters
-        ----------
-        parent : Node
-            - node we want to set as a parent
-        '''
-        if not isnode(parent):
-            raise ValueError('parent ({}) must be a (subclass of) Node'.format( 
-                type(parent)))
-
-        if self.G.id != parent.G.id:
-            raise GraphIDError('Attempting to add a parent `{}` to `{}` ' \
-                'but they are not in the same graph'.format(self.name, parent.name))
-
-        self.parents[parent.id] = parent
-        parent.children[self.id] = self
-
-    def add_child(self, child: "Node"):
-        '''Adds `child` as a child to the node
-        Also adds self as a parent to `child`
-
-        Parameters
-        ----------
-        child : Node
-            - node we want to set as a child
-        '''
-        if not isnode(child):
-            raise ValueError('child ({}) must be a (subclass of) Node'.format( 
-                type(child)))
-
-        if self.G.id != child.G.id:
-            raise GraphIDError('Attempting to add a child `{}` to `{}` ' \
-                'but they are not in the same graph'.format(self.name, child.name))
-
-        self.children[child.id] = child
-        child.parents[self.id] = self
-
-    def add_undirected(self, node: "Node"):
-        '''Adds `node` as an undirected neighbor to the node
-        Does the same for `node`
-
-        Parameters
-        ----------
-        node : Node
-            - node we want to set as an undirected node
-        '''
-        if not isnode(node):
-            raise ValueError('node ({}) must be a (subclass of) Node'.format( 
-                type(node)))
-
-        if self.G.id != node.G.id:
-            raise GraphIDError('Attempting to add a node `{}` to `{}` ' \
-                'but they are not in the same graph'.format(self.name, node.name))
-        self.undirected[node.id] = node
-        node.undirected[self.id] = self
-
-    def add_prior(self, prior: "Node"):
-        '''Override the name of the passed in distribution `prior`.
-
-        Parameters
-        ----------
-        prior : Node
-            - node we want to set as a prior
-        '''
-        if not isnode(prior):
-            raise ValueError('prior ({}) must be a (subclass of) Node'.format( 
-                type(prior)))
-
-        self.add_parent(prior)
-        self.prior = prior
-
-
-class Data(DataNode):
-    '''Simple class defining the covariates `X` and the observations `y`
-
-    Parameters
-    ----------
-    X : array_like
-        Defines the covariates
-    y : array_like
-        Defines the observations
-    **kwargs
-        See `pylab.graph.DataNode`
-    '''
-    def __init__(self, X: np.ndarray, y: np.ndarray, **kwargs):
-        DataNode.__init__(self, **kwargs)
-        self.X = X
-        self.y = y
 
 # Creates a background graph that we can add to
 _default_graph = Graph()
