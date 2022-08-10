@@ -6,7 +6,7 @@ import pickle
 from pathlib import Path
 
 from .. import util as plutil
-from ..graph import Node
+from mdsine2.pylab import Node
 
 
 class Saveable:
