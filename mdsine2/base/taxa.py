@@ -381,7 +381,7 @@ class OTU(Taxon):
                     self.taxonomy[tax_level] = '/'.join(sorted(labels))
                 else:
                     # This means that the taxonomy is different on a level different than
-                    logger.warning('{} taxonomy does not agree'.format(self.name))
+                    logger.warning(f"{self.name} taxonomy does not agree at level `{tax_level}`")
                     logger.warning(','.join(taxon.name for taxon in self.components))
 
                     if consensus_table is not None:
