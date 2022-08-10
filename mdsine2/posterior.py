@@ -25,7 +25,7 @@ from typing import Union, Dict, Iterator, Tuple, List, Any, IO
 from .base import *
 from .names import STRNAMES
 from . import pylab as pl
-from .pylab import Graph, Variable, variables
+from .pylab import Graph, Variable, variables, hasprior
 from .util import generate_cluster_assignments_posthoc, generate_taxonomic_distribution_over_clusters_posthoc
 
 from . import visualization
@@ -474,7 +474,7 @@ def _scalar_visualize(obj: Variable, path: str, f: IO, section: str='posterior',
     ax1, _ = visualization.render_trace(var=obj, plt_type='both',
         section=section, include_burnin=True, log_scale=log_scale, rasterized=True)
 
-    if pl.hasprior(obj):
+    if hasprior(obj):
         l,h = ax1.get_xlim()
         try:
             xs = np.arange(l,h,step=(h-l)/1000)
