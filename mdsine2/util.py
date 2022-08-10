@@ -334,8 +334,14 @@ def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
         else:
             seqs2 = [taxon2.sequence]
 
+        print(taxon1.name)
         for v1 in seqs1:
             for v2 in seqs2:
+                print("{}, {} -> {}".format(
+                    v1,
+                    v2,
+                    diversity.beta.hamming(v1, v2)
+                ))
                 dists.append(diversity.beta.hamming(v1, v2))
         return np.nanmean(dists)
     cnt = 0
