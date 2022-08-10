@@ -1803,7 +1803,6 @@ def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: s
         taxaname = taxon.name
         temp = []
         for t in subj.times:
-            print(subj._reads_individ.keys())
             abund = subj._reads_individ[taxaname][t]
 
             if dtype == 'rel':

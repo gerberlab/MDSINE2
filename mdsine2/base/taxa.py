@@ -1363,6 +1363,7 @@ class TaxaSet(Clusterable):
         other = OTUTaxaSet()
         for gidx, grouping in enumerate(groupings):
             otu = OTU(components=grouping, idx=gidx)
+            otu.generate_consensus_taxonomy(consensus_table=self.taxonomy_table)
             other.add(otu)
         return other
 
