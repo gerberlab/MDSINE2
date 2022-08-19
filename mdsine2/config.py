@@ -147,6 +147,10 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         self.QPCR_NORMALIZATION_MAX_VALUE = 100
         self.LEAVE_OUT = leave_out
         self.ZERO_INFLATION_TRANSITION_POLICY = None #'ignore'
+        # path to tsv file containing introduction times of each taxa
+        # NOTE: 'ZERO_INFLATION_TRANSITION_POLICY' must also be set to 'ignore' to run with zero_inflation option
+        # NOTE: need to set STRNAMES.ZERO_INFLATION['value_option'] = "custom" to use tsv file for zero_inflation option
+        self.ZERO_INFLATION_DATA_PATH = None
 
         self.GROWTH_TRUNCATION_SETTINGS = 'positive'
         self.SELF_INTERACTIONS_TRUNCATION_SETTINGS = 'positive'

@@ -631,11 +631,13 @@ class Data(DataNode):
                     start_tidx*n_taxa, (end_tidx-1)*n_taxa, dtype=int))
             replicate_offset += n_taxa * self.n_dts_for_replicate[ridx]
 
-        ret = np.ones(len(self.lhs), dtype=bool)
-        ret[ridxs] = False
-
         if self.zero_inflation_transition_policy is not None:
+            ret = np.ones(len(self.rows_to_include_zero_inflation), dtype=bool)
+            ret[ridxs] = False
             ret = ret[self.rows_to_include_zero_inflation]
+        else:
+            ret = np.ones(len(self.lhs), dtype=bool)
+            ret[ridxs] = False
 
         return ret
 
@@ -719,7 +721,7 @@ class Data(DataNode):
         v = []
         valid_indices = None
         if index_out_perturbations and self.G.perturbations is not None:
-            valid_indices = self._get_non_pert_rows_of_regress_matrices() 
+            valid_indices = self._get_non_pert_rows_of_regress_matrices()
         for x in keys:
             if x in kwargs_dict:
                 kwargs = kwargs_dict[x]
@@ -729,6 +731,7 @@ class Data(DataNode):
                 raise KeyError('Key `{}` not found. Valid keys: {}'.format(
                     x, list(self.design_matrices.keys())))
             X = self.design_matrices[x].set_to_rhs(**kwargs)
+
             if valid_indices is not None:
                 X = X[valid_indices, :]
             v.append(X)
@@ -1158,8 +1161,6 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
     def __init__(self, **kwargs):
         name = STRNAMES.PERT_VALUE+'_base_data'
         DesignMatrix.__init__(self, varname=name, **kwargs)
-        if self.G.data.zero_inflation_transition_policy is not None:
-            raise NotImplementedError('Not Implemented')
 
         self.perturbations = self.G.perturbations # pylab.base.Perturbations object
         self.n_perturbations = len(self.perturbations) # int
@@ -1272,6 +1273,10 @@ class PerturbationBaseDesignMatrix(DesignMatrix):
 
         self.matrix = scipy.sparse.coo_matrix(
             (self.data,(self.rows,self.cols)),shape=self.shape).tocsc()
+
+        if self.G.data.zero_inflation_transition_policy is not None:
+            self.matrix = self.matrix[self.G.data.rows_to_include_zero_inflation, :]
+
 
     def update_value(self):
         self.build()
