@@ -1,17 +1,12 @@
 import numpy as np
-from mdsine2.logger import logger
-import copy
 import numba
 
 # Typing
-from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, Type, List
+from typing import Any, Iterator, Type, List
 
+from mdsine2.pylab import Variable, TraceableNode, Node
 from . import util
-from .errors import NeedToImplementError
-from .graph import Node
-from .base import isclusterable, Traceable, TaxaSet
-from .graph import Node
-from .variables import Variable, summary
+from mdsine2.pylab import util
 
 # Constants
 DEFAULT_CLUSTERVALUE_DTYPE = float
@@ -62,7 +57,59 @@ def isclustervalue(x: Any) -> bool:
     return x is not None and issubclass(x.__class__, ClusterValue)
 
 
-class Clustering(Node, Traceable):
+def isclusterable(x: Any) -> bool:
+    '''Determines whether the input is a subclass of Clusterable
+
+    Parameters
+    ----------
+    x : any
+        Input instance to check the type of Clusterable
+
+    Returns
+    -------
+    bool
+        True if `x` is of type Clusterable, else False
+    '''
+    return x is not None and issubclass(x.__class__, Clusterable)
+
+
+class ClusterItem:
+    '''These are single points that get clustered
+
+    It must have the parameter
+        'name'
+    '''
+    def __init__(self, name: str):
+        self.name = name
+
+    def cluster_str(self) -> str:
+        return self.name
+
+
+class Clusterable:
+    '''This is the base class for something to be clusterable (be used to cluster in
+    pylab.cluster.Clustering). These are the functions that need to be implemented
+    for it to be able to be clustered.
+
+    `stritem`: This is the function that we use to get the label of the item
+    '''
+    def __len__(self):
+        raise NotImplementedError('You must implement this function')
+
+    def __getitem__(self, key):
+        raise NotImplementedError('You must implement this function')
+
+    def __iter__(self):
+        raise NotImplementedError('You must implement this function')
+
+    def __contains__(self, key):
+        raise NotImplementedError('You must implement this function')
+
+    def stritem(self, key):
+        raise NotImplementedError('You must implement this function')
+
+
+class Clustering(TraceableNode):
     '''Base class for clustering. This will cluster items where the aggregate
     clas inherits the `pylab.base.Clusterable` class.
     
@@ -129,8 +176,8 @@ class Clustering(Node, Traceable):
     kwargs : dict
         These are the additional arguments for the Node class (name, Graph, etc.)
     '''
-    def __init__(self, clusters: np.ndarray, items: TaxaSet, **kwargs):
-        Node.__init__(self, **kwargs)
+    def __init__(self, clusters: np.ndarray, items: List[ClusterItem], **kwargs):
+        super().__init__(dtype=None, **kwargs)
         if not isclusterable(items):
             raise TypeError('`items` ({}) must be a pylab.base.Clusterable object'.format( 
                 type(items)))
@@ -152,8 +199,8 @@ class Clustering(Node, Traceable):
         
         # Everything is good, make the cluster objects
         self._CIDX = 100100 # Start of the cluster index
-        self.items = items # This is usually a TaxaSet object
-        self.clusters = {} # dict: cluster id (int) -> _Cluster
+        self.items = items  # An indexable container of ClusterItems
+        self.clusters = {}  # dict: cluster id (int) -> _Cluster
         for cidx in np.arange(np.max(clusters)+1):
             idxs = np.where(clusters == cidx)[0]
             temp = _Cluster(members=idxs, parent=self, iden=self._CIDX)
@@ -622,12 +669,12 @@ class ClusterProperty:
     def assignments_changed(self):
         '''Each object inheriting this class needs to implement this function
         '''
-        raise NeedToImplementError('User needs to implement this function')
+        raise NotImplementedError('User needs to implement this function')
 
     def clusters_changed(self, cids_added, cids_removed):
         '''Each object inheriting this class needs to implement this function
         '''
-        raise NeedToImplementError('User needs to implement this function')
+        raise NotImplementedError('User needs to implement this function')
 
     def set_signal_when_clusters_change(self, value: bool):
         '''Switch the signal `signal_when_clusters_change` to `value`
@@ -675,10 +722,10 @@ class ClusterProperty:
         '''Call this function after you set the `signal_when_item_assignment_changes` or
         `signal_when_clusters_change`.
         '''
-        raise NeedToImplementError('User needs to implement this function')
+        raise NotImplementedError('User needs to implement this function')
 
 
-class ClusterValue(ClusterProperty, Node, Traceable):
+class ClusterValue(ClusterProperty, TraceableNode):
     '''This is an object that has a value per cluster.
     The value is a dictionary, then there are functions to convert
     that dictionary into an item array or a cluster array.

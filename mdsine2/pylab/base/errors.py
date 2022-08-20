@@ -31,9 +31,3 @@ class InitializationError(Exception):
     is not done properly.
     '''
     pass
-
-class NeedToImplementError(Exception):
-    '''Raise this error when something needs to be implemented 
-    by the user
-    '''
-    pass

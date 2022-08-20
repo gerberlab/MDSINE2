@@ -10,6 +10,8 @@ Defined Beta diversity measures
     * Jaccard
     * Hamming
 '''
+from typing import List, Union
+
 import numpy as np
 from scipy.spatial import distance
 
@@ -100,7 +102,7 @@ class beta:
         return distance.jaccard(u,v)
 
     @staticmethod
-    def hamming(u: np.ndarray, v: np.ndarray, ignore_char: str='N') -> int:
+    def hamming(u: Union[str, List[str], np.ndarray], v: Union[str, List[str], np.ndarray], ignore_char: str='N') -> int:
         '''Calculate the hamming distance between `u` and `v`
 
         Parameters
@@ -117,13 +119,13 @@ class beta:
         '''
         if len(u) != len(v):
             raise ValueError('Cannot compare different distances')
-        result=0
-        for i,j in zip(u,v):
+        result = 0
+        for i, j in zip(u, v):
             if ignore_char is not None:
                 if i == ignore_char or j == ignore_char:
                     continue
-            if i!=j:
-                result+=1
+            if i != j:
+                result += 1
         return result
 
     @staticmethod

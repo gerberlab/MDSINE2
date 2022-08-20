@@ -1,25 +1,16 @@
 '''Utility functions used by multiple modules
 '''
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import pickle
 import inspect
 from mdsine2.logger import logger
-import random
 import scipy.sparse
 import numba
 from timeit import default_timer
-import itertools
-import re
 import ete3
 
 # Typing
-from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, Callable
-
-import os
-from pathlib import Path
-
+from typing import Any, Union, Iterator, Callable
 import scipy.spatial
 
 def isdataframe(a: Any) -> bool:
@@ -143,8 +134,7 @@ def isarray(a: Any) -> bool:
     bool
         True if `a` is an array
     '''
-    return (type(a) == np.ndarray or type(a) == list or \
-        scipy.sparse.issparse(a)) and a is not None
+    return (type(a) == np.ndarray or type(a) == list or scipy.sparse.issparse(a)) and a is not None
 
 def isstr(a: Any) -> bool:
     '''Checks if `a` is a str

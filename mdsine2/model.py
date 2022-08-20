@@ -7,7 +7,8 @@ from mdsine2.logger import logger
 from typing import Union, Dict, Iterator, Tuple, List, Any
 
 from . import pylab as pl
-from .pylab import BaseMCMC, Subject
+from .pylab import BaseMCMC
+from .base import Subject
 from .names import STRNAMES
 
 class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):

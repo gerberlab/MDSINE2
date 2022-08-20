@@ -2,7 +2,7 @@ import pandas as pd
 import os
 from mdsine2.logger import logger
 from typing import Dict, Union
-from .pylab import TaxaSet, Study
+from .base import TaxaSet, Study
 
 __all__ = ['load_gibson', 'parse']
 

@@ -11,18 +11,14 @@ Changes to Make in pylab 1.0
     - Redo how you make the SubjsetSet - idk how but it's messy
 '''
 import numpy as np
-import numpy.random as npr
-import sys
-import time
 from mdsine2.logger import logger
-import math
 
 # Typing
-from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple
+from typing import Any, Dict
 
 
 from . import util as plu
-from .errors import NeedToImplementError
+from .base import *
 
 _ADDITIVE = 0
 _MULTIPLICATIVE = 1
@@ -96,7 +92,7 @@ class Integratable:
             This is the amount of time from the previous time point we
             are integrating from
         '''
-        raise NeedToImplementError('User needs to implement this function')
+        raise NotImplementedError('User needs to implement this function')
 
     def finish_integration(self):
         '''This is the function that
@@ -111,7 +107,7 @@ class BaseDynamics(Integratable):
         Integratable.__init__(self, **kwargs)
 
     def stability(self):
-        raise NeedToImplementError('User needs to implement this function')
+        raise NotImplementedError('User needs to implement this function')
 
     def integrate(self, *args, **kwargs):
         return integrate(dynamics=self, *args, **kwargs)

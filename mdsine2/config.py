@@ -2,10 +2,6 @@
 parameters that are set manually in here. There are also the filtering
 functions used to preprocess the data
 '''
-from mdsine2.logger import logger
-import numpy as np
-import pandas as pd
-import sys
 import os.path
 import json
 
@@ -419,21 +415,18 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         self.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['a0'] = a0
         self.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['a1'] = a1
 
-
     def suffix(self):
         '''Create a suffix with the parameters
         '''
-        s = 's{}_b{}_ns{}_lo{}_mo{}'.format(
-            self.SEED, self.BURNIN, self.N_SAMPLES, self.LEAVE_OUT,
-            self.MAX_N_TAXA)
+        s = 's{}_b{}_ns{}_lo{}'.format(
+            self.SEED, self.BURNIN, self.N_SAMPLES, self.LEAVE_OUT)
         return s
 
     def cv_suffix(self):
         '''Create a master suffix with the parameters
         '''
-        s = 's{}_b{}_ns{}_mo{}'.format(
-            self.SEED, self.BURNIN, self.N_SAMPLES,
-            self.MAX_N_TAXA)
+        s = 's{}_b{}_ns{}'.format(
+            self.SEED, self.BURNIN, self.N_SAMPLES)
         return s
 
     def cv_single_suffix(self):

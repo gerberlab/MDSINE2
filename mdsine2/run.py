@@ -12,7 +12,9 @@ from . import design_matrices
 from . import posterior
 
 from . import pylab as pl
-from .pylab import Study, BaseMCMC
+from .pylab import BaseMCMC
+from .base import *
+
 
 def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset: Study, continue_inference: int=None, 
     intermediate_validation: Dict[str, Union[float, Callable, Dict[str, Any]]]=None) -> BaseMCMC:
@@ -48,8 +50,6 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
     # ----------
     if not config.isModelConfig(params):
         raise TypeError('`params` ({}) needs to be a config.ModelConfig object'.format(type(params)))
-    if not pl.isstudy(subjset):
-        raise TypeError('`subjset` ({}) must be a mdsine2.Study'.format(type(subjset)))
     if not pl.isstr(graph_name):
         raise TypeError('`graph_name` ({}) must be a str'.format(type(graph_name)))
     if continue_inference is not None:
@@ -98,7 +98,7 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
     taxa = subjset.taxa
     d = design_matrices.Data(subjects=subjset, G=GRAPH, 
         zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
-    clustering = pl.Clustering(clusters=None, items=taxa, G=GRAPH,
+    clustering = Clustering(clusters=None, items=taxa, G=GRAPH,
         name=STRNAMES.CLUSTERING_OBJ)
 
     # Interactions
@@ -183,7 +183,7 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
     if subjset.perturbations is not None:
         for pidx, subj_pert in enumerate(subjset.perturbations):
             name = subj_pert.name
-            perturbation = pl.ClusterPerturbationEffect(
+            perturbation = ClusterPerturbationEffect(
                 starts=subj_pert.starts, ends=subj_pert.ends, 
                 probability=pl.variables.Beta(
                     name=name + '_probability', G=GRAPH, value=None, a=None, b=None),

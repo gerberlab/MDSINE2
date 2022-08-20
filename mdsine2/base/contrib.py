@@ -5,21 +5,15 @@ depend on contrib
 '''
 import numpy as np
 import numpy.random as npr
-import sys
 from mdsine2.logger import logger
-import scipy.special
 
 # Typing
-from typing import TypeVar, Generic, Any, Union, Dict, Iterator, Tuple, \
-    Callable
+from mdsine2.pylab import variables, util, TraceableNode
+from typing import Any, Union, Dict, Iterator, Tuple, Callable
+from .cluster import isclustervalue, ClusterValue, isclustering, ClusterProperty, Clustering
+from .perturbation import BasePerturbation, Perturbations
+from .taxa import TaxaSet
 
-from .base import BasePerturbation, Traceable
-from .base import Perturbations as PerturbationSet
-from . import variables
-from .cluster import isclustervalue, ClusterValue, isclustering, \
-    ClusterProperty, Clustering
-from .graph import Node
-from . import util, base
 
 # Constants
 DEFAULT_SIGNAL_WHEN_CLUSTERS_CHANGE = False
@@ -85,7 +79,7 @@ class Perturbation(BasePerturbation, variables.Variable):
     ----------
     starts, ends : dict
         Start and end of the perturbation for each subject
-    taxa : pylab.base.TaxaSet
+    taxa : pylab.TaxaSet
         Set of taxon/otu objects
     magnitude : pylab.variables.Variable, int/float, array, Optional
         If a pylab.variables.Variable is passed in it will create one
@@ -100,19 +94,16 @@ class Perturbation(BasePerturbation, variables.Variable):
     kwargs : dict
         - Extra arguments for the Node class
     '''
-    def __init__(self, taxa: base.TaxaSet, starts: Dict[str, float], ends: Dict[str, float], 
+    def __init__(self, taxa: TaxaSet, starts: Dict[str, float], ends: Dict[str, float], 
         magnitude: Union[variables.Variable, np.ndarray, int, float]=None, 
         indicator: Union[variables.Variable, np.ndarray]=None, 
         probability: Union[variables.Variable, float]=None, **kwargs):
         
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
-            self.G.perturbations = PerturbationSet()
+            self.G.perturbations = Perturbations()
         BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         
-        if not base.istaxaset(taxa):
-            raise TypeError('`taxa` ({}) must be pylab.base.TaxaSet'.format(type(taxa)))
-
         self.G.perturbations.append(self)
         self.taxa = taxa
         n_taxa = len(self.taxa)
@@ -500,7 +491,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
         
         variables.Variable.__init__(self, **kwargs)
         if self.G.perturbations is None:
-            self.G.perturbations = PerturbationSet()
+            self.G.perturbations = Perturbations()
 
         BasePerturbation.__init__(self, starts=starts, ends=ends, name=self.name)
         self.G.perturbations.append(self)
@@ -691,7 +682,7 @@ class ClusterPerturbationEffect(BasePerturbation, variables.Variable):
                     i += 1
 
 
-class Interactions(ClusterProperty, Node, Traceable):
+class Interactions(ClusterProperty, TraceableNode):
     '''This is a basic class for interactions between clusters.
 
     This is a 2D dictionary. The first level of the dictionary indexes the target 
@@ -755,7 +746,7 @@ class Interactions(ClusterProperty, Node, Traceable):
         value_initializer: Callable=None, indicator_initializer: Callable=None, 
         signal_when_clusters_change: bool=True, **kwargs):
 
-        Node.__init__(self, **kwargs)
+        TraceableNode.__init__(self, dtype=float, **kwargs)
         ClusterProperty.__init__(self, clustering=clustering, 
             signal_when_clusters_change=signal_when_clusters_change, 
             signal_when_item_assignment_changes=False)
@@ -789,7 +780,7 @@ class Interactions(ClusterProperty, Node, Traceable):
             for scid in order:
                 if tcid == scid:
                     continue
-                self.value[tcid][scid] = _Interaction( 
+                self.value[tcid][scid] = Interaction(
                     source_cid=scid, target_cid=tcid,
                     value=self.value_initializer(),
                     indicator=self.indicator_initializer(),
@@ -797,15 +788,14 @@ class Interactions(ClusterProperty, Node, Traceable):
                 self._IIDX += 1
 
         self._shape = (len(self.clustering.items), len(self.clustering.items))
-        self.dtype = float
 
-    def __getitem__(self, key: Any) -> '_Interaction':
+    def __getitem__(self, key: Any) -> 'Interaction':
         return self.value[key]
 
     def __setitem__(self, key, val):
         self.value[key] = val
 
-    def __iter__(self) -> "_Interaction":
+    def __iter__(self) -> "Interaction":
         '''Iterates over the interactions in order
         '''
         order = self.clustering.order
@@ -855,7 +845,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                     if temp[scid].indicator:
                         yield tcid, scid
 
-    def iter_to_target(self, cid: int, only_valid: bool=False) -> "_Interaction":
+    def iter_to_target(self, cid: int, only_valid: bool=False) -> "Interaction":
         '''Iterates over interactions to the target cluster from all
         source clusters in the order specified by clusters
 
@@ -878,7 +868,7 @@ class Interactions(ClusterProperty, Node, Traceable):
                 if scid != cid:
                     yield temp[scid]
 
-    def iter_from_source(self, cid: int, only_valid: bool=False) -> "_Interaction":
+    def iter_from_source(self, cid: int, only_valid: bool=False) -> "Interaction":
         '''Iterates over interactions from the source cluster to all
         target clusters in the order specified by clusters
 
@@ -909,14 +899,14 @@ class Interactions(ClusterProperty, Node, Traceable):
             for scid in self.clustering.order:
                 if tcid == scid:
                     continue
-                self.value[tcid][scid] = _Interaction(
+                self.value[tcid][scid] = Interaction(
                     source_cid=scid, target_cid=tcid,
                     value=self.value_initializer(),
                     indicator=self.indicator_initializer()>=.5, 
                     iden=self._IIDX)
                 self._IIDX += 1
 
-    def iloc(self, idx: int) -> "_Interaction":
+    def iloc(self, idx: int) -> "Interaction":
         '''Get the interaction as a function of the index that it occurs at.
         Reverse indexing is allowed.
 
@@ -927,7 +917,7 @@ class Interactions(ClusterProperty, Node, Traceable):
 
         Returns
         -------
-        pylab.contrib._Interaction
+        pylab.contrib.Interaction
         '''
         if not util.isint(idx):
             raise TypeError('`idx` ({}) must be an int'.format(idx))
@@ -971,7 +961,7 @@ class Interactions(ClusterProperty, Node, Traceable):
         # Add the interaction from clusters already there and 
         # the new cluster
         for ocid in other_cids:
-            self.value[ocid][cid] = _Interaction(
+            self.value[ocid][cid] = Interaction(
                 source_cid=cid, target_cid=ocid,
                 value=self.value_initializer(),
                 indicator=self.indicator_initializer() >= 0.5,
@@ -979,7 +969,7 @@ class Interactions(ClusterProperty, Node, Traceable):
             self._IIDX += 1
         self.value[cid] = {}
         for ocid in other_cids:
-            self.value[cid][ocid] = _Interaction(
+            self.value[cid][ocid] = Interaction(
                 source_cid=ocid, target_cid=cid,
                 value=self.value_initializer(),
                 indicator=self.indicator_initializer() >= 0.5,
@@ -1078,9 +1068,9 @@ class Interactions(ClusterProperty, Node, Traceable):
             Returns a list of the interactions that are positive in order
         '''
         ret = []
+        n_clusters = len(self.clustering)
         try:
             if target_cid is not None:
-                n_clusters = len(self.clustering)
                 tcidx = self.clustering.cid2cidx[target_cid]
 
                 if source_cid is not None:
@@ -1481,7 +1471,7 @@ class Interactions(ClusterProperty, Node, Traceable):
         return cids
         
 
-class _Interaction:
+class Interaction:
     '''Defines an interaction from cluster `source` to cluster `target`.
 
     Parameters

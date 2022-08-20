@@ -1,19 +1,22 @@
 '''Utility functions for mdsine2
 '''
+import itertools
+
 from mdsine2.logger import logger
 import numpy as np
-import scipy
-import math
 import copy
 import pandas as pd
+
+import scipy.stats
+from sklearn.cluster import AgglomerativeClustering
 
 from .names import STRNAMES
 from . import pylab as pl
 
-from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Callable
+from typing import Union, Dict, List, Optional
+from .pylab import BaseMCMC, diversity
+from .base import *
 
-from .pylab import diversity
-from .pylab import Taxon, OTU, BaseMCMC, ClusterPerturbationEffect, Clustering, Study
 
 def is_gram_negative(taxon: Union[OTU, Taxon]) -> bool:
     '''Return true if the taxon is gram - or gram positive
@@ -148,10 +151,6 @@ def generate_cluster_assignments_posthoc(clustering: Clustering, n_clusters: Uni
     np.ndarray(size=(len(items), ), dtype=int)
         Each value is the cluster assignment for index i
     '''
-    from sklearn.cluster import AgglomerativeClustering
-    import scipy.stats
-
-
     trace = clustering.n_clusters.get_trace_from_disk(section=section)
     if callable(n_clusters):
         n = n_clusters(trace)
@@ -250,7 +249,7 @@ def generate_taxonomic_distribution_over_clusters_posthoc(mcmc: BaseMCMC, tax_fm
     data = np.hstack(data).shape
 
     # Make the taxonomic heatmap as a dataframe
-    df = pl.base.condense_matrix_with_taxonomy(M, taxa=study.taxa, fmt=tax_fmt)
+    df = condense_matrix_with_taxonomy(M, taxa=study.taxa, fmt=tax_fmt)
     return df
 
 def condense_fixed_clustering_interaction_matrix(M: np.ndarray, clustering: Clustering) -> np.ndarray:
@@ -307,67 +306,47 @@ def condense_fixed_clustering_perturbation(pert: np.ndarray, clustering: Cluster
         ret[..., cidx] = pert[..., aidx]
     return ret
 
-def aggregate_items(subjset: Study, hamming_dist: int) -> Study:
-    '''Aggregate Taxa that have an average hamming distance of `hamming_dist`
+
+def aggregate_items(subjset: Study, hamming_dist: int, linkage: str = 'average') -> Study:
+    """
+    Aggregate Taxa that have an average hamming distance of `hamming_dist`.
 
     Parameters
     ----------
     subjset : mdsine2.Study
         This is the `mdsine2.Study` object that we are aggregating
     hamming_dist : int
-        This is the hamming radius from one taxon to the next where we
-        are aggregating
+        This is the hamming radius from one taxon to the next where we are aggregating
+    """
 
-    Returns
-    -------
-    mdsine2.Study
-    '''
-    def _avg_dist(taxon1: Union[Taxon, OTU], taxon2: Union[Taxon, OTU]) -> float:
-        dists = []
-        if pl.isotu(taxon1):
-            seqs1 = taxon1.aggregated_seqs.values()
-        else:
-            seqs1 = [taxon1.sequence]
+    # Compute the hamming dist matrix
+    asvs = list(subjset.taxa)
+    dists = np.zeros((len(asvs), len(asvs)), dtype=int)
+    for i, j in itertools.combinations(subjset.taxa, r=2):
+        d = diversity.beta.hamming(i.sequence, j.sequence)
+        dists[i.idx, j.idx] = d
+        dists[j.idx, i.idx] = d
 
-        if pl.isotu(taxon2):
-            seqs2 = taxon2.aggregated_seqs.values()
-        else:
-            seqs2 = [taxon2.sequence]
+    logger.info(f'Aggregating taxa with a hamming distance of {hamming_dist} (linkage: {linkage})')
+    clustering = AgglomerativeClustering(
+        affinity='precomputed',
+        n_clusters=None,
+        linkage=linkage,  # min distance
+        distance_threshold=hamming_dist
+    ).fit(dists)
 
-        for v1 in seqs1:
-            for v2 in seqs2:
-                dists.append(diversity.beta.hamming(v1, v2))
-        return np.nanmean(dists)
-    cnt = 0
-    found = False
-    iii = 0
-    logger.info('Agglomerating taxa')
-    while not found:
-        for iii in range(iii, len(subjset.taxa)):
-            if iii % 200 == 0:
-                logger.info('{}/{}'.format(iii, len(subjset.taxa)))
-            taxon1 = subjset.taxa[iii]
-            for taxon2 in subjset.taxa.names.order[iii:]:
-                taxon2 = subjset.taxa[taxon2]
-                if taxon1.name == taxon2.name:
-                    continue
-                if len(taxon1.sequence) != len(taxon2.sequence):
-                    continue
+    subsets: List[List[Taxon]] = []
+    oidx_set = set(clustering.labels_)
+    for oidx in oidx_set:
+        asv_subset: List[Taxon] = [asvs[i] for i in np.where(clustering.labels_ == oidx)[0]]
+        subsets.append(asv_subset)
+    subsets = sorted(
+        subsets,
+        key=lambda x: len(x),
+        reverse=True
+    )
 
-                dist = _avg_dist(taxon1, taxon2)
-                if dist <= hamming_dist:
-                    subjset.aggregate_items(taxon1, taxon2)
-                    cnt += 1
-                    found = True
-                    break
-            if found:
-                break
-        if found:
-            found = False
-        else:
-            break
-    logger.info('Aggregated {} taxa'.format(cnt))
-    return subjset
+    return subjset.aggregate_items(subsets)
 
 
 def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_filename: str):
@@ -501,8 +480,8 @@ def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_filename: str):
     print("cyjs file exported to: {}".format(output_filename))
 
 
-def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min_num_consecutive: int, min_num_subjects: int,
-    colonization_time: Union[float, int]=None, union_other_consortia: Study=None) -> Study:
+def consistency_filtering(subjset: Study, dtype: str, threshold: Union[float, int], min_num_consecutive: int, min_num_subjects: int,
+    colonization_time: Union[float, int]=None, union_other_consortia: Optional[Study]=None) -> Study:
     '''Filters the subjects by looking at the consistency of the 'dtype', which can
     be either 'raw' where we look for the minimum number of counts, 'rel', where we
     look for a minimum relative abundance, or 'abs' where we look for a minium
@@ -551,9 +530,6 @@ def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min
         raise TypeError('`dtype` ({}) must be a str'.format(type(dtype)))
     if dtype not in ['raw', 'rel', 'abs']:
         raise ValueError('`dtype` ({}) not recognized'.format(dtype))
-    if not pl.isstudy(subjset):
-        raise TypeError('`subjset` ({}) must be a mdsine2.Study'.format(
-            type(subjset)))
     if not pl.isnumeric(threshold):
         raise TypeError('`threshold` ({}) must be a numeric'.format(type(threshold)))
     if threshold <= 0:
@@ -579,10 +555,6 @@ def consistency_filtering(subjset, dtype: str, threshold: Union[float, int], min
             type(min_num_subjects)))
     if min_num_subjects > len(subjset) or min_num_subjects <= 0:
         raise ValueError('`min_num_subjects` ({}) value not valid'.format(min_num_subjects))
-    if union_other_consortia is not None:
-        if not pl.isstudy(union_other_consortia):
-            raise TypeError('`union_other_consortia` ({}) must be a mdsine2.Study'.format(
-                type(union_other_consortia)))
 
     subjset = copy.deepcopy(subjset)
 

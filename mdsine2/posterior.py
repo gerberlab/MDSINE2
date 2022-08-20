@@ -23,9 +23,10 @@ import random
 
 from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Optional
 
+from .base import *
 from .names import STRNAMES
 from . import pylab as pl
-from .pylab import Graph, Variable, variables
+from .pylab import Graph, Variable, variables, hasprior
 from .util import generate_cluster_assignments_posthoc, generate_taxonomic_distribution_over_clusters_posthoc
 
 from . import visualization
@@ -474,7 +475,7 @@ def _scalar_visualize(obj: Variable, path: str, f: IO, section: str='posterior',
     ax1, _ = visualization.render_trace(var=obj, plt_type='both',
         section=section, include_burnin=True, log_scale=log_scale, rasterized=True)
 
-    if pl.hasprior(obj):
+    if hasprior(obj):
         l,h = ax1.get_xlim()
         try:
             xs = np.arange(l,h,step=(h-l)/1000)
@@ -1043,7 +1044,7 @@ class ClusterAssignments(pl.graph.Node):
                 - Send out to the different classes but stay on a single core. This
                   is necessary for benchmarking and easier debugging.
     '''
-    def __init__(self, clustering: pl.Clustering, concentration: Concentration,
+    def __init__(self, clustering: Clustering, concentration: Concentration,
         m: int=1, mp: str=None, **kwargs):
         self.clustering = clustering # mdsine2.pylab.cluster.Clustering object
         self.concentration = concentration # mdsine2.posterior.Concentration
@@ -1076,7 +1077,7 @@ class ClusterAssignments(pl.graph.Node):
         self.actors = None
 
     @property
-    def value(self) -> pl.Clustering:
+    def value(self) -> Clustering:
         '''This is so that the cluster assignments get printed in inference.MCMC
         '''
         return self.clustering
@@ -1259,7 +1260,7 @@ class ClusterAssignments(pl.graph.Node):
             clusters = [val for val in clusters.values()]
 
         elif value_option == 'sequence':
-            from pylab import diversity
+            from mdsine2.pylab import diversity
 
             logger.info('Making affinity matrix from sequences')
             evenness = np.diag(np.ones(len(self.G.data.taxa), dtype=float))
@@ -1395,7 +1396,7 @@ class ClusterAssignments(pl.graph.Node):
             for cidx, cluster in enumerate(self.clustering):
                 f.write('Cluster {}:\n'.format(cidx+1))
                 for aidx in cluster.members:
-                    label = pl.taxaname_formatter(format=taxa_formatter, taxon=taxa[aidx], taxa=taxa)
+                    label = taxaname_formatter(format=taxa_formatter, taxon=taxa[aidx], taxa=taxa)
                     f.write('\t- {}\n'.format(label))
             return f
 
@@ -1459,7 +1460,7 @@ class ClusterAssignments(pl.graph.Node):
         for cidx, cluster in enumerate(self.clustering):
             f.write('Cluster {} - Size {}\n'.format(cidx, len(cluster)))
             for oidx in cluster.members:
-                label = pl.taxaname_formatter(format=taxa_formatter, taxon=taxa[oidx], taxa=taxa)
+                label = taxaname_formatter(format=taxa_formatter, taxon=taxa[oidx], taxa=taxa)
                 f.write('\t- {}\n'.format(label))
 
         return f
@@ -2413,7 +2414,7 @@ class TrajectorySet(pl.graph.Node):
         acceptance_rates = []
         for oidx in range(len(subjset.taxa)):
             fig = plt.figure()
-            title = pl.taxaname_formatter(format=taxa_formatter, taxon=oidx, taxa=taxa)
+            title = taxaname_formatter(format=taxa_formatter, taxon=oidx, taxa=taxa)
             title += '\nSubject {}, {}'.format(subj.name, taxa[oidx].name)
             fig.suptitle(title)
             ax = fig.add_subplot(111)
@@ -4191,13 +4192,13 @@ class ClusterInteractionValue(pl.variables.MVN):
     clustering : mdsine2.Clustering
         Clustering object
     '''
-    def __init__(self, prior: variables.Normal, clustering: pl.Clustering, **kwargs):
+    def __init__(self, prior: variables.Normal, clustering: Clustering, **kwargs):
         kwargs['name'] = STRNAMES.CLUSTER_INTERACTION_VALUE
         pl.variables.MVN.__init__(self, dtype=float, **kwargs)
         self.set_value_shape(shape=(len(self.G.data.taxa),len(self.G.data.taxa))) # Set the shape of the trace
         self.add_prior(prior)
         self.clustering = clustering # Clustering object
-        self.obj = pl.contrib.Interactions( # Initialize the mdsine2.pylab.contrib.Interactions object
+        self.obj = Interactions(
             clustering=self.clustering,
             use_indicators=True,
             name=STRNAMES.INTERACTIONS_OBJ, G=self.G,
@@ -6150,7 +6151,7 @@ class Growth(pl.variables.TruncatedNormal):
 
         for idx in range(len(taxa)):
             if taxa_formatter is not None:
-                prefix = pl.taxaname_formatter(format=taxa_formatter, taxon=taxa[idx], taxa=taxa)
+                prefix = taxaname_formatter(format=taxa_formatter, taxon=taxa[idx], taxa=taxa)
             else:
                 prefix = taxa[idx].name
             index.append(taxa[idx].name)
@@ -6542,7 +6543,7 @@ class SelfInteractions(pl.variables.TruncatedNormal):
 
         for idx in range(len(taxa)):
             if taxa_formatter is not None:
-                prefix = pl.taxaname_formatter(format=taxa_formatter, taxon=taxa[idx], taxa=taxa)
+                prefix = taxaname_formatter(format=taxa_formatter, taxon=taxa[idx], taxa=taxa)
             else:
                 prefix = taxa[idx].name
             index.append(taxa[idx].name)
@@ -7303,7 +7304,7 @@ class PerturbationMagnitudes(pl.variables.Normal):
             if fixed_clustering:
                 fig.suptitle('Cluster {}'.format(iii+1))
             else:
-                fig.suptitle('{}'.format(pl.taxaname_formatter(
+                fig.suptitle('{}'.format(taxaname_formatter(
                     format=taxa_formatter, taxon=oidx, taxa=self.G.data.taxa)))
             fig.tight_layout()
             fig.subplots_adjust(top=0.85)
@@ -8022,7 +8023,7 @@ class PerturbationIndicators(pl.Node):
 
     # @profile
     def calculate_marginal_loglikelihood(self, cid: int, val: bool,
-        perturbation: pl.contrib.ClusterPerturbationEffect) -> Dict[str, float]:
+        perturbation: ClusterPerturbationEffect) -> Dict[str, float]:
         '''Calculate the log marginal likelihood with the perturbations integrated
         out
         '''
@@ -8229,7 +8230,7 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
     '''This is the posterior of the prior variance of regression coefficients
     for the interaction (off diagonal) variables
     '''
-    def __init__(self, prior: variables.SICS, perturbation: pl.ClusterPerturbationEffect,
+    def __init__(self, prior: variables.SICS, perturbation: ClusterPerturbationEffect,
         value: Union[float, int]=None, **kwargs):
 
         kwargs['name'] = STRNAMES.PRIOR_VAR_PERT + '_' + perturbation.name
@@ -8287,7 +8288,7 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
             if not pl.isnumeric(dof):
                 raise TypeError('`dof` ({}) must be a numeric'.format(type(dof)))
             if dof < 0:
-                raise ValueError('`dof` ({}) must be > 0 for it to be a valid prior'.format(shape))
+                raise ValueError('`dof` ({}) must be > 0 for it to be a valid prior'.format(dof))
         elif dof_option in ['diffuse', 'auto']:
             dof = 2.5
         elif dof_option == 'strong':
@@ -8454,7 +8455,7 @@ class PriorMeanPerturbations(pl.Variable):
 
 class PriorMeanPerturbationSingle(pl.variables.Normal):
 
-    def __init__(self, prior: variables.Normal, perturbation: pl.ClusterPerturbationEffect, **kwargs):
+    def __init__(self, prior: variables.Normal, perturbation: ClusterPerturbationEffect, **kwargs):
 
         kwargs['name'] = STRNAMES.PRIOR_MEAN_PERT + '_' + perturbation.name
         pl.variables.Normal.__init__(self, loc=None, scale2=None, dtype=float, **kwargs)

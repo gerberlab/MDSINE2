@@ -29,23 +29,19 @@ from mdsine2.logger import logger
 import math
 import warnings
 import re
-import copy
 import pandas
-import sys
 import numba
 
 from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Callable
 
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 import seaborn as sns
-from matplotlib.pyplot import arrow
 import matplotlib.ticker as plticker
 import matplotlib
 
 from . import pylab as pl
-from .pylab.base import DEFAULT_TAXLEVEL_NAME, Perturbations, Subject, TaxaSet, Study, OTU
-from .pylab import Clustering, variables
+from .base import *
+from .pylab import variables
 
 warnings.filterwarnings('ignore')
 _plt_labels = ['title', 'xlabel', 'ylabel']
@@ -66,6 +62,15 @@ DEFAULT_TRACE_COLOR = 'steelblue'
 PLT_TITLE_LABEL = 'title'
 PLT_XLABEL_LABEL = 'xlabel'
 PLT_YLABEL_LABEL = 'ylabel'
+
+
+def issubject(s):
+    return isinstance(s, Subject)
+
+
+def isstudy(s):
+    return isinstance(s, Study)
+
 
 # ----------------
 # Global Functions
@@ -151,7 +156,7 @@ def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbati
     '''
     from . import pylab as pl
 
-    if pl.issubject(subj):
+    if issubject(subj):
         subj = subj.name
     if not pl.isstr(subj):
         raise ValueError('`Cannot recognize {}'.format(subj))
@@ -1002,7 +1007,7 @@ def alpha_diversity_over_time(subjs: Union[Subject, List[Subject]], metric: Call
     # Type checking
     if not pl.isbool(grid):
         raise TypeError('`grid` ({}) must be a bool'.format(type(grid)))
-    if pl.issubject(subjs):
+    if issubject(subjs):
         subjs = [subjs]
     if not pl.isarray(subjs):
         raise ValueError('`subjs` ({}) must be a pylab.base.Subject or an array'.format(type(subjs)))
@@ -1255,16 +1260,16 @@ def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, 
             raise ValueError('`include_errorbars ({}) must be a bool'.format(type(include_errorbars)))
     if not pl.isbool(grid):
         raise TypeError('`grid` ({}) must be a bool'.format(type(grid)))
-    if not pl.issubject(subj):
+    if not issubject(subj):
         if dtype not in ['qpcr', 'read-depth']:
             raise TypeError('`subj` ({}) must be a pylab.base.Subject'.format(type(subj)))
         else:
             if pl.isarray(subj):
                 for s in subj:
-                    if not pl.issubject(s):
+                    if not issubject(s):
                         raise TypeError('Every element in `subj` ({}) must be a ' \
                             'pl.base.Subject'.format(type(s)))
-            if not pl.isstudy(subj):
+            if not isstudy(subj):
                 raise TypeError('`subj` ({}) type not recognized'.format(type(subj)))
     if yscale_log is None:
         if dtype == 'rel':
@@ -1283,7 +1288,7 @@ def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, 
     if not pl.isbool(set_0_to_nan):
         raise TypeError('`set_0_to_nan` ({}) must be a bool'.format(type(set_0_to_nan)))
     if clustering is not None:
-        if not pl.isclustering(clustering):
+        if not isinstance(clustering, Clustering):
             raise TypeError('`clustering` ({}) must be a pylab.cluster.Clustering' \
                 ' object if specified'.format(type(clustering)))
     if color_code_clusters and clustering is None:
@@ -1436,7 +1441,7 @@ def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, 
         ax, kwargs = _set_plt_labels(d=kwargs, ax=ax)
         if ylim is not None:
             ax.set_ylim(*ylim)
-        if pl.issubject(subj):
+        if issubject(subj):
             subj = [subj]
         colors = sns.color_palette(cmap, n_colors=len(subj))
         
@@ -1499,10 +1504,10 @@ def abundance_over_time(subj: Union[Subject, Study, List[Subject]], dtype: str, 
         ax.set_yscale('log')
     ax = _set_xticks(ax)
     if shade_perturbations:
-        if pl.issubject(subj):
+        if issubject(subj):
             perturbations = subj.parent.perturbations
             ax = shade_in_perturbations(ax, perturbations, subj=subj)
-        elif pl.isstudy(subj):
+        elif isstudy(subj):
             perturbations = subj.perturbations
             ax = shade_in_perturbations(ax, perturbations, subj=next(iter(subj)))
         else:
@@ -1576,7 +1581,7 @@ def taxonomic_distribution_over_time(subj: Union[Subject, Study], taxlevel: str=
     matplotlib.pyplot.Axes
     ''' 
     # Type checking
-    if not (pl.issubject(subj) or pl.isstudy(subj)):
+    if not (issubject(subj) or isstudy(subj)):
         raise ValueError('`subj` ({}) must be a pylab.base.Subject or pl.base.Study'.format(type(subj)))
     if not pl.isbool(legend):
         raise ValueError('`legend` ({}) must be a bool'.format(type(legend)))
@@ -1600,7 +1605,7 @@ def taxonomic_distribution_over_time(subj: Union[Subject, Study], taxlevel: str=
     if len(kwargs) != 0:
         raise ValueError('Arguments {} not recognized'.format(list(kwargs.keys())))
 
-    if pl.isstudy(subj):
+    if isstudy(subj):
         raise NotImplementedError('Not implemented yet')
         # # average over all of the subjects
         # dfs = []
@@ -1642,7 +1647,7 @@ def taxonomic_distribution_over_time(subj: Union[Subject, Study], taxlevel: str=
 
     ax = df.T.plot(ax=ax, kind='bar', stacked=True, colormap=colormap, **kwargs)
     if shade_perturbations:
-        if pl.isstudy(subj):
+        if isstudy(subj):
             for sss in subj:
                 ax = shade_in_perturbations(ax, subj.perturbations, subj=sss)
         else:
@@ -1755,9 +1760,11 @@ def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: s
             label = '****** {kingdom} {name}'.format(
                     kingdom=agg.aggregated_taxonomies[taxaname]['kingdom'],
                     name=taxaname)
+        else:
+            raise RuntimeError("Unexpected error while generating taxonomic label.")
         return label
 
-    if not pl.issubject(subj):
+    if not issubject(subj):
         raise TypeError('`subj` ({}) must be a mdsine2.Subject object'.format(type(subj)))
     if agg not in subj.taxa:
         raise ValueError('`agg` ({}) not found in study'.format(agg))
@@ -1789,14 +1796,13 @@ def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: s
     M = subj.matrix()[dtype]
 
     # Plot the aggregate
-    labelotu = pl.taxaname_for_paper(taxon=agg, taxa=subj.taxa)
+    labelotu = taxaname_for_paper(taxon=agg, taxa=subj.taxa)
     ax.plot(subj.times, M[agg.idx, :], label=labelotu, alpha=alpha_agg, linewidth=7, 
         marker='x')
 
     individ_trajs = {}
-    for taxaname in agg.aggregated_taxa:
-        if taxaname not in subj._reads_individ:
-            raise ValueError('This should not happend. Failing.')
+    for taxon in agg.components:
+        taxaname = taxon.name
         temp = []
         for t in subj.times:
             abund = subj._reads_individ[taxaname][t]
@@ -1903,7 +1909,7 @@ def _format_ticklabel(format: str, order: Union[List[int], np.ndarray], taxa: Ta
 
     for num, idx in enumerate(order):
         fmt = format.replace('%(index)s', str(num))
-        label = pl.taxaname_formatter(format=fmt, taxon=idx, taxa=taxa)
+        label = taxaname_formatter(format=fmt, taxon=idx, taxa=taxa)
         ticklabels.append(label)
     return ticklabels
 
@@ -2014,15 +2020,12 @@ def _init_parameters_heatmap(matrix: np.ndarray, taxa: TaxaSet, clustering: Clus
         raise ValueError('`matrix` ({}) must be square'.format(
             matrix.shape))
     if taxa is not None:
-        if not pl.istaxaset(taxa):
-            raise ValueError('`taxa` ({}) must be a subclass of pylab.data.TaxaSet'.format(
-                taxa.__class__))
         if matrix.shape[0] != taxa.n_taxa:
             raise ValueError('The size of the interaction matrix ({}) must ' \
                 'equal the number of Taxa in `taxa` ({})'.format(
                     matrix.shape[0], taxa.n_taxa))
     if clustering is not None:
-        if not pl.isclustering(clustering):
+        if not isinstance(clustering, Clustering):
             raise ValueError('`clustering` ({}) must be a subclass of ' \
                 'pylab.cluster.ClusteringBase'.format(clustering.__class__))
     if not (xticklabels is None or type(xticklabels) == str or pl.isarray(xticklabels)):
