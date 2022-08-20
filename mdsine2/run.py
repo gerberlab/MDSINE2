@@ -172,11 +172,12 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
         G=GRAPH, mp=params.MP_CLUSTERING)
 
     # Filtering and zero inflation
-    filtering = posterior.FilteringLogMP(G=GRAPH, mp=params.MP_FILTERING, 
-        zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
-    zero_inflation_data_path = params.ZERO_INFLATION_DATA_PATH
-    zero_inflation = posterior.ZeroInflation(zero_inflation_data_path=zero_inflation_data_path,
-                                             G=GRAPH)
+    filtering = posterior.FilteringLogMP(
+        G=GRAPH,
+        mp=params.MP_FILTERING,
+        zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY
+    )
+    zero_inflation = posterior.ZeroInflation(zero_inflation_data_path=params.ZERO_INFLATION_DATA_PATH, G=GRAPH)
 
     # Perturbations
     if subjset.perturbations is not None:

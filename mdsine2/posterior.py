@@ -1,6 +1,7 @@
 '''Posterior objects used for inference of MDSINE2 model
 '''
 from contextlib import contextmanager
+from pathlib import Path
 
 from mdsine2.logger import logger
 import time
@@ -20,7 +21,7 @@ import scipy.sparse
 import math
 import random
 
-from typing import Union, Dict, Iterator, Tuple, List, Any, IO
+from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Optional
 
 from .names import STRNAMES
 from . import pylab as pl
@@ -3655,7 +3656,7 @@ class ZeroInflation(pl.graph.Node):
     TODO: Parallel version of the class
     '''
 
-    def __init__(self, zero_inflation_data_path=None, **kwargs):
+    def __init__(self, zero_inflation_data_path: Optional[Path] = None, **kwargs):
         '''
         Parameters
         ----------
@@ -3672,7 +3673,8 @@ class ZeroInflation(pl.graph.Node):
             self.value.append(np.ones(shape=(len(self.G.data.taxa), n_timepoints), dtype=bool))
 
         self.zero_inflation_data_path = zero_inflation_data_path
-        print("USING FILE: ", self.zero_inflation_data_path)
+        logger.debug(f"Using time masking file {zero_inflation_data_path}")
+
     def reset_value_size(self):
         '''Change the size of the trajectory when we set the intermediate timepoints
         '''
