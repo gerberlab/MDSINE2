@@ -3674,7 +3674,6 @@ class ZeroInflation(pl.graph.Node):
             self.value.append(np.ones(shape=(len(self.G.data.taxa), n_timepoints), dtype=bool))
 
         self.zero_inflation_data_path = zero_inflation_data_path
-        logger.debug(f"Using time masking file {zero_inflation_data_path}")
 
     def reset_value_size(self):
         '''Change the size of the trajectory when we set the intermediate timepoints
@@ -3716,7 +3715,9 @@ class ZeroInflation(pl.graph.Node):
         elif value_option == "custom":
             if self.zero_inflation_data_path is None:
                 raise ValueError("Need to specify `zero_inflation_data_path` to use option `custom` for zero-inflation")
+
             # read in file
+            logger.debug(f"Using time masking file {self.zero_inflation_data_path}")
             time_mask = pd.read_csv(self.zero_inflation_data_path, index_col=0,  sep="\t")
 
             # Set everything to on except for specified taxa before specified time, for each subject
