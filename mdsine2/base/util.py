@@ -123,7 +123,6 @@ def taxaname_for_paper(taxon: Union["Taxon", "OTU"], taxa: "TaxaSet") -> str:
             format='****** %(kingdom)s %(name)s',
             taxon=taxon, taxa=taxa)
     else:
-        logger.debug('Something went wrong - no taxnonomy for {}'.format(taxon.name))
         label = 'NA {}'.format(taxa[taxon].name)
 
     return label
