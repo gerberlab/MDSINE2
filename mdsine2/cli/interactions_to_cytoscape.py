@@ -32,5 +32,5 @@ class InteractionToCytoscapeCLI(CLIModule):
 
         md2.write_fixed_clustering_as_json(
             mcmc=mcmc,
-            output_path=args.output_path
+            output_filename=args.output_path
         )
