@@ -484,9 +484,14 @@ class Study(Saveable):
             taxa=self.taxa.aggregate_items(components),
             name=self.name
         )
+
         for subj in self:
             agg_subj = subj.aggregate_items(other, components)
             other.add_subject_obj(agg_subj)
+
+        other.perturbations = self.perturbations
+        other.qpcr_normalization_factor = self.qpcr_normalization_factor
+        other._samples = self._samples
         return other
 
     def pop_times(self, times: Union[int, float, np.ndarray], sids: Union[str, int, Iterable[int]]='all'):
