@@ -43,7 +43,7 @@ class NegBinCLI(CLIModule):
         parser.add_argument('--multiprocessing', '-mp', action='store_true', dest="mp",
                             help='If flag is set, run the inference with multiprocessing. Else run on a single process')
 
-        parser.add_argument('--log_every', type=int, required=False, default=100,
+        parser.add_argument('--log-every', type=int, required=False, default=100,
                             help='<Optional> Tells the inference loop to print debug messages '
                                  '(if logging level is set to DEBUG) every <LOG_EVERY> iterations.'
                                  '(Default: 100)')
