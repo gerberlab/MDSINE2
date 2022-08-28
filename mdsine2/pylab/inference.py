@@ -2,7 +2,6 @@ import os
 import copy
 import sys
 from collections import defaultdict
-from contextlib import contextmanager
 
 import h5py
 from mdsine2.logger import logger
