@@ -42,10 +42,14 @@ class KeystonenessCLI(CLIModule):
                             help="The path to the relevant Study object containing the input data (subjects, taxa).")
 
         # Optional:
-        parser.add_argument('--initial-conditions', '-i', type=str, dest='initial_condition_path',
-                            required=True,
+        parser.add_argument('--initial-conditions-file', '-if', type=str, dest='initial_condition_path',
+                            required=False,
                             help='The path to a file specifying the initial conditions. File will be interpreted as a '
-                                 'two-column TSV file (Taxa name, Absolute abundance).')
+                                 'two-column TSV file (Taxa name, Absolute abundance). '
+                                 'If not specified, then the user must specify initial_condition_study_tidx argument.')
+        parser.add_argument('--initial-conditions-study-time', '-it', type=int, dest='initial_condition_study_tidx',
+                            required=False,
+                            help='The time index of the study to pull out initial conditions from.')
 
         # Outputs
         parser.add_argument('--output-dir', '-o', type=str, dest='out_dir',
@@ -68,7 +72,17 @@ class KeystonenessCLI(CLIModule):
         mcmc = md2.BaseMCMC.load(args.mcmc_path)
 
         logger.info(f"Loading initial conditions from {args.initial_condition_path}")
-        initial_conditions_master = load_initial_conditions(study, args.initial_condition_path)
+
+        if args.initial_condition_path is not None:
+            initial_conditions_master = load_initial_conditions(study, args.initial_condition_path)
+        else:
+            if args.initial_condition_study_tidx is None:
+                raise RuntimeError("If initial-conditions-file is not specified, user must provide initial-conditions-study-time.")
+            initial_conditions_master = initial_conditions_from_study(study, args.initial_condition_study_tidx)
+
+        lb = args.limit_of_detection
+        logger.info(f"Using limit of detection = {lb}")
+        initial_conditions_master[initial_conditions_master < lb] = lb
 
         out_dir = Path(args.out_dir)
         out_dir.mkdir(exist_ok=True, parents=True)
@@ -187,6 +201,11 @@ def do_fwsims(mcmc,
             n_days=n_days
         )
         yield gibb, gibbs_step_sim
+
+
+def initial_conditions_from_study(study: md2.Study, tidx: int) -> np.ndarray:
+    M = study.matrix(dtype='abs', agg='mean', times='intersection', qpcr_unnormalize=True)
+    return M[:, tidx]  # Day 20
 
 
 def load_initial_conditions(study: md2.Study, initial_condition_path: str) -> np.ndarray:
