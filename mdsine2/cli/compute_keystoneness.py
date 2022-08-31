@@ -114,7 +114,7 @@ def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_condition
     df_entries = []
 
     # Baseline
-    compute_keystoneness_of_cluster(
+    compute_forward_sim(
         mcmc,
         None,
         initial_conditions_master,
@@ -127,7 +127,10 @@ def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_condition
     # Cluster exclusion
     for cluster_idx, cluster in enumerate(mcmc.graph[STRNAMES.CLUSTERING_OBJ]):
         initial_conditions = exclude_cluster_from(initial_conditions_master, cluster)
-        compute_keystoneness_of_cluster(
+        logger.info(f"Now excluding cluster idx={cluster.idx}")
+        logger.info("Using initial conditions: {}".format(initial_conditions.flatten()))
+
+        compute_forward_sim(
             mcmc,
             cluster_idx,
             initial_conditions,
@@ -145,11 +148,11 @@ def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_condition
 def exclude_cluster_from(initial_conditions_master: np.ndarray, cluster):
     initial_conditions = np.copy(initial_conditions_master)
     for oidx in cluster.members:
-        initial_conditions_master[oidx] = 0.0
+        initial_conditions[oidx] = 0.0
     return initial_conditions
 
 
-def compute_keystoneness_of_cluster(
+def compute_forward_sim(
         mcmc: BaseMCMC,
         cluster_idx: Union[int, None],
         initial_conditions: np.ndarray,
@@ -162,24 +165,26 @@ def compute_keystoneness_of_cluster(
 
     # forward simulate and add results to dataframe.
     if cluster_idx is None:
-        tqdm_disp = "Keystoneness Simulations (Baseline)"
+        tqdm_disp = "Baseline"
     else:
-        tqdm_disp = f"Keystoneness Simulations (Cluster {cluster_idx})"
+        tqdm_disp = f"Cluster {cluster_idx}"
 
-    for gibbs_idx, fwsim in tqdm(do_fwsims(
-        mcmc, initial_conditions, n_days, dt, sim_max
-    ), total=(mcmc.n_samples - mcmc.burnin), desc=tqdm_disp):
-        for entry in fwsim_entries(taxa, cluster_idx, fwsim, gibbs_idx):
+    for gibbs_idx, fwsim in tqdm(
+            do_fwsims(mcmc, initial_conditions, n_days, dt, sim_max),
+            total=(mcmc.n_samples - mcmc.burnin),
+            desc=tqdm_disp
+    ):
+        for entry in fwsim_entries(taxa, fwsim):
+            entry['SampleIdx'] = gibbs_idx
+            entry['ExcludedCluster'] = str(cluster_idx)
             df_entries.append(entry)
 
 
-def fwsim_entries(taxa, excluded_cluster_idx, fwsim, gibbs_idx):
-    stable_states = fwsim[:, -50:].mean(axis=1)
+def fwsim_entries(taxa, fwsim):
+    stable_states = fwsim[:, -50:].mean(axis=1)  # 100 indices = 1 day, if dt = 0.01
     for otu in taxa:
         yield {
-            "ExcludedCluster": str(excluded_cluster_idx),
             "OTU": otu.name,
-            "SampleIdx": gibbs_idx,
             "StableState": stable_states[otu.idx]
         }
 
