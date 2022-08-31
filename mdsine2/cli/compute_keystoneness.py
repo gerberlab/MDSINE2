@@ -107,9 +107,10 @@ class KeystonenessCLI(CLIModule):
 def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_conditions_master: np.ndarray,
                             n_days: float, dt: float, sim_max: float):
     if df_path.exists():
+        logger.info(f"Loading previously computed results ({df_path})")
         return pd.read_csv(df_path, sep='\t')
 
-    print(f"Computing new fwsims (target: {df_path})")
+    logger.info(f"Computing new fwsims (target: {df_path})")
     df_entries = []
 
     # Baseline
