@@ -93,6 +93,7 @@ class KeystonenessCLI(CLIModule):
             initial_conditions_master,
             args.n_days, args.dt, args.sim_max
         )
+        fwsim_df['ExcludedCluster'] = fwsim_df['ExcludedCluster'].astype("string")
 
         # Render figure
         fig = plt.figure(figsize=(10, 10))
