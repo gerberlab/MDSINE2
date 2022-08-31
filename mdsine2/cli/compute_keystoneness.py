@@ -87,45 +87,59 @@ class KeystonenessCLI(CLIModule):
         out_dir = Path(args.out_dir)
         out_dir.mkdir(exist_ok=True, parents=True)
 
-        df_entries = []
-
-        # Baseline
-        compute_keystoneness_of_cluster(
-            mcmc,
-            None,
+        df_path = out_dir / f"{study.name}_fwsims.tsv"
+        fwsim_df = retrieve_ky_simulations(
+            df_path, mcmc,
             initial_conditions_master,
-            args.n_days,
-            args.dt,
-            args.sim_max,
-            df_entries
+            args.n_days, args.dt, args.sim_max
         )
-
-        # Cluster exclusion
-        for cluster_idx, cluster in enumerate(mcmc.graph[STRNAMES.CLUSTERING_OBJ]):
-            initial_conditions = exclude_cluster_from(initial_conditions_master, cluster)
-            compute_keystoneness_of_cluster(
-                mcmc,
-                cluster_idx,
-                initial_conditions,
-                args.n_days,
-                args.dt,
-                args.sim_max,
-                df_entries
-            )
-
-        df = pd.DataFrame(df_entries)
-        del df_entries
-
-        df.to_csv(out_dir / "{study.name}_fwsims.tsv", sep='\t')
 
         # Render figure
         fig = plt.figure(figsize=(10, 10))
         KeystonenessFigure(
             args.mcmc_path,
             args.study,
-            df
+            fwsim_df
         ).plot(fig)
         plt.savefig(out_dir / f"{study.name}_keystoneness.pdf", format="pdf")
+
+
+def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_conditions_master: np.ndarray,
+                            n_days: float, dt: float, sim_max: float):
+    if df_path.exists():
+        return pd.read_csv(df_path, sep='\t')
+
+    df_entries = []
+
+    # Baseline
+    compute_keystoneness_of_cluster(
+        mcmc,
+        None,
+        initial_conditions_master,
+        n_days,
+        dt,
+        sim_max,
+        df_entries
+    )
+
+    # Cluster exclusion
+    for cluster_idx, cluster in enumerate(mcmc.graph[STRNAMES.CLUSTERING_OBJ]):
+        initial_conditions = exclude_cluster_from(initial_conditions_master, cluster)
+        compute_keystoneness_of_cluster(
+            mcmc,
+            cluster_idx,
+            initial_conditions,
+            n_days,
+            dt,
+            sim_max,
+            df_entries
+        )
+
+    df = pd.DataFrame(df_entries)
+    del df_entries
+
+    df.to_csv(df_path, sep='\t', index=False)
+    return df
 
 
 def exclude_cluster_from(initial_conditions_master: np.ndarray, cluster):
@@ -139,7 +153,7 @@ def compute_keystoneness_of_cluster(
         mcmc: BaseMCMC,
         cluster_idx: Union[int, None],
         initial_conditions: np.ndarray,
-        n_days: int,
+        n_days: float,
         dt: float,
         sim_max: float,
         df_entries: List,
@@ -170,9 +184,9 @@ def fwsim_entries(taxa, excluded_cluster_idx, fwsim, gibbs_idx):
         }
 
 
-def do_fwsims(mcmc,
+def do_fwsims(mcmc: md2.BaseMCMC,
               initial_conditions: np.ndarray,
-              n_days,
+              n_days: float,
               dt: float,
               sim_max
               ):
