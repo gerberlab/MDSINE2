@@ -109,6 +109,7 @@ def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_condition
     if df_path.exists():
         return pd.read_csv(df_path, sep='\t')
 
+    print(f"Computing new fwsims (target: {df_path})")
     df_entries = []
 
     # Baseline
@@ -136,8 +137,6 @@ def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_condition
         )
 
     df = pd.DataFrame(df_entries)
-    del df_entries
-
     df.to_csv(df_path, sep='\t', index=False)
     return df
 
