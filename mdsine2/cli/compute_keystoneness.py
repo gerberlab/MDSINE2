@@ -128,7 +128,7 @@ def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_condition
     # Cluster exclusion
     for cluster_idx, cluster in enumerate(mcmc.graph[STRNAMES.CLUSTERING_OBJ]):
         initial_conditions = exclude_cluster_from(initial_conditions_master, cluster)
-        logger.info(f"Now excluding cluster idx={cluster.idx}")
+        logger.info(f"Now excluding cluster idx={cluster_idx}")
         logger.info("Using initial conditions: {}".format(initial_conditions.flatten()))
 
         compute_forward_sim(
