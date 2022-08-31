@@ -97,11 +97,13 @@ class KeystonenessCLI(CLIModule):
 
         # Render figure
         fig = plt.figure(figsize=(10, 10))
-        KeystonenessFigure(
+        ky = Keystoneness(
             args.mcmc_path,
             args.study,
             fwsim_df
-        ).plot(fig)
+        )
+        ky.plot(fig)
+        ky.save_ky(out_dir / f"{study.name}_keystoneness.tsv")
         plt.savefig(out_dir / f"{study.name}_keystoneness.pdf", format="pdf")
 
 
@@ -366,7 +368,7 @@ def create_cmap(tag, nan_value="red"):
     return cmap
 
 
-class KeystonenessFigure(object):
+class Keystoneness(object):
     def __init__(self, mcmc_pickle_path, subjset_path, fwsim_df):
         self.fwsim_df = fwsim_df
 
@@ -381,7 +383,13 @@ class KeystonenessFigure(object):
         self.abundance_array = self.get_abundance_array()
 
         logger.info("Extracting keystoneness values.")
-        self.ky_array = self.get_ky_array()
+        agg_ky_df = self.ky_df.groupby(level=0).mean()
+        self.ky_array = np.array(
+            [
+                agg_ky_df.loc[f'{cluster.idx}', "Ky"]
+                for cluster in self.md.get_clustering()
+            ]
+        )
 
         logger.info("Extracting baseline abundances.")
         self.day20_array = self.get_day20_abundances()
@@ -465,12 +473,13 @@ class KeystonenessFigure(object):
                 abund_array[removed_cluster.idx + 1, cluster.idx] = subset_df.loc[f'{cluster.idx}']
         return abund_array
 
-    def get_ky_array(self):
-        # Group by Cluster, aggregate (mean/median) across samples.
-        agg_ky_df = self.ky_df.groupby(level=0).median()
-        return np.array(
-            [agg_ky_df.loc[f'{cluster.idx}', "Ky"] for cluster in self.md.get_clustering()]
-        )
+    def get_agg_ky(self) -> pd.DataFrame:
+        """
+        Evalautes the keystoneness as an aggregate across samples.
+
+        :return:
+        """
+        return self.ky_df.groupby(level=0).mean()  # Aggregate across per-sample Ky values
 
     def get_day20_abundances(self):
         M = self.study.matrix(dtype='abs', agg='mean', times='intersection', qpcr_unnormalize=True)
@@ -482,6 +491,9 @@ class KeystonenessFigure(object):
                 [day20_state[oidx] for oidx in cluster.members]
             )
         return cluster_day20_abundances
+
+    def save_ky(self, tsv_path: Path):
+        self.ky_df.to_csv(tsv_path, sep='\t')
 
     def plot(self, fig):
         # Main abundance grid shows the _difference_ from baseline, instead of the abundances itself.
