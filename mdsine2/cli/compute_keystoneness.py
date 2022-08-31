@@ -87,7 +87,7 @@ class KeystonenessCLI(CLIModule):
         out_dir = Path(args.out_dir)
         out_dir.mkdir(exist_ok=True, parents=True)
 
-        df_path = out_dir / f"{study.name}_fwsims.tsv"
+        df_path = out_dir / f"{study.name}_steady_states.tsv"
         fwsim_df = retrieve_ky_simulations(
             df_path, mcmc,
             initial_conditions_master,
@@ -111,7 +111,7 @@ def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_condition
         logger.info(f"Loading previously computed results ({df_path})")
         return pd.read_csv(df_path, sep='\t', index_col=False)
 
-    logger.info(f"Computing new fwsims (target: {df_path})")
+    logger.info(f"Computing new steady states (target: {df_path})")
     df_entries = []
 
     # Baseline
