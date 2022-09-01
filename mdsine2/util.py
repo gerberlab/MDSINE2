@@ -307,7 +307,7 @@ def condense_fixed_clustering_perturbation(pert: np.ndarray, clustering: Cluster
     return ret
 
 
-def aggregate_items(subjset: Study, hamming_dist: int, linkage: str = 'average') -> Study:
+def aggregate_items(subjset: Study, hamming_dist: int, linkage: str = 'average', sort_order='SIZE') -> Study:
     """
     Aggregate Taxa that have an average hamming distance of `hamming_dist`.
 
@@ -340,11 +340,20 @@ def aggregate_items(subjset: Study, hamming_dist: int, linkage: str = 'average')
     for oidx in oidx_set:
         asv_subset: List[Taxon] = [asvs[i] for i in np.where(clustering.labels_ == oidx)[0]]
         subsets.append(asv_subset)
-    subsets = sorted(
-        subsets,
-        key=lambda x: len(x),
-        reverse=True
-    )
+
+    if sort_order == 'SIZE':
+        subsets = sorted(
+            subsets,
+            key=lambda x: len(x),
+            reverse=True
+        )
+    elif sort_order == "MIN_ASV_IDX":
+        subsets = sorted(
+            subsets,
+            key=lambda agg: min(taxa.idx for taxa in agg)
+        )
+    else:
+        raise ValueError(f"Unrecognized sort_order argument `{sort_order}`")
 
     return subjset.aggregate_items(subsets)
 
