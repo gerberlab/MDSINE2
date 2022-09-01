@@ -13,7 +13,7 @@ from sklearn.cluster import AgglomerativeClustering
 from .names import STRNAMES
 from . import pylab as pl
 
-from typing import Union, Dict, List, Optional
+from typing import Union, Dict, List, Optional, Callable
 from .pylab import BaseMCMC, diversity
 from .base import *
 
@@ -307,7 +307,11 @@ def condense_fixed_clustering_perturbation(pert: np.ndarray, clustering: Cluster
     return ret
 
 
-def aggregate_items(subjset: Study, hamming_dist: int, linkage: str = 'average', sort_order='SIZE') -> Study:
+def aggregate_items(subjset: Study,
+                    hamming_dist: int,
+                    otu_naming: Callable[[int, List[Taxon]], str],
+                    linkage: str = 'average',
+                    sort_order='SIZE') -> Study:
     """
     Aggregate Taxa that have an average hamming distance of `hamming_dist`.
 
@@ -354,8 +358,7 @@ def aggregate_items(subjset: Study, hamming_dist: int, linkage: str = 'average',
         )
     else:
         raise ValueError(f"Unrecognized sort_order argument `{sort_order}`")
-
-    return subjset.aggregate_items(subsets)
+    return subjset.aggregate_items(subsets, otu_naming=otu_naming)
 
 
 def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_filename: str):

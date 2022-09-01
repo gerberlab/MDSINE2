@@ -1,4 +1,4 @@
-from typing import Iterator, Any, Union, List
+from typing import Iterator, Any, Union, List, Optional, Callable
 
 import pandas as pd
 
@@ -185,13 +185,11 @@ class OTU(Taxon):
         These are the taxa/Aggregates that you're joining together. The anchor is
         the one you are setting the sequeunce and taxonomy to
     """
-    def __init__(self, components: List[Taxon], idx: int):
+    def __init__(self, components: List[Taxon], idx: int, name: str):
         self.components = components
-        self.name = f"OTU_{idx+1}"
-
         Taxon.__init__(
             self,
-            name=f"OTU_{idx+1}",
+            name=name,
             idx=idx,
             sequence=self.generate_consensus_seq()
         )
@@ -1356,7 +1354,7 @@ class TaxaSet(Clusterable):
                 break
         return i/8 # including asv
 
-    def aggregate_items(self, groupings: List[List[Taxon]]) -> 'OTUTaxaSet':
+    def aggregate_items(self, groupings: List[List[Taxon]], otu_naming: Callable[[int, List[Taxon]], str]) -> 'OTUTaxaSet':
         """Create an OTU with the anchor `anchor` and other taxon  `other`.
         The aggregate takes the sequence and the taxonomy from the anchor.
 
@@ -1367,7 +1365,8 @@ class TaxaSet(Clusterable):
         """
         other = OTUTaxaSet()
         for gidx, grouping in enumerate(groupings):
-            otu = OTU(components=grouping, idx=gidx)
+            name = otu_naming(gidx, grouping)
+            otu = OTU(components=grouping, idx=gidx, name=name)
             other.add(otu)
         return other
 
