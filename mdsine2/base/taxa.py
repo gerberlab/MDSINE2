@@ -1395,6 +1395,9 @@ class TaxaSet(Clusterable):
             If this is False, then we start the enumeration of the taxa from 1
             instead of 0. If True, then the enumeration starts at 0
         """
+        raise RuntimeError("This function is deprecated. Renaming of taxasets arbitrarily using indices is dangerous! "
+                           "Make sure that the names are decided at the beginning.")
+
         if not plutil.isstr(prefix):
             raise TypeError('`prefix` ({}) must be a str'.format(type(prefix)))
         if not plutil.isbool(zero_based_index):
