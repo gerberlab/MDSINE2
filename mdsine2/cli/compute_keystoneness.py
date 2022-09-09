@@ -66,7 +66,7 @@ class KeystonenessCLI(CLIModule):
         parser.add_argument('--limit-of-detection', dest='limit_of_detection', required=False,
                             help='If any of the taxa have a 0 abundance at the start, then we ' \
                                  'set it to this value.', default=1e5, type=float)
-        parser.add_argument('--simulate-every-n', dest='simulate_every_n', required=False, default=1,
+        parser.add_argument('--simulate-every-n', dest='simulate_every_n', type=int, required=False, default=1,
                             help='Specify to skip a certain number of gibbs steps and thin out the samples '
                                  '(for faster calculations)')
 
