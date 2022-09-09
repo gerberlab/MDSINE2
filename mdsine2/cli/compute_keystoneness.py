@@ -66,6 +66,9 @@ class KeystonenessCLI(CLIModule):
         parser.add_argument('--limit-of-detection', dest='limit_of_detection', required=False,
                             help='If any of the taxa have a 0 abundance at the start, then we ' \
                                  'set it to this value.', default=1e5, type=float)
+        parser.add_argument('--simulate-every-n', dest='simulate_every_n', required=False, default=1,
+                            help='Specify to skip a certain number of gibbs steps and thin out the samples '
+                                 '(for faster calculations)')
 
     def main(self, args: argparse.Namespace):
         study = md2.Study.load(args.study)
@@ -91,7 +94,8 @@ class KeystonenessCLI(CLIModule):
         fwsim_df = retrieve_ky_simulations(
             df_path, mcmc,
             initial_conditions_master,
-            args.n_days, args.dt, args.sim_max
+            args.n_days, args.dt, args.sim_max,
+            args.simulate_every_n
         )
         fwsim_df['ExcludedCluster'] = fwsim_df['ExcludedCluster'].astype("string")
 
@@ -108,7 +112,7 @@ class KeystonenessCLI(CLIModule):
 
 
 def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_conditions_master: np.ndarray,
-                            n_days: float, dt: float, sim_max: float):
+                            n_days: float, dt: float, sim_max: float, simulate_every: int):
     if df_path.exists():
         logger.info(f"Loading previously computed results ({df_path})")
         return pd.read_csv(df_path, sep='\t', index_col=False)
@@ -124,7 +128,8 @@ def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_condition
         n_days,
         dt,
         sim_max,
-        df_entries
+        df_entries,
+        simulate_every
     )
 
     # Cluster exclusion
@@ -140,7 +145,8 @@ def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_condition
             n_days,
             dt,
             sim_max,
-            df_entries
+            df_entries,
+            simulate_every
         )
 
     df = pd.DataFrame(df_entries)
@@ -163,6 +169,7 @@ def compute_forward_sim(
         dt: float,
         sim_max: float,
         df_entries: List,
+        simulate_every: int
 ):
     taxa = mcmc.graph.data.taxa
 
@@ -173,8 +180,8 @@ def compute_forward_sim(
         tqdm_disp = f"Cluster {cluster_idx}"
 
     for gibbs_idx, fwsim in tqdm(
-            do_fwsims(mcmc, initial_conditions, n_days, dt, sim_max),
-            total=(mcmc.n_samples - mcmc.burnin),
+            do_fwsims(mcmc, initial_conditions, n_days, dt, sim_max, simulate_every),
+            total=(mcmc.n_samples - mcmc.burnin) // simulate_every,
             desc=tqdm_disp
     ):
         for entry in fwsim_entries(taxa, fwsim):
@@ -196,7 +203,8 @@ def do_fwsims(mcmc: md2.BaseMCMC,
               initial_conditions: np.ndarray,
               n_days: float,
               dt: float,
-              sim_max
+              sim_max: float,
+              simulate_every: int
               ):
     # Load the rest of the parameters
     growth = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section="posterior")
@@ -210,7 +218,7 @@ def do_fwsims(mcmc: md2.BaseMCMC,
     num_posterior_samples = mcmc.n_samples - mcmc.burnin
 
     # Do the forward sim.
-    for gibb in range(num_posterior_samples):
+    for gibb in range(0, num_posterior_samples, simulate_every):
         gibbs_step_sim = run_forward_sim(
             growth=growth[gibb],
             interactions=interactions[gibb],
