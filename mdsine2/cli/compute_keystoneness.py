@@ -187,14 +187,15 @@ def compute_forward_sim(
             total=(mcmc.n_samples - mcmc.burnin) // simulate_every,
             desc=tqdm_disp
     ):
-        for entry in fwsim_entries(taxa, fwsim):
+        for entry in fwsim_entries(taxa, fwsim, dt=dt):
             entry['SampleIdx'] = gibbs_idx
             entry['ExcludedCluster'] = str(cluster_idx)
             df_entries.append(entry)
 
 
-def fwsim_entries(taxa, fwsim):
-    stable_states = fwsim[:, -50:].mean(axis=1)  # 100 indices = 1 day, if dt = 0.01
+def fwsim_entries(taxa, fwsim, dt):
+    n = int(0.5 / dt)  # number of timepoints to average over.
+    stable_states = fwsim[:, -n:].mean(axis=1)  # 100 indices = 1 day, if dt = 0.01
     for otu in taxa:
         yield {
             "OTU": otu.name,
