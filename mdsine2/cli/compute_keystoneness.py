@@ -231,6 +231,7 @@ def do_fwsims(mcmc: md2.BaseMCMC,
             perturbations_start=[],
             perturbations_end=[],
             dt=dt,
+            start_time=0.,
             sim_max=sim_max,
             n_days=n_days
         )

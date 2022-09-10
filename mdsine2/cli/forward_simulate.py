@@ -164,12 +164,13 @@ class ForwardSimulationCLI(CLIModule):
                 perturbations_end=perturbations_end,
                 dt=args.dt,
                 sim_max=args.sim_max,
-                n_days=n_days
+                n_days=n_days,
+                start_time=subject.times[0]
             )
             fwsims.append(fwsim)
 
         fwsims = np.stack(fwsims)
-        times = np.array([args.dt * i for i in range(fwsims.shape[-1])]) + subject.times[0]
+        times = subject.times[0] + args.dt * np.arange(0, fwsims.shape[-1])
         np.save(str(out_path), fwsims)
         logger.info("Saved forward simulations to {}.".format(str(out_path)))
 

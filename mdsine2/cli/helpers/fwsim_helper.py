@@ -16,6 +16,7 @@ def run_forward_sim(growth: np.ndarray,
                     perturbations_end: List[float],
                     dt: float,
                     sim_max: float,
+                    start_time: float,
                     n_days: float):
     """
     Forward simulate with the given dynamics, with the option to apply perturbations during specified timeframes.
@@ -47,7 +48,7 @@ def run_forward_sim(growth: np.ndarray,
         perturbations=perturbations,
         perturbation_starts=perturbations_start,
         perturbation_ends=perturbations_end,
-        start_day=0,
+        start_day=start_time,
         sim_max=sim_max
     )
 
