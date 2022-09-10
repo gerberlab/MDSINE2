@@ -138,8 +138,9 @@ class ForwardSimulationCLI(CLIModule):
 
         initial_conditions = M[:, 0]
         if np.any(initial_conditions == 0):
-            logger.info('{} taxa have abundance zero at the start. Setting to {}'.format(
+            logger.info('{} of {} taxa have abundance zero at the start. Setting to {}'.format(
                 np.sum(initial_conditions == 0),
+                initial_conditions.shape[0],
                 limit_of_detection
             ))
             initial_conditions[initial_conditions == 0] = limit_of_detection
