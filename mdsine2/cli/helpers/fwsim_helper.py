@@ -56,11 +56,12 @@ def run_forward_sim(growth: np.ndarray,
         dynamics=dyn,
         initial_conditions=initial_conditions,
         dt=dt,
-        n_days=n_days,
+        n_days=n_days + dt,
         subsample=False
     )
     fwsim_values = x['X']
-    return fwsim_values
+    fwsim_times = x['T']
+    return fwsim_values, fwsim_times
 
 
 def plot_fwsim_comparison(
@@ -94,7 +95,7 @@ def plot_fwsim_comparison(
         elif mcmc_display_method == "all":
             cmap = plt.get_cmap("blues")
             for mcmc_idx in range(taxa_trajectory.shape[0]):
-                ax.plot(times, taxa_trajectory[mcmc_idx, :], c=cmap(mcmc_idx / taxa_trajectory.shape[0]), linewidth=0.8)
+                ax.plot(trajectory_times, taxa_trajectory[mcmc_idx, :], c=cmap(mcmc_idx / taxa_trajectory.shape[0]), linewidth=0.8)
         else:
             raise ValueError("Unrecognized mcmc_display_argument value `{}`".format(mcmc_display_method))
 

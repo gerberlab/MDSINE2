@@ -154,8 +154,9 @@ class ForwardSimulationCLI(CLIModule):
         logger.info("Running forward simulations on {} MCMC samples.".format(len(gibbs_samples)))
 
         fwsims = []
+        sim_times = None
         for gibbs_idx in gibbs_samples:
-            fwsim = run_forward_sim(
+            fwsim, times = run_forward_sim(
                 growth=growth[gibbs_idx],
                 interactions=interactions[gibbs_idx],
                 initial_conditions=initial_conditions,
@@ -168,9 +169,9 @@ class ForwardSimulationCLI(CLIModule):
                 start_time=subject.times[0]
             )
             fwsims.append(fwsim)
+            sim_times = times
 
         fwsims = np.stack(fwsims)
-        times = subject.times[0] + args.dt * np.arange(0, fwsims.shape[-1])
         np.save(str(out_path), fwsims)
         logger.info("Saved forward simulations to {}.".format(str(out_path)))
 
@@ -191,7 +192,7 @@ class ForwardSimulationCLI(CLIModule):
                 plot_fwsim_comparison(
                     taxa=taxa,
                     taxa_trajectory=fwsims[:, taxa.idx, :],
-                    trajectory_times=times,
+                    trajectory_times=sim_times,
                     subject=subject,
                     out_path=plot_out_path,
                     mcmc_display_method="quantiles",

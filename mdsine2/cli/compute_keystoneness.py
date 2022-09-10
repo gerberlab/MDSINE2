@@ -223,7 +223,7 @@ def do_fwsims(mcmc: md2.BaseMCMC,
 
     # Do the forward sim.
     for gibb in range(0, num_posterior_samples, simulate_every):
-        gibbs_step_sim = run_forward_sim(
+        gibbs_step_sim, _ = run_forward_sim(
             growth=growth[gibb],
             interactions=interactions[gibb],
             initial_conditions=initial_conditions.reshape(-1, 1),
