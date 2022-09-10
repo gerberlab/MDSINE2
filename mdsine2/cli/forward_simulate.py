@@ -124,7 +124,10 @@ class ForwardSimulationCLI(CLIModule):
             perturbations_end = []
             for pert in mcmc.graph.perturbations:
                 logger.info('Loading perturbation `{}`'.format(pert.name))
-                perturbations.append(pert.get_trace_from_disk())
+                pert_value = pert.get_trace_from_disk()
+                pert_value[np.isnan(pert_value)] = 0.
+
+                perturbations.append(pert_value)
                 perturbations_start.append(pert.starts[subj_name])
                 perturbations_end.append(pert.ends[subj_name])
         else:
