@@ -70,6 +70,9 @@ class KeystonenessCLI(CLIModule):
                             help='Specify to skip a certain number of gibbs steps and thin out the samples '
                                  '(for faster calculations)')
 
+        parser.add_argument('--width', default=10., type=float)
+        parser.add_argument('--height', default=10., type=float)
+
     def main(self, args: argparse.Namespace):
         study = md2.Study.load(args.study)
         mcmc = md2.BaseMCMC.load(args.mcmc_path)
@@ -100,7 +103,7 @@ class KeystonenessCLI(CLIModule):
         fwsim_df['ExcludedCluster'] = fwsim_df['ExcludedCluster'].astype("string")
 
         # Render figure
-        fig = plt.figure(figsize=(10, 10))
+        fig = plt.figure(figsize=(args.width, args.height))
         ky = Keystoneness(
             args.mcmc_path,
             args.study,
