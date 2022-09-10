@@ -60,7 +60,7 @@ def run_forward_sim(growth: np.ndarray,
         subsample=False
     )
     fwsim_values = x['X']
-    fwsim_times = x['T']
+    fwsim_times = x['times']
     return fwsim_values, fwsim_times
 
 
