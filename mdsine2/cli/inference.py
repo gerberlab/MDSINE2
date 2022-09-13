@@ -47,6 +47,10 @@ class InferenceCLI(CLIModule):
                  'This script uses this chain to compute consensus clusters.'
         )
         parser.add_argument(
+            '--nomodules', action='store_true', dest='nomodules',
+            help='If flag is provided, then run inference without learning modules.'
+        )
+        parser.add_argument(
             '--negbin', type=str, dest='negbin', nargs='+',
             required=True,
             help='If there is a single argument, then this is the MCMC object that was run to ' \
@@ -153,12 +157,20 @@ class InferenceCLI(CLIModule):
             params.MP_CLUSTERING = 'full-4'
 
         # Change parameters if there is fixed clustering
+        if args.fixed_clustering and args.nomodules:
+            logger.error("Can't use both `fixed_clustering` and `nomodules` mode; only one can be chosen at a time.")
+            exit(1)
         if args.fixed_clustering:
             params.LEARN[STRNAMES.CLUSTERING] = False
             params.LEARN[STRNAMES.CONCENTRATION] = False
-
             params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'fixed-clustering'
             params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value'] = args.fixed_clustering
+            params.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB]['N'] = 'fixed-clustering'
+            params.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['N'] = 'fixed-clustering'
+        elif args.nomodules:
+            params.LEARN[STRNAMES.CLUSTERING] = False
+            params.LEARN[STRNAMES.CONCENTRATION] = False
+            params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'no-clusters'
             params.INITIALIZATION_KWARGS[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB]['N'] = 'fixed-clustering'
             params.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['N'] = 'fixed-clustering'
 
