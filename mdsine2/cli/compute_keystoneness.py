@@ -4,7 +4,7 @@ Run keystoneness analysis using the specified MDSINE2 output.
 
 import argparse
 import csv
-from typing import List, Union
+from typing import List, Union, Iterable
 
 import numpy as np
 import pandas as pd
@@ -24,6 +24,7 @@ from mdsine2.logger import logger
 
 from .base import CLIModule
 from .helpers.fwsim_helper import run_forward_sim
+from ..base import _Cluster
 
 
 class KeystonenessCLI(CLIModule):
@@ -35,9 +36,12 @@ class KeystonenessCLI(CLIModule):
 
     def create_parser(self, parser: argparse.ArgumentParser):
         # Inputs
-        parser.add_argument('--fixed-cluster-mcmc-path', '-f', type=str, dest='mcmc_path',
+
+        parser.add_argument('--mcmc-path', '-m', type=str, dest='mcmc_path', required=True)
+        parser.add_argument('--fixed-cluster-mcmc-path', '-f', type=str, dest='fixed_mcmc_path',
                             required=True,
                             help='Path of saved MDSINE2.BaseMCMC chain (fixed-clustering inference)')
+
         parser.add_argument('--study', '-s', dest='study', type=str, required=True,
                             help="The path to the relevant Study object containing the input data (subjects, taxa).")
 
@@ -76,6 +80,8 @@ class KeystonenessCLI(CLIModule):
     def main(self, args: argparse.Namespace):
         study = md2.Study.load(args.study)
         mcmc = md2.BaseMCMC.load(args.mcmc_path)
+        fixed_cluster_mcmc = md2.BaseMCMC.load(args.fixed_mcmc_path)
+        modules = fixed_cluster_mcmc.graph[STRNAMES.CLUSTERING_OBJ]
 
         logger.info(f"Loading initial conditions from {args.initial_condition_path}")
 
@@ -95,7 +101,7 @@ class KeystonenessCLI(CLIModule):
 
         df_path = out_dir / f"{study.name}_steady_states.tsv"
         fwsim_df = retrieve_ky_simulations(
-            df_path, mcmc,
+            df_path, mcmc, modules,
             initial_conditions_master,
             args.n_days, args.dt, args.sim_max,
             args.simulate_every_n
@@ -105,7 +111,7 @@ class KeystonenessCLI(CLIModule):
         # Render figure
         fig = plt.figure(figsize=(args.width, args.height))
         ky = Keystoneness(
-            args.mcmc_path,
+            mcmc,
             args.study,
             fwsim_df
         )
@@ -114,7 +120,9 @@ class KeystonenessCLI(CLIModule):
         plt.savefig(out_dir / f"{study.name}_keystoneness.pdf", format="pdf")
 
 
-def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_conditions_master: np.ndarray,
+def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC,
+                            modules: Iterable[_Cluster],
+                            initial_conditions_master: np.ndarray,
                             n_days: float, dt: float, sim_max: float, simulate_every: int):
     if df_path.exists():
         logger.info(f"Loading previously computed results ({df_path})")
@@ -136,7 +144,7 @@ def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_condition
     )
 
     # Cluster exclusion
-    for cluster_idx, cluster in enumerate(mcmc.graph[STRNAMES.CLUSTERING_OBJ]):
+    for cluster_idx, cluster in enumerate(modules):
         initial_conditions = exclude_cluster_from(initial_conditions_master, cluster)
         logger.info(f"Now excluding cluster idx={cluster_idx}")
         logger.info("Using initial conditions: {}".format(initial_conditions.flatten()))
@@ -270,8 +278,8 @@ class MdsineOutput(object):
     """
     A class to encode the data output by MDSINE.
     """
-    def __init__(self, pkl_path):
-        self.mcmc = md2.BaseMCMC.load(pkl_path)
+    def __init__(self, mcmc: md2.BaseMCMC):
+        self.mcmc = mcmc
         self.taxa = self.mcmc.graph.data.taxa
         self.name_to_taxa = {otu.name: otu for otu in self.taxa}
 
@@ -382,11 +390,11 @@ def create_cmap(tag, nan_value="red"):
 
 
 class Keystoneness(object):
-    def __init__(self, mcmc_pickle_path, subjset_path, fwsim_df):
+    def __init__(self, mcmc: md2.BaseMCMC, fixed_cluster_mcmc: md2.BaseMCMC, subjset_path, fwsim_df):
         self.fwsim_df = fwsim_df
 
         logger.info("Loading pickle files.")
-        self.md: MdsineOutput = MdsineOutput(mcmc_pickle_path)
+        self.md: MdsineOutput = MdsineOutput(mcmc)
         self.study = md2.Study.load(subjset_path)
 
         logger.info("Compiling dataframe.")
