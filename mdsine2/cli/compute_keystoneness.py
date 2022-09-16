@@ -74,8 +74,8 @@ class KeystonenessCLI(CLIModule):
                             help='Specify to skip a certain number of gibbs steps and thin out the samples '
                                  '(for faster calculations)')
 
-        parser.add_argument('--width', default=10., type=float)
-        parser.add_argument('--height', default=10., type=float)
+        parser.add_argument('--width', default=10., type=float, required=False)
+        parser.add_argument('--height', default=10., type=float, required=False)
 
     def main(self, args: argparse.Namespace):
         study = md2.Study.load(args.study)
