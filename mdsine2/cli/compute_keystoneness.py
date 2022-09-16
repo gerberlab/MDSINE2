@@ -74,8 +74,9 @@ class KeystonenessCLI(CLIModule):
                             help='Specify to skip a certain number of gibbs steps and thin out the samples '
                                  '(for faster calculations)')
 
-        parser.add_argument('--width', default=10., type=float)
-        parser.add_argument('--height', default=10., type=float)
+        parser.add_argument('--width', default=10., type=float, required=False)
+        parser.add_argument('--height', default=10., type=float, required=False)
+        parser.add_argument('--grid-unit', dest='grid_unit', default=0.3, type=float, required=False)
 
     def main(self, args: argparse.Namespace):
         study = md2.Study.load(args.study)
@@ -115,7 +116,7 @@ class KeystonenessCLI(CLIModule):
             args.study,
             fwsim_df
         )
-        ky.plot(fig)
+        ky.plot(fig, box_unit=args.grid_unit)
         ky.save_ky(out_dir / f"{study.name}_keystoneness.tsv")
         plt.savefig(out_dir / f"{study.name}_keystoneness.pdf", format="pdf")
 
@@ -516,7 +517,7 @@ class Keystoneness(object):
     def save_ky(self, tsv_path: Path):
         self.ky_df.to_csv(tsv_path, sep='\t')
 
-    def plot(self, fig):
+    def plot(self, fig, box_unit: float = 0.3):
         # Main abundance grid shows the _difference_ from baseline, instead of the abundances itself.
         n_clusters = len(self.ky_array)
 
@@ -609,7 +610,6 @@ class Keystoneness(object):
         #     [left, bottom, width, height]
         main_x = 0.67
         main_y = 0.5
-        box_unit = 0.03
         main_width = box_unit * n_clusters
         main_height = main_width
         main_left = main_x - 0.5 * main_width
