@@ -682,7 +682,7 @@ class Keystoneness(object):
             **ky_heatmapkws
         )
         # Draw a marker ("X") on top of NaNs.
-        abundances_ax.scatter(*np.argwhere(np.isnan(baseline_diff_array.T)).T + 0.5, marker="x", color="black", s=100)
+        abundances_ax.scatter(*np.argwhere(np.isnan(baseline_diff_array.T)).T + 0.5, marker="x", color="black", s=100 * (box_unit / _DEFAULT_BOX_SIZE))
         abundances_ax.set_ylabel("Module Removed", fontsize=10)
         abundances_ax.set_xlabel("Per-Module Change", fontsize=10)
         for _, spine in hmap_removed_cluster_abund.spines.items():
