@@ -26,11 +26,6 @@ from .base import CLIModule
 from .helpers.fwsim_helper import run_forward_sim
 from ..base import _Cluster
 
-matplotlib.rcParams['pdf.fonttype'] = 42
-matplotlib.rcParams['ps.fonttype'] = 42
-
-_DEFAULT_BOX_SIZE = 0.3
-
 
 class KeystonenessCLI(CLIModule):
     def __init__(self, subcommand="evaluate-keystoneness"):
@@ -79,9 +74,8 @@ class KeystonenessCLI(CLIModule):
                             help='Specify to skip a certain number of gibbs steps and thin out the samples '
                                  '(for faster calculations)')
 
-        parser.add_argument('--width', default=10., type=float, required=False)
-        parser.add_argument('--height', default=10., type=float, required=False)
-        parser.add_argument('--grid-unit', dest='grid_unit', default=_DEFAULT_BOX_SIZE, type=float, required=False)
+        parser.add_argument('--width', default=10., type=float)
+        parser.add_argument('--height', default=10., type=float)
 
     def main(self, args: argparse.Namespace):
         study = md2.Study.load(args.study)
@@ -121,7 +115,7 @@ class KeystonenessCLI(CLIModule):
             args.study,
             fwsim_df
         )
-        ky.plot(fig, box_unit=args.grid_unit)
+        ky.plot(fig)
         ky.save_ky(out_dir / f"{study.name}_keystoneness.tsv")
         plt.savefig(out_dir / f"{study.name}_keystoneness.pdf", format="pdf")
 
@@ -522,7 +516,7 @@ class Keystoneness(object):
     def save_ky(self, tsv_path: Path):
         self.ky_df.to_csv(tsv_path, sep='\t')
 
-    def plot(self, fig, box_unit: float = 0.3):
+    def plot(self, fig):
         # Main abundance grid shows the _difference_ from baseline, instead of the abundances itself.
         n_clusters = len(self.ky_array)
 
@@ -615,14 +609,13 @@ class Keystoneness(object):
         #     [left, bottom, width, height]
         main_x = 0.67
         main_y = 0.5
+        box_unit = 0.03
         main_width = box_unit * n_clusters
         main_height = main_width
         main_left = main_x - 0.5 * main_width
         main_bottom = main_y - 0.5 * main_width
         # print("Left: {}, bottom: {}, width: {}, height: {}".format(main_left, main_bottom, main_width, main_height))
         # print("Right: {}, Top: {}".format(main_left + main_width, main_bottom + main_height))
-
-        matplotlib.rcParams.update({'font.size': 10 * (box_unit / _DEFAULT_BOX_SIZE)})
 
         ky_ax = fig.add_axes([main_left + main_width + 0.5 * box_unit, main_bottom, box_unit, main_height])
         abundances_ax = fig.add_axes([main_left, main_bottom, main_width, main_height])
@@ -640,7 +633,7 @@ class Keystoneness(object):
             **ky_heatmapkws
         )
         hmap_ky.xaxis.set_tick_params(width=0)
-        fig.text(main_left + main_width + 2 * box_unit, main_y, "Keystoneness", ha='center', va='center', rotation=-90, fontsize=10)
+        fig.text(main_left + main_width + 2 * box_unit, main_y, "Keystoneness", ha='center', va='center', rotation=-90)
 
         for _, spine in hmap_ky.spines.items():
             spine.set_visible(True)
@@ -656,7 +649,7 @@ class Keystoneness(object):
         for _, spine in hmap_day20_abund.spines.items():
             spine.set_visible(True)
             spine.set_linewidth(1.0)
-        fig.text(main_x, main_bottom + main_height + 3 * box_unit, "Steady State Abundance", ha='center', va='center', fontsize=10)
+        fig.text(main_x, main_bottom + main_height + 3 * box_unit, "Steady State Abundance", ha='center', va='center')
 
         # ====== Top right 2: Baseline abundances
         hmap_base_abund = sns.heatmap(baseline_array,
@@ -682,9 +675,9 @@ class Keystoneness(object):
             **ky_heatmapkws
         )
         # Draw a marker ("X") on top of NaNs.
-        abundances_ax.scatter(*np.argwhere(np.isnan(baseline_diff_array.T)).T + 0.5, marker="x", color="black", s=100 * (box_unit / _DEFAULT_BOX_SIZE))
-        abundances_ax.set_ylabel("Module Removed", fontsize=10)
-        abundances_ax.set_xlabel("Per-Module Change", fontsize=10)
+        abundances_ax.scatter(*np.argwhere(np.isnan(baseline_diff_array.T)).T + 0.5, marker="x", color="black", s=100)
+        abundances_ax.set_ylabel("Module Removed")
+        abundances_ax.set_xlabel("Per-Module Change")
         for _, spine in hmap_removed_cluster_abund.spines.items():
             spine.set_visible(True)
             spine.set_linewidth(1.0)
@@ -709,7 +702,7 @@ class Keystoneness(object):
         yticklabels = [str(np.log10(y)) for y in yticks]
         yticklabels[0] = "<{}".format(yticklabels[0])
         cax.set_yticklabels(yticklabels)
-        cax.set_ylabel("Log-Abundance", fontsize=10)
+        cax.set_ylabel("Log-Abundance")
 
         # Cbar on the left (Keyst., RdBu)
         cax = fig.add_axes(
@@ -718,7 +711,7 @@ class Keystoneness(object):
         sm.set_array(np.array([]))
         cbar = fig.colorbar(sm, cax=cax)
         cax.yaxis.set_ticks_position('left')
-        cax.set_ylabel("Log-Difference from Base", fontsize=10)
+        cax.set_ylabel("Log-Difference from Base")
         cax.yaxis.set_label_position("left")
 
         yticks = cbar.get_ticks()
@@ -731,6 +724,5 @@ class Keystoneness(object):
             main_y + 0.5 * cbar_height + 0.05,
             "Legend",
             ha='center', va='center',
-            fontweight='bold',
-            fontsize=10
+            fontweight='bold'
         )
