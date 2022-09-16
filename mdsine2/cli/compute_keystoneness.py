@@ -390,7 +390,7 @@ def create_cmap(tag, nan_value="red"):
 
 
 class Keystoneness(object):
-    def __init__(self, mcmc: md2.BaseMCMC, fixed_cluster_mcmc: md2.BaseMCMC, subjset_path, fwsim_df):
+    def __init__(self, mcmc: md2.BaseMCMC, subjset_path, fwsim_df):
         self.fwsim_df = fwsim_df
 
         logger.info("Loading pickle files.")
