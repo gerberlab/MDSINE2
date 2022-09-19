@@ -111,7 +111,7 @@ class KeystonenessCLI(CLIModule):
         # Render figure
         fig = plt.figure(figsize=(args.width, args.height))
         ky = Keystoneness(
-            mcmc,
+            fixed_cluster_mcmc,
             args.study,
             fwsim_df
         )
