@@ -11,6 +11,7 @@ from .forward_simulate import ForwardSimulationCLI
 from .compute_keystoneness import KeystonenessCLI
 from .plot_subjects import PlotSubjectCLI
 from .extract_abundance import ExtractAbundancesCLI
+from .extract_from_mcmc import ExtractPosteriorCLI
 
 
 def main():
@@ -27,7 +28,8 @@ def main():
         ForwardSimulationCLI(subcommand="forward-simulate"),
         KeystonenessCLI(subcommand="evaluate-keystoneness"),
         PlotSubjectCLI(subcommand="plot-subjects"),
-        ExtractAbundancesCLI(subcommand="extract-abundances")
+        ExtractAbundancesCLI(subcommand="extract-abundances"),
+        ExtractPosteriorCLI(subcommand="extract-posterior")
     ]
 
     dispatch({
