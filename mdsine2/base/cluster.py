@@ -260,6 +260,9 @@ class Clustering(TraceableNode):
         return (cid in self.clusters) or (cid < len(self.clusters))
 
     def __getitem__(self, cid):
+        # TODO: reimplement this.
+        #  this is very dangerous legacy code, since we can't retrieve CIDs if they happen to be smaller than
+        #  the # of clusters.
         if cid in self.clusters:
             return self.clusters[cid]
         elif cid < len(self.clusters):
