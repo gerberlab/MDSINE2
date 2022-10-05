@@ -112,7 +112,7 @@ class ExtractPosteriorCLI(CLIModule):
         del mcmc0
 
         perturbations = {
-            np.concatenate([
+            pert_name: np.concatenate([
                 extract_perts(
                     md2.BaseMCMC.load(str(mcmc_path)),
                     pert_name
