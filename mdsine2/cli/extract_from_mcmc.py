@@ -126,7 +126,7 @@ class ExtractPosteriorCLI(CLIModule):
             ])
             for pert_name in pert_names
         }
-        np.savez(str(out_dir / 'perturbations.npy'), **perturbations)
+        np.savez(str(out_dir / 'perturbations.npz'), **perturbations)
         del perturbations
 
         n_clusters_all = []
@@ -138,8 +138,8 @@ class ExtractPosteriorCLI(CLIModule):
             n_samples = n_clusters.shape[0]
             coclustering_all.append(coclustering * n_samples)
             total_samples += n_samples
-        np.savez(str(out_dir / 'n_clusters.npy'), np.concatenate(n_clusters_all))
-        np.savez(
+        np.save(str(out_dir / 'n_clusters.npy'), np.concatenate(n_clusters_all))
+        np.save(
             str(out_dir / 'coclusters.npy'),
             np.sum(
                 (1 / total_samples) * np.stack(coclustering_all, axis=0),
