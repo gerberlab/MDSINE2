@@ -56,7 +56,7 @@ def extract_perts(mcmc: md2.BaseMCMC, pert_name: str) -> np.ndarray:
 def extract_clustering(mcmc: md2.BaseMCMC) -> Tuple[np.ndarray, np.ndarray]:
     clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
     n_clusters = clustering.n_clusters.get_trace_from_disk(section='posterior')
-    coclusters = md2.summary(clustering.coclusters, section='posterior')['mean']
+    coclusters = md2.summary(clustering.coclusters, section='posterior', only=['mean'])['mean']
     return n_clusters, coclusters
 
 
