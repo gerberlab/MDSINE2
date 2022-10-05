@@ -20,12 +20,13 @@ arguments `--interaction-ind-prior` and `perturbation-ind-prior`.
 
 import argparse
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Tuple
 
 import numpy as np
 
 from .base import CLIModule
 import mdsine2 as md2
+from mdsine2 import Clustering
 from mdsine2.names import STRNAMES
 
 
@@ -51,6 +52,13 @@ def extract_perts(mcmc: md2.BaseMCMC, pert_name: str) -> Dict[str, np.ndarray]:
     return perts
 
 
+def extract_clustering(mcmc: md2.BaseMCMC) -> Tuple[np.ndarray, np.ndarray]:
+    clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
+    n_clusters = clustering.n_clusters.get_trace_from_disk(section='posterior')
+    coclusters = md2.summary(clustering.coclusters, section='posterior')['mean']
+    return n_clusters, coclusters
+
+
 class ExtractPosteriorCLI(CLIModule):
     def __init__(self, subcommand="extract-posterior"):
         super().__init__(
@@ -74,7 +82,11 @@ class ExtractPosteriorCLI(CLIModule):
         out_dir = Path(args.out_dir)
         out_dir.mkdir(exist_ok=True, parents=True)
 
-        """To save memory, loop through each MCMC object one-by-one and reload from disk as needed."""
+        """
+        To save memory, loop through each MCMC object one-by-one and reload from disk as needed.
+        (Note: increases runtime since file pointers must be re-opened several times!)
+        """
+
         # Interactions
         interaction_traces = np.concatenate([
             extract_interactions(md2.BaseMCMC.load(str(mcmc_path)))
@@ -109,3 +121,21 @@ class ExtractPosteriorCLI(CLIModule):
         }
         np.savez(str(out_dir / 'perturbations.npy'), **perturbations)
         del perturbations
+
+        n_clusters_all = []
+        coclustering_all = []
+        total_samples = 0
+        for mcmc_path in mcmc_paths:
+            n_clusters, coclustering, n_posteriors = extract_clustering(md2.BaseMCMC.load(str(mcmc_path)))
+            n_clusters_all.append(n_clusters)
+            n_samples = n_clusters.shape[0]
+            coclustering_all.append(coclustering * n_samples)
+            total_samples += n_samples
+        np.savez(str(out_dir / 'n_clusters.npy'), np.concatenate(n_clusters_all))
+        np.savez(
+            str(out_dir / 'coclusters.npy'),
+            np.sum(
+                (1 / total_samples) * np.stack(coclustering_all, axis=0),
+                axis=0
+            )
+        )
