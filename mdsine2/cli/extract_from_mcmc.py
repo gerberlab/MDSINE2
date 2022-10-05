@@ -108,6 +108,7 @@ class ExtractPosteriorCLI(CLIModule):
         pert_names = []
         for pert in mcmc0.graph.perturbations:
             pert_names.append(pert.name)
+        print("Found perturbations: {}".format(pert_names))
         del mcmc0
 
         perturbations = {
