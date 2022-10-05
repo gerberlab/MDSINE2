@@ -128,7 +128,7 @@ class ExtractPosteriorCLI(CLIModule):
         coclustering_all = []
         total_samples = 0
         for mcmc_path in tqdm(mcmc_paths, desc='Clustering'):
-            n_clusters, coclustering, n_posteriors = extract_clustering(md2.BaseMCMC.load(str(mcmc_path)))
+            n_clusters, coclustering = extract_clustering(md2.BaseMCMC.load(str(mcmc_path)))
             n_clusters_all.append(n_clusters)
             n_samples = n_clusters.shape[0]
             coclustering_all.append(coclustering * n_samples)
