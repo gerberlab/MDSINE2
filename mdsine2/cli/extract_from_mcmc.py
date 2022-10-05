@@ -27,6 +27,7 @@ from tqdm import tqdm
 
 from .base import CLIModule
 import mdsine2 as md2
+from mdsine2.logger import logger
 from mdsine2.names import STRNAMES
 
 
@@ -79,6 +80,10 @@ class ExtractPosteriorCLI(CLIModule):
 
     def main(self, args: argparse.Namespace):
         mcmc_paths = [Path(x) for x in args.input]
+        logger.info("Loading from:")
+        for mcmc_path in mcmc_paths:
+            logger.info(mcmc_path)
+
         out_dir = Path(args.out_dir)
         out_dir.mkdir(exist_ok=True, parents=True)
 
