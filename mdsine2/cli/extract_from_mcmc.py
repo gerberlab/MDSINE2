@@ -46,7 +46,7 @@ def extract_growth(mcmc: md2.BaseMCMC) -> np.ndarray:
     return mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section='posterior')
 
 
-def extract_perts(mcmc: md2.BaseMCMC, pert_name: str) -> Dict[str, np.ndarray]:
+def extract_perts(mcmc: md2.BaseMCMC, pert_name: str) -> np.ndarray:
     perts = mcmc.graph.perturbations[pert_name].get_trace_from_disk(section='posterior')
     perts[np.isnan(perts)] = 0.
     return perts
@@ -114,9 +114,10 @@ class ExtractPosteriorCLI(CLIModule):
         perturbations = {
             np.concatenate([
                 extract_perts(
-                    md2.BaseMCMC.load(str(mcmc_path)), pert_name
+                    md2.BaseMCMC.load(str(mcmc_path)),
+                    pert_name
                 )
-                for mcmc_path in tqdm(mcmc_paths, desc=f'Perturbation {pert_name}')
+                for mcmc_path in tqdm(mcmc_paths, desc=f'Perturbation ({pert_name})')
             ])
             for pert_name in pert_names
         }
