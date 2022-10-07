@@ -337,7 +337,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'hyperparam_option': 'diffuse',
                 'delay': 0, 'n_iter': 20},
             STRNAMES.CLUSTERING: {
-                'value_option': 'no-clusters',
+                'value_option': 'spearman',
                 'delay': 2,
                 'n_clusters': 30,
                 'run_every_n_iterations': 4},
