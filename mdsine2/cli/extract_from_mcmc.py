@@ -144,7 +144,7 @@ class ExtractPosteriorCLI(CLIModule):
 
         n_clusters_all = np.concatenate(n_clusters_all)
         coclustering_all = np.sum((1 / total_samples) * np.stack(coclustering_all, axis=0), axis=0)
-        np.save(str(out_dir / 'n_clusters.npy'), )
+        np.save(str(out_dir / 'n_clusters.npy'), n_clusters_all)
         np.save(str(out_dir / 'coclusters.npy'), coclustering_all)
 
         # Agglomerated modules
