@@ -21,8 +21,10 @@ arguments `--interaction-ind-prior` and `perturbation-ind-prior`.
 import argparse
 from pathlib import Path
 from typing import Dict, Tuple
+import scipy.stats
 
 import numpy as np
+from sklearn.cluster import AgglomerativeClustering
 from tqdm import tqdm
 
 from .base import CLIModule
@@ -129,6 +131,7 @@ class ExtractPosteriorCLI(CLIModule):
         np.savez(str(out_dir / 'perturbations.npz'), **perturbations)
         del perturbations
 
+        # Coclustering
         n_clusters_all = []
         coclustering_all = []
         total_samples = 0
@@ -138,11 +141,20 @@ class ExtractPosteriorCLI(CLIModule):
             n_samples = n_clusters.shape[0]
             coclustering_all.append(coclustering * n_samples)
             total_samples += n_samples
-        np.save(str(out_dir / 'n_clusters.npy'), np.concatenate(n_clusters_all))
-        np.save(
-            str(out_dir / 'coclusters.npy'),
-            np.sum(
-                (1 / total_samples) * np.stack(coclustering_all, axis=0),
-                axis=0
-            )
+
+        n_clusters_all = np.concatenate(n_clusters_all)
+        coclustering_all = np.sum((1 / total_samples) * np.stack(coclustering_all, axis=0), axis=0)
+        np.save(str(out_dir / 'n_clusters.npy'), )
+        np.save(str(out_dir / 'coclusters.npy'), coclustering_all)
+
+        # Agglomerated modules
+        A = 1 - coclustering_all
+        n = scipy.stats.mode(n_clusters_all)[0][0]
+        linkage = 'complete'
+        c = AgglomerativeClustering(
+            n_clusters=n,
+            affinity='precomputed',
+            linkage=linkage
         )
+        agglom = c.fit_predict(A)
+        np.save(str(out_dir / "agglomeration.npy"), agglom)
