@@ -24,6 +24,7 @@ from typing import Dict, Tuple
 import scipy.stats
 
 import numpy as np
+from mdsine2.pylab.inference import TraceNotFoundException
 from sklearn.cluster import AgglomerativeClustering
 from tqdm import tqdm
 
@@ -132,29 +133,33 @@ class ExtractPosteriorCLI(CLIModule):
         del perturbations
 
         # Coclustering
-        n_clusters_all = []
-        coclustering_all = []
-        total_samples = 0
-        for mcmc_path in tqdm(mcmc_paths, desc='Clustering'):
-            n_clusters, coclustering = extract_clustering(md2.BaseMCMC.load(str(mcmc_path)))
-            n_clusters_all.append(n_clusters)
-            n_samples = n_clusters.shape[0]
-            coclustering_all.append(coclustering * n_samples)
-            total_samples += n_samples
+        try:
+            n_clusters_all = []
+            coclustering_all = []
+            total_samples = 0
+            for mcmc_path in tqdm(mcmc_paths, desc='Clustering'):
+                n_clusters, coclustering = extract_clustering(md2.BaseMCMC.load(str(mcmc_path)))
+                n_clusters_all.append(n_clusters)
+                n_samples = n_clusters.shape[0]
+                coclustering_all.append(coclustering * n_samples)
+                total_samples += n_samples
 
-        n_clusters_all = np.concatenate(n_clusters_all)
-        coclustering_all = np.sum((1 / total_samples) * np.stack(coclustering_all, axis=0), axis=0)
-        np.save(str(out_dir / 'n_clusters.npy'), n_clusters_all)
-        np.save(str(out_dir / 'coclusters.npy'), coclustering_all)
+            n_clusters_all = np.concatenate(n_clusters_all)
+            coclustering_all = np.sum((1 / total_samples) * np.stack(coclustering_all, axis=0), axis=0)
+            np.save(str(out_dir / 'n_clusters.npy'), n_clusters_all)
+            np.save(str(out_dir / 'coclusters.npy'), coclustering_all)
 
-        # Agglomerated modules
-        A = 1 - coclustering_all
-        n = scipy.stats.mode(n_clusters_all)[0][0]
-        linkage = 'complete'
-        c = AgglomerativeClustering(
-            n_clusters=n,
-            affinity='precomputed',
-            linkage=linkage
-        )
-        agglom = c.fit_predict(A)
-        np.save(str(out_dir / "agglomeration.npy"), agglom)
+            # Agglomerated modules
+            A = 1 - coclustering_all
+            n = scipy.stats.mode(n_clusters_all)[0][0]
+            linkage = 'complete'
+            c = AgglomerativeClustering(
+                n_clusters=n,
+                affinity='precomputed',
+                linkage=linkage
+            )
+            agglom = c.fit_predict(A)
+            np.save(str(out_dir / "agglomeration.npy"), agglom)
+        except TraceNotFoundException:
+            print("Trace for clustering doesn't exist. Skipping.")
+            pass
