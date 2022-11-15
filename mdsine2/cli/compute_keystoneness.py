@@ -604,6 +604,9 @@ class Keystoneness(object):
         hmap_removed_cluster_abund.set_xticklabels(
             hmap_removed_cluster_abund.get_xticklabels(), rotation=90, horizontalalignment='center'
         )
+        hmap_removed_cluster_abund.set_yticklabels(
+            hmap_removed_cluster_abund.set_yticklabels(), rotation=0, horizontalalignment='center'
+        )
         abundances_ax.tick_params(direction='out', length=0, width=0)
 
         # ======= Draw the colormaps ========
