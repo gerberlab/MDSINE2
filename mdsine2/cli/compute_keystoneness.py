@@ -583,7 +583,7 @@ class Keystoneness(object):
 
         # ====== Bottom right: Abundances with clusters removed.
         ticklabels = [
-            f"Cluster{c_idx+1}"
+            f"M{c_idx+1}"
             for c_idx in ky_order
         ]
         hmap_removed_cluster_abund = sns.heatmap(
