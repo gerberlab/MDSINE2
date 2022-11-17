@@ -25,6 +25,11 @@ from .base import CLIModule
 from .helpers.fwsim_helper import run_forward_sim
 
 
+# Make font editable in AI
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
+
+
 class KeystonenessCLI(CLIModule):
     def __init__(self, subcommand="evaluate-keystoneness"):
         super().__init__(
