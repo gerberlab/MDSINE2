@@ -1495,7 +1495,7 @@ class OTUTaxaSet(TaxaSet):
             #                  tax_species: str = None):
             row = consensus_table.loc[otu.name]
             asv = otu.components[0]
-            taxon.set_taxonomy(
+            otu.set_taxonomy(
                 tax_kingdom=asv.taxonomy['kingdom'],
                 tax_phylum=asv.taxonomy['phylum'],
                 tax_class=asv.taxonomy['class'],
