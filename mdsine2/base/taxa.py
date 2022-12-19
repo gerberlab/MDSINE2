@@ -345,6 +345,8 @@ class OTU(Taxon):
         consensus_table : pd.DataFrame
             Table for resolving conflicts
         """
+        logger.warning("Function generate_consensus_taxonomy is deprecated. Use set_taxonomy() directly instead.")
+
         # Check that all the taxonomies have the same lineage
         set_to_na = False
         set_from_table = False
@@ -1488,7 +1490,19 @@ class OTUTaxaSet(TaxaSet):
         mdsine2.pylab.base.OTU.generate_consensus_taxonomy
         """
         for taxon in self:
-            taxon.generate_consensus_taxonomy(consensus_table=consensus_table)
+            # def set_taxonomy(self, tax_kingdom: str = None, tax_phylum: str = None, tax_class: str = None,
+            #                  tax_order: str = None, tax_family: str = None, tax_genus: str = None,
+            #                  tax_species: str = None):
+            row = consensus_table.loc[taxon.name]
+            taxon.set_taxonomy(
+                tax_kingdom=row['kingdom'],
+                tax_phylum=row['phylum'],
+                tax_class=row['class'],
+                tax_order=row['order'],
+                tax_family=row['family'],
+                tax_genus=row['genus'],
+                tax_species=row['species']
+            )
 
     def deaggregate_item(self, agg: Union[OTU, str, int], other: str) -> Taxon:
         """Deaggregate the sequence `other` from OTU `agg`.
