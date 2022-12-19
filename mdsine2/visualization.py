@@ -1810,7 +1810,7 @@ def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: s
             if dtype == 'rel':
                 abund = abund / np.sum(subj.reads[t])
             if dtype == 'abs':
-                abund = abund * subj.qpcr[t].mean()
+                abund = abund * subj.qpcr[t].mean() / np.sum(subj.reads[t])
             temp.append(abund)
 
         label = _agg_taxaname_for_paper(agg=agg, taxaname=taxaname)
