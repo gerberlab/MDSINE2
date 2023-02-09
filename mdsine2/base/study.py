@@ -110,6 +110,7 @@ class Study(Saveable):
 
         # Add the perturbations if there are any
         # --------------------------------------
+        perturbations = perturbations.reset_index()
         if perturbations is not None:
             logger.debug('Reseting perturbations')
             self.perturbations = Perturbations()
