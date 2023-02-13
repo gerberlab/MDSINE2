@@ -1,4 +1,4 @@
-from typing import Iterator, Any, Union, List
+from typing import Iterator, Any, Union, List, Optional, Callable
 
 import pandas as pd
 
@@ -185,13 +185,11 @@ class OTU(Taxon):
         These are the taxa/Aggregates that you're joining together. The anchor is
         the one you are setting the sequeunce and taxonomy to
     """
-    def __init__(self, components: List[Taxon], idx: int):
+    def __init__(self, components: List[Taxon], idx: int, name: str):
         self.components = components
-        self.name = f"OTU_{idx+1}"
-
         Taxon.__init__(
             self,
-            name=f"OTU_{idx+1}",
+            name=name,
             idx=idx,
             sequence=self.generate_consensus_seq()
         )
@@ -347,6 +345,8 @@ class OTU(Taxon):
         consensus_table : pd.DataFrame
             Table for resolving conflicts
         """
+        logger.warning("Function generate_consensus_taxonomy is deprecated. Use set_taxonomy() directly instead.")
+
         # Check that all the taxonomies have the same lineage
         set_to_na = False
         set_from_table = False
@@ -1356,7 +1356,7 @@ class TaxaSet(Clusterable):
                 break
         return i/8 # including asv
 
-    def aggregate_items(self, groupings: List[List[Taxon]]) -> 'OTUTaxaSet':
+    def aggregate_items(self, groupings: List[List[Taxon]], otu_naming: Callable[[int, List[Taxon]], str]) -> 'OTUTaxaSet':
         """Create an OTU with the anchor `anchor` and other taxon  `other`.
         The aggregate takes the sequence and the taxonomy from the anchor.
 
@@ -1367,7 +1367,8 @@ class TaxaSet(Clusterable):
         """
         other = OTUTaxaSet()
         for gidx, grouping in enumerate(groupings):
-            otu = OTU(components=grouping, idx=gidx)
+            name = otu_naming(gidx, grouping)
+            otu = OTU(components=grouping, idx=gidx, name=name)
             other.add(otu)
         return other
 
@@ -1396,6 +1397,9 @@ class TaxaSet(Clusterable):
             If this is False, then we start the enumeration of the taxa from 1
             instead of 0. If True, then the enumeration starts at 0
         """
+        raise RuntimeError("This function is deprecated. Renaming of taxasets arbitrarily using indices is dangerous! "
+                           "Make sure that the names are decided at the beginning.")
+
         if not plutil.isstr(prefix):
             raise TypeError('`prefix` ({}) must be a str'.format(type(prefix)))
         if not plutil.isbool(zero_based_index):
@@ -1485,8 +1489,21 @@ class OTUTaxaSet(TaxaSet):
         --------
         mdsine2.pylab.base.OTU.generate_consensus_taxonomy
         """
-        for taxon in self:
-            taxon.generate_consensus_taxonomy(consensus_table=consensus_table)
+        for otu in self:
+            # def set_taxonomy(self, tax_kingdom: str = None, tax_phylum: str = None, tax_class: str = None,
+            #                  tax_order: str = None, tax_family: str = None, tax_genus: str = None,
+            #                  tax_species: str = None):
+            row = consensus_table.loc[otu.name]
+            asv = otu.components[0]
+            otu.set_taxonomy(
+                tax_kingdom=asv.taxonomy['kingdom'],
+                tax_phylum=asv.taxonomy['phylum'],
+                tax_class=asv.taxonomy['class'],
+                tax_order=asv.taxonomy['order'],
+                tax_family=asv.taxonomy['family'],
+                tax_genus=asv.taxonomy['genus'],
+                tax_species=asv.taxonomy['species']
+            )
 
     def deaggregate_item(self, agg: Union[OTU, str, int], other: str) -> Taxon:
         """Deaggregate the sequence `other` from OTU `agg`.

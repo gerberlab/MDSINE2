@@ -13,10 +13,10 @@ from sklearn.cluster import AgglomerativeClustering
 from .names import STRNAMES
 from . import pylab as pl
 
-from typing import Union, Dict, List, Optional
+from typing import Union, Dict, List, Optional, Callable
 from .pylab import BaseMCMC, diversity
 from .base import *
-
+from .dataset import parse
 
 def is_gram_negative(taxon: Union[OTU, Taxon]) -> bool:
     '''Return true if the taxon is gram - or gram positive
@@ -307,7 +307,11 @@ def condense_fixed_clustering_perturbation(pert: np.ndarray, clustering: Cluster
     return ret
 
 
-def aggregate_items(subjset: Study, hamming_dist: int, linkage: str = 'average') -> Study:
+def aggregate_items(subjset: Study,
+                    hamming_dist: int,
+                    otu_naming: Callable[[int, List[Taxon]], str],
+                    linkage: str = 'average',
+                    sort_order='SIZE') -> Study:
     """
     Aggregate Taxa that have an average hamming distance of `hamming_dist`.
 
@@ -340,13 +344,21 @@ def aggregate_items(subjset: Study, hamming_dist: int, linkage: str = 'average')
     for oidx in oidx_set:
         asv_subset: List[Taxon] = [asvs[i] for i in np.where(clustering.labels_ == oidx)[0]]
         subsets.append(asv_subset)
-    subsets = sorted(
-        subsets,
-        key=lambda x: len(x),
-        reverse=True
-    )
 
-    return subjset.aggregate_items(subsets)
+    if sort_order == 'SIZE':
+        subsets = sorted(
+            subsets,
+            key=lambda x: len(x),
+            reverse=True
+        )
+    elif sort_order == "MIN_ASV_IDX":
+        subsets = sorted(
+            subsets,
+            key=lambda agg: min(taxa.idx for taxa in agg)
+        )
+    else:
+        raise ValueError(f"Unrecognized sort_order argument `{sort_order}`")
+    return subjset.aggregate_items(subsets, otu_naming=otu_naming)
 
 
 def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_filename: str):
@@ -680,3 +692,50 @@ def conditional_consistency_filtering(subjset: Study, other: Study, dtype: str, 
 
     subjset_lower.pop_taxa(to_delete)
     return subjset_lower
+
+def make_toy(metadata_f, qpcr_f, reads_f, taxa_f, perturbations_f=None, dataset_dir=None, n_taxa=15, ):
+    """ Make small toy dataset from existing study.
+    Adapted from MDSINE2_paper github repo.
+    """
+
+    dset = parse(
+        name = metadata_f.parent.stem,
+        metadata = metadata_f,
+        taxonomy = taxa_f,
+        reads = reads_f,
+        qpcr = qpcr_f,
+        perturbations = perturbations_f,
+    )
+
+    to_delete = []
+    for taxon in dset.taxa:
+        if taxon.idx >= n_taxa:   
+            to_delete.append(taxon.name)
+    dset.pop_taxa(to_delete)
+    
+    if dataset_dir is None:
+        dataset_dir = metadata_f.parents[1]
+
+    toy_dataset_path = dataset_dir / "{}-toy".format(dset.name)
+    toy_dataset_path.mkdir(parents=True, exist_ok=True)
+
+    tsv_files = [metadata_f, qpcr_f, reads_f, taxa_f, perturbations_f]
+    toy_dataset_files = {f.stem : toy_dataset_path / f.name for f in tsv_files}
+    
+    dset.write_metadata_to_csv(path=toy_dataset_files[metadata_f.stem])
+    dset.write_qpcr_to_csv(path=toy_dataset_files[qpcr_f.stem])
+    if dset.perturbations is not None:
+        dset.write_perturbations_to_csv(path=toy_dataset_files[perturbations_f.stem])
+    dset.write_reads_to_csv(path=toy_dataset_files[reads_f.stem])
+    dset.taxa.write_taxonomy_to_csv(path=toy_dataset_files[taxa_f.stem])
+
+    toy_study = parse(
+        name = toy_dataset_path.stem,
+        metadata = toy_dataset_files[metadata_f.stem],
+        taxonomy = toy_dataset_files[taxa_f.stem],
+        reads = toy_dataset_files[reads_f.stem],
+        qpcr = toy_dataset_files[qpcr_f.stem],
+        perturbations = toy_dataset_files[perturbations_f.stem],
+        )
+    
+    return toy_study

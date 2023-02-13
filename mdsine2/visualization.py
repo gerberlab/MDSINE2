@@ -138,7 +138,7 @@ def set_default_trace_color(color: Any):
 
 def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbations, 
     subj: Subject, textcolor: str='black', textsize: Union[float, int]=None, 
-    alpha: float=0.25, label: bool=True) -> matplotlib.pyplot.Axes:
+    alpha: float=0.25, label: bool=True, time_to_indices: bool=False) -> matplotlib.pyplot.Axes:
     '''Shade in the axis where there are perturbations and adds the label of
     the perturbation above it.
 
@@ -154,28 +154,47 @@ def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbati
     -------
     matplotlib.pyplot.Axes
     '''
-    from . import pylab as pl
-
-    if issubject(subj):
-        subj = subj.name
-    if not pl.isstr(subj):
-        raise ValueError('`Cannot recognize {}'.format(subj))
     if perturbations is None or len(perturbations) == 0:
         return ax
+
+    def index_interp(_times: np.ndarray, _t):
+        i = np.argmax(_times > _t)
+        if _times[-1] == _t:
+            return len(_times) - 1
+        elif _times[0] == _t:
+            return 0
+        elif i == 0 and _times[-1] < _t:
+            logger.warning("Timepoint {} is out of range.".format(_t))
+            return _times[-1] + 1
+        elif i == 0 and _times[0] > _t:
+            logger.warning("Timepoint {} is out of range.".format(_t))
+            return _times[0] - 1
+        else:
+            x1 = _times[i - 1]
+            x2 = _times[i]
+            ratio = (_t - x1) / (x2 - x1)
+            return (i - 1) + ratio
 
     pert_locs = []
     pert_names = []
     for pidx, perturbation in enumerate(perturbations):
 
-        if subj not in perturbation.starts or subj not in perturbation.ends:
+        if subj.name not in perturbation.starts or subj.name not in perturbation.ends:
             continue
 
+        if time_to_indices:
+            xmin = index_interp(subj.times, perturbation.starts[subj.name])
+            xmax = index_interp(subj.times, perturbation.ends[subj.name])
+        else:
+            xmin = perturbation.starts[subj.name]
+            xmax = perturbation.ends[subj.name]
+
         ax.axvspan(
-            xmin=perturbation.starts[subj],
-            xmax=perturbation.ends[subj], 
+            xmin=xmin,
+            xmax=xmax,
             facecolor=PERTURBATION_COLOR, 
             alpha=alpha, zorder=-10000)
-        pert_locs.append((perturbation.ends[subj] + perturbation.starts[subj]) / 2)
+        pert_locs.append((xmin + xmax) / 2)
         name = perturbation.name
         if name is None:
             name = 'pert{}'.format(pidx)
@@ -195,7 +214,7 @@ def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbati
         # ax2.yaxis.set_major_locator(plt.NullLocator())
         # ax2.yaxis.set_minor_locator(plt.NullLocator())
 
-        left,right = ax.get_xlim()
+        left, right = ax.get_xlim()
         ax2.set_xlim(ax.get_xlim())
         pl = []
         pn = []
@@ -205,8 +224,7 @@ def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbati
                 pn.append(pert_names[idx])
         ax2.set_xticks(pl)
         ax2.set_xticklabels(pn)
-        ax2.tick_params('x', which='both', length=0, colors=textcolor, 
-            labelsize=textsize)
+        ax2.tick_params('x', which='both', length=0, colors=textcolor, labelsize=textsize)
 
     return ax
 
@@ -1649,9 +1667,9 @@ def taxonomic_distribution_over_time(subj: Union[Subject, Study], taxlevel: str=
     if shade_perturbations:
         if isstudy(subj):
             for sss in subj:
-                ax = shade_in_perturbations(ax, subj.perturbations, subj=sss)
+                ax = shade_in_perturbations(ax, subj.perturbations, subj=sss, time_to_indices=True)
         else:
-            ax = shade_in_perturbations(ax, subj.parent.perturbations, subj=subj)
+            ax = shade_in_perturbations(ax, subj.parent.perturbations, subj=subj, time_to_indices=True)
 
     if legend:
         # handles, labels = ax.get_legend_handles_labels()
@@ -1810,7 +1828,7 @@ def aggregate_taxa_abundances(subj: Subject, agg: Union[str, OTU, int], dtype: s
             if dtype == 'rel':
                 abund = abund / np.sum(subj.reads[t])
             if dtype == 'abs':
-                abund = abund * subj.qpcr[t].mean()
+                abund = abund * subj.qpcr[t].mean() / np.sum(subj.reads[t])
             temp.append(abund)
 
         label = _agg_taxaname_for_paper(agg=agg, taxaname=taxaname)

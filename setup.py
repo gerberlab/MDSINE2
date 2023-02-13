@@ -60,7 +60,8 @@ PACKAGES = [
     'mdsine2.base',
     'mdsine2.cli',
     'mdsine2.cli.helpers',
-    'mdsine2.pylab'
+    'mdsine2.pylab',
+    'mdsine2.pylab.base'
 ]
 
 setup(

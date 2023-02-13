@@ -124,7 +124,10 @@ class ForwardSimulationCLI(CLIModule):
             perturbations_end = []
             for pert in mcmc.graph.perturbations:
                 logger.info('Loading perturbation `{}`'.format(pert.name))
-                perturbations.append(pert.get_trace_from_disk())
+                pert_value = pert.get_trace_from_disk()
+                pert_value[np.isnan(pert_value)] = 0.
+
+                perturbations.append(pert_value)
                 perturbations_start.append(pert.starts[subj_name])
                 perturbations_end.append(pert.ends[subj_name])
         else:
@@ -138,8 +141,9 @@ class ForwardSimulationCLI(CLIModule):
 
         initial_conditions = M[:, 0]
         if np.any(initial_conditions == 0):
-            logger.info('{} taxa have abundance zero at the start. Setting to {}'.format(
+            logger.info('{} of {} taxa have abundance zero at the start. Setting to {}'.format(
                 np.sum(initial_conditions == 0),
+                initial_conditions.shape[0],
                 limit_of_detection
             ))
             initial_conditions[initial_conditions == 0] = limit_of_detection
@@ -150,8 +154,9 @@ class ForwardSimulationCLI(CLIModule):
         logger.info("Running forward simulations on {} MCMC samples.".format(len(gibbs_samples)))
 
         fwsims = []
+        sim_times = None
         for gibbs_idx in gibbs_samples:
-            fwsim = run_forward_sim(
+            fwsim, times = run_forward_sim(
                 growth=growth[gibbs_idx],
                 interactions=interactions[gibbs_idx],
                 initial_conditions=initial_conditions,
@@ -160,12 +165,13 @@ class ForwardSimulationCLI(CLIModule):
                 perturbations_end=perturbations_end,
                 dt=args.dt,
                 sim_max=args.sim_max,
-                n_days=n_days
+                n_days=n_days,
+                start_time=subject.times[0]
             )
             fwsims.append(fwsim)
+            sim_times = times
 
         fwsims = np.stack(fwsims)
-        times = np.array([args.dt * i for i in range(fwsims.shape[-1])]) + subject.times[0]
         np.save(str(out_path), fwsims)
         logger.info("Saved forward simulations to {}.".format(str(out_path)))
 
@@ -186,7 +192,7 @@ class ForwardSimulationCLI(CLIModule):
                 plot_fwsim_comparison(
                     taxa=taxa,
                     taxa_trajectory=fwsims[:, taxa.idx, :],
-                    trajectory_times=times,
+                    trajectory_times=sim_times,
                     subject=subject,
                     out_path=plot_out_path,
                     mcmc_display_method="quantiles",

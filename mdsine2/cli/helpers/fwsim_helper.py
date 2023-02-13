@@ -16,6 +16,7 @@ def run_forward_sim(growth: np.ndarray,
                     perturbations_end: List[float],
                     dt: float,
                     sim_max: float,
+                    start_time: float,
                     n_days: float):
     """
     Forward simulate with the given dynamics, with the option to apply perturbations during specified timeframes.
@@ -47,7 +48,7 @@ def run_forward_sim(growth: np.ndarray,
         perturbations=perturbations,
         perturbation_starts=perturbations_start,
         perturbation_ends=perturbations_end,
-        start_day=0,
+        start_day=start_time,
         sim_max=sim_max
     )
 
@@ -55,11 +56,12 @@ def run_forward_sim(growth: np.ndarray,
         dynamics=dyn,
         initial_conditions=initial_conditions,
         dt=dt,
-        n_days=n_days,
+        n_days=n_days + dt,
         subsample=False
     )
     fwsim_values = x['X']
-    return fwsim_values
+    fwsim_times = x['times']
+    return fwsim_values, fwsim_times
 
 
 def plot_fwsim_comparison(
@@ -93,7 +95,7 @@ def plot_fwsim_comparison(
         elif mcmc_display_method == "all":
             cmap = plt.get_cmap("blues")
             for mcmc_idx in range(taxa_trajectory.shape[0]):
-                ax.plot(times, taxa_trajectory[mcmc_idx, :], c=cmap(mcmc_idx / taxa_trajectory.shape[0]), linewidth=0.8)
+                ax.plot(trajectory_times, taxa_trajectory[mcmc_idx, :], c=cmap(mcmc_idx / taxa_trajectory.shape[0]), linewidth=0.8)
         else:
             raise ValueError("Unrecognized mcmc_display_argument value `{}`".format(mcmc_display_method))
 

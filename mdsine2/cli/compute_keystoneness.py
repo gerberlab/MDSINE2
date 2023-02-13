@@ -4,7 +4,7 @@ Run keystoneness analysis using the specified MDSINE2 output.
 
 import argparse
 import csv
-from typing import List, Union
+from typing import List, Union, Set
 
 import numpy as np
 import pandas as pd
@@ -18,12 +18,16 @@ import matplotlib.colors as mcolors
 import seaborn as sns
 
 import mdsine2 as md2
-from mdsine2 import BaseMCMC
-from mdsine2.names import STRNAMES
+from mdsine2 import TaxaSet
 from mdsine2.logger import logger
 
 from .base import CLIModule
 from .helpers.fwsim_helper import run_forward_sim
+
+
+# Make font editable in AI
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
 
 
 class KeystonenessCLI(CLIModule):
@@ -35,9 +39,9 @@ class KeystonenessCLI(CLIModule):
 
     def create_parser(self, parser: argparse.ArgumentParser):
         # Inputs
-        parser.add_argument('--fixed-cluster-mcmc-path', '-f', type=str, dest='mcmc_path',
-                            required=True,
-                            help='Path of saved MDSINE2.BaseMCMC chain (fixed-clustering inference)')
+        parser.add_argument('--extraction-dir', '-e', dest='extraction_dir', type=str, required=True,
+                            help="The directory containing the extracted .npy interaction/growth/coclustering files.")
+
         parser.add_argument('--study', '-s', dest='study', type=str, required=True,
                             help="The path to the relevant Study object containing the input data (subjects, taxa).")
 
@@ -66,75 +70,110 @@ class KeystonenessCLI(CLIModule):
         parser.add_argument('--limit-of-detection', dest='limit_of_detection', required=False,
                             help='If any of the taxa have a 0 abundance at the start, then we ' \
                                  'set it to this value.', default=1e5, type=float)
+        parser.add_argument('--simulate-every-n', dest='simulate_every_n', type=int, required=False, default=1,
+                            help='Specify to skip a certain number of gibbs steps and thin out the samples '
+                                 '(for faster calculations)')
+
+        parser.add_argument('--width', default=10., type=float, required=False)
+        parser.add_argument('--height', default=10., type=float, required=False)
 
     def main(self, args: argparse.Namespace):
         study = md2.Study.load(args.study)
-        mcmc = md2.BaseMCMC.load(args.mcmc_path)
-
         logger.info(f"Loading initial conditions from {args.initial_condition_path}")
 
+        # Load initial conditions
         if args.initial_condition_path is not None:
             initial_conditions_master = load_initial_conditions(study, args.initial_condition_path)
         else:
             if args.initial_condition_study_tidx is None:
                 raise RuntimeError("If initial-conditions-file is not specified, user must provide initial-conditions-study-time.")
             initial_conditions_master = initial_conditions_from_study(study, args.initial_condition_study_tidx)
-
         lb = args.limit_of_detection
         logger.info(f"Using limit of detection = {lb}")
         initial_conditions_master[initial_conditions_master < lb] = lb
 
+        # Load MCMC posterior
+        extraction_dir = Path(args.extraction_dir)
+        interactions = np.load(str(extraction_dir / 'interactions.npy'))
+        growths = np.load(str(extraction_dir / 'growth.npy'))
+        agglom = np.load(str(extraction_dir / 'agglomeration.npy'))
+        modules = []
+        for cidx in range(np.max(agglom) + 1):  # Make sure to do the (+1) to count the last module.
+            module = {oidx for oidx in np.where(agglom == cidx)[0]}
+            modules.append(module)
+
+        # Run analysis
         out_dir = Path(args.out_dir)
         out_dir.mkdir(exist_ok=True, parents=True)
 
-        df_path = out_dir / f"{study.name}_fwsims.tsv"
+        df_path = out_dir / f"{study.name}_steady_states.tsv"
         fwsim_df = retrieve_ky_simulations(
-            df_path, mcmc,
+            study,
+            df_path,
+            interactions,
+            growths,
+            modules,
             initial_conditions_master,
-            args.n_days, args.dt, args.sim_max
+            args.n_days, args.dt, args.sim_max,
+            args.simulate_every_n
         )
+        fwsim_df['ExcludedCluster'] = fwsim_df['ExcludedCluster'].astype("string")
 
         # Render figure
-        fig = plt.figure(figsize=(10, 10))
-        KeystonenessFigure(
-            args.mcmc_path,
-            args.study,
-            fwsim_df
-        ).plot(fig)
+        fig = plt.figure(figsize=(args.width, args.height))
+        ky = Keystoneness(
+            study,
+            fwsim_df,
+            modules
+        )
+        ky.plot(fig)
+        ky.save_ky(out_dir / f"{study.name}_keystoneness.tsv")
         plt.savefig(out_dir / f"{study.name}_keystoneness.pdf", format="pdf")
 
 
-def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_conditions_master: np.ndarray,
-                            n_days: float, dt: float, sim_max: float):
+def retrieve_ky_simulations(
+        study: md2.Study,
+        df_path: Path,
+        interactions: np.ndarray,
+        growths: np.ndarray,
+        modules: List[Set[int]],
+        initial_conditions_master: np.ndarray,
+        n_days: float, dt: float, sim_max: float, simulate_every: int
+):
     if df_path.exists():
         logger.info(f"Loading previously computed results ({df_path})")
-        return pd.read_csv(df_path, sep='\t', index=False)
+        return pd.read_csv(df_path, sep='\t', index_col=False)
 
-    logger.info(f"Computing new fwsims (target: {df_path})")
+    logger.info(f"Computing new steady states (target: {df_path})")
     df_entries = []
 
     # Baseline
-    compute_keystoneness_of_cluster(
-        mcmc,
+    compute_forward_sim(
+        interactions, growths, study.taxa,
         None,
         initial_conditions_master,
         n_days,
         dt,
         sim_max,
-        df_entries
+        df_entries,
+        simulate_every
     )
 
     # Cluster exclusion
-    for cluster_idx, cluster in enumerate(mcmc.graph[STRNAMES.CLUSTERING_OBJ]):
+    for cluster_idx, cluster in enumerate(modules):
         initial_conditions = exclude_cluster_from(initial_conditions_master, cluster)
-        compute_keystoneness_of_cluster(
-            mcmc,
+        logger.info(f"Now excluding cluster idx={cluster_idx}")
+        logger.info("Using initial conditions: {}".format(initial_conditions.flatten()))
+
+        compute_forward_sim(
+            interactions, growths, study.taxa,
             cluster_idx,
             initial_conditions,
             n_days,
             dt,
             sim_max,
-            df_entries
+            df_entries,
+            simulate_every
         )
 
     df = pd.DataFrame(df_entries)
@@ -142,75 +181,75 @@ def retrieve_ky_simulations(df_path: Path, mcmc: md2.BaseMCMC, initial_condition
     return df
 
 
-def exclude_cluster_from(initial_conditions_master: np.ndarray, cluster):
+def exclude_cluster_from(initial_conditions_master: np.ndarray, cluster: Set[int]):
     initial_conditions = np.copy(initial_conditions_master)
-    for oidx in cluster.members:
-        initial_conditions_master[oidx] = 0.0
+    for oidx in cluster:
+        initial_conditions[oidx] = 0.0
     return initial_conditions
 
 
-def compute_keystoneness_of_cluster(
-        mcmc: BaseMCMC,
+def compute_forward_sim(
+        interactions: np.ndarray,
+        growths: np.ndarray,
+        taxa: TaxaSet,
         cluster_idx: Union[int, None],
         initial_conditions: np.ndarray,
         n_days: float,
         dt: float,
         sim_max: float,
         df_entries: List,
+        simulate_every: int
 ):
-    taxa = mcmc.graph.data.taxa
+    n_samples = interactions.shape[0]
 
     # forward simulate and add results to dataframe.
     if cluster_idx is None:
-        tqdm_disp = "Keystoneness Simulations (Baseline)"
+        tqdm_disp = "Baseline"
     else:
-        tqdm_disp = f"Keystoneness Simulations (Cluster {cluster_idx})"
+        tqdm_disp = f"Cluster {cluster_idx}"
 
-    for gibbs_idx, fwsim in tqdm(do_fwsims(
-        mcmc, initial_conditions, n_days, dt, sim_max
-    ), total=(mcmc.n_samples - mcmc.burnin), desc=tqdm_disp):
-        for entry in fwsim_entries(taxa, cluster_idx, fwsim, gibbs_idx):
+    for gibbs_idx, fwsim in tqdm(
+            do_fwsims(interactions, growths, initial_conditions, n_days, dt, sim_max, simulate_every),
+            total=n_samples // simulate_every,
+            desc=tqdm_disp
+    ):
+        for entry in fwsim_entries(taxa, fwsim, dt=dt):
+            entry['SampleIdx'] = gibbs_idx
+            entry['ExcludedCluster'] = str(cluster_idx)
             df_entries.append(entry)
 
 
-def fwsim_entries(taxa, excluded_cluster_idx, fwsim, gibbs_idx):
-    stable_states = fwsim[:, -50:].mean(axis=1)
+def fwsim_entries(taxa: TaxaSet, fwsim, dt):
+    n = int(0.5 / dt)  # number of timepoints to average over.
+    stable_states = fwsim[:, -n:].mean(axis=1)  # 100 indices = 1 day, if dt = 0.01
     for otu in taxa:
         yield {
-            "ExcludedCluster": str(excluded_cluster_idx),
             "OTU": otu.name,
-            "SampleIdx": gibbs_idx,
             "StableState": stable_states[otu.idx]
         }
 
 
-def do_fwsims(mcmc: md2.BaseMCMC,
+def do_fwsims(interactions: np.ndarray,
+              growths: np.ndarray,
               initial_conditions: np.ndarray,
               n_days: float,
               dt: float,
-              sim_max
+              sim_max: float,
+              simulate_every: int
               ):
-    # Load the rest of the parameters
-    growth = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section="posterior")
-    self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section="posterior")
-    interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section="posterior")
-    interactions[np.isnan(interactions)] = 0
-    self_interactions = -np.absolute(self_interactions)
-    for i in range(self_interactions.shape[1]):
-        interactions[:, i, i] = self_interactions[:, i]
-
-    num_posterior_samples = mcmc.n_samples - mcmc.burnin
+    n_samples = interactions.shape[0]
 
     # Do the forward sim.
-    for gibb in range(num_posterior_samples):
-        gibbs_step_sim = run_forward_sim(
-            growth=growth[gibb],
+    for gibb in range(0, n_samples, simulate_every):
+        gibbs_step_sim, _ = run_forward_sim(
+            growth=growths[gibb],
             interactions=interactions[gibb],
             initial_conditions=initial_conditions.reshape(-1, 1),
             perturbations=None,
             perturbations_start=[],
             perturbations_end=[],
             dt=dt,
+            start_time=0.,
             sim_max=sim_max,
             n_days=n_days
         )
@@ -245,110 +284,25 @@ def load_initial_conditions(study: md2.Study, initial_condition_path: str) -> np
     return abundances.reshape(-1, 1)
 
 
-class MdsineOutput(object):
-    """
-    A class to encode the data output by MDSINE.
-    """
-    def __init__(self, pkl_path):
-        self.mcmc = md2.BaseMCMC.load(pkl_path)
-        self.taxa = self.mcmc.graph.data.taxa
-        self.name_to_taxa = {otu.name: otu for otu in self.taxa}
-
-        self.interactions = None
-        self.clustering = None
-
-        self.clusters_by_idx = {
-            (c_idx): [self.get_taxa(oidx) for oidx in cluster.members]
-            for c_idx, cluster in enumerate(self.get_clustering())
-        }
-
-    @property
-    def num_samples(self) -> int:
-        return self.mcmc.n_samples
-
-    def get_cluster_df(self):
-        return pd.DataFrame([
-            {
-                "id": cluster.id,
-                "idx": c_idx + 1,
-                "otus": ",".join([self.get_taxa(otu_idx).name for otu_idx in cluster.members]),
-                "size": len(cluster)
-            }
-            for c_idx, cluster in enumerate(self.clustering)
-        ])
-
-    def get_interactions(self):
-        if self.interactions is None:
-            self.interactions = self.mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section='posterior')
-        return self.interactions
-
-    def get_taxa(self, idx):
-        return self.taxa.index[idx]
-
-    def get_taxa_by_name(self, name: str):
-        return self.name_to_taxa[name]
-
-    def get_taxa_str(self, idx):
-        tax = self.taxa.index[idx].taxonomy
-        family = tax["family"]
-        genus = tax["genus"]
-        species = tax["species"]
-
-        if genus == "NA":
-            return "{}**".format(family)
-        elif species == "NA":
-            return "{}, {}*".format(family, genus)
-        else:
-            return "{}, {} {}".format(family, genus, species)
-
-    def get_taxa_str_long(self, idx):
-        return "{}\n[{}]".format(self.get_taxa(idx).name, self.get_taxa_str(idx))
-
-    def get_clustering(self):
-        if self.clustering is None:
-            self.clustering = self.mcmc.graph[STRNAMES.CLUSTERING_OBJ]
-            for cidx, cluster in enumerate(self.clustering):
-                cluster.idx = cidx
-        return self.clustering
-
-    def get_clustered_interactions(self):
-        clusters = self.get_clustering()
-        otu_interactions = self.get_interactions()
-        cluster_interactions = np.zeros(
-            shape=(
-                otu_interactions.shape[0],
-                len(clusters),
-                len(clusters)
-            ),
-            dtype=np.float
-        )
-        cluster_reps = [
-            next(iter(cluster.members)) for cluster in clusters
-        ]
-        for i in range(cluster_interactions.shape[0]):
-            cluster_interactions[i] = otu_interactions[i][np.ix_(cluster_reps, cluster_reps)]
-        return cluster_interactions
-
-
-def cluster_nonmembership_df(md):
+def cluster_nonmembership_df(taxaset: TaxaSet, clustering: List[Set[int]]):
     entries = []
-    for cluster in md.get_clustering():
-        for otu in md.taxa:
-            if otu.idx not in cluster.members:
+    for cluster_idx, cluster in enumerate(clustering):
+        for otu in taxaset:
+            if otu.idx not in cluster:
                 entries.append({
-                    "ClusterID": f"{cluster.idx}",
+                    "ClusterID": f"{cluster_idx}",
                     "OTU": otu.name
                 })
     return pd.DataFrame(entries)
 
 
-def cluster_membership_df(md):
+def cluster_membership_df(taxaset: TaxaSet, clustering: List[Set[int]]):
     entries = []
-    for cluster in md.get_clustering():
-        for oidx in cluster.members:
-            otu = md.get_taxa(oidx)
+    for cluster_idx, cluster in enumerate(clustering):
+        for oidx in cluster:
+            otu = taxaset[oidx]
             entries.append({
-                "ClusterOfOTU": f"{cluster.idx}",
+                "ClusterOfOTU": f"{cluster_idx}",
                 "OTU": otu.name
             })
     return pd.DataFrame(entries)
@@ -360,13 +314,11 @@ def create_cmap(tag, nan_value="red"):
     return cmap
 
 
-class KeystonenessFigure(object):
-    def __init__(self, mcmc_pickle_path, subjset_path, fwsim_df):
+class Keystoneness(object):
+    def __init__(self, study: md2.Study, fwsim_df: pd.DataFrame, clustering: List[Set[int]]):
         self.fwsim_df = fwsim_df
-
-        logger.info("Loading pickle files.")
-        self.md: MdsineOutput = MdsineOutput(mcmc_pickle_path)
-        self.study = md2.Study.load(subjset_path)
+        self.clustering = clustering
+        self.study = study
 
         logger.info("Compiling dataframe.")
         self.ky_df: pd.DataFrame = self.generate_keystoneness_df()
@@ -375,13 +327,19 @@ class KeystonenessFigure(object):
         self.abundance_array = self.get_abundance_array()
 
         logger.info("Extracting keystoneness values.")
-        self.ky_array = self.get_ky_array()
+        agg_ky_df = self.ky_df.groupby(level=0).mean()
+        self.ky_array = np.array(
+            [
+                agg_ky_df.loc[f'{cluster_idx}', "Ky"]
+                for cluster_idx in range(len(clustering))
+            ]
+        )
 
         logger.info("Extracting baseline abundances.")
         self.day20_array = self.get_day20_abundances()
 
     def generate_keystoneness_df(self) -> pd.DataFrame:
-        nonmembers_df = cluster_nonmembership_df(self.md)
+        nonmembers_df = cluster_nonmembership_df(self.study.taxa, self.clustering)
 
         baseline = self.fwsim_df.loc[self.fwsim_df["ExcludedCluster"] == "None"]
 
@@ -410,8 +368,7 @@ class KeystonenessFigure(object):
         ).mean().rename(columns={"DiffStableState": "Ky"})
 
     def get_abundance_array(self):
-        clustering = self.md.get_clustering()
-        membership_df = cluster_membership_df(self.md)
+        membership_df = cluster_membership_df(self.study.taxa, self.clustering)
         merged_df = self.fwsim_df.merge(
             membership_df,
             how="left",
@@ -419,7 +376,7 @@ class KeystonenessFigure(object):
             right_on="OTU"
         )
 
-        abund_array = np.zeros(shape=(len(clustering) + 1, len(clustering)))
+        abund_array = np.zeros(shape=(len(self.clustering) + 1, len(self.clustering)))
 
         # Baseline abundances (no cluster removed) -- sum across OTUs (per sample), median across samples.
         subset_df = merged_df.loc[merged_df["ExcludedCluster"] == "None"]
@@ -434,12 +391,12 @@ class KeystonenessFigure(object):
         ).median(
             # Aggregate over samples
         )
-        for cluster in clustering:
-            abund_array[0, cluster.idx] = subset_df.loc[f'{cluster.idx}']
+        for cluster_idx in range(len(self.clustering)):
+            abund_array[0, cluster_idx] = subset_df.loc[f'{cluster_idx}']
 
         # Altered abundances (remove 1 cluster at a time)
-        for removed_cluster in clustering:
-            subset_df = merged_df.loc[merged_df["ExcludedCluster"] == f'{removed_cluster.idx}']
+        for removed_cluster_idx in range(len(self.clustering)):
+            subset_df = merged_df.loc[merged_df["ExcludedCluster"] == f'{removed_cluster_idx}']
 
             # Compute the total abundance (over OTUs) for each cluster, for each sample.
             # Then aggregate (median) across samples.
@@ -455,27 +412,33 @@ class KeystonenessFigure(object):
                 # Aggregate over samples
             )
 
-            for cluster in clustering:
-                abund_array[removed_cluster.idx + 1, cluster.idx] = subset_df.loc[f'{cluster.idx}']
+            for cluster_idx in range(len(self.clustering)):
+                if cluster_idx == removed_cluster_idx:
+                    continue
+                abund_array[removed_cluster_idx + 1, cluster_idx] = subset_df.loc[f'{cluster_idx}']
         return abund_array
 
-    def get_ky_array(self):
-        # Group by Cluster, aggregate (mean/median) across samples.
-        agg_ky_df = self.ky_df.groupby(level=0).median()
-        return np.array(
-            [agg_ky_df.loc[f'{cluster.idx}', "Ky"] for cluster in self.md.get_clustering()]
-        )
+    def get_agg_ky(self) -> pd.DataFrame:
+        """
+        Evalautes the keystoneness as an aggregate across samples.
+
+        :return:
+        """
+        return self.ky_df.groupby(level=0).mean()  # Aggregate across per-sample Ky values
 
     def get_day20_abundances(self):
         M = self.study.matrix(dtype='abs', agg='mean', times='intersection', qpcr_unnormalize=True)
         day20_state = M[:, 19]
-        cluster_day20_abundances = np.zeros(len(self.md.get_clustering()))
+        cluster_day20_abundances = np.zeros(len(self.clustering))
 
-        for cidx, cluster in enumerate(self.md.get_clustering()):
+        for cidx, cluster in enumerate(self.clustering):
             cluster_day20_abundances[cidx] = np.sum(
-                [day20_state[oidx] for oidx in cluster.members]
+                [day20_state[oidx] for oidx in cluster]
             )
         return cluster_day20_abundances
+
+    def save_ky(self, tsv_path: Path):
+        self.ky_df.to_csv(tsv_path, sep='\t')
 
     def plot(self, fig):
         # Main abundance grid shows the _difference_ from baseline, instead of the abundances itself.
@@ -556,7 +519,7 @@ class KeystonenessFigure(object):
             y[x < 0] = -np.abs(ky_min) * np.power(negative_part, 2)
             return y
 
-        ky_norm = matplotlib.colors.FuncNorm((_forward, _reverse), vmin=ky_min, vmax=ky_max)
+        ky_norm = mcolors.FuncNorm((_forward, _reverse), vmin=ky_min, vmax=ky_max)
 
         # Seaborn Heatmap Kwargs
         abund_heatmapkws = dict(square=False,
@@ -625,7 +588,7 @@ class KeystonenessFigure(object):
 
         # ====== Bottom right: Abundances with clusters removed.
         ticklabels = [
-            f"Cluster{c_idx+1}"
+            f"M{c_idx+1}"
             for c_idx in ky_order
         ]
         hmap_removed_cluster_abund = sns.heatmap(
@@ -645,6 +608,9 @@ class KeystonenessFigure(object):
         hmap_removed_cluster_abund.xaxis.set_ticks_position('bottom')
         hmap_removed_cluster_abund.set_xticklabels(
             hmap_removed_cluster_abund.get_xticklabels(), rotation=90, horizontalalignment='center'
+        )
+        hmap_removed_cluster_abund.set_yticklabels(
+            hmap_removed_cluster_abund.get_yticklabels(), rotation=0, horizontalalignment='right'
         )
         abundances_ax.tick_params(direction='out', length=0, width=0)
 

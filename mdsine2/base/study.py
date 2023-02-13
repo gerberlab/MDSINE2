@@ -1,5 +1,5 @@
 import copy
-from typing import Union, Tuple, Dict, Iterable, List
+from typing import Union, Tuple, Dict, Iterable, List, Callable
 import numpy as np
 import pandas as pd
 
@@ -110,6 +110,7 @@ class Study(Saveable):
 
         # Add the perturbations if there are any
         # --------------------------------------
+        perturbations = perturbations.reset_index()
         if perturbations is not None:
             logger.debug('Reseting perturbations')
             self.perturbations = Perturbations()
@@ -457,16 +458,20 @@ class Study(Saveable):
         if isinstance(study.taxa, OTUTaxaSet):
             raise RuntimeError("aggregate_items_like() requires an OTUTaxaSet to model from.")
 
+        # Copy components, but also copy naming convention.
         components = []
+        component_names = {}
+        component_key = lambda comp: '+'.join(taxa.idx for taxa in comp)
         for otu in study.taxa:
             components.append(otu.components)
+            component_names[component_key(otu.components)] = otu.name
 
-        other = self.aggregate_items(components)
+        other = self.aggregate_items(components, otu_naming=lambda _, comp: component_names[component_key(comp)])
         if prefix is not None:
             other.taxa.rename(prefix=prefix)
         return other
 
-    def aggregate_items(self, components: List[List[Taxon]]) -> 'Study':
+    def aggregate_items(self, components: List[List[Taxon]], otu_naming: Callable[[int, List[Taxon]], str]) -> 'Study':
         """Aggregates the abundances of `taxon1` and `taxon2`. Updates the reads table and
         internal TaxaSet
 
@@ -481,7 +486,7 @@ class Study(Saveable):
             This is the new aggregated taxon containing anchor and other
         """
         other = Study(
-            taxa=self.taxa.aggregate_items(components),
+            taxa=self.taxa.aggregate_items(components, otu_naming=otu_naming),
             name=self.name
         )
 
