@@ -159,14 +159,18 @@ def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbati
 
     def index_interp(_times: np.ndarray, _t):
         i = np.argmax(_times > _t)
-        if i == 0 and _times[-1] < _t:
+        if _times[-1] == _t:
+            return len(_times) - 1
+        elif _times[0] == _t:
+            return 0
+        elif i == 0 and _times[-1] < _t:
             logger.warning("Timepoint {} is out of range.".format(_t))
             return _times[-1] + 1
         elif i == 0 and _times[0] > _t:
             logger.warning("Timepoint {} is out of range.".format(_t))
             return _times[0] - 1
         else:
-            x1 = _times[i-1]
+            x1 = _times[i - 1]
             x2 = _times[i]
             ratio = (_t - x1) / (x2 - x1)
             return (i - 1) + ratio
