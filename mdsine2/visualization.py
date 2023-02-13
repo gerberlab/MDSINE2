@@ -154,16 +154,10 @@ def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbati
     -------
     matplotlib.pyplot.Axes
     '''
-    from . import pylab as pl
-
-    if issubject(subj):
-        subj = subj.name
-    if not pl.isstr(subj):
-        raise ValueError('`Cannot recognize {}'.format(subj))
     if perturbations is None or len(perturbations) == 0:
         return ax
 
-    def index_interp(_times, _t):
+    def index_interp(_times: np.ndarray, _t):
         i = np.argmax(_times > _t)
         if i == 0 and _times[-1] < _t:
             logger.warning("Timepoint {} is out of range.".format(_t))
@@ -172,32 +166,31 @@ def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbati
             logger.warning("Timepoint {} is out of range.".format(_t))
             return _times[0] - 1
         else:
-            raise RuntimeError("Unexpected branch, could not extrapolate time to index.")
-        x1 = _times[i-1]
-        x2 = _times[i]
-        ratio = (_t - x1) / (x2 - x1)
-        return (i - 1) + ratio
+            x1 = _times[i-1]
+            x2 = _times[i]
+            ratio = (_t - x1) / (x2 - x1)
+            return (i - 1) + ratio
 
     pert_locs = []
     pert_names = []
     for pidx, perturbation in enumerate(perturbations):
 
-        if subj not in perturbation.starts or subj not in perturbation.ends:
+        if subj.name not in perturbation.starts or subj.name not in perturbation.ends:
             continue
 
         if time_to_indices:
-            xmin = index_interp(subj.times, perturbation.starts[subj])
-            xmax = index_interp(subj.times, perturbation.ends[subj])
+            xmin = index_interp(subj.times, perturbation.starts[subj.name])
+            xmax = index_interp(subj.times, perturbation.ends[subj.name])
         else:
-            xmin = perturbation.starts[subj]
-            xmax = perturbation.ends[subj]
+            xmin = perturbation.starts[subj.name]
+            xmax = perturbation.ends[subj.name]
 
         ax.axvspan(
             xmin=xmin,
             xmax=xmax,
             facecolor=PERTURBATION_COLOR, 
             alpha=alpha, zorder=-10000)
-        pert_locs.append((perturbation.ends[subj] + perturbation.starts[subj]) / 2)
+        pert_locs.append((perturbation.ends[subj.name] + perturbation.starts[subj.name]) / 2)
         name = perturbation.name
         if name is None:
             name = 'pert{}'.format(pidx)
