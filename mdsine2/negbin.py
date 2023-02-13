@@ -923,7 +923,7 @@ def visualize_learned_negative_binomial_model(mcmc: BaseMCMC, section: str='post
     ax = fig.add_subplot(111)
 
     # plot the data
-    colors = sns.color_palette()
+    colors = sns.color_palette(n_colors=len(subjset))
     for sidx, subj in enumerate(subjset):
         reads_subj = subj.matrix()['raw']
 
@@ -936,7 +936,7 @@ def visualize_learned_negative_binomial_model(mcmc: BaseMCMC, section: str='post
 
         ax.scatter(
             x=x, y=y, alpha=0.5,
-            c=colors[sidx], rasterized=False, 
+            color=colors[sidx], rasterized=False, 
             label='Subject {}'.format(subj.name))
 
     # Still need to get the 2.5th percentile, 97.5th percentile and the median
