@@ -2,7 +2,7 @@ numpy>=1.19.4
 pandas>=1.1.4
 scipy
 matplotlib>=3.2.2
-sklearn
+scikit-learn
 seaborn>=0.11.0
 h5py>=2.9.0
 psutil>=5.4.8
