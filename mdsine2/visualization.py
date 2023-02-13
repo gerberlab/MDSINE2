@@ -190,7 +190,7 @@ def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbati
             xmax=xmax,
             facecolor=PERTURBATION_COLOR, 
             alpha=alpha, zorder=-10000)
-        pert_locs.append((perturbation.ends[subj.name] + perturbation.starts[subj.name]) / 2)
+        pert_locs.append((xmin + xmax) / 2)
         name = perturbation.name
         if name is None:
             name = 'pert{}'.format(pidx)
@@ -210,7 +210,7 @@ def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbati
         # ax2.yaxis.set_major_locator(plt.NullLocator())
         # ax2.yaxis.set_minor_locator(plt.NullLocator())
 
-        left,right = ax.get_xlim()
+        left, right = ax.get_xlim()
         ax2.set_xlim(ax.get_xlim())
         pl = []
         pn = []
@@ -220,8 +220,7 @@ def shade_in_perturbations(ax: matplotlib.pyplot.Axes, perturbations: Perturbati
                 pn.append(pert_names[idx])
         ax2.set_xticks(pl)
         ax2.set_xticklabels(pn)
-        ax2.tick_params('x', which='both', length=0, colors=textcolor, 
-            labelsize=textsize)
+        ax2.tick_params('x', which='both', length=0, colors=textcolor, labelsize=textsize)
 
     return ax
 
