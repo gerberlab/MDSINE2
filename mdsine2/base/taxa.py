@@ -1489,20 +1489,20 @@ class OTUTaxaSet(TaxaSet):
         --------
         mdsine2.pylab.base.OTU.generate_consensus_taxonomy
         """
-        for otu in self:
-            otu.generate_consensus_taxonomy(consensus_table=consensus_table)
-        
         # for otu in self:
-        #     asv = otu.components[0]
-        #     otu.set_taxonomy(
-        #         tax_kingdom=asv.taxonomy['kingdom'],
-        #         tax_phylum=asv.taxonomy['phylum'],
-        #         tax_class=asv.taxonomy['class'],
-        #         tax_order=asv.taxonomy['order'],
-        #         tax_family=asv.taxonomy['family'],
-        #         tax_genus=asv.taxonomy['genus'],
-        #         tax_species=asv.taxonomy['species']
-        #     )
+        #     otu.generate_consensus_taxonomy(consensus_table=consensus_table)
+        
+        for otu in self:
+            asv = otu.components[0]
+            otu.set_taxonomy(
+                tax_kingdom=asv.taxonomy['kingdom'],
+                tax_phylum=asv.taxonomy['phylum'],
+                tax_class=asv.taxonomy['class'],
+                tax_order=asv.taxonomy['order'],
+                tax_family=asv.taxonomy['family'],
+                tax_genus=asv.taxonomy['genus'],
+                tax_species=asv.taxonomy['species']
+            )
 
     def deaggregate_item(self, agg: Union[OTU, str, int], other: str) -> Taxon:
         """Deaggregate the sequence `other` from OTU `agg`.
