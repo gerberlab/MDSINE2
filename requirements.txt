@@ -12,5 +12,4 @@ biopython
 treeswift
 py2cytoscape
 tqdm
-PyQt5
 ete3
