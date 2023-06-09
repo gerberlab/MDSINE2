@@ -9,8 +9,8 @@ There is an [associated repo](https://github.com/gerberlab/MDSINE2_Paper) for th
   <a href="https://doi.org/10.1101/2021.12.14.469105"><img alt="" src="https://img.shields.io/badge/bioRχiv%20DOI-10.1101/2021.12.14.46910-blue?style=flat"/></a>
 - Associated GitHub repo for the paper: ["MDSINE2_Paper"](https://github.com/gerberlab/MDSINE2_Paper)<br />
   <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
-- Folder containing [tutorials as notebooks exploring the model, data and paper](https://github.com/gibsonlab/mdsine2_tutorials) that can be opened directly in Google Colab<br />
-<a href="https://github.com/gibsonlab/mdsine2_tutorials"><img alt="" src="https://img.shields.io/badge/Jupyter Notebooks-MDSINE2%20Tutorials-blue?style=flat&logo=jupyter"/></a>
+- Folder containing [tutorials as notebooks exploring the model, data and paper](https://github.com/gerberlab/MDSINE2_Paper/tree/main/tutorials) that can be opened directly in Google Colab<br />
+<a href="https://github.com/gerberlab/MDSINE2_Paper/tree/main/tutorials"><img alt="" src="https://img.shields.io/badge/Jupyter Notebooks-MDSINE2%20Tutorials-blue?style=flat&logo=jupyter"/></a>
 - The mathematics behind this model are detailed in the [supplemental text for the pre-print](https://www.biorxiv.org/content/biorxiv/early/2021/12/16/2021.12.14.469105/DC1/embed/media-1.pdf)<br />
 <a href="https://www.biorxiv.org/content/biorxiv/early/2021/12/16/2021.12.14.469105/DC1/embed/media-1.pdf"><img alt="" src="https://img.shields.io/badge/PDF-MDSINE2%20Mathematics-blue?style=flat&logo=adobeacrobatreader"/></a>
 
