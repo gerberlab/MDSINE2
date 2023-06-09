@@ -1,0 +1,26 @@
+name: mdsine2
+
+channels:
+  - conda-forge
+  - bioconda
+
+dependencies:
+  - python
+  - numpy
+  - numba
+  - pandas
+  - scipy
+  - matplotlib
+  - seaborn
+  - scikit-learn
+  - h5py
+  - psutil
+  - networkx
+  - biopython
+  - treeswift
+  - py2cytoscape
+  - tqdm
+  - pyqt
+  - ete3
+  - pip:
+    - ./
