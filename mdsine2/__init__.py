@@ -1,7 +1,5 @@
 # Import top level
-from . import pylab
 from . import visualization
-from .pylab import diversity
 from . import dataset
 from . import config
 from . import posterior
@@ -14,6 +12,7 @@ from . import synthetic
 from .logger import MakeDirTimedRotatingFileHandler
 
 # Import key modules from pylab
+from .pylab import diversity
 from .pylab import random
 from .pylab import variables
 

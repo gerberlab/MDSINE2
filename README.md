@@ -44,20 +44,6 @@ ICML conference paper
 
 ## Installation
 
-#### Dependencies (Python 3.7.3)
-
- * biopython==1.78
- * ete3==3.1.2
- * numpy==1.19.4
- * pandas==1.14
- * matplotlib==3.3.1
- * numba==0.52
- * sklearn==0.0
- * seaborn==0.11.0
- * psutil==5.7.3
- * h5py==2.9.0
- * networkx==2.3
-
 #### Option 1: Simple installation using pip
 
 clone the repository and then `pip install`
@@ -65,29 +51,20 @@ clone the repository and then `pip install`
 git clone https://github.com/gerberlab/MDSINE2
 pip install MDSINE2/.
 ```
-This installs the package MDSINE2 and all of the dependencies listed above.
+This installs the package MDSINE2 and all of the dependencies listed in `requirements.txt`.
 
 #### Option 2: Conda environment with MDSINE2 and jupyterlab
 
-An alternative is to install MDSINE2 through conda and a linked jupyter kernel (useful for data exploration).
+An alternative is to install MDSINE2 through conda.
 ```
-conda create -n mdsine2 -c conda-forge python=3.7.3 jupyterlab
-conda activate mdsine2
-python -m ipykernel install --user --name mdsine2 --display-name "mdsine2"
 git clone https://github.com/gerberlab/MDSINE2
-pip install MDSINE2/.
-```
-
-To install without the Jupyter kernel, follow these shortened instructions:
-```
-conda create -n mdsine2 -c conda-forge python=3.7.3
-conda activate mdsine2
-git clone https://github.com/gerberlab/MDSINE2
-pip install MDSINE2/.
+cd MDSINE2
+conda env create -f conda_recipe.yml 
 ```
 
 ## Documentation
-MDSINE2 is implemented as a python library, which is importable using python's import command: `import mdsine2`.
+MDSINE2 is implemented as a python library and as a command line interface (CLI).
+The library is importable using python's import command: `import mdsine2`, and the CLI is accessed using the command `mdsine2`.
 The classes and methods' documentation can be found here: 
 
 [documentation link](https://htmlpreview.github.io/?https://raw.githubusercontent.com/gerberlab/MDSINE2/master/docs/mdsine2/index.html)

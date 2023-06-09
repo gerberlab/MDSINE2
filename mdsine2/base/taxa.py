@@ -1489,11 +1489,10 @@ class OTUTaxaSet(TaxaSet):
         --------
         mdsine2.pylab.base.OTU.generate_consensus_taxonomy
         """
+        # for otu in self:
+        #     otu.generate_consensus_taxonomy(consensus_table=consensus_table)
+        
         for otu in self:
-            # def set_taxonomy(self, tax_kingdom: str = None, tax_phylum: str = None, tax_class: str = None,
-            #                  tax_order: str = None, tax_family: str = None, tax_genus: str = None,
-            #                  tax_species: str = None):
-            row = consensus_table.loc[otu.name]
             asv = otu.components[0]
             otu.set_taxonomy(
                 tax_kingdom=asv.taxonomy['kingdom'],
