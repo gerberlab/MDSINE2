@@ -1491,6 +1491,7 @@ class OTUTaxaSet(TaxaSet):
         """
         for otu in self:
             otu.generate_consensus_taxonomy(consensus_table=consensus_table)
+        
         # for otu in self:
         #     asv = otu.components[0]
         #     otu.set_taxonomy(

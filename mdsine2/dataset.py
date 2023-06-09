@@ -105,19 +105,19 @@ def parse(name: str, metadata: str, taxonomy: str, reads: str=None, qpcr: str=No
     -------
     mdsine2.Study
     '''
-    taxonomy = pd.read_csv(taxonomy, sep=sep)
+    taxonomy = pd.read_csv(taxonomy, sep=sep, index_col=0)
     taxa = TaxaSet()
     taxa.parse(taxonomy_table=taxonomy)
     study = Study(taxa, name=name)
 
-    metadata = pd.read_csv(metadata, sep=sep)
+    metadata = pd.read_csv(metadata, sep=sep, index_col=0)
     if reads is not None:
-        reads = pd.read_csv(reads, sep=sep)
+        reads = pd.read_csv(reads, sep=sep, index_col=0)
     if qpcr is not None:
-        qpcr = pd.read_csv(qpcr, sep=sep)
+        qpcr = pd.read_csv(qpcr, sep=sep, index_col=0)
     if perturbations is not None:
-        perturbations = pd.read_csv(perturbations, sep=sep)
-    
+        perturbations = pd.read_csv(perturbations, sep=sep, index_col=0)
+
     return study.parse(metadata=metadata, reads=reads, qpcr=qpcr, perturbations=perturbations)
 
 class _Gibson:
