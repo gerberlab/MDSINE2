@@ -110,8 +110,8 @@ class Study(Saveable):
 
         # Add the perturbations if there are any
         # --------------------------------------
-        perturbations = perturbations.reset_index()
         if perturbations is not None:
+            perturbations = perturbations.reset_index()
             logger.debug('Reseting perturbations')
             self.perturbations = Perturbations()
             if not plutil.isdataframe(perturbations):
