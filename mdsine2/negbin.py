@@ -835,8 +835,10 @@ class _LatentWorker(pl.multiprocessing.PersistentWorker):
     def qpcr_ll(self) -> float:
         '''qPCR loglikelihood
         '''
-        return pl.random.normal.logpdf(value=self.log_sumq, 
-            loc=self.qpcr_loc, scale=self.qpcr_scale)
+        if self.qpcr_scale > 0:
+            return pl.random.normal.logpdf(value=self.log_sumq, loc=self.qpcr_loc, scale=self.qpcr_scale)
+        else:
+            return 0.
 
     def negbin_ll(self) -> float:
         '''Negative binomial loglikelihood
