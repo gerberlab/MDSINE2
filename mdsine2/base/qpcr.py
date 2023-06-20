@@ -44,8 +44,13 @@ class qPCRdata:
         self.log_data = np.log(self.data)
 
         self.loc = np.mean(self.log_data)
-        self.scale = np.std(self.log_data - self.loc)
-        self.scale2 = self.scale ** 2
+
+        if len(self._raw_data) == 1:
+            self.scale = 0
+            self.scale2 = 0
+        else:
+            self.scale = np.std(self.log_data - self.loc)
+            self.scale2 = self.scale ** 2
 
 
         self._mean_dist = np.exp(self.loc + (self.scale2/2) )
