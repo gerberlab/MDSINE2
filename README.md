@@ -258,3 +258,29 @@ on the rest of the system.
 > mdsine2 extract-abundances -s dataset.pkl -t 19 -o initial.tsv
 > mdsine2 evaluate-keystoneness -f fixed_clustering/mcmc.pkl -s dataset.pkl -i initial.tsv (...)
 ```
+
+# Branch info
+Using spike-in abundances instead of qPCR is a work-in-progress feature. This is the high-level overview of changes in this branch:
+
+## Data generation
+Each `subject` should have:
+- `subj.spikein_reads` 
+	- Reads associated with spike-in, formatted as dict indexed by time in same way as `subj.reads`
+- `subj.spikein_abundance_observed` 
+	- Raw abundance associated with spike-in, again a dict indexed by time
+- `subj.use_spikein`
+	- Bool indicating whether spike-in will be used. If False, will default to previous qPCR behavior 
+
+## Inference
+### Set up
+When setting params, set:
+``` 
+params = md2.config.MDSINE2ModelConfig(...
+	spikein=True
+	)
+```
+
+### During inference
+Key changes happen in `mdsine2.posterior.FilteringLogMP`, which generates `worker` objects of type `mdsine2.posterior.SubjectLogTrajectorySetMP`.
+
+Key idea: Spike-in taxa isn't included in any of the dynamics. In `mdsine2.posterior.SubjectLogTrajectorySetMP.persistent_run`, when we iterate through taxa and calculate the likelihood of the data, we have a special case for the spike-in taxa, where instead of using `mdsine2.posterior.SubjectLogTrajectorySetMP.update_single` we use `mdsine2.posterior.SubjectLogTrajectorySetMP.update_single_spikein`. The actual likelihood is calculated in `mdsine2.posterior.SubjectLogTrajectorySetMP.data_loglik_wo_intermediates`. 
