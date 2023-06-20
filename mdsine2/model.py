@@ -146,7 +146,7 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
 
     @staticmethod
     def forward_sim_from_chain(mcmc: BaseMCMC, initial_conditions: np.ndarray, times: np.ndarray, simulation_dt: float,
-        subj: Subject=None, sim_max: float=None, section: str='posterior') -> np.ndarray:
+        subj: Subject=None, sim_max: float=None, section: str='posterior', slices: slice=None) -> np.ndarray:
         '''Forward simulate the dynamics from a chain. This assumes that the
         initial conditions occur at time `times[0]`
 
@@ -175,9 +175,9 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
             These are the forward imsualtions for each gibb step
         '''
         # Get the parameters from the chain
-        growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section=section)
-        self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section=section)
-        interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section=section)
+        growths = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section=section, slices=slices)
+        self_interactions = mcmc.graph[STRNAMES.SELF_INTERACTION_VALUE].get_trace_from_disk(section=section, slices=slices)
+        interactions = mcmc.graph[STRNAMES.INTERACTIONS_OBJ].get_trace_from_disk(section=section, slices=slices)
 
         si = -np.absolute(self_interactions)
         for i in range(len(mcmc.graph.data.taxa)):

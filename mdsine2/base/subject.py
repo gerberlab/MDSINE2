@@ -199,25 +199,26 @@ class Subject(Saveable):
         """Make a numpy matrix out of our data - returns the raw reads,
         the relative abundance, and the absolute abundance.
 
-        If there is no qPCR data, then the absolute abundance is set to None.
+        If there is no qPCR (or spikein) data, then the absolute abundance is set to None.
         """
-
         shape = (len(self.taxa), len(self.times))
         raw = np.zeros(shape=shape, dtype=int)
         rel = np.zeros(shape=shape, dtype=float)
         abs = np.zeros(shape=shape, dtype=float)
 
+        # Raw reads of the actual (non-spikein) taxa
         for i,t in enumerate(self.times):
             raw[:,i] = self.reads[t]
-            rel[:,i] = raw[:,i]/np.sum(raw[:,i])
-
-        try:
+            
+        if self.use_spikein:
             for i,t in enumerate(self.times):
+                rel[:,i] = raw[:,i] / (np.sum(raw[:,i]) )#+ self.spikein_reads[t])
+                abs[:,i] = self.spikein_abundance_observed[t] / self.spikein_reads[t] * raw[:,i]
+            
+        else:
+            for i,t in enumerate(self.times):
+                rel[:,i] = raw[:,i] / np.sum(raw[:,i])
                 abs[:,i] = rel[:,i] * self.qpcr[t].mean()
-        except AttributeError as e:
-            logger.info('Attribute Error ({}) for absolute abundance. This is likely ' \
-                'because you did not set the qPCR abundances. Skipping `abs`'.format(e))
-            abs = None
 
         return {'raw':raw, 'rel': rel, 'abs':abs}
 

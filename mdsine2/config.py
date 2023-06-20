@@ -130,7 +130,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
     '''
     def __init__(self, basepath: str, seed: int, burnin: int, n_samples: int,
         negbin_a0: float, negbin_a1: float, leave_out: str=None,
-        checkpoint: int=100):
+        checkpoint: int=100, spikein: bool=False):
         self.OUTPUT_BASEPATH = os.path.abspath(basepath)
         self.MODEL_PATH = self.OUTPUT_BASEPATH
         self.SEED = seed
@@ -160,6 +160,8 @@ class MDSINE2ModelConfig(_BaseModelConfig):
 
         self.INTERMEDIATE_VALIDATION_T = 1 * 3600 # Every hour
         self.INTERMEDIATE_VALIDATION_KWARGS = None
+
+        self.spikein = spikein
 
         self.LEARN = {
             STRNAMES.GLV_PARAMETERS: True,
@@ -375,10 +377,22 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.PERT_VALUE,
             STRNAMES.PERT_INDICATOR_PROB,
             STRNAMES.GLV_PARAMETERS,
-            STRNAMES.QPCR_SCALES,
-            STRNAMES.QPCR_DOFS,
-            STRNAMES.QPCR_VARIANCES]
+        ]
 
+        if not self.spikein:
+            self.INITIALIZATION_ORDER += [
+                STRNAMES.QPCR_SCALES,
+                STRNAMES.QPCR_DOFS,
+                STRNAMES.QPCR_VARIANCES,
+                ]
+
+        if self.spikein:
+            self.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['calculate_qpcr_loglik'] = False
+            self.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['calculate_spikein_loglik'] = True
+        else:
+            self.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['calculate_qpcr_loglik'] = True
+            self.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['calculate_spikein_loglik'] = False
+            
     def copy(self):
         cfg = MDSINE2ModelConfig(
             self.OUTPUT_BASEPATH,

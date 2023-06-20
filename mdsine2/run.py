@@ -78,18 +78,19 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
     basepath = params.OUTPUT_BASEPATH
     os.makedirs(basepath, exist_ok=True)
 
-    # Normalize the qpcr measurements for numerical stability
-    # -------------------------------------------------------
-    if params.QPCR_NORMALIZATION_MAX_VALUE is not None:
-        subjset.normalize_qpcr(max_value=params.QPCR_NORMALIZATION_MAX_VALUE)
-        logger.info('Normalizing abundances for a max value of {}. Normalization ' \
-            'constant: {:.4E}'.format(params.QPCR_NORMALIZATION_MAX_VALUE, 
-            subjset.qpcr_normalization_factor))
+    if params.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['calculate_qpcr_loglik']:
+        # Normalize the qpcr measurements for numerical stability
+        # -------------------------------------------------------
+        if params.QPCR_NORMALIZATION_MAX_VALUE is not None:
+            subjset.normalize_qpcr(max_value=params.QPCR_NORMALIZATION_MAX_VALUE)
+            logger.info('Normalizing abundances for a max value of {}. Normalization ' \
+                'constant: {:.4E}'.format(params.QPCR_NORMALIZATION_MAX_VALUE, 
+                subjset.qpcr_normalization_factor))
+            
+            params.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['v2'] *= subjset.qpcr_normalization_factor
+            params.INITIALIZATION_KWARGS[STRNAMES.SELF_INTERACTION_VALUE]['rescale_value'] = \
+                subjset.qpcr_normalization_factor
         
-        params.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['v2'] *= subjset.qpcr_normalization_factor
-        params.INITIALIZATION_KWARGS[STRNAMES.SELF_INTERACTION_VALUE]['rescale_value'] = \
-            subjset.qpcr_normalization_factor
-    
     subjset_filename = os.path.join(basepath, config.SUBJSET_FILENAME)
     subjset.save(subjset_filename)
 
@@ -224,52 +225,53 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
         growth=growth, self_interactions=self_interactions,
         interactions=interactions, pert_mag=magnitude_perts, G=GRAPH)
 
-    # Set qPCR variance priors and hyper priors
-    qpcr_variances = posterior.qPCRVariances(G=GRAPH, L=params.N_QPCR_BUCKETS)
-    qpcr_dofs = posterior.qPCRDegsOfFreedoms(G=GRAPH, L=params.N_QPCR_BUCKETS)
-    qpcr_scales = posterior.qPCRScales(G=GRAPH, L=params.N_QPCR_BUCKETS)
+    if params.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['calculate_qpcr_loglik']:
+        # Set qPCR variance priors and hyper priors
+        qpcr_variances = posterior.qPCRVariances(G=GRAPH, L=params.N_QPCR_BUCKETS)
+        qpcr_dofs = posterior.qPCRDegsOfFreedoms(G=GRAPH, L=params.N_QPCR_BUCKETS)
+        qpcr_scales = posterior.qPCRScales(G=GRAPH, L=params.N_QPCR_BUCKETS)
 
-    for l in range(params.N_QPCR_BUCKETS):
-        qpcr_scale_prior = pl.variables.SICS( 
-            dof=pl.Constant(None, G=GRAPH),
-            scale=pl.Constant(None, G=GRAPH),
-            name='prior_' + STRNAMES.QPCR_SCALES + '_{}'.format(l), G=GRAPH)
-        qpcr_dof_prior = pl.variables.Uniform(
-            low=pl.Constant(None, G=GRAPH),
-            high=pl.Constant(None, G=GRAPH),
-            name='prior_' + STRNAMES.QPCR_DOFS + '_{}'.format(l), G=GRAPH)
-        
-        # add priors
-        qpcr_dofs.value[l].add_prior(qpcr_dof_prior)
-        qpcr_scales.value[l].add_prior(qpcr_scale_prior)
+        for l in range(params.N_QPCR_BUCKETS):
+            qpcr_scale_prior = pl.variables.SICS( 
+                dof=pl.Constant(None, G=GRAPH),
+                scale=pl.Constant(None, G=GRAPH),
+                name='prior_' + STRNAMES.QPCR_SCALES + '_{}'.format(l), G=GRAPH)
+            qpcr_dof_prior = pl.variables.Uniform(
+                low=pl.Constant(None, G=GRAPH),
+                high=pl.Constant(None, G=GRAPH),
+                name='prior_' + STRNAMES.QPCR_DOFS + '_{}'.format(l), G=GRAPH)
+            
+            # add priors
+            qpcr_dofs.value[l].add_prior(qpcr_dof_prior)
+            qpcr_scales.value[l].add_prior(qpcr_scale_prior)
 
-    # Allocate qpcr measurements into buckets
-    mean_log_measurements = []
-    indices = []
-    for ridx in range(d.n_replicates):
-        for tidx,t in enumerate(d.given_timepoints[ridx]):
-            mean_log_measurements.append(np.mean(d.qpcr[ridx][t].log_data))
-            indices.append((ridx, tidx))
+        # Allocate qpcr measurements into buckets
+        mean_log_measurements = []
+        indices = []
+        for ridx in range(d.n_replicates):
+            for tidx,t in enumerate(d.given_timepoints[ridx]):
+                mean_log_measurements.append(np.mean(d.qpcr[ridx][t].log_data))
+                indices.append((ridx, tidx))
 
-    idxs = np.argsort(mean_log_measurements)
-    l_len = int(len(mean_log_measurements)/params.N_QPCR_BUCKETS)
-    logger.info('There are {} qPCR measurements for {} buckets. Each bucket is' \
-        ' {} measurements long'.format(len(indices), params.N_QPCR_BUCKETS, l_len))
+        idxs = np.argsort(mean_log_measurements)
+        l_len = int(len(mean_log_measurements)/params.N_QPCR_BUCKETS)
+        logger.info('There are {} qPCR measurements for {} buckets. Each bucket is' \
+            ' {} measurements long'.format(len(indices), params.N_QPCR_BUCKETS, l_len))
 
-    iii = 0
-    for bucket_idx in range(params.N_QPCR_BUCKETS):
-        # If it is the last bucket, assign the rest of the elements to it
-        if bucket_idx == params.N_QPCR_BUCKETS - 1:
-            l_len = len(mean_log_measurements) - iii
-        for i in range(l_len):
-            idx = idxs[iii]
-            ridx,tidx = indices[idx]
-            qpcr_variances.add_qpcr_measurement(ridx=ridx, tidx=tidx, sidx=bucket_idx)
-            qpcr_dofs.add_qpcr_measurement(ridx=ridx, tidx=tidx, sidx=bucket_idx)
-            qpcr_scales.add_qpcr_measurement(ridx=ridx, tidx=tidx, sidx=bucket_idx)
-            iii += 1
-    qpcr_dofs.set_shape()
-    qpcr_scales.set_shape()
+        iii = 0
+        for bucket_idx in range(params.N_QPCR_BUCKETS):
+            # If it is the last bucket, assign the rest of the elements to it
+            if bucket_idx == params.N_QPCR_BUCKETS - 1:
+                l_len = len(mean_log_measurements) - iii
+            for i in range(l_len):
+                idx = idxs[iii]
+                ridx,tidx = indices[idx]
+                qpcr_variances.add_qpcr_measurement(ridx=ridx, tidx=tidx, sidx=bucket_idx)
+                qpcr_dofs.add_qpcr_measurement(ridx=ridx, tidx=tidx, sidx=bucket_idx)
+                qpcr_scales.add_qpcr_measurement(ridx=ridx, tidx=tidx, sidx=bucket_idx)
+                iii += 1
+        qpcr_dofs.set_shape()
+        qpcr_scales.set_shape()
 
     # Set up inference and the inference order.
     # -----------------------------------------

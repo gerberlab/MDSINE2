@@ -87,7 +87,9 @@ class Data(pl.graph.DataNode):
             d = subject.matrix()['raw']
             self.data.append(d)
             self.read_depths.append(np.sum(d, axis=0))
-            self.qpcr.append(subject.qpcr[0])
+            
+            if not subject.use_spikein:
+                self.qpcr.append(subject.qpcr[0])
 
         self.n_replicates = len(self.data)
 
@@ -413,7 +415,9 @@ class TrajectorySet(pl.variables.Variable):
         self.value = np.zeros(n_taxa, dtype=float)
         self.data = self.G.data.data[self.ridx] # np.ndarray
         self.read_depths = self.G.data.read_depths[self.ridx] # np.ndarray
-        self.qpcr_measurement = self.G.data.qpcr[self.ridx] # mdsine2.pylab.base.qPCRData
+
+        if len(self.G.data.qpcr) > 0:
+            self.qpcr_measurement = self.G.data.qpcr[self.ridx] # mdsine2.pylab.base.qPCRData
     
         prior = pl.variables.Normal(
             loc=pl.variables.Constant(name=self.name+'_prior_loc', value=None, G=self.G),
@@ -430,7 +434,9 @@ class TrajectorySet(pl.variables.Variable):
         # Get the mean relative abundance
         rel = np.sum(self.data, axis=1)
         rel = rel / np.sum(rel)
-        value = rel * self.qpcr_measurement.mean()
+
+        if hasattr(self, 'qpcr_measurement'):
+            value = rel * self.qpcr_measurement.mean()
 
         self.value = np.zeros(len(value))
         for i in range(len(value)):

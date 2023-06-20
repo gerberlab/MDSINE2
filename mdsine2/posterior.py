@@ -2504,7 +2504,7 @@ class FilteringLogMP(pl.graph.Node):
         intermediate_step: Union[Tuple[str, Tuple], np.ndarray, List, type(None)],
         intermediate_interpolation: str=None, delay: int=0, bandwidth: Union[float, int]=None,
         window: int=None, target_acceptance_rate: Union[str, float]=0.44,
-        calculate_qpcr_loglik: bool=True):
+        calculate_qpcr_loglik: bool=True, calculate_spikein_loglik: bool=False):
         '''Initialize the values of the error model (values for the
         latent and the auxiliary trajectory). Additionally this sets
         the intermediate time points
@@ -2625,6 +2625,9 @@ class FilteringLogMP(pl.graph.Node):
             raise ValueError('`proposal_init_scale` ({}) must be positive'.format(
                 proposal_init_scale))
 
+        self.calculate_qpcr_loglik = calculate_qpcr_loglik
+        self.calculate_spikein_loglik = calculate_spikein_loglik
+        
         self.tune = tune
         self.a0 = a0
         self.a1 = a1
@@ -2793,9 +2796,29 @@ class FilteringLogMP(pl.graph.Node):
 
         for ridx, subj in enumerate(self.G.data.subjects):
             # Set up qPCR measurements and reads to send
-            qpcr_log_measurements = {}
-            for t in self.G.data.given_timepoints[ridx]:
-                qpcr_log_measurements[t] = self.G.data.qpcr[ridx][t].log_data
+            if calculate_qpcr_loglik:
+                qpcr_log_measurements = {}
+                for t in self.G.data.given_timepoints[ridx]:
+                    qpcr_log_measurements[t] = self.G.data.qpcr[ridx][t].log_data
+
+                spikein_reads = None
+                spikein_abundance_observed = None
+                spikein_latent_x = None 
+
+            elif calculate_spikein_loglik:
+                spikein_reads = self.G.data.subjects.iloc(ridx).spikein_reads
+                spikein_abundance_observed = self.G.data.subjects.iloc(ridx).spikein_abundance_observed
+                times = self.G.data.subjects.iloc(ridx).times
+                spikein_abundance_observed = [spikein_abundance_observed[x] for x in times]
+                spikein_abundance_observed = np.array(spikein_abundance_observed)
+
+                # Init the latent spikein values
+                spikein_latent_x = spikein_abundance_observed.copy()
+                qpcr_log_measurements = None 
+
+            else:
+                raise NotImplementedError("TODO raise proper error")
+
             reads = self.G.data.subjects.iloc(ridx).reads
 
             worker = SubjectLogTrajectorySetMP()
@@ -2821,8 +2844,14 @@ class FilteringLogMP(pl.graph.Node):
                 ridx=ridx,
                 subjname=subj.name,
                 calculate_qpcr_loglik=calculate_qpcr_loglik,
+                calculate_spikein_loglik=calculate_spikein_loglik,
                 h5py_xname=self.x[ridx].name,
-                target_acceptance_rate=self.target_acceptance_rate)
+                target_acceptance_rate=self.target_acceptance_rate,
+                spikein_latent_x = spikein_latent_x,
+                spikein_reads = spikein_reads,
+                spikein_abundance_observed = spikein_abundance_observed,
+                )
+
             if self.mp == 'debug':
                 self.pool.append(worker)
             elif self.mp == 'full':
@@ -2934,13 +2963,19 @@ class FilteringLogMP(pl.graph.Node):
             perts = np.hstack(perts)
 
         zero_inflation = [self.G[STRNAMES.ZERO_INFLATION].value[ridx] for ridx in range(self.G.data.n_replicates)]
-        qpcr_vars = []
-        for aaa in self.G[STRNAMES.QPCR_VARIANCES].value:
-            qpcr_vars.append(aaa.value)
+        if self.calculate_qpcr_loglik:
+            qpcr_vars = []
+            for aaa in self.G[STRNAMES.QPCR_VARIANCES].value:
+                qpcr_vars.append(aaa.value)
 
         kwargs = {'growth':growth, 'self_interactions':self_interactions,
             'pv':pv, 'interactions':interactions, 'perturbations':perts,
-            'zero_inflation_data': zero_inflation, 'qpcr_variances':qpcr_vars}
+            'zero_inflation_data': zero_inflation}
+
+        if self.calculate_qpcr_loglik:
+            kwargs['qpcr_variances'] = qpcr_vars
+        else:
+            kwargs['qpcr_variances'] = None
 
         str_acc = [None]*self.G.data.n_replicates
         mpstr = None
@@ -3061,9 +3096,11 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         reads: Dict[float, np.ndarray], there_are_intermediate_timepoints: bool,
         there_are_perturbations: bool, pv_global: bool, x_prior_mean: Union[float, int],
         x_prior_std: Union[float, int], tune: int, delay: int, end_iter: int, proposal_init_scale: float,
-        a0: float, a1: float, x: np.ndarray, calculate_qpcr_loglik: bool,
+        a0: float, a1: float, x: np.ndarray, calculate_qpcr_loglik: bool, calculate_spikein_loglik: bool,
         pert_starts: np.ndarray, pert_ends: np.ndarray, ridx: int, subjname: str,
-        h5py_xname: str, target_acceptance_rate: float, zero_inflation_transition_policy: Any):
+        h5py_xname: str, target_acceptance_rate: float, zero_inflation_transition_policy: Any,
+        spikein_latent_x: Any, spikein_reads: Any, spikein_abundance_observed: Any,
+        spikein_abundance_scale = 1):
         '''Initialize the object at the beginning of the inference
 
         n_o = Number of Taxa
@@ -3150,6 +3187,13 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.logx = np.log(x)
         self.x = x
 
+        if spikein_latent_x is not None:
+            self.spikein_latent_x = spikein_latent_x.flatten() * np.random.normal(1, 0.1, len(spikein_latent_x.flatten()))
+            self.log_spikein_latent_x = np.log(spikein_latent_x.flatten())
+            self.spikein_reads = spikein_reads
+            self.spikein_abundance_observed = spikein_abundance_observed
+            self.spikein_abundance_scale = spikein_abundance_scale
+
         # Get the perturbations for this subject
         if self.there_are_perturbations:
             self.pert_starts = []
@@ -3161,6 +3205,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.total_n_points = self.x.shape[0] * self.x.shape[1]
         self.ridx = ridx
         self.calculate_qpcr_loglik = calculate_qpcr_loglik
+        self.calculate_spikein_loglik = calculate_spikein_loglik
 
         self.sample_iter = 0
         self.n_data_points = self.x.shape[0] * self.x.shape[1]
@@ -3190,7 +3235,10 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.read_depths = {}
         for t in self.reads:
             self.read_depths[t] = float(np.sum(self.reads[t]))
-
+        
+        if self.calculate_spikein_loglik:
+            for t in self.reads:
+                self.read_depths[t] += float(self.spikein_reads[t])
         # t
         self.dts = np.zeros(self.n_timepoints_minus_1)
         self.sqrt_dts = np.zeros(self.n_timepoints_minus_1)
@@ -3321,78 +3369,116 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.n_accepted_iter = 0
         self.pv = pv
         self.pv_std = np.sqrt(pv)
-        self.qpcr_stds = np.sqrt(qpcr_variances[self.ridx])
-        self.qpcr_stds_d = {}
+
+        if self.calculate_qpcr_loglik:
+            self.qpcr_stds = np.sqrt(qpcr_variances[self.ridx])
+            self.qpcr_stds_d = {}
+
+        # if self.calculate_spikein_loglik:
+        #     self.spikein_std = np.sqrt(self.spikein_abundance_scale)
 
         if zero_inflation_data is not None:
             self.zero_inflation_data = zero_inflation_data[self.ridx]
         else:
             self.zero_inflation_data = None
 
-        for tidx,t in enumerate(self.qpcr_log_measurements):
-            self.qpcr_stds_d[t] = self.qpcr_stds[tidx]
+        if self.calculate_qpcr_loglik:
+            for tidx,t in enumerate(self.qpcr_log_measurements):
+                self.qpcr_stds_d[t] = self.qpcr_stds[tidx]
 
         if self.there_are_perturbations:
             self.growth_rate_non_pert = growth.ravel()
             self.growth_rate_on_pert = growth.reshape(-1,1) * (1 + perturbations)
 
         # Go through each randomly Taxa and go in time order
-        oidxs = npr.permutation(self.n_taxa)
+        if self.calculate_spikein_loglik:
+            n_permute = self.n_taxa + 1
+        else:
+            n_permute = self.n_taxa
+
+        oidxs = npr.permutation(n_permute)
         # print('===============================')
         # print('===============================')
-        # print('ridx', self.ridx)
+        # print('X STARTOFLOOP', np.any(np.isnan(self.x)), self.x.min(), self.x.max())
+
         for oidx in oidxs:
+            if oidx < self.n_taxa:
+                # Set the necessary global parameters
+                self.oidx = oidx
+                self.curr_x = self.x[oidx, :] # latent abundances
+                self.curr_logx = self.logx[oidx, :]
+                self.curr_interactions = interactions[oidx, :] # omit and make it make sense
+                self.curr_self_interaction = self_interactions[oidx]
+                # self.curr_zero_inflation = self.zero_inflation[oidx, :]
 
-            # Set the necessary global parameters
-            self.oidx = oidx
-            self.curr_x = self.x[oidx, :]
-            self.curr_logx = self.logx[oidx, :]
-            self.curr_interactions = interactions[oidx, :]
-            self.curr_self_interaction = self_interactions[oidx]
-            # self.curr_zero_inflation = self.zero_inflation[oidx, :]
+                if self.pv_global:
+                    self.curr_pv_std = self.pv_std
+                else:
+                    self.curr_pv_std = self.pv_std[oidx]
 
-            if self.pv_global:
-                self.curr_pv_std = self.pv_std
-            else:
-                self.curr_pv_std = self.pv_std[oidx]
-
-            # Set for first time point
-            self.tidx = 0
-            self.set_attrs_for_timepoint()
-            self.forward_loglik = self.default_forward_loglik
-            self.reverse_loglik = self.first_timepoint_reverse
-            # Calculate A matrix for forward
-            self.forward_interaction_vals = np.nansum(self.x[:, self.tidx] * self.curr_interactions)
-            self.update_single()
-            self.reverse_loglik = self.default_reverse_loglik
-            # Set for middle timepoints
-            for tidx in range(1, self.n_timepoints-1):
-                # Check if it needs to be zero inflated
-                # if not self.curr_zero_inflation[tidx]:
-                #     raise NotImplementedError('Zero inflation not implemented for logmodel')
-
-                self.tidx = tidx
+                # Set for first time point
+                self.tidx = 0
                 self.set_attrs_for_timepoint()
-
-                # Calculate A matrix for forward and reverse
-                # Set the reverse of the current time step to the forward of the previous
-                self.reverse_interaction_vals = self.forward_interaction_vals #np.sum(self.x[:, self.prev_tidx] * self.curr_interactions)
+                self.forward_loglik = self.default_forward_loglik
+                self.reverse_loglik = self.first_timepoint_reverse
+                # Calculate A matrix for forward
                 self.forward_interaction_vals = np.nansum(self.x[:, self.tidx] * self.curr_interactions)
-
-                # Run single update
                 self.update_single()
+                self.reverse_loglik = self.default_reverse_loglik
+                # Set for middle timepoints
+                for tidx in range(1, self.n_timepoints-1):
+                    # Check if it needs to be zero inflated
+                    # if not self.curr_zero_inflation[tidx]:
+                    #     raise NotImplementedError('Zero inflation not implemented for logmodel')
 
-            # Set for last timepoint
-            self.tidx = self.n_timepoints_minus_1
-            self.set_attrs_for_timepoint()
-            self.forward_loglik = self.last_timepoint_forward
-            # Calculate A matrix for reverse
-            # Set the reverse of the current time step to the forward of the previous
-            self.reverse_interaction_vals = self.forward_interaction_vals # np.sum(self.x[:, self.prev_tidx] * self.curr_interactions)
-            self.update_single()
+                    self.tidx = tidx
+                    self.set_attrs_for_timepoint()
 
-            # if self.sample_iter == 4:
-            # sys.exit()
+                    # Calculate A matrix for forward and reverse
+                    # Set the reverse of the current time step to the forward of the previous
+                    self.reverse_interaction_vals = self.forward_interaction_vals #np.sum(self.x[:, self.prev_tidx] * self.curr_interactions)
+                    self.forward_interaction_vals = np.nansum(self.x[:, self.tidx] * self.curr_interactions)
+
+                    # Run single update
+                    self.update_single()
+
+                # Set for last timepoint
+                self.tidx = self.n_timepoints_minus_1
+                self.set_attrs_for_timepoint()
+                self.forward_loglik = self.last_timepoint_forward
+                # Calculate A matrix for reverse
+                # Set the reverse of the current time step to the forward of the previous
+                self.reverse_interaction_vals = self.forward_interaction_vals # np.sum(self.x[:, self.prev_tidx] * self.curr_interactions)
+                self.update_single()
+                
+                # if self.sample_iter == 4:
+                # sys.exit()
+
+            elif oidx == self.n_taxa:
+                # The spikein taxa was previously added to the end of the list.
+                # See
+                self.oidx = oidx
+                self.curr_x = self.spikein_latent_x
+                self.curr_logx = self.log_spikein_latent_x
+
+                if self.pv_global:
+                    self.curr_pv_std = self.pv_std
+                else:
+                    raise NotImplementedError("No self.pv_std[oidx] for spike in")
+
+                # Set for all timepoints
+                for tidx in range(0, self.n_timepoints):
+
+                    self.tidx = tidx
+                    self.set_attrs_for_timepoint_spikein()
+
+                    # Run single update
+                    self.update_single_spikein()
+
+            else:
+                raise Exception("Check oidx")
+
+        # print('X ENDOFLOOP', np.any(np.isnan(self.x)), self.x.min(), self.x.max())
 
         self.sample_iter += 1
         if self.add_trace:
@@ -3414,14 +3500,17 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 t = self.times[self.tidx]
                 self.curr_reads = self.reads[t][self.oidx]
                 self.curr_read_depth = self.read_depths[t]
-                self.curr_qpcr_log_measurements = self.qpcr_log_measurements[t]
-                self.curr_qpcr_std = self.qpcr_stds_d[t]
+                if self.calculate_qpcr_loglik:
+                    self.curr_qpcr_log_measurements = self.qpcr_log_measurements[t]
+                    self.curr_qpcr_std = self.qpcr_stds_d[t]
         else:
             t = self.times[self.tidx]
             self.curr_reads = self.reads[t][self.oidx]
             self.curr_read_depth = self.read_depths[t]
-            self.curr_qpcr_log_measurements = self.qpcr_log_measurements[t]
-            self.curr_qpcr_std = self.qpcr_stds_d[t]
+
+            if self.calculate_qpcr_loglik:
+                self.curr_qpcr_log_measurements = self.qpcr_log_measurements[t]
+                self.curr_qpcr_std = self.qpcr_stds_d[t]
 
         # Set perturbation growth rates
         if self.there_are_perturbations:
@@ -3441,6 +3530,48 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 pidx = self.fully_in_pert[self.tidx]
                 self.forward_growth_rate = self.growth_rate_on_pert[self.oidx,pidx]
                 self.reverse_growth_rate = self.forward_growth_rate
+
+    def set_attrs_for_timepoint_spikein(self):
+        self.prev_tidx = None #self.tidx-1
+        self.next_tidx = None #self.tidx+1
+        self.forward_growth_rate = None
+        self.reverse_growth_rate = None
+
+        # self.curr_spikein_std = self.spikein_std
+
+        if self.there_are_intermediate_timepoints:
+            if not self.is_intermediate_timepoint[self.times[self.tidx]]:
+                # It is not intermediate timepoints - we need to get the data
+                t = self.times[self.tidx]
+                self.curr_reads = self.spikein_reads[t]
+                self.curr_read_depth = self.read_depths[t]
+                self.curr_qpcr_log_measurements = None
+                self.curr_qpcr_std = None
+        else:
+            t = self.times[self.tidx]
+            self.curr_reads = self.spikein_reads[t]
+            self.curr_read_depth = self.read_depths[t]
+            self.curr_qpcr_log_measurements = None
+            self.curr_qpcr_std = None
+
+        # Set perturbation growth rates
+        if self.there_are_perturbations:
+            if self.in_pert_transition[self.tidx]:
+                if self.fully_in_pert[self.tidx-1] != -1:
+                    # If the previous time point is in the perturbation, that means
+                    # we are going out of the perturbation
+                    # self.forward_growth_rate = self.master_growth_rate[self.oidx]
+                    pidx = None #self.fully_in_pert[self.tidx-1]
+                    self.reverse_growth_rate = None
+                else:
+                    # Else we are going into a perturbation
+                    # self.reverse_growth_rate = self.master_growth_rate[self.oidx]
+                    pidx = None #self.fully_in_pert[self.tidx+1]
+                    self.forward_growth_rate = None
+            elif self.fully_in_pert[self.tidx] != -1:
+                pidx = self.fully_in_pert[self.tidx]
+                self.forward_growth_rate = None
+                self.reverse_growth_rate = None
 
     # @profile
     def update_single(self):
@@ -3520,6 +3651,50 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         else:
             self.x[oidx, tidx] = x_new
             self.logx[oidx, tidx] = logx_new
+            self.acceptances += 1
+            self.total_acceptances += 1
+            self.n_accepted_iter += 1
+
+        self.n_props_local += 1
+        self.n_props_total += 1
+
+    def update_single_spikein(self):
+        '''Update a single oidx, tidx
+        '''
+        tidx = self.tidx
+
+        try:
+            logx_new = pl.random.misc.fast_sample_normal(
+                loc=self.curr_logx[tidx],
+                scale=self.proposal_std)
+        except:
+            print('mu', self.curr_logx[tidx])
+            print('std', self.proposal_std)
+            raise
+        x_new = np.exp(logx_new)
+        prev_logx_value = self.curr_logx[tidx]
+        prev_x_value = self.curr_x[tidx]
+
+        # print('UPDATE SINGLE', x_new.shape, x_new)
+
+        l_old = self.data_loglik()
+
+        self.curr_x[tidx] = x_new
+        self.curr_logx[tidx] = logx_new
+        self.sum_q[tidx] = self.sum_q[tidx] - prev_x_value + x_new
+
+        l_new = self.data_loglik()
+
+        r_accept = l_new - l_old
+
+        r = pl.random.misc.fast_sample_standard_uniform()
+        if math.log(r) > r_accept:
+            self.sum_q[tidx] = self.sum_q[tidx] + prev_x_value - x_new
+            self.curr_x[tidx] = prev_x_value
+            self.curr_logx[tidx] = prev_logx_value
+        else:
+            self.spikein_latent_x[tidx] = x_new
+            self.log_spikein_latent_x[tidx] = logx_new
             self.acceptances += 1
             self.total_acceptances += 1
             self.n_accepted_iter += 1
@@ -3608,11 +3783,18 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
     def data_loglik_wo_intermediates(self) -> float:
         '''data loglikelihood with intermediate timepoints
         '''
-        sum_q = self.sum_q[self.tidx]
-        log_sum_q = math.log(sum_q)
+        if self.calculate_qpcr_loglik:
+            sum_q = self.sum_q[self.tidx]
+            log_sum_q = math.log(sum_q)
+        elif self.calculate_spikein_loglik:
+            sum_q = self.sum_q[self.tidx] + self.spikein_latent_x[self.tidx]  # Total abundance for timepoint tidx
+        else:
+            raise AttributeError("Error: user must specify either `calculate_qpcr_loglik` or `calculate_spikein_loglik`")
+
         rel = self.curr_x[self.tidx] / sum_q
 
         try:
+            # Compute negative binomial log-pmf
             negbin = negbin_loglikelihood_MH_condensed(
                 k=self.curr_reads,
                 m=self.curr_read_depth * rel,
@@ -3628,7 +3810,15 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             for qpcr_val in self.curr_qpcr_log_measurements:
                 a = pl.random.normal.logpdf(value=qpcr_val, loc=log_sum_q, scale=self.curr_qpcr_std)
                 qpcr += a
-        return negbin + qpcr
+            return negbin + qpcr
+
+        elif self.calculate_spikein_loglik:
+            spikein = pl.random.normal.logpdf(
+                value=np.log(self.spikein_abundance_observed[self.tidx]), # * self.measurement_volume_ratio[self.tidx]
+                loc=self.log_spikein_latent_x[self.tidx],  
+                scale=0.01 ## TODO change this later
+            )
+            return negbin + spikein
 
     def compute_dynamics(self, tidx: int, Axj: np.ndarray, a1: np.ndarray) -> np.ndarray:
         '''Compute dynamics going into tidx+1
