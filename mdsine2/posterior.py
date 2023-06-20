@@ -3626,8 +3626,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         qpcr = 0
         if self.calculate_qpcr_loglik:
             for qpcr_val in self.curr_qpcr_log_measurements:
-                a = pl.random.normal.logpdf(value=qpcr_val, loc=log_sum_q, scale=self.curr_qpcr_std)
-                qpcr += a
+                if self.curr_qpcr_std > 0:
+                    qpcr += pl.random.normal.logpdf(value=qpcr_val, loc=log_sum_q, scale=self.curr_qpcr_std)
         return negbin + qpcr
 
     def compute_dynamics(self, tidx: int, Axj: np.ndarray, a1: np.ndarray) -> np.ndarray:
