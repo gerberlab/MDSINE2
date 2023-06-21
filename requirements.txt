@@ -13,3 +13,4 @@ treeswift
 py2cytoscape
 tqdm
 ete3
+PyQt5
