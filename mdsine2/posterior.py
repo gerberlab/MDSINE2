@@ -3189,7 +3189,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         if spikein_latent_x is not None:
             self.spikein_latent_x = spikein_latent_x.flatten() * np.random.normal(1, 0.1, len(spikein_latent_x.flatten()))
-            self.log_spikein_latent_x = np.log(spikein_latent_x.flatten())
+            self.log_spikein_latent_x = np.log(self.spikein_latent_x)
             self.spikein_reads = spikein_reads
             self.spikein_abundance_observed = spikein_abundance_observed
             self.spikein_abundance_scale = spikein_abundance_scale
@@ -3212,6 +3212,11 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         # latent state
         self.sum_q = np.sum(self.x, axis=0)
+
+        # if spikein_latent_x is not None:
+        #     print("DEM SUM Q", self.sum_q.shape, self.spikein_latent_x.shape)
+        #     self.sum_q += self.spikein_latent_x
+
         self.trace_iter = 0
 
         # proposal
@@ -3236,10 +3241,10 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         for t in self.reads:
             self.read_depths[t] = float(np.sum(self.reads[t]))
         
-        if self.calculate_spikein_loglik:
-            for t in self.reads:
-                self.read_depths[t] += float(self.spikein_reads[t])
-        # t
+        # if self.calculate_spikein_loglik:
+        #     for t in self.reads:
+        #         self.read_depths[t] += float(self.spikein_reads[t])
+        
         self.dts = np.zeros(self.n_timepoints_minus_1)
         self.sqrt_dts = np.zeros(self.n_timepoints_minus_1)
         for k in range(self.n_timepoints_minus_1):
@@ -3455,8 +3460,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 # sys.exit()
 
             elif oidx == self.n_taxa:
-                # The spikein taxa was previously added to the end of the list.
-                # See
+                # The spikein taxa.
                 self.oidx = oidx
                 self.curr_x = self.spikein_latent_x
                 self.curr_logx = self.log_spikein_latent_x
@@ -3472,19 +3476,19 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                     self.tidx = tidx
                     self.set_attrs_for_timepoint_spikein()
 
+                    if tidx == 50:
+                        # print shit and see if changes!
+                        print("DEM OIDX", self.subjname, self.spikein_latent_x[11])
+
                     # Run single update
                     self.update_single_spikein()
 
             else:
                 raise Exception("Check oidx")
 
-        # print('X ENDOFLOOP', np.any(np.isnan(self.x)), self.x.min(), self.x.max())
-
         self.sample_iter += 1
         if self.add_trace:
             self.trace_iter += 1
-
-        # print(self.cnt_accepted_times/self.sample_iter)
 
         return self.ridx, self.x, self.n_accepted_iter/self.n_data_points
 
@@ -3532,46 +3536,44 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 self.reverse_growth_rate = self.forward_growth_rate
 
     def set_attrs_for_timepoint_spikein(self):
-        self.prev_tidx = None #self.tidx-1
-        self.next_tidx = None #self.tidx+1
-        self.forward_growth_rate = None
-        self.reverse_growth_rate = None
+        # self.prev_tidx = None 
+        # self.next_tidx = None 
+        # self.forward_growth_rate = None
+        # self.reverse_growth_rate = None
 
-        # self.curr_spikein_std = self.spikein_std
+        # if self.there_are_intermediate_timepoints:
+        #     if not self.is_intermediate_timepoint[self.times[self.tidx]]:
+        #         # It is not intermediate timepoints - we need to get the data
+        #         t = self.times[self.tidx]
+        #         self.curr_reads = self.spikein_reads[t]
+        #         self.curr_read_depth = self.read_depths[t] # These include self.spikein_reads[t]
+        #         self.curr_qpcr_log_measurements = None
+        #         self.curr_qpcr_std = None
+        # else:
+        t = self.times[self.tidx]
+        self.curr_reads = self.spikein_reads[t]
+        self.curr_read_depth = self.read_depths[t] + self.spikein_reads[t] # These DONT include self.spikein_reads[t]
+        self.curr_qpcr_log_measurements = None
+        self.curr_qpcr_std = None
 
-        if self.there_are_intermediate_timepoints:
-            if not self.is_intermediate_timepoint[self.times[self.tidx]]:
-                # It is not intermediate timepoints - we need to get the data
-                t = self.times[self.tidx]
-                self.curr_reads = self.spikein_reads[t]
-                self.curr_read_depth = self.read_depths[t]
-                self.curr_qpcr_log_measurements = None
-                self.curr_qpcr_std = None
-        else:
-            t = self.times[self.tidx]
-            self.curr_reads = self.spikein_reads[t]
-            self.curr_read_depth = self.read_depths[t]
-            self.curr_qpcr_log_measurements = None
-            self.curr_qpcr_std = None
-
-        # Set perturbation growth rates
-        if self.there_are_perturbations:
-            if self.in_pert_transition[self.tidx]:
-                if self.fully_in_pert[self.tidx-1] != -1:
-                    # If the previous time point is in the perturbation, that means
-                    # we are going out of the perturbation
-                    # self.forward_growth_rate = self.master_growth_rate[self.oidx]
-                    pidx = None #self.fully_in_pert[self.tidx-1]
-                    self.reverse_growth_rate = None
-                else:
-                    # Else we are going into a perturbation
-                    # self.reverse_growth_rate = self.master_growth_rate[self.oidx]
-                    pidx = None #self.fully_in_pert[self.tidx+1]
-                    self.forward_growth_rate = None
-            elif self.fully_in_pert[self.tidx] != -1:
-                pidx = self.fully_in_pert[self.tidx]
-                self.forward_growth_rate = None
-                self.reverse_growth_rate = None
+        # # Set perturbation growth rates
+        # if self.there_are_perturbations:
+        #     if self.in_pert_transition[self.tidx]:
+        #         if self.fully_in_pert[self.tidx-1] != -1:
+        #             # If the previous time point is in the perturbation, that means
+        #             # we are going out of the perturbation
+        #             # self.forward_growth_rate = self.master_growth_rate[self.oidx]
+        #             pidx = None #self.fully_in_pert[self.tidx-1]
+        #             self.reverse_growth_rate = None
+        #         else:
+        #             # Else we are going into a perturbation
+        #             # self.reverse_growth_rate = self.master_growth_rate[self.oidx]
+        #             pidx = None #self.fully_in_pert[self.tidx+1]
+        #             self.forward_growth_rate = None
+        #     elif self.fully_in_pert[self.tidx] != -1:
+        #         pidx = self.fully_in_pert[self.tidx]
+        #         self.forward_growth_rate = None
+        #         self.reverse_growth_rate = None
 
     # @profile
     def update_single(self):
@@ -3675,21 +3677,26 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         prev_logx_value = self.curr_logx[tidx]
         prev_x_value = self.curr_x[tidx]
 
-        # print('UPDATE SINGLE', x_new.shape, x_new)
+        self.spikein_oidx_flag = True
 
-        l_old = self.data_loglik()
+        # l_old = self.data_loglik()
+        l_old = self.data_loglik_wo_intermediates()
 
         self.curr_x[tidx] = x_new
         self.curr_logx[tidx] = logx_new
-        self.sum_q[tidx] = self.sum_q[tidx] - prev_x_value + x_new
 
-        l_new = self.data_loglik()
+        # self.sum_q was initialized as sum(x) + self.spikein_latent_x
+        # self.sum_q[tidx] = self.sum_q[tidx] - prev_x_value + x_new
+
+        l_new = self.data_loglik_wo_intermediates()
+        
+        self.spikein_oidx_flag = False
 
         r_accept = l_new - l_old
 
         r = pl.random.misc.fast_sample_standard_uniform()
         if math.log(r) > r_accept:
-            self.sum_q[tidx] = self.sum_q[tidx] + prev_x_value - x_new
+            # self.sum_q[tidx] = self.sum_q[tidx] + prev_x_value - x_new
             self.curr_x[tidx] = prev_x_value
             self.curr_logx[tidx] = prev_logx_value
         else:
@@ -3782,14 +3789,15 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
     # @profile
     def data_loglik_wo_intermediates(self) -> float:
         '''data loglikelihood with intermediate timepoints
+
+        What changes in this function (or above it) in each iteration? why growing?
         '''
-        if self.calculate_qpcr_loglik:
-            sum_q = self.sum_q[self.tidx]
-            log_sum_q = math.log(sum_q)
-        elif self.calculate_spikein_loglik:
-            sum_q = self.sum_q[self.tidx] + self.spikein_latent_x[self.tidx]  # Total abundance for timepoint tidx
-        else:
-            raise AttributeError("Error: user must specify either `calculate_qpcr_loglik` or `calculate_spikein_loglik`")
+        sum_q = self.sum_q[self.tidx]
+        log_sum_q = math.log(sum_q)
+        
+        if self.spikein_oidx_flag:
+            # Total abundance for timepoint tidx
+            sum_q = self.sum_q[self.tidx] + self.spikein_latent_x[self.tidx]
 
         rel = self.curr_x[self.tidx] / sum_q
 
@@ -3814,11 +3822,37 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         elif self.calculate_spikein_loglik:
             spikein = pl.random.normal.logpdf(
-                value=np.log(self.spikein_abundance_observed[self.tidx]), # * self.measurement_volume_ratio[self.tidx]
+                value=np.log(self.spikein_abundance_observed[self.tidx]), 
                 loc=self.log_spikein_latent_x[self.tidx],  
-                scale=0.01 ## TODO change this later
+                scale=0.1 ## TODO change this later
             )
             return negbin + spikein
+
+    # def data_loglik_spikein(self):
+    #     """ Exp.
+    #     """
+    #     sum_q = self.sum_q[self.tidx] + self.spikein_latent_x[self.tidx]
+    #     rel = self.curr_x[self.tidx] / sum_q
+        
+    #     # read_depth = self.curr_read_depth + self.spikein_reads[self.tidx]
+
+    #     # negbin = negbin_loglikelihood_MH_condensed(
+    #     #     k=self.spikein_reads[self.tidx],
+    #     #     m=read_depth * rel,
+    #     #     dispersion=self.a0/rel + self.a1)
+        
+    #     negbin = negbin_loglikelihood_MH_condensed_not_fast(
+    #         k=self.curr_reads,
+    #         m=self.curr_read_depth * rel,
+    #         dispersion=self.a0/rel + self.a1)
+    
+    #     spikein = pl.random.normal.logpdf(
+    #         value=np.log(self.spikein_abundance_observed[self.tidx]), 
+    #         loc=self.log_spikein_latent_x[self.tidx],  
+    #         scale=0.00000001 ## TODO change this later
+    #     )
+    #     return negbin + spikein
+
 
     def compute_dynamics(self, tidx: int, Axj: np.ndarray, a1: np.ndarray) -> np.ndarray:
         '''Compute dynamics going into tidx+1

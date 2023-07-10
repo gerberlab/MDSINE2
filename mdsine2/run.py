@@ -78,7 +78,10 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
     basepath = params.OUTPUT_BASEPATH
     os.makedirs(basepath, exist_ok=True)
 
-    if params.INITIALIZATION_KWARGS[STRNAMES.FILTERING]['calculate_qpcr_loglik']:
+    has_spikein = np.all([len(x.spikein_reads) > 0 for x in subjset])
+    has_qpcr = np.all([len(x.qpcr) > 0 for x in subjset])
+
+    if has_qpcr:
         # Normalize the qpcr measurements for numerical stability
         # -------------------------------------------------------
         if params.QPCR_NORMALIZATION_MAX_VALUE is not None:

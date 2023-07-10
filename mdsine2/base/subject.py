@@ -25,7 +25,7 @@ class Subject(Saveable):
     name : str
         This is the name of the subject
     """
-    def __init__(self, parent: 'Study', name: str):
+    def __init__(self, parent: 'Study', name: str, use_spikein=False):
         self.name = name # str
         self.id = id(self)
         self.parent = parent
@@ -33,7 +33,8 @@ class Subject(Saveable):
         self.reads = {} # dict: time (float) -> reads (np.ndarray)
         self.times = np.asarray([]) # times in order
         self._reads_individ = {} # for taking out aggregated taxa
-
+        self.use_spikein = use_spikein
+        
     def add_time(self, timepoint: Union[float, int]):
         """Add the timepoint `timepoint`. Set the reads and qpcr at that timepoint
         to None
@@ -46,8 +47,8 @@ class Subject(Saveable):
         if timepoint in self.times:
             return
         self.times = np.sort(np.append(self.times, timepoint))
-        self.reads[timepoint] = None
-        self.qpcr[timepoint] = None
+        # self.reads[timepoint] = None
+        # self.qpcr[timepoint] = None
 
     def add_reads(self, timepoints: Union[np.ndarray, int, float], reads: np.ndarray):
         """Add the reads for timepoint `timepoint`
@@ -209,16 +210,19 @@ class Subject(Saveable):
         # Raw reads of the actual (non-spikein) taxa
         for i,t in enumerate(self.times):
             raw[:,i] = self.reads[t]
-            
+            rel[:, i] = raw[:, i] / np.sum(raw[:, i])
+            # rel[:, i] = raw[:, i] / (np.sum(raw[:, i]) + self.spikein_reads[t].sum())
+
         if self.use_spikein:
-            for i,t in enumerate(self.times):
-                rel[:,i] = raw[:,i] / (np.sum(raw[:,i]) )#+ self.spikein_reads[t])
-                abs[:,i] = self.spikein_abundance_observed[t] / self.spikein_reads[t] * raw[:,i]
-            
+            if len(self.spikein_reads) > 0:
+                for i,t in enumerate(self.times):
+                    # rel[:, i] = raw[:, i] / (np.sum(raw[:, i]) + self.spikein_reads[t].sum())
+                    abs[:,i] = self.spikein_abundance_observed[t] / self.spikein_reads[t].sum() * raw[:,i]
+                    # abs[:,i] = rel[:,i] * self.qpcr[t].mean()
         else:
-            for i,t in enumerate(self.times):
-                rel[:,i] = raw[:,i] / np.sum(raw[:,i])
-                abs[:,i] = rel[:,i] * self.qpcr[t].mean()
+            if len(self.qpcr) > 0:
+                for i,t in enumerate(self.times):
+                    abs[:,i] = rel[:,i] * self.qpcr[t].mean()
 
         return {'raw':raw, 'rel': rel, 'abs':abs}
 

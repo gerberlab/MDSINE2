@@ -303,7 +303,10 @@ class BaseMCMC(BaseModel):
         bool
         '''
         if not isnode(var):
-            var = self.graph[var].id
+            try:
+                var = self.graph[var].id
+            except:
+                print(f'{var} is not in graph; skipping.')
         else:
             var = var.id
         return var in self.inf_order
