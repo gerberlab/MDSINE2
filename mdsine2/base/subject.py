@@ -216,7 +216,7 @@ class Subject(Saveable):
         if self.use_spikein:
             if len(self.spikein_reads) > 0:
                 for i,t in enumerate(self.times):
-                    # rel[:, i] = raw[:, i] / (np.sum(raw[:, i]) + self.spikein_reads[t].sum())
+                    rel[:, i] = raw[:, i] / (np.sum(raw[:, i]) + self.spikein_reads[t].sum())
                     abs[:,i] = self.spikein_abundance_observed[t] / self.spikein_reads[t].sum() * raw[:,i]
                     # abs[:,i] = rel[:,i] * self.qpcr[t].mean()
         else:
