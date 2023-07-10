@@ -3797,7 +3797,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         
         if self.spikein_oidx_flag:
             # Total abundance for timepoint tidx
-            sum_q = self.sum_q[self.tidx] + self.spikein_latent_x[self.tidx]
+            sum_q = self.sum_q[self.tidx] + self.curr_x[self.tidx]
 
         rel = self.curr_x[self.tidx] / sum_q
 
@@ -3823,7 +3823,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         elif self.calculate_spikein_loglik:
             spikein = pl.random.normal.logpdf(
                 value=np.log(self.spikein_abundance_observed[self.tidx]), 
-                loc=self.log_spikein_latent_x[self.tidx],  
+                loc=self.curr_logx[self.tidx],  
                 scale=0.1 ## TODO change this later
             )
             return negbin + spikein
