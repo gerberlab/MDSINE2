@@ -211,7 +211,6 @@ class Subject(Saveable):
         for i,t in enumerate(self.times):
             raw[:,i] = self.reads[t]
             rel[:, i] = raw[:, i] / np.sum(raw[:, i])
-            # rel[:, i] = raw[:, i] / (np.sum(raw[:, i]) + self.spikein_reads[t].sum())
 
         if self.use_spikein:
             if len(self.spikein_reads) > 0:

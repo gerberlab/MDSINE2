@@ -3213,9 +3213,9 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         # latent state
         self.sum_q = np.sum(self.x, axis=0)
 
-        # if spikein_latent_x is not None:
-        #     print("DEM SUM Q", self.sum_q.shape, self.spikein_latent_x.shape)
-        #     self.sum_q += self.spikein_latent_x
+        if spikein_latent_x is not None:
+            # print("DEM SUM Q", self.sum_q.shape, self.spikein_latent_x.shape)
+            self.sum_q += self.spikein_latent_x
 
         self.trace_iter = 0
 
@@ -3241,9 +3241,9 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         for t in self.reads:
             self.read_depths[t] = float(np.sum(self.reads[t]))
         
-        # if self.calculate_spikein_loglik:
-        #     for t in self.reads:
-        #         self.read_depths[t] += float(self.spikein_reads[t])
+        if self.calculate_spikein_loglik:
+            for t in self.reads:
+                self.read_depths[t] += float(self.spikein_reads[t])
         
         self.dts = np.zeros(self.n_timepoints_minus_1)
         self.sqrt_dts = np.zeros(self.n_timepoints_minus_1)
@@ -3552,7 +3552,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         # else:
         t = self.times[self.tidx]
         self.curr_reads = self.spikein_reads[t]
-        self.curr_read_depth = self.read_depths[t] + self.spikein_reads[t] # These DONT include self.spikein_reads[t]
+        self.curr_read_depth = self.read_depths[t] #+ self.spikein_reads[t] # These ALREADY include self.spikein_reads[t]
         self.curr_qpcr_log_measurements = None
         self.curr_qpcr_std = None
 
