@@ -3497,6 +3497,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.next_tidx = self.tidx+1
         self.forward_growth_rate = self.master_growth_rate[self.oidx]
         self.reverse_growth_rate = self.master_growth_rate[self.oidx]
+        self.spikein_oidx_flag = False
 
         if self.there_are_intermediate_timepoints:
             if not self.is_intermediate_timepoint[self.times[self.tidx]]:
@@ -3555,7 +3556,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.curr_read_depth = self.read_depths[t] #+ self.spikein_reads[t] # These ALREADY include self.spikein_reads[t]
         self.curr_qpcr_log_measurements = None
         self.curr_qpcr_std = None
-
+        self.spikein_oidx_flag = True
+        
         # # Set perturbation growth rates
         # if self.there_are_perturbations:
         #     if self.in_pert_transition[self.tidx]:
@@ -3677,8 +3679,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         prev_logx_value = self.curr_logx[tidx]
         prev_x_value = self.curr_x[tidx]
 
-        self.spikein_oidx_flag = True
-
         # l_old = self.data_loglik()
         l_old = self.data_loglik_wo_intermediates()
 
@@ -3690,8 +3690,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         l_new = self.data_loglik_wo_intermediates()
         
-        self.spikein_oidx_flag = False
-
         r_accept = l_new - l_old
 
         r = pl.random.misc.fast_sample_standard_uniform()
