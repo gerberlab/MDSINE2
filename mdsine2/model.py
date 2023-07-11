@@ -187,7 +187,7 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         if mcmc.graph.perturbations is not None and subj is not None:
             perturbations = []
             for pert in mcmc.graph.perturbations:
-                perturbations.append(pert.get_trace_from_disk(section=section))
+                perturbations.append(pert.get_trace_from_disk(section=section, slices=slices))
                 perturbations[-1][np.isnan(perturbations[-1])] = 0
             
             perturbation_starts = []
