@@ -3822,7 +3822,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             spikein = pl.random.normal.logpdf(
                 value=np.log(self.spikein_abundance_observed[self.tidx]), 
                 loc=self.curr_logx[self.tidx],  
-                scale=100 ## TODO change this later
+                scale=3 ## TODO change this later
             )
             return negbin + spikein
 
