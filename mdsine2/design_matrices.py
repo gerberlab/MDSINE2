@@ -1068,7 +1068,7 @@ class GrowthDesignMatrix(DesignMatrix):
             self.G.data.n_replicates,
             self.G.data.data[0].shape[0],
             self.G.data.data[0].shape[1]
-        ), dtype=np.float)
+        ), dtype=float)
 
         for pidx, pert in enumerate(self.G.perturbations):
             val = (pert.item_array(only_pos_ind=True) + 1).reshape(-1,1)

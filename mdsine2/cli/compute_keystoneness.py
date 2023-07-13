@@ -275,7 +275,7 @@ def load_initial_conditions(study: md2.Study, initial_condition_path: str) -> np
                 )
             taxa_to_abundance[row[0]] = float(row[1])
 
-    abundances = np.zeros(len(study.taxa), dtype=np.float)
+    abundances = np.zeros(len(study.taxa), dtype=float)
     for tidx, taxa in enumerate(study.taxa):
         try:
             abundances[tidx] = taxa_to_abundance[taxa.name]

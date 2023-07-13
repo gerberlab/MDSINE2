@@ -8965,7 +8965,7 @@ class qPCRVarianceReplicate(pl.variables.SICS):
         if not pl.isstr(value_option):
             raise TypeError('`value_option` ({}) must be a str'.format(type(value_option)))
         if value_option in ['empirical', 'auto']:
-            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=np.float)
+            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
             for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
                 self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data)
 
@@ -8975,7 +8975,7 @@ class qPCRVarianceReplicate(pl.variables.SICS):
             if inflated < 0:
                 raise ValueError('`inflated` ({}) must be positive'.format(inflated))
             # Set each variance by the empirical variance * inflated
-            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=np.float)
+            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
             for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
                 self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data) * inflated
 
@@ -8988,7 +8988,7 @@ class qPCRVarianceReplicate(pl.variables.SICS):
             self.value = np.full(
                 shape=len(self.G.data.qpcr[self.ridx]),
                 value=value,
-                dtype=np.float
+                dtype=float
             )
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
