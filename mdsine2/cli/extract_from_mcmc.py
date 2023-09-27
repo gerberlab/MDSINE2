@@ -20,7 +20,7 @@ arguments `--interaction-ind-prior` and `perturbation-ind-prior`.
 
 import argparse
 from pathlib import Path
-from typing import Dict, Tuple
+from typing import Tuple, List
 import scipy.stats
 
 import numpy as np
@@ -56,11 +56,49 @@ def extract_perts(mcmc: md2.BaseMCMC, pert_name: str) -> np.ndarray:
     return perts
 
 
+def extract_concentrations(mcmc: md2.BaseMCMC) -> np.ndarray:
+    return mcmc.graph[STRNAMES.CONCENTRATION].get_trace_from_disk(section='posterior')
+
+
+def extract_process_variance(mcmc: md2.BaseMCMC) -> np.ndarray:
+    return mcmc.graph[STRNAMES.PROCESSVAR].get_trace_from_disk(section='posterior')
+
+
 def extract_clustering(mcmc: md2.BaseMCMC) -> Tuple[np.ndarray, np.ndarray]:
     clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
     n_clusters = clustering.n_clusters.get_trace_from_disk(section='posterior')
     coclusters = md2.summary(clustering.coclusters, section='posterior', only=['mean'])['mean']
     return n_clusters, coclusters
+
+
+def compute_r_hat(samples: List[np.ndarray]) -> np.ndarray:
+    """
+    This implements the "split R-hat" from Gelman's BDA3.
+    (originally published in Vehtari et al 2019: https://arxiv.org/pdf/1903.08008.pdf)
+    """
+
+    # dim 0 enumerates different chains, dim1 enumerates sample in each chain.
+    # shape (M, N, *)
+    samples = np.stack(samples, axis=0)
+
+    # Split each chain in half.
+    n = samples.shape[1]
+    first_half = samples[:, :(n // 2)]
+    second_half = samples[:, (n // 2):]
+    samples = np.concatenate([first_half, second_half], axis=0)
+
+    # Compute B and W.
+    samples_per_chain = samples.shape[1]
+    within_chain_mean = np.mean(samples, axis=1)  # shape (M, *)
+    B = samples_per_chain * np.var(within_chain_mean, ddof=1, axis=0)  # shape (*), note the "ddof=1" for sample var.
+    W = np.mean(
+        np.var(samples, ddof=1, axis=1),  # shape (M), note the "ddof=1" for sample var.
+        axis=0
+    )  # shape (*)
+
+    wt = 1 / samples_per_chain
+    chain_var = ((1 - wt) * W) + (wt * B)
+    return np.sqrt(chain_var / W)
 
 
 class ExtractPosteriorCLI(CLIModule):
@@ -104,12 +142,35 @@ class ExtractPosteriorCLI(CLIModule):
         del interaction_traces
 
         # Growths
-        growth_traces = np.concatenate([
+        growth_traces = [
             extract_growth(md2.BaseMCMC.load(str(mcmc_path)))
             for mcmc_path in tqdm(mcmc_paths, desc='Growth Rates')
-        ])
-        np.save(str(out_dir / 'growth.npy'), growth_traces)
+        ]
+        r_hats = compute_r_hat(growth_traces)
+        np.save(str(out_dir / 'growth.npy'), np.concatenate(growth_traces))
+        np.save(str(out_dir / 'growth_rhat.npy'), r_hats)
         del growth_traces
+        del r_hats
+
+        # Concentration parameter
+        conc_params = [
+            extract_concentrations(md2.BaseMCMC.load(str(mcmc_path)))
+            for mcmc_path in tqdm(mcmc_paths, desc='Concentrations')
+        ]
+        r_hat = compute_r_hat(conc_params)
+        np.save(str(out_dir / 'concentration_rhat.npy'), r_hat)
+        del conc_params
+        del r_hat
+
+        # Process Variance parameter
+        procvar_params = [
+            extract_process_variance(md2.BaseMCMC.load(str(mcmc_path)))
+            for mcmc_path in tqdm(mcmc_paths, desc='Process Variance')
+        ]
+        r_hat = compute_r_hat(procvar_params)
+        np.save(str(out_dir / 'procvar_rhat.npy'), r_hat)
+        del procvar_params
+        del r_hat
 
         # Perts
         mcmc0 = md2.BaseMCMC.load(str(mcmc_paths[0]))
