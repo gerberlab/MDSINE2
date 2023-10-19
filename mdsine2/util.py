@@ -158,7 +158,7 @@ def generate_cluster_assignments_posthoc(clustering: Clustering, n_clusters: Uni
         n = n_clusters
     elif type(n_clusters) == str:
         if n_clusters == 'mode':
-            n = scipy.stats.mode(trace)[0][0]
+            n = scipy.stats.mode(trace)[0]
         else:
             raise ValueError('`n_clusters` ({}) not recognized.'.format(n_clusters))
     else:
