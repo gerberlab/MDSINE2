@@ -240,7 +240,8 @@ class MDSINE2ModelConfig(_BaseModelConfig):
                 'delay':0},
             STRNAMES.PRIOR_VAR_PERT: {
                 'value_option': 'prior-mean',
-                'scale_option': 'diffuse',
+                'scale_option': 'auto',
+                'target_mean': 1e-4,
                 'dof_option': 'diffuse',
                 'delay': 0},
             STRNAMES.PRIOR_MEAN_PERT: {
@@ -251,6 +252,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.PRIOR_VAR_GROWTH: {
                 'value_option': 'prior-mean',
                 'scale_option': 'inflated-median',
+                'inflation_factor': 1e-4,
                 'dof_option': 'diffuse',
                 'proposal_option': 'tight',
                 'target_acceptance_rate': 'optimal',
@@ -274,6 +276,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.PRIOR_VAR_SELF_INTERACTIONS: {
                 'value_option': 'prior-mean',
                 'scale_option': 'inflated-median',
+                'inflation_factor': 1e-4,
                 'dof_option': 'diffuse',
                 'proposal_option': 'tight',
                 'target_acceptance_rate': 'optimal',
@@ -297,13 +300,13 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.PRIOR_VAR_INTERACTIONS: {
                 'value_option': 'auto',
                 'dof_option': 'diffuse',
-                'scale_option': 'same-as-aii',
+                'scale_option': 'auto',
                 'mean_scaling_factor': 1,
                 'delay': 0},
             STRNAMES.PRIOR_MEAN_INTERACTIONS: {
                 'value_option': 'prior-mean',
                 'loc_option': 'zero',
-                'scale2_option': 'same-as-aii',
+                'scale2_option': 'auto',
                 'delay':0},
             STRNAMES.CLUSTER_INTERACTION_VALUE: {
                 'value_option': 'all-off',

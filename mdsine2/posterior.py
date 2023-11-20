@@ -3799,13 +3799,20 @@ class PriorVarInteractions(pl.variables.SICS):
     def __init__(self, prior: variables.SICS, value: Union[float, int]=None, **kwargs):
 
         kwargs['name'] = STRNAMES.PRIOR_VAR_INTERACTIONS
-        pl.variables.SICS.__init__(self, value=value,
-            dtype=float, **kwargs)
+        pl.variables.SICS.__init__(self, value=value, dtype=float, **kwargs)
         self.add_prior(prior)
 
-    def initialize(self, value_option: str, dof_option: str, scale_option: str, value: float=None,
-        mean_scaling_factor: Union[float, int]=None, dof: Union[float, int]=None,
-        scale: Union[float, int]=None, delay: int=0):
+    def initialize(
+            self,
+            value_option: str,
+            dof_option: str,
+            scale_option: str,
+            value: float = None,
+            mean_scaling_factor: Union[float, int] = None,
+            dof: Union[float, int] = None,
+            scale: Union[float, int] = None,
+            delay: int=0
+    ):
         '''Initialize the hyperparameters of the self interaction variance based on the
         passed in option
 
@@ -3823,7 +3830,7 @@ class PriorVarInteractions(pl.variables.SICS):
             - Options
                 - 'manual'
                     - Set the value manually, `scale` must also be specified
-                - 'auto', 'same-as-aii'
+                - 'auto'
                     - Set the mean the same as the self-interactions
         dof_option : str
             Initialize the dof of the parameter
@@ -3867,9 +3874,10 @@ class PriorVarInteractions(pl.variables.SICS):
                 raise TypeError('`scale` ({}) must be a numeric'.format(type(scale)))
             if scale < 0:
                 raise ValueError('`scale` ({}) must be > 0 for it to be a valid prior'.format(scale))
-        elif scale_option in ['auto', 'same-as-aii']:
+        elif scale_option in ['auto']:
+            # same as self-interactions (a_2 in supplement)
             mean = self.G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].prior.mean()
-            scale = mean * (self.prior.dof.value - 2) /(self.prior.dof.value)
+            scale = mean * (self.prior.dof.value - 2) / (self.prior.dof.value)
         else:
             raise ValueError('`scale_option` ({}) not recognized'.format(scale_option))
         self.prior.scale.override_value(scale)
@@ -3953,7 +3961,7 @@ class PriorMeanInteractions(pl.variables.Normal):
                 'manual'
                     Set with the `loc` parameter
         scale2_option : str
-            'same-as-aii', 'auto'
+            'auto'
                 Set as the same variance as the self-interactions
             'manual'
                 Set with the `scale2` parameter
@@ -3989,7 +3997,8 @@ class PriorMeanInteractions(pl.variables.Normal):
                 raise TypeError('`scale2` ({}) must be a numeric'.format(type(scale2)))
             if scale2 <= 0:
                 raise ValueError('`scale2` ({}) must be positive'.format(scale2))
-        elif scale2_option in ['same-as-aii', 'auto']:
+        elif scale2_option in ['auto']:
+            # same as self-interactions (a_2 in supplement)
             scale2 = self.G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value
         else:
             raise ValueError('`scale2_option` ({}) not recognized'.format(scale2_option))
@@ -5134,6 +5143,7 @@ class PriorVarMH(pl.variables.SICS):
                    dof: float=None,
                    scale: float=None,
                    proposal_dof: float=None,
+                   inflation_factor: float=None,
                    delay: int=0):
         '''Initialize the parameters of the distribution and the
         proposal distribution
@@ -5291,6 +5301,9 @@ class PriorVarMH(pl.variables.SICS):
             if scale <= 0:
                 raise ValueError('`scale` ({}) must be positive'.format(scale))
         elif scale_option in ['auto', 'inflated-median']:
+            if not pl.isnumeric(inflation_factor):
+                raise TypeError('If using `auto` or `inflated-median`, paramter `inflation_factor` must be specified as a number.')
+
             # Perform linear regression
             rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
@@ -5302,9 +5315,9 @@ class PriorVarMH(pl.variables.SICS):
             cov = pinv(prec, self)
             mean = cov @ X.T @ y
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                mean = 1e4*(np.median(mean[:self.G.data.n_taxa]) ** 2)
+                mean = inflation_factor * (np.median(mean[:self.G.data.n_taxa]) ** 2)
             else:
-                mean = 1e4*(np.median(mean[self.G.data.n_taxa:]) ** 2)
+                mean = inflation_factor * (np.median(mean[self.G.data.n_taxa:]) ** 2)
 
             # Calculate the scale
             scale = mean * (self.prior.dof.value - 2) / self.prior.dof.value
@@ -5320,10 +5333,14 @@ class PriorVarMH(pl.variables.SICS):
                 raise ValueError('If `value_option` == "manual", value ({}) ' \
                     'must be a numeric (float, int)'.format(value.__class__))
         elif value_option in ['inflated-median']:
+            if not pl.isnumeric(inflation_factor):
+                raise TypeError('If using `auto` or `inflated-median`, paramter `inflation_factor` must be specified as a number.')
+
             # No interactions
             rhs = [
                 STRNAMES.GROWTH_VALUE,
-                STRNAMES.SELF_INTERACTION_VALUE]
+                STRNAMES.SELF_INTERACTION_VALUE
+            ]
             X = self.G.data.construct_rhs(keys=rhs,
                 kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
                 index_out_perturbations=True)
@@ -5333,9 +5350,9 @@ class PriorVarMH(pl.variables.SICS):
             cov = pinv(prec, self)
             mean = cov @ X.T @ y
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                value = 1e4*(np.median(mean[:self.G.data.n_taxa]) ** 2)
+                value = inflation_factor * (np.median(mean[:self.G.data.n_taxa]) ** 2)
             else:
-                value = 1e4*(np.median(mean[self.G.data.n_taxa:]) ** 2)
+                value = inflation_factor * (np.median(mean[self.G.data.n_taxa:]) ** 2)
         elif value_option in ['prior-mean', 'auto']:
             value = self.prior.mean()
         else:
@@ -8239,8 +8256,16 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
         self.add_prior(prior)
         self.perturbation = perturbation
 
-    def initialize(self, value_option: str, dof_option: str, scale_option: str,
-        value: float=None, dof: float=None, scale: float=None, delay: int=0):
+    def initialize(
+            self,
+            value_option: str,
+            dof_option: str, scale_option: str,
+            value: float = None,
+            dof: float = None,
+            scale: float = None,
+            delay: int = 0,
+            target_mean: float = None,
+    ):
         '''Initialize the hyperparameters of the perturbation prior variance based on the
         passed in option
 
@@ -8305,11 +8330,12 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
                 raise TypeError('`scale` ({}) must be a numeric'.format(type(scale)))
             if scale < 0:
                 raise ValueError('`scale` ({}) must be > 0 for it to be a valid prior'.format(scale))
-        elif scale_option in ['auto', 'diffuse']:
+        elif scale_option in ['auto']:
+            if not pl.isnumeric(target_mean):
+                raise TypeError('If using `auto`, paramter `target_mean` must be specified as a number.')
+
             # Calculate the mean to be 10
-            scale = 1e4 * (self.prior.dof.value - 2) / self.prior.dof.value
-        elif scale_option == 'tight':
-            scale = 100 * (self.prior.dof.value - 2) / self.prior.dof.value
+            scale = target_mean * (self.prior.dof.value - 2) / self.prior.dof.value
         else:
             raise ValueError('`scale_option` ({}) not recognized'.format(scale_option))
         self.prior.scale.override_value(scale)
