@@ -3885,6 +3885,7 @@ class PriorVarInteractions(pl.variables.SICS):
             By default, the 'auto' option above copies the regression solution from the self-interaction obj,
             but we need a way to independently set the regression-based scaling.
             """
+            logger.debug("Performing separate fit from data for scale parameter of interactions var.")
             if not pl.isnumeric(inflation_factor):
                 raise TypeError('If using `auto` or `inflated-median`, paramter `inflation_factor` must be specified as a number.')
 
