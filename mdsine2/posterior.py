@@ -3809,6 +3809,7 @@ class PriorVarInteractions(pl.variables.SICS):
             scale_option: str,
             value: float = None,
             mean_scaling_factor: Union[float, int] = None,
+            inflation_factor: Union[float, int] = None,
             dof: Union[float, int] = None,
             scale: Union[float, int] = None,
             delay: int=0
@@ -3878,6 +3879,29 @@ class PriorVarInteractions(pl.variables.SICS):
             # same as self-interactions (a_2 in supplement)
             mean = self.G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].prior.mean()
             scale = mean * (self.prior.dof.value - 2) / (self.prior.dof.value)
+        elif scale_option == 'inflated-median':
+            """
+            This is a copy-paste of the initialization from self-interactions.
+            By default, the 'auto' option above copies the regression solution from the self-interaction obj,
+            but we need a way to independently set the regression-based scaling.
+            """
+            if not pl.isnumeric(inflation_factor):
+                raise TypeError('If using `auto` or `inflated-median`, paramter `inflation_factor` must be specified as a number.')
+
+            # Perform linear regression
+            rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
+            X = self.G.data.construct_rhs(keys=rhs,
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
+                index_out_perturbations=True)
+            y = self.G.data.construct_lhs(index_out_perturbations=True)
+
+            prec = X.T @ X
+            cov = pinv(prec, self)
+            mean = cov @ X.T @ y
+            mean = inflation_factor * (np.median(mean[self.G.data.n_taxa:]) ** 2)
+
+            # Calculate the scale
+            scale = mean * (self.prior.dof.value - 2) / self.prior.dof.value
         else:
             raise ValueError('`scale_option` ({}) not recognized'.format(scale_option))
         self.prior.scale.override_value(scale)
