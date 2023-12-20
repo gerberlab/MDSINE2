@@ -241,7 +241,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.PRIOR_VAR_PERT: {
                 'value_option': 'prior-mean',
                 'scale_option': 'auto',
-                'target_mean': 1e-4,
+                'target_mean': 1e4,
                 'dof_option': 'diffuse',
                 'delay': 0},
             STRNAMES.PRIOR_MEAN_PERT: {
@@ -252,7 +252,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.PRIOR_VAR_GROWTH: {
                 'value_option': 'prior-mean',
                 'scale_option': 'inflated-median',
-                'inflation_factor': 1e-4,
+                'inflation_factor': 1e4,
                 'dof_option': 'diffuse',
                 'proposal_option': 'tight',
                 'target_acceptance_rate': 'optimal',
@@ -276,7 +276,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.PRIOR_VAR_SELF_INTERACTIONS: {
                 'value_option': 'prior-mean',
                 'scale_option': 'inflated-median',
-                'inflation_factor': 1e-4,
+                'inflation_factor': 1e4,
                 'dof_option': 'diffuse',
                 'proposal_option': 'tight',
                 'target_acceptance_rate': 'optimal',
