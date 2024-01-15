@@ -300,7 +300,8 @@ class MDSINE2ModelConfig(_BaseModelConfig):
             STRNAMES.PRIOR_VAR_INTERACTIONS: {
                 'value_option': 'auto',
                 'dof_option': 'diffuse',
-                'scale_option': 'auto',
+                'scale_option': 'inflated-median',
+                'inflation_factor': 1e-4,
                 'mean_scaling_factor': 1,
                 'delay': 0},
             STRNAMES.PRIOR_MEAN_INTERACTIONS: {
