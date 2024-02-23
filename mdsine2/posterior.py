@@ -1295,20 +1295,20 @@ class ClusterAssignments(pl.graph.Node):
                 data.append(self.G.data.abs_data[ridx])
             data = np.hstack(data)
             for i in range(len(taxa)):
+                taxa_i = taxa[i]
+                nnz_i = np.sum(data[i, :] != 0)
+                if nnz_i == 0:
+                    logger.warn(f"Taxa {taxa_i.name} has zero measurements at all timepoints. Should it have been filtered out?")
+                    dm[i, :] = 1.0
+                    dm[:, i] = 1.0
+                    continue
+
                 for j in range(i+1):
-                    nnz_i = np.sum(data[i, :] != 0)
                     nnz_j = np.sum(data[j, :] != 0)
-                    if nnz_i == 0 and nnz_j == 0:
-                        taxa_i = taxa[i]
-                        taxa_j = taxa[j]
-                        logger.warn("Both {} and {} have zero measurements across all timepoints. Should they have been filtered out?".format(
-                            taxa_i.name, taxa_j.name
-                        ))
-                        distance = 0.0
-                    else:
+                    if nnz_j > 0:
                         distance = (1 - scipy.stats.spearmanr(data[i, :], data[j, :])[0])/2
-                    dm[i,j] = distance
-                    dm[j,i] = distance
+                        dm[i, j] = distance
+                        dm[j, i] = distance
 
             c = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='complete')
             assignments = c.fit_predict(dm)
