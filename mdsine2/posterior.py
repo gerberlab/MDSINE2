@@ -1296,7 +1296,17 @@ class ClusterAssignments(pl.graph.Node):
             data = np.hstack(data)
             for i in range(len(taxa)):
                 for j in range(i+1):
-                    distance = (1 - scipy.stats.spearmanr(data[i, :], data[j, :])[0])/2
+                    nnz_i = np.sum(data[i, :] != 0)
+                    nnz_j = np.sum(data[j, :] != 0)
+                    if nnz_i == 0 and nnz_j == 0:
+                        taxa_i = taxa[i]
+                        taxa_j = taxa[j]
+                        logger.warn("Both {} and {} have zero measurements across all timepoints. Should they have been filtered out?".format(
+                            taxa_i.name, taxa_j.name
+                        ))
+                        distance = 0.0
+                    else:
+                        distance = (1 - scipy.stats.spearmanr(data[i, :], data[j, :])[0])/2
                     dm[i,j] = distance
                     dm[j,i] = distance
 
