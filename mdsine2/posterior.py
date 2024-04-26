@@ -2804,6 +2804,7 @@ class FilteringLogMP(pl.graph.Node):
                 spikein_reads = None
                 spikein_abundance_observed = None
                 spikein_latent_x = None 
+                spikein_abundance_scale = None 
 
             elif calculate_spikein_loglik:
                 spikein_reads = self.G.data.subjects.iloc(ridx).spikein_reads
@@ -2815,6 +2816,26 @@ class FilteringLogMP(pl.graph.Node):
                 # Init the latent spikein values
                 spikein_latent_x = spikein_abundance_observed.copy()
                 qpcr_log_measurements = None 
+                spikein_abundance_scale = 1.0 # TODO DEM 
+
+                # Make spikein_latent_x the same size as self.x, and set the 
+                # data at known times, referring to "essential_times" for 
+                # indexing. Interpolate the data between.
+                spikein_latent_x = np.interp( # REDO OCT12
+                    x=essential_timepoints,
+                    xp=times,
+                    fp=spikein_latent_x,
+                )
+                spikein_abundance_observed = spikein_latent_x.copy() # REDO OCT12
+
+                spikein_read_vals = [spikein_reads[t][0] for t in times] # REDO OCT12
+
+                spikein_read_vals = np.interp( # REDO OCT12
+                    x=essential_timepoints,
+                    xp=times,
+                    fp=spikein_read_vals,
+                )
+                spikein_reads = dict(zip(essential_timepoints, spikein_read_vals)) # REDO OCT12
 
             else:
                 raise NotImplementedError("TODO raise proper error")
@@ -2850,6 +2871,7 @@ class FilteringLogMP(pl.graph.Node):
                 spikein_latent_x = spikein_latent_x,
                 spikein_reads = spikein_reads,
                 spikein_abundance_observed = spikein_abundance_observed,
+                spikein_abundance_scale=spikein_abundance_scale,
                 )
 
             if self.mp == 'debug':
@@ -3379,8 +3401,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             self.qpcr_stds = np.sqrt(qpcr_variances[self.ridx])
             self.qpcr_stds_d = {}
 
-        # if self.calculate_spikein_loglik:
-        #     self.spikein_std = np.sqrt(self.spikein_abundance_scale)
+        if self.calculate_spikein_loglik:
+            self.spikein_std = np.sqrt(self.spikein_abundance_scale)
 
         if zero_inflation_data is not None:
             self.zero_inflation_data = zero_inflation_data[self.ridx]
@@ -3415,6 +3437,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 self.curr_interactions = interactions[oidx, :] # omit and make it make sense
                 self.curr_self_interaction = self_interactions[oidx]
                 # self.curr_zero_inflation = self.zero_inflation[oidx, :]
+                if self.calculate_spikein_loglik:
+                    self.curr_spikein_std = self.spikein_std
 
                 if self.pv_global:
                     self.curr_pv_std = self.pv_std
@@ -3465,6 +3489,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 self.curr_x = self.spikein_latent_x
                 self.curr_logx = self.log_spikein_latent_x
 
+                self.curr_spikein_std = self.spikein_std
+
                 if self.pv_global:
                     self.curr_pv_std = self.pv_std
                 else:
@@ -3476,9 +3502,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                     self.tidx = tidx
                     self.set_attrs_for_timepoint_spikein()
 
-                    if tidx == 50:
-                        # print shit and see if changes!
-                        print("DEM OIDX", self.subjname, self.spikein_latent_x[11])
 
                     # Run single update
                     self.update_single_spikein()
@@ -3551,13 +3574,22 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         #         self.curr_qpcr_log_measurements = None
         #         self.curr_qpcr_std = None
         # else:
-        t = self.times[self.tidx]
-        self.curr_reads = self.spikein_reads[t]
-        self.curr_read_depth = self.read_depths[t] #+ self.spikein_reads[t] # These ALREADY include self.spikein_reads[t]
-        self.curr_qpcr_log_measurements = None
-        self.curr_qpcr_std = None
-        self.spikein_oidx_flag = True
-        
+        if self.there_are_intermediate_timepoints:
+            if not self.is_intermediate_timepoint[self.times[self.tidx]]:
+                t = self.times[self.tidx]
+                self.curr_reads = self.spikein_reads[t]
+                self.curr_read_depth = self.read_depths[t] #+ self.spikein_reads[t] # These ALREADY include self.spikein_reads[t]
+                self.curr_qpcr_log_measurements = None
+                self.curr_qpcr_std = None
+                self.spikein_oidx_flag = True
+        else:
+            t = self.times[self.tidx]
+            self.curr_reads = self.spikein_reads[t]
+            self.curr_read_depth = self.read_depths[t] #+ self.spikein_reads[t] # These ALREADY include self.spikein_reads[t]
+            self.curr_qpcr_log_measurements = None
+            self.curr_qpcr_std = None
+            self.spikein_oidx_flag = True
+
         # # Set perturbation growth rates
         # if self.there_are_perturbations:
         #     if self.in_pert_transition[self.tidx]:
@@ -3671,6 +3703,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             logx_new = pl.random.misc.fast_sample_normal(
                 loc=self.curr_logx[tidx],
                 scale=self.proposal_std)
+            spikein_scale_new = pl.random.sics.sample(2.5, 1 * (2.5 - 2) / 2.5)
+
         except:
             print('mu', self.curr_logx[tidx])
             print('std', self.proposal_std)
@@ -3678,17 +3712,19 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         x_new = np.exp(logx_new)
         prev_logx_value = self.curr_logx[tidx]
         prev_x_value = self.curr_x[tidx]
+        prev_spikein_std = self.curr_spikein_std
 
         # l_old = self.data_loglik()
-        l_old = self.data_loglik_wo_intermediates()
+        l_old = self.data_loglik_w_intermediates()
 
         self.curr_x[tidx] = x_new
         self.curr_logx[tidx] = logx_new
+        self.curr_spikein_std = spikein_scale_new
 
         # self.sum_q was initialized as sum(x) + self.spikein_latent_x
         # self.sum_q[tidx] = self.sum_q[tidx] - prev_x_value + x_new
 
-        l_new = self.data_loglik_wo_intermediates()
+        l_new = self.data_loglik_w_intermediates()
         
         r_accept = l_new - l_old
 
@@ -3697,6 +3733,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             # self.sum_q[tidx] = self.sum_q[tidx] + prev_x_value - x_new
             self.curr_x[tidx] = prev_x_value
             self.curr_logx[tidx] = prev_logx_value
+            self.curr_spikein_std = prev_spikein_std
         else:
             self.spikein_latent_x[tidx] = x_new
             self.log_spikein_latent_x[tidx] = logx_new
@@ -3822,7 +3859,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             spikein = pl.random.normal.logpdf(
                 value=np.log(self.spikein_abundance_observed[self.tidx]), 
                 loc=self.curr_logx[self.tidx],  
-                scale=3 ## TODO change this later
+                scale=2.5 #self.curr_spikein_std ## TODO change this later 3
             )
             return negbin + spikein
 
@@ -3962,6 +3999,47 @@ class ZeroInflation(pl.graph.Node):
                             turn_off.append((ridx, tidx, oidx))
                         else:
                             turn_on.append((ridx, tidx, oidx))
+
+        elif value_option == "custom_dan":
+            """ THIS IS SAME AS ABOVE BUT JUST FOR TESTING DANS METHOD
+            """
+            if self.zero_inflation_data_path is None:
+                raise ValueError("Need to specify `zero_inflation_data_path` to use option `custom` for zero-inflation")
+
+            # read in file
+            logger.debug(f"Using time masking file {self.zero_inflation_data_path}")
+            time_mask = pd.read_csv(self.zero_inflation_data_path, index_col=0,  sep="\t")
+
+            # Set everything to on except for specified taxa before specified time, for each subject
+            # assuming times same for all subjects
+            self.value = []
+            for ridx in range(self.G.data.n_replicates):
+                n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
+                self.value.append(np.ones(
+                    shape=(len(self.G.data.taxa), n_timepoints), dtype=bool))
+
+            turn_off = []
+            turn_on = []
+
+            subjects = self.G.data.subjects.names()
+            subj_to_idx = dict(zip(subjects, range(len(subjects))))
+
+            for subj_id, row in time_mask.iterrows():
+                ridx = subj_to_idx[subj_id]
+                otu = row['taxa_id']
+                t_intro = row['zero_before']
+                t_outro = row['zero_after']
+                oidx = self.G.data.taxa[otu].idx
+                for tidx, t in enumerate(self.G.data.times[ridx]):
+                    if t < t_intro:
+                        self.value[ridx][oidx, tidx] = False
+                        turn_off.append((ridx, tidx, oidx))
+                    # if t > t_outro:
+                    #     self.value[ridx][oidx, tidx] = False
+                    #     turn_off.append((ridx, tidx, oidx))
+                    else:
+                        turn_on.append((ridx, tidx, oidx))
+
 
         elif value_option == 'mdsine1-synthetic':
             # option for running with synthetic dataset from mdsine1

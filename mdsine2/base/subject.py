@@ -347,7 +347,7 @@ class Subject(Saveable):
                     taxa[tax] = taxaname_formatter(format=index_formatter, taxon=taxon, taxa=self.taxa)
                 toadd = pd.DataFrame(np.array(list(df.loc[row])).reshape(1,-1),
                     index=[taxa[tax]], columns=dfnew.columns)
-                dfnew = dfnew.append(toadd)
+                dfnew = dfnew._append(toadd)
 
             if taxa[tax] not in taxaname_map:
                 taxaname_map[taxa[tax]] = []

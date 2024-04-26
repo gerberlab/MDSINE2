@@ -158,7 +158,7 @@ def generate_cluster_assignments_posthoc(clustering: Clustering, n_clusters: Uni
         n = n_clusters
     elif type(n_clusters) == str:
         if n_clusters == 'mode':
-            n = scipy.stats.mode(trace)[0][0]
+            n = scipy.stats.mode(trace)[0]
         else:
             raise ValueError('`n_clusters` ({}) not recognized.'.format(n_clusters))
     else:
@@ -489,6 +489,20 @@ def write_fixed_clustering_as_json(mcmc: BaseMCMC, output_filename: str):
         output_filename += '.json'
     with open(output_filename, 'w') as f:
         json.dump(data_json, f)
+
+    dfs = []
+    for k, l in consensus_cluster.items():
+        dd = {
+            'labels' : [k for _ in consensus_cluster[k]],
+            'taxa' : consensus_cluster[k]
+        }
+        df = pd.DataFrame.from_dict(dd)
+        df = df.set_index('taxa')
+        dfs.append(df)
+
+    df = pd.concat(dfs, axis=0)
+    df.to_csv(output_filename[:-5] + '.csv', sep='\t')
+
     print("cyjs file exported to: {}".format(output_filename))
 
 

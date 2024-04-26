@@ -110,8 +110,8 @@ class Study(Saveable):
 
         # Add the perturbations if there are any
         # --------------------------------------
-        perturbations = perturbations.reset_index()
         if perturbations is not None:
+            perturbations = perturbations.reset_index()
             logger.debug('Reseting perturbations')
             self.perturbations = Perturbations()
             if not plutil.isdataframe(perturbations):
@@ -190,6 +190,7 @@ class Study(Saveable):
                 continue
             data.append([sampleid, sid, t])
         df = pd.DataFrame(data, columns=columns)
+        df = df.set_index('sampleID')
         if path is not None:
             df.to_csv(path, sep=sep, index=False, header=True)
         return df
@@ -218,10 +219,29 @@ class Study(Saveable):
             data.append(reads)
 
         df = pd.DataFrame(data, index=index).T
+        df = df.set_index('name')
         if path is not None:
             df.to_csv(path, sep=sep, index=False, header=True)
         return df
 
+    def write_spikein_reads_to_csv(self, path=None, sep='\t'):
+        """
+        """
+        data = [['Spikein']]
+        index = ['name']
+        for sampleid in self._samples:
+            sid, t = self._samples[sampleid]
+            if t not in self[sid].times:
+                continue
+
+            index.append(sampleid)
+            reads = self[sid].spikein_reads[t]
+            data.append(reads)
+
+        df = pd.DataFrame(data, index=index).T
+        df = df.set_index('name')
+        return df 
+    
     def write_qpcr_to_csv(self, path: str=None, sep:str='\t') -> pd.DataFrame:
         """Write the qPCR measurements to a table. If a path is provided then
         we write to that path
@@ -256,6 +276,7 @@ class Study(Saveable):
         columns = ['sampleID'] + ['measurement{}'.format(i+1) for i in range(max_n_measurements)]
 
         df = pd.DataFrame(data, columns=columns)
+        df = df.set_index('sampleID')
         if path is not None:
             df.to_csv(path, sep=sep, index=False, header=True)
         return df
@@ -283,6 +304,7 @@ class Study(Saveable):
                     subjname])
 
         df = pd.DataFrame(data, columns=columns)
+        df = df.set_index('name')
         if path is not None:
             df.to_csv(path, sep=sep, index=False, header=True)
         return df

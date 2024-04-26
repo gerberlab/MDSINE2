@@ -78,7 +78,7 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
     basepath = params.OUTPUT_BASEPATH
     os.makedirs(basepath, exist_ok=True)
 
-    has_spikein = np.all([len(x.spikein_reads) > 0 for x in subjset])
+    # has_spikein = np.all([len(x.spikein_reads) > 0 for x in subjset])
     has_qpcr = np.all([len(x.qpcr) > 0 for x in subjset])
 
     if has_qpcr:

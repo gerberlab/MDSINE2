@@ -213,7 +213,7 @@ class Data(DataNode):
             self._structural_zeros = []
             for ridx in range(self.n_replicates):
                 self._structural_zeros.append(np.zeros(
-                    shape=(len(self.taxa), self.n_timepoints_for_replicate[ridx]), dtype=bool))
+                    shape=(len(self.taxa), len(self.G.data.times[ridx])), dtype=bool))
             self._setrows_to_include_zero_inflation()
 
     def iter_for_building(self) -> Tuple[int, int, int]:
@@ -513,6 +513,12 @@ class Data(DataNode):
             #     'is not set during initialization')
             logger.warning('`zero_inflation_transition_policy` is None so we are not doing anything')
             return
+        
+        self._structural_zeros = []
+        for ridx in range(self.n_replicates):
+            self._structural_zeros.append(np.zeros(
+                shape=(len(self.taxa), len(self.G.data.times[ridx])), dtype=bool))
+        
         if turn_on is not None:
             for i, (ridx,tidx,aidx) in enumerate(turn_on):
                 if ridx > self.n_replicates or ridx < 0:
@@ -1662,8 +1668,6 @@ class InteractionsMixingDesignMatrix(DesignMatrix):
         # Cluster 2 Cluster Interaction InDeX (c2ciidx)
         c2ciidx = 0
         self.d = {}
-
-        # print('this bitch')
 
         for tcid, scid in self.interactions.iter_valid_pairs():
             self.inner_faster_faster(tcid, scid, c2ciidx)

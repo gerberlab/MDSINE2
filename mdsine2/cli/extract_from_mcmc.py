@@ -151,7 +151,7 @@ class ExtractPosteriorCLI(CLIModule):
 
             # Agglomerated modules
             A = 1 - coclustering_all
-            n = scipy.stats.mode(n_clusters_all)[0][0]
+            n = scipy.stats.mode(n_clusters_all)[0]#[0]
             linkage = 'complete'
             c = AgglomerativeClustering(
                 n_clusters=n,
