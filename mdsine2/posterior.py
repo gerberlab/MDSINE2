@@ -42,7 +42,7 @@ def gaussian_marginals(Xs: List[np.ndarray],
                        prior_means: List[np.ndarray],
                        y: np.ndarray,
                        process_prec: np.ndarray):
-    ans = np.empty(len(Xs), np.float64)
+    ans = np.empty(len(Xs), float)
     for i in numba.prange(len(Xs)):
         ll = gaussian_marginal_single(Xs[i], prior_vars[i], prior_means[i], y, process_prec)
         ans[i] = ll
@@ -361,42 +361,49 @@ def sample_categorical_log(log_p: Iterator[float]) -> int:
             log_p))
         raise
 
+# def log_det(M: np.ndarray, var: Variable) -> float:
+#     '''Computes pl.math.log_det but also saves the array if it crashes
+#
+#     Parameters
+#     ----------
+#     M : nxn matrix (np.ndarray, scipy.sparse)
+#         Matrix to calculate the log determinant
+#     var : pl.variable.Variable subclass
+#         This is the variable that `log_det` was called from
+#
+#     Returns
+#     -------
+#     float
+#         Log determinant of matrix
+#     '''
+#     if scipy.sparse.issparse(M):
+#         M_ = np.zeros(shape=M.shape)
+#         M.toarray(out=M_)
+#         M = M_
+#     try:
+#         # if type(M) == torch.Tensor:
+#         #     return torch.inverse(M)
+#         # else:
+#         return pl.math.log_det(M)
+#     except:
+#         try:
+#             sample_iter = var.sample_iter
+#         except:
+#             sample_iter = None
+#         filename = 'crashes/logdet_error_iter{}_var{}pinv_{}.npy'.format(
+#             sample_iter, var.name, var.G.name)
+#         logger.critical('\n\n\n\n\n\n\n\nSaved array at "{}" - now crashing\n\n\n'.format(
+#                 filename))
+#         os.makedirs('crashes/', exist_ok=True)
+#         np.save(filename, M)
+#         raise
+
 def log_det(M: np.ndarray, var: Variable) -> float:
-    '''Computes pl.math.log_det but also saves the array if it crashes
+    sign, logabsdet = np.linalg.slogdet(M)
+    if not sign > 0:
+        raise ValueError("Non-Positive Definite matrix found. (slogdet sign: {})".format(sign))
+    return logabsdet
 
-    Parameters
-    ----------
-    M : nxn matrix (np.ndarray, scipy.sparse)
-        Matrix to calculate the log determinant
-    var : pl.variable.Variable subclass
-        This is the variable that `log_det` was called from
-
-    Returns
-    -------
-    float
-        Log determinant of matrix
-    '''
-    if scipy.sparse.issparse(M):
-        M_ = np.zeros(shape=M.shape)
-        M.toarray(out=M_)
-        M = M_
-    try:
-        # if type(M) == torch.Tensor:
-        #     return torch.inverse(M)
-        # else:
-        return pl.math.log_det(M)
-    except:
-        try:
-            sample_iter = var.sample_iter
-        except:
-            sample_iter = None
-        filename = 'crashes/logdet_error_iter{}_var{}pinv_{}.npy'.format(
-            sample_iter, var.name, var.G.name)
-        logger.critical('\n\n\n\n\n\n\n\nSaved array at "{}" - now crashing\n\n\n'.format(
-                filename))
-        os.makedirs('crashes/', exist_ok=True)
-        np.save(filename, M)
-        raise
 
 def pinv(M: np.ndarray, var: Variable) -> np.ndarray:
     '''Computes np.linalg.pinv but it also saves the array that crashed it if
@@ -2176,7 +2183,7 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
                     cols.append(col)
                 col += 1
 
-        data = np.ones(len(rows), dtype=np.float64)
+        data = np.ones(len(rows), dtype=float)
         M = scipy.sparse.coo_matrix((data,(rows,cols)),
             shape=(self.n_rowsMpert, col)).tocsc()
         ret = self.base_Xpert @ M
@@ -8369,7 +8376,6 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
             if not pl.isnumeric(target_mean):
                 raise TypeError('If using `auto`, paramter `target_mean` must be specified as a number.')
 
-            # Calculate the mean to be 10
             scale = target_mean * (self.prior.dof.value - 2) / self.prior.dof.value
         else:
             raise ValueError('`scale_option` ({}) not recognized'.format(scale_option))
@@ -8383,10 +8389,6 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
             self.value = value
         elif value_option in ['auto', 'prior-mean']:
             self.value = self.prior.mean()
-        elif value_option == 'diffuse':
-            self.value = 1e4
-        elif value_option == 'tight':
-            self.value = 1e2
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
 
@@ -8804,7 +8806,7 @@ class qPCRVarianceReplicate(pl.variables.SICS):
         if not pl.isstr(value_option):
             raise TypeError('`value_option` ({}) must be a str'.format(type(value_option)))
         if value_option in ['empirical', 'auto']:
-            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=np.float)
+            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
             for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
                 self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data)
 
@@ -8814,7 +8816,7 @@ class qPCRVarianceReplicate(pl.variables.SICS):
             if inflated < 0:
                 raise ValueError('`inflated` ({}) must be positive'.format(inflated))
             # Set each variance by the empirical variance * inflated
-            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=np.float)
+            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
             for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
                 self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data) * inflated
 
@@ -8827,7 +8829,7 @@ class qPCRVarianceReplicate(pl.variables.SICS):
             self.value = np.full(
                 shape=len(self.G.data.qpcr[self.ridx]),
                 value=value,
-                dtype=np.float
+                dtype=float
             )
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
