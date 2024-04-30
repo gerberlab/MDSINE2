@@ -399,6 +399,9 @@ def sample_categorical_log(log_p: Iterator[float]) -> int:
 #         raise
 
 def log_det(M: np.ndarray, var: Variable) -> float:
+    if np.ndim(M) == 0:
+        return np.log(M)
+
     sign, logabsdet = np.linalg.slogdet(M)
     if not sign > 0:
         raise ValueError("Non-Positive Definite matrix found. (slogdet sign: {})".format(sign))
