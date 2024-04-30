@@ -1760,7 +1760,7 @@ class ClusterAssignments(pl.graph.Node):
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -2242,7 +2242,7 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -4927,7 +4927,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         # Perform the marginalization
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -5040,7 +5040,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         bEb = (beta_mean.T @ beta_prec @ beta_mean)[0,0]
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -8011,7 +8011,7 @@ class PerturbationIndicators(pl.Node):
 
         bEb = (beta_mean.T @ beta_prec @ beta_mean)[0,0]
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -8127,7 +8127,7 @@ class PerturbationIndicators(pl.Node):
 
         # Perform the marginalization
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
