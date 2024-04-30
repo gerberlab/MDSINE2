@@ -402,6 +402,11 @@ def log_det(M: np.ndarray, var: Variable) -> float:
     if np.ndim(M) == 0:
         return np.log(M)
 
+    if scipy.sparse.issparse(M):
+        M_ = np.zeros(shape=M.shape)
+        M.toarray(out=M_)
+        M = M_
+
     sign, logabsdet = np.linalg.slogdet(M)
     if not sign > 0:
         raise ValueError("Non-Positive Definite matrix found. (slogdet sign: {})".format(sign))
