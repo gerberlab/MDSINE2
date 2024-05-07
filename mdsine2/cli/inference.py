@@ -112,10 +112,24 @@ class InferenceCLI(CLIModule):
             required=False,
             help='<Optional> Tells the inference loop to print debug messages every k iterations.'
         )
-
         parser.add_argument(
             '--benchmark', action='store_true', dest='benchmark',
             help='If flag is set, then logs (at INFO level) the update() runtime of each component at the end.'
+        )
+
+        parser.add_argument(
+            '--interaction-mean-loc', type=float, dest='interaction_mean_loc',
+            required=False, help='The loc parameter for the interaction strength prior mean.', default=0.0
+        )
+        parser.add_argument(
+            '--interaction-var-dof', type=float, dest='interaction_var_dof',
+            required=False, help='The dof parameter for the interaction strength prior var.', default=2.01
+        )
+        parser.add_argument(
+            '--interaction-var-rescale', type=float, dest='interaction_var_rescale',
+            required=False,
+            help='Controls the scale parameter for the interaction strength prior var, using the formula [SCALE]*E^2',
+            default=1.0
         )
 
     def main(self, args: argparse.Namespace):
