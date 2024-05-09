@@ -194,6 +194,18 @@ class InferenceCLI(CLIModule):
         params.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['hyperparam_option'] = \
             args.perturbation_prior
 
+        # Set interaction str priors
+        if args.interaction_mean_loc != 0.0:
+            params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_MEAN_INTERACTIONS]['loc_option'] = 'manual'
+            params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_MEAN_INTERACTIONS]['loc'] = args.interaction_mean_loc
+
+        if args.interaction_var_dof != None:
+            params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof_option'] = 'manual'
+            params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof'] = args.interaction_var_dof
+
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['scale_option'] = 'inflated-median'
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['inflation_factor'] = 1e4 * args.interaction_var_rescale
+
         # Change the cluster initialization to no clustering if there are less than 30 clusters
         if len(study.taxa) <= 30:
             logger.info(
