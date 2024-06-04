@@ -1208,33 +1208,53 @@ class ClusterAssignments(pl.graph.Node):
             if not pl.isstr(value):
                 raise TypeError('`value` ({}) must be a str'.format(value))
 
-            CHAIN2 = pl.inference.BaseMCMC.load(value)
-            CLUSTERING2 = CHAIN2.graph[STRNAMES.CLUSTERING_OBJ]
-            TAXA2 = CHAIN2.graph.data.taxa
-            taxa_curr = self.G.data.taxa
-            for taxon in TAXA2:
-                if taxon.name not in taxa_curr:
-                    raise ValueError('Cannot perform fixed topology because the  {} in ' \
-                        'the passed in clustering is not in this clustering: {}'.format(
-                            taxon.name, taxa_curr.names.order))
-            for taxon in taxa_curr:
-                if taxon.name not in TAXA2:
-                    raise ValueError('Cannot perform fixed topology because the  {} in ' \
-                        'the current clustering is not in the passed in clustering: {}'.format(
-                            taxon.name, TAXA2.names.order))
+            file_path = Path(value)
+            if file_path.suffix == '.pkl':
+                # Try to load a MCMC pickle file, and compute consensus cluster.
+                CHAIN2 = pl.inference.BaseMCMC.load(value)
+                CLUSTERING2 = CHAIN2.graph[STRNAMES.CLUSTERING_OBJ]
+                TAXA2 = CHAIN2.graph.data.taxa
+                taxa_curr = self.G.data.taxa
+                for taxon in TAXA2:
+                    if taxon.name not in taxa_curr:
+                        raise ValueError('Cannot perform fixed topology because the  {} in ' \
+                            'the passed in clustering is not in this clustering: {}'.format(
+                                taxon.name, taxa_curr.names.order))
+                for taxon in taxa_curr:
+                    if taxon.name not in TAXA2:
+                        raise ValueError('Cannot perform fixed topology because the  {} in ' \
+                            'the current clustering is not in the passed in clustering: {}'.format(
+                                taxon.name, TAXA2.names.order))
 
-            # Get the most likely cluster configuration and set as the value for the passed in cluster
-            ret = generate_cluster_assignments_posthoc(CLUSTERING2, n_clusters='mode', set_as_value=False)
-            CLUSTERING2.from_array(ret)
-            logger.info('Clustering set to:\n{}'.format(str(CLUSTERING2)))
+                # Get the most likely cluster configuration and set as the value for the passed in cluster
+                ret = generate_cluster_assignments_posthoc(CLUSTERING2, n_clusters='mode', set_as_value=False)
+                CLUSTERING2.from_array(ret)
+                logger.info('Clustering set to:\n{}'.format(str(CLUSTERING2)))
 
-            # Set the passed in cluster assignment as the current cluster assignment
-            # Need to be careful because the indices of the s might not line up
-            clusters = []
-            for cluster in CLUSTERING2:
-                anames = [taxa_curr[TAXA2.names.order[aidx]].name for aidx in cluster.members]
-                aidxs = [taxa_curr[aname].idx for aname in anames]
-                clusters.append(aidxs)
+                # Set the passed in cluster assignment as the current cluster assignment
+                # Need to be careful because the indices of the s might not line up
+                clusters = []
+                for cluster in CLUSTERING2:
+                    anames = [taxa_curr[TAXA2.names.order[aidx]].name for aidx in cluster.members]
+                    aidxs = [taxa_curr[aname].idx for aname in anames]
+                    clusters.append(aidxs)
+            elif file_path.suffix == '.npy':
+                # Try to load a numpy clustering file.
+                clustering = np.load(file_path)
+                if clustering.ndim != 1:
+                    raise ValueError("Input clustering array should be 1-d")
+                if clustering.shape[0] != len(self.G.data.taxa):
+                    raise ValueError("Input clustering array had {} entries, but input data has {} taxa.".format(clustering.shape[0], len(self.G.data.taxa)))
+                clusters = []
+                clust_ids = sorted(set(clustering))
+                for c_id in clust_ids:
+                    c_locs, = np.where(clust_ids == c_id)
+                    clusters.append(c_locs)
+            else:
+                raise ValueError("Unknown file extension {} for fixed_clustering option. (Full path: {})".format(
+                    file_path.suffix,
+                    file_path
+                ))
 
         elif value_option == 'no-clusters':
             clusters = []

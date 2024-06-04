@@ -43,8 +43,9 @@ class InferenceCLI(CLIModule):
         parser.add_argument(
             '--fixed-clustering', type=str, dest='fixed_clustering',
             required=False, default=None,
-            help='If you are running fixed clustering, this is the location of the chain of the original run. '
-                 'This script uses this chain to compute consensus clusters.'
+            help='Specify a file with this argument to run fixed-clustering mode inference.'
+                 'If extension is .pkl, then the argument will be treated as an MCMC inference using normal-mode inference, from which consensus clusters will be computed.'
+                 'If extension is .npy, then the argument will be treated as a clustering numpy array, meaning a (N_TAXA)-length array of integers. Each taxa will be assigned a cluster ID grouped by these integer values.'
         )
         parser.add_argument(
             '--nomodules', action='store_true', dest='nomodules',
