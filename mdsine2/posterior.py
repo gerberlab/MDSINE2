@@ -1248,7 +1248,7 @@ class ClusterAssignments(pl.graph.Node):
                 clusters = []
                 clust_ids = sorted(set(clustering))
                 for c_id in clust_ids:
-                    c_locs, = np.where(clust_ids == c_id)
+                    c_locs, = np.where(clustering == c_id)
                     clusters.append(list(c_locs))
                 logger.info("Clustering set to:\n{}".format(clusters))
             else:
