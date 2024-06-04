@@ -1249,7 +1249,8 @@ class ClusterAssignments(pl.graph.Node):
                 clust_ids = sorted(set(clustering))
                 for c_id in clust_ids:
                     c_locs, = np.where(clust_ids == c_id)
-                    clusters.append(c_locs)
+                    clusters.append(list(c_locs))
+                logger.info("Clustering set to:\n{}".format(clusters))
             else:
                 raise ValueError("Unknown file extension {} for fixed_clustering option. (Full path: {})".format(
                     file_path.suffix,
