@@ -269,7 +269,7 @@ def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float,
     X = np.zeros(shape=(initial_conditions.shape[0], n_timepoints_to_integrate), dtype=float)
     X[:,0] = initial_conditions.ravel()
 
-    t = 0
+    t = dynamics.start_day
     prev = X[:,[0]]
     for i in range(1, n_timepoints_to_integrate):
         if i % log_every == 0:
@@ -289,6 +289,6 @@ def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float,
             idxs.append(int(steps_per_day*t))
         X = X[:, idxs]
     else:
-        times = np.arange(n_timepoints_to_integrate, dtype=float) * dt
+        times = dynamics.start_day + (np.arange(n_timepoints_to_integrate, dtype=float) * dt)
 
     return {'X': X, 'times': times}
