@@ -266,11 +266,12 @@ def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float,
     processvar.finish_integration()
 
     if subsample:
+        numerical_tol = 1e-4 * dt
         locs = np.bitwise_or.reduce(
-            np.array([
-                [sim_times == t]
+            np.stack([
+                np.abs(sim_times - t) < numerical_tol
                 for t in times
-            ]),
+            ], axis=0),
             0
         )
         if np.sum(locs) != len(times):
