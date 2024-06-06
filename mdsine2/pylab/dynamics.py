@@ -133,9 +133,8 @@ class _NoProcessVariance(Integratable):
         return x
 
 
-def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float, n_days: float, 
-    processvar: BaseProcessVariance=None, subsample: bool=False, times: np.ndarray=None, 
-    log_every: int=10000) -> Dict[str, np.ndarray]:
+def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float, final_day: float,
+    processvar: BaseProcessVariance=None, subsample: bool=False, times: np.ndarray=None) -> Dict[str, np.ndarray]:
     '''Numerically integrates the ODE given the dynamics and the initial 
     conditions. If the process variance is not None, then this integrates
     a stochastic ODE.
@@ -163,18 +162,18 @@ def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float,
         column array.
     dt : float
         Time between each time step (in days) during integration
-    n_days : float
-        How many days to simulate for
+    final_day : float
+        the last timepoint to simulate.
     subsample : bool
         If True, we subsample the integration at the time points indicated in
         `times`. If False we do not subsample
     times : int, np.ndarray((t,), dtype=numeric), None
         `times` must be a list of floats/ints, where each element 
         corresponds to a time of day to take the sample at. The last time 
-        point must not exceed `n_days`, each time must be >= 0, and there
+        point must not exceed `final_day`, each time must be >= 0, and there
         must not be duplicates.
         Example: (assuming `subsample` is True)
-            n_days = 6
+            final_day = 6
             times = [0, 0.1, 1.1, 3, 5] - This is valid
             times = [0.1, 0, 1.1, 3, 5] - This is valid:
                 (0 is automatically reordered)
@@ -229,20 +228,14 @@ def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float,
     if not plu.isbool(subsample):
         raise TypeError('`subsample` ({}) must be a bool'.format(type(subsample)))
     
-    if not plu.isnumeric(n_days):
-        raise TypeError('`n_days` ({}) must be an int'.format(type(n_days)))
-    if n_days <= 0:
-        raise ValueError('`n_days` ({}) must be > 0'.format(n_days))
-    
-    n_days += dt
-    n_timepoints_to_integrate = n_days/dt
-    if n_timepoints_to_integrate - int(n_timepoints_to_integrate) != 0:
-        n_timepoints_to_integrate = int(n_timepoints_to_integrate)+1
-    n_timepoints_to_integrate = int(n_timepoints_to_integrate)
-    
+    if not plu.isnumeric(final_day):
+        raise TypeError('`final_day` ({}) must be an int'.format(type(final_day)))
+    if final_day <= 0:
+        raise ValueError('`final_day` ({}) must be > 0'.format(final_day))
+
     if subsample:
         if times is None:
-            times = np.arange(int(n_days), dtype=float)
+            times = np.arange(int(final_day), dtype=float)
         elif not plu.isarray(times):
             raise TypeError('If `subsample` is True, then `times` ({}) must either ' \
                 'be an array or None'.format(type(times)))
@@ -250,45 +243,39 @@ def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float,
         times = np.sort(np.unique(times))
         if np.any(times < 0):
             raise ValueError('All `times` ({}) must be > 0 '.format(times))
-        if np.any(times > n_days):
-            raise ValueError('All `times` ({}) must be < `n_days` ({})'.format( 
-                times, n_days))
-    
-    if log_every is None:
-        log_every = float('inf')
-    else:
-        if not plu.isint(log_every):
-            raise TypeError('`log_every` ({}) must be an int'.format(type(log_every)))
-        if log_every <= 0:
-            raise ValueError('`log_every` ({}) must be >= 0'.format(log_every))
+        if np.any(times > final_day):
+            raise ValueError('All `times` ({}) must be < `final_day` ({})'.format(
+                times, final_day))
 
     # Everything is good - initialize then start integrating
     dynamics.init_integration(dt=dt)
     processvar.init_integration()
 
-    X = np.zeros(shape=(initial_conditions.shape[0], n_timepoints_to_integrate), dtype=float)
-    X[:,0] = initial_conditions.ravel()
+    sim_times = np.arange(start=dynamics.start_day, stop=final_day+dt, step=dt)
+    X = np.zeros(shape=(initial_conditions.shape[0], len(sim_times)), dtype=float)
+    X[:, 0] = initial_conditions.ravel()
 
-    t = dynamics.start_day
-    prev = X[:,[0]]
-    for i in range(1, n_timepoints_to_integrate):
-        if i % log_every == 0:
-            logger.debug('Simulating {}/{}'.format(i, n_timepoints_to_integrate))
-        t += dt 
+    for t_idx, t in enumerate(sim_times):
+        if t_idx == 0:
+            continue  # nothing to simulate for first timepoint (initial condition)
+        prev = X[:, t_idx-1]
         a = dynamics.integrate_single_timestep(x=prev, t=t, dt=dt)
-        X[:,i] = processvar.integrate_single_timestep(x=a, t=t, dt=dt)
-        prev = X[:, [i]]
+        X[:, t_idx] = processvar.integrate_single_timestep(x=a, t=t, dt=dt)
     
     dynamics.finish_integration()
     processvar.finish_integration()
 
     if subsample:
-        steps_per_day = int(n_timepoints_to_integrate/n_days)
-        idxs = []
-        for t in times:
-            idxs.append(int(steps_per_day*t))
-        X = X[:, idxs]
+        locs = np.bitwise_or.reduce(
+            np.array([
+                [sim_times == t]
+                for t in times
+            ]),
+            0
+        )
+        if np.sum(locs) != len(times):
+            raise ValueError("Simulation times did not contain all requested timepoints, presumably due to "
+                             "floating-point precision weirdness. This is an unexpected bug.")
+        return {'X': X[:, locs], 'times': times}
     else:
-        times = dynamics.start_day + (np.arange(n_timepoints_to_integrate, dtype=float) * dt)
-
-    return {'X': X, 'times': times}
+        return {'X': X, 'times': sim_times}
