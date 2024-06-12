@@ -17,7 +17,7 @@ def run_forward_sim(growth: np.ndarray,
                     dt: float,
                     sim_max: float,
                     start_time: float,
-                    n_days: float):
+                    final_day: float):
     """
     Forward simulate with the given dynamics, with the option to apply perturbations during specified timeframes.
 
@@ -56,7 +56,7 @@ def run_forward_sim(growth: np.ndarray,
         dynamics=dyn,
         initial_conditions=initial_conditions,
         dt=dt,
-        n_days=n_days + dt,
+        final_day=final_day,
         subsample=False
     )
     fwsim_values = x['X']

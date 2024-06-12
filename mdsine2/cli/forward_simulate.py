@@ -72,7 +72,7 @@ class ForwardSimulationCLI(CLIModule):
                             help='Maximum value for abundances.')
         parser.add_argument('--output-path', '-o', type=str, dest='out_path',
                             required=True,
-                            help='This is where you are saving the posterior forward simulation. (stored in numpy format)')
+                            help='This is where you are saving the posterior forward simulation. (stored in .npz format)')
         parser.add_argument('--gibbs-subsample', type=int,
                             required=False, default=1,
                             help='The number of gibbs samples to skip. A value of n indicates that one out of every '
@@ -165,14 +165,14 @@ class ForwardSimulationCLI(CLIModule):
                 perturbations_end=perturbations_end,
                 dt=args.dt,
                 sim_max=args.sim_max,
-                n_days=n_days,
+                final_day=subject.times[-1],
                 start_time=subject.times[0]
             )
             fwsims.append(fwsim)
             sim_times = times
 
         fwsims = np.stack(fwsims)
-        np.save(str(out_path), fwsims)
+        np.savez(str(out_path), sims=fwsims, times=sim_times)
         logger.info("Saved forward simulations to {}.".format(str(out_path)))
 
         if args.plot.lower() == "all":
