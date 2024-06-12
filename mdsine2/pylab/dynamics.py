@@ -256,8 +256,8 @@ def integrate(dynamics: BaseDynamics, initial_conditions: np.ndarray, dt: float,
     X[:, 0] = initial_conditions.ravel()
 
     for t_idx, t in enumerate(sim_times):
-        if t_idx == len(sim_times):
-            continue  # nothing to simulate for first timepoint (initial condition)
+        if t_idx == len(sim_times) - 1:
+            continue  # nothing to simulate for last timepoint.
         cur = X[:, [t_idx]]
         a = dynamics.integrate_single_timestep(x=cur, t=t, dt=dt)
         X[:, t_idx+1] = processvar.integrate_single_timestep(x=a, t=t, dt=dt)
