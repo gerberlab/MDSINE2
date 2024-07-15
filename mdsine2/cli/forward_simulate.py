@@ -171,6 +171,10 @@ class ForwardSimulationCLI(CLIModule):
             fwsims.append(fwsim)
             sim_times = times
 
+        if len(fwsims) == 0:
+            logger.error("No forward simulations to save.")
+            return
+
         fwsims = np.stack(fwsims)
         np.savez(str(out_path), sims=fwsims, times=sim_times)
         logger.info("Saved forward simulations to {}.".format(str(out_path)))
