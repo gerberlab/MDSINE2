@@ -177,8 +177,13 @@ class Data(DataNode):
             for ridx, subj in enumerate(self.subjects):
                 self.tidxs_in_perturbation.append([])
                 for perturbation in self.subjects.perturbations:
-                    start = perturbation.starts[subj.name]
-                    end = perturbation.ends[subj.name]
+                    try:
+                        start = perturbation.starts[subj.name]
+                        end = perturbation.ends[subj.name]
+                    except KeyError:
+                        logger.debug("Perturbation {} start/end for subject {} not found. Skipping pert definition for this subject.")
+                        self.tidxs_in_perturbation[ridx].append((None, None))
+                        continue
 
                     if start in self.timepoint2index[ridx]:
                         # There is a measurement at the start of the perturbation
@@ -460,8 +465,13 @@ class Data(DataNode):
             for ridx, subj in enumerate(self.subjects):
                 self.tidxs_in_perturbation.append([])
                 for perturbation in self.subjects.perturbations:
-                    start = perturbation.starts[subj.name]
-                    end = perturbation.ends[subj.name]
+                    try:
+                        start = perturbation.starts[subj.name]
+                        end = perturbation.ends[subj.name]
+                    except KeyError:
+                        logger.debug("Perturbation {} start/end for subject {} not found. Skipping pert definition for this subject.")
+                        self.tidxs_in_perturbation[ridx].append((None, None))
+                        continue
 
                     if start in self.timepoint2index[ridx]:
                         # There is a measurement at the start of the perturbation
@@ -1068,7 +1078,7 @@ class GrowthDesignMatrix(DesignMatrix):
             self.G.data.n_replicates,
             self.G.data.data[0].shape[0],
             self.G.data.data[0].shape[1]
-        ), dtype=np.float)
+        ), dtype=float)
 
         for pidx, pert in enumerate(self.G.perturbations):
             val = (pert.item_array(only_pos_ind=True) + 1).reshape(-1,1)
@@ -1353,7 +1363,7 @@ class PerturbationMixingDesignMatrix(DesignMatrix):
 
         Rebuild after we have changed the mixing matrix if `build` is True
         '''
-        data = np.ones(len(rows), dtype=np.float64)
+        data = np.ones(len(rows), dtype=float)
         self.matrix = scipy.sparse.coo_matrix((data,(rows,cols)),
             shape=(self.n_rows, n_cols)).tocsc()
         self.shape = self.matrix.shape
