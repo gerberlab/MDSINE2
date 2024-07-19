@@ -86,6 +86,12 @@ class ForwardSimulationCLI(CLIModule):
                                  '\nAvailable options: `none`, `all`, `<comma_separated_taxa_names>`.'
                                  '\nExample: `--plot all`, or `--plot OTU_1,OTU_3,OTU_10`')
 
+        parser.add_argument('--initialize_from_study', type=str, dest='init_study',
+                            required=False,
+                            help='[Experimental, for semisynthetic comparison] The path to another study file which contains data different from the '
+                                 'specified study. This study\'s taxa must be a superset of the target study taxa.'
+                            )
+
     def main(self, args: argparse.Namespace):
         out_path = Path(args.out_path)
         out_path.parent.mkdir(exist_ok=True, parents=True)
@@ -137,9 +143,18 @@ class ForwardSimulationCLI(CLIModule):
             perturbations_end = []
 
         # ======= Initial conditions
-        M = subject.matrix()['abs']
+        if args.init_study is None:
+            M = subject.matrix()['abs']
+            initial_conditions = M[:, 0]
+        else:
+            other_study = md2.Study.load(args.init_study)
+            other_taxa = other_study.taxa
+            M = other_study[subject.name].matrix()['abs']
+            initial_conditions = M[:, 0]
 
-        initial_conditions = M[:, 0]
+            taxa_indices = [other_taxa[taxa.name].idx for taxa in study.taxa]
+            initial_conditions = initial_conditions[taxa_indices]
+
         if np.any(initial_conditions == 0):
             logger.info('{} of {} taxa have abundance zero at the start. Setting to {}'.format(
                 np.sum(initial_conditions == 0),
