@@ -6592,6 +6592,16 @@ class SelfInteractions(pl.variables.TruncatedNormal):
 
         prec = X.T @ process_prec @ X + prior_prec
         cov = pinv(prec, self)
+
+        # A fix for diagonals containing NaNs after pinv operation.
+        cov_diag = np.diag(cov)
+        if np.any(cov_diag == 0):
+            # Bugfix: "zero" variance is output by np.pinv/scipy.linalg.pinv due to precision issues.
+            # Replace these values with the inverse of the corresponding diagonal entry of precision (approximation)
+            overflow_indices, = np.where(cov_diag == 0)
+            for _i in overflow_indices:
+                cov[_i, _i] = 1 / prec[_i, _i]
+
         self.loc.value = np.asarray(cov @ (X.T @ process_prec.dot(y) + pm)).ravel()
         self.scale2.value = np.diag(cov)
 
