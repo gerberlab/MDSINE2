@@ -336,7 +336,7 @@ def build_prior_mean(G: Graph, order: List[str], shape: Tuple=None) -> np.ndarra
         a = a.reshape(*shape)
     return a
 
-def sample_categorical_log(log_p: Iterator[float]) -> int:
+def sample_categorical_log(log_p: List[float]) -> int:
     '''Generate one sample from a categorical distribution with event
     probabilities provided in unnormalized log-space.
 
@@ -352,10 +352,10 @@ def sample_categorical_log(log_p: Iterator[float]) -> int:
         event from log_p.
     '''
     try:
-        exp_sample = math.log(random.random())
-        events = np.logaddexp.accumulate(np.hstack([[-np.inf], log_p]))
-        events -= events[-1]
-        return next(x[0]-1 for x in enumerate(events) if x[1] >= exp_sample)
+        num_categories = len(log_p)
+        gumbels = np.random.gumbel(size=num_categories)
+        sample = np.argmax(np.array(log_p) + gumbels)
+        return sample
     except:
         logger.critical('CRASHED IN `sample_categorical_log`:\nlog_p{}'.format(
             log_p))
