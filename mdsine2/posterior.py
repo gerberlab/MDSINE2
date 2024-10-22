@@ -7031,6 +7031,7 @@ class GLVParameters(pl.variables.MVN):
             # Make the prior covariance matrix and process varaince
             prec = X.T @ process_prec @ X + prior_prec
             print("# NaNs:", np.isnan(prec.todense()).sum())
+            print("# infs:", np.isinf(prec.todense()).sum())
             self.cov.value = pinv(prec, self)
             self.mean.value = np.asarray(self.cov.value @ (X.T @ process_prec.dot(y) + \
                 prior_prec @ prior_means)).ravel()
