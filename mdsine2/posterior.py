@@ -4396,7 +4396,7 @@ class ClusterInteractionValue(pl.variables.MVN):
         prior_prec = build_prior_covariance(G=self.G, cov=False,
             order=rhs, sparse=True)
 
-        pm = prior_prec @ (self.prior.mean.value * np.ones(prior_prec.shape[0]).reshape(-1,1))
+        pm = prior_prec @ (self.prior.mean() * np.ones(prior_prec.shape[0]).reshape(-1,1))
 
         prec = X.T @ process_prec @ X + prior_prec
         cov = pinv(prec, self)
@@ -7034,15 +7034,8 @@ class GLVParameters(pl.variables.MVN):
             self.mean.value = np.asarray(self.cov.value @ (X.T @ process_prec.dot(y) + \
                 prior_prec @ prior_means)).ravel()
 
-            # sample posterior jointly and then assign the values to each coefficient
-            # type, respectfully
-            try:
-                value = self.sample()
-            except:
-                logger.critical('failed here, updating separately')
-                self.pert_mag.update()
-                self.interactions.update()
-                return
+            # sample posterior jointly and then assign the values to each coefficient type, respectfully
+            value = self.sample()
 
             i = 0
             if STRNAMES.CLUSTER_INTERACTION_VALUE in rhs:
