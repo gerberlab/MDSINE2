@@ -67,7 +67,7 @@ def extract_process_variance(mcmc: md2.BaseMCMC) -> np.ndarray:
 def extract_clustering(mcmc: md2.BaseMCMC) -> Tuple[np.ndarray, np.ndarray]:
     clustering = mcmc.graph[STRNAMES.CLUSTERING_OBJ]
     n_clusters = clustering.n_clusters.get_trace_from_disk(section='posterior')
-    coclusters = md2.summary(clustering.coclusters, section='posterior', only=['mean'])['mean']
+    coclusters = clustering.coclusters.get_trace_from_disk(section='posterior')
     return n_clusters, coclusters
 
 
@@ -197,21 +197,18 @@ class ExtractPosteriorCLI(CLIModule):
         try:
             n_clusters_all = []
             coclustering_all = []
-            total_samples = 0
             for mcmc_path in tqdm(mcmc_paths, desc='Clustering'):
                 n_clusters, coclustering = extract_clustering(md2.BaseMCMC.load(str(mcmc_path)))
                 n_clusters_all.append(n_clusters)
-                n_samples = n_clusters.shape[0]
-                coclustering_all.append(coclustering * n_samples)
-                total_samples += n_samples
+                coclustering_all.append(coclustering)
 
             n_clusters_all = np.concatenate(n_clusters_all)
-            coclustering_all = np.sum((1 / total_samples) * np.stack(coclustering_all, axis=0), axis=0)
+            coclustering_all = np.concatenate(coclustering_all, axis=0)
             np.save(str(out_dir / 'n_clusters.npy'), n_clusters_all)
             np.save(str(out_dir / 'coclusters.npy'), coclustering_all)
 
             # Agglomerated modules
-            A = 1 - coclustering_all
+            A = 1 - np.mean(coclustering_all, axis=0)
             n = scipy.stats.mode(n_clusters_all)[0][0]
             linkage = 'complete'
             c = AgglomerativeClustering(

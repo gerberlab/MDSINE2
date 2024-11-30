@@ -132,6 +132,11 @@ class InferenceCLI(CLIModule):
             help='Controls the scale parameter for the interaction strength prior var, using the formula [SCALE]*E^2',
             default=1.0
         )
+        parser.add_argument(
+            '-r', '--resume',
+            required=False, default=False, action='store_true',
+            help='If set, tries to check for an existing MCMC trace and resume from where it left off.'
+        )
 
     def main(self, args: argparse.Namespace):
         # 1) load dataset
@@ -213,7 +218,25 @@ class InferenceCLI(CLIModule):
                 'Since there is less than 30 taxa, we set the initialization of the clustering to `no-clusters`')
             params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'no-clusters'
 
-        mcmc = md2.initialize_graph(params=params, graph_name=study.name, subjset=study)
+        # Try to see if we should resume.
+        if args.resume:
+            from pathlib import Path
+            from mdsine2 import BaseMCMC
+
+            # Check for existing pickle file. If not, run in default mode.
+            target_pickle_file = Path(params.MCMC_FILENAME)
+            if target_pickle_file.exists():
+                mcmc = BaseMCMC.load(target_pickle_file)
+                growth_posterior = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section='posterior')
+                n_samples_done = growth_posterior.shape[0]
+                resume_from_mcmc_index = n_samples_done
+                del mcmc
+                del growth_posterior
+            else:
+                resume_from_mcmc_index = None
+
+
+        mcmc = md2.initialize_graph(params=params, graph_name=study.name, subjset=study, continue_inference=resume_from_mcmc_index)
         mdata_fname = os.path.join(params.MODEL_PATH, 'metadata.txt')
         params.make_metadata_file(fname=mdata_fname)
 
