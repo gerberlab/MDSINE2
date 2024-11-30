@@ -233,7 +233,10 @@ class InferenceCLI(CLIModule):
                 del mcmc
                 del growth_posterior
 
-                logger.info("--resume option invoked; resuming at trace index = {}.".format(resume_from_mcmc_index))
+                if resume_from_mcmc_index == 0:
+                    resume_from_mcmc_index = None
+                else:
+                    logger.info("--resume option invoked; resuming at trace index = {}.".format(resume_from_mcmc_index))
             else:
                 resume_from_mcmc_index = None
 
