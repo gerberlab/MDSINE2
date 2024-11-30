@@ -224,9 +224,9 @@ class InferenceCLI(CLIModule):
             from mdsine2 import BaseMCMC
 
             # Check for existing pickle file. If not, run in default mode.
-            target_pickle_file = Path(params.MCMC_FILENAME)
+            target_pickle_file = Path(params.MODEL_PATH) / "mcmc.pkl"
             if target_pickle_file.exists():
-                mcmc = BaseMCMC.load(target_pickle_file)
+                mcmc = BaseMCMC.load(str(target_pickle_file))
                 growth_posterior = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section='posterior')
                 n_samples_done = growth_posterior.shape[0]
                 resume_from_mcmc_index = n_samples_done
