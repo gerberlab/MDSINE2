@@ -67,7 +67,6 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
     # Continue inference if necessary
     # -------------------------------
     if continue_inference is not None:
-        # Note: param.GRAPH_FILENAME is never touched and never written to. So this feature won't work.
         logger.info('Continuing inference at Gibb step {}'.format(continue_inference))
         mcmc = pl.inference.BaseMCMC.load(params.MCMC_FILENAME)
         mcmc.continue_inference(gibb_step_start=continue_inference)

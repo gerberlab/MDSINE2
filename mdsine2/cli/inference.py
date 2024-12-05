@@ -219,26 +219,30 @@ class InferenceCLI(CLIModule):
             params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'no-clusters'
 
         # Try to see if we should resume.
-        if args.resume:
-            from pathlib import Path
-            from mdsine2 import BaseMCMC
+        # if args.resume:
+        #     """ Note: param.GRAPH_FILENAME is never touched and never written to. So this feature won't work."""
+        #     from pathlib import Path
+        #     from mdsine2 import BaseMCMC
+        #
+        #     # Check for existing pickle file. If not, run in default mode.
+        #     target_pickle_file = Path(params.MODEL_PATH) / "mcmc.pkl"
+        #     if target_pickle_file.exists():
+        #         mcmc = BaseMCMC.load(str(target_pickle_file))
+        #         growth_posterior = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section='posterior')
+        #         n_samples_done = growth_posterior.shape[0]
+        #         resume_from_mcmc_index = n_samples_done
+        #         del mcmc
+        #         del growth_posterior
+        #
+        #         if resume_from_mcmc_index == 0:
+        #             resume_from_mcmc_index = None
+        #         else:
+        #             logger.info("--resume option invoked; resuming at trace index = {}.".format(resume_from_mcmc_index))
+        #     else:
+        #         resume_from_mcmc_index = None
+        # else:
 
-            # Check for existing pickle file. If not, run in default mode.
-            target_pickle_file = Path(params.MODEL_PATH) / "mcmc.pkl"
-            if target_pickle_file.exists():
-                mcmc = BaseMCMC.load(str(target_pickle_file))
-                growth_posterior = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section='posterior')
-                n_samples_done = growth_posterior.shape[0]
-                resume_from_mcmc_index = n_samples_done
-                del mcmc
-                del growth_posterior
-
-                if resume_from_mcmc_index == 0:
-                    resume_from_mcmc_index = None
-                else:
-                    logger.info("--resume option invoked; resuming at trace index = {}.".format(resume_from_mcmc_index))
-            else:
-                resume_from_mcmc_index = None
+        resume_from_mcmc_index = None
 
 
         mcmc = md2.initialize_graph(params=params, graph_name=study.name, subjset=study, continue_inference=resume_from_mcmc_index)
