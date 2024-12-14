@@ -333,7 +333,7 @@ def aggregate_items(subjset: Study,
 
     logger.info(f'Aggregating taxa with a hamming distance of {hamming_dist} (linkage: {linkage})')
     clustering = AgglomerativeClustering(
-        affinity='precomputed',
+        metric='precomputed',
         n_clusters=None,
         linkage=linkage,  # min distance
         distance_threshold=hamming_dist
