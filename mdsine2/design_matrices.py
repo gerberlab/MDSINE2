@@ -181,7 +181,7 @@ class Data(DataNode):
                         start = perturbation.starts[subj.name]
                         end = perturbation.ends[subj.name]
                     except KeyError:
-                        logger.debug("Perturbation {} start/end for subject {} not found. Skipping pert definition for this subject.")
+                        logger.debug(f"Perturbation {perturbation.name} start/end for subject {subj.name} not found. Skipping pert definition for this subject.")
                         self.tidxs_in_perturbation[ridx].append((None, None))
                         continue
 
@@ -469,7 +469,7 @@ class Data(DataNode):
                         start = perturbation.starts[subj.name]
                         end = perturbation.ends[subj.name]
                     except KeyError:
-                        logger.debug("Perturbation {} start/end for subject {} not found. Skipping pert definition for this subject.")
+                        logger.debug(f"Perturbation {perturbation.name} start/end for subject {subj.name} not found. Skipping pert definition for this subject.")
                         self.tidxs_in_perturbation[ridx].append((None, None))
                         continue
 

@@ -3201,8 +3201,17 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             self.pert_starts = []
             self.pert_ends = []
             for pidx in range(len(pert_starts)):
-                self.pert_starts.append(pert_starts[pidx][subjname])
-                self.pert_ends.append(pert_ends[pidx][subjname])
+                if subjname in pert_starts[pidx] and subjname in pert_ends[pidx]:
+                    self.pert_starts.append(pert_starts[pidx][subjname])
+                    self.pert_ends.append(pert_ends[pidx][subjname])
+                else:
+                    logger.info(
+                        f"While initializing {self.__class__.__name__} for subject `{subjname}`, unable to find perturbation "
+                        f"window for perturbation index {pidx}. "
+                        f"Perturbation #{pidx} will be skipped for this subject."
+                    )
+                    self.pert_starts.append(np.inf)
+                    self.pert_ends.append(np.inf)
 
         self.total_n_points = self.x.shape[0] * self.x.shape[1]
         self.ridx = ridx
@@ -3311,18 +3320,36 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
             # Make the fully in perturbation times
             for pidx in range(len(self.pert_ends)):
-                try:
+                """ Fix for "infinity" start/end times (hotfix for when perts don't exist for a particular subject) """
+                t_start, t_end = self.pert_starts[pidx], self.pert_ends[pidx]
+                if t_end > np.max(self.times) > t_start > np.min(self.times):
                     start_tidx = self.t2tidx[self.pert_starts[pidx]] + 1
+                    self.fully_in_pert[start_tidx:] = pidx
+                    logger.debug("subj {}, pidx {} has a t_end after the experiment: perturbation will be applied to the START interval ending at {}".format(subjname, pidx, t_end))
+                elif t_start < np.min(self.times) < t_end < np.max(self.times):
                     end_tidx = self.t2tidx[self.pert_ends[pidx]]
-                except:
-                    # This means there is a missing datapoint at either the
-                    # start or end of the perturbation
-                    start_t = self.pert_starts[pidx]
-                    end_t = self.pert_ends[pidx]
-                    start_tidx = np.searchsorted(self.times, start_t)
-                    end_tidx = np.searchsorted(self.times, end_t) - 1
+                    self.fully_in_pert[:end_tidx] = pidx
+                    logger.debug("subj {}, pidx {} has a t_start before the experiment: perturbation will be applied to the END interval starting at {}".format(subjname, pidx, t_start))
+                elif t_start > np.max(self.times):
+                    logger.debug("subj {}, pidx {} has a t_start after the experiment: perturbation will not be applied. (t_start = {})".format(subjname, pidx, t_start))
+                    continue
+                elif t_end < np.min(self.times):
+                    logger.debug("subj {}, pidx {} has a t_end before the experiment: perturbation will not be applied. (t_end = {})".format(subjname, pidx, t_end))
+                    continue
+                else:
+                    logger.debug("Creating perturbation markers for subj {}, pidx {}: [{}, {}]".format(subjname, pidx, t_start, t_end))
+                    try:
+                        start_tidx = self.t2tidx[self.pert_starts[pidx]] + 1
+                        end_tidx = self.t2tidx[self.pert_ends[pidx]]
+                    except KeyError:
+                        # This means there is a missing datapoint at either the
+                        # start or end of the perturbation
+                        start_t = self.pert_starts[pidx]
+                        end_t = self.pert_ends[pidx]
+                        start_tidx = np.searchsorted(self.times, start_t)
+                        end_tidx = np.searchsorted(self.times, end_t) - 1
 
-                self.fully_in_pert[start_tidx:end_tidx] = pidx
+                    self.fully_in_pert[start_tidx:end_tidx] = pidx
 
     # @profile
     def persistent_run(self, growth: np.ndarray, self_interactions: np.ndarray,
