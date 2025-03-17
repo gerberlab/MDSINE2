@@ -155,7 +155,7 @@ class ExtractPosteriorCLI(CLIModule):
             linkage = 'complete'
             c = AgglomerativeClustering(
                 n_clusters=n,
-                affinity='precomputed',
+                metric='precomputed',
                 linkage=linkage
             )
             agglom = c.fit_predict(A)

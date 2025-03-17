@@ -172,7 +172,7 @@ def generate_cluster_assignments_posthoc(clustering: Clustering, n_clusters: Uni
     logger.info('Number of clusters: {}'.format(int(n)))
     c = AgglomerativeClustering(
         n_clusters=int(n),
-        affinity='precomputed',
+        metric='precomputed',
         linkage=linkage)
     ret = c.fit_predict(A)
     logger.info('Clusters assigned: {}'.format(ret))
@@ -333,7 +333,7 @@ def aggregate_items(subjset: Study,
 
     logger.info(f'Aggregating taxa with a hamming distance of {hamming_dist} (linkage: {linkage})')
     clustering = AgglomerativeClustering(
-        affinity='precomputed',
+        metric='precomputed',
         n_clusters=None,
         linkage=linkage,  # min distance
         distance_threshold=hamming_dist

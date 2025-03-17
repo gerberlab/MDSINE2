@@ -356,9 +356,13 @@ def sample_categorical_log(log_p: Iterator[float]) -> int:
         events = np.logaddexp.accumulate(np.hstack([[-np.inf], log_p]))
         events -= events[-1]
         return next(x[0]-1 for x in enumerate(events) if x[1] >= exp_sample)
-    except:
-        logger.critical('CRASHED IN `sample_categorical_log`:\nlog_p{}'.format(
-            log_p))
+    except Exception as e:
+        logger.critical(
+            'CRASHED IN `sample_categorical_log`:\nlog_p{}'.format(
+                log_p, e
+            ),
+            exc_info=True,
+        )
         raise
 
 def log_det(M: np.ndarray, var: Variable) -> float:
@@ -950,6 +954,7 @@ class Concentration(pl.variables.Gamma):
         if hyperparam_option == 'manual':
             self.prior.shape.override_value(shape)
             self.prior.scale.override_value(scale)
+            print('Successfully using custom shape and scale for concentration param', shape, scale)
             self.n_iter = n_iter
 
         elif hyperparam_option in ['diffuse', 'auto']:
@@ -1248,7 +1253,7 @@ class ClusterAssignments(pl.graph.Node):
                         continue
                     M[i,j] = taxa.taxonomic_similarity(oid1=oid1, oid2=oid2)
 
-            c = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='complete')
+            c = AgglomerativeClustering(n_clusters=n_clusters, metric='precomputed', linkage='complete')
             assignments = c.fit_predict(1-M)
 
             # Convert assignments into clusters
@@ -1276,7 +1281,7 @@ class ClusterAssignments(pl.graph.Node):
                     evenness[i,j] = dist
                     evenness[j,i] = dist
 
-            c = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='average')
+            c = AgglomerativeClustering(n_clusters=n_clusters, metric='precomputed', linkage='average')
             assignments = c.fit_predict(evenness)
             clusters = {}
             for oidx,cidx in enumerate(assignments):
@@ -1300,7 +1305,7 @@ class ClusterAssignments(pl.graph.Node):
                     dm[i,j] = distance
                     dm[j,i] = distance
 
-            c = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='complete')
+            c = AgglomerativeClustering(n_clusters=n_clusters, metric='precomputed', linkage='complete')
             assignments = c.fit_predict(dm)
 
             # convert into clusters
@@ -1735,7 +1740,8 @@ class ClusterAssignments(pl.graph.Node):
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
         try:
-            beta_logdet = log_det(beta_cov, self)
+            # beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -2217,7 +2223,8 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
         try:
-            beta_logdet = log_det(beta_cov, self)
+            # beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -2804,38 +2811,18 @@ class FilteringLogMP(pl.graph.Node):
                 spikein_reads = None
                 spikein_abundance_observed = None
                 spikein_latent_x = None 
-                spikein_abundance_scale = None 
 
             elif calculate_spikein_loglik:
+                ##############################
+                # SPIKEIN INITIALIZATION
+                ##############################
                 spikein_reads = self.G.data.subjects.iloc(ridx).spikein_reads
                 spikein_abundance_observed = self.G.data.subjects.iloc(ridx).spikein_abundance_observed
                 times = self.G.data.subjects.iloc(ridx).times
-                spikein_abundance_observed = [spikein_abundance_observed[x] for x in times]
-                spikein_abundance_observed = np.array(spikein_abundance_observed)
 
                 # Init the latent spikein values
-                spikein_latent_x = spikein_abundance_observed.copy()
-                qpcr_log_measurements = None 
-                spikein_abundance_scale = 1.0 # TODO DEM 
-
-                # Make spikein_latent_x the same size as self.x, and set the 
-                # data at known times, referring to "essential_times" for 
-                # indexing. Interpolate the data between.
-                spikein_latent_x = np.interp( # REDO OCT12
-                    x=essential_timepoints,
-                    xp=times,
-                    fp=spikein_latent_x,
-                )
-                spikein_abundance_observed = spikein_latent_x.copy() # REDO OCT12
-
-                spikein_read_vals = [spikein_reads[t][0] for t in times] # REDO OCT12
-
-                spikein_read_vals = np.interp( # REDO OCT12
-                    x=essential_timepoints,
-                    xp=times,
-                    fp=spikein_read_vals,
-                )
-                spikein_reads = dict(zip(essential_timepoints, spikein_read_vals)) # REDO OCT12
+                spikein_latent_x = np.ones(self.x[ridx].value.shape[1]) *  spikein_abundance_observed 
+                qpcr_log_measurements = None
 
             else:
                 raise NotImplementedError("TODO raise proper error")
@@ -2871,7 +2858,6 @@ class FilteringLogMP(pl.graph.Node):
                 spikein_latent_x = spikein_latent_x,
                 spikein_reads = spikein_reads,
                 spikein_abundance_observed = spikein_abundance_observed,
-                spikein_abundance_scale=spikein_abundance_scale,
                 )
 
             if self.mp == 'debug':
@@ -3122,7 +3108,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         pert_starts: np.ndarray, pert_ends: np.ndarray, ridx: int, subjname: str,
         h5py_xname: str, target_acceptance_rate: float, zero_inflation_transition_policy: Any,
         spikein_latent_x: Any, spikein_reads: Any, spikein_abundance_observed: Any,
-        spikein_abundance_scale = 1):
+        ):
         '''Initialize the object at the beginning of the inference
 
         n_o = Number of Taxa
@@ -3210,11 +3196,16 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.x = x
 
         if spikein_latent_x is not None:
-            self.spikein_latent_x = spikein_latent_x.flatten() * np.random.normal(1, 0.1, len(spikein_latent_x.flatten()))
+            ##############################
+            # SPIKEIN INITIALIZATION
+            ##############################
+            init_noise = spikein_abundance_observed * np.random.normal(0, 0.01, len(spikein_latent_x.flatten()))
+            self.spikein_latent_x = 10. + spikein_latent_x.flatten() + init_noise
+            self.spikein_latent_x[self.spikein_latent_x < 0.01] = 0.01
+            
             self.log_spikein_latent_x = np.log(self.spikein_latent_x)
             self.spikein_reads = spikein_reads
             self.spikein_abundance_observed = spikein_abundance_observed
-            self.spikein_abundance_scale = spikein_abundance_scale
 
         # Get the perturbations for this subject
         if self.there_are_perturbations:
@@ -3232,11 +3223,15 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.sample_iter = 0
         self.n_data_points = self.x.shape[0] * self.x.shape[1]
 
-        # latent state
+        ##############################
+        # INITIALIZE TOTAL ABUNDANCE
+        ##############################
         self.sum_q = np.sum(self.x, axis=0)
 
+        ############################################################
+        # UPDATE TOTAL ABUNDANCE WITH SPIKE
+        ############################################################
         if spikein_latent_x is not None:
-            # print("DEM SUM Q", self.sum_q.shape, self.spikein_latent_x.shape)
             self.sum_q += self.spikein_latent_x
 
         self.trace_iter = 0
@@ -3258,11 +3253,16 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         else:
             self.data_loglik = self.data_loglik_wo_intermediates
 
-        # Reads
+        ##############################
+        # INITIALIZE READ DEPTHS
+        ##############################        
         self.read_depths = {}
         for t in self.reads:
             self.read_depths[t] = float(np.sum(self.reads[t]))
-        
+
+        ############################################################
+        # UPDATE READ DEPTHS TO INCLUDE SPIKE-IN
+        ############################################################ 
         if self.calculate_spikein_loglik:
             for t in self.reads:
                 self.read_depths[t] += float(self.spikein_reads[t])
@@ -3401,9 +3401,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             self.qpcr_stds = np.sqrt(qpcr_variances[self.ridx])
             self.qpcr_stds_d = {}
 
-        if self.calculate_spikein_loglik:
-            self.spikein_std = np.sqrt(self.spikein_abundance_scale)
-
         if zero_inflation_data is not None:
             self.zero_inflation_data = zero_inflation_data[self.ridx]
         else:
@@ -3417,6 +3414,11 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             self.growth_rate_non_pert = growth.ravel()
             self.growth_rate_on_pert = growth.reshape(-1,1) * (1 + perturbations)
 
+        ##############################
+        # PREPARE FOR TAXA ITERATION
+        # ADD 1 TO N_TAXA FOR SPIKE
+        ##############################
+
         # Go through each randomly Taxa and go in time order
         if self.calculate_spikein_loglik:
             n_permute = self.n_taxa + 1
@@ -3429,6 +3431,9 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         # print('X STARTOFLOOP', np.any(np.isnan(self.x)), self.x.min(), self.x.max())
 
         for oidx in oidxs:
+            ##############################
+            # REGULAR TAXA
+            ##############################
             if oidx < self.n_taxa:
                 # Set the necessary global parameters
                 self.oidx = oidx
@@ -3437,8 +3442,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 self.curr_interactions = interactions[oidx, :] # omit and make it make sense
                 self.curr_self_interaction = self_interactions[oidx]
                 # self.curr_zero_inflation = self.zero_inflation[oidx, :]
-                if self.calculate_spikein_loglik:
-                    self.curr_spikein_std = self.spikein_std
 
                 if self.pv_global:
                     self.curr_pv_std = self.pv_std
@@ -3483,18 +3486,12 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 # if self.sample_iter == 4:
                 # sys.exit()
 
+            ##############################
+            # SPIKE-IN TAXA
+            ##############################
             elif oidx == self.n_taxa:
-                # The spikein taxa.
-                self.oidx = oidx
-                self.curr_x = self.spikein_latent_x
-                self.curr_logx = self.log_spikein_latent_x
-
-                self.curr_spikein_std = self.spikein_std
-
-                if self.pv_global:
-                    self.curr_pv_std = self.pv_std
-                else:
-                    raise NotImplementedError("No self.pv_std[oidx] for spike in")
+                self.curr_spikein_x = self.spikein_latent_x
+                self.curr_spikein_logx = self.log_spikein_latent_x
 
                 # Set for all timepoints
                 for tidx in range(0, self.n_timepoints):
@@ -3502,12 +3499,16 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                     self.tidx = tidx
                     self.set_attrs_for_timepoint_spikein()
 
-
-                    # Run single update
-                    self.update_single_spikein()
+                    if hasattr(self, 'curr_spikein_reads'):
+                        # Run single update
+                        self.update_single_spikein()
 
             else:
                 raise Exception("Check oidx")
+
+        
+        # self._recalculate_sum_q()
+        # print('log sum_q', np.log(self.sum_q.mean()))
 
         self.sample_iter += 1
         if self.add_trace:
@@ -3520,7 +3521,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.next_tidx = self.tidx+1
         self.forward_growth_rate = self.master_growth_rate[self.oidx]
         self.reverse_growth_rate = self.master_growth_rate[self.oidx]
-        self.spikein_oidx_flag = False
 
         if self.there_are_intermediate_timepoints:
             if not self.is_intermediate_timepoint[self.times[self.tidx]]:
@@ -3560,54 +3560,21 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 self.reverse_growth_rate = self.forward_growth_rate
 
     def set_attrs_for_timepoint_spikein(self):
-        # self.prev_tidx = None 
-        # self.next_tidx = None 
-        # self.forward_growth_rate = None
-        # self.reverse_growth_rate = None
-
-        # if self.there_are_intermediate_timepoints:
-        #     if not self.is_intermediate_timepoint[self.times[self.tidx]]:
-        #         # It is not intermediate timepoints - we need to get the data
-        #         t = self.times[self.tidx]
-        #         self.curr_reads = self.spikein_reads[t]
-        #         self.curr_read_depth = self.read_depths[t] # These include self.spikein_reads[t]
-        #         self.curr_qpcr_log_measurements = None
-        #         self.curr_qpcr_std = None
-        # else:
         if self.there_are_intermediate_timepoints:
             if not self.is_intermediate_timepoint[self.times[self.tidx]]:
                 t = self.times[self.tidx]
-                self.curr_reads = self.spikein_reads[t]
-                self.curr_read_depth = self.read_depths[t] #+ self.spikein_reads[t] # These ALREADY include self.spikein_reads[t]
+                self.curr_spikein_reads = self.spikein_reads[t]
+                self.curr_spikein_read_depth = self.read_depths[t]
                 self.curr_qpcr_log_measurements = None
                 self.curr_qpcr_std = None
-                self.spikein_oidx_flag = True
+            
         else:
             t = self.times[self.tidx]
-            self.curr_reads = self.spikein_reads[t]
-            self.curr_read_depth = self.read_depths[t] #+ self.spikein_reads[t] # These ALREADY include self.spikein_reads[t]
+            self.curr_spikein_reads = self.spikein_reads[t]
+            self.curr_spikein_read_depth = self.read_depths[t]
             self.curr_qpcr_log_measurements = None
             self.curr_qpcr_std = None
-            self.spikein_oidx_flag = True
 
-        # # Set perturbation growth rates
-        # if self.there_are_perturbations:
-        #     if self.in_pert_transition[self.tidx]:
-        #         if self.fully_in_pert[self.tidx-1] != -1:
-        #             # If the previous time point is in the perturbation, that means
-        #             # we are going out of the perturbation
-        #             # self.forward_growth_rate = self.master_growth_rate[self.oidx]
-        #             pidx = None #self.fully_in_pert[self.tidx-1]
-        #             self.reverse_growth_rate = None
-        #         else:
-        #             # Else we are going into a perturbation
-        #             # self.reverse_growth_rate = self.master_growth_rate[self.oidx]
-        #             pidx = None #self.fully_in_pert[self.tidx+1]
-        #             self.forward_growth_rate = None
-        #     elif self.fully_in_pert[self.tidx] != -1:
-        #         pidx = self.fully_in_pert[self.tidx]
-        #         self.forward_growth_rate = None
-        #         self.reverse_growth_rate = None
 
     # @profile
     def update_single(self):
@@ -3701,48 +3668,46 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         try:
             logx_new = pl.random.misc.fast_sample_normal(
-                loc=self.curr_logx[tidx],
+                loc=self.curr_spikein_logx[tidx],
                 scale=self.proposal_std)
-            spikein_scale_new = pl.random.sics.sample(2.5, 1 * (2.5 - 2) / 2.5)
 
         except:
-            print('mu', self.curr_logx[tidx])
+            print('mu', self.curr_spikein_logx[tidx])
             print('std', self.proposal_std)
             raise
+
         x_new = np.exp(logx_new)
-        prev_logx_value = self.curr_logx[tidx]
-        prev_x_value = self.curr_x[tidx]
-        prev_spikein_std = self.curr_spikein_std
+        prev_logx_value = self.curr_spikein_logx[tidx]
+        prev_x_value = self.curr_spikein_x[tidx]
 
-        # l_old = self.data_loglik()
-        l_old = self.data_loglik_w_intermediates()
+        l_old = self.data_loglik_spikein()
 
-        self.curr_x[tidx] = x_new
-        self.curr_logx[tidx] = logx_new
-        self.curr_spikein_std = spikein_scale_new
+        self.curr_spikein_x[tidx] = x_new
+        self.curr_spikein_logx[tidx] = logx_new
 
         # self.sum_q was initialized as sum(x) + self.spikein_latent_x
-        # self.sum_q[tidx] = self.sum_q[tidx] - prev_x_value + x_new
+        self.sum_q[tidx] = self.sum_q[tidx] - prev_x_value + x_new
 
-        l_new = self.data_loglik_w_intermediates()
+        l_new = self.data_loglik_spikein()
         
         r_accept = l_new - l_old
 
         r = pl.random.misc.fast_sample_standard_uniform()
         if math.log(r) > r_accept:
-            # self.sum_q[tidx] = self.sum_q[tidx] + prev_x_value - x_new
-            self.curr_x[tidx] = prev_x_value
-            self.curr_logx[tidx] = prev_logx_value
-            self.curr_spikein_std = prev_spikein_std
+            # print('reject spikein')
+            self.sum_q[tidx] = self.sum_q[tidx] + prev_x_value - x_new
+            self.curr_spikein_x[tidx] = prev_x_value
+            self.curr_spikein_logx[tidx] = prev_logx_value
         else:
+            # print('accept spikein')
             self.spikein_latent_x[tidx] = x_new
             self.log_spikein_latent_x[tidx] = logx_new
-            self.acceptances += 1
-            self.total_acceptances += 1
-            self.n_accepted_iter += 1
+            # self.acceptances += 1
+            # self.total_acceptances += 1
+            # self.n_accepted_iter += 1
 
-        self.n_props_local += 1
-        self.n_props_total += 1
+        # self.n_props_local += 1
+        # self.n_props_total += 1
 
     def update_proposals(self):
         '''Update the proposal if necessary
@@ -3830,10 +3795,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         sum_q = self.sum_q[self.tidx]
         log_sum_q = math.log(sum_q)
         
-        if self.spikein_oidx_flag:
-            # Total abundance for timepoint tidx
-            sum_q = self.sum_q[self.tidx] + self.curr_x[self.tidx]
-
         rel = self.curr_x[self.tidx] / sum_q
 
         try:
@@ -3853,40 +3814,44 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             for qpcr_val in self.curr_qpcr_log_measurements:
                 a = pl.random.normal.logpdf(value=qpcr_val, loc=log_sum_q, scale=self.curr_qpcr_std)
                 qpcr += a
-            return negbin + qpcr
 
-        elif self.calculate_spikein_loglik:
-            spikein = pl.random.normal.logpdf(
-                value=np.log(self.spikein_abundance_observed[self.tidx]), 
-                loc=self.curr_logx[self.tidx],  
-                scale=2.5 #self.curr_spikein_std ## TODO change this later 3
-            )
-            return negbin + spikein
+        return negbin + qpcr
 
-    # def data_loglik_spikein(self):
-    #     """ Exp.
-    #     """
-    #     sum_q = self.sum_q[self.tidx] + self.spikein_latent_x[self.tidx]
-    #     rel = self.curr_x[self.tidx] / sum_q
+
+    def data_loglik_spikein(self):
+        """ Calculate spikein.
+        """
+        sum_q = self.sum_q[self.tidx]
         
-    #     # read_depth = self.curr_read_depth + self.spikein_reads[self.tidx]
+        rel = self.curr_spikein_x[self.tidx] / sum_q
 
-    #     # negbin = negbin_loglikelihood_MH_condensed(
-    #     #     k=self.spikein_reads[self.tidx],
-    #     #     m=read_depth * rel,
-    #     #     dispersion=self.a0/rel + self.a1)
+        try:
+            # Compute negative binomial log-pmf
+            negbin = negbin_loglikelihood_MH_condensed(
+                k=self.curr_spikein_reads,
+                m=self.curr_spikein_read_depth * rel,
+                dispersion=self.a0/rel + self.a1)
+        except:
+            negbin = negbin_loglikelihood_MH_condensed_not_fast(
+                k=self.curr_spikein_reads,
+                m=self.curr_spikein_read_depth * rel,
+                dispersion=self.a0/rel + self.a1)
         
-    #     negbin = negbin_loglikelihood_MH_condensed_not_fast(
-    #         k=self.curr_reads,
-    #         m=self.curr_read_depth * rel,
-    #         dispersion=self.a0/rel + self.a1)
-    
-    #     spikein = pl.random.normal.logpdf(
-    #         value=np.log(self.spikein_abundance_observed[self.tidx]), 
-    #         loc=self.log_spikein_latent_x[self.tidx],  
-    #         scale=0.00000001 ## TODO change this later
-    #     )
-    #     return negbin + spikein
+        spikein = 0
+        if self.calculate_spikein_loglik:
+            spikein += pl.random.normal.logpdf(
+                value=np.log(self.spikein_abundance_observed),
+                loc=self.log_spikein_latent_x[self.tidx],
+                scale=1e-2,
+                )
+        return negbin + spikein
+
+    def _recalculate_sum_q(self):
+        """Recalculate sum_q from scratch to prevent numerical drift."""
+        self.sum_q = np.sum(self.x, axis=0)
+        if hasattr(self, 'spikein_latent_x') and self.spikein_latent_x is not None:
+            self.sum_q += self.spikein_latent_x
+        return self.sum_q
 
 
     def compute_dynamics(self, tidx: int, Axj: np.ndarray, a1: np.ndarray) -> np.ndarray:
@@ -3999,6 +3964,73 @@ class ZeroInflation(pl.graph.Node):
                             turn_off.append((ridx, tidx, oidx))
                         else:
                             turn_on.append((ridx, tidx, oidx))
+
+        # elif value_option == "custom2":
+        #     if self.zero_inflation_data_path is None:
+        #         raise ValueError("Need to specify `zero_inflation_data_path` to use option `custom` for zero-inflation")
+
+        #     # read in file
+        #     logger.debug(f"Using time masking file {self.zero_inflation_data_path}")
+        #     time_mask = pd.read_csv(self.zero_inflation_data_path, index_col=0,  sep="\t")
+
+        #     # Set everything to on except for specified taxa before specified time, for each subject
+        #     # assuming times same for all subjects
+        #     self.value = []
+        #     for ridx in range(self.G.data.n_replicates):
+        #         n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
+        #         self.value.append(np.ones(
+        #             shape=(len(self.G.data.taxa), n_timepoints), dtype=bool))
+
+        #     turn_off = []
+        #     turn_on = []
+        #     for ridx in range(self.G.data.n_replicates):
+        #         for otu, row in time_mask.iterrows():
+        #             t_intro = row['time']
+        #             oidx = self.G.data.taxa[otu].idx
+        #             for tidx, t in enumerate(self.G.data.times[ridx]):
+        #                 if t == t_intro:
+        #                     self.value[ridx][oidx, tidx] = False
+        #                     turn_off.append((ridx, tidx, oidx))
+        #                     # print('**'*50)
+        #                     # print('TURN OFF', ridx, tidx, oidx)
+        #                     # print('**'*50)
+        #                 else:
+        #                     turn_on.append((ridx, tidx, oidx))
+
+
+        # elif value_option == "custom_zeros_dan":
+        #     if self.zero_inflation_data_path is None:
+        #         raise ValueError("Need to specify `zero_inflation_data_path` to use option `custom` for zero-inflation")
+
+        #     # read in file
+        #     logger.debug(f"Using time masking file {self.zero_inflation_data_path}")
+        #     time_mask = pd.read_csv(self.zero_inflation_data_path, index_col=0,  sep="\t")
+
+        #     # Set everything to on except for specified taxa before specified time, for each subject
+        #     # assuming times same for all subjects
+        #     self.value = []
+        #     for ridx in range(self.G.data.n_replicates):
+        #         n_timepoints = self.G.data.n_timepoints_for_replicate[ridx]
+        #         self.value.append(np.ones(
+        #             shape=(len(self.G.data.taxa), n_timepoints), dtype=bool))
+
+        #     turn_off = []
+        #     turn_on = []
+        #     for ridx in range(self.G.data.n_replicates):
+        #         for otu, row in time_mask.iterrows():
+        #             t_omit = row['time']
+        #             ridx2 = row['subject']
+        #             oidx = self.G.data.taxa[otu].idx
+        #             for tidx, t in enumerate(self.G.data.times[ridx]):
+        #                 if t == t_omit:
+        #                     if ridx == ridx2:
+        #                         self.value[ridx][oidx, tidx] = False
+        #                         turn_off.append((ridx, tidx, oidx))
+        #                         print('**'*50)
+        #                         print('TURN OFF', ridx, tidx, oidx)
+        #                         print('**'*50)
+        #                 else:
+        #                     turn_on.append((ridx, tidx, oidx))
 
         elif value_option == "custom_dan":
             """ THIS IS SAME AS ABOVE BUT JUST FOR TESTING DANS METHOD
@@ -5168,7 +5200,8 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         # Perform the marginalization
         try:
-            beta_logdet = log_det(beta_cov, self)
+            # beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -5219,6 +5252,10 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         ll_on = d_on + self.prior_ll_on
         ll_off = d_off + self.prior_ll_off
+
+        # print('DEM' * 50)
+        # print(d_on, self.prior_ll_on)
+        # print(d_off, self.prior_ll_off)
 
         dd = [ll_off, ll_on]
         res = bool(sample_categorical_log(dd))
@@ -5281,7 +5318,8 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         bEb = (beta_mean.T @ beta_prec @ beta_mean)[0,0]
         try:
-            beta_logdet = log_det(beta_cov, self)
+            # beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -8244,7 +8282,8 @@ class PerturbationIndicators(pl.Node):
 
         bEb = (beta_mean.T @ beta_prec @ beta_mean)[0,0]
         try:
-            beta_logdet = log_det(beta_cov, self)
+            # beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -8360,7 +8399,8 @@ class PerturbationIndicators(pl.Node):
 
         # Perform the marginalization
         try:
-            beta_logdet = log_det(beta_cov, self)
+            # beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
