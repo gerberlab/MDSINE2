@@ -28,10 +28,12 @@ from mdsine2.names import STRNAMES
 
 
 class InferenceCLI(CLIModule):
+    """ Run MCMC inference using MDSINE2 model. """
+
     def __init__(self, subcommand="infer"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):

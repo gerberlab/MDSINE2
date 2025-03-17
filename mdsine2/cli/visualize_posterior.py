@@ -20,10 +20,11 @@ from .base import CLIModule
 
 
 class PosteriorVisualizationCLI(CLIModule):
+    """ Visualize the posterior distribution of a MDSINE2 Markov Chain. """
     def __init__(self, subcommand="visualize-posterior"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):

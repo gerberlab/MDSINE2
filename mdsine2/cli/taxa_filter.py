@@ -27,10 +27,11 @@ from mdsine2.logger import logger
 
 
 class TaxaFilterCLI(CLIModule):
+    """ Given a MDSINE2 study file, run filtering on it. Produces a new pickle file. """
     def __init__(self, subcommand="filter"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):

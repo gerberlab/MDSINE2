@@ -32,6 +32,4 @@ def main():
         ExtractPosteriorCLI(subcommand="extract-posterior")
     ]
 
-    dispatch({
-        cli.subcommand: cli for cli in clis
-    })
+    dispatch(clis)

@@ -1,7 +1,3 @@
-"""
-Run keystoneness analysis using the specified MDSINE2 output.
-"""
-
 import argparse
 import csv
 from pathlib import Path
@@ -13,10 +9,11 @@ from mdsine2.logger import logger
 
 
 class ExtractAbundancesCLI(CLIModule):
+    """ A command-line utility tool for extracting a particular time index's absolute abundance profile from an MDSINE2 pickle file. """
     def __init__(self, subcommand="extract-abundances"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):

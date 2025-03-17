@@ -16,10 +16,11 @@ from .base import CLIModule
 
 
 class NegBinVisualizationCLI(CLIModule):
+    """ Visualize negative binomial calibration inference (infer_negbin) output. """
     def __init__(self, subcommand="visualize-negbin"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):

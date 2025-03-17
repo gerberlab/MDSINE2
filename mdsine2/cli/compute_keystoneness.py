@@ -31,10 +31,11 @@ matplotlib.rcParams['ps.fonttype'] = 42
 
 
 class KeystonenessCLI(CLIModule):
+    """ Run keystoneness analysis using specified MDSINE2 MCMC output. """
     def __init__(self, subcommand="evaluate-keystoneness"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):

@@ -8,10 +8,11 @@ from .base import CLIModule
 
 
 class InteractionToCytoscapeCLI(CLIModule):
+    """ Write interactions into a cytoscape-readable network. """
     def __init__(self, subcommand="interaction-to-cytoscape"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):

@@ -45,10 +45,13 @@ from mdsine2.cli.helpers.fwsim_helper import run_forward_sim, plot_fwsim_compari
 
 
 class ForwardSimulationCLI(CLIModule):
+    """
+    Forward simulate gLV models given by MDSINE2 MCMC output.
+    """
     def __init__(self, subcommand="forward-simulate"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):

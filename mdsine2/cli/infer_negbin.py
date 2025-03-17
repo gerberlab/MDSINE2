@@ -13,10 +13,11 @@ from .base import CLIModule
 
 
 class NegBinCLI(CLIModule):
+    """ Perform inference using the calibration model, for tuning MDSINE2 hyperparameters. """
     def __init__(self, subcommand="infer-negbin"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):
