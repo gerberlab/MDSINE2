@@ -5,25 +5,25 @@ MDSINE2 extends the generalized Lotka-Volterra (gLV) model to include automatica
 
 There is an [associated repo](https://github.com/gerberlab/MDSINE2_Paper) for the [pre-print](https://doi.org/10.1101/2021.12.14.469105) that introduces and applies this model to a densely sampled gnotobiotic time series of healthy and dysbiotic microbiomes along with [google colab tutorials](https://github.com/gerberlab/MDSINE2_Paper/tree/master/google_colab) exploring the model, data, and paper results. 
 
-- Main Paper (Pre-print): ["Intrinsic instability of the dysbiotic microbiome revealed through dynamical systems inference at scale"](https://doi.org/10.1101/2021.12.14.469105)<br />
-  <a href="https://doi.org/10.1101/2021.12.14.469105"><img alt="" src="https://img.shields.io/badge/bioRχiv%20DOI-10.1101/2021.12.14.46910-blue?style=flat"/></a>
+- Main Paper (Pre-print): ["Intrinsic instability of the dysbiotic microbiome revealed through dynamical systems inference at scale"](https://doi.org/10.1101/2021.12.14.469105 )<br />
+  <a href="https://doi.org/10.1101/2021.12.14.469105"><img alt="" src="https://img.shields.io/badge/bioRχiv%20DOI-10.1101/2021.12.14.469105-blue?style=flat"/></a>
 - Associated GitHub repo for the paper: ["MDSINE2_Paper"](https://github.com/gerberlab/MDSINE2_Paper)<br />
   <a href="https://github.com/gerberlab/MDSINE2_Paper"><img alt="" src="https://img.shields.io/badge/GitHub-MDSINE2%20Paper-blue?style=flat&logo=github"/></a>
 - Folder containing [tutorials as notebooks exploring the model, data and paper](https://github.com/gerberlab/MDSINE2_Paper/tree/main/tutorials) that can be opened directly in Google Colab<br />
 <a href="https://github.com/gerberlab/MDSINE2_Paper/tree/main/tutorials"><img alt="" src="https://img.shields.io/badge/Jupyter Notebooks-MDSINE2%20Tutorials-blue?style=flat&logo=jupyter"/></a>
-- The mathematics behind this model are detailed in the [supplemental text for the pre-print](https://www.biorxiv.org/content/biorxiv/early/2021/12/16/2021.12.14.469105/DC1/embed/media-1.pdf)<br />
-<a href="https://www.biorxiv.org/content/biorxiv/early/2021/12/16/2021.12.14.469105/DC1/embed/media-1.pdf"><img alt="" src="https://img.shields.io/badge/PDF-MDSINE2%20Mathematics-blue?style=flat&logo=adobeacrobatreader"/></a>
+- The mathematics behind this model are detailed in the [supplemental text for the pre-print](https://www.biorxiv.org/content/biorxiv/early/2023/06/15/2021.12.14.469105/DC1/embed/media-1.pdf)<br />
+<a href="https://www.biorxiv.org/content/biorxiv/early/2023/06/15/2021.12.14.469105/DC1/embed/media-1.pdf"><img alt="" src="https://img.shields.io/badge/PDF-MDSINE2%20Mathematics-blue?style=flat&logo=adobeacrobatreader"/></a>
 
 ### References
 Pre-print
 ```bibtex
 @article {Gibson2021.12.14.469105,
 	author = {Gibson, Travis E and Kim, Younhun and Acharya, Sawal and Kaplan, David E and DiBenedetto, Nicholas and Lavin, Richard and Berger, Bonnie and Allegretti, Jessica R and Bry, Lynn and Gerber, Georg K},
-	title = {Intrinsic instability of the dysbiotic microbiome revealed through dynamical systems inference at scale},
-	year = {2021},
+	title = {Microbial dynamics inference at ecosystem-scale},
+	year = {2023},
 	doi = {10.1101/2021.12.14.469105},
 	publisher = {Cold Spring Harbor Laboratory},
-	URL = {https://www.biorxiv.org/content/early/2021/12/16/2021.12.14.469105},
+	URL = {https://www.biorxiv.org/content/early/2021/12/16/2021.12.14.469105v2},
 	journal = {bioRxiv}}
 ```
 ICML conference paper 
