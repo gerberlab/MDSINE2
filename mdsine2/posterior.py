@@ -2838,8 +2838,11 @@ class FilteringLogMP(pl.graph.Node):
                 there_are_intermediate_timepoints=True,
                 there_are_perturbations=self._there_are_perturbations,
                 pv_global=self.G[STRNAMES.PROCESSVAR].global_variance,
-                x_prior_mean=np.log(1e7),
+                # x_prior_mean=np.log(1e7),
+                x_prior_mean=np.log(0.1),
                 x_prior_std=1e10,
+                # x_prior_mean=np.log(self.x[ridx].value).mean(), # This should really just be centered around the measurement, per taxa
+                # x_prior_std=2,
                 tune=tune[1],
                 delay=delay,
                 end_iter=tune[0],
@@ -3040,6 +3043,842 @@ class FilteringLogMP(pl.graph.Node):
                 taxa_formatter=taxa_formatter)
 
 
+# class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
+#     '''This performs filtering on a multiprocessing level. We send the
+#     other parameters of the model and return the filtered `x` and values.
+#     With multiprocessing, this class has ~91% efficiency. Additionally, the code
+#     in this class is optimized to be ~20X faster than the code in `Filtering`. This
+#     assumes we have the log model.
+
+#     It might seem unneccessary to have so many local attributes, but it speeds up
+#     the inference considerably if we index a value from an array once and store it
+#     as a float instead of repeatedly indexing the array - the difference in
+#     reality is super small but we do this so often that it adds up to ~40% speedup
+#     as supposed to not doing it - so we do this as often as possible - This speedup
+#     is even greater for indexing keys of dictionaries and getting parameters of objects.
+
+#     General efficiency speedups
+#     ---------------------------
+#     All of these are done relative to a non-optimized filtering implementation:
+#     - Specialized sampling and logpdf functions. About 95% faster than
+#       scipy or numpy functions. All of these add up to a ~35% speed up
+#     - Explicit function definitions:
+#       instead of doing `self.prior.logpdf(...)`, we do
+#       `pl.random.normal.logpdf(...)`, about a ~10% overall speedup
+#     - Precomputation of values so that the least amout of computation
+#       is done on a data level - All of these add up to a ~25% speed up
+#     Benchmarked on a MacPro
+
+#     Non/trivial efficiency speedups w.r.t. non-multiprocessed filtering
+#     -------------------------------------------------------------------
+#     All of the speed ups are done relative to the current implementation
+#     in non-multiprocessed filtering.
+#     - Whenever possible we replace a 2D variable like `self.x` with a
+#       `curr_x`, which is 1D, because indexing a 1D array is 10-20% faster
+#       than a 2D array. All of these add up to a ~8% speed up
+#     - We only every compute the forward dynamics (not the reverse), because
+#       we can use the forward of the previous timepoint as the reverse for
+#       the next timepoint. This is about 45% faster and adds up to a ~40%
+#       speedup.
+#     - Whenever possible, we replace a dictionary like `read_depths`
+#       with a float because indexing a dict is 12-20% slower than a 1D
+#       array. All these add up to a ~7% speed up
+#     - We precompute AS MUCH AS POSSIBLE in `update` and in `initialize`,
+#       even simple this as `self.curr_tidx_minus_1`: all of these add up
+#       to about ~5% speedup
+#     - If an attribute of a class is being referenced more than once in
+#       a subroutine, we "get" it by making it a local variable. Example:
+#       `tidx = self.tidx`. This has about a 5% speed up PER ADDITIONAL
+#       CALL within the subroutine. All of these add up to ~2.5% speed up.
+#     - If an indexed value gets indexed more than once within a subroutine,
+#       we "get" the value by making it a local variable. All of these
+#       add up to ~4% speed up.
+#     - We "get" all of the means and stds of the qPCR data-structures so we
+#       do not reference an object. This is about 22% faster and adds up
+#       to a ~3% speed up.
+#     Benchmarked on a MacPro
+#     '''
+#     def __init__(self):
+#         '''Set all local variables to None
+#         '''
+#         return
+
+#     def initialize(self, times: np.ndarray, qpcr_log_measurements: Dict[float, np.ndarray],
+#         reads: Dict[float, np.ndarray], there_are_intermediate_timepoints: bool,
+#         there_are_perturbations: bool, pv_global: bool, x_prior_mean: Union[float, int],
+#         x_prior_std: Union[float, int], tune: int, delay: int, end_iter: int, proposal_init_scale: float,
+#         a0: float, a1: float, x: np.ndarray, calculate_qpcr_loglik: bool, calculate_spikein_loglik: bool,
+#         pert_starts: np.ndarray, pert_ends: np.ndarray, ridx: int, subjname: str,
+#         h5py_xname: str, target_acceptance_rate: float, zero_inflation_transition_policy: Any,
+#         spikein_latent_x: Any, spikein_reads: Any, spikein_abundance_observed: Any,
+#         ):
+#         '''Initialize the object at the beginning of the inference
+
+#         n_o = Number of Taxa
+#         n_gT = Number of given time points
+#         n_T = Total number of time points, including intermediate
+#         n_P = Number of Perturbations
+
+#         Parameters
+#         ----------
+#         times : np.array((n_T, ))
+#             Times for each of the time points
+#         qpcr_log_measurements : dict(t -> np.ndarray(float))
+#             These are the qPCR observations for every timepoint in log space.
+#         reads : dict (float -> np.ndarray((n_o, )))
+#             The counts for each of the given timepoints. Each value is an
+#             array for the counts for each of the Taxa
+#         there_are_intermediate_timepoints : bool
+#             If True, then there are intermediate timepoints, else there are only
+#             given timepoints
+#         there_are_perturbations : bool
+#             If True, that means there are perturbations, else there are no
+#             perturbations
+#         pv_global : bool
+#             If True, it means the process variance is is global for each Taxa. If
+#             False it means that there is a separate `pv` for each Taxa
+#         pv : float, np.ndarray
+#             This is the process variance value. This is a float if `pv_global` is True
+#             and it is an array if `pv_global` is False.
+#         x_prior_mean, x_prior_std : numeric
+#             This is the prior mean and std for `x` used when sampling the reverse for
+#             the first timepoint
+#         tune : int
+#             How often we should update the proposal for each Taxa
+#         delay : int
+#             How many MCMC iterations we should delay the start of updating
+#         end_iter : int
+#             What iteration we should stop updating the proposal
+#         proposal_init_scale : float
+#             Scale to multiply the initial covariance of the poposal
+#         a0, a1 : floats
+#             These are the negative binomial dispersion parameters that specify how
+#             much noise there is in the counts
+#         x : np.ndarray((n_o, n_T))
+#             This is the x initialization
+#         pert_starts, pert_ends : np.ndarray((n_P, ))
+#             The starts and ends for each one of the perturbations
+#         ridx : int
+#             This is the replicate index that this object corresponds to
+#         subjname : str
+#             This is the name of the replicate
+#         h5py_xname : str
+#             This is the name for the x in the h5py object
+#         target_acceptance_rate : float
+#             This is the target acceptance rate for each point
+#         calculate_qpcr_loglik : bool
+#             If True, calculate the loglikelihood of the qPCR measurements during the proposal
+#         zero_inflation_transition_policy : str
+#             Zero inflation policy
+#         '''
+#         self.subjname = subjname
+#         self.h5py_xname = h5py_xname
+#         self.target_acceptance_rate = target_acceptance_rate
+#         self.zero_inflation_transition_policy = zero_inflation_transition_policy
+
+#         self.times = times
+#         self.qpcr_log_measurements = qpcr_log_measurements
+#         self.reads = reads
+#         self.there_are_intermediate_timepoints = there_are_intermediate_timepoints
+#         self.there_are_perturbations = there_are_perturbations
+#         self.pv_global = pv_global
+#         if not pv_global:
+#             raise TypeError('Filtering with MP not implemented for non global process variance')
+#         self.x_prior_mean = x_prior_mean
+#         self.x_prior_std = x_prior_std
+#         self.tune = tune
+#         self.delay = 0
+#         self.end_iter = end_iter
+#         self.proposal_init_scale = proposal_init_scale
+#         self.a0 = a0
+#         self.a1 = a1
+#         self.n_taxa = x.shape[0]
+#         self.n_timepoints = len(times)
+#         self.n_timepoints_minus_1 = len(times)-1
+#         self.logx = np.log(x)
+#         self.x = x
+
+#         if spikein_latent_x is not None:
+#             ##############################
+#             # SPIKEIN INITIALIZATION
+#             ##############################
+#             init_noise = spikein_abundance_observed * np.random.normal(0, 0.000001, len(spikein_latent_x.flatten()))
+#             self.spikein_latent_x = spikein_latent_x.flatten() + init_noise
+#             self.spikein_latent_x[self.spikein_latent_x < 0.01] = 0.01
+            
+#             self.log_spikein_latent_x = np.log(self.spikein_latent_x)
+#             self.spikein_reads = spikein_reads
+#             self.spikein_abundance_observed = spikein_abundance_observed
+
+#         # Get the perturbations for this subject
+#         if self.there_are_perturbations:
+#             self.pert_starts = []
+#             self.pert_ends = []
+#             for pidx in range(len(pert_starts)):
+#                 self.pert_starts.append(pert_starts[pidx][subjname])
+#                 self.pert_ends.append(pert_ends[pidx][subjname])
+
+#         self.total_n_points = self.x.shape[0] * self.x.shape[1]
+#         self.ridx = ridx
+#         self.calculate_qpcr_loglik = calculate_qpcr_loglik
+#         self.calculate_spikein_loglik = calculate_spikein_loglik
+
+#         self.sample_iter = 0
+#         self.n_data_points = self.x.shape[0] * self.x.shape[1]
+
+#         ##############################
+#         # INITIALIZE TOTAL ABUNDANCE
+#         ##############################
+#         self.sum_q = np.sum(self.x, axis=0)
+
+#         ############################################################
+#         # UPDATE TOTAL ABUNDANCE WITH SPIKE
+#         ############################################################
+#         if spikein_latent_x is not None:
+#             self.sum_q += self.spikein_latent_x
+
+#         self.trace_iter = 0
+
+#         # proposal
+#         self.proposal_std = np.log(1.5) #np.log(3)
+#         self.acceptances = 0
+#         self.n_props_total = 0
+#         self.n_props_local = 0
+#         self.total_acceptances = 0
+#         self.add_trace = True
+
+#         # Intermediate timepoints
+#         if self.there_are_intermediate_timepoints:
+#             self.is_intermediate_timepoint = {}
+#             self.data_loglik = self.data_loglik_w_intermediates
+#             for t in self.times:
+#                 self.is_intermediate_timepoint[t] = t not in self.reads
+#         else:
+#             self.data_loglik = self.data_loglik_wo_intermediates
+
+#         ##############################
+#         # INITIALIZE READ DEPTHS
+#         ##############################        
+#         self.read_depths = {}
+#         for t in self.reads:
+#             self.read_depths[t] = float(np.sum(self.reads[t]))
+
+#         ############################################################
+#         # UPDATE READ DEPTHS TO INCLUDE SPIKE-IN
+#         ############################################################ 
+#         if self.calculate_spikein_loglik:
+#             for t in self.reads:
+#                 self.read_depths[t] += float(self.spikein_reads[t])
+        
+#         self.dts = np.zeros(self.n_timepoints_minus_1)
+#         self.sqrt_dts = np.zeros(self.n_timepoints_minus_1)
+#         for k in range(self.n_timepoints_minus_1):
+#             self.dts[k] = self.times[k+1] - self.times[k]
+#             self.sqrt_dts[k] = np.sqrt(self.dts[k])
+#         self.t2tidx = {}
+#         for tidx, t in enumerate(self.times):
+#             self.t2tidx[t] = tidx
+
+#         self.cnt_accepted_times = np.zeros(len(self.times))
+
+#         # Perturbations
+#         # -------------
+#         # in_pert_transition : np.ndarray(dtype=bool)
+#         #   This is a bool array where if it is a true it means that the
+#         #   forward and reverse growth rates are different
+#         # fully_in_pert : np.ndarray(dtype=int)
+#         #   This is an int-array where it tells you which perturbation you are fully in
+#         #   (the forward and reverse growth rates are the same but not the default).
+#         #   If there is no perturbation then the value is -1. If it is not -1, then the
+#         #   number corresponds to what perturbation index you are in.
+#         #
+#         # Edge cases
+#         # ----------
+#         #   * missing data for start
+#         #       There could be a situation where there was no sample collection
+#         #       on the day that they started a perturbation. In this case we
+#         #       assume that the next time point is the `start` of the perturbation.
+#         #       i.e. the next time point is the perturbation transition.
+#         #   * missing data for end
+#         #       There could be a situation where no sample was collected when the
+#         #       perturbation ended. In this case we assume that the pervious time
+#         #       point was the end of the perturbation.
+#         if self.there_are_perturbations:
+#             self.in_pert_transition = np.zeros(self.n_timepoints, dtype=bool)
+#             self.fully_in_pert = np.ones(self.n_timepoints, dtype=int) * -1
+#             for pidx, t in enumerate(self.pert_starts):
+#                 if t == self.times[-1] or t == self.times[0]:
+#                     raise ValueError('The code right now does not support either a perturbation that ' \
+#                         'started on the first day or ended on the last day. The code where this is ' \
+#                         'incompatible is when we checking if we are in a perturbation transition')
+#                 if t > np.max(self.times):
+#                     continue
+#                 if t not in self.t2tidx:
+#                     # Use the next time point
+#                     tidx = np.searchsorted(self.times, t)
+#                 else:
+#                     tidx = self.t2tidx[t]
+#                 self.in_pert_transition[tidx] = True
+#             for pidx, t in enumerate(self.pert_ends):
+#                 if t == self.times[-1] or t == self.times[0]:
+#                     raise ValueError('The code right now does not support either a perturbation that ' \
+#                         'started on the first day or ended on the last day. The code where this is ' \
+#                         'incompatible is when we checking if we are in a perturbation transition')
+#                 if t < np.min(self.times) or t > np.max(self.times):
+#                     continue
+#                 if t not in self.t2tidx:
+#                     # Use the previous time point
+#                     tidx = np.searchsorted(self.times, t) - 1
+#                 else:
+#                     tidx = self.t2tidx[t]
+#                 self.in_pert_transition[tidx] = True
+
+#             # check if anything is weird
+#             # if np.sum(self.in_pert_transition) % 2 != 0:
+#             #     raise ValueError('The number of in_pert_transition periods must be even ({})' \
+#             #         '. There is either something wrong with the data (start and end day are ' \
+#             #         'the same) or with the algorithm ({})'.format(
+#             #             np.sum(self.in_pert_transition),
+#             #             self.in_pert_transition))
+
+#             # Make the fully in perturbation times
+#             for pidx in range(len(self.pert_ends)):
+#                 try:
+#                     start_tidx = self.t2tidx[self.pert_starts[pidx]] + 1
+#                     end_tidx = self.t2tidx[self.pert_ends[pidx]]
+#                 except:
+#                     # This means there is a missing datapoint at either the
+#                     # start or end of the perturbation
+#                     start_t = self.pert_starts[pidx]
+#                     end_t = self.pert_ends[pidx]
+#                     start_tidx = np.searchsorted(self.times, start_t)
+#                     end_tidx = np.searchsorted(self.times, end_t) - 1
+
+#                 self.fully_in_pert[start_tidx:end_tidx] = pidx
+
+#     # @profile
+#     def persistent_run(self, growth: np.ndarray, self_interactions: np.ndarray,
+#         pv: Union[float, int, np.ndarray], interactions: np.ndarray,
+#         perturbations: np.ndarray, qpcr_variances: np.ndarray,
+#         zero_inflation_data: Any) -> Tuple[int, np.ndarray, float]:
+#         '''Run an update of the values for a single gibbs step for all of the data points
+#         in this replicate
+
+#         Parameters
+#         ----------
+#         growth : np.ndarray((n_taxa, ))
+#             Growth rates for each Taxa
+#         self_interactions : np.ndarray((n_taxa, ))
+#             Self-interactions for each Taxa
+#         pv : numeric, np.ndarray
+#             This is the process variance
+#         interactions : np.ndarray((n_taxa, n_taxa))
+#             These are the Taxa-Taxa interactions
+#         perturbations : np.ndarray((n_perturbations, n_taxa))
+#             Perturbation values in the right perturbation order, per Taxa
+#         zero_inflation : np.ndarray
+#             These are the points that are delibertly pushed down to zero
+#         qpcr_variances : np.ndarray
+#             These are the sampled qPCR variances as an array - they are in
+#             time order
+
+#         Returns
+#         -------
+#         (int, np.ndarray, float)
+#             1 This is the replicate index
+#             2 This is the updated latent state for logx
+#             3 This is the acceptance rate for this past update.
+#         '''
+#         self.master_growth_rate = growth
+
+#         if self.sample_iter < self.delay:
+#             self.sample_iter += 1
+#             return self.ridx, self.x, np.nan
+
+#         self.update_proposals()
+#         self.n_accepted_iter = 0
+#         self.pv = pv
+#         self.pv_std = np.sqrt(pv)
+
+#         if self.calculate_qpcr_loglik:
+#             self.qpcr_stds = np.sqrt(qpcr_variances[self.ridx])
+#             self.qpcr_stds_d = {}
+
+#         if zero_inflation_data is not None:
+#             self.zero_inflation_data = zero_inflation_data[self.ridx]
+#         else:
+#             self.zero_inflation_data = None
+
+#         if self.calculate_qpcr_loglik:
+#             for tidx,t in enumerate(self.qpcr_log_measurements):
+#                 self.qpcr_stds_d[t] = self.qpcr_stds[tidx]
+
+#         if self.there_are_perturbations:
+#             self.growth_rate_non_pert = growth.ravel()
+#             self.growth_rate_on_pert = growth.reshape(-1,1) * (1 + perturbations)
+
+#         ##############################
+#         # PREPARE FOR TAXA ITERATION
+#         # ADD 1 TO N_TAXA FOR SPIKE
+#         ##############################
+
+#         # Go through each randomly Taxa and go in time order
+#         if self.calculate_spikein_loglik:
+#             n_permute = self.n_taxa + 1
+#         else:
+#             n_permute = self.n_taxa
+
+#         oidxs = npr.permutation(n_permute)
+#         # print('===============================')
+#         # print('===============================')
+#         # print('X STARTOFLOOP', np.any(np.isnan(self.x)), self.x.min(), self.x.max())
+
+#         for oidx in oidxs:
+#             ##############################
+#             # REGULAR TAXA
+#             ##############################
+#             if oidx < self.n_taxa:
+#                 # Set the necessary global parameters
+#                 self.oidx = oidx
+#                 self.curr_x = self.x[oidx, :] # latent abundances
+#                 self.curr_logx = self.logx[oidx, :]
+#                 self.curr_interactions = interactions[oidx, :] # omit and make it make sense
+#                 self.curr_self_interaction = self_interactions[oidx]
+#                 # self.curr_zero_inflation = self.zero_inflation[oidx, :]
+
+#                 if self.pv_global:
+#                     self.curr_pv_std = self.pv_std
+#                 else:
+#                     self.curr_pv_std = self.pv_std[oidx]
+
+#                 # Set for first time point
+#                 self.tidx = 0
+#                 self.set_attrs_for_timepoint()
+#                 self.forward_loglik = self.default_forward_loglik
+#                 self.reverse_loglik = self.first_timepoint_reverse
+#                 # Calculate A matrix for forward
+#                 self.forward_interaction_vals = np.nansum(self.x[:, self.tidx] * self.curr_interactions)
+#                 self.update_single()
+#                 self.reverse_loglik = self.default_reverse_loglik
+#                 # Set for middle timepoints
+#                 for tidx in range(1, self.n_timepoints-1):
+#                     # Check if it needs to be zero inflated
+#                     # if not self.curr_zero_inflation[tidx]:
+#                     #     raise NotImplementedError('Zero inflation not implemented for logmodel')
+
+#                     self.tidx = tidx
+#                     self.set_attrs_for_timepoint()
+
+#                     # Calculate A matrix for forward and reverse
+#                     # Set the reverse of the current time step to the forward of the previous
+#                     self.reverse_interaction_vals = self.forward_interaction_vals #np.sum(self.x[:, self.prev_tidx] * self.curr_interactions)
+#                     self.forward_interaction_vals = np.nansum(self.x[:, self.tidx] * self.curr_interactions)
+
+#                     # Run single update
+#                     self.update_single()
+
+#                 # Set for last timepoint
+#                 self.tidx = self.n_timepoints_minus_1
+#                 self.set_attrs_for_timepoint()
+#                 self.forward_loglik = self.last_timepoint_forward
+#                 # Calculate A matrix for reverse
+#                 # Set the reverse of the current time step to the forward of the previous
+#                 self.reverse_interaction_vals = self.forward_interaction_vals # np.sum(self.x[:, self.prev_tidx] * self.curr_interactions)
+#                 self.update_single()
+                
+#                 # if self.sample_iter == 4:
+#                 # sys.exit()
+
+#             ##############################
+#             # SPIKE-IN TAXA
+#             ##############################
+#             elif oidx == self.n_taxa:
+#                 # self.curr_spikein_x = self.spikein_latent_x
+#                 # self.curr_spikein_logx = self.log_spikein_latent_x
+
+#                 # # Set for all timepoints
+#                 # for tidx in range(0, self.n_timepoints):
+
+#                 #     self.tidx = tidx
+#                 #     self.set_attrs_for_timepoint_spikein()
+
+#                 #     if hasattr(self, 'curr_spikein_reads'):
+#                 #         # Run single update
+#                 #         self.update_single_spikein()
+
+#                 # # print('self.spikein_latent_x', self.spikein_latent_x, self.log_spikein_latent_x)
+#                 pass
+            
+#             else:
+#                 raise Exception("Check oidx")
+
+        
+#         # self._recalculate_sum_q()
+#         # print('log sum_q', np.log(self.sum_q.mean()))
+
+#         self.sample_iter += 1
+#         if self.add_trace:
+#             self.trace_iter += 1
+
+#         return self.ridx, self.x, self.n_accepted_iter/self.n_data_points
+
+#     def set_attrs_for_timepoint(self):
+#         self.prev_tidx = self.tidx-1
+#         self.next_tidx = self.tidx+1
+#         self.forward_growth_rate = self.master_growth_rate[self.oidx]
+#         self.reverse_growth_rate = self.master_growth_rate[self.oidx]
+
+#         if self.there_are_intermediate_timepoints:
+#             if not self.is_intermediate_timepoint[self.times[self.tidx]]:
+#                 # It is not intermediate timepoints - we need to get the data
+#                 t = self.times[self.tidx]
+#                 self.curr_reads = self.reads[t][self.oidx]
+#                 self.curr_read_depth = self.read_depths[t]
+#                 if self.calculate_qpcr_loglik:
+#                     self.curr_qpcr_log_measurements = self.qpcr_log_measurements[t]
+#                     self.curr_qpcr_std = self.qpcr_stds_d[t]
+#         else:
+#             t = self.times[self.tidx]
+#             self.curr_reads = self.reads[t][self.oidx]
+#             self.curr_read_depth = self.read_depths[t]
+
+#             if self.calculate_qpcr_loglik:
+#                 self.curr_qpcr_log_measurements = self.qpcr_log_measurements[t]
+#                 self.curr_qpcr_std = self.qpcr_stds_d[t]
+
+#         # Set perturbation growth rates
+#         if self.there_are_perturbations:
+#             if self.in_pert_transition[self.tidx]:
+#                 if self.fully_in_pert[self.tidx-1] != -1:
+#                     # If the previous time point is in the perturbation, that means
+#                     # we are going out of the perturbation
+#                     # self.forward_growth_rate = self.master_growth_rate[self.oidx]
+#                     pidx = self.fully_in_pert[self.tidx-1]
+#                     self.reverse_growth_rate = self.growth_rate_on_pert[self.oidx,pidx]
+#                 else:
+#                     # Else we are going into a perturbation
+#                     # self.reverse_growth_rate = self.master_growth_rate[self.oidx]
+#                     pidx = self.fully_in_pert[self.tidx+1]
+#                     self.forward_growth_rate = self.growth_rate_on_pert[self.oidx,pidx]
+#             elif self.fully_in_pert[self.tidx] != -1:
+#                 pidx = self.fully_in_pert[self.tidx]
+#                 self.forward_growth_rate = self.growth_rate_on_pert[self.oidx,pidx]
+#                 self.reverse_growth_rate = self.forward_growth_rate
+
+#     def set_attrs_for_timepoint_spikein(self):
+#         if self.there_are_intermediate_timepoints:
+#             if not self.is_intermediate_timepoint[self.times[self.tidx]]:
+#                 t = self.times[self.tidx]
+#                 self.curr_spikein_reads = self.spikein_reads[t]
+#                 self.curr_spikein_read_depth = self.read_depths[t]
+#                 self.curr_qpcr_log_measurements = None
+#                 self.curr_qpcr_std = None
+            
+#         else:
+#             t = self.times[self.tidx]
+#             self.curr_spikein_reads = self.spikein_reads[t]
+#             self.curr_spikein_read_depth = self.read_depths[t]
+#             self.curr_qpcr_log_measurements = None
+#             self.curr_qpcr_std = None
+
+
+#     # @profile
+#     def update_single(self):
+#         '''Update a single oidx, tidx
+#         '''
+#         tidx = self.tidx
+#         oidx = self.oidx
+
+#         # Check if we should update the zero inflation policy
+#         if self.zero_inflation_transition_policy is not None:
+#             if self.zero_inflation_transition_policy == 'ignore':
+#                 if not self.zero_inflation_data[oidx,tidx]:
+#                     self.x[oidx, tidx] = np.nan
+#                     self.logx[oidx, tidx] = np.nan
+#                     return
+#                 else:
+#                     if tidx < self.zero_inflation_data.shape[1]-1:
+#                         do_forward = self.zero_inflation_data[oidx, tidx+1]
+#                     else:
+#                         do_forward = True
+#                     if tidx > 0:
+#                         do_reverse = self.zero_inflation_data[oidx, tidx-1]
+#                     else:
+#                         do_reverse = True
+#             else:
+#                 raise NotImplementedError('Not Implemented')
+#         else:
+#             do_forward = True
+#             do_reverse = True
+
+#         try:
+#             logx_new = pl.random.misc.fast_sample_normal(
+#                 loc=self.curr_logx[tidx],
+#                 scale=self.proposal_std)
+#         except:
+#             print('mu', self.curr_logx[tidx])
+#             print('std', self.proposal_std)
+#             raise
+#         x_new = np.exp(logx_new)
+#         prev_logx_value = self.curr_logx[tidx]
+#         prev_x_value = self.curr_x[tidx]
+
+#         if do_forward:
+#             prev_aaa = self.forward_loglik()
+#         else:
+#             prev_aaa = 0
+#         if do_reverse:
+#             prev_bbb = self.reverse_loglik()
+#         else:
+#             prev_bbb = 0
+#         prev_ddd = self.data_loglik()
+
+#         l_old = prev_aaa + prev_bbb + prev_ddd
+
+#         self.curr_x[tidx] = x_new
+#         self.curr_logx[tidx] = logx_new
+#         self.sum_q[tidx] = self.sum_q[tidx] - prev_x_value + x_new
+
+#         if do_forward:
+#             new_aaa = self.forward_loglik()
+#         else:
+#             new_aaa = 0
+#         if do_reverse:
+#             new_bbb = self.reverse_loglik()
+#         else:
+#             new_bbb = 0
+#         new_ddd = self.data_loglik()
+
+#         l_new = new_aaa + new_bbb + new_ddd
+#         r_accept = l_new - l_old
+
+#         r = pl.random.misc.fast_sample_standard_uniform()
+#         if math.log(r) > r_accept:
+#             self.sum_q[tidx] = self.sum_q[tidx] + prev_x_value - x_new
+#             self.curr_x[tidx] = prev_x_value
+#             self.curr_logx[tidx] = prev_logx_value
+#         else:
+#             self.x[oidx, tidx] = x_new
+#             self.logx[oidx, tidx] = logx_new
+#             self.acceptances += 1
+#             self.total_acceptances += 1
+#             self.n_accepted_iter += 1
+
+#         self.n_props_local += 1
+#         self.n_props_total += 1
+
+#     def update_single_spikein(self):
+#         '''Update a single oidx, tidx
+#         '''
+#         tidx = self.tidx
+
+#         # print('self.proposal_std', self.proposal_std)
+
+#         try:
+#             logx_new = pl.random.misc.fast_sample_normal(
+#                 loc=self.curr_spikein_logx[tidx],
+#                 scale=self.proposal_std)
+
+#         except:
+#             print('mu', self.curr_spikein_logx[tidx])
+#             print('std', self.proposal_std)
+#             raise
+
+#         x_new = np.exp(logx_new)
+#         prev_logx_value = self.curr_spikein_logx[tidx]
+#         prev_x_value = self.curr_spikein_x[tidx]
+
+#         l_old = self.data_loglik_spikein()
+
+#         self.curr_spikein_x[tidx] = x_new
+#         self.curr_spikein_logx[tidx] = logx_new
+
+#         # self.sum_q was initialized as sum(x) + self.spikein_latent_x
+#         self.sum_q[tidx] = self.sum_q[tidx] - prev_x_value + x_new
+
+#         l_new = self.data_loglik_spikein()
+        
+#         r_accept = l_new - l_old
+
+#         r = pl.random.misc.fast_sample_standard_uniform()
+#         if math.log(r) > r_accept:
+#             # print('reject spikein')
+#             self.sum_q[tidx] = self.sum_q[tidx] + prev_x_value - x_new
+#             self.curr_spikein_x[tidx] = prev_x_value
+#             self.curr_spikein_logx[tidx] = prev_logx_value
+#         else:
+#             # print('accept spikein')
+#             self.spikein_latent_x[tidx] = x_new
+#             self.log_spikein_latent_x[tidx] = logx_new
+#             # self.acceptances += 1
+#             # self.total_acceptances += 1
+#             # self.n_accepted_iter += 1
+
+#         # self.n_props_local += 1
+#         # self.n_props_total += 1
+
+#     def update_proposals(self):
+#         '''Update the proposal if necessary
+#         '''
+#         if self.sample_iter > self.end_iter:
+#             self.add_trace = False
+#             return
+#         if self.sample_iter == 0:
+#             return
+#         if self.trace_iter - self.delay == self.tune  and self.sample_iter - self.delay > 0:
+
+#             # Adjust
+#             acc_rate = self.acceptances/self.n_props_total
+#             if acc_rate < 0.1:
+#                 logger.debug('Very low acceptance rate, scaling down past covariance')
+#                 self.proposal_std *= 0.01
+#             elif acc_rate < self.target_acceptance_rate:
+#                 self.proposal_std /= np.sqrt(1.5)
+#             else:
+#                 self.proposal_std *= np.sqrt(1.5)
+
+#             self.acceptances = 0
+#             self.n_props_local = 0
+
+#     def last_timepoint_forward(self):
+#         return 0
+
+#     # @profile
+#     def default_forward_loglik(self) -> float:
+#         '''From the current timepoint (tidx) to the next timepoint (tidx+1)
+#         '''
+#         logmu = self.compute_dynamics(
+#             tidx=self.tidx,
+#             Axj=self.forward_interaction_vals,
+#             a1=self.forward_growth_rate)
+
+#         try:
+#             return pl.random.normal.logpdf(
+#                 value=self.curr_logx[self.next_tidx],
+#                 loc=logmu, scale=self.curr_pv_std*self.sqrt_dts[self.tidx])
+#         except:
+#             return _normal_logpdf(
+#                 value=self.curr_logx[self.next_tidx],
+#                 loc=logmu, scale=self.curr_pv_std*self.sqrt_dts[self.tidx])
+
+#     def first_timepoint_reverse(self) -> float:
+#         # sample from the prior
+#         try:
+#             return pl.random.normal.logpdf(value=self.curr_logx[self.tidx],
+#                 loc=self.x_prior_mean, scale=self.x_prior_std)
+#         except:
+#             return _normal_logpdf(value=self.curr_logx[self.tidx],
+#                 loc=self.x_prior_mean, scale=self.x_prior_std)
+
+#     # @profile
+#     def default_reverse_loglik(self) -> float:
+#         '''From the previous timepoint (tidx-1) to the current time point (tidx)
+#         '''
+#         logmu = self.compute_dynamics(
+#             tidx=self.prev_tidx,
+#             Axj=self.reverse_interaction_vals,
+#             a1=self.reverse_growth_rate)
+
+#         try:
+#             return pl.random.normal.logpdf(value=self.curr_logx[self.tidx],
+#                 loc=logmu, scale=self.curr_pv_std*self.sqrt_dts[self.prev_tidx])
+#         except:
+#             return _normal_logpdf(value=self.curr_logx[self.tidx],
+#                 loc=logmu, scale=self.curr_pv_std*self.sqrt_dts[self.prev_tidx])
+
+#     def data_loglik_w_intermediates(self) -> float:
+#         '''data loglikelihood w/ intermediate timepoints
+#         '''
+#         if self.is_intermediate_timepoint[self.times[self.tidx]]:
+#             return 0
+#         else:
+#             return self.data_loglik_wo_intermediates()
+
+#     # @profile
+#     def data_loglik_wo_intermediates(self) -> float:
+#         '''data loglikelihood with intermediate timepoints
+
+#         What changes in this function (or above it) in each iteration? why growing?
+#         '''
+#         sum_q = self.sum_q[self.tidx]
+#         log_sum_q = math.log(sum_q)
+        
+#         rel = self.curr_x[self.tidx] / sum_q
+
+#         try:
+#             # Compute negative binomial log-pmf
+#             negbin = negbin_loglikelihood_MH_condensed(
+#                 k=self.curr_reads,
+#                 m=self.curr_read_depth * rel,
+#                 dispersion=self.a0/rel + self.a1)
+#         except:
+#             negbin = negbin_loglikelihood_MH_condensed_not_fast(
+#                 k=self.curr_reads,
+#                 m=self.curr_read_depth * rel,
+#                 dispersion=self.a0/rel + self.a1)
+
+#         qpcr = 0
+#         if self.calculate_qpcr_loglik:
+#             for qpcr_val in self.curr_qpcr_log_measurements:
+#                 a = pl.random.normal.logpdf(value=qpcr_val, loc=log_sum_q, scale=self.curr_qpcr_std)
+#                 qpcr += a
+
+#         return negbin + qpcr
+
+
+#     def data_loglik_spikein(self):
+#         """ Calculate spikein.
+#         """
+#         sum_q = self.sum_q[self.tidx]
+        
+#         rel = self.curr_spikein_x[self.tidx] / sum_q
+
+#         try:
+#             # Compute negative binomial log-pmf
+#             negbin = negbin_loglikelihood_MH_condensed(
+#                 k=self.curr_spikein_reads,
+#                 m=self.curr_spikein_read_depth * rel,
+#                 dispersion=self.a0/rel + self.a1)
+#         except:
+#             negbin = negbin_loglikelihood_MH_condensed_not_fast(
+#                 k=self.curr_spikein_reads,
+#                 m=self.curr_spikein_read_depth * rel,
+#                 dispersion=self.a0/rel + self.a1)
+        
+#         spikein = 0
+#         if self.calculate_spikein_loglik:
+#             spikein += pl.random.normal.logpdf(
+#                 value=np.log(self.spikein_abundance_observed),
+#                 loc=self.log_spikein_latent_x[self.tidx],
+#                 scale=1e-4,
+#                 )
+#         return negbin + spikein
+
+#     def _recalculate_sum_q(self):
+#         """Recalculate sum_q from scratch to prevent numerical drift."""
+#         self.sum_q = np.sum(self.x, axis=0)
+#         if hasattr(self, 'spikein_latent_x') and self.spikein_latent_x is not None:
+#             self.sum_q += self.spikein_latent_x
+#         return self.sum_q
+
+
+#     def compute_dynamics(self, tidx: int, Axj: np.ndarray, a1: np.ndarray) -> np.ndarray:
+#         '''Compute dynamics going into tidx+1
+
+#         a1 : growth rates and perturbations (if necessary)
+#         Axj : cluster interactions with the other abundances already multiplied
+#         tidx : time index
+
+#         Zero-inflation
+#         --------------
+#         When we get here, the current taxon at `tidx` is not a structural zero, but
+#         there might be other bugs in the system that do have a structural zero there.
+#         Thus we do nan adds
+#         '''
+#         logxi = self.curr_logx[tidx]
+#         xi = self.curr_x[tidx]
+#         return logxi + (a1 - xi*self.curr_self_interaction + Axj) * self.dts[tidx]
+
 class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
     '''This performs filtering on a multiprocessing level. We send the
     other parameters of the model and return the filtered `x` and values.
@@ -3104,11 +3943,11 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         reads: Dict[float, np.ndarray], there_are_intermediate_timepoints: bool,
         there_are_perturbations: bool, pv_global: bool, x_prior_mean: Union[float, int],
         x_prior_std: Union[float, int], tune: int, delay: int, end_iter: int, proposal_init_scale: float,
-        a0: float, a1: float, x: np.ndarray, calculate_qpcr_loglik: bool, calculate_spikein_loglik: bool,
+        a0: float, a1: float, x: np.ndarray, calculate_qpcr_loglik: bool,
         pert_starts: np.ndarray, pert_ends: np.ndarray, ridx: int, subjname: str,
         h5py_xname: str, target_acceptance_rate: float, zero_inflation_transition_policy: Any,
-        spikein_latent_x: Any, spikein_reads: Any, spikein_abundance_observed: Any,
-        ):
+        calculate_spikein_loglik : bool,
+        spikein_latent_x: Any, spikein_reads: Any, spikein_abundance_observed: Any):
         '''Initialize the object at the beginning of the inference
 
         n_o = Number of Taxa
@@ -3195,25 +4034,35 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         self.logx = np.log(x)
         self.x = x
 
+        self.x_init_est = x.copy()
+
         if spikein_latent_x is not None:
             ##############################
             # SPIKEIN INITIALIZATION
             ##############################
-            init_noise = spikein_abundance_observed * np.random.normal(0, 0.01, len(spikein_latent_x.flatten()))
-            self.spikein_latent_x = 10. + spikein_latent_x.flatten() + init_noise
-            self.spikein_latent_x[self.spikein_latent_x < 0.01] = 0.01
-            
-            self.log_spikein_latent_x = np.log(self.spikein_latent_x)
+            # init_noise = spikein_abundance_observed * np.random.normal(0, 0.00001, len(spikein_latent_x.flatten()))
+            self.spikein_latent_x = spikein_latent_x.flatten() #+ init_noise
+            self.spikein_latent_x[self.spikein_latent_x < 1e-4] = 1e-4
             self.spikein_reads = spikein_reads
             self.spikein_abundance_observed = spikein_abundance_observed
+            self.log_spikein_latent_x = np.log(self.spikein_latent_x)
 
         # Get the perturbations for this subject
         if self.there_are_perturbations:
             self.pert_starts = []
             self.pert_ends = []
             for pidx in range(len(pert_starts)):
-                self.pert_starts.append(pert_starts[pidx][subjname])
-                self.pert_ends.append(pert_ends[pidx][subjname])
+                if subjname in pert_starts[pidx] and subjname in pert_ends[pidx]:
+                    self.pert_starts.append(pert_starts[pidx][subjname])
+                    self.pert_ends.append(pert_ends[pidx][subjname])
+                else:
+                    logger.info(
+                        f"While initializing {self.__class__.__name__} for subject `{subjname}`, unable to find perturbation "
+                        f"window for perturbation index {pidx}. "
+                        f"Perturbation #{pidx} will be skipped for this subject."
+                    )
+                    self.pert_starts.append(np.inf)
+                    self.pert_ends.append(np.inf)
 
         self.total_n_points = self.x.shape[0] * self.x.shape[1]
         self.ridx = ridx
@@ -3226,15 +4075,13 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         ##############################
         # INITIALIZE TOTAL ABUNDANCE
         ##############################
+        # latent state
         self.sum_q = np.sum(self.x, axis=0)
-
-        ############################################################
-        # UPDATE TOTAL ABUNDANCE WITH SPIKE
-        ############################################################
-        if spikein_latent_x is not None:
-            self.sum_q += self.spikein_latent_x
-
         self.trace_iter = 0
+
+        if spikein_latent_x is not None:
+            assert self.sum_q.shape == self.spikein_latent_x.shape
+            self.sum_q += self.spikein_latent_x
 
         # proposal
         self.proposal_std = np.log(1.5) #np.log(3)
@@ -3255,7 +4102,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
         ##############################
         # INITIALIZE READ DEPTHS
-        ##############################        
+        ############################## 
+        # Reads
         self.read_depths = {}
         for t in self.reads:
             self.read_depths[t] = float(np.sum(self.reads[t]))
@@ -3264,9 +4112,11 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         # UPDATE READ DEPTHS TO INCLUDE SPIKE-IN
         ############################################################ 
         if self.calculate_spikein_loglik:
+            assert all([x in self.reads.keys() for x in self.spikein_reads.keys()])
             for t in self.reads:
                 self.read_depths[t] += float(self.spikein_reads[t])
-        
+
+        # t
         self.dts = np.zeros(self.n_timepoints_minus_1)
         self.sqrt_dts = np.zeros(self.n_timepoints_minus_1)
         for k in range(self.n_timepoints_minus_1):
@@ -3340,18 +4190,36 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
             # Make the fully in perturbation times
             for pidx in range(len(self.pert_ends)):
-                try:
+                """ Fix for "infinity" start/end times (hotfix for when perts don't exist for a particular subject) """
+                t_start, t_end = self.pert_starts[pidx], self.pert_ends[pidx]
+                if t_end > np.max(self.times) > t_start > np.min(self.times):
                     start_tidx = self.t2tidx[self.pert_starts[pidx]] + 1
+                    self.fully_in_pert[start_tidx:] = pidx
+                    logger.debug("subj {}, pidx {} has a t_end after the experiment: perturbation will be applied to the START interval ending at {}".format(subjname, pidx, t_end))
+                elif t_start < np.min(self.times) < t_end < np.max(self.times):
                     end_tidx = self.t2tidx[self.pert_ends[pidx]]
-                except:
-                    # This means there is a missing datapoint at either the
-                    # start or end of the perturbation
-                    start_t = self.pert_starts[pidx]
-                    end_t = self.pert_ends[pidx]
-                    start_tidx = np.searchsorted(self.times, start_t)
-                    end_tidx = np.searchsorted(self.times, end_t) - 1
+                    self.fully_in_pert[:end_tidx] = pidx
+                    logger.debug("subj {}, pidx {} has a t_start before the experiment: perturbation will be applied to the END interval starting at {}".format(subjname, pidx, t_start))
+                elif t_start > np.max(self.times):
+                    logger.debug("subj {}, pidx {} has a t_start after the experiment: perturbation will not be applied. (t_start = {})".format(subjname, pidx, t_start))
+                    continue
+                elif t_end < np.min(self.times):
+                    logger.debug("subj {}, pidx {} has a t_end before the experiment: perturbation will not be applied. (t_end = {})".format(subjname, pidx, t_end))
+                    continue
+                else:
+                    logger.debug("Creating perturbation markers for subj {}, pidx {}: [{}, {}]".format(subjname, pidx, t_start, t_end))
+                    try:
+                        start_tidx = self.t2tidx[self.pert_starts[pidx]] + 1
+                        end_tidx = self.t2tidx[self.pert_ends[pidx]]
+                    except KeyError:
+                        # This means there is a missing datapoint at either the
+                        # start or end of the perturbation
+                        start_t = self.pert_starts[pidx]
+                        end_t = self.pert_ends[pidx]
+                        start_tidx = np.searchsorted(self.times, start_t)
+                        end_tidx = np.searchsorted(self.times, end_t) - 1
 
-                self.fully_in_pert[start_tidx:end_tidx] = pidx
+                    self.fully_in_pert[start_tidx:end_tidx] = pidx
 
     # @profile
     def persistent_run(self, growth: np.ndarray, self_interactions: np.ndarray,
@@ -3425,11 +4293,11 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         else:
             n_permute = self.n_taxa
 
+        # Go through each randomly Taxa and go in time order
         oidxs = npr.permutation(n_permute)
         # print('===============================')
         # print('===============================')
-        # print('X STARTOFLOOP', np.any(np.isnan(self.x)), self.x.min(), self.x.max())
-
+        # print('ridx', self.ridx)
         for oidx in oidxs:
             ##############################
             # REGULAR TAXA
@@ -3437,11 +4305,17 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             if oidx < self.n_taxa:
                 # Set the necessary global parameters
                 self.oidx = oidx
-                self.curr_x = self.x[oidx, :] # latent abundances
+                self.curr_x = self.x[oidx, :]
                 self.curr_logx = self.logx[oidx, :]
-                self.curr_interactions = interactions[oidx, :] # omit and make it make sense
+                self.curr_interactions = interactions[oidx, :]
                 self.curr_self_interaction = self_interactions[oidx]
                 # self.curr_zero_inflation = self.zero_inflation[oidx, :]
+
+                # print('SHAPESSHAPESSHAPESSHAPESSHAPESSHAPESSHAPES')
+                # print('self.x', self.x.shape)
+                # print('self.log_x', self.log_x.shape)
+                # print('interactions', interactions.shape)
+                # print('self_interactions', self_interactions.shape)
 
                 if self.pv_global:
                     self.curr_pv_std = self.pv_std
@@ -3451,6 +4325,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 # Set for first time point
                 self.tidx = 0
                 self.set_attrs_for_timepoint()
+                self.set_attrs_for_timepoint_spikein()
+
                 self.forward_loglik = self.default_forward_loglik
                 self.reverse_loglik = self.first_timepoint_reverse
                 # Calculate A matrix for forward
@@ -3458,13 +4334,17 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 self.update_single()
                 self.reverse_loglik = self.default_reverse_loglik
                 # Set for middle timepoints
+
+                # time_permute = npr.permutation(range(1, self.n_timepoints-1))
                 for tidx in range(1, self.n_timepoints-1):
+                    # for tidx in time_permute:
                     # Check if it needs to be zero inflated
                     # if not self.curr_zero_inflation[tidx]:
                     #     raise NotImplementedError('Zero inflation not implemented for logmodel')
 
                     self.tidx = tidx
                     self.set_attrs_for_timepoint()
+                    self.set_attrs_for_timepoint_spikein()
 
                     # Calculate A matrix for forward and reverse
                     # Set the reverse of the current time step to the forward of the previous
@@ -3477,19 +4357,23 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 # Set for last timepoint
                 self.tidx = self.n_timepoints_minus_1
                 self.set_attrs_for_timepoint()
+                self.set_attrs_for_timepoint_spikein()
+
                 self.forward_loglik = self.last_timepoint_forward
                 # Calculate A matrix for reverse
                 # Set the reverse of the current time step to the forward of the previous
                 self.reverse_interaction_vals = self.forward_interaction_vals # np.sum(self.x[:, self.prev_tidx] * self.curr_interactions)
                 self.update_single()
-                
+
                 # if self.sample_iter == 4:
                 # sys.exit()
+            
 
             ##############################
             # SPIKE-IN TAXA
             ##############################
             elif oidx == self.n_taxa:
+                self.oidx = None
                 self.curr_spikein_x = self.spikein_latent_x
                 self.curr_spikein_logx = self.log_spikein_latent_x
 
@@ -3503,17 +4387,19 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                         # Run single update
                         self.update_single_spikein()
 
-            else:
-                raise Exception("Check oidx")
+                # # print('self.spikein_latent_x', self.spikein_latent_x, self.log_spikein_latent_x)
+                pass
 
-        
-        # self._recalculate_sum_q()
-        # print('log sum_q', np.log(self.sum_q.mean()))
 
         self.sample_iter += 1
         if self.add_trace:
             self.trace_iter += 1
 
+        # print(self.cnt_accepted_times/self.sample_iter)
+
+        if self.sample_iter % 10 == 0:
+            # print(f'{self.sample_iter} self.n_accepted_iter/self.n_data_points', self.n_accepted_iter/self.n_data_points)
+            print(f'{self.sample_iter} self.acceptances/self.n_data_points', self.acceptances/self.n_props_total)
         return self.ridx, self.x, self.n_accepted_iter/self.n_data_points
 
     def set_attrs_for_timepoint(self):
@@ -3528,14 +4414,13 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
                 t = self.times[self.tidx]
                 self.curr_reads = self.reads[t][self.oidx]
                 self.curr_read_depth = self.read_depths[t]
-                if self.calculate_qpcr_loglik:
-                    self.curr_qpcr_log_measurements = self.qpcr_log_measurements[t]
-                    self.curr_qpcr_std = self.qpcr_stds_d[t]
+            if self.calculate_qpcr_loglik:
+                self.curr_qpcr_log_measurements = self.qpcr_log_measurements[t]
+                self.curr_qpcr_std = self.qpcr_stds_d[t]
         else:
             t = self.times[self.tidx]
             self.curr_reads = self.reads[t][self.oidx]
             self.curr_read_depth = self.read_depths[t]
-
             if self.calculate_qpcr_loglik:
                 self.curr_qpcr_log_measurements = self.qpcr_log_measurements[t]
                 self.curr_qpcr_std = self.qpcr_stds_d[t]
@@ -3575,7 +4460,6 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             self.curr_qpcr_log_measurements = None
             self.curr_qpcr_std = None
 
-
     # @profile
     def update_single(self):
         '''Update a single oidx, tidx
@@ -3609,6 +4493,11 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             logx_new = pl.random.misc.fast_sample_normal(
                 loc=self.curr_logx[tidx],
                 scale=self.proposal_std)
+            
+            # print('proposal_std', self.proposal_std)
+            # logx_new = pl.random.misc.fast_sample_normal(
+            #     loc=np.log(self.x_init_est[oidx,tidx]),
+            #     scale=self.proposal_std)
         except:
             print('mu', self.curr_logx[tidx])
             print('std', self.proposal_std)
@@ -3643,20 +4532,55 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             new_bbb = 0
         new_ddd = self.data_loglik()
 
+        # print('prev_aaa', prev_aaa, 'prev_bbb', prev_bbb, 'prev_ddd', prev_ddd)
+        # print('new_aaa', new_aaa, 'new_bbb', new_bbb, 'new_ddd', new_ddd)
+
+        #############################################
+        # HASTINGS CORRECTION FACTORS
+        #############################################
+        # g_x = pl.random.normal.logpdf(
+        #     value=prev_logx_value,
+        #     loc=np.log(self.x_init_est[oidx,tidx]), 
+        #     scale=self.proposal_std,
+        # )
+
+        # g_x_prime = pl.random.normal.logpdf(
+        #     value=logx_new,
+        #     loc=np.log(self.x_init_est[oidx,tidx]), 
+        #     scale=self.proposal_std,
+        # )
+        # if self.sample_iter % 10 == 0:
+        #     if (self.oidx == 0 and self.tidx == 5):
+        #         print('g_x', g_x)
+        #         print('g_x_prime', g_x_prime)
+        #############################################
+
+
         l_new = new_aaa + new_bbb + new_ddd
         r_accept = l_new - l_old
+        # r_accept = l_new - l_old #+ g_x - g_x_prime
 
         r = pl.random.misc.fast_sample_standard_uniform()
+        # print('r', r, math.log(r))
+        info = {}
         if math.log(r) > r_accept:
+            info['accept'] = False
             self.sum_q[tidx] = self.sum_q[tidx] + prev_x_value - x_new
             self.curr_x[tidx] = prev_x_value
             self.curr_logx[tidx] = prev_logx_value
         else:
+            info['accept'] = True
             self.x[oidx, tidx] = x_new
             self.logx[oidx, tidx] = logx_new
             self.acceptances += 1
             self.total_acceptances += 1
             self.n_accepted_iter += 1
+
+        # print('x old, x new', prev_x_value, x_new)
+        # print('---')
+        # if self.oidx == 0:
+        #     if self.tidx == 5:
+        #         print(info)
 
         self.n_props_local += 1
         self.n_props_total += 1
@@ -3665,6 +4589,8 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         '''Update a single oidx, tidx
         '''
         tidx = self.tidx
+
+        # print('self.proposal_std', self.proposal_std)
 
         try:
             logx_new = pl.random.misc.fast_sample_normal(
@@ -3718,6 +4644,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         if self.sample_iter == 0:
             return
         if self.trace_iter - self.delay == self.tune  and self.sample_iter - self.delay > 0:
+            print('update_proposals adjusting')
 
             # Adjust
             acc_rate = self.acceptances/self.n_props_total
@@ -3789,16 +4716,12 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
     # @profile
     def data_loglik_wo_intermediates(self) -> float:
         '''data loglikelihood with intermediate timepoints
-
-        What changes in this function (or above it) in each iteration? why growing?
         '''
         sum_q = self.sum_q[self.tidx]
         log_sum_q = math.log(sum_q)
-        
         rel = self.curr_x[self.tidx] / sum_q
 
         try:
-            # Compute negative binomial log-pmf
             negbin = negbin_loglikelihood_MH_condensed(
                 k=self.curr_reads,
                 m=self.curr_read_depth * rel,
@@ -3812,11 +4735,32 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         qpcr = 0
         if self.calculate_qpcr_loglik:
             for qpcr_val in self.curr_qpcr_log_measurements:
-                a = pl.random.normal.logpdf(value=qpcr_val, loc=log_sum_q, scale=self.curr_qpcr_std)
-                qpcr += a
+                if self.curr_qpcr_std > 0:
+                    qpcr += pl.random.normal.logpdf(value=qpcr_val, loc=log_sum_q, scale=self.curr_qpcr_std)
 
-        return negbin + qpcr
+        total_mass_log_prob = 0
+        # print('spikein_reads', self.spikein_reads)
+        if self.calculate_spikein_loglik:
+            # log_sum_x = np.log(np.sum(self.x[:, self.tidx], axis=0))
+            # assert np.isclose(self.sum_q[self.tidx] - self.spikein_latent_x[self.tidx], np.exp(log_sum_x))
+            log_sum_x = np.log(self.sum_q[self.tidx] - self.spikein_latent_x[self.tidx])
 
+            total_reads = self.curr_read_depth
+            spike_reads = self.curr_spikein_reads
+            read_factor = (total_reads - spike_reads) / spike_reads
+            mu_sum_x = self.spikein_abundance_observed * read_factor
+            log_mu_sum_x = np.log(mu_sum_x)
+
+            total_mass_log_prob += pl.random.normal.logpdf(
+                value=log_sum_x, 
+                loc=log_mu_sum_x, 
+                scale=1.0
+                )
+
+        # if self.oidx == 0:
+        #     if self.tidx == 0:
+        #         print('negbin', self.oidx, self.tidx, self.subjname, negbin)
+        return negbin + qpcr + total_mass_log_prob
 
     def data_loglik_spikein(self):
         """ Calculate spikein.
@@ -3842,16 +4786,9 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             spikein += pl.random.normal.logpdf(
                 value=np.log(self.spikein_abundance_observed),
                 loc=self.log_spikein_latent_x[self.tidx],
-                scale=1e-2,
+                scale=0.1, # 1e-4
                 )
         return negbin + spikein
-
-    def _recalculate_sum_q(self):
-        """Recalculate sum_q from scratch to prevent numerical drift."""
-        self.sum_q = np.sum(self.x, axis=0)
-        if hasattr(self, 'spikein_latent_x') and self.spikein_latent_x is not None:
-            self.sum_q += self.spikein_latent_x
-        return self.sum_q
 
 
     def compute_dynamics(self, tidx: int, Axj: np.ndarray, a1: np.ndarray) -> np.ndarray:
@@ -3870,7 +4807,7 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
         logxi = self.curr_logx[tidx]
         xi = self.curr_x[tidx]
         return logxi + (a1 - xi*self.curr_self_interaction + Axj) * self.dts[tidx]
-
+    
 
 class ZeroInflation(pl.graph.Node):
     '''This is the posterior distribution for the zero inflation model. These are used
