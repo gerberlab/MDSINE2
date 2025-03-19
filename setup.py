@@ -49,10 +49,10 @@ if os.name == 'nt':
     build_ext.build_ext.get_export_symbols = get_export_symbols
 
 # Custom C distributions
-EXTENSIONS = [
-    Extension('_distribution', ['mdsine2/pylab/c_code/distributionmodule.c']),
-    Extension('_sample', ['mdsine2/pylab/c_code/_samplemodule.c'])
-]
+# EXTENSIONS = [
+#     Extension('_distribution', ['mdsine2/pylab/c_code/distributionmodule.c']),
+#     Extension('_sample', ['mdsine2/pylab/c_code/_samplemodule.c'])
+# ]
 
 # Subpackages
 PACKAGES = [
@@ -76,7 +76,6 @@ setup(
     packages=PACKAGES,
     zip_safe=False,
     install_requires=REQUIREMENTS,
-    ext_modules=EXTENSIONS,
     include_package_data=True,
     entry_points={
         'console_scripts': [

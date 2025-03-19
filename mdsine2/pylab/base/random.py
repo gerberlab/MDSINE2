@@ -7,29 +7,17 @@ and to instantiate as objects. The functions of the distributions in `pylab.vari
 are implemented here
 '''
 
+import os
 import numpy as np
 import math
 import numpy.random as npr
 import random
 from mdsine2.logger import logger
-import warnings
 import scipy.stats
 
 # Typing
 from typing import Any, Union, Tuple, List
 from .errors import MathError, UndefinedError
-
-try:
-    import _sample as c_sample
-    # warnings.warn('PYLAB - USING C VERSIONS FOR DISTRIBUTIONS')
-
-    C_SAMPLE = c_sample.Sample()
-    CUSTOM_DIST_AVAIL = True
-except ImportError as e:
-    print(e)
-    warnings.warn('PYLAB - WAS NOT ABLE TO IMPORT C VERSIONS OF DISTRIBUTIONS.' \
-        ' USING DEFAULT PYTHON INSTEAD.')
-    CUSTOM_DIST_AVAIL = False
 
 
 # For caluclating pdf, logpdf, cdf, logcdf - faster access and precomputation
@@ -76,8 +64,6 @@ def seed(x: int):
     '''
     np.random.seed(x)
     random.seed(x)
-    if CUSTOM_DIST_AVAIL:
-        C_SAMPLE.seed(x)
 
 def _safe_cholesky(M: np.ndarray, jitter: bool=False, save_if_crash: bool=False):
     # if scipy.sparse.issparse(M):
@@ -138,18 +124,18 @@ class misc:
         np.ndarray (2,)
             Two samples
         '''
-        z0 = C_SAMPLE.c_standard_normal()
+        z0 = np.random.normal()
         SQRT_COV_00 = math.sqrt(cov[0,0])
         mean[0] += SQRT_COV_00 * z0
         mean[1] += cov[1,0] / SQRT_COV_00 * z0 + math.sqrt(cov[1,1] - \
-            cov[1,0]**2 / cov[0,0]) * C_SAMPLE.c_standard_normal()
+            cov[1,0]**2 / cov[0,0]) * np.random.normal()
         return mean
 
     @staticmethod
     def fast_sample_standard_uniform() -> float:
         '''Sample from a uniform distribution on [0,1)
         '''
-        return C_SAMPLE.c_standard_uniform()
+        return np.random.uniform()
 
     @staticmethod
     def fast_sample_normal(loc: float, scale: float) -> float:
@@ -165,7 +151,7 @@ class misc:
         -------
         float
         '''
-        return C_SAMPLE.c_normal(loc, scale)
+        return np.random.normal(loc=loc, scale=scale)
 
 
 class _BaseSample:
@@ -416,37 +402,17 @@ class truncnormal(_BaseSample):
         np.ndarray, float
         '''
         if size is not None:
-            if CUSTOM_DIST_AVAIL:
-                try:
-                    value = np.asarray([C_SAMPLE.c_truncated_normal(
-                        loc,scale,low,high) for i in range(len(size))])
-                except:
-                    value = scipy.stats.truncnorm(
-                        a=(low-loc)/scale,
-                        b=(high-loc)/scale,
-                        loc=loc,
-                        scale=scale).rvs(size=size)
-            else:
-                value = scipy.stats.truncnorm(
-                    a=(low-loc)/scale,
-                    b=(high-loc)/scale,
-                    loc=loc,
-                    scale=scale).rvs(size=size)
+            value = scipy.stats.truncnorm(
+                a=(low-loc)/scale,
+                b=(high-loc)/scale,
+                loc=loc,
+                scale=scale).rvs(size=size)
         else:
-            if CUSTOM_DIST_AVAIL:
-                try:
-                    value = C_SAMPLE.c_truncated_normal(loc, scale, low, high)
-                except:
-                    # likely because the loc and scale are vectors
-                    # try vectorizing it
-                    value = np.asarray([C_SAMPLE.c_truncated_normal(
-                        loc[i],scale[i],low,high) for i in range(len(loc))])
-            else:
-                value = scipy.stats.truncnorm(
-                    a=(low-loc)/scale,
-                    b=(high-loc)/scale,
-                    loc=loc,
-                    scale=scale).rvs(size=size)
+            value = scipy.stats.truncnorm(
+                a=(low-loc)/scale,
+                b=(high-loc)/scale,
+                loc=loc,
+                scale=scale).rvs(size=size)
         return value
 
     @staticmethod
