@@ -31,10 +31,11 @@ matplotlib.rcParams['ps.fonttype'] = 42
 
 
 class KeystonenessCLI(CLIModule):
+    """ Run keystoneness analysis using specified MDSINE2 MCMC output. """
     def __init__(self, subcommand="evaluate-keystoneness"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):
@@ -275,7 +276,7 @@ def load_initial_conditions(study: md2.Study, initial_condition_path: str) -> np
                 )
             taxa_to_abundance[row[0]] = float(row[1])
 
-    abundances = np.zeros(len(study.taxa), dtype=np.float)
+    abundances = np.zeros(len(study.taxa), dtype=float)
     for tidx, taxa in enumerate(study.taxa):
         try:
             abundances[tidx] = taxa_to_abundance[taxa.name]

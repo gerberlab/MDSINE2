@@ -45,10 +45,13 @@ from mdsine2.cli.helpers.fwsim_helper import run_forward_sim, plot_fwsim_compari
 
 
 class ForwardSimulationCLI(CLIModule):
+    """
+    Forward simulate gLV models given by MDSINE2 MCMC output.
+    """
     def __init__(self, subcommand="forward-simulate"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):
@@ -72,7 +75,7 @@ class ForwardSimulationCLI(CLIModule):
                             help='Maximum value for abundances.')
         parser.add_argument('--output-path', '-o', type=str, dest='out_path',
                             required=True,
-                            help='This is where you are saving the posterior forward simulation. (stored in numpy format)')
+                            help='This is where you are saving the posterior forward simulation. (stored in .npz format)')
         parser.add_argument('--gibbs-subsample', type=int,
                             required=False, default=1,
                             help='The number of gibbs samples to skip. A value of n indicates that one out of every '
@@ -85,6 +88,12 @@ class ForwardSimulationCLI(CLIModule):
                                  'resulting numpy file. (Default: `none`).'
                                  '\nAvailable options: `none`, `all`, `<comma_separated_taxa_names>`.'
                                  '\nExample: `--plot all`, or `--plot OTU_1,OTU_3,OTU_10`')
+
+        parser.add_argument('--initialize_from_study', type=str, dest='init_study',
+                            required=False,
+                            help='[Experimental, for semisynthetic comparison] The path to another study file which contains data different from the '
+                                 'specified study. This study\'s taxa must be a superset of the target study taxa.'
+                            )
 
     def main(self, args: argparse.Namespace):
         out_path = Path(args.out_path)
@@ -137,9 +146,18 @@ class ForwardSimulationCLI(CLIModule):
             perturbations_end = []
 
         # ======= Initial conditions
-        M = subject.matrix()['abs']
+        if args.init_study is None:
+            M = subject.matrix()['abs']
+            initial_conditions = M[:, 0]
+        else:
+            other_study = md2.Study.load(args.init_study)
+            other_taxa = other_study.taxa
+            M = other_study[subject.name].matrix()['abs']
+            initial_conditions = M[:, 0]
 
-        initial_conditions = M[:, 0]
+            taxa_indices = [other_taxa[taxa.name].idx for taxa in study.taxa]
+            initial_conditions = initial_conditions[taxa_indices]
+
         if np.any(initial_conditions == 0):
             logger.info('{} of {} taxa have abundance zero at the start. Setting to {}'.format(
                 np.sum(initial_conditions == 0),
@@ -165,14 +183,18 @@ class ForwardSimulationCLI(CLIModule):
                 perturbations_end=perturbations_end,
                 dt=args.dt,
                 sim_max=args.sim_max,
-                n_days=n_days,
+                final_day=subject.times[-1],
                 start_time=subject.times[0]
             )
             fwsims.append(fwsim)
             sim_times = times
 
+        if len(fwsims) == 0:
+            logger.error("No forward simulations to save.")
+            return
+
         fwsims = np.stack(fwsims)
-        np.save(str(out_path), fwsims)
+        np.savez(str(out_path), sims=fwsims, times=sim_times)
         logger.info("Saved forward simulations to {}.".format(str(out_path)))
 
         if args.plot.lower() == "all":

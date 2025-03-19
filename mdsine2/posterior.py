@@ -42,7 +42,7 @@ def gaussian_marginals(Xs: List[np.ndarray],
                        prior_means: List[np.ndarray],
                        y: np.ndarray,
                        process_prec: np.ndarray):
-    ans = np.empty(len(Xs), np.float64)
+    ans = np.empty(len(Xs), float)
     for i in numba.prange(len(Xs)):
         ll = gaussian_marginal_single(Xs[i], prior_vars[i], prior_means[i], y, process_prec)
         ans[i] = ll
@@ -336,7 +336,7 @@ def build_prior_mean(G: Graph, order: List[str], shape: Tuple=None) -> np.ndarra
         a = a.reshape(*shape)
     return a
 
-def sample_categorical_log(log_p: Iterator[float]) -> int:
+def sample_categorical_log(log_p: List[float]) -> int:
     '''Generate one sample from a categorical distribution with event
     probabilities provided in unnormalized log-space.
 
@@ -352,51 +352,66 @@ def sample_categorical_log(log_p: Iterator[float]) -> int:
         event from log_p.
     '''
     try:
-        exp_sample = math.log(random.random())
-        events = np.logaddexp.accumulate(np.hstack([[-np.inf], log_p]))
-        events -= events[-1]
-        return next(x[0]-1 for x in enumerate(events) if x[1] >= exp_sample)
+        num_categories = len(log_p)
+        gumbels = np.random.gumbel(size=num_categories)
+        sample = np.argmax(np.array(log_p) + gumbels)
+        return sample
     except:
         logger.critical('CRASHED IN `sample_categorical_log`:\nlog_p{}'.format(
             log_p))
         raise
 
+# def log_det(M: np.ndarray, var: Variable) -> float:
+#     '''Computes pl.math.log_det but also saves the array if it crashes
+#
+#     Parameters
+#     ----------
+#     M : nxn matrix (np.ndarray, scipy.sparse)
+#         Matrix to calculate the log determinant
+#     var : pl.variable.Variable subclass
+#         This is the variable that `log_det` was called from
+#
+#     Returns
+#     -------
+#     float
+#         Log determinant of matrix
+#     '''
+#     if scipy.sparse.issparse(M):
+#         M_ = np.zeros(shape=M.shape)
+#         M.toarray(out=M_)
+#         M = M_
+#     try:
+#         # if type(M) == torch.Tensor:
+#         #     return torch.inverse(M)
+#         # else:
+#         return pl.math.log_det(M)
+#     except:
+#         try:
+#             sample_iter = var.sample_iter
+#         except:
+#             sample_iter = None
+#         filename = 'crashes/logdet_error_iter{}_var{}pinv_{}.npy'.format(
+#             sample_iter, var.name, var.G.name)
+#         logger.critical('\n\n\n\n\n\n\n\nSaved array at "{}" - now crashing\n\n\n'.format(
+#                 filename))
+#         os.makedirs('crashes/', exist_ok=True)
+#         np.save(filename, M)
+#         raise
+
 def log_det(M: np.ndarray, var: Variable) -> float:
-    '''Computes pl.math.log_det but also saves the array if it crashes
+    if np.ndim(M) == 0:
+        return np.log(M)
 
-    Parameters
-    ----------
-    M : nxn matrix (np.ndarray, scipy.sparse)
-        Matrix to calculate the log determinant
-    var : pl.variable.Variable subclass
-        This is the variable that `log_det` was called from
-
-    Returns
-    -------
-    float
-        Log determinant of matrix
-    '''
     if scipy.sparse.issparse(M):
         M_ = np.zeros(shape=M.shape)
         M.toarray(out=M_)
         M = M_
-    try:
-        # if type(M) == torch.Tensor:
-        #     return torch.inverse(M)
-        # else:
-        return pl.math.log_det(M)
-    except:
-        try:
-            sample_iter = var.sample_iter
-        except:
-            sample_iter = None
-        filename = 'crashes/logdet_error_iter{}_var{}pinv_{}.npy'.format(
-            sample_iter, var.name, var.G.name)
-        logger.critical('\n\n\n\n\n\n\n\nSaved array at "{}" - now crashing\n\n\n'.format(
-                filename))
-        os.makedirs('crashes/', exist_ok=True)
-        np.save(filename, M)
-        raise
+
+    sign, logabsdet = np.linalg.slogdet(M)
+    if not sign > 0:
+        raise ValueError("Non-Positive Definite matrix found. (slogdet sign: {})".format(sign))
+    return logabsdet
+
 
 def pinv(M: np.ndarray, var: Variable) -> np.ndarray:
     '''Computes np.linalg.pinv but it also saves the array that crashed it if
@@ -1193,33 +1208,54 @@ class ClusterAssignments(pl.graph.Node):
             if not pl.isstr(value):
                 raise TypeError('`value` ({}) must be a str'.format(value))
 
-            CHAIN2 = pl.inference.BaseMCMC.load(value)
-            CLUSTERING2 = CHAIN2.graph[STRNAMES.CLUSTERING_OBJ]
-            TAXA2 = CHAIN2.graph.data.taxa
-            taxa_curr = self.G.data.taxa
-            for taxon in TAXA2:
-                if taxon.name not in taxa_curr:
-                    raise ValueError('Cannot perform fixed topology because the  {} in ' \
-                        'the passed in clustering is not in this clustering: {}'.format(
-                            taxon.name, taxa_curr.names.order))
-            for taxon in taxa_curr:
-                if taxon.name not in TAXA2:
-                    raise ValueError('Cannot perform fixed topology because the  {} in ' \
-                        'the current clustering is not in the passed in clustering: {}'.format(
-                            taxon.name, TAXA2.names.order))
+            file_path = Path(value)
+            if file_path.suffix == '.pkl':
+                # Try to load a MCMC pickle file, and compute consensus cluster.
+                CHAIN2 = pl.inference.BaseMCMC.load(value)
+                CLUSTERING2 = CHAIN2.graph[STRNAMES.CLUSTERING_OBJ]
+                TAXA2 = CHAIN2.graph.data.taxa
+                taxa_curr = self.G.data.taxa
+                for taxon in TAXA2:
+                    if taxon.name not in taxa_curr:
+                        raise ValueError('Cannot perform fixed topology because the  {} in ' \
+                            'the passed in clustering is not in this clustering: {}'.format(
+                                taxon.name, taxa_curr.names.order))
+                for taxon in taxa_curr:
+                    if taxon.name not in TAXA2:
+                        raise ValueError('Cannot perform fixed topology because the  {} in ' \
+                            'the current clustering is not in the passed in clustering: {}'.format(
+                                taxon.name, TAXA2.names.order))
 
-            # Get the most likely cluster configuration and set as the value for the passed in cluster
-            ret = generate_cluster_assignments_posthoc(CLUSTERING2, n_clusters='mode', set_as_value=False)
-            CLUSTERING2.from_array(ret)
-            logger.info('Clustering set to:\n{}'.format(str(CLUSTERING2)))
+                # Get the most likely cluster configuration and set as the value for the passed in cluster
+                ret = generate_cluster_assignments_posthoc(CLUSTERING2, n_clusters='mode', set_as_value=False)
+                CLUSTERING2.from_array(ret)
+                logger.info('Clustering set to:\n{}'.format(str(CLUSTERING2)))
 
-            # Set the passed in cluster assignment as the current cluster assignment
-            # Need to be careful because the indices of the s might not line up
-            clusters = []
-            for cluster in CLUSTERING2:
-                anames = [taxa_curr[TAXA2.names.order[aidx]].name for aidx in cluster.members]
-                aidxs = [taxa_curr[aname].idx for aname in anames]
-                clusters.append(aidxs)
+                # Set the passed in cluster assignment as the current cluster assignment
+                # Need to be careful because the indices of the s might not line up
+                clusters = []
+                for cluster in CLUSTERING2:
+                    anames = [taxa_curr[TAXA2.names.order[aidx]].name for aidx in cluster.members]
+                    aidxs = [taxa_curr[aname].idx for aname in anames]
+                    clusters.append(aidxs)
+            elif file_path.suffix == '.npy':
+                # Try to load a numpy clustering file.
+                clustering = np.load(file_path)
+                if clustering.ndim != 1:
+                    raise ValueError("Input clustering array should be 1-d")
+                if clustering.shape[0] != len(self.G.data.taxa):
+                    raise ValueError("Input clustering array had {} entries, but input data has {} taxa.".format(clustering.shape[0], len(self.G.data.taxa)))
+                clusters = []
+                clust_ids = sorted(set(clustering))
+                for c_id in clust_ids:
+                    c_locs, = np.where(clustering == c_id)
+                    clusters.append(list(c_locs))
+                logger.info("Clustering set to:\n{}".format(clusters))
+            else:
+                raise ValueError("Unknown file extension {} for fixed_clustering option. (Full path: {})".format(
+                    file_path.suffix,
+                    file_path
+                ))
 
         elif value_option == 'no-clusters':
             clusters = []
@@ -1295,10 +1331,20 @@ class ClusterAssignments(pl.graph.Node):
                 data.append(self.G.data.abs_data[ridx])
             data = np.hstack(data)
             for i in range(len(taxa)):
+                taxa_i = taxa[i]
+                nnz_i = np.sum(data[i, :] != 0)
+                if nnz_i == 0:
+                    logger.warn(f"Taxa {taxa_i.name} has zero measurements at all timepoints. Should it have been filtered out?")
+                    dm[i, :] = 1.0
+                    dm[:, i] = 1.0
+                    continue
+
                 for j in range(i+1):
-                    distance = (1 - scipy.stats.spearmanr(data[i, :], data[j, :])[0])/2
-                    dm[i,j] = distance
-                    dm[j,i] = distance
+                    nnz_j = np.sum(data[j, :] != 0)
+                    if nnz_j > 0:
+                        distance = (1 - scipy.stats.spearmanr(data[i, :], data[j, :])[0])/2
+                        dm[i, j] = distance
+                        dm[j, i] = distance
 
             c = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='complete')
             assignments = c.fit_predict(dm)
@@ -1735,7 +1781,7 @@ class ClusterAssignments(pl.graph.Node):
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -2166,7 +2212,7 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
                     cols.append(col)
                 col += 1
 
-        data = np.ones(len(rows), dtype=np.float64)
+        data = np.ones(len(rows), dtype=float)
         M = scipy.sparse.coo_matrix((data,(rows,cols)),
             shape=(self.n_rowsMpert, col)).tocsc()
         ret = self.base_Xpert @ M
@@ -2217,7 +2263,7 @@ class SingleClusterFullParallelization(pl.multiprocessing.PersistentWorker):
         beta_mean = np.asarray(beta_mean).reshape(-1,1)
 
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -3155,8 +3201,17 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
             self.pert_starts = []
             self.pert_ends = []
             for pidx in range(len(pert_starts)):
-                self.pert_starts.append(pert_starts[pidx][subjname])
-                self.pert_ends.append(pert_ends[pidx][subjname])
+                if subjname in pert_starts[pidx] and subjname in pert_ends[pidx]:
+                    self.pert_starts.append(pert_starts[pidx][subjname])
+                    self.pert_ends.append(pert_ends[pidx][subjname])
+                else:
+                    logger.info(
+                        f"While initializing {self.__class__.__name__} for subject `{subjname}`, unable to find perturbation "
+                        f"window for perturbation index {pidx}. "
+                        f"Perturbation #{pidx} will be skipped for this subject."
+                    )
+                    self.pert_starts.append(np.inf)
+                    self.pert_ends.append(np.inf)
 
         self.total_n_points = self.x.shape[0] * self.x.shape[1]
         self.ridx = ridx
@@ -3265,18 +3320,36 @@ class SubjectLogTrajectorySetMP(pl.multiprocessing.PersistentWorker):
 
             # Make the fully in perturbation times
             for pidx in range(len(self.pert_ends)):
-                try:
+                """ Fix for "infinity" start/end times (hotfix for when perts don't exist for a particular subject) """
+                t_start, t_end = self.pert_starts[pidx], self.pert_ends[pidx]
+                if t_end > np.max(self.times) > t_start > np.min(self.times):
                     start_tidx = self.t2tidx[self.pert_starts[pidx]] + 1
+                    self.fully_in_pert[start_tidx:] = pidx
+                    logger.debug("subj {}, pidx {} has a t_end after the experiment: perturbation will be applied to the START interval ending at {}".format(subjname, pidx, t_end))
+                elif t_start < np.min(self.times) < t_end < np.max(self.times):
                     end_tidx = self.t2tidx[self.pert_ends[pidx]]
-                except:
-                    # This means there is a missing datapoint at either the
-                    # start or end of the perturbation
-                    start_t = self.pert_starts[pidx]
-                    end_t = self.pert_ends[pidx]
-                    start_tidx = np.searchsorted(self.times, start_t)
-                    end_tidx = np.searchsorted(self.times, end_t) - 1
+                    self.fully_in_pert[:end_tidx] = pidx
+                    logger.debug("subj {}, pidx {} has a t_start before the experiment: perturbation will be applied to the END interval starting at {}".format(subjname, pidx, t_start))
+                elif t_start > np.max(self.times):
+                    logger.debug("subj {}, pidx {} has a t_start after the experiment: perturbation will not be applied. (t_start = {})".format(subjname, pidx, t_start))
+                    continue
+                elif t_end < np.min(self.times):
+                    logger.debug("subj {}, pidx {} has a t_end before the experiment: perturbation will not be applied. (t_end = {})".format(subjname, pidx, t_end))
+                    continue
+                else:
+                    logger.debug("Creating perturbation markers for subj {}, pidx {}: [{}, {}]".format(subjname, pidx, t_start, t_end))
+                    try:
+                        start_tidx = self.t2tidx[self.pert_starts[pidx]] + 1
+                        end_tidx = self.t2tidx[self.pert_ends[pidx]]
+                    except KeyError:
+                        # This means there is a missing datapoint at either the
+                        # start or end of the perturbation
+                        start_t = self.pert_starts[pidx]
+                        end_t = self.pert_ends[pidx]
+                        start_tidx = np.searchsorted(self.times, start_t)
+                        end_tidx = np.searchsorted(self.times, end_t) - 1
 
-                self.fully_in_pert[start_tidx:end_tidx] = pidx
+                    self.fully_in_pert[start_tidx:end_tidx] = pidx
 
     # @profile
     def persistent_run(self, growth: np.ndarray, self_interactions: np.ndarray,
@@ -3799,13 +3872,21 @@ class PriorVarInteractions(pl.variables.SICS):
     def __init__(self, prior: variables.SICS, value: Union[float, int]=None, **kwargs):
 
         kwargs['name'] = STRNAMES.PRIOR_VAR_INTERACTIONS
-        pl.variables.SICS.__init__(self, value=value,
-            dtype=float, **kwargs)
+        pl.variables.SICS.__init__(self, value=value, dtype=float, **kwargs)
         self.add_prior(prior)
 
-    def initialize(self, value_option: str, dof_option: str, scale_option: str, value: float=None,
-        mean_scaling_factor: Union[float, int]=None, dof: Union[float, int]=None,
-        scale: Union[float, int]=None, delay: int=0):
+    def initialize(
+            self,
+            value_option: str,
+            dof_option: str,
+            scale_option: str,
+            value: float = None,
+            mean_scaling_factor: Union[float, int] = None,
+            inflation_factor: Union[float, int] = None,
+            dof: Union[float, int] = None,
+            scale: Union[float, int] = None,
+            delay: int=0
+    ):
         '''Initialize the hyperparameters of the self interaction variance based on the
         passed in option
 
@@ -3823,7 +3904,7 @@ class PriorVarInteractions(pl.variables.SICS):
             - Options
                 - 'manual'
                     - Set the value manually, `scale` must also be specified
-                - 'auto', 'same-as-aii'
+                - 'auto'
                     - Set the mean the same as the self-interactions
         dof_option : str
             Initialize the dof of the parameter
@@ -3867,9 +3948,34 @@ class PriorVarInteractions(pl.variables.SICS):
                 raise TypeError('`scale` ({}) must be a numeric'.format(type(scale)))
             if scale < 0:
                 raise ValueError('`scale` ({}) must be > 0 for it to be a valid prior'.format(scale))
-        elif scale_option in ['auto', 'same-as-aii']:
+        elif scale_option in ['auto']:
+            # same as self-interactions (a_2 in supplement)
             mean = self.G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].prior.mean()
-            scale = mean * (self.prior.dof.value - 2) /(self.prior.dof.value)
+            scale = mean * (self.prior.dof.value - 2) / (self.prior.dof.value)
+        elif scale_option == 'inflated-median':
+            """
+            This is a copy-paste of the initialization from self-interactions.
+            By default, the 'auto' option above copies the regression solution from the self-interaction obj,
+            but we need a way to independently set the regression-based scaling.
+            """
+            logger.debug("Performing separate fit from data for scale parameter of interactions var.")
+            if not pl.isnumeric(inflation_factor):
+                raise TypeError('If using `auto` or `inflated-median`, paramter `inflation_factor` must be specified as a number.')
+
+            # Perform linear regression
+            rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
+            X = self.G.data.construct_rhs(keys=rhs,
+                kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
+                index_out_perturbations=True)
+            y = self.G.data.construct_lhs(index_out_perturbations=True)
+
+            prec = X.T @ X
+            cov = pinv(prec, self)
+            mean = cov @ X.T @ y
+            mean = inflation_factor * (np.median(mean[self.G.data.n_taxa:]) ** 2)
+
+            # Calculate the scale
+            scale = mean * (self.prior.dof.value - 2) / self.prior.dof.value
         else:
             raise ValueError('`scale_option` ({}) not recognized'.format(scale_option))
         self.prior.scale.override_value(scale)
@@ -3953,7 +4059,7 @@ class PriorMeanInteractions(pl.variables.Normal):
                 'manual'
                     Set with the `loc` parameter
         scale2_option : str
-            'same-as-aii', 'auto'
+            'auto'
                 Set as the same variance as the self-interactions
             'manual'
                 Set with the `scale2` parameter
@@ -3989,7 +4095,8 @@ class PriorMeanInteractions(pl.variables.Normal):
                 raise TypeError('`scale2` ({}) must be a numeric'.format(type(scale2)))
             if scale2 <= 0:
                 raise ValueError('`scale2` ({}) must be positive'.format(scale2))
-        elif scale2_option in ['same-as-aii', 'auto']:
+        elif scale2_option in ['auto']:
+            # same as self-interactions (a_2 in supplement)
             scale2 = self.G[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].value
         else:
             raise ValueError('`scale2_option` ({}) not recognized'.format(scale2_option))
@@ -4316,7 +4423,7 @@ class ClusterInteractionValue(pl.variables.MVN):
         prior_prec = build_prior_covariance(G=self.G, cov=False,
             order=rhs, sparse=True)
 
-        pm = prior_prec @ (self.prior.mean.value * np.ones(prior_prec.shape[0]).reshape(-1,1))
+        pm = prior_prec @ (self.prior.mean() * np.ones(prior_prec.shape[0]).reshape(-1,1))
 
         prec = X.T @ process_prec @ X + prior_prec
         cov = pinv(prec, self)
@@ -4868,7 +4975,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         # Perform the marginalization
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -4981,7 +5088,7 @@ class ClusterInteractionIndicators(pl.variables.Variable):
 
         bEb = (beta_mean.T @ beta_prec @ beta_mean)[0,0]
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -5134,6 +5241,7 @@ class PriorVarMH(pl.variables.SICS):
                    dof: float=None,
                    scale: float=None,
                    proposal_dof: float=None,
+                   inflation_factor: float=None,
                    delay: int=0):
         '''Initialize the parameters of the distribution and the
         proposal distribution
@@ -5291,6 +5399,9 @@ class PriorVarMH(pl.variables.SICS):
             if scale <= 0:
                 raise ValueError('`scale` ({}) must be positive'.format(scale))
         elif scale_option in ['auto', 'inflated-median']:
+            if not pl.isnumeric(inflation_factor):
+                raise TypeError('If using `auto` or `inflated-median`, paramter `inflation_factor` must be specified as a number.')
+
             # Perform linear regression
             rhs = [STRNAMES.GROWTH_VALUE, STRNAMES.SELF_INTERACTION_VALUE]
             X = self.G.data.construct_rhs(keys=rhs,
@@ -5302,9 +5413,9 @@ class PriorVarMH(pl.variables.SICS):
             cov = pinv(prec, self)
             mean = cov @ X.T @ y
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                mean = 1e4*(np.median(mean[:self.G.data.n_taxa]) ** 2)
+                mean = inflation_factor * (np.median(mean[:self.G.data.n_taxa]) ** 2)
             else:
-                mean = 1e4*(np.median(mean[self.G.data.n_taxa:]) ** 2)
+                mean = inflation_factor * (np.median(mean[self.G.data.n_taxa:]) ** 2)
 
             # Calculate the scale
             scale = mean * (self.prior.dof.value - 2) / self.prior.dof.value
@@ -5320,10 +5431,14 @@ class PriorVarMH(pl.variables.SICS):
                 raise ValueError('If `value_option` == "manual", value ({}) ' \
                     'must be a numeric (float, int)'.format(value.__class__))
         elif value_option in ['inflated-median']:
+            if not pl.isnumeric(inflation_factor):
+                raise TypeError('If using `auto` or `inflated-median`, paramter `inflation_factor` must be specified as a number.')
+
             # No interactions
             rhs = [
                 STRNAMES.GROWTH_VALUE,
-                STRNAMES.SELF_INTERACTION_VALUE]
+                STRNAMES.SELF_INTERACTION_VALUE
+            ]
             X = self.G.data.construct_rhs(keys=rhs,
                 kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations':False}},
                 index_out_perturbations=True)
@@ -5333,9 +5448,9 @@ class PriorVarMH(pl.variables.SICS):
             cov = pinv(prec, self)
             mean = cov @ X.T @ y
             if self.child_name == STRNAMES.GROWTH_VALUE:
-                value = 1e4*(np.median(mean[:self.G.data.n_taxa]) ** 2)
+                value = inflation_factor * (np.median(mean[:self.G.data.n_taxa]) ** 2)
             else:
-                value = 1e4*(np.median(mean[self.G.data.n_taxa:]) ** 2)
+                value = inflation_factor * (np.median(mean[self.G.data.n_taxa:]) ** 2)
         elif value_option in ['prior-mean', 'auto']:
             value = self.prior.mean()
         else:
@@ -6504,6 +6619,16 @@ class SelfInteractions(pl.variables.TruncatedNormal):
 
         prec = X.T @ process_prec @ X + prior_prec
         cov = pinv(prec, self)
+
+        """ A fix for diagonals containing NaNs after pinv operation. """
+        # cov_diag = np.diag(cov)
+        # if np.any(cov_diag == 0):
+        #     # Bugfix: "zero" variance is output by np.pinv/scipy.linalg.pinv due to precision issues.
+        #     # Replace these values with the inverse of the corresponding diagonal entry of precision (approximation)
+        #     overflow_indices, = np.where(cov_diag == 0)
+        #     for _i in overflow_indices:
+        #         cov[_i, _i] = 1 / prec[_i, _i]
+
         self.loc.value = np.asarray(cov @ (X.T @ process_prec.dot(y) + pm)).ravel()
         self.scale2.value = np.diag(cov)
 
@@ -6936,15 +7061,8 @@ class GLVParameters(pl.variables.MVN):
             self.mean.value = np.asarray(self.cov.value @ (X.T @ process_prec.dot(y) + \
                 prior_prec @ prior_means)).ravel()
 
-            # sample posterior jointly and then assign the values to each coefficient
-            # type, respectfully
-            try:
-                value = self.sample()
-            except:
-                logger.critical('failed here, updating separately')
-                self.pert_mag.update()
-                self.interactions.update()
-                return
+            # sample posterior jointly and then assign the values to each coefficient type, respectfully
+            value = self.sample()
 
             i = 0
             if STRNAMES.CLUSTER_INTERACTION_VALUE in rhs:
@@ -7944,7 +8062,7 @@ class PerturbationIndicators(pl.Node):
 
         bEb = (beta_mean.T @ beta_prec @ beta_mean)[0,0]
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -8060,7 +8178,7 @@ class PerturbationIndicators(pl.Node):
 
         # Perform the marginalization
         try:
-            beta_logdet = log_det(beta_cov, self)
+            beta_logdet = -log_det(beta_prec, self)
         except:
             logger.critical('Crashed in log_det')
             logger.critical('beta_cov:\n{}'.format(beta_cov))
@@ -8239,8 +8357,16 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
         self.add_prior(prior)
         self.perturbation = perturbation
 
-    def initialize(self, value_option: str, dof_option: str, scale_option: str,
-        value: float=None, dof: float=None, scale: float=None, delay: int=0):
+    def initialize(
+            self,
+            value_option: str,
+            dof_option: str, scale_option: str,
+            value: float = None,
+            dof: float = None,
+            scale: float = None,
+            delay: int = 0,
+            target_mean: float = None,
+    ):
         '''Initialize the hyperparameters of the perturbation prior variance based on the
         passed in option
 
@@ -8305,11 +8431,11 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
                 raise TypeError('`scale` ({}) must be a numeric'.format(type(scale)))
             if scale < 0:
                 raise ValueError('`scale` ({}) must be > 0 for it to be a valid prior'.format(scale))
-        elif scale_option in ['auto', 'diffuse']:
-            # Calculate the mean to be 10
-            scale = 1e4 * (self.prior.dof.value - 2) / self.prior.dof.value
-        elif scale_option == 'tight':
-            scale = 100 * (self.prior.dof.value - 2) / self.prior.dof.value
+        elif scale_option in ['auto']:
+            if not pl.isnumeric(target_mean):
+                raise TypeError('If using `auto`, paramter `target_mean` must be specified as a number.')
+
+            scale = target_mean * (self.prior.dof.value - 2) / self.prior.dof.value
         else:
             raise ValueError('`scale_option` ({}) not recognized'.format(scale_option))
         self.prior.scale.override_value(scale)
@@ -8322,10 +8448,6 @@ class PriorVarPerturbationSingle(pl.variables.SICS):
             self.value = value
         elif value_option in ['auto', 'prior-mean']:
             self.value = self.prior.mean()
-        elif value_option == 'diffuse':
-            self.value = 1e4
-        elif value_option == 'tight':
-            self.value = 1e2
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))
 
@@ -8743,7 +8865,7 @@ class qPCRVarianceReplicate(pl.variables.SICS):
         if not pl.isstr(value_option):
             raise TypeError('`value_option` ({}) must be a str'.format(type(value_option)))
         if value_option in ['empirical', 'auto']:
-            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=np.float)
+            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
             for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
                 self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data)
 
@@ -8753,7 +8875,7 @@ class qPCRVarianceReplicate(pl.variables.SICS):
             if inflated < 0:
                 raise ValueError('`inflated` ({}) must be positive'.format(inflated))
             # Set each variance by the empirical variance * inflated
-            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=np.float)
+            self.value = np.zeros(len(self.G.data.qpcr[self.ridx]), dtype=float)
             for idx, t in enumerate(self.G.data.qpcr[self.ridx]):
                 self.value[idx] = np.var(self.G.data.qpcr[self.ridx][t].log_data) * inflated
 
@@ -8766,7 +8888,7 @@ class qPCRVarianceReplicate(pl.variables.SICS):
             self.value = np.full(
                 shape=len(self.G.data.qpcr[self.ridx]),
                 value=value,
-                dtype=np.float
+                dtype=float
             )
         else:
             raise ValueError('`value_option` ({}) not recognized'.format(value_option))

@@ -67,10 +67,11 @@ import mdsine2 as md2
 
 
 class InputParseCLI(CLIModule):
+    """ Parse the input TSV files into a python mdsine2.Study object. Saves this object into a pickle file. """
     def __init__(self, subcommand="parse-input"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):

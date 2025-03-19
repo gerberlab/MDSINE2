@@ -1,5 +1,5 @@
 import argparse
-from typing import Dict
+from typing import List
 
 
 class CLIModule:
@@ -14,19 +14,25 @@ class CLIModule:
         raise NotImplementedError()
 
 
-def dispatch(cli_mapping: Dict[str, CLIModule]):
+def dispatch(clis: List[CLIModule]):
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest='subcommand')
 
-    for subcommand, cli_module in cli_mapping.items():
-        cli_module.create_parser(subparsers.add_parser(subcommand))
+    for cli_module in clis:
+        cli_module.create_parser(
+            subparsers.add_parser(
+                cli_module.subcommand,
+                description=cli_module.docstring
+            )
+        )
 
     args = parser.parse_args()
 
+    cli_mapping = {cli.subcommand: cli for cli in clis}
     if args.subcommand not in cli_mapping:
         print("Subcommand `{in_cmd}` not found. Supported commands: {cmds}".format(
             in_cmd=args.subcommand,
-            cmds=",".join(list(cli_mapping.keys()))
+            cmds=",".join(cli_mapping.keys())
         ))
         exit(1)
 

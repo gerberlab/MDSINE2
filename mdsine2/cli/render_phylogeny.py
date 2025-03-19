@@ -15,10 +15,11 @@ from mdsine2.logger import logger
 
 
 class PhylogenyRenderCLI(CLIModule):
+    """ Render a phylogenetic subtree for each taxon. """
     def __init__(self, subcommand="render-phylogeny"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):

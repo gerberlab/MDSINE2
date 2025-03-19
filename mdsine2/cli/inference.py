@@ -28,10 +28,12 @@ from mdsine2.names import STRNAMES
 
 
 class InferenceCLI(CLIModule):
+    """ Run MCMC inference using MDSINE2 model. """
+
     def __init__(self, subcommand="infer"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):
@@ -43,8 +45,9 @@ class InferenceCLI(CLIModule):
         parser.add_argument(
             '--fixed-clustering', type=str, dest='fixed_clustering',
             required=False, default=None,
-            help='If you are running fixed clustering, this is the location of the chain of the original run. '
-                 'This script uses this chain to compute consensus clusters.'
+            help='Specify a file with this argument to run fixed-clustering mode inference.'
+                 'If extension is .pkl, then the argument will be treated as an MCMC inference using normal-mode inference, from which consensus clusters will be computed.'
+                 'If extension is .npy, then the argument will be treated as a clustering numpy array, meaning a (N_TAXA)-length array of integers. Each taxa will be assigned a cluster ID grouped by these integer values.'
         )
         parser.add_argument(
             '--nomodules', action='store_true', dest='nomodules',
@@ -112,10 +115,29 @@ class InferenceCLI(CLIModule):
             required=False,
             help='<Optional> Tells the inference loop to print debug messages every k iterations.'
         )
-
         parser.add_argument(
             '--benchmark', action='store_true', dest='benchmark',
             help='If flag is set, then logs (at INFO level) the update() runtime of each component at the end.'
+        )
+
+        parser.add_argument(
+            '--interaction-mean-loc', type=float, dest='interaction_mean_loc',
+            required=False, help='The loc parameter for the interaction strength prior mean.', default=0.0
+        )
+        parser.add_argument(
+            '--interaction-var-dof', type=float, dest='interaction_var_dof',
+            required=False, help='The dof parameter for the interaction strength prior var.', default=2.01
+        )
+        parser.add_argument(
+            '--interaction-var-rescale', type=float, dest='interaction_var_rescale',
+            required=False,
+            help='Controls the scale parameter for the interaction strength prior var, using the formula [SCALE]*E^2',
+            default=1.0
+        )
+        parser.add_argument(
+            '-r', '--resume',
+            required=False, default=False, action='store_true',
+            help='If set, tries to check for an existing MCMC trace and resume from where it left off.'
         )
 
     def main(self, args: argparse.Namespace):
@@ -180,13 +202,52 @@ class InferenceCLI(CLIModule):
         params.INITIALIZATION_KWARGS[STRNAMES.PERT_INDICATOR_PROB]['hyperparam_option'] = \
             args.perturbation_prior
 
+        # Set interaction str priors
+        if args.interaction_mean_loc != 0.0:
+            params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_MEAN_INTERACTIONS]['loc_option'] = 'manual'
+            params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_MEAN_INTERACTIONS]['loc'] = args.interaction_mean_loc
+
+        if args.interaction_var_dof != None:
+            params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof_option'] = 'manual'
+            params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['dof'] = args.interaction_var_dof
+
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['scale_option'] = 'inflated-median'
+        params.INITIALIZATION_KWARGS[STRNAMES.PRIOR_VAR_INTERACTIONS]['inflation_factor'] = 1e4 * args.interaction_var_rescale
+
         # Change the cluster initialization to no clustering if there are less than 30 clusters
         if len(study.taxa) <= 30:
             logger.info(
                 'Since there is less than 30 taxa, we set the initialization of the clustering to `no-clusters`')
             params.INITIALIZATION_KWARGS[STRNAMES.CLUSTERING]['value_option'] = 'no-clusters'
 
-        mcmc = md2.initialize_graph(params=params, graph_name=study.name, subjset=study)
+        # Try to see if we should resume.
+        # if args.resume:
+        #     """ Note: param.GRAPH_FILENAME is never touched and never written to. So this feature won't work."""
+        #     from pathlib import Path
+        #     from mdsine2 import BaseMCMC
+        #
+        #     # Check for existing pickle file. If not, run in default mode.
+        #     target_pickle_file = Path(params.MODEL_PATH) / "mcmc.pkl"
+        #     if target_pickle_file.exists():
+        #         mcmc = BaseMCMC.load(str(target_pickle_file))
+        #         growth_posterior = mcmc.graph[STRNAMES.GROWTH_VALUE].get_trace_from_disk(section='posterior')
+        #         n_samples_done = growth_posterior.shape[0]
+        #         resume_from_mcmc_index = n_samples_done
+        #         del mcmc
+        #         del growth_posterior
+        #
+        #         if resume_from_mcmc_index == 0:
+        #             resume_from_mcmc_index = None
+        #         else:
+        #             logger.info("--resume option invoked; resuming at trace index = {}.".format(resume_from_mcmc_index))
+        #     else:
+        #         resume_from_mcmc_index = None
+        # else:
+
+        resume_from_mcmc_index = None
+
+
+        mcmc = md2.initialize_graph(params=params, graph_name=study.name, subjset=study, continue_inference=resume_from_mcmc_index)
         mdata_fname = os.path.join(params.MODEL_PATH, 'metadata.txt')
         params.make_metadata_file(fname=mdata_fname)
 

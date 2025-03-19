@@ -11,10 +11,11 @@ from .base import CLIModule
 
 
 class PlotSubjectCLI(CLIModule):
+    """ Plot the qPCR and relative abundance levels from an MDSINE2 Study object. """
     def __init__(self, subcommand="plot-abundances"):
         super().__init__(
             subcommand=subcommand,
-            docstring=__doc__
+            docstring=self.__doc__
         )
 
     def create_parser(self, parser: argparse.ArgumentParser):
