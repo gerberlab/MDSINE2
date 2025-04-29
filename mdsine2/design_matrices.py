@@ -880,7 +880,7 @@ class LHSVector(ObservationVector):
         else:
             n_dts = 0
             for sidx in subjects:
-                n_dts += self.G.dta.n_dts_for_replicate[sidx]
+                n_dts += self.G.data.n_dts_for_replicate[sidx]
         self.vector = np.zeros(self.G.data.n_taxa * n_dts, dtype=float)
         i = 0
         for ridx in range(self.G.data.n_replicates):
