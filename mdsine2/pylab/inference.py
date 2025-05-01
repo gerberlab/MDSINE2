@@ -303,6 +303,8 @@ class BaseMCMC(BaseModel):
         bool
         '''
         if not isnode(var):
+            if var not in self.graph:
+                return False
             var = self.graph[var].id
         else:
             var = var.id
