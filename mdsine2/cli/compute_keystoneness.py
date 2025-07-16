@@ -252,7 +252,7 @@ def do_fwsims(interactions: np.ndarray,
             dt=dt,
             start_time=0.,
             sim_max=sim_max,
-            n_days=n_days
+            final_day=n_days
         )
         yield gibb, gibbs_step_sim
 

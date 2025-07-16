@@ -194,7 +194,18 @@ class ExtractPosteriorCLI(CLIModule):
             ])
             for pert_name in pert_names
         }
+        pert_rhats = {
+            pert_name: compute_r_hat([
+                extract_perts(
+                    md2.BaseMCMC.load(str(mcmc_path)),
+                    pert_name
+                )
+                for mcmc_path in tqdm(mcmc_paths, desc=f'Perturbation ({pert_name}) R-hat')
+            ])
+            for pert_name in pert_names
+        }
         np.savez(str(out_dir / 'perturbations.npz'), **perturbations)
+        np.savez(str(out_dir / 'perturbations_rhat.npz'), **pert_rhats)
         del perturbations
 
         # Coclustering
