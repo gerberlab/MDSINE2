@@ -8887,7 +8887,7 @@ class qPCRVarianceReplicate(pl.variables.SICS):
             # Set each variance to a constant value.
             self.value = np.full(
                 shape=len(self.G.data.qpcr[self.ridx]),
-                value=value,
+                fill_value=value,
                 dtype=float
             )
         else:
