@@ -134,7 +134,8 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         #             if oidx not in self.record:
         #                 self.record[oidx] = []
         #             self.record[oidx].append(ret[oidx])
-        ret[ret >= self.sim_max] = self.sim_max
+        if self.sim_max is not None:
+            ret[ret >= self.sim_max] = self.sim_max
         return ret
 
     def finish_integration(self):
