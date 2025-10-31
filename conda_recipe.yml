@@ -1,18 +1,18 @@
-name: mdsine2
+name: mdsine21
 
 channels:
   - conda-forge
   - bioconda
 
 dependencies:
-  - python
+  - python=3.10
   - numpy
   - numba
   - pandas
   - scipy
   - matplotlib
   - seaborn
-  - scikit-learn
+  - scikit-learn=1.1.3
   - h5py
   - psutil
   - networkx
