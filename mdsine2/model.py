@@ -134,7 +134,8 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         #             if oidx not in self.record:
         #                 self.record[oidx] = []
         #             self.record[oidx].append(ret[oidx])
-        ret[ret >= self.sim_max] = self.sim_max
+        if self.sim_max is not None:
+            ret[ret >= self.sim_max] = self.sim_max
         return ret
 
     def finish_integration(self):
@@ -222,8 +223,8 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
                 dyn.perturbations = [pert[gibb] for pert in perturbations]
             
             X = pl.dynamics.integrate(dynamics=dyn, initial_conditions=initial_conditions, 
-                dt=simulation_dt, n_days=times[-1]+simulation_dt, processvar=None,
-                subsample=True, times=times, log_every=10000)
+                dt=simulation_dt, final_day=times[-1], processvar=None,
+                subsample=True, times=times)
             pred_matrix[gibb] = X['X']
         return pred_matrix
 
@@ -249,4 +250,3 @@ class MultiplicativeGlobal(pl.dynamics.BaseProcessVariance):
 
     def finish_integration(self):
         pass
-
