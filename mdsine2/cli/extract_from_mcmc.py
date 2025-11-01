@@ -83,8 +83,12 @@ def compute_r_hat(samples: List[np.ndarray]) -> np.ndarray:
 
     # Split each chain in half.
     n = samples.shape[1]
-    first_half = samples[:, :(n // 2)]
-    second_half = samples[:, (n // 2):]
+    if n % 2 == 0:
+        first_half = samples[:, :(n // 2)]
+        second_half = samples[:, (n // 2):]
+    else:
+        first_half = samples[:, :(n // 2)]
+        second_half = samples[:, (n // 2):-1]
     samples = np.concatenate([first_half, second_half], axis=0)
 
     # Compute B and W.
