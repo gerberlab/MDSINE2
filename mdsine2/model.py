@@ -248,4 +248,3 @@ class MultiplicativeGlobal(pl.dynamics.BaseProcessVariance):
 
     def finish_integration(self):
         pass
-
