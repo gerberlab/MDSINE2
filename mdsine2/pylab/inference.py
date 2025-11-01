@@ -968,7 +968,7 @@ class Tracer(Saveable):
 
 def r_hat(chains: Iterator[BaseMCMC], vname: str, start: int, end: int, idx: Union[int, slice]=None, 
     returnBW: bool=False) -> Union[float, Dict[str, float]]:
-    '''Calculate the measure `R^` for the variable called `vname` at the index `idx`.
+    r'''Calculate the measure `R^` for the variable called `vname` at the index `idx`.
     If `idx` is None then we assume that the variable is scalar.
 
     Definition

@@ -24,12 +24,12 @@ from typing import Tuple, List
 import scipy.stats
 
 import numpy as np
-from mdsine2.pylab.inference import TraceNotFoundException
-from sklearn.cluster import AgglomerativeClustering
 from tqdm import tqdm
+from sklearn.cluster import AgglomerativeClustering
 
 from .base import CLIModule
 import mdsine2 as md2
+from mdsine2.pylab.inference import TraceNotFoundException
 from mdsine2.logger import logger
 from mdsine2.names import STRNAMES
 
@@ -83,8 +83,12 @@ def compute_r_hat(samples: List[np.ndarray]) -> np.ndarray:
 
     # Split each chain in half.
     n = samples.shape[1]
-    first_half = samples[:, :(n // 2)]
-    second_half = samples[:, (n // 2):]
+    if n % 2 == 0:
+        first_half = samples[:, :(n // 2)]
+        second_half = samples[:, (n // 2):]
+    else:
+        first_half = samples[:, :(n // 2)]
+        second_half = samples[:, (n // 2):-1]
     samples = np.concatenate([first_half, second_half], axis=0)
 
     # Compute B and W.
@@ -230,7 +234,7 @@ class ExtractPosteriorCLI(CLIModule):
             linkage = 'complete'
             c = AgglomerativeClustering(
                 n_clusters=n,
-                affinity='precomputed',
+                metric='precomputed',
                 linkage=linkage
             )
             agglom = c.fit_predict(A)

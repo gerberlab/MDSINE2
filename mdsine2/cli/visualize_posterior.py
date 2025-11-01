@@ -12,6 +12,7 @@ Implemented for:
 """
 import os
 import argparse
+import pandas as pd
 import mdsine2 as md2
 from mdsine2.logger import logger
 from mdsine2.names import STRNAMES
@@ -65,8 +66,7 @@ class PosteriorVisualizationCLI(CLIModule):
             path=os.path.join(growthpath, 'mean.pdf'), section=section)
         dfvar = mcmc.graph[STRNAMES.PRIOR_VAR_GROWTH].visualize(
             path=os.path.join(growthpath, 'var.pdf'), section=section)
-        df = dfmean.append(dfvar)
-        df = df.append(dfvalues)
+        df = pd.concat([dfvalues, dfmean, dfvar], ignore_index=True)
         df.to_csv(os.path.join(growthpath, 'values.tsv'), sep='\t', index=True, header=True)
 
         # Plot self-interactions
@@ -81,8 +81,7 @@ class PosteriorVisualizationCLI(CLIModule):
             path=os.path.join(sipath, 'mean.pdf'), section=section)
         dfvar = mcmc.graph[STRNAMES.PRIOR_VAR_SELF_INTERACTIONS].visualize(
             path=os.path.join(sipath, 'var.pdf'), section=section)
-        df = dfmean.append(dfvar)
-        df = df.append(dfvalues)
+        df = pd.concat([dfvalues, dfmean, dfvar], ignore_index=True)
         df.to_csv(os.path.join(sipath, 'values.tsv'), sep='\t', index=True, header=True)
 
         # Plot clustering

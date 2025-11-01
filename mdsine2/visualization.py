@@ -2184,9 +2184,9 @@ def _set_xticks(ax: matplotlib.pyplot.Axes) -> matplotlib.pyplot.Axes:
 def _set_tick_fontsize(ax: matplotlib.pyplot.Axes, fontsize: Union[int, float]) -> matplotlib.pyplot.Axes:
 
     for tick in ax.xaxis.get_major_ticks():
-        tick.label.set_fontsize(fontsize)
+        tick.label1.set_fontsize(fontsize)
     for tick in ax.yaxis.get_major_ticks():
-        tick.label.set_fontsize(fontsize)
+        tick.label1.set_fontsize(fontsize)
     return ax
 
 def _set_taxlevel(taxlevel: str) -> str:

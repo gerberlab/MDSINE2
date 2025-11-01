@@ -300,7 +300,7 @@ class normal(_BaseSample):
 
 
 class lognormal(_BaseSample):
-    '''Log-normal distribution:
+    r'''Log-normal distribution:
     X = exp(\mu + \sigma Z), Z ~ Normal(0,1)
     ''' 
     @staticmethod
