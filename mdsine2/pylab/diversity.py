@@ -18,7 +18,7 @@ from scipy.spatial import distance
 class alpha:
     @staticmethod
     def entropy(counts: np.ndarray) -> float:
-        '''Calculate the entropy
+        r'''Calculate the entropy
         
         Entropy is defined as
             E = - \sum_i (b_i * \log(b_i))
@@ -44,7 +44,7 @@ class alpha:
 
     @staticmethod
     def normalized_entropy(counts: np.ndarray) -> float:
-        '''Calculate the normailized entropy
+        r'''Calculate the normailized entropy
         
         Entropy is defined as
             E = - \sum_i (b_i * \log_n(b_i))

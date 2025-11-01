@@ -201,7 +201,7 @@ class metrics:
 
     @staticmethod
     def variation_of_information(X: Iterator[Iterator[int]], Y: Iterator[Iterator[int]], n: int) -> float:
-        '''Variation of information:
+        r'''Variation of information:
 
         .. math::
             VI(X,Y) = - \sum_{i,j} r_{ij} [\log(r_{ij}/p_i) + \log(r_{ij}/q_j)] \\
