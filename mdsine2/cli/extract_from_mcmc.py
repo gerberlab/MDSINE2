@@ -24,12 +24,12 @@ from typing import Tuple, List
 import scipy.stats
 
 import numpy as np
-from mdsine2.pylab.inference import TraceNotFoundException
-from sklearn.cluster import AgglomerativeClustering
 from tqdm import tqdm
+from sklearn.cluster import AgglomerativeClustering
 
 from .base import CLIModule
 import mdsine2 as md2
+from mdsine2.pylab.inference import TraceNotFoundException
 from mdsine2.logger import logger
 from mdsine2.names import STRNAMES
 
@@ -230,7 +230,7 @@ class ExtractPosteriorCLI(CLIModule):
             linkage = 'complete'
             c = AgglomerativeClustering(
                 n_clusters=n,
-                affinity='precomputed',
+                metric='precomputed',
                 linkage=linkage
             )
             agglom = c.fit_predict(A)

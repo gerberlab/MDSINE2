@@ -21,7 +21,7 @@ import scipy.sparse
 import math
 import random
 
-from typing import Union, Dict, Iterator, Tuple, List, Any, IO, Optional
+from typing import Union, Dict, Tuple, List, Any, IO, Optional
 
 from .base import *
 from .names import STRNAMES
@@ -32,6 +32,7 @@ from .util import generate_cluster_assignments_posthoc, generate_taxonomic_distr
 from . import visualization
 import matplotlib.pyplot as plt
 import seaborn as sns
+
 _LOG_INV_SQRT_2PI = np.log(1/np.sqrt(2*math.pi))
 
 # Helper functions
@@ -1284,7 +1285,7 @@ class ClusterAssignments(pl.graph.Node):
                         continue
                     M[i,j] = taxa.taxonomic_similarity(oid1=oid1, oid2=oid2)
 
-            c = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='complete')
+            c = AgglomerativeClustering(n_clusters=n_clusters, metric='precomputed', linkage='complete')
             assignments = c.fit_predict(1-M)
 
             # Convert assignments into clusters
@@ -1312,7 +1313,7 @@ class ClusterAssignments(pl.graph.Node):
                     evenness[i,j] = dist
                     evenness[j,i] = dist
 
-            c = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='average')
+            c = AgglomerativeClustering(n_clusters=n_clusters, metric='precomputed', linkage='average')
             assignments = c.fit_predict(evenness)
             clusters = {}
             for oidx,cidx in enumerate(assignments):
@@ -1346,7 +1347,7 @@ class ClusterAssignments(pl.graph.Node):
                         dm[i, j] = distance
                         dm[j, i] = distance
 
-            c = AgglomerativeClustering(n_clusters=n_clusters, affinity='precomputed', linkage='complete')
+            c = AgglomerativeClustering(n_clusters=n_clusters, metric='precomputed', linkage='complete')
             assignments = c.fit_predict(dm)
 
             # convert into clusters

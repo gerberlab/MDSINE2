@@ -1,0 +1,48 @@
+[project]
+name = "mdsine2"
+version = "0.5.0"
+requires-python = ">=3.10"
+dependencies = [
+    "biopython>=1.81",
+    "ete3>=3.1.3",
+    "h5py>=3.8.0",
+    "matplotlib>=3.5.3",
+    "networkx>=2.6.3",
+    "numba>=0.56.3",
+    "numpy>=1.21.6",
+    "pandas>=1.3.5",
+    "psutil>=5.9.6",
+    "py2cytoscape>=0.7.1",
+    "pyqt5>=5.15.7",
+    "scikit-learn>=1.2.2",
+    "scipy>=1.7.3",
+    "seaborn>=0.12.2",
+    "tqdm>=4.66.1",
+    "treeswift>=1.1.37",
+    "legacy-cgi; python_version >= '3.13'",
+]
+description = "Implements core features of the MDSINE2 model"
+license = "GPL-3.0-or-later"
+authors = [
+    {name = "David Kaplan"},
+    {name = "Travis Gibson", email = "tegibson@bwh.harvard.edu"},
+    {name = "Younhun Kim", email = "yk847@bwh.harvard.edu"},
+    {name = "Sawal Acharya"},
+]
+maintainers = [
+    {name = "Travis Gibson", email = "tegibson@bwh.harvard.edu"},
+    {name = "Younhun Kim", email = "yk847@bwh.harvard.edu"},
+]
+
+[project.scripts]
+mdsine2 = "mdsine2.cli:main"
+
+[tool.setuptools]
+packages = [
+    "mdsine2",
+    "mdsine2.base",
+    "mdsine2.cli",
+    "mdsine2.cli.helpers",
+    "mdsine2.pylab",
+    "mdsine2.pylab.base",
+]

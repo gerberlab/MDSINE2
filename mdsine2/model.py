@@ -126,15 +126,8 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
         # Integrate
         logret = np.log(x) + growth + self._dtinteractions @ x
         ret = np.exp(logret).ravel()
-        # This is a severe bottleneck. Get rid of this; not needed.
-        # if self.record is not None:
-        #     oidxs = np.where(ret >= self.sim_max)[0]
-        #     if len(oidxs) > 0:
-        #         for oidx in oidxs:
-        #             if oidx not in self.record:
-        #                 self.record[oidx] = []
-        #             self.record[oidx].append(ret[oidx])
-        ret[ret >= self.sim_max] = self.sim_max
+        if self.sim_max is not None:
+            ret[ret >= self.sim_max] = self.sim_max
         return ret
 
     def finish_integration(self):
@@ -221,9 +214,15 @@ class gLVDynamicsSingleClustering(pl.dynamics.BaseDynamics):
             if perturbations is not None:
                 dyn.perturbations = [pert[gibb] for pert in perturbations]
             
-            X = pl.dynamics.integrate(dynamics=dyn, initial_conditions=initial_conditions, 
-                dt=simulation_dt, n_days=times[-1]+simulation_dt, processvar=None,
-                subsample=True, times=times, log_every=10000)
+            X = pl.dynamics.integrate(
+                dynamics=dyn,
+                initial_conditions=initial_conditions,
+                dt=simulation_dt,
+                final_day=times[-1],
+                processvar=None,
+                subsample=True,
+                times=times
+            )
             pred_matrix[gibb] = X['X']
         return pred_matrix
 
