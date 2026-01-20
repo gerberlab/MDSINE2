@@ -212,7 +212,8 @@ class Data(DataNode):
                         self.tidxs_in_perturbation[ridx].append((start_idx, start_idx+1))
                     else:
                         self.tidxs_in_perturbation[ridx].append((start_idx, end_idx))
-        
+
+    def initialize_structural_zeros_arrays(self):
         # Set structural zeros - everything is set to non-structural zero initially
         if self.zero_inflation_transition_policy is not None:
             self._structural_zeros = []
@@ -523,6 +524,8 @@ class Data(DataNode):
             #     'is not set during initialization')
             logger.warning('`zero_inflation_transition_policy` is None so we are not doing anything')
             return
+
+        self.initialize_structural_zeros_arrays()
         if turn_on is not None:
             for i, (ridx,tidx,aidx) in enumerate(turn_on):
                 if ridx > self.n_replicates or ridx < 0:

@@ -364,7 +364,7 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
     logger.info('\tprior.scale: {}'.format(GRAPH[STRNAMES.CONCENTRATION].prior.scale.value))
     logger.info('\tvalue: {}'.format(GRAPH[STRNAMES.CONCENTRATION].value))
 
-    logger.info('Indicator probability')
+    logger.info('Interaction Indicator probability')
     logger.info('\tprior.a: {}'.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.a.value))
     logger.info('\tprior.b: {}'.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].prior.b.value))
     logger.info('\tvalue: {}'.format(GRAPH[STRNAMES.CLUSTER_INTERACTION_INDICATOR_PROB].value))

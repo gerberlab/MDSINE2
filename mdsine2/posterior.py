@@ -3791,7 +3791,7 @@ class ZeroInflation(pl.graph.Node):
                 raise ValueError("Need to specify `zero_inflation_data_path` to use option `custom` for zero-inflation")
 
             # read in file
-            logger.debug(f"Using time masking file {self.zero_inflation_data_path}")
+            logger.info(f"Using time masking file {self.zero_inflation_data_path}")
             time_mask = pd.read_csv(self.zero_inflation_data_path, index_col=0,  sep="\t")
 
             # Set everything to on except for specified taxa before specified time, for each subject
