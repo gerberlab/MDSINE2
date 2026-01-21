@@ -7046,6 +7046,7 @@ class GLVParameters(pl.variables.MVN):
             X = self.G.data.construct_rhs(keys=rhs)
             if X.shape[1] == 0:
                 # logger.info('No columns, skipping')
+                self.interactions.update_str()
                 return
             y = self.G.data.construct_lhs(keys=lhs,
                 kwargs_dict={STRNAMES.GROWTH_VALUE:{'with_perturbations': False}})

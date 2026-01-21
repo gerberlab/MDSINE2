@@ -161,14 +161,18 @@ class ExtractPosteriorCLI(CLIModule):
         del r_hats
 
         # Concentration parameter
-        conc_params = [
-            extract_concentrations(md2.BaseMCMC.load(str(mcmc_path)))
-            for mcmc_path in tqdm(mcmc_paths, desc='Concentrations')
-        ]
-        r_hat = compute_r_hat(conc_params)
-        np.save(str(out_dir / 'concentration_rhat.npy'), r_hat)
-        del conc_params
-        del r_hat
+        try:
+            conc_params = [
+                extract_concentrations(md2.BaseMCMC.load(str(mcmc_path)))
+                for mcmc_path in tqdm(mcmc_paths, desc='Concentrations')
+            ]
+            r_hat = compute_r_hat(conc_params)
+            np.save(str(out_dir / 'concentration_rhat.npy'), r_hat)
+            del conc_params
+            del r_hat
+        except TraceNotFoundException:
+            print("Trace for clustering concencentration parameter doesn't exist. Skipping.")
+            pass
 
         # Process Variance parameter
         procvar_params = [
@@ -183,34 +187,40 @@ class ExtractPosteriorCLI(CLIModule):
         # Perts
         mcmc0 = md2.BaseMCMC.load(str(mcmc_paths[0]))
         pert_names = []
-        for pert in mcmc0.graph.perturbations:
-            pert_names.append(pert.name)
+        if mcmc0.graph.perturbations is not None:
+            for pert in mcmc0.graph.perturbations:
+                pert_names.append(pert.name)
         print("Found perturbations: {}".format(pert_names))
         del mcmc0
 
-        perturbations = {
-            pert_name: np.concatenate([
-                extract_perts(
-                    md2.BaseMCMC.load(str(mcmc_path)),
-                    pert_name
-                )
-                for mcmc_path in tqdm(mcmc_paths, desc=f'Perturbation ({pert_name})')
-            ])
-            for pert_name in pert_names
-        }
-        pert_rhats = {
-            pert_name: compute_r_hat([
-                extract_perts(
-                    md2.BaseMCMC.load(str(mcmc_path)),
-                    pert_name
-                )
-                for mcmc_path in tqdm(mcmc_paths, desc=f'Perturbation ({pert_name}) R-hat')
-            ])
-            for pert_name in pert_names
-        }
-        np.savez(str(out_dir / 'perturbations.npz'), **perturbations)
-        np.savez(str(out_dir / 'perturbations_rhat.npz'), **pert_rhats)
-        del perturbations
+        try:
+            perturbations = {
+                pert_name: np.concatenate([
+                    extract_perts(
+                        md2.BaseMCMC.load(str(mcmc_path)),
+                        pert_name
+                    )
+                    for mcmc_path in tqdm(mcmc_paths, desc=f'Perturbation ({pert_name})')
+                ])
+                for pert_name in pert_names
+            }
+            pert_rhats = {
+                pert_name: compute_r_hat([
+                    extract_perts(
+                        md2.BaseMCMC.load(str(mcmc_path)),
+                        pert_name
+                    )
+                    for mcmc_path in tqdm(mcmc_paths, desc=f'Perturbation ({pert_name}) R-hat')
+                ])
+                for pert_name in pert_names
+            }
+            np.savez(str(out_dir / 'perturbations.npz'), **perturbations)
+            np.savez(str(out_dir / 'perturbations_rhat.npz'), **pert_rhats)
+            del perturbations
+        except TraceNotFoundException:
+            print("Trace for perturbations doesn't exist. Skipping.")
+            pass
+
 
         # Coclustering
         try:
