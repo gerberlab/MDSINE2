@@ -2969,7 +2969,10 @@ class FilteringLogMP(pl.graph.Node):
         start_time = time.time()
 
         growth = self.G[STRNAMES.GROWTH_VALUE].value.ravel()
-        self_interactions = self.G[STRNAMES.SELF_INTERACTION_VALUE].value.ravel()
+        # Self-interactions are stored rescaled (a~_ii = a_ii * c_i); divide by c to
+        # hand the PHYSICAL self-interactions to the filtering worker (which uses
+        # absolute abundance). Interactions come out physical from the accessor below.
+        self_interactions = self.G[STRNAMES.SELF_INTERACTION_VALUE].value.ravel() / self.G.data.rescale
         pv = self.G[STRNAMES.PROCESSVAR].value
         interactions = self.G[STRNAMES.INTERACTIONS_OBJ].get_datalevel_value_matrix(
             set_neg_indicators_to_nan=False)
@@ -6368,6 +6371,18 @@ class SelfInteractions(pl.variables.TruncatedNormal):
 
     def update_str(self):
         return
+
+    def add_trace(self):
+        '''Self-interactions are stored rescaled (a~_ii = a_ii * c_i). Write the
+        PHYSICAL self-interaction a_ii = a~_ii / c_i to the trace so every reader
+        (diagnostics, forward-sim) sees physical values. (c defaults to ones.)
+        '''
+        rescaled = self.value
+        self.value = rescaled / self.G.data.rescale
+        try:
+            pl.variables.TruncatedNormal.add_trace(self)
+        finally:
+            self.value = rescaled
 
     def initialize(self, value_option: str, truncation_settings: Union[str, Tuple[float, float]],
         value: np.ndarray=None, delay: int=0, q: float=None, rescale_value: float=None):

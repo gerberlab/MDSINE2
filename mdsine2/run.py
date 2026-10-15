@@ -96,8 +96,22 @@ def initialize_graph(params: config.MDSINE2ModelConfig, graph_name: str, subjset
     # Instantiate the posterior classes
     # ---------------------------------
     taxa = subjset.taxa
-    d = design_matrices.Data(subjects=subjset, G=GRAPH, 
+    d = design_matrices.Data(subjects=subjset, G=GRAPH,
         zero_inflation_transition_policy=params.ZERO_INFLATION_TRANSITION_POLICY)
+
+    # Per-taxon signal rescale. Set BEFORE the parameter initializers and design-matrix
+    # builds below, so the (design-based) linear-regression initializers and the
+    # inflated-median prior scales are all computed in the rescaled O(1) space -- i.e.
+    # parameters start properly scaled rather than at their physical (tiny) values.
+    # c_j = q-quantile of taxon j's positive (normalized) absolute abundance.
+    if getattr(params, 'PER_TAXA_RESCALE_QUANTILE', None) is not None:
+        q = params.PER_TAXA_RESCALE_QUANTILE
+        abs_cat = np.concatenate(d.abs_data, axis=1)  # [n_taxa, total_timepoints]
+        d.rescale = np.array([
+            np.quantile(row[np.isfinite(row) & (row > 0)], q) for row in abs_cat])
+        logger.info('Per-taxa signal rescale (quantile {}): {}'.format(
+            q, np.array2string(d.rescale, precision=3)))
+
     clustering = Clustering(clusters=None, items=taxa, G=GRAPH,
         name=STRNAMES.CLUSTERING_OBJ)
 

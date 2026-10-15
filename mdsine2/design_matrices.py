@@ -113,6 +113,16 @@ class Data(DataNode):
         self.timepoint2index = [] # list(dict(float, int)) for each subject, maps the time (float) to the index it occurs in (int)
         self.toupdate = set() # Which design matrices we change once we filter the data
         self.n_replicates = len(self.subjects)
+
+        # Per-taxon signal rescale c (default: ones = no rescaling). When set to a
+        # per-taxon scale, the interaction & self-interaction inference is run on the
+        # rescaled signal x/c (O(1)): the design matrices divide the source-taxon
+        # abundance by c, so the sampler works with A~_ij = A_ij * c_j (and self
+        # a~_ii = a_ii * c_i). Physical A = A~/c is what gets reported everywhere
+        # (get_datalevel_value_matrix, the trace, the filtering hand-off). See the
+        # per-taxa rescaling notes. Set from the run script, e.g.
+        #     data.rescale = np.quantile(abs_abundance, 0.9, axis=1)
+        self.rescale = np.ones(len(self.taxa), dtype=float)
         self.n_taxa = len(self.taxa)
 
         for ridx, s in enumerate(self.subjects):
@@ -952,10 +962,11 @@ class SelfInteractionDesignMatrix(DesignMatrix):
 
         self.data = np.zeros(self.n_rows_master, dtype=float)
         data = self.G.data.data
+        rescale = self.G.data.rescale  # per-taxon signal rescale (self-interaction column ÷ c_i)
         i = 0
         for ridx in range(self.G.data.n_replicates):
             l = (self.G.data.n_dts_for_replicate[ridx]) * self.G.data.n_taxa
-            self.data[i:i+l] = -data[ridx][:,:-1].ravel('F')
+            self.data[i:i+l] = -(data[ridx][:,:-1] / rescale[:, None]).ravel('F')
             i += l
             
         shape = (self.n_rows_master, self.n_cols_master)
@@ -1480,11 +1491,12 @@ class InteractionsBaseDesignMatrix(DesignMatrix):
         self.cols = self.master_cols
         self.data = self.master_data
 
+        rescale = self.G.data.rescale  # per-taxon signal rescale (source column ÷ c_source)
         i = 0
         for ridx in range(self.G.data.n_replicates):
             i = InteractionsBaseDesignMatrix._fast_build(
                 ret=self.master_data, data=data[ridx], n_taxa=n_taxa,
-                n_dts=self.G.data.n_dts_for_replicate[ridx], i=i)
+                n_dts=self.G.data.n_dts_for_replicate[ridx], i=i, rescale=rescale)
             
         if self.G.data.zero_inflation_transition_policy is not None:
             # All of the rows that need to be taken out will be taken out. All of the 
@@ -1503,15 +1515,19 @@ class InteractionsBaseDesignMatrix(DesignMatrix):
 
     @staticmethod
     @numba.jit(nopython=True, cache=True, fastmath=True)
-    def _fast_build(ret: np.ndarray, data: np.ndarray, n_dts: int, n_taxa: int, i: int):
+    def _fast_build(ret: np.ndarray, data: np.ndarray, n_dts: int, n_taxa: int, i: int,
+        rescale: np.ndarray):
         '''About 99.5% faster than regular python looping
+
+        `rescale` divides each source-taxon column by c_source so the sampler works
+        with the rescaled interaction A~_ij = A_ij * c_j (physical A recovered on read).
         '''
         for tidx in range(n_dts):
             for toidx in range(n_taxa):
                 for soidx in range(n_taxa):
                     if toidx == soidx:
                         continue
-                    ret[i] = data[soidx, tidx]
+                    ret[i] = data[soidx, tidx] / rescale[soidx]
                     i = i + 1
         return i
 

@@ -141,6 +141,14 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         self.DATA_DTYPE = 'abs'
 
         self.QPCR_NORMALIZATION_MAX_VALUE = 100
+        # Per-taxon signal rescale for the gLV interaction inference. When set to a
+        # quantile q in (0,1), each taxon's abundance is divided by the q-quantile of
+        # its (normalized) absolute abundance in the interaction & self-interaction
+        # DESIGN, so the sampler works with O(1) coefficients A~_ij = A_ij * c_j (and
+        # a~_ii = a_ii * c_i). This gives a properly-scaled shared self-interaction
+        # prior and well-conditioned interaction regression; the PHYSICAL A = A~/c is
+        # what gets reported. None = no rescaling (default, identical to before).
+        self.PER_TAXA_RESCALE_QUANTILE = None
         self.LEAVE_OUT = leave_out
         self.ZERO_INFLATION_TRANSITION_POLICY = None #'ignore'
         # path to tsv file containing introduction times of each taxa
@@ -398,6 +406,7 @@ class MDSINE2ModelConfig(_BaseModelConfig):
         cfg.PROCESS_VARIANCE_TYPE = self.PROCESS_VARIANCE_TYPE
         cfg.DATA_DTYPE = self.DATA_DTYPE
         cfg.QPCR_NORMALIZATION_MAX_VALUE = self.QPCR_NORMALIZATION_MAX_VALUE
+        cfg.PER_TAXA_RESCALE_QUANTILE = self.PER_TAXA_RESCALE_QUANTILE
         cfg.ZERO_INFLATION_TRANSITION_POLICY = self.ZERO_INFLATION_TRANSITION_POLICY
         cfg.GROWTH_TRUNCATION_SETTINGS = self.GROWTH_TRUNCATION_SETTINGS
         cfg.SELF_INTERACTIONS_TRUNCATION_SETTINGS = self.SELF_INTERACTIONS_TRUNCATION_SETTINGS

@@ -1348,13 +1348,18 @@ class Interactions(ClusterProperty, TraceableNode):
         else:
             fill = 0
         ret = np.full(shape=(n_items, n_items), fill_value=fill, dtype=float)
+        # The interaction values are stored rescaled (A~_ij = A_ij * c_j); divide by
+        # the source-taxon scale c_j to return the PHYSICAL interaction matrix. This is
+        # the single accessor used by the filtering hand-off, the trace, and forward-sim,
+        # so physical A is what every reader sees. (c defaults to ones = no rescaling.)
+        rescale = self.G.data.rescale
         for interaction in self:
             if not interaction.indicator:
                 continue
             val = interaction.value
             for tidx in self.clustering.clusters[interaction.target_cid].members:
                 for sidx in self.clustering.clusters[interaction.source_cid].members:
-                    ret[tidx, sidx] = val
+                    ret[tidx, sidx] = val / rescale[sidx]
         return ret
     
     def get_datalevel_indicator_matrix(self) -> np.ndarray:
